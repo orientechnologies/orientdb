@@ -25,13 +25,13 @@ public class OParenthesisExpression extends OMathExpression {
   @Override
   public String toString() {
     StringBuilder result = new StringBuilder();
-    result.append("(");
+    result.append('(');
     if (expression != null) {
       result.append(expression.toString());
     } else if (statement != null) {
       result.append(statement.toString());
     }
-    result.append(")");
+    result.append(')');
     return result.toString();
   }
 

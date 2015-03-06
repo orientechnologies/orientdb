@@ -40,7 +40,7 @@ public class OCreateVertexStatement extends OStatement {
     }
     if (insertBody != null) {
       if (targetClass != null || targetCluster != null || returnStatement != null) {
-        result.append(" ");
+        result.append(' ');
       }
       result.append(insertBody.toString());
     }

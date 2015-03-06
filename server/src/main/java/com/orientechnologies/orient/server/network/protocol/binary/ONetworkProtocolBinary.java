@@ -131,7 +131,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     channel.flush();
     start();
-    setName("OrientDB <- BinaryClient (" + iSocket.getRemoteSocketAddress() + ")");
+    setName("OrientDB <- BinaryClient (" + iSocket.getRemoteSocketAddress() + ')');
   }
 
   @Override
@@ -195,7 +195,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           String db = token.getDatabase();
           String type = token.getDatabaseType();
           if (db != null && type != null) {
-            final ODatabaseDocumentTx database = new ODatabaseDocumentTx(type + ":" + db);
+            final ODatabaseDocumentTx database = new ODatabaseDocumentTx(type + ':' + db);
             if (connection.data.serverUser) {
               database.resetInitialization();
               database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
@@ -653,7 +653,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     if (connection.database.getStorage() instanceof OStorageProxy && !loadUserFromSchema(user, passwd)) {
       sendErrorOrDropConnection(clientTxId, new OSecurityAccessException(connection.database.getName(),
-          "User or password not valid for database: '" + connection.database.getName() + "'"));
+          "User or password not valid for database: '" + connection.database.getName() + '\''));
     } else {
 
       beginResponse();

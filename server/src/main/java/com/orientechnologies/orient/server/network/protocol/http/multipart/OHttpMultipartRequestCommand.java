@@ -196,12 +196,12 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
       currChar = (char) in;
       if (currChar != ' ') {
         iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE,
-            "Wrong request part header: Expected ' ' (header: " + headerName + ")", OHttpUtils.CONTENT_TEXT_PLAIN,
-            "Wrong request part header: Expected ' ' (header: " + headerName + ")", null);
+            "Wrong request part header: Expected ' ' (header: " + headerName + ')', OHttpUtils.CONTENT_TEXT_PLAIN,
+            "Wrong request part header: Expected ' ' (header: " + headerName + ')', null);
       }
     } else if (currChar != '=') {
-      iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Wrong request part header: Expected ':' (header: " + headerName + ")",
-          OHttpUtils.CONTENT_TEXT_PLAIN, "Wrong request part header: Expected ':' (header: " + headerName + ")", null);
+      iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Wrong request part header: Expected ':' (header: " + headerName + ')',
+          OHttpUtils.CONTENT_TEXT_PLAIN, "Wrong request part header: Expected ':' (header: " + headerName + ')', null);
     }
     while (!endOfHeader) {
       in = iRequest.multipartStream.read();

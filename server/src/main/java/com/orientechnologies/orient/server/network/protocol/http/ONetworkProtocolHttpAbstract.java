@@ -183,7 +183,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
         try {
           OLogManager.instance().warn(
               this,
-              "->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + request.httpMethod + "."
+              "->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + request.httpMethod + '.'
                   + URLDecoder.decode(command, "UTF-8"));
 
           sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, OHttpUtils.STATUS_INVALIDMETHOD_DESCRIPTION, null,
@@ -295,7 +295,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             errorCode = OHttpUtils.STATUS_AUTH_CODE;
             errorReason = OHttpUtils.STATUS_AUTH_DESCRIPTION;
             responseHeaders = "WWW-Authenticate: Basic realm=\"OrientDB db-" + ((OSecurityAccessException) cause).getDatabaseName()
-                + "\"";
+                + '"';
             errorMessage = null;
           } else {
             // USER ACCESS DENIED
@@ -364,7 +364,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   }
 
   protected void sendStatus(final int iStatus, final String iReason) throws IOException {
-    writeLine(request.httpVersion + " " + iStatus + " " + iReason);
+    writeLine(request.httpVersion + ' ' + iStatus + ' ' + iReason);
   }
 
   protected void sendResponseHeaders(final String iContentType, final boolean iKeepAlive) throws IOException {

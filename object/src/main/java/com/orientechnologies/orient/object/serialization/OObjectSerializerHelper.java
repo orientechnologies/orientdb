@@ -150,7 +150,7 @@ public class OObjectSerializerHelper {
 
     getClassFields(c);
 
-    return getters.get(className + "." + iProperty) != null;
+    return getters.get(className + '.' + iProperty) != null;
   }
 
   public static String getDocumentBoundField(final Class<?> iClass) {
@@ -166,7 +166,7 @@ public class OObjectSerializerHelper {
     getClassFields(c);
 
     try {
-      final Object o = getters.get(className + "." + iProperty);
+      final Object o = getters.get(className + '.' + iProperty);
 
       if (o == null)
         return null;
@@ -197,7 +197,7 @@ public class OObjectSerializerHelper {
     getClassFields(c);
 
     try {
-      Object o = getters.get(className + "." + iProperty);
+      Object o = getters.get(className + '.' + iProperty);
 
       if (o instanceof Method)
         return ((Method) o).invoke(iPojo);
@@ -216,7 +216,7 @@ public class OObjectSerializerHelper {
     getClassFields(c);
 
     try {
-      Object o = setters.get(className + "." + iProperty);
+      Object o = setters.get(className + '.' + iProperty);
 
       if (o instanceof Method) {
         ((Method) o).invoke(iPojo,
@@ -728,7 +728,7 @@ public class OObjectSerializerHelper {
         } else {
           final Object result = serializeFieldValue(null, iFieldValue);
           if (iFieldValue == result)
-            throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ":" + iFieldValue
+            throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ':' + iFieldValue
                 + "] cannot be serialized because is not part of registered entities. To fix this error register this class");
 
           iFieldValue = result;
@@ -868,7 +868,7 @@ public class OObjectSerializerHelper {
   }
 
   public static void invokeCallback(final Object iPojo, final ODocument iDocument, final Class<?> iAnnotation) {
-    final Method m = callbacks.get(iPojo.getClass().getSimpleName() + "." + iAnnotation.getSimpleName());
+    final Method m = callbacks.get(iPojo.getClass().getSimpleName() + '.' + iAnnotation.getSimpleName());
 
     if (m != null)
 
@@ -879,7 +879,7 @@ public class OObjectSerializerHelper {
           m.invoke(iPojo);
       } catch (Exception e) {
         throw new OConfigurationException("Error on executing user callback '" + m.getName() + "' annotated with '"
-            + iAnnotation.getSimpleName() + "'", e);
+            + iAnnotation.getSimpleName() + '\'', e);
       }
   }
 
@@ -996,7 +996,7 @@ public class OObjectSerializerHelper {
           try {
             String getterName = "get" + OUtils.camelCase(fieldName);
             Method m = currentClass.getMethod(getterName, NO_ARGS);
-            getters.put(iClass.getName() + "." + fieldName, m);
+            getters.put(iClass.getName() + '.' + fieldName, m);
           } catch (Exception e) {
             registerFieldGetter(iClass, fieldName, f);
           }
@@ -1008,7 +1008,7 @@ public class OObjectSerializerHelper {
           try {
             String getterName = "set" + OUtils.camelCase(fieldName);
             Method m = currentClass.getMethod(getterName, f.getType());
-            setters.put(iClass.getName() + "." + fieldName, m);
+            setters.put(iClass.getName() + '.' + fieldName, m);
           } catch (Exception e) {
             registerFieldSetter(iClass, fieldName, f);
           }
@@ -1035,7 +1035,7 @@ public class OObjectSerializerHelper {
       // SEARCH FOR CALLBACK ANNOTATIONS
       for (Class annotationClass : callbackAnnotationClasses) {
         if (m.getAnnotation(annotationClass) != null)
-          callbacks.put(iRootClass.getSimpleName() + "." + annotationClass.getSimpleName(), m);
+          callbacks.put(iRootClass.getSimpleName() + '.' + annotationClass.getSimpleName(), m);
       }
     }
   }
@@ -1045,7 +1045,7 @@ public class OObjectSerializerHelper {
     if (!f.isAccessible())
       f.setAccessible(true);
 
-    setters.put(iClass.getName() + "." + fieldName, f);
+    setters.put(iClass.getName() + '.' + fieldName, f);
   }
 
   private static void registerFieldGetter(final Class<?> iClass, String fieldName, Field f) {
@@ -1053,7 +1053,7 @@ public class OObjectSerializerHelper {
     if (!f.isAccessible())
       f.setAccessible(true);
 
-    getters.put(iClass.getName() + "." + fieldName, f);
+    getters.put(iClass.getName() + '.' + fieldName, f);
   }
 
   private static boolean isEmbeddedObject(final Class<?> iPojoClass, final Class<?> iFieldClass, final String iFieldName,

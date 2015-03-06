@@ -437,6 +437,6 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   private void checkEntreeSize(int entreeSize) {
     if (entreeSize > MAX_ENTREE_SIZE)
       throw new OSBTreeException("Serialized key-value pair size bigger than allowed " + entreeSize + " vs " + MAX_ENTREE_SIZE
-          + ".");
+          + '.');
   }
 }

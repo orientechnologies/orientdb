@@ -108,7 +108,7 @@ public class OExecuteBlock extends OAbstractBlock {
       returnValue = executeBlock(iManager, iContext, "do", iDoClause, iOutput, iReadOnly, returnType, returnValue);
     } else
       for (Object item : OMultiValue.getMultiValueIterable(iDoClause)) {
-        final String blockId = "do[" + i + "]";
+        final String blockId = "do[" + i + ']';
 
         returnValue = executeBlock(iManager, iContext, blockId, item, iOutput, iReadOnly, returnType, returnValue);
 

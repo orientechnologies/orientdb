@@ -62,7 +62,7 @@ public class OIndexMatchCondition extends OBooleanExpression {
         result.append(x.toString());
         first = false;
       }
-      result.append("]");
+      result.append(']');
     } else if (Boolean.TRUE.equals(between)) {
       result.append(" BETWEEN [");
       boolean first = true;
@@ -82,7 +82,7 @@ public class OIndexMatchCondition extends OBooleanExpression {
         result.append(x.toString());
         first = false;
       }
-      result.append("]");
+      result.append(']');
     }
     return result.toString();
   }

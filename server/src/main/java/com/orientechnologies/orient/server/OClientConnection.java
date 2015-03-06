@@ -59,7 +59,7 @@ public class OClientConnection {
         + id
         + ", source="
         + (protocol != null && protocol.getChannel() != null && protocol.getChannel().socket != null ? protocol.getChannel().socket
-            .getRemoteSocketAddress() : "?") + ", since=" + since + "]";
+            .getRemoteSocketAddress() : "?") + ", since=" + since + ']';
   }
 
   /**
@@ -69,7 +69,7 @@ public class OClientConnection {
     final Socket socket = protocol.getChannel().socket;
     if (socket != null) {
       final InetSocketAddress remoteAddress = (InetSocketAddress) socket.getRemoteSocketAddress();
-      return remoteAddress.getAddress().getHostAddress() + ":" + remoteAddress.getPort();
+      return remoteAddress.getAddress().getHostAddress() + ':' + remoteAddress.getPort();
     }
     return null;
   }

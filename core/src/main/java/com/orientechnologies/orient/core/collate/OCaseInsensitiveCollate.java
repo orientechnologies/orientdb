@@ -59,6 +59,6 @@ public class OCaseInsensitiveCollate extends ODefaultComparator implements OColl
 
   @Override
   public String toString() {
-    return "{" + getClass().getSimpleName() + " : name = " + getName() + "}";
+    return '{' + getClass().getSimpleName() + " : name = " + getName() + '}';
   }
 }

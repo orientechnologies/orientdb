@@ -88,7 +88,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
     value = parserText.substring(pos + 1).trim();
 
     if (value.length() == 0)
-      throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", parserText,
+      throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + '\'', parserText,
           oldPos);
 
     if (value.equalsIgnoreCase("null"))

@@ -47,9 +47,9 @@ public class OFunctionCall extends SimpleNode {
   public String toString() {
     StringBuilder result = new StringBuilder();
     result.append(name.toString());
-    result.append("(");
+    result.append('(');
     if (star) {
-      result.append("*");
+      result.append('*');
     } else {
       boolean first = true;
       for (OExpression expr : params) {
@@ -60,7 +60,7 @@ public class OFunctionCall extends SimpleNode {
         first = false;
       }
     }
-    result.append(")");
+    result.append(')');
     return result.toString();
   }
 

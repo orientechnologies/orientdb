@@ -749,7 +749,7 @@ public class OObjectEntitySerializer {
         } else {
           final Object result = serializeFieldValue(null, iFieldValue);
           if (iFieldValue == result && !ORecordAbstract.class.isAssignableFrom(result.getClass()))
-            throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ":" + iFieldValue
+            throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ':' + iFieldValue
                 + "] cannot be serialized because is not part of registered entities. To fix this error register this class");
 
           iFieldValue = result;
@@ -1198,7 +1198,7 @@ public class OObjectEntitySerializer {
             m.invoke(iPojo);
         } catch (Exception e) {
           throw new OConfigurationException("Error on executing user callback '" + m.getName() + "' annotated with '"
-              + iAnnotation.getSimpleName() + "'", e);
+              + iAnnotation.getSimpleName() + '\'', e);
         }
       }
   }
@@ -1211,7 +1211,7 @@ public class OObjectEntitySerializer {
     List<Method> result = new ArrayList<Method>();
     Class<?> currentClass = iClass;
     while (classes.contains(currentClass)) {
-      List<Method> callbackMethods = callbacks.get(currentClass.getSimpleName() + "." + iAnnotation.getSimpleName());
+      List<Method> callbackMethods = callbacks.get(currentClass.getSimpleName() + '.' + iAnnotation.getSimpleName());
       if (callbackMethods != null && !callbackMethods.isEmpty())
         result.addAll(callbackMethods);
       if (currentClass != Object.class)
@@ -1227,7 +1227,7 @@ public class OObjectEntitySerializer {
     for (Method m : iRootClass.getDeclaredMethods()) {
       // SEARCH FOR CALLBACK ANNOTATIONS
       for (Class annotationClass : OObjectSerializerHelper.callbackAnnotationClasses) {
-        final String key = iRootClass.getSimpleName() + "." + annotationClass.getSimpleName();
+        final String key = iRootClass.getSimpleName() + '.' + annotationClass.getSimpleName();
         if (m.getAnnotation(annotationClass) != null) {
           if (!callbacks.containsKey(key)) {
             callbacks.put(key, new ArrayList<Method>(Arrays.asList(m)));

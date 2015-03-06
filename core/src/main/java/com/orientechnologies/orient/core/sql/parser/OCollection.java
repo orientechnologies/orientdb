@@ -26,7 +26,7 @@ public class OCollection extends SimpleNode {
   public String toString() {
 
     StringBuilder result = new StringBuilder();
-    result.append("[");
+    result.append('[');
     boolean first = true;
     for (OExpression expr : expressions) {
       if (!first) {
@@ -35,7 +35,7 @@ public class OCollection extends SimpleNode {
       result.append(expr.toString());
       first = false;
     }
-    result.append("]");
+    result.append(']');
     return result.toString();
   }
 

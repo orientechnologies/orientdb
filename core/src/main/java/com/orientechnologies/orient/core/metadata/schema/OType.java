@@ -403,7 +403,7 @@ public enum OType {
             return Boolean.TRUE;
           else if (((String) iValue).equalsIgnoreCase("false"))
             return Boolean.FALSE;
-          throw new IllegalArgumentException("Value is not boolean. Expected true or false but received '" + iValue + "'");
+          throw new IllegalArgumentException("Value is not boolean. Expected true or false but received '" + iValue + '\'');
         } else if (iValue instanceof Number)
           return ((Number) iValue).intValue() != 0;
 
@@ -551,7 +551,7 @@ public enum OType {
     }
 
     throw new IllegalArgumentException("Cannot increment value '" + a + "' (" + a.getClass() + ") with '" + b + "' ("
-        + b.getClass() + ")");
+        + b.getClass() + ')');
   }
 
   public static Number[] castComparableNumber(Number context, Number max) {

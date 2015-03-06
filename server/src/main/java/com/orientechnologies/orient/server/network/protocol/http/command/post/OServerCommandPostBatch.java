@@ -149,7 +149,7 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
                 if (commandAsString == null)
                   commandAsString = c.toString();
                 else
-                  commandAsString += ";" + c.toString();
+                  commandAsString += ';' + c.toString();
               }
             } else
               commandAsString = command.toString();
@@ -174,7 +174,7 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
             for (Object o : OMultiValue.getMultiValueIterable(script)) {
               if (o != null) {
                 if (i++ > 0)
-                  text.append("\n");
+                  text.append('\n');
                 text.append(o.toString());
               }
             }

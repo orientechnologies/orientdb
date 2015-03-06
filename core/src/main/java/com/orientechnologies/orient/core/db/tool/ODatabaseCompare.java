@@ -69,7 +69,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   public ODatabaseCompare(String iDb1URL, String iDb2URL, final OCommandOutputListener iListener) throws IOException {
     super(null, null, iListener);
 
-    listener.onMessage("\nComparing two local databases:\n1) " + iDb1URL + "\n2) " + iDb2URL + "\n");
+    listener.onMessage("\nComparing two local databases:\n1) " + iDb1URL + "\n2) " + iDb2URL + '\n');
 
     storage1 = Orient.instance().loadStorage(iDb1URL);
     storage1.open(null, null, null);
@@ -82,7 +82,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       final OCommandOutputListener iListener) throws IOException {
     super(null, null, iListener);
 
-    listener.onMessage("\nComparing two local databases:\n1) " + iDb1URL + "\n2) " + iDb2URL + "\n");
+    listener.onMessage("\nComparing two local databases:\n1) " + iDb1URL + "\n2) " + iDb2URL + '\n');
 
     databaseDocumentTxOne = new ODatabaseDocumentTx(iDb1URL);
     databaseDocumentTxOne.open(userName, userPassword);
@@ -177,7 +177,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       OLogManager.instance()
           .error(this, "Error on comparing database '%s' against '%s'", e, storage1.getName(), storage2.getName());
       throw new ODatabaseExportException("Error on comparing database '" + storage1.getName() + "' against '" + storage2.getName()
-          + "'", e);
+          + '\'', e);
     } finally {
       storage1.close();
       storage2.close();
@@ -468,8 +468,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is not null but for DB2 is null.");
           listener.onMessage("\n");
           ++differences;
-        } else if (metadataOne != null && metadataTwo != null
-            && !ODocumentHelper.hasSameContentOf(metadataOne, databaseDocumentTxOne, metadataTwo, databaseDocumentTxTwo, ridMapper)) {
+        } else if (metadataOne != null && !ODocumentHelper.hasSameContentOf(metadataOne, databaseDocumentTxOne, metadataTwo, databaseDocumentTxTwo, ridMapper)) {
           ok = false;
           listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 and for DB2 are different.");
           makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
@@ -590,7 +589,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       ok = true;
       cluster2Id = storage2.getClusterIdByName(clusterName);
 
-      listener.onMessage("\n- Checking cluster " + String.format("%-25s: ", "'" + clusterName + "'"));
+      listener.onMessage("\n- Checking cluster " + String.format("%-25s: ", '\'' + clusterName + '\''));
 
       if (cluster2Id == -1) {
         listener.onMessage("ERR: cluster name " + clusterName + " was not found on database " + storage2);
@@ -695,29 +694,29 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           if (buffer1 == null && buffer2 == null)
             // BOTH RECORD NULL, OK
             continue;
-          else if (buffer1 == null && buffer2 != null) {
+          else if (buffer1 == null) {
             // REC1 NULL
-            listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " is null in DB1");
+            listener.onMessage("\n- ERR: RID=" + clusterId + ':' + position + " is null in DB1");
             ++differences;
-          } else if (buffer1 != null && buffer2 == null) {
+          } else if (buffer2 == null) {
             // REC2 NULL
-            listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " is null in DB2");
+            listener.onMessage("\n- ERR: RID=" + clusterId + ':' + position + " is null in DB2");
             ++differences;
           } else {
             if (buffer1.recordType != buffer2.recordType) {
-              listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " recordType is different: "
+              listener.onMessage("\n- ERR: RID=" + clusterId + ':' + position + " recordType is different: "
                   + (char) buffer1.recordType + " <-> " + (char) buffer2.recordType);
               ++differences;
             }
 
             if (buffer1.buffer == null && buffer2.buffer == null) {
-            } else if (buffer1.buffer == null && buffer2.buffer != null) {
-              listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " content is different: null <-> "
+            } else if (buffer1.buffer == null) {
+              listener.onMessage("\n- ERR: RID=" + clusterId + ':' + position + " content is different: null <-> "
                   + buffer2.buffer.length);
               ++differences;
 
-            } else if (buffer1.buffer != null && buffer2.buffer == null) {
-              listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " content is different: " + buffer1.buffer.length
+            } else if (buffer2.buffer == null) {
+              listener.onMessage("\n- ERR: RID=" + clusterId + ':' + position + " content is different: " + buffer1.buffer.length
                   + " <-> null");
               ++differences;
 
@@ -759,7 +758,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
                 }
 
                 if (!ODocumentHelper.hasSameContentOf(doc1, databaseDocumentTxOne, doc2, databaseDocumentTxTwo, ridMapper)) {
-                  listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " document content is different");
+                  listener.onMessage("\n- ERR: RID=" + clusterId + ':' + position + " document content is different");
                   listener.onMessage("\n--- REC1: " + new String(buffer1.buffer));
                   listener.onMessage("\n--- REC2: " + new String(buffer2.buffer));
                   listener.onMessage("\n");
@@ -772,7 +771,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
                   final String rec2 = new String(buffer2.buffer).trim();
 
                   if (rec1.length() != rec2.length()) {
-                    listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " content length is different: "
+                    listener.onMessage("\n- ERR: RID=" + clusterId + ':' + position + " content length is different: "
                         + buffer1.buffer.length + " <-> " + buffer2.buffer.length);
 
                     if (buffer1.recordType == ODocument.RECORD_TYPE || buffer1.recordType == ORecordFlat.RECORD_TYPE)
@@ -787,7 +786,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
                   // CHECK BYTE PER BYTE
                   for (int b = 0; b < buffer1.buffer.length; ++b) {
                     if (buffer1.buffer[b] != buffer2.buffer[b]) {
-                      listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " content is different at byte #" + b
+                      listener.onMessage("\n- ERR: RID=" + clusterId + ':' + position + " content is different at byte #" + b
                           + ": " + buffer1.buffer[b] + " <-> " + buffer2.buffer[b]);
                       listener.onMessage("\n--- REC1: " + new String(buffer1.buffer));
                       listener.onMessage("\n--- REC2: " + new String(buffer2.buffer));

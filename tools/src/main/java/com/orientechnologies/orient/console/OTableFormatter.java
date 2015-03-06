@@ -63,7 +63,7 @@ public class OTableFormatter {
 
       if (limit > -1 && fetched >= limit) {
         printHeaderLine(columns);
-        out.message("\nLIMIT EXCEEDED: resultset contains more items not displayed (limit=" + limit + ")");
+        out.message("\nLIMIT EXCEEDED: resultset contains more items not displayed (limit=" + limit + ')');
         return;
       }
     }
@@ -95,7 +95,7 @@ public class OTableFormatter {
       for (Entry<String, Integer> col : iColumns.entrySet()) {
         if (format.length() > 0)
           format.append('|');
-        format.append("%-" + col.getValue() + "s");
+        format.append("%-" + col.getValue() + 's');
 
         Object value = getFieldValue(iIndex, iRecord, col.getKey());
 
@@ -110,7 +110,7 @@ public class OTableFormatter {
         vargs.add(value);
       }
 
-      out.message("\n" + format.toString(), vargs.toArray());
+      out.message('\n' + format.toString(), vargs.toArray());
 
     } catch (Throwable t) {
       out.message("%3d|%9s|%s\n", iIndex, iRecord.getIdentity(), "Error on loading record dued to: " + t);
@@ -139,9 +139,9 @@ public class OTableFormatter {
     }
 
     if (value instanceof OMultiCollectionIterator<?>)
-      value = "[" + ((OMultiCollectionIterator<?>) value).size() + "]";
+      value = "[" + ((OMultiCollectionIterator<?>) value).size() + ']';
     else if (value instanceof Collection<?>)
-      value = "[" + ((Collection<?>) value).size() + "]";
+      value = "[" + ((Collection<?>) value).size() + ']';
     else if (value instanceof ORecord) {
       if (((ORecord) value).getIdentity().equals(ORecordId.EMPTY_RECORD_ID)) {
         value = ((ORecord) value).toString();
@@ -156,7 +156,7 @@ public class OTableFormatter {
         value = DEF_DATEFORMAT.format((Date) value);
       }
     } else if (value instanceof byte[])
-      value = "byte[" + ((byte[]) value).length + "]";
+      value = "byte[" + ((byte[]) value).length + ']';
 
     return value;
   }
@@ -172,7 +172,7 @@ public class OTableFormatter {
       String colName = column.getKey();
       if (colName.length() > column.getValue())
         colName = colName.substring(0, column.getValue());
-      buffer.append(String.format("%-" + column.getValue() + "s", colName));
+      buffer.append(String.format("%-" + column.getValue() + 's', colName));
     }
     out.message(buffer.toString());
 
@@ -186,10 +186,10 @@ public class OTableFormatter {
       int i = 0;
       for (Entry<String, Integer> col : iColumns.entrySet()) {
         if (i++ > 0)
-          buffer.append("+");
+          buffer.append('+');
 
         for (int k = 0; k < col.getValue(); ++k)
-          buffer.append("-");
+          buffer.append('-');
       }
     }
 

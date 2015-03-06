@@ -43,7 +43,7 @@ public class OCreateEdgeStatement extends OStatement {
     StringBuilder result = new StringBuilder();
     result.append("CREATE EDGE");
     if (targetClass != null) {
-      result.append(" ");
+      result.append(' ');
       result.append(targetClass.toString());
       if (targetClusterName != null) {
         result.append(" CLUSTER ");
@@ -54,7 +54,7 @@ public class OCreateEdgeStatement extends OStatement {
     if (leftRid != null) {
       result.append(leftRid.toString());
     } else if (leftRids != null) {
-      result.append("[");
+      result.append('[');
       boolean first = true;
       for (ORid rid : leftRids) {
         if (!first) {
@@ -63,18 +63,18 @@ public class OCreateEdgeStatement extends OStatement {
         result.append(rid.toString());
         first = false;
       }
-      result.append("]");
+      result.append(']');
     } else if (leftStatement != null) {
-      result.append("(");
+      result.append('(');
       result.append(leftStatement.toString());
-      result.append(")");
+      result.append(')');
     } else if (leftParam != null) {
       if (leftParamValue == unset) {
         result.append(leftParam.toString());
       } else if (leftParamValue == null) {
         result.append("NULL");
       } else if (leftParamValue instanceof String) {
-        result.append("\"" + OExpression.encode("" + leftParamValue) + "\"");
+        result.append('"' + OExpression.encode("" + leftParamValue) + '"');
       } else {
         result.append(leftParamValue.toString());
       }
@@ -85,7 +85,7 @@ public class OCreateEdgeStatement extends OStatement {
     if (rightRid != null) {
       result.append(rightRid.toString());
     } else if (rightRids != null) {
-      result.append("[");
+      result.append('[');
       boolean first = true;
       for (ORid rid : rightRids) {
         if (!first) {
@@ -94,18 +94,18 @@ public class OCreateEdgeStatement extends OStatement {
         result.append(rid.toString());
         first = false;
       }
-      result.append("]");
+      result.append(']');
     } else if (rightStatement != null) {
-      result.append("(");
+      result.append('(');
       result.append(rightStatement.toString());
-      result.append(")");
+      result.append(')');
     } else if (rightParam != null) {
       if (rightParamValue == unset) {
         result.append(rightParam.toString());
       } else if (rightParamValue == null) {
         result.append("NULL");
       } else if (rightParamValue instanceof String) {
-        result.append("\"" + OExpression.encode("" + rightParamValue) + "\"");
+        result.append('"' + OExpression.encode("" + rightParamValue) + '"');
       } else {
         result.append(rightParamValue.toString());
       }
@@ -113,7 +113,7 @@ public class OCreateEdgeStatement extends OStatement {
       result.append(rightIdentifier.toString());
     }
     if (body != null) {
-      result.append(" ");
+      result.append(' ');
       result.append(body.toString());
     }
     if (retry != null) {

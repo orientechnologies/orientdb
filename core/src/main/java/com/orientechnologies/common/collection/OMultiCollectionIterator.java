@@ -205,6 +205,6 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
 
   @Override
   public String toString() {
-    return "[" + size() + "]";
+    return "[" + size() + ']';
   }
 }

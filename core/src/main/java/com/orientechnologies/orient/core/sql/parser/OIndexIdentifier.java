@@ -41,7 +41,7 @@ public class OIndexIdentifier extends SimpleNode {
       builder.append("indexvaluesdesc");
       break;
     }
-    builder.append(":");
+    builder.append(':');
     builder.append(indexName);
     return builder.toString();
   }

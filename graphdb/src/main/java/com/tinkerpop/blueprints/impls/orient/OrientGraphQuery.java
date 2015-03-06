@@ -183,7 +183,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     if (orderBy.length() > 1) {
       text.append(ORDERBY);
       text.append(orderBy);
-      text.append(" " + orderByDir + " ");
+      text.append(' ' + orderByDir + ' ');
     }
     if (skip > 0 && skip < Integer.MAX_VALUE) {
       text.append(SKIP);

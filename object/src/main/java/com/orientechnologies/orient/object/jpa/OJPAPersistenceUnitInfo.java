@@ -204,7 +204,7 @@ public class OJPAPersistenceUnitInfo implements PersistenceUnitInfo {
 
 	@Override
 	public String toString() {
-		return "PersistenceUnit@" + unitName + " " + super.toString();
+		return "PersistenceUnit@" + unitName + ' ' + super.toString();
 	}
 
 	@Override

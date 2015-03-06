@@ -57,7 +57,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + " [text=" + parserText + "]";
+    return getClass().getSimpleName() + " [text=" + parserText + ']';
   }
 
   public OProgressListener getProgressListener() {

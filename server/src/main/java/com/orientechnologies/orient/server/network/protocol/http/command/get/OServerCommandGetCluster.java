@@ -48,7 +48,7 @@ public class OServerCommandGetCluster extends OServerCommandAuthenticatedDbAbstr
        db = getProfiledDatabaseInstance(iRequest);
 
        if (db.getClusterIdByName(urlParts[2]) == -1)
-         throw new IllegalArgumentException("Invalid cluster '" + urlParts[2] + "'");
+         throw new IllegalArgumentException("Invalid cluster '" + urlParts[2] + '\'');
 
        final int limit = urlParts.length > 3 ? Integer.parseInt(urlParts[3]) : 20;
 

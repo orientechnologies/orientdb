@@ -51,9 +51,9 @@ public class OContainsAllCondition extends OBooleanExpression {
     if (right != null) {
       result.append(right.toString());
     } else if (rightBlock != null) {
-      result.append("(");
+      result.append('(');
       result.append(rightBlock.toString());
-      result.append(")");
+      result.append(')');
     }
 
     return result.toString();

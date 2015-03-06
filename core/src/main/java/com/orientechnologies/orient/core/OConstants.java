@@ -33,7 +33,7 @@ public class OConstants {
     if (buildNumber != null) {
       buffer.append(" (build ");
       buffer.append(buildNumber);
-      buffer.append(")");
+      buffer.append(')');
     }
 
     return buffer.toString();

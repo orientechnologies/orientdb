@@ -24,7 +24,7 @@ public class ONamedParameter extends OInputParameter {
 
   @Override
   public String toString() {
-    return ":" + paramName.toString();
+    return ':' + paramName.toString();
   }
 
   public Object bindFromInputParams(Map<Object, Object> params) {

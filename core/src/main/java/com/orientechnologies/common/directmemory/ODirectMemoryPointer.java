@@ -213,10 +213,10 @@ public class ODirectMemoryPointer {
 
     if (offset > pageSize)
       throw new ODirectMemoryViolationException("Provided offset [" + offset + "] is more than size of allocated area  ["
-          + pageSize + "]");
+          + pageSize + ']');
 
     if (offset + size > pageSize)
       throw new ODirectMemoryViolationException("Last position of provided data interval [" + (offset + size)
-          + "] is more than size of allocated area [" + pageSize + "]");
+          + "] is more than size of allocated area [" + pageSize + ']');
   }
 }

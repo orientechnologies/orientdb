@@ -443,7 +443,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     } catch (Exception e) {
       final StringWriter writer = new StringWriter();
       writer.append("Error on database import happened just before line " + jsonReader.getLineNumber() + ", column "
-          + jsonReader.getColumnNumber() + "\n");
+          + jsonReader.getColumnNumber() + '\n');
       final PrintWriter printWriter = new PrintWriter(writer);
       e.printStackTrace(printWriter);
       printWriter.flush();
@@ -1053,7 +1053,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       } else
         rid = null;
 
-      listener.onMessage("\n- Creating cluster " + (name != null ? "'" + name + "'" : "NULL") + "...");
+      listener.onMessage("\n- Creating cluster " + (name != null ? '\'' + name + '\'' : "NULL") + "...");
 
       int clusterId = name != null ? database.getClusterIdByName(name) : -1;
       if (clusterId == -1) {

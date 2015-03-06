@@ -34,7 +34,7 @@ public class OProcessorManager extends ODynamicFactory<String, OProcessor> {
       final boolean iReadOnly) {
     final OProcessor t = registry.get(iType);
     if (t == null)
-      throw new OProcessException("Cannot find processor type '" + iType + "'");
+      throw new OProcessException("Cannot find processor type '" + iType + '\'');
 
     return t.process(null, iContent, iContext, iOutput, iReadOnly);
   }

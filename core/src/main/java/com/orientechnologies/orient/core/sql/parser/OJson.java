@@ -32,7 +32,7 @@ public class OJson extends SimpleNode {
   @Override
   public String toString() {
     StringBuilder result = new StringBuilder();
-    result.append("{");
+    result.append('{');
     boolean first = true;
     for (OJsonItem item : items) {
       if (!first) {
@@ -42,7 +42,7 @@ public class OJson extends SimpleNode {
 
       first = false;
     }
-    result.append("}");
+    result.append('}');
     return result.toString();
   }
 }

@@ -34,7 +34,7 @@ public class OServerCommandDeleteProperty extends OServerCommandAuthenticatedDbA
     String[] urlParts = checkSyntax(iRequest.url, 4, "Syntax error: property/<database>/<class-name>/<property-name>");
 
     iRequest.data.commandInfo = "Delete property";
-    iRequest.data.commandDetail = urlParts[2] + "." + urlParts[3];
+    iRequest.data.commandDetail = urlParts[2] + '.' + urlParts[3];
 
     ODatabaseDocumentTx db = null;
 
@@ -42,7 +42,7 @@ public class OServerCommandDeleteProperty extends OServerCommandAuthenticatedDbA
       db = getProfiledDatabaseInstance(iRequest);
 
       if (db.getMetadata().getSchema().getClass(urlParts[2]) == null)
-        throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
+        throw new IllegalArgumentException("Invalid class '" + urlParts[2] + '\'');
 
       final OClass cls = db.getMetadata().getSchema().getClass(urlParts[2]);
 

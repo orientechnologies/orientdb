@@ -42,7 +42,7 @@ public class OFromItem extends SimpleNode {
         return rids.get(0).toString();
       } else {
         StringBuilder builder = new StringBuilder();
-        builder.append("[");
+        builder.append('[');
         boolean first = true;
         for (ORid rid : rids) {
           if (!first) {
@@ -51,7 +51,7 @@ public class OFromItem extends SimpleNode {
           builder.append(rid.toString());
           first = false;
         }
-        builder.append("]");
+        builder.append(']');
         return builder.toString();
       }
     } else if (cluster != null) {
@@ -61,7 +61,7 @@ public class OFromItem extends SimpleNode {
     } else if (metadata != null) {
       return metadata.toString();
     } else if (statement != null) {
-      return "(" + statement.toString() + ")";
+      return '(' + statement.toString() + ')';
     } else if (index != null) {
       return index.toString();
     } else if (inputParam != null) {

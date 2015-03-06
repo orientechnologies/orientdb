@@ -118,7 +118,7 @@ public class OJSONWriter {
         else
           for (int i = 0; i < size; ++i) {
             if (i > 0)
-              buffer.append(",");
+              buffer.append(',');
             buffer.append(writeValue(Array.get(iValue, i), iFormat));
           }
         buffer.append(']');
@@ -136,7 +136,7 @@ public class OJSONWriter {
       final Map.Entry<?, ?> entry = (Entry<?, ?>) iValue;
       buffer.append('{');
       buffer.append(writeValue(entry.getKey(), iFormat));
-      buffer.append(":");
+      buffer.append(':');
       if (iFormat.contains("prettyPrint"))
         buffer.append(' ');
       buffer.append(writeValue(entry.getValue(), iFormat));
@@ -188,7 +188,7 @@ public class OJSONWriter {
     } else {
       for (int i = 0; it.hasNext(); ++i) {
         if (i > 0)
-          buffer.append(",");
+          buffer.append(',');
         buffer.append(writeValue(it.next(), iFormat));
       }
     }
@@ -247,9 +247,9 @@ public class OJSONWriter {
         for (Iterator<?> it = iMap.entrySet().iterator(); it.hasNext(); ++i) {
           entry = (Entry<?, ?>) it.next();
           if (i > 0)
-            buffer.append(",");
+            buffer.append(',');
           buffer.append(writeValue(entry.getKey(), iFormat));
-          buffer.append(":");
+          buffer.append(':');
           buffer.append(writeValue(entry.getValue(), iFormat));
         }
       }
@@ -282,7 +282,7 @@ public class OJSONWriter {
     format(iIdentLevel, iNewLine);
 
     if (iName != null)
-      out.append("\"" + iName.toString() + "\":");
+      out.append('"' + iName.toString() + "\":");
 
     out.append('{');
 
@@ -298,7 +298,7 @@ public class OJSONWriter {
     format(iIdentLevel, iNewLine);
 
     if (iName != null)
-      out.append("\"" + iName.toString() + "\":");
+      out.append('"' + iName.toString() + "\":");
 
     out.append(iRecord.toJSON(format));
 

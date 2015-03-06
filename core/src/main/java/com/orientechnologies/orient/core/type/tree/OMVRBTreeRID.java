@@ -470,7 +470,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
         if (item != null)
           buffer.append(item.toString());
       }
-      buffer.append("}");
+      buffer.append('}');
     }
     return buffer.toString();
   }

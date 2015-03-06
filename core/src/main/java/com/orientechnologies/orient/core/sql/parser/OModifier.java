@@ -32,7 +32,7 @@ public class OModifier extends SimpleNode {
   public String toString() {
     StringBuilder result = new StringBuilder();
     if (squareBrackets) {
-      result.append("[");
+      result.append('[');
 
       if (arrayRange != null) {
         result.append(arrayRange.toString());
@@ -42,11 +42,11 @@ public class OModifier extends SimpleNode {
         result.append(arraySingleValues.toString());
       }
 
-      result.append("]");
+      result.append(']');
     } else if (methodCall != null) {
       result.append(methodCall.toString());
     } else if (suffix != null) {
-      result.append(".");
+      result.append('.');
       result.append(suffix.toString());
     }
     if (next != null) {

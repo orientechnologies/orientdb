@@ -92,7 +92,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
         // EARLY SAVE IT
         ((ORecord) iValue).save();
       else
-        throw new IllegalArgumentException("Cannot store non persistent RID as index value for key '" + iKey + "'");
+        throw new IllegalArgumentException("Cannot store non persistent RID as index value for key '" + iKey + '\'');
 
     database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, iValue);
     return this;

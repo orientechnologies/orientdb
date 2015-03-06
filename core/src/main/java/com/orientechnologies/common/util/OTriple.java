@@ -76,7 +76,7 @@ public class OTriple<K extends Comparable<K>, V, SV> implements Comparable<OTrip
 
 	@Override
 	public String toString() {
-		return key + ":" + value + "/" + value;
+		return key + ":" + value + '/' + value;
 	}
 
 	@Override

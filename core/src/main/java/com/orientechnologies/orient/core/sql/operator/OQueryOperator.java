@@ -224,8 +224,8 @@ public abstract class OQueryOperator {
         final String profiler_prefix = profiler.getDatabaseMetric(index.getDatabaseName(), "query.compositeIndexUsed");
 
         profiler.updateCounter(profiler_prefix, "Used composite index in query", +1);
-        profiler.updateCounter(profiler_prefix + "." + params, "Used composite index in query with " + params + " params", +1);
-        profiler.updateCounter(profiler_prefix + "." + params + '.' + keyParams.size(), "Used composite index in query with "
+        profiler.updateCounter(profiler_prefix + '.' + params, "Used composite index in query with " + params + " params", +1);
+        profiler.updateCounter(profiler_prefix + '.' + params + '.' + keyParams.size(), "Used composite index in query with "
             + params + " params and " + keyParams.size() + " keys", +1);
       }
     }

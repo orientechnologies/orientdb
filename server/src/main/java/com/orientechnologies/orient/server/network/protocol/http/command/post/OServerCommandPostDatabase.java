@@ -96,9 +96,9 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 
   protected String getStoragePath(final String databaseName, final String iStorageMode) {
     if (iStorageMode.equals(OEngineLocalPaginated.NAME))
-      return iStorageMode + ":" + server.getDatabaseDirectory() + databaseName;
+      return iStorageMode + ':' + server.getDatabaseDirectory() + databaseName;
     else if (iStorageMode.equals(OEngineMemory.NAME))
-      return iStorageMode + ":" + databaseName;
+      return iStorageMode + ':' + databaseName;
 
     return null;
   }
@@ -118,7 +118,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
             exportClass(db, json, cls);
             exportedNames.add(cls.getName());
           } catch (Exception e) {
-            OLogManager.instance().error(this, "Error on exporting class '" + cls + "'", e);
+            OLogManager.instance().error(this, "Error on exporting class '" + cls + '\'', e);
           }
       }
       json.endCollection(1, true);

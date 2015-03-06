@@ -32,25 +32,25 @@ public class OFetchPlanItem extends SimpleNode {
   public String toString() {
     StringBuilder result = new StringBuilder();
     if (Boolean.TRUE.equals(star)) {
-      result.append("*");
+      result.append('*');
     } else {
       if (leftDepth != null) {
-        result.append("[");
+        result.append('[');
         result.append(leftDepth.toString());
-        result.append("]");
+        result.append(']');
       }
 
       boolean first = true;
       for (String s : fieldChain) {
         if (!first) {
-          result.append(".");
+          result.append('.');
         }
         result.append(s);
         first = false;
       }
 
     }
-    result.append(":");
+    result.append(':');
     result.append(rightDepth.toString());
 
     return result.toString();

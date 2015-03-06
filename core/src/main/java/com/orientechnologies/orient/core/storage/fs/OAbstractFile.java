@@ -517,7 +517,7 @@ public abstract class OAbstractFile implements OFile {
     try {
       if (iOffset < 0 || iOffset + iLength > getFilledUpTo())
         throw new OIOException("You cannot access outside the file size (" + getFilledUpTo()
-            + " bytes). You have requested portion " + iOffset + "-" + (iOffset + iLength) + " bytes. File: " + toString());
+            + " bytes). You have requested portion " + iOffset + '-' + (iOffset + iLength) + " bytes. File: " + toString());
 
       return iOffset;
     } finally {
@@ -568,7 +568,7 @@ public abstract class OAbstractFile implements OFile {
       try {
         builder.append(accessFile.length());
       } catch (IOException e) {
-        builder.append("?");
+        builder.append('?');
       }
     }
     builder.append(", stored=");

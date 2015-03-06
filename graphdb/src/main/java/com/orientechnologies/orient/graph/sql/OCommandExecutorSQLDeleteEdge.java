@@ -101,12 +101,12 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
           if (temp.equals("FROM")) {
             fromExpr = parserRequiredWord(false, "Syntax error", " =><,\r\n");
             if (rid != null)
-              throwSyntaxErrorException("FROM '" + fromExpr + "' is not allowed when specify a RID (" + rid + ")");
+              throwSyntaxErrorException("FROM '" + fromExpr + "' is not allowed when specify a RID (" + rid + ')');
 
           } else if (temp.equals("TO")) {
             toExpr = parserRequiredWord(false, "Syntax error", " =><,\r\n");
             if (rid != null)
-              throwSyntaxErrorException("TO '" + toExpr + "' is not allowed when specify a RID (" + rid + ")");
+              throwSyntaxErrorException("TO '" + toExpr + "' is not allowed when specify a RID (" + rid + ')');
 
           } else if (temp.startsWith("#")) {
             rid = new ORecordId(temp);
@@ -118,7 +118,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
               // ASSIGN DEFAULT CLASS
               clazz = graph.getEdgeType(OrientEdgeType.CLASS_NAME);
 
-            where = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetCurrentPosition()) : "";
+            where = parserGetCurrentPosition() > -1 ? ' ' + parserText.substring(parserGetCurrentPosition()) : "";
 
             compiledFilter = OSQLEngine.getInstance().parseCondition(where, getContext(), KEYWORD_WHERE);
             break;

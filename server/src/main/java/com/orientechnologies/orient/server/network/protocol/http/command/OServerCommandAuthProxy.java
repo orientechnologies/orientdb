@@ -54,7 +54,7 @@ public class OServerCommandAuthProxy extends OServerCommandPatternAbstract {
       else if (conf.name.equals(DATABASE_CONF))
         databaseName = conf.value;
     }
-    authentication = userName + ":" + userPassword;
+    authentication = userName + ':' + userPassword;
   }
 
   @Override

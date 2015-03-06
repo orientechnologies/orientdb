@@ -39,7 +39,7 @@ public class OFloatingPoint extends ONumber {
   @Override
   public String toString() {
     if (sign == -1) {
-      return "-" + stringValue;
+      return '-' + stringValue;
     }
     return stringValue;
   }

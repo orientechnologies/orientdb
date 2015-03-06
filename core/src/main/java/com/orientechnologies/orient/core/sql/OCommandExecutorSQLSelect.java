@@ -265,7 +265,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             } else if (w.equals(KEYWORD_PARALLEL)) {
               parallel = parseParallel(w);
             } else {
-              throwParsingException("Invalid keyword '" + w + "'");
+              throwParsingException("Invalid keyword '" + w + '\'');
             }
           }
         }
@@ -672,7 +672,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           final StringBuilder keyArray = new StringBuilder();
           for (Object o : array) {
             if (keyArray.length() > 0) {
-              keyArray.append(",");
+              keyArray.append(',');
             }
             if (o != null) {
               keyArray.append(o instanceof OIdentifiable ? ((OIdentifiable) o).getIdentity().toString() : o.toString());
@@ -1076,8 +1076,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         final String profiler_prefix = profiler.getDatabaseMetric(index.getDatabaseName(), "query.compositeIndexUsed");
 
         profiler.updateCounter(profiler_prefix, "Used composite index in query", -1);
-        profiler.updateCounter(profiler_prefix + "." + params, "Used composite index in query with " + params + " params", -1);
-        profiler.updateCounter(profiler_prefix + "." + params + '.' + keyParams.size(), "Used composite index in query with "
+        profiler.updateCounter(profiler_prefix + '.' + params, "Used composite index in query with " + params + " params", -1);
+        profiler.updateCounter(profiler_prefix + '.' + params + '.' + keyParams.size(), "Used composite index in query with "
             + params + " params and " + keyParams.size() + " keys", -1);
       }
     }

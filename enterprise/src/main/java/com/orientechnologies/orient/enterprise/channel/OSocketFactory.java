@@ -88,10 +88,10 @@ public class OSocketFactory {
 	protected SSLContext createSSLContext() {
 		try {
 			if (keyStorePath != null && trustStorePath != null) {
-				if (keyStorePassword == null || keyStorePassword.equals("")) {
+				if (keyStorePassword == null || keyStorePassword.isEmpty()) {
 					throw new OConfigurationException("Please provide a keystore password");
 				}
-				if (trustStorePassword == null || trustStorePassword.equals("")) {
+				if (trustStorePassword == null || trustStorePassword.isEmpty()) {
 					throw new OConfigurationException("Please provide a truststore password");
 				}
 				

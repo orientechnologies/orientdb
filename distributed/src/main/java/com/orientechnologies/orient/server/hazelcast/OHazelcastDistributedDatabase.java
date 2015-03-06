@@ -430,7 +430,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     }
 
     // SELF ASSIGN CLUSTERS PREVIOUSLY ASSIGNED TO THIS LOCAL NODE (BY SUFFIX)
-    final String suffix2Search = "_" + getLocalNodeName();
+    final String suffix2Search = '_' + getLocalNodeName();
     for (String c : cfg.getClusterNames()) {
       if (c.endsWith(suffix2Search)) {
         // FOUND: ASSIGN TO LOCAL NODE

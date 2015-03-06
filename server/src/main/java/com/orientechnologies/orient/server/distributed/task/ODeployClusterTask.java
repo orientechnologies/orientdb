@@ -78,7 +78,7 @@ public class ODeployClusterTask extends OAbstractReplicatedTask implements OComm
         // NOT MASTER SERVER FOR THIS CLUSTER, SKIP IT
         return Boolean.FALSE;
 
-      final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYCLUSTER + databaseName + "." + clusterName);
+      final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYCLUSTER + databaseName + '.' + clusterName);
       if (lastDeployment != null && lastDeployment.longValue() == random) {
         // SKIP IT
         ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
@@ -86,12 +86,12 @@ public class ODeployClusterTask extends OAbstractReplicatedTask implements OComm
         return Boolean.FALSE;
       }
 
-      iManager.getConfigurationMap().put(DEPLOYCLUSTER + databaseName + "." + clusterName, random);
+      iManager.getConfigurationMap().put(DEPLOYCLUSTER + databaseName + '.' + clusterName, random);
 
       ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying cluster %s...",
           databaseName);
 
-      final File f = new File(Orient.getTempPath() + "/backup_" + database.getName() + "_" + clusterName + ".zip");
+      final File f = new File(Orient.getTempPath() + "/backup_" + database.getName() + '_' + clusterName + ".zip");
       if (f.exists())
         f.delete();
       else

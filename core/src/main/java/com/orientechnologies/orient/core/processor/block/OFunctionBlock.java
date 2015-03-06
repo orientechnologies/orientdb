@@ -60,7 +60,7 @@ public class OFunctionBlock extends OAbstractBlock {
 
     final OFunction f = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getFunctionLibrary().getFunction(function);
     if (f != null) {
-      debug(iContext, "Calling database function: " + function + "(" + Arrays.toString(args) + ")...");
+      debug(iContext, "Calling database function: " + function + '(' + Arrays.toString(args) + ")...");
       return f.executeInContext(iContext, args);
     }
 
@@ -78,7 +78,7 @@ public class OFunctionBlock extends OAbstractBlock {
 
         Method m = cls.getMethod(methodName, argTypes);
 
-        debug(iContext, "Calling Java function: " + m + "(" + Arrays.toString(args).replace("%", "%%") + ")...");
+        debug(iContext, "Calling Java function: " + m + '(' + Arrays.toString(args).replace("%", "%%") + ")...");
         return m.invoke(null, args);
 
       } catch (NoSuchMethodException e) {
@@ -86,24 +86,24 @@ public class OFunctionBlock extends OAbstractBlock {
         for (Method m : cls.getMethods()) {
           if (m.getName().equals(methodName) && m.getParameterTypes().length == args.length) {
             try {
-              debug(iContext, "Calling Java function: " + m + "(" + Arrays.toString(args) + ")...");
+              debug(iContext, "Calling Java function: " + m + '(' + Arrays.toString(args) + ")...");
               return m.invoke(null, args);
             } catch (IllegalArgumentException e1) {
               // DO NOTHING, LOOK FOR ANOTHER METHOD
             } catch (Exception e1) {
               OLogManager.instance().error(this, "Error on calling function '%s'", e, function);
-              throw new OProcessException("Error on calling function '" + function + "'", e);
+              throw new OProcessException("Error on calling function '" + function + '\'', e);
             }
           }
         }
 
         // METHOD NOT FOUND!
-        debug(iContext, "Method not found: " + clsName + "." + methodName + "(" + Arrays.toString(args) + ")");
+        debug(iContext, "Method not found: " + clsName + '.' + methodName + '(' + Arrays.toString(args) + ')');
 
         for (Method m : cls.getMethods()) {
           final StringBuilder candidates = new StringBuilder();
           if (m.getName().equals(methodName)) {
-            candidates.append("-" + m + "\n");
+            candidates.append("-" + m + '\n');
           }
           if (candidates.length() > 0)
             debug(iContext, "Candidate methods were: \n" + candidates);

@@ -125,27 +125,27 @@ public class OOfflineCluster implements OCluster {
 
   @Override
   public void truncate() throws IOException {
-    throw new OOfflineClusterException("Cannot truncate an offline cluster '" + name + "'");
+    throw new OOfflineClusterException("Cannot truncate an offline cluster '" + name + '\'');
   }
 
   @Override
   public OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
-    throw new OOfflineClusterException("Cannot create a new record on offline cluster '" + name + "'");
+    throw new OOfflineClusterException("Cannot create a new record on offline cluster '" + name + '\'');
   }
 
   @Override
   public boolean deleteRecord(long clusterPosition) throws IOException {
-    throw new OOfflineClusterException("Cannot delete a record on offline cluster '" + name + "'");
+    throw new OOfflineClusterException("Cannot delete a record on offline cluster '" + name + '\'');
   }
 
   @Override
   public void updateRecord(long clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
-    throw new OOfflineClusterException("Cannot update a record on offline cluster '" + name + "'");
+    throw new OOfflineClusterException("Cannot update a record on offline cluster '" + name + '\'');
   }
 
   @Override
   public ORawBuffer readRecord(long clusterPosition) throws IOException {
-    throw new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'");
+    throw new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + '\'');
   }
 
   @Override
@@ -155,7 +155,7 @@ public class OOfflineCluster implements OCluster {
 
   @Override
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
-    throw new OOfflineClusterException("Cannot read a record on offline cluster '" + name + "'");
+    throw new OOfflineClusterException("Cannot read a record on offline cluster '" + name + '\'');
   }
 
   @Override

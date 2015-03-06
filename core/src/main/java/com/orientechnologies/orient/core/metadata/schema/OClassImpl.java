@@ -621,7 +621,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     acquireSchemaWriteLock();
     try {
       if (!properties.containsKey(lowerName))
-        throw new OSchemaException("Property '" + propertyName + "' not found in class " + name + "'");
+        throw new OSchemaException("Property '" + propertyName + "' not found in class " + name + '\'');
 
       final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
@@ -979,11 +979,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (storage instanceof OStorageProxy) {
         // FORMAT FLOAT LOCALE AGNOSTIC
-        final String cmd = String.format("alter class %s oversize %s", name, new Float(overSize).toString());
+        final String cmd = String.format("alter class %s oversize %s", name, Float.toString(overSize));
         database.command(new OCommandSQL(cmd)).execute();
       } else if (isDistributedCommand()) {
         // FORMAT FLOAT LOCALE AGNOSTIC
-        final String cmd = String.format("alter class %s oversize %s", name, new Float(overSize).toString());
+        final String cmd = String.format("alter class %s oversize %s", name, Float.toString(overSize));
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
@@ -1172,7 +1172,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     if (isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME))
       throw new OSecurityException("Class " + getName()
-          + " cannot be truncated because has record level security enabled (extends " + OSecurityShared.RESTRICTED_CLASSNAME + ")");
+          + " cannot be truncated because has record level security enabled (extends " + OSecurityShared.RESTRICTED_CLASSNAME + ')');
 
     final OStorage storage = getDatabase().getStorage();
     acquireSchemaReadLock();
@@ -1276,7 +1276,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       return getCustomInternal();
     }
 
-    throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");
+    throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + '\'');
   }
 
   public OClass set(final ATTRIBUTES attribute, final Object iValue) {
@@ -1359,7 +1359,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       checkEmbedded();
 
       if (properties.containsKey(lowerName))
-        throw new OSchemaException("Class '" + this.name + "' already has property '" + name + "'");
+        throw new OSchemaException("Class '" + this.name + "' already has property '" + name + '\'');
 
       OGlobalProperty global = owner.findOrCreateGlobalProperty(name, type);
 
@@ -1588,7 +1588,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public void fireDatabaseMigration(final ODatabaseDocument database, final String propertyName, final OType type) {
     database.query(new OSQLAsynchQuery<Object>("select from " + name + " where " + propertyName + ".type() <> \"" + type.name()
-        + "\"", new OCommandResultListener() {
+        + '"', new OCommandResultListener() {
 
       @Override
       public boolean result(Object iRecord) {
@@ -1637,7 +1637,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     while (cur.hasNext()) {
       builder.append('"').append(cur.next().name()).append('"');
       if (cur.hasNext())
-        builder.append(",");
+        builder.append(',');
     }
     builder.append("] and ").append(propertyName).append(" is not null ");
     if (type.isMultiValue())
@@ -1645,7 +1645,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     final List<ODocument> res = database.command(new OCommandSQL(builder.toString())).execute();
     if (((Long) res.get(0).field("count")) > 0)
-      throw new OSchemaException("The database contains some schema-less data in the property '" + name + "." + propertyName
+      throw new OSchemaException("The database contains some schema-less data in the property '" + name + '.' + propertyName
           + "' that is not compatible with the type " + type + ". Fix those records and change the schema again");
 
   }
@@ -1805,7 +1805,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final OProperty prop = properties.remove(iPropertyName.toLowerCase());
 
       if (prop == null)
-        throw new OSchemaException("Property '" + iPropertyName + "' not found in class " + name + "'");
+        throw new OSchemaException("Property '" + iPropertyName + "' not found in class " + name + '\'');
     } finally {
       releaseSchemaWriteLock();
     }

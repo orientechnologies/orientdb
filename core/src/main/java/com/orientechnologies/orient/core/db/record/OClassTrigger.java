@@ -246,7 +246,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
       Method method = clz.getMethod(methodName, ODocument.class);
       return new Object[] { clz, method };
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "illegal class or method : " + clzName + "/" + methodName);
+      OLogManager.instance().error(this, "illegal class or method : " + clzName + '/' + methodName);
       return null;
     }
   }

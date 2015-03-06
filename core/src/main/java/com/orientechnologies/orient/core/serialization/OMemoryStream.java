@@ -204,7 +204,7 @@ public class OMemoryStream extends OutputStream {
       throw new IllegalArgumentException("Begin is bigger than end");
 
     if (iEnd > buffer.length)
-      throw new IndexOutOfBoundsException("Position " + iEnd + " is greater than the buffer length (" + buffer.length + ")");
+      throw new IndexOutOfBoundsException("Position " + iEnd + " is greater than the buffer length (" + buffer.length + ')');
 
     System.arraycopy(buffer, iEnd, buffer, iBegin, buffer.length - iEnd);
   }

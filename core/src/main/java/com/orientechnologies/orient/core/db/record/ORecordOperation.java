@@ -71,7 +71,7 @@ public class ORecordOperation implements OSerializableStream {
   @Override
   public String toString() {
     return new StringBuilder(128).append("ORecordOperation [record=").append(record).append(", type=").append(getName(type))
-        .append("]").toString();
+        .append(']').toString();
   }
 
   public ORecord getRecord() {

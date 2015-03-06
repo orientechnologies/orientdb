@@ -354,7 +354,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   }
 
   protected String getLocalNodeNameAndThread() {
-    return manager.getLocalNodeName() + ":" + Thread.currentThread().getId();
+    return manager.getLocalNodeName() + ':' + Thread.currentThread().getId();
   }
 
   protected void purgePendingMessages() {

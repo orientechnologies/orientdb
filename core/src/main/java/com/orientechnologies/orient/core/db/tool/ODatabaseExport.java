@@ -175,7 +175,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       } else if (includeClusters != null && !includeClusters.isEmpty())
         continue;
 
-      listener.onMessage("\n- Cluster " + (clusterName != null ? "'" + clusterName + "'" : "NULL") + " (id=" + i + ")...");
+      listener.onMessage("\n- Cluster " + (clusterName != null ? '\'' + clusterName + '\'' : "NULL") + " (id=" + i + ")...");
 
       long clusterExportedRecordsCurrent = 0;
       if (clusterName != null) {
@@ -224,7 +224,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         }
       }
 
-      listener.onMessage("OK (records=" + clusterExportedRecordsCurrent + "/" + clusterExportedRecordsTot + ")");
+      listener.onMessage("OK (records=" + clusterExportedRecordsCurrent + '/' + clusterExportedRecordsTot + ')');
 
       totalExportedRecords += clusterExportedRecordsCurrent;
       totalFoundRecords += clusterExportedRecordsTot;
@@ -452,7 +452,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         writer.endCollection(3, true);
 
         writer.endObject(2, true);
-        listener.onMessage("OK (entries=" + index.getSize() + ")");
+        listener.onMessage("OK (entries=" + index.getSize() + ')');
         manualIndexes++;
       }
     }

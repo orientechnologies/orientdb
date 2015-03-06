@@ -211,7 +211,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     if (record != null)
       return (REC) record;
 
-    throw new NoSuchElementException("Direction: forward, last position was: " + current + ", range: " + beginRange + "-"
+    throw new NoSuchElementException("Direction: forward, last position was: " + current + ", range: " + beginRange + '-'
         + endRange);
   }
 

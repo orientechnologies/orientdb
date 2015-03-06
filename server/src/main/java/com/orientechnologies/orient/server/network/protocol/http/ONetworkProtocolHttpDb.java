@@ -38,7 +38,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
    public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
        final OContextConfiguration iConfiguration) throws IOException {
      server = iServer;
-     setName("OrientDB HTTP Connection " + iSocket.getLocalAddress() + ":" + iSocket.getLocalPort() + "<-"
+     setName("OrientDB HTTP Connection " + iSocket.getLocalAddress() + ':' + iSocket.getLocalPort() + "<-"
          + iSocket.getRemoteSocketAddress());
 
      super.config(iListener, server, iSocket, iConfiguration);

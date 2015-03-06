@@ -75,7 +75,7 @@ public abstract class ONetworkProtocol extends OSoftThread {
       }
 
       // TIMEOUT
-      throw new OTimeoutException("Cannot execute operation while the node is not online (status=" + mgr.getNodeStatus() + ")");
+      throw new OTimeoutException("Cannot execute operation while the node is not online (status=" + mgr.getNodeStatus() + ')');
     }
   }
 }

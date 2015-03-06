@@ -21,12 +21,12 @@ public class ORid extends SimpleNode {
 
   @Override
   public String toString(String prefix) {
-    return "#" + cluster.getValue() + ":" + position.getValue();
+    return "#" + cluster.getValue() + ':' + position.getValue();
   }
 
   @Override
   public String toString() {
-    return "#" + cluster.getValue() + ":" + position.getValue();
+    return "#" + cluster.getValue() + ':' + position.getValue();
   }
 }
 /* JavaCC - OriginalChecksum=c2c6d67d7722e29212e438574698d7cd (do not edit this line) */

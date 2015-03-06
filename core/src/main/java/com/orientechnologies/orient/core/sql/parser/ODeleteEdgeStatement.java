@@ -50,7 +50,7 @@ public class ODeleteEdgeStatement extends OStatement {
     result.append("DELETE EDGE");
 
     if (className != null) {
-      result.append(" ");
+      result.append(' ');
       result.append(className.toString());
       if (targetClusterName != null) {
         result.append(" CLUSTER ");
@@ -60,7 +60,7 @@ public class ODeleteEdgeStatement extends OStatement {
 
 
     if (rid != null) {
-      result.append(" ");
+      result.append(' ');
       result.append(rid.toString());
     }
 
@@ -69,7 +69,7 @@ public class ODeleteEdgeStatement extends OStatement {
       if (leftRid != null) {
         result.append(leftRid.toString());
       } else if (leftRids != null) {
-        result.append("[");
+        result.append('[');
         boolean first = true;
         for (ORid rid : leftRids) {
           if (!first) {
@@ -78,18 +78,18 @@ public class ODeleteEdgeStatement extends OStatement {
           result.append(rid.toString());
           first = false;
         }
-        result.append("]");
+        result.append(']');
       } else if (leftStatement != null) {
-        result.append("(");
+        result.append('(');
         result.append(leftStatement.toString());
-        result.append(")");
+        result.append(')');
       } else if (leftParam != null) {
         if (leftParamValue == unset) {
           result.append(leftParam.toString());
         } else if (leftParamValue == null) {
           result.append("NULL");
         } else if (leftParamValue instanceof String) {
-          result.append("\"" + OExpression.encode("" + leftParamValue) + "\"");
+          result.append('"' + OExpression.encode("" + leftParamValue) + '"');
         } else {
           result.append(leftParamValue.toString());
         }
@@ -103,7 +103,7 @@ public class ODeleteEdgeStatement extends OStatement {
       if (rightRid != null) {
         result.append(rightRid.toString());
       } else if (rightRids != null) {
-        result.append("[");
+        result.append('[');
         boolean first = true;
         for (ORid rid : rightRids) {
           if (!first) {
@@ -112,18 +112,18 @@ public class ODeleteEdgeStatement extends OStatement {
           result.append(rid.toString());
           first = false;
         }
-        result.append("]");
+        result.append(']');
       } else if (rightStatement != null) {
-        result.append("(");
+        result.append('(');
         result.append(rightStatement.toString());
-        result.append(")");
+        result.append(')');
       } else if (rightParam != null) {
         if (rightParamValue == unset) {
           result.append(rightParam.toString());
         } else if (rightParamValue == null) {
           result.append("NULL");
         } else if (rightParamValue instanceof String) {
-          result.append("\"" + OExpression.encode("" + rightParamValue) + "\"");
+          result.append('"' + OExpression.encode("" + rightParamValue) + '"');
         } else {
           result.append(rightParamValue.toString());
         }

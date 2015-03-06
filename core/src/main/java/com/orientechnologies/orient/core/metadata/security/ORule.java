@@ -70,7 +70,7 @@ public class ORule implements Serializable{
 
 	@Override
 	public String toString() {
-		return ResourceGeneric.class.getSimpleName()+" [name="+name+", legacyName="+legacyName+"]";
+		return ResourceGeneric.class.getSimpleName()+" [name="+name+", legacyName="+legacyName+ ']';
 	}
     
   }

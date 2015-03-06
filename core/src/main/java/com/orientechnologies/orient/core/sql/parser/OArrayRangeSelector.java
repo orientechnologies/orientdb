@@ -34,10 +34,10 @@ public class OArrayRangeSelector extends SimpleNode {
       result.append(fromSelector.toString());
     }
     if (newRange) {
-      result.append("-");
+      result.append('-');
       // TODO in 3.0 result.append("..");
     } else {
-      result.append("-");
+      result.append('-');
     }
     if (to != null) {
       result.append(to);

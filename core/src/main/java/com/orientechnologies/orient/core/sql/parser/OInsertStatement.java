@@ -44,7 +44,7 @@ public class OInsertStatement extends OStatement {
       result.append(returnStatement.toString());
     }
     if (insertBody != null) {
-      result.append(" ");
+      result.append(' ');
       result.append(insertBody.toString());
     }
     if (unsafe) {

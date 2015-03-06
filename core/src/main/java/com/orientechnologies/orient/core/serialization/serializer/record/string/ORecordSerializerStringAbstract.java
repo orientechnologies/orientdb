@@ -259,8 +259,6 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       return OType.BINARY;
     else if (firstChar == OStringSerializerHelper.EMBEDDED_BEGIN)
       return OType.EMBEDDED;
-    else if (firstChar == OStringSerializerHelper.LINK)
-      return OType.LINK;
     else if (firstChar == OStringSerializerHelper.LIST_BEGIN)
       return OType.EMBEDDEDLIST;
     else if (firstChar == OStringSerializerHelper.SET_BEGIN)
@@ -327,7 +325,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     final double dou = Double.parseDouble(iValue);
     if ((dou <= Float.MAX_VALUE || dou >= Float.MIN_VALUE) && new Double(new Double(dou).floatValue()).doubleValue() == dou) {
       return OType.FLOAT;
-    } else if (!new Double(dou).toString().equals(iValue)) {
+    } else if (!Double.toString(dou).equals(iValue)) {
       return OType.DECIMAL;
     }
 
@@ -508,7 +506,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     case BOOLEAN:
       if (iValue instanceof Boolean)
         return iValue;
-      return new Boolean(iValue.toString());
+      return Boolean.valueOf(iValue.toString());
 
     case FLOAT:
       if (iValue instanceof Float)

@@ -94,7 +94,7 @@ public class OHttpResponse {
     // final String contentType;
 
     if (callbackFunction != null) {
-      content = callbackFunction + "(" + iContent + ")";
+      content = callbackFunction + '(' + iContent + ')';
       contentType = "text/javascript";
     } else {
       if (content == null || content.length() == 0) {
@@ -120,7 +120,7 @@ public class OHttpResponse {
 
     final String sessId = sessionId != null ? sessionId : "-";
 
-    writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessId + "; Path=/; HttpOnly");
+    writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + '=' + sessId + "; Path=/; HttpOnly");
 
     byte[] binaryContent = null;
     if (!empty) {
@@ -143,7 +143,7 @@ public class OHttpResponse {
   }
 
   public void writeStatus(final int iStatus, final String iReason) throws IOException {
-    writeLine(httpVersion + " " + iStatus + " " + iReason);
+    writeLine(httpVersion + ' ' + iStatus + ' ' + iReason);
   }
 
   public void writeHeaders(final String iContentType) throws IOException {
@@ -296,7 +296,7 @@ public class OHttpResponse {
                 Object value = doc.field(orderedColumns.get(col));
                 if (value != null) {
                   if (!(value instanceof Number))
-                    value = "\"" + value + "\"";
+                    value = "\"" + value + '"';
 
                   iArgument.write(value.toString().getBytes());
                 }
@@ -317,7 +317,7 @@ public class OHttpResponse {
       if (iFormat == null)
         iFormat = JSON_FORMAT;
       else
-        iFormat = JSON_FORMAT + "," + iFormat;
+        iFormat = JSON_FORMAT + ',' + iFormat;
 
       final StringWriter buffer = new StringWriter();
       final OJSONWriter json = new OJSONWriter(buffer, iFormat);
@@ -408,7 +408,7 @@ public class OHttpResponse {
     writeLine("Content-Transfer-Encoding: binary");
 
     if (iFileName != null) {
-      writeLine("Content-Disposition: attachment; filename=\"" + iFileName + "\"");
+      writeLine("Content-Disposition: attachment; filename=\"" + iFileName + '"');
     }
 
     if (iSize < 0) {
@@ -448,7 +448,7 @@ public class OHttpResponse {
     writeLine("Transfer-Encoding: chunked");
 
     if (iFileName != null) {
-      writeLine("Content-Disposition: attachment; filename=\"" + iFileName + "\"");
+      writeLine("Content-Disposition: attachment; filename=\"" + iFileName + '"');
     }
 
     writeLine(null);

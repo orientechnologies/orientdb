@@ -57,25 +57,25 @@ public class OMathExpression extends SimpleNode {
 
     for (int i = 0; i < childExpressions.size(); i++) {
       if (i > 0) {
-        result.append(" ");
+        result.append(' ');
         switch (operators.get(i - 1)) {
         case PLUS:
-          result.append("+");
+          result.append('+');
           break;
         case MINUS:
-          result.append("-");
+          result.append('-');
           break;
         case STAR:
-          result.append("*");
+          result.append('*');
           break;
         case SLASH:
-          result.append("/");
+          result.append('/');
           break;
         case REM:
-          result.append("%");
+          result.append('%');
           break;
         }
-        result.append(" ");
+        result.append(' ');
       }
       result.append(childExpressions.get(i).toString());
     }

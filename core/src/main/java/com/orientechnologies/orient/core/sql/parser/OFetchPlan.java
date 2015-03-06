@@ -29,7 +29,7 @@ public class OFetchPlan extends SimpleNode {
     boolean first = true;
     for (OFetchPlanItem item : items) {
       if (!first) {
-        result.append(" ");
+        result.append(' ');
       }
 
       result.append(item.toString());

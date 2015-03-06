@@ -90,7 +90,7 @@ public abstract class OStringSerializerHelper {
     case BOOLEAN:
       if (iValue instanceof Boolean)
         return iValue;
-      return new Boolean(getStringContent(iValue));
+      return Boolean.valueOf(getStringContent(iValue));
 
     case DECIMAL:
       if (iValue instanceof BigDecimal)
@@ -395,19 +395,19 @@ public abstract class OStringSerializerHelper {
           i = OStringParser.readUnicode(iSource, i + 2, iBuffer);
           continue;
         } else if (nextChar == 'n') {
-          iBuffer.append("\n");
+          iBuffer.append('\n');
           i++;
           continue;
         } else if (nextChar == 'r') {
-          iBuffer.append("\r");
+          iBuffer.append('\r');
           i++;
           continue;
         } else if (nextChar == 't') {
-          iBuffer.append("\t");
+          iBuffer.append('\t');
           i++;
           continue;
         } else if (nextChar == 'f') {
-          iBuffer.append("\f");
+          iBuffer.append('\f');
           i++;
           continue;
         } else
@@ -587,16 +587,16 @@ public abstract class OStringSerializerHelper {
           if (nextChar == 'u') {
             currentPos = OStringParser.readUnicode(iText, currentPos + 2, buffer);
           } else if (nextChar == 'n') {
-            buffer.append("\n");
+            buffer.append('\n');
             currentPos++;
           } else if (nextChar == 'r') {
-            buffer.append("\r");
+            buffer.append('\r');
             currentPos++;
           } else if (nextChar == 't') {
-            buffer.append("\t");
+            buffer.append('\t');
             currentPos++;
           } else if (nextChar == 'f') {
-            buffer.append("\f");
+            buffer.append('\f');
             currentPos++;
           } else
             escape = true;

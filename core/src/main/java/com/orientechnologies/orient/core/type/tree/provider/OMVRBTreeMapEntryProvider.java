@@ -379,7 +379,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
 
     if (currentVersion != CURRENT_VERSION)
       throw new OSerializationException("MVRBTree node is stored using " + currentVersion
-          + " version of serialization format but current version is " + CURRENT_VERSION + ".");
+          + " version of serialization format but current version is " + CURRENT_VERSION + '.');
 
     pageSize = OIntegerSerializer.INSTANCE.deserializeLiteral(inBuffer, offset);
     offset += OIntegerSerializer.INT_SIZE;

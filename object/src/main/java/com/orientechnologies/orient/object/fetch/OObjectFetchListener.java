@@ -137,7 +137,7 @@ public class OObjectFetchListener implements OFetchListener {
       throw new OSerializationException(
           "Linked type of field '"
               + iRoot.getClassName()
-              + "."
+              + '.'
               + iFieldName
               + "' is unknown. Probably needs to be registered with <db>.getEntityManager().registerEntityClasses(<package>) or <db>.getEntityManager().registerEntityClass(<class>) or the package cannot be loaded correctly due to a classpath problem. In this case register the single classes one by one.");
 

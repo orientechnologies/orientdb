@@ -118,7 +118,7 @@ public class OSingleFileSegment {
   public void rename(String iOldName, String iNewName) throws IOException {
     final String osFileName = file.getName();
     if (osFileName.startsWith(iOldName)) {
-      final File newFile = new File(storage.getStoragePath() + "/" + iNewName
+      final File newFile = new File(storage.getStoragePath() + '/' + iNewName
           + osFileName.substring(osFileName.lastIndexOf(iOldName) + iOldName.length()));
       boolean renamed = file.renameTo(newFile);
       while (!renamed) {

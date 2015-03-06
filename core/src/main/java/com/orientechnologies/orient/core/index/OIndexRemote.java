@@ -263,7 +263,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   public Collection<ODocument> getEntries(final Collection<?> iKeys) {
     final StringBuilder params = new StringBuilder(128);
     if (!iKeys.isEmpty()) {
-      params.append("?");
+      params.append('?');
       for (int i = 1; i < iKeys.size(); i++) {
         params.append(", ?");
       }
@@ -300,7 +300,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
     final StringBuilder params = new StringBuilder(128);
     if (!iKeys.isEmpty()) {
-      params.append("?");
+      params.append('?');
       for (int i = 1; i < iKeys.size(); i++) {
         params.append(", ?");
       }

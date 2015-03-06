@@ -116,7 +116,7 @@ public class OFileUtils {
     if (iSize > KILOBYTE)
       return String.format("%2.2fKB", (float) iSize / KILOBYTE);
 
-    return String.valueOf(iSize) + "b";
+    return String.valueOf(iSize) + 'b';
   }
 
   public static String getDirectory(String iPath) {
@@ -142,7 +142,7 @@ public class OFileUtils {
 
   public static void checkValidName(final String iFileName) throws IOException {
     if (iFileName.contains("..") || iFileName.contains("/") || iFileName.contains("\\"))
-      throw new IOException("Invalid file name '" + iFileName + "'");
+      throw new IOException("Invalid file name '" + iFileName + '\'');
   }
 
   public static void deleteRecursively(final File iRootFile) {
@@ -173,7 +173,7 @@ public class OFileUtils {
       destination.mkdirs();
 
     for (File f : source.listFiles()) {
-      final File target = new File(destination.getAbsolutePath() + "/" + f.getName());
+      final File target = new File(destination.getAbsolutePath() + '/' + f.getName());
       if (f.isFile())
         copyFile(f, target);
       else

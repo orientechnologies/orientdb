@@ -139,7 +139,7 @@ public class OReflectionHelper {
     if (!iDirectory.exists())
       return classes;
 
-    iPackageName += "." + iDirectory.getName();
+    iPackageName += '.' + iDirectory.getName();
 
     String className;
     final File[] files = iDirectory.listFiles();

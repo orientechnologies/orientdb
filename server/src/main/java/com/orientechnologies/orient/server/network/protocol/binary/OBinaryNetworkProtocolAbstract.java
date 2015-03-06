@@ -307,9 +307,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       path = server.getConfiguration().getStoragePath(dbName);
 
       if (path == null)
-        path = storageType + ":" + server.getDatabaseDirectory() + "/" + dbName;
+        path = storageType + ':' + server.getDatabaseDirectory() + '/' + dbName;
     } else if (storageType.equals(OEngineMemory.NAME)) {
-      path = storageType + ":" + dbName;
+      path = storageType + ':' + dbName;
     } else
       throw new IllegalArgumentException("Cannot create database: storage mode '" + storageType + "' is not supported.");
 
@@ -431,7 +431,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       channel.writeBytes(stream, realLength);
     } catch (Exception e) {
       channel.writeBytes(null);
-      final String message = "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")";
+      final String message = "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ')';
       OLogManager.instance().error(this, message, e);
 
       throw new OSerializationException(message, e);

@@ -385,7 +385,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
               unknownException.incrementAndGet();
               OLogManager.instance().warn(
                   this,
-                  "Error on addEdge(" + iOutVertex + "," + iInVertex + "," + iEdgeLabel + "), retrying (retry=" + retry + "/"
+                  "Error on addEdge(" + iOutVertex + ',' + iInVertex + ',' + iEdgeLabel + "), retrying (retry=" + retry + '/'
                       + maxRetries + ") Thread: " + Thread.currentThread().getId());
               e.printStackTrace();
             }
@@ -442,7 +442,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
               unknownException.incrementAndGet();
               OLogManager.instance().warn(
                   this,
-                  "Error on addEdge(" + id + "," + outVertex + "," + inVertex + "," + label + "), retrying (retry=" + retry + "/"
+                  "Error on addEdge(" + id + ',' + outVertex + ',' + inVertex + ',' + label + "), retrying (retry=" + retry + '/'
                       + maxRetries + ") Thread: " + Thread.currentThread().getId());
               e.printStackTrace();
             }

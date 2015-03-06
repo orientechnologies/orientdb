@@ -62,6 +62,6 @@ public class OTraverseMultiValueProcess extends OTraverseAbstractProcess<Iterato
 
   @Override
   public String toString() {
-    return "[idx:" + index + "]";
+    return "[idx:" + index + ']';
   }
 }

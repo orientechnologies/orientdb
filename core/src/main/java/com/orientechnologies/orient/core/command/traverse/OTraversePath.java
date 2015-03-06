@@ -97,7 +97,7 @@ public class OTraversePath {
 
     @Override
     public String toString() {
-      return "(" + record.getIdentity().toString() + ")";
+      return '(' + record.getIdentity().toString() + ')';
     }
   }
 
@@ -111,7 +111,7 @@ public class OTraversePath {
 
     @Override
     public String toString() {
-      return "." + name;
+      return '.' + name;
     }
   }
 
@@ -125,7 +125,7 @@ public class OTraversePath {
 
     @Override
     public String toString() {
-      return "[" + index + "]";
+      return "[" + index + ']';
     }
   }
 

@@ -554,11 +554,11 @@ public class OServerAdmin {
         retry = handleDBFreeze();
       } catch (IOException e) {
         storage.getEngine().getConnectionManager().remove(network);
-        throw new OStorageException("Error on executing  '" + iActivity + "'", e);
+        throw new OStorageException("Error on executing  '" + iActivity + '\'', e);
       } catch (Exception e2) {
         if (network != null)
           storage.getEngine().getConnectionManager().release(network);
-        throw new OStorageException("Error on executing  '" + iActivity + "'", e2);
+        throw new OStorageException("Error on executing  '" + iActivity + '\'', e2);
       }
     }
     return null;

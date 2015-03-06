@@ -273,9 +273,9 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
       } else {
         buffer.append(getKeyAt(0));
       }
-      buffer.append("]");
+      buffer.append(']');
     }
-    buffer.append(")");
+    buffer.append(')');
     return buffer.toString();
   }
 }

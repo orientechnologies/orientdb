@@ -37,7 +37,7 @@ public class OAsynchChannelServiceThread extends OSoftThread {
 
   public OAsynchChannelServiceThread(final ORemoteServerEventListener iRemoteServerEventListener,
       final OChannelBinaryAsynchClient iChannel) {
-    super(Orient.instance().getThreadGroup(), "OrientDB <- Asynch Client (" + iChannel.socket.getRemoteSocketAddress() + ")");
+    super(Orient.instance().getThreadGroup(), "OrientDB <- Asynch Client (" + iChannel.socket.getRemoteSocketAddress() + ')');
     sessionId = Integer.MIN_VALUE;
     remoteServerEventListener = iRemoteServerEventListener;
     network = iChannel;

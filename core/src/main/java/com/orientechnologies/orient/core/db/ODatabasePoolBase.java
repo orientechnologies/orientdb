@@ -89,7 +89,7 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
                   iValue.getStorage().open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1], null);
                 else if (!iValue.getUser().checkPassword((String) iAdditionalArgs[1]))
                   throw new OSecurityAccessException(iValue.getName(), "User or password not valid for database: '"
-                      + iValue.getName() + "'");
+                      + iValue.getName() + '\'');
 
                 return true;
               }

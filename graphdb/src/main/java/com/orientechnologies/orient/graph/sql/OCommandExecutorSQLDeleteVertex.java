@@ -102,7 +102,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
             // ASSIGN DEFAULT CLASS
             clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(OrientVertexType.CLASS_NAME);
 
-          where = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetPreviousPosition()) : "";
+          where = parserGetCurrentPosition() > -1 ? ' ' + parserText.substring(parserGetPreviousPosition()) : "";
           query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
           break;
 

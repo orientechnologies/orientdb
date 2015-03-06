@@ -178,7 +178,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     if (f != null)
       if (!iExpectedClass.isAssignableFrom(f.getClass()))
         throw new OProcessException("Block '" + getName() + "' defines the field '" + iFieldName + "' of type '" + f.getClass()
-            + "' that is not compatible with the expected type '" + iExpectedClass + "'");
+            + "' that is not compatible with the expected type '" + iExpectedClass + '\'');
 
     return (T) f;
   }
@@ -187,7 +187,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
   protected <T> T getRequiredField(final OCommandContext iContext, final ODocument iConfig, final String iFieldName) {
     final Object f = iConfig.field(iFieldName);
     if (f == null)
-      throw new OProcessException("Block '" + getName() + "' must define the field '" + iFieldName + "'");
+      throw new OProcessException("Block '" + getName() + "' must define the field '" + iFieldName + '\'');
     return (T) resolveValue(iContext, f, true);
   }
 
@@ -196,7 +196,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
       Class<? extends T> iExpectedClass) {
     final Object f = getFieldOfClass(iContext, iConfig, iFieldName, iExpectedClass);
     if (f == null)
-      throw new OProcessException("Block '" + getName() + "' must define the field '" + iFieldName + "'");
+      throw new OProcessException("Block '" + getName() + "' must define the field '" + iFieldName + '\'');
     return (T) resolveValue(iContext, f, true);
   }
 

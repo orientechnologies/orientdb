@@ -356,7 +356,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
               && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration().getDateFormatInstance()
                   .parse(min)))
             throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
-                + " which precedes the first acceptable date (" + min + ")");
+                + " which precedes the first acceptable date (" + min + ')');
         } catch (ParseException e) {
         }
       } else if (p.getType().equals(OType.DATETIME)) {
@@ -365,7 +365,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
               && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration()
                   .getDateTimeFormatInstance().parse(min)))
             throw new OValidationException("The field '" + p.getFullName() + "' contains the datetime " + fieldValue
-                + " which precedes the first acceptable datetime (" + min + ")");
+                + " which precedes the first acceptable datetime (" + min + ')');
         } catch (ParseException e) {
         }
       } else if ((p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
@@ -396,7 +396,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
               && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration().getDateFormatInstance()
                   .parse(max)))
             throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
-                + " which is after the last acceptable date (" + max + ")");
+                + " which is after the last acceptable date (" + max + ')');
         } catch (ParseException e) {
         }
       } else if (p.getType().equals(OType.DATETIME)) {
@@ -405,7 +405,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
               && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration()
                   .getDateTimeFormatInstance().parse(max)))
             throw new OValidationException("The field '" + p.getFullName() + "' contains the datetime " + fieldValue
-                + " which is after the last acceptable datetime (" + max + ")");
+                + " which is after the last acceptable datetime (" + max + ')');
         } catch (ParseException e) {
         }
       } else if ((p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
@@ -471,7 +471,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       if (doc.getImmutableSchemaClass() != null && !p.getLinkedClass().isSuperClassOf(doc.getImmutableSchemaClass()))
         throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
             + p.getLinkedClass().getName() + "' but the value is the document " + linkedRecord.getIdentity() + " of class '"
-            + doc.getImmutableSchemaClass() + "'");
+            + doc.getImmutableSchemaClass() + '\'');
     }
   }
 
@@ -1908,7 +1908,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   protected String toString(Set<ORecord> inspected) {
     if (inspected.contains(this))
-      return "<recursion:rid=" + (_recordId != null ? _recordId : "null") + ">";
+      return "<recursion:rid=" + (_recordId != null ? _recordId : "null") + '>';
     else
       inspected.add(this);
 
@@ -2328,7 +2328,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   protected void setClass(final OClass iClass) {
     if (iClass != null && iClass.isAbstract())
-      throw new OSchemaException("Cannot create a document of the abstract class '" + iClass + "'");
+      throw new OSchemaException("Cannot create a document of the abstract class '" + iClass + '\'');
 
     if (iClass == null)
       _className = null;

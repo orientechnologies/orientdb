@@ -36,7 +36,7 @@ public abstract class OrientConsole extends OConsoleApplication {
   protected void onException(Throwable e) {
     Throwable current = e;
     while (current != null) {
-      err.print("\nError: " + current.toString() + "\n");
+      err.print("\nError: " + current.toString() + '\n');
       current = current.getCause();
     }
   }

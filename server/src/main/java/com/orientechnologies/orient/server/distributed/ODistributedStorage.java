@@ -454,12 +454,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         if (!masterNode.equals(dManager.getLocalNodeName()))
           throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '"
-              + dManager.getLocalNodeName() + "' is not the master of it, but it's '" + masterNode + "'");
+              + dManager.getLocalNodeName() + "' is not the master of it, but it's '" + masterNode + '\'');
 
         OLogManager.instance().warn(
             this,
             "Local node '" + dManager.getLocalNodeName() + "' is not the master for cluster '" + clusterName + "' (it's '"
-                + masterNode + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
+                + masterNode + "'). Switching to a valid cluster of the same class: '" + newClusterName + '\'');
       }
 
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
@@ -1239,7 +1239,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public String getStorageId() {
-    return dManager.getLocalNodeName() + "." + getName();
+    return dManager.getLocalNodeName() + '.' + getName();
   }
 
   @Override

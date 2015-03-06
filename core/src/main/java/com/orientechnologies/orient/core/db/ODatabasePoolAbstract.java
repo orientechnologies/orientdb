@@ -140,7 +140,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
 
   public DB acquire(final String iURL, final String iUserName, final String iUserPassword, final Map<String, Object> iOptionalParams)
       throws OLockException {
-    final String dbPooledName = OIOUtils.getUnixFileName(iUserName + "@" + iURL);
+    final String dbPooledName = OIOUtils.getUnixFileName(iUserName + '@' + iURL);
     OReentrantResourcePool<String, DB> pool;
     lock();
     try {
@@ -160,7 +160,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
   }
 
   public int getMaxConnections(final String url, final String userName) {
-    final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
+    final String dbPooledName = OIOUtils.getUnixFileName(userName + '@' + url);
     final OReentrantResourcePool<String, DB> pool;
     lock();
     try {
@@ -175,7 +175,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
   }
 
   public int getCreatedInstances(String url, String userName) {
-    final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
+    final String dbPooledName = OIOUtils.getUnixFileName(userName + '@' + url);
     lock();
     try {
       final OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
@@ -189,7 +189,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
   }
 
   public int getAvailableConnections(final String url, final String userName) {
-    final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
+    final String dbPooledName = OIOUtils.getUnixFileName(userName + '@' + url);
     final OReentrantResourcePool<String, DB> pool;
     lock();
     try {
@@ -204,7 +204,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
   }
 
   public int getConnectionsInCurrentThread(final String url, final String userName) {
-    final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
+    final String dbPooledName = OIOUtils.getUnixFileName(userName + '@' + url);
     final OReentrantResourcePool<String, DB> pool;
     lock();
     try {
@@ -222,7 +222,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
     // REMOVE ANY INTENT BEFORE. THIS RESTORE ANYTHING BEFORE THE CLOSE, LIKE THE USER NAME IN CASE OF MASSIVE INSERT
     iDatabase.declareIntent(null);
 
-    final String dbPooledName = iDatabase.getUser().getName() + "@" + iDatabase.getURL();
+    final String dbPooledName = iDatabase.getUser().getName() + '@' + iDatabase.getURL();
     final OReentrantResourcePool<String, DB> pool;
     lock();
     try {
@@ -284,7 +284,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
   }
 
   public void remove(final String iName, final String iUser) {
-    remove(iUser + "@" + iName);
+    remove(iUser + '@' + iName);
   }
 
   public void remove(final String iPoolName) {

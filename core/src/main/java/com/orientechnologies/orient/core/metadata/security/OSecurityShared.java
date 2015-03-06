@@ -168,7 +168,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     final String dbName = getDatabase().getName();
     final OUser user = getUser(iUserName);
     if (user == null)
-      throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + "'");
+      throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + '\'');
 
     if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
       throw new OSecurityAccessException(dbName, "User '" + iUserName + "' is not active");
@@ -182,7 +182,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
         }
-        throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + "'");
+        throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + '\'');
       }
     }
 
@@ -248,7 +248,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   public boolean dropUser(final String iUserName) {
     final Number removed = getDatabase().<OCommandRequest> command(
-        new OCommandSQL("delete from OUser where name = '" + iUserName + "'")).execute();
+        new OCommandSQL("delete from OUser where name = '" + iUserName + '\'')).execute();
 
     return removed != null && removed.intValue() > 0;
   }
@@ -287,7 +287,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   public boolean dropRole(final String iRoleName) {
     final Number removed = getDatabase().<OCommandRequest> command(
-        new OCommandSQL("delete from ORole where name = '" + iRoleName + "'")).execute();
+        new OCommandSQL("delete from ORole where name = '" + iRoleName + '\'')).execute();
 
     return removed != null && removed.intValue() > 0;
   }
