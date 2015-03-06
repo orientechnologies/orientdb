@@ -124,6 +124,13 @@ body {
     height: 30px;
     background-color: #f5f5f5;
   }
+  .board-member {
+    margin-top: 20px;
+  }
+  .panel-milestone {
+    max-height: 200px;
+    overflow: auto;
+  }
 }
 
 .sidebar-right .nav-pills > li.active > a, .sidebar-right .nav-pills > li > a:hover {

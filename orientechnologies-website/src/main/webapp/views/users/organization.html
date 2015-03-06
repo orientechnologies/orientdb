@@ -56,20 +56,51 @@
     <div class="col-md-12">
       <div class="panel panel-default">
         <div class="panel-body">
-          <table>
-            <tbody>
-            <tr ng-repeat="repo in repositories">
-              <td>
-                {{repo.name}}
-              </td>
-            </tr>
-            </tbody>
-          </table>
+          <div class="row">
+            <div class="col-md-12">
+              <ul class="list-group">
+                <a href="javascript:void(0)" class="list-group-item" ng-repeat="repo in repositories">{{repo.name}}</a>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
+  <div class="row">
+    <div class="col-md-2">
+      <h4> Milestones</h4>
+    </div>
+    <div class="col-md-offset-6 col-md-4">
 
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="panel panel-default">
+        <div class="panel-body panel-milestone">
+          <div class="row">
+            <div class="col-md-12">
+              <table class="table">
+                <thead>
+                <tr>
+                  <th>Current</th>
+                  <th>Title</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="m in milestones">
+                  <td><input type="checkbox" ng-click="saveMilestone(m)" ng-model="m.current"/></td>
+                  <td>{{m.title}}</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="row">
     <div class="col-md-2">
       <h4> Areas</h4>
@@ -113,11 +144,13 @@
         </div>
         <div class="form-group">
           <label class="col-sm-2 control-label">Backup</label>
+
           <div class="col-sm-8">
             <div class="row">
               <div class="col-md-3" ng-repeat="member in members">
                 <avatar dim="20" name="true" user="member"></avatar>
-                <input type="checkbox" ng-checked="area.members.indexOf(member.name)!=-1" ng-click="toggleBackup(member)">
+                <input type="checkbox" ng-checked="area.members.indexOf(member.name)!=-1"
+                       ng-click="toggleBackup(member)">
               </div>
             </div>
           </div>
@@ -129,7 +162,8 @@
     <div class="col-md-12">
       <div class="panel panel-default">
         <div class="panel-body">
-          <h3><span class="label label-primary" ng-click="selectArea(area)" ng-repeat="area in areas">{{area.name}}</span></h3>
+          <h3><span class="label label-primary" ng-click="selectArea(area)"
+                    ng-repeat="area in areas">{{area.name}}</span></h3>
         </div>
       </div>
     </div>

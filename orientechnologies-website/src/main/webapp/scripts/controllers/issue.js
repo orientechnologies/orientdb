@@ -9,14 +9,25 @@ angular.module('webappApp')
     $scope.page = 1;
     // Query By Example
     $scope.issue = {};
+    $scope.matched = {};
     if ($routeParams.q) {
       $scope.query = $routeParams.q;
+      var match = $scope.query.match(/(?:[^\s"]+|"[^"]*")+/g);
+
+      match.forEach(function (m) {
+        var splitted = m.split(":")
+        if (splitted[0] == "label") {
+          if (!$scope.matched[splitted[0]]) {
+            $scope.matched[splitted[0]] = []
+          }
+          $scope.matched[splitted[0]].push(splitted[1].replace(/"/g, ""));
+        } else {
+          $scope.matched[splitted[0]] = splitted[1].replace(/"/g, "");
+        }
+      })
     }
-
     if ($routeParams.page) {
-
       $scope.page = $routeParams.page;
-      console.log($scope.page);
     }
 
     $scope.labelPopover = {
@@ -48,31 +59,77 @@ angular.module('webappApp')
 
     User.whoami().then(function (data) {
       $scope.isMember = User.isMember(ORGANIZATION);
-
       if ($scope.isMember) {
         Organization.all("clients").getList().then(function (data) {
           $scope.clients = data.plain();
+          $scope.clients.forEach(function (a) {
+            if (a.name == $scope.matched['client']) {
+              $scope.issue.client = a;
+            }
+          })
         })
       }
     });
     Organization.all("scopes").getList().then(function (data) {
       $scope.scopes = data.plain();
+
+
+      $scope.scopes.forEach(function (s) {
+        if (s.name == $scope.matched['area']) {
+          $scope.issue.scope = s;
+        }
+      })
+
+
     })
     Organization.all("members").getList().then(function (data) {
       $scope.assignees = data.plain();
+
+      $scope.assignees.forEach(function (a) {
+        if (a.name == $scope.matched['assignee']) {
+          $scope.issue.assignee = a;
+        }
+      })
     })
     Organization.all("priorities").getList().then(function (data) {
       $scope.priorities = data.plain();
+      $scope.priorities.forEach(function (p) {
+        if (p.name == $scope.matched['priority']) {
+          $scope.issue.priority = p;
+        }
+      })
     })
     Organization.all("milestones").getList().then(function (data) {
       $scope.milestones = data.plain();
       $scope.versions = data.plain();
+
+      $scope.milestones.forEach(function (m) {
+        if (m.title == $scope.matched['milestone']) {
+          $scope.issue.milestone = m;
+        }
+        if (m.title == $scope.matched['version']) {
+          $scope.issue.version = m;
+        }
+      })
     })
     Organization.all("labels").getList().then(function (data) {
       $scope.labels = data.plain();
+      $scope.issue.labels = [];
+      $scope.labels.forEach(function (l) {
+        if ($scope.matched["label"] && $scope.matched["label"].indexOf(l.name) != -1) {
+          $scope.issue.labels.push(l);
+        }
+      })
+
     })
     Organization.all('repos').getList().then(function (data) {
       $scope.repositories = data.plain();
+
+      $scope.repositories.forEach(function (m) {
+        if (m.name == $scope.matched['repo']) {
+          $scope.issue.repository = m;
+        }
+      })
     })
     var addCondition = function (input, name, val) {
       input = input.trim()
@@ -113,11 +170,13 @@ angular.module('webappApp')
       }
     });
     $scope.$on("assignee:changed", function (e, assignee) {
+
+      if ($scope.issue.assignee) {
+        $scope.query = removeCondition($scope.query, "assignee", $scope.issue.assignee.name);
+      }
       if (assignee) {
-        if ($scope.issue.assignee) {
-          $scope.query = removeCondition($scope.query, "assignee", $scope.issue.assignee.name);
-        }
         $scope.query = addCondition($scope.query, "assignee", assignee.name);
+
         $scope.issue.assignee = assignee;
         $scope.search();
       }
@@ -264,7 +323,7 @@ angular.module('webappApp')
     });
   });
 angular.module('webappApp')
-  .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User, $timeout,$location) {
+  .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User, $timeout, $location) {
 
 
     $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
@@ -357,6 +416,9 @@ angular.module('webappApp')
       });
     }
     $scope.close = function () {
+      if ($scope.newComment && $scope.newComment.body) {
+        $scope.comment();
+      }
       Repo.one($scope.repo).all("issues").one(number).patch({state: "closed"}).then(function (data) {
         $scope.issue.state = "closed";
         refreshEvents();
@@ -471,6 +533,7 @@ angular.module('webappApp')
 
     $scope.title = $scope.title || 'Change target milestone';
     $scope.isMilestoneSelected = function (milestone) {
+      if (!milestone) return false;
       if ($scope.issue.milestone) {
         if (milestone.number) {
           return milestone.number == $scope.issue.milestone.number;
@@ -482,7 +545,10 @@ angular.module('webappApp')
       }
     }
     $scope.toggleMilestone = function (milestone) {
-      if (!$scope.isMilestoneSelected(milestone)) {
+      if (!milestone) {
+        $scope.$emit("milestone:changed", milestone);
+        $scope.$hide();
+      } else if (!$scope.isMilestoneSelected(milestone)) {
         $scope.$emit("milestone:changed", milestone);
         $scope.$hide();
       }
@@ -515,12 +581,15 @@ angular.module('webappApp')
 angular.module('webappApp')
   .controller('ChangeAssigneeCtrl', function ($scope) {
     $scope.title = $scope.title || 'Assign this issue';
-    $scope.isAssigneeSelected = function (assignee) {
 
+    $scope.isAssigneeSelected = function (assignee) {
       return ($scope.issue.assignee && assignee) ? assignee.name == $scope.issue.assignee.name : false;
     }
     $scope.toggleAssignee = function (assignee) {
-      if (!$scope.isAssigneeSelected(assignee)) {
+      if (!assignee) {
+        $scope.$emit("assignee:changed", assignee);
+        $scope.$hide();
+      } else if (!$scope.isAssigneeSelected(assignee)) {
         $scope.$emit("assignee:changed", assignee);
         $scope.$hide();
       }

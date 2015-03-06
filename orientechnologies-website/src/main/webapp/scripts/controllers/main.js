@@ -14,7 +14,6 @@ angular.module('webappApp')
     $scope.issue = {}
     User.whoami().then(function (data) {
       $scope.member = data;
-      $scope.issue.assignee = data;
       if (User.isMember(ORGANIZATION)) {
         $scope.query = 'is:open ' + 'assignee:' + $scope.member.name + " sort:priority-desc";
       } else if (User.isClient(ORGANIZATION)) {
@@ -26,19 +25,27 @@ angular.module('webappApp')
       Organization.all("members").getList().then(function (data) {
         $scope.assignees = data.plain();
       })
+      Organization.all("milestones").all('current').getList().then(function (data) {
+        $scope.milestones = data.plain().map(function (m) {
+          m.current = true;
+          return m;
+        });
+      })
       Organization.all('issues').customGET("", {q: $scope.query, page: $scope.page}).then(function (data) {
         $scope.issues = data.content;
       });
       function loadBoard() {
-        var assignee = $scope.issue.assignee ? $scope.issue.assignee.name : $scope.member.name;
-        $scope.queryBacklog = 'is:open assignee:' + assignee + " !label:\"In Progress\" sort:priority-desc sort:createdAt-desc";
+        var assignee = $scope.issue.assignee ? $scope.issue.assignee.name : "";
+        var assigneeFilter = assignee == "" ? "" : 'assignee:' + assignee;
+        var milestone = $scope.issue.milestone ? "milestone:\"" + $scope.issue.milestone.title + "\"" : "milestone:_current";
+        $scope.queryBacklog = 'is:open ' + assigneeFilter + " !label:\"In Progress\" " + milestone + " sort:priority-desc sort:createdAt-desc";
         Organization.all('board').all("issues").customGET("", {
           q: $scope.queryBacklog,
           page: $scope.page
         }).then(function (data) {
           $scope.backlogs = data.content;
         });
-        $scope.queryProgress = 'is:open assignee:' + assignee + " label:\"In Progress\" sort:priority-desc sort:createdAt-desc";
+        $scope.queryProgress = 'is:open assignee:' + assignee + " label:\"In Progress\" " + milestone + " sort:priority-desc sort:createdAt-desc";
         Organization.all('board').all("issues").customGET("", {
           q: $scope.queryProgress,
           page: $scope.page
@@ -47,14 +54,19 @@ angular.module('webappApp')
         });
       }
 
+      $scope.isMember = User.isMember(ORGANIZATION);
       if (User.isMember(ORGANIZATION)) {
         loadBoard();
       }
       $scope.$on("assignee:changed", function (e, assignee) {
-        if (assignee) {
-          $scope.issue.assignee = assignee;
-          loadBoard();
-        }
+
+        $scope.issue.assignee = assignee;
+        loadBoard();
+
+      });
+      $scope.$on("milestone:changed", function (e, m) {
+        $scope.issue.milestone = m;
+        loadBoard();
       });
     });
 

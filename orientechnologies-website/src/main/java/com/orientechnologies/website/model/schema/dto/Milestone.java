@@ -12,6 +12,7 @@ public class Milestone {
   private String  state;
   private String  title;
   private String  description;
+  private Boolean current;
   private OUser   creator;
   private Date    createdAt;
   private Date    updatedAt;
@@ -89,4 +90,12 @@ public class Milestone {
   }
 
   private Date dueOn;
+
+  public Boolean getCurrent() {
+    return current;
+  }
+
+  public void setCurrent(Boolean current) {
+    this.current = current;
+  }
 }

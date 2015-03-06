@@ -10,6 +10,13 @@
     </form>
     <hr class="milestone-popover-divider"/>
     <ul class="milestones-group">
+      <li class="milestone-item" ng-click="toggleMilestone(null)">
+        <div class="row">
+          <div class="col-md-12 text-center">
+            <i class="fa fa-remove"></i> Clear Milestone
+          </div>
+        </div>
+      </li>
       <li class="milestone-item" ng-click="toggleMilestone(milestone)"
           ng-class="{ 'milestone-selected' : isMilestoneSelected(milestone)  }"
           ng-repeat="milestone in milestones">

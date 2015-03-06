@@ -129,6 +129,21 @@ public class OrganizationController extends ExceptionController {
     return orgRepository.findMilestones(name);
   }
 
+  @RequestMapping(value = "{name}/milestones/current", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public List<Milestone> findCurrentMilestones(@PathVariable("name") String name) {
+    return orgRepository.findCurrentMilestones(name);
+  }
+
+  @RequestMapping(value = "{name}/milestones/{title:.+}", method = RequestMethod.PATCH)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity patchMilestone(@PathVariable("name") String name, @PathVariable("title") String title,
+      @RequestBody Milestone milestone) {
+
+    orgRepository.setCurrentMilestones(name, title, milestone.getCurrent());
+    return new ResponseEntity(HttpStatus.OK);
+  }
+
   @RequestMapping(value = "{name}/labels", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   public List<Label> findLabels(@PathVariable("name") String name) {

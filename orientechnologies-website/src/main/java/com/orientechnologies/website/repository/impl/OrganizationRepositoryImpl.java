@@ -23,6 +23,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -203,8 +204,13 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
       query = query + "'%s' not in out('HasLabel').name";
     }
     if ("milestone".equals(name)) {
+
       val = value;
-      query = query + " out('HasMilestone').title CONTAINS '%s'";
+      if (val.equals("_current")) {
+        query = query + " out('HasMilestone').current CONTAINS true";
+      } else {
+        query = query + " out('HasMilestone').title CONTAINS '%s'";
+      }
     }
     if ("version".equals(name)) {
       val = value;
@@ -644,6 +650,15 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     return users;
   }
 
+  @Transactional
+  @Override
+  public void setCurrentMilestones(String name, String title, Boolean current) {
+
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("update Milestone set current = %s where title = '%s'", current, title);
+    db.command(new OCommandSQL(query)).execute();
+  }
+
   @Override
   public List<Milestone> findMilestones(String name) {
     OrientGraph db = dbFactory.getGraph();
@@ -660,7 +675,22 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     }
     return milestones;
   }
+  @Override
+  public List<Milestone> findCurrentMilestones(String name) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String
+            .format(
+                    "select distinct(title) as title from (select  from (select expand(out('HasRepo').out('HasMilestone')) from Organization where name = '%s') where current = true)",
+                    name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
 
+    List<Milestone> milestones = new ArrayList<Milestone>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      milestones.add(OMilestone.TITLE.fromDoc(doc, db));
+    }
+    return milestones;
+  }
   @Override
   public List<Label> findLabels(String name) {
     OrientGraph db = dbFactory.getGraph();

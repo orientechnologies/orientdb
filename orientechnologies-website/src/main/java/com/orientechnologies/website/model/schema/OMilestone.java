@@ -48,6 +48,12 @@ public enum OMilestone implements OTypeHolder<Milestone> {
       return OType.DATETIME;
     }
   },
+  CURRENT("current") {
+    @Override
+    public OType getType() {
+      return OType.BOOLEAN;
+    }
+  },
   UPDATED_AT("updatedAt") {
     @Override
     public OType getType() {
@@ -86,6 +92,7 @@ public enum OMilestone implements OTypeHolder<Milestone> {
     milestone.setState((String) doc.field(STATE.toString()));
     milestone.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
     milestone.setDueOn((Date) doc.field(DUE_ON.toString()));
+    milestone.setCurrent((Boolean) doc.field(CURRENT.toString()));
     milestone.setCreator(OUser.NAME.fromDoc((ODocument) doc.field(CREATOR.toString()), graph));
     return milestone;
 
@@ -106,6 +113,7 @@ public enum OMilestone implements OTypeHolder<Milestone> {
     doc.field(NUMBER.toString(), entity.getNumber());
     doc.field(TITLE.toString(), entity.getTitle());
     doc.field(STATE.toString(), entity.getState());
+    doc.field(CURRENT.toString(), entity.getCurrent());
     doc.field(DESCRIPTION.toString(), entity.getDescription());
     doc.field(CREATED_AT.toString(), entity.getCreatedAt());
     doc.field(UPDATED_AT.toString(), entity.getUpdatedAt());

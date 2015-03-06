@@ -135,9 +135,26 @@ angular.module('webappApp')
     })
     Organization.all("repos").getList().then(function (data) {
       $scope.repositories = data.plain();
+      if ($scope.repositories.length > 0) {
+        $scope.selectedRepo = $scope.repositories[0];
+      }
     })
     Organization.all("scopes").getList().then(function (data) {
       $scope.areas = data.plain();
+    })
+
+    Organization.all("milestones").all('current').getList().then(function (data) {
+      var currents = data.plain();
+      Organization.all("milestones").getList().then(function (data) {
+        $scope.milestones = data.plain().map(function (m) {
+          currents.forEach(function (m1) {
+            if (m1.title == m.title) {
+              m.current = true;
+            }
+          })
+          return m;
+        });
+      })
     })
 
     $scope.addRepository = function () {
@@ -150,6 +167,11 @@ angular.module('webappApp')
       $scope.areaEditing = true;
       $scope.area = {}
       $scope.area.members = [];
+    }
+    $scope.saveMilestone = function (milestone) {
+      Organization.all("milestones").one(encodeURI(milestone.title)).patch({current: milestone.current}).then(function (data) {
+
+      })
     }
     $scope.cancelArea = function () {
       $scope.areaEditing = false;
