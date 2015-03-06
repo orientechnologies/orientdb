@@ -13,7 +13,6 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.util.MersenneTwisterFast;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageChanges;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
