@@ -212,8 +212,12 @@ public class OWALChangesTree {
     applyChanges(values, start, end, result);
   }
 
-  private int serializedSize(int content) {
-    return content + 4 * OIntegerSerializer.INT_SIZE; // start, end, version, content size + content
+  public int serializedSize() {
+    return serializedSize;
+  }
+
+  public int serializedSize(int content) {
+    return content + 3 * OIntegerSerializer.INT_SIZE; // start, version, content size + content
   }
 
   private void applyChanges(byte[] values, int start, int end, List<Node> result) {
@@ -282,6 +286,31 @@ public class OWALChangesTree {
     return serializedSize;
   }
 
+  public int fromStream(int offset, byte[] stream) {
+    serializedSize = OIntegerSerializer.INSTANCE.deserializeNative(stream, offset);
+    int readBytes = OIntegerSerializer.INT_SIZE;
+
+    while (readBytes < serializedSize) {
+      int start = OIntegerSerializer.INSTANCE.deserializeNative(stream, offset + readBytes);
+      readBytes += OIntegerSerializer.INT_SIZE;
+
+      int version = OIntegerSerializer.INSTANCE.deserializeNative(stream, offset + readBytes);
+      readBytes += OIntegerSerializer.INT_SIZE;
+
+      int length = OIntegerSerializer.INSTANCE.deserializeNative(stream, offset + readBytes);
+      readBytes += OIntegerSerializer.INT_SIZE;
+
+      byte[] data = new byte[length];
+      System.arraycopy(stream, offset + readBytes, data, 0, length);
+
+      readBytes += length;
+
+      add(data, start, version, false);
+    }
+
+    return offset + readBytes;
+  }
+
   public int toStream(int offset, byte[] stream) {
     OIntegerSerializer.INSTANCE.serializeNative(serializedSize, stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
@@ -298,14 +327,14 @@ public class OWALChangesTree {
     OIntegerSerializer.INSTANCE.serializeNative(node.start, stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
-    OIntegerSerializer.INSTANCE.serializeNative(node.end, stream, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
     OIntegerSerializer.INSTANCE.serializeNative(node.version, stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     OIntegerSerializer.INSTANCE.serializeNative(node.value.length, stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
+
+    System.arraycopy(node.value, 0, stream, offset, node.value.length);
+    offset += node.value.length;
 
     if (node.right != null)
       offset = toStream(node.right, offset, stream);

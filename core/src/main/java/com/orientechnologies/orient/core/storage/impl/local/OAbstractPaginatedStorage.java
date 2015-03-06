@@ -1444,51 +1444,51 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   private void undoOperation(List<OLogSequenceNumber> operationUnit) throws IOException {
-    for (int i = operationUnit.size() - 1; i >= 0; i--) {
-      OWALRecord record = writeAheadLog.read(operationUnit.get(i));
-      if (checkFirstAtomicUnitRecord(i, record)) {
-        assert ((OAtomicUnitStartRecord) record).isRollbackSupported();
-        continue;
-      }
-
-      if (checkLastAtomicUnitRecord(i, record, operationUnit.size())) {
-        assert ((OAtomicUnitEndRecord) record).isRollback();
-        continue;
-      }
-
-      if (record instanceof OUpdatePageRecord) {
-        OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) record;
-        final long fileId = updatePageRecord.getFileId();
-        final long pageIndex = updatePageRecord.getPageIndex();
-
-        if (!diskCache.isOpen(fileId))
-          diskCache.openFile(fileId);
-
-        OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
-        OCachePointer cachePointer = cacheEntry.getCachePointer();
-        cachePointer.acquireExclusiveLock();
-        try {
-          ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
-
-          OPageChanges pageChanges = updatePageRecord.getChanges();
-          durablePage.revertChanges(pageChanges);
-
-          durablePage.setLsn(updatePageRecord.getLsn());
-        } finally {
-          cachePointer.releaseExclusiveLock();
-          diskCache.release(cacheEntry);
-        }
-      } else if (record instanceof OFileCreatedCreatedWALRecord) {
-        final OFileCreatedCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedCreatedWALRecord) record;
-
-        diskCache.openFile(fileCreatedCreatedRecord.getFileName(), fileCreatedCreatedRecord.getFileId());
-        diskCache.deleteFile(fileCreatedCreatedRecord.getFileId());
-      } else {
-        OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
-            record.getClass());
-        assert false : "Invalid WAL record type was passed " + record.getClass().getName();
-      }
-    }
+    // for (int i = operationUnit.size() - 1; i >= 0; i--) {
+    // OWALRecord record = writeAheadLog.read(operationUnit.get(i));
+    // if (checkFirstAtomicUnitRecord(i, record)) {
+    // assert ((OAtomicUnitStartRecord) record).isRollbackSupported();
+    // continue;
+    // }
+    //
+    // if (checkLastAtomicUnitRecord(i, record, operationUnit.size())) {
+    // assert ((OAtomicUnitEndRecord) record).isRollback();
+    // continue;
+    // }
+    //
+    // if (record instanceof OUpdatePageRecord) {
+    // OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) record;
+    // final long fileId = updatePageRecord.getFileId();
+    // final long pageIndex = updatePageRecord.getPageIndex();
+    //
+    // if (!diskCache.isOpen(fileId))
+    // diskCache.openFile(fileId);
+    //
+    // OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
+    // OCachePointer cachePointer = cacheEntry.getCachePointer();
+    // cachePointer.acquireExclusiveLock();
+    // try {
+    // ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
+    //
+    // OPageChanges pageChanges = updatePageRecord.getChanges();
+    // durablePage.revertChanges(pageChanges);
+    //
+    // durablePage.setLsn(updatePageRecord.getLsn());
+    // } finally {
+    // cachePointer.releaseExclusiveLock();
+    // diskCache.release(cacheEntry);
+    // }
+    // } else if (record instanceof OFileCreatedCreatedWALRecord) {
+    // final OFileCreatedCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedCreatedWALRecord) record;
+    //
+    // diskCache.openFile(fileCreatedCreatedRecord.getFileName(), fileCreatedCreatedRecord.getFileId());
+    // diskCache.deleteFile(fileCreatedCreatedRecord.getFileId());
+    // } else {
+    // OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
+    // record.getClass());
+    // assert false : "Invalid WAL record type was passed " + record.getClass().getName();
+    // }
+    // }
   }
 
   private boolean checkFirstAtomicUnitRecord(int index, OWALRecord record) {
@@ -2488,7 +2488,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           final OCachePointer cachePointer = cacheEntry.getCachePointer();
           cachePointer.acquireExclusiveLock();
           try {
-            ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
+            ODurablePage durablePage = new ODurablePage(cacheEntry, null);
             durablePage.restoreChanges(updatePageRecord.getChanges());
             durablePage.setLsn(lsn);
 

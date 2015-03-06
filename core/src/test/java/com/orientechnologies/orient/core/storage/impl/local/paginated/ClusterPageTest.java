@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -31,7 +32,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
 
       int freeSpace = localPage.getFreeSpace();
       Assert.assertEquals(localPage.getRecordsCount(), 0);
@@ -62,7 +63,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
       int freeSpace = localPage.getFreeSpace();
 
       Assert.assertEquals(localPage.getRecordsCount(), 0);
@@ -109,7 +110,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -153,7 +154,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -188,7 +189,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -221,7 +222,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -259,7 +260,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -291,7 +292,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -322,7 +323,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -387,7 +388,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
 
       Map<Integer, Byte> positionCounter = new HashMap<Integer, Byte>();
       Set<Integer> deletedPositions = new HashSet<Integer>();
@@ -462,7 +463,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
 
       Map<Integer, Byte> positionCounter = new HashMap<Integer, Byte>();
       Set<Integer> deletedPositions = new HashSet<Integer>();
@@ -537,7 +538,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -596,7 +597,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     final MersenneTwisterFast mersenneTwister = new MersenneTwisterFast();
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
 
       Set<Integer> positions = new HashSet<Integer>();
 
@@ -663,7 +664,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     final MersenneTwisterFast mersenneTwister = new MersenneTwisterFast();
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
 
       Set<Integer> positions = new HashSet<Integer>();
 
@@ -726,7 +727,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
       localPage.setNextPage(1034);
       Assert.assertEquals(localPage.getNextPage(), 1034);
 
@@ -743,7 +744,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
       localPage.setPrevPage(1034);
       Assert.assertEquals(localPage.getPrevPage(), 1034);
 
@@ -760,7 +761,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
       Assert.assertEquals(localPage.getRecordsCount(), 0);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -796,7 +797,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
       Assert.assertEquals(localPage.getRecordsCount(), 0);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -832,7 +833,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
       Assert.assertEquals(localPage.getRecordsCount(), 0);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -868,7 +869,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
       Assert.assertEquals(localPage.getRecordsCount(), 0);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -904,7 +905,7 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
       Assert.assertEquals(localPage.getRecordsCount(), 0);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -939,18 +940,13 @@ public class ClusterPageTest {
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage restoredPage = new OClusterPage(cacheEntry, false, ODurablePage.TrackMode.FULL);
+      OClusterPage restoredPage = new OClusterPage(cacheEntry, false, new OWALChangesTree());
 
-      OPageChanges changes = localPage.getChangesTree();
-      restoredPage.restoreChanges(changes);
+      OWALChangesTree changesTree = localPage.getChangesTree();
+      restoredPage.restoreChanges(changesTree);
 
       Assert.assertEquals(restoredPagePointer.get(SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET),
           pagePointer.get(SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET));
-
-      restoredPage.revertChanges(changes);
-
-      Assert.assertEquals(restoredPagePointer.get(SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET),
-          new byte[OClusterPage.PAGE_SIZE - SYSTEM_OFFSET]);
     } finally {
       cachePointer.decrementReferrer();
     }

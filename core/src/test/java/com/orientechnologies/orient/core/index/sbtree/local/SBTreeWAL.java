@@ -137,7 +137,7 @@ public class SBTreeWAL extends SBTreeTest {
 
     when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", true, ".nbt", null);
+    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", true, ".nbt");
     sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, actualStorage, 1, false);
   }
 
@@ -173,7 +173,7 @@ public class SBTreeWAL extends SBTreeTest {
 
     when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", true, ".nbt", null);
+    expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", true, ".nbt");
     expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, expectedStorage, 1, false);
   }
 
@@ -317,7 +317,7 @@ public class SBTreeWAL extends SBTreeTest {
 
           cacheEntry.acquireExclusiveLock();
           try {
-            ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
+            ODurablePage durablePage = new ODurablePage(cacheEntry, null);
             durablePage.restoreChanges(updatePageRecord.getChanges());
             durablePage.setLsn(updatePageRecord.getLsn());
 

@@ -71,7 +71,7 @@ public class ODurablePage {
 
   protected static final int         NEXT_FREE_POSITION  = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
 
-  protected final OWALChangesTree    changesTree;
+  protected OWALChangesTree          changesTree;
 
   private final OCacheEntry          cacheEntry;
   private final ODirectMemoryPointer pagePointer;
@@ -82,6 +82,10 @@ public class ODurablePage {
     final OCachePointer cachePointer = cacheEntry.getCachePointer();
     this.pagePointer = cachePointer.getDataPointer();
 
+    this.changesTree = changesTree;
+  }
+
+  public void setChangesTree(OWALChangesTree changesTree) {
     this.changesTree = changesTree;
   }
 

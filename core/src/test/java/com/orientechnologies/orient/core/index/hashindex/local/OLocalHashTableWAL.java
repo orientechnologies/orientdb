@@ -102,7 +102,7 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", murmurHash3HashFunction, true, null);
+    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", murmurHash3HashFunction, true);
     localHashTable.create("actualLocalHashTable", OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance()
         .<String> getObjectSerializer(OType.STRING), null, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage(), true);
   }
@@ -271,7 +271,7 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
 
             cacheEntry.acquireExclusiveLock();
             try {
-              ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
+              ODurablePage durablePage = new ODurablePage(cacheEntry, null);
               durablePage.restoreChanges(updatePageRecord.getChanges());
               durablePage.setLsn(updatePageRecord.getLsn());
 
