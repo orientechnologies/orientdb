@@ -274,8 +274,6 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
               ODurablePage durablePage = new ODurablePage(cacheEntry, null);
               durablePage.restoreChanges(updatePageRecord.getChanges());
               durablePage.setLsn(updatePageRecord.getLsn());
-
-              cacheEntry.markDirty();
             } finally {
               cacheEntry.releaseExclusiveLock();
               expectedDiskCache.release(cacheEntry);

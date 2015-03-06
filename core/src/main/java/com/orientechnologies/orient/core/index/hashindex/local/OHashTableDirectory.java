@@ -108,7 +108,6 @@ public class OHashTableDirectory extends ODurableComponent {
         firstPage.setTreeSize(0);
         firstPage.setTombstone(-1);
 
-        firstEntry.markDirty();
       } finally {
         firstEntry.releaseExclusiveLock();
         diskCache.release(firstEntry);
@@ -255,7 +254,6 @@ public class OHashTableDirectory extends ODurableComponent {
             for (int i = 0; i < newNode.length; i++)
               page.setPointer(localLevel, i, newNode[i]);
 
-            cacheEntry.markDirty();
           } finally {
             cacheEntry.releaseExclusiveLock();
             diskCache.release(cacheEntry);
@@ -309,7 +307,6 @@ public class OHashTableDirectory extends ODurableComponent {
             page.setPointer(localNodeIndex, 0, firstPage.getTombstone());
             firstPage.setTombstone(nodeIndex);
 
-            cacheEntry.markDirty();
           } finally {
             cacheEntry.releaseExclusiveLock();
             diskCache.release(cacheEntry);
@@ -353,10 +350,6 @@ public class OHashTableDirectory extends ODurableComponent {
       final ODirectoryPage page = loadPage(nodeIndex, true);
       try {
         page.setMaxLeftChildDepth(getLocalNodeIndex(nodeIndex), maxLeftChildDepth);
-
-        OCacheEntry cacheEntry = page.getEntry();
-        cacheEntry.markDirty();
-
       } finally {
         releasePage(page, true);
       }
@@ -394,9 +387,6 @@ public class OHashTableDirectory extends ODurableComponent {
       final ODirectoryPage page = loadPage(nodeIndex, true);
       try {
         page.setMaxRightChildDepth(getLocalNodeIndex(nodeIndex), (byte) maxRightChildDepth);
-
-        OCacheEntry cacheEntry = page.getEntry();
-        cacheEntry.markDirty();
       } finally {
         releasePage(page, true);
       }
@@ -434,9 +424,6 @@ public class OHashTableDirectory extends ODurableComponent {
       final ODirectoryPage page = loadPage(nodeIndex, true);
       try {
         page.setNodeLocalDepth(getLocalNodeIndex(nodeIndex), localNodeDepth);
-
-        OCacheEntry cacheEntry = page.getEntry();
-        cacheEntry.markDirty();
       } finally {
         releasePage(page, true);
       }
@@ -482,9 +469,6 @@ public class OHashTableDirectory extends ODurableComponent {
         final int localNodeIndex = getLocalNodeIndex(nodeIndex);
         for (int i = 0; i < LEVEL_SIZE; i++)
           page.setPointer(localNodeIndex, i, node[i]);
-
-        OCacheEntry cacheEntry = page.getEntry();
-        cacheEntry.markDirty();
       } finally {
         releasePage(page, true);
       }
@@ -522,9 +506,6 @@ public class OHashTableDirectory extends ODurableComponent {
       final ODirectoryPage page = loadPage(nodeIndex, true);
       try {
         page.setPointer(getLocalNodeIndex(nodeIndex), index, pointer);
-
-        OCacheEntry cacheEntry = page.getEntry();
-        cacheEntry.markDirty();
       } finally {
         releasePage(page, true);
       }

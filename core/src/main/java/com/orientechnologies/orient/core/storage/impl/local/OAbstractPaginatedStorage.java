@@ -2514,8 +2514,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             ODurablePage durablePage = new ODurablePage(cacheEntry, null);
             durablePage.restoreChanges(updatePageRecord.getChanges());
             durablePage.setLsn(lsn);
-
-            cacheEntry.markDirty();
           } finally {
             cachePointer.releaseExclusiveLock();
             diskCache.release(cacheEntry);
