@@ -232,6 +232,12 @@ public class OSelectStatementTest {
     checkRightSyntax("SELECT @rid as rid, localName FROM Person WHERE ( 'milano' IN out('lives').localName OR 'roma' IN out('lives').localName ) ORDER BY age ASC");
   }
 
+  // issue #3718
+  public void testComplexTarget1(){
+    checkRightSyntax("SELECT $e FROM [#1:1,#1:2] LET $e = (SELECT FROM $current.prop1)");
+    checkRightSyntax("SELECT $e FROM [#1:1,#1:2] let $e = (SELECT FROM (SELECT FROM $parent.$current))");
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {

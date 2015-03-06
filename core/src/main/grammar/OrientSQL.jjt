@@ -1720,24 +1720,32 @@ OFromItem FromItem():
     (
     	lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	|
-    	(
+    	/*(
     	    <LBRACKET> lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	    (
     	        <COMMA> lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	    )* <RBRACKET>
     	)
-    	|
+    	|*/
     	jjtThis.cluster = Cluster()
     	|
     	jjtThis.index = IndexIdentifier()
     	|
         jjtThis.metadata = MetadataIdentifier()
     	|
-    	jjtThis.className = Identifier()
-    	|
+    	/*jjtThis.className = Identifier()
+    	|*/
     	<LPAREN> ( jjtThis.statement = SelectStatement() | jjtThis.statement = TraverseStatement() ) <RPAREN>
     	|
     	jjtThis.inputParam = InputParameter()
+    	|
+    	(
+            jjtThis.identifier = BaseIdentifier()
+            [
+                LOOKAHEAD( Modifier() )
+                jjtThis.modifier = Modifier()
+            ]
+        )
     )
     { return jjtThis; }
 }
