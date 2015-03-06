@@ -1053,6 +1053,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return false;
   }
 
+  protected void revertSubclassesProfiler(final OCommandContext iContext, int num) {
+    final OProfilerMBean profiler = Orient.instance().getProfiler();
+    if (profiler.isRecording()) {
+      profiler.updateCounter(profiler.getDatabaseMetric(getDatabase().getName(), "query.indexUseAttemptedAndReverted"),
+          "Reverted index usage in query", num);
+    }
+  }
+
   protected void revertProfiler(final OCommandContext iContext, final OIndex<?> index, final List<Object> keyParams,
       final OIndexDefinition indexDefinition) {
     if (iContext.isRecordingMetrics()) {
@@ -1480,16 +1488,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       uniqueResult.clear();
     }
 
-    for (OClass zz : subclasses) {
-      List<OIndexCursor> subcursors = getIndexCursors(zz);
+    int attempted = 0;
+    for (OClass subclass : subclasses) {
+      List<OIndexCursor> subcursors = getIndexCursors(subclass);
       fullySorted = fullySorted && fullySortedByIndex;
       if (subcursors == null || subcursors.size() == 0) {
+        if (attempted > 0) {
+          revertSubclassesProfiler(context, attempted);
+        }
         return false;
       }
       for (OIndexCursor c : subcursors) {
         if (!fullySortedByIndex) {
           // TODO sort every iterator
         }
+        attempted++;
         cursor.add(c);
       }
 

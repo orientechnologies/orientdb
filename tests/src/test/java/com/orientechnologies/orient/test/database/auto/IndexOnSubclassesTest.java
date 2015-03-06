@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -33,6 +35,22 @@ public class IndexOnSubclassesTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("create class IndexInSubclassesTestChild2 extends IndexInSubclassesTestBase")).execute();
     database.command(
         new OCommandSQL("create index IndexInSubclassesTestChild2.name on IndexInSubclassesTestChild2 (name) notunique")).execute();
+
+    database.command(new OCommandSQL("create class IndexInSubclassesTestBaseFail")).execute();
+    database.command(new OCommandSQL("create property IndexInSubclassesTestBaseFail.name string")).execute();
+
+    database.command(new OCommandSQL("create class IndexInSubclassesTestChild1Fail extends IndexInSubclassesTestBaseFail"))
+        .execute();
+    // database.command(
+    // new OCommandSQL("create index IndexInSubclassesTestChild1Fail.name on IndexInSubclassesTestChild1Fail (name) notunique"))
+    // .execute();
+
+    database.command(new OCommandSQL("create class IndexInSubclassesTestChild2Fail extends IndexInSubclassesTestBaseFail"))
+        .execute();
+    database.command(
+        new OCommandSQL("create index IndexInSubclassesTestChild2Fail.name on IndexInSubclassesTestChild2Fail (name) notunique"))
+        .execute();
+
   }
 
   @BeforeMethod
@@ -43,16 +61,97 @@ public class IndexOnSubclassesTest extends DocumentDBBaseTest {
     schema.reload();
     database.getStorage().reload();
 
-    schema.getClass("IndexInSubclassesTestBase").truncate();
-    schema.getClass("IndexInSubclassesTestChild1").truncate();
-    schema.getClass("IndexInSubclassesTestChild2").truncate();
+    database.command(new OCommandSQL("delete from IndexInSubclassesTestBase")).execute();
+    database.command(new OCommandSQL("delete from IndexInSubclassesTestChild1")).execute();
+    database.command(new OCommandSQL("delete from IndexInSubclassesTestChild2")).execute();
+
+    database.command(new OCommandSQL("delete from IndexInSubclassesTestBaseFail")).execute();
+    database.command(new OCommandSQL("delete from IndexInSubclassesTestChild1Fail")).execute();
+    database.command(new OCommandSQL("delete from IndexInSubclassesTestChild2Fail")).execute();
+
   }
 
   @Test
-  public void testIndexCrossReferencedDocuments() throws Exception {
+  public void testSubclassesIndexes() throws Exception {
     database.begin();
 
-    for (int i = 0; i < 100000; i++) {
+    OProfilerMBean profiler = Orient.instance().getProfiler();
+
+    long indexUsage = profiler.getCounter("db.demo.query.indexUsed");
+    long indexUsageReverted = profiler.getCounter("db.demo.query.indexUseAttemptedAndReverted");
+
+    if (indexUsage < 0) {
+      indexUsage = 0;
+    }
+
+    if (indexUsageReverted < 0) {
+      indexUsageReverted = 0;
+    }
+
+    profiler.startRecording();
+    for (int i = 0; i < 10000; i++) {
+
+      final ODocument doc1 = new ODocument("IndexInSubclassesTestChild1");
+      doc1.field("name", "name" + i);
+      doc1.save();
+
+      final ODocument doc2 = new ODocument("IndexInSubclassesTestChild2");
+      doc2.field("name", "name" + i);
+      doc2.save();
+      if (i % 100 == 0) {
+        database.commit();
+      }
+    }
+    database.commit();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
+        "select from IndexInSubclassesTestBase where name > 'name9995' and name < 'name9999' order by name ASC"));
+    Assert.assertEquals(result.size(), 6);
+    String lastName = result.get(0).field("name");
+
+    for (int i = 1; i < result.size(); i++) {
+      ODocument current = result.get(i);
+      String currentName = current.field("name");
+      Assert.assertTrue(lastName.compareTo(currentName) <= 0);
+      lastName = currentName;
+    }
+
+    Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), indexUsage + 2);
+    long reverted = profiler.getCounter("db.demo.query.indexUseAttemptedAndReverted");
+    Assert.assertEquals(reverted<0?0:reverted, indexUsageReverted);
+
+    result = database.query(new OSQLSynchQuery<ODocument>(
+        "select from IndexInSubclassesTestBase where name > 'name9995' and name < 'name9999' order by name DESC"));
+    Assert.assertEquals(result.size(), 6);
+    lastName = result.get(0).field("name");
+    for (int i = 1; i < result.size(); i++) {
+      ODocument current = result.get(i);
+      String currentName = current.field("name");
+      Assert.assertTrue(lastName.compareTo(currentName) >= 0);
+      lastName = currentName;
+    }
+    profiler.stopRecording();
+  }
+
+  @Test
+  public void testBaseWithoutIndexAndSubclassesIndexes() throws Exception {
+    database.begin();
+
+    OProfilerMBean profiler = Orient.instance().getProfiler();
+
+    long indexUsage = profiler.getCounter("db.demo.query.indexUsed");
+    long indexUsageReverted = profiler.getCounter("db.demo.query.indexUseAttemptedAndReverted");
+
+    if (indexUsage < 0) {
+      indexUsage = 0;
+    }
+
+    if (indexUsageReverted < 0) {
+      indexUsageReverted = 0;
+    }
+
+    profiler.startRecording();
+    for (int i = 0; i < 10000; i++) {
       final ODocument doc0 = new ODocument("IndexInSubclassesTestBase");
       doc0.field("name", "name" + i);
       doc0.save();
@@ -70,34 +169,85 @@ public class IndexOnSubclassesTest extends DocumentDBBaseTest {
     }
     database.commit();
 
-    long begin = System.currentTimeMillis();
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
-        "select from IndexInSubclassesTestBase where name > 'name99995' and name < 'name99999' order by name ASC"));
-    System.out.println("elapsed: " + (System.currentTimeMillis() - begin));
+        "select from IndexInSubclassesTestBase where name > 'name9995' and name < 'name9999' order by name ASC"));
     Assert.assertTrue(result.size() == 9);
     String lastName = result.get(0).field("name");
-    System.out.println(lastName);
     for (int i = 1; i < result.size(); i++) {
       ODocument current = result.get(i);
       String currentName = current.field("name");
       Assert.assertTrue(lastName.compareTo(currentName) <= 0);
       lastName = currentName;
-      System.out.println(currentName);
     }
 
-    begin = System.currentTimeMillis();
+    Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), indexUsage + 2);
+
+    long reverted = profiler.getCounter("db.demo.query.indexUseAttemptedAndReverted");
+    Assert.assertEquals(reverted < 0 ? 0 : reverted, indexUsageReverted);
+
     result = database.query(new OSQLSynchQuery<ODocument>(
-        "select from IndexInSubclassesTestBase where name > 'name99995' and name < 'name99999' order by name DESC"));
-    System.out.println("elapsed: " + (System.currentTimeMillis() - begin));
+        "select from IndexInSubclassesTestBase where name > 'name9995' and name < 'name9999' order by name DESC"));
     Assert.assertTrue(result.size() == 9);
     lastName = result.get(0).field("name");
-    System.out.println(lastName);
     for (int i = 1; i < result.size(); i++) {
       ODocument current = result.get(i);
       String currentName = current.field("name");
       Assert.assertTrue(lastName.compareTo(currentName) >= 0);
       lastName = currentName;
-      System.out.println(currentName);
     }
+    profiler.stopRecording();
   }
+
+  @Test
+  public void testSubclassesIndexesFailed() throws Exception {
+    database.begin();
+
+    OProfilerMBean profiler = Orient.instance().getProfiler();
+    profiler.startRecording();
+
+    for (int i = 0; i < 10000; i++) {
+
+      final ODocument doc1 = new ODocument("IndexInSubclassesTestChild1Fail");
+      doc1.field("name", "name" + i);
+      doc1.save();
+
+      final ODocument doc2 = new ODocument("IndexInSubclassesTestChild2Fail");
+      doc2.field("name", "name" + i);
+      doc2.save();
+      if (i % 100 == 0) {
+        database.commit();
+      }
+    }
+    database.commit();
+
+    long indexUsage = profiler.getCounter("db.demo.query.indexUsed");
+    long indexUsageReverted = profiler.getCounter("db.demo.query.indexUseAttemptedAndReverted");
+
+    if (indexUsage < 0) {
+      indexUsage = 0;
+    }
+
+    if (indexUsageReverted < 0) {
+      indexUsageReverted = 0;
+    }
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
+        "select from IndexInSubclassesTestBaseFail where name > 'name9995' and name < 'name9999' order by name ASC"));
+    Assert.assertTrue(result.size() == 6);
+
+    long lastIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
+    long lastIndexUsageReverted = profiler.getCounter("db.demo.query.indexUseAttemptedAndReverted");
+    if (lastIndexUsage < 0) {
+      lastIndexUsage = 0;
+    }
+
+    if (lastIndexUsageReverted < 0) {
+      lastIndexUsageReverted = 0;
+    }
+
+    Assert.assertEquals(lastIndexUsage - indexUsage, lastIndexUsageReverted - indexUsageReverted);
+
+    profiler.stopRecording();
+  }
+
 }
