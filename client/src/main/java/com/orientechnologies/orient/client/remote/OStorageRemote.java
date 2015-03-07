@@ -156,7 +156,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public String getServerURL() {
-    return OStorageRemoteThreadLocal.INSTANCE.get().serverURL;
+    final OStorageRemoteSession instance = OStorageRemoteThreadLocal.INSTANCE.get();
+    return instance != null ? instance.serverURL : null;
   }
 
   public byte[] getSessionToken() {
