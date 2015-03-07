@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (c) Orient Technologies LTD (http://www.orientechnologies.com)
 #
