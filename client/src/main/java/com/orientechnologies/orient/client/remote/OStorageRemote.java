@@ -124,12 +124,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private Map<String, Object>           connectionOptions;
   private OEngineRemote                 engine;
   private String                        recordFormat;
+  private int                           port                  = DEFAULT_PORT;
+  private int                           sslPort               = DEFAULT_SSL_PORT;
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
     this(iClientId, iURL, iMode, null);
   }
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode, STATUS status) throws IOException {
+    this(iClientId, iURL, iMode, status, DEFAULT_PORT, DEFAULT_SSL_PORT);
+  }
+
+  public OStorageRemote(final String iClientId, final String iURL, final String iMode, STATUS status, int port, int sslPort) throws IOException {
     super(iURL, iURL, iMode, 0); // NO TIMEOUT @SINCE 1.5
     if (status != null)
       this.status = status;
@@ -146,6 +152,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     asynchExecutor = Executors.newSingleThreadScheduledExecutor();
 
     engine = (OEngineRemote) Orient.instance().getEngine(OEngineRemote.NAME);
+    this.port = port;
+    this.sslPort = sslPort;
   }
 
   @Override
@@ -1784,7 +1792,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     // REGISTER THE REMOTE SERVER+PORT
     if (!host.contains(":"))
       host += ":"
-          + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
+          + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? sslPort : port);
 
     if (host.contains("/"))
       host = host.substring(0, host.indexOf("/"));
