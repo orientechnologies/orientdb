@@ -111,10 +111,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private int                           networkPoolCursor    = 0;
   private OCluster[]                    clusters             = OCommonConst.EMPTY_CLUSTER_ARRAY;
   private int                           defaultClusterId;
-  @Deprecated
-  private int                           minPool;
-  @Deprecated
-  private int                           maxPool;
   private ORemoteServerEventListener    asynchEventListener;
   private String                        connectionDbType;
 
