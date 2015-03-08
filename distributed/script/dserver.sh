@@ -2,4 +2,4 @@
 #
 # Copyright (c) Orient Technologies LTD (http://www.orientechnologies.com)
 #
-${0/%dserver.sh/server.sh} -Ddistributed=true $*
+exec ${0/%dserver.sh/server.sh} -Ddistributed=true $*

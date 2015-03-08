@@ -32,7 +32,7 @@ import java.util.Set;
 
 public class TTYConsoleReader implements OConsoleReader {
 
-  private static final String   HISTORY_FILE_NAME   = ".orientdb_history";
+  private static final String   HISTORY_FILE_NAME   = System.getenv("HOME").append("/.orientdb_history")  ;
   public static int             END_CHAR            = 70;
   public static int             BEGIN_CHAR          = 72;
   public static int             DEL_CHAR            = 126;
