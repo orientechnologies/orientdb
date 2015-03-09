@@ -228,17 +228,38 @@ public class OWOWCache {
       else
         fileClassic = files.get(fileId);
 
-      if (fileClassic == null) {
-        fileId = ++fileCounter;
-
-        fileClassic = createFile(fileName);
-
-        files.put(fileId, fileClassic);
-        nameIdMap.put(fileName, fileId);
-        writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
-      }
+      if (fileClassic == null)
+        throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
 
       openFile(fileClassic);
+
+      return fileId;
+
+    } finally {
+      filesLock.releaseWriteLock();
+    }
+  }
+
+  public long addFile(String fileName) throws IOException {
+    filesLock.acquireWriteLock();
+    try {
+      initNameIdMapping();
+
+      Long fileId = nameIdMap.get(fileName);
+      OFileClassic fileClassic;
+
+      if (fileId != null)
+        throw new OStorageException("File with name " + fileName + " already exists in storage " + storageLocal.getName());
+
+      fileId = ++fileCounter;
+
+      fileClassic = createFile(fileName);
+
+      files.put(fileId, fileClassic);
+      nameIdMap.put(fileName, fileId);
+      writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+
+      addFile(fileClassic);
 
       return fileId;
 
@@ -263,17 +284,48 @@ public class OWOWCache {
           throw new OStorageException("File with given name already exists but has different id " + existingFileId
               + " vs. proposed " + fileId);
       } else {
-        if (fileCounter < fileId)
-          fileCounter = fileId;
-
-        fileClassic = createFile(fileName);
-
-        files.put(fileId, fileClassic);
-        nameIdMap.put(fileName, fileId);
-        writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+        throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
       }
 
       openFile(fileClassic);
+    } finally {
+      filesLock.releaseWriteLock();
+    }
+  }
+
+  public void addFile(String fileName, long fileId) throws IOException {
+    filesLock.acquireWriteLock();
+    try {
+      initNameIdMapping();
+
+      OFileClassic fileClassic;
+
+      Long existingFileId = nameIdMap.get(fileName);
+
+      if (existingFileId != null) {
+        if (existingFileId == fileId)
+          throw new OStorageException("File with name " + fileName + " already exists in storage " + storageLocal.getName());
+        else
+          throw new OStorageException("File with given name already exists but has different id " + existingFileId
+              + " vs. proposed " + fileId);
+      }
+
+      fileClassic = files.get(fileId);
+
+      if (fileClassic != null)
+        throw new OStorageException("File with given id exists but has different name " + fileClassic.getName() + " vs. proposed "
+            + fileName);
+
+      if (fileCounter < fileId)
+        fileCounter = fileId;
+
+      fileClassic = createFile(fileName);
+
+      files.put(fileId, fileClassic);
+      nameIdMap.put(fileName, fileId);
+      writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+
+      addFile(fileClassic);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -772,10 +824,18 @@ public class OWOWCache {
       if (!fileClassic.isOpen())
         fileClassic.open();
     } else {
-      fileClassic.create(-1);
-      fileClassic.synch();
+      throw new OStorageException("File " + fileClassic + " does not exist.");
     }
 
+  }
+
+  private void addFile(OFileClassic fileClassic) throws IOException {
+    if (!fileClassic.exists()) {
+      fileClassic.create(-1);
+      fileClassic.synch();
+    } else {
+      throw new OStorageException("File " + fileClassic + " already exists.");
+    }
   }
 
   private void initNameIdMapping() throws IOException {

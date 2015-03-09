@@ -108,7 +108,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       this.keySerializer = keySerializer;
       this.valueSerializer = valueSerializer;
 
-      this.fileId = diskCache.openFile(name + dataFileExtension);
+      this.fileId = diskCache.addFile(name + dataFileExtension);
       this.name = name;
 
       initAfterCreate();

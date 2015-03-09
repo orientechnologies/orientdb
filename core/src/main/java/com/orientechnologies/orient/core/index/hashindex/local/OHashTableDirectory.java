@@ -75,7 +75,7 @@ public class OHashTableDirectory extends ODurableComponent {
     startAtomicOperation();
     acquireExclusiveLock();
     try {
-      fileId = diskCache.openFile(name + defaultExtension);
+      fileId = diskCache.addFile(name + defaultExtension);
       logFileCreation(name + defaultExtension, fileId);
       init();
       endAtomicOperation(false);

@@ -137,6 +137,18 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
+  public long addFile(String fileName) throws IOException {
+    cacheLock.acquireWriteLock();
+    try {
+      long fileId = writeCache.addFile(fileName);
+      filePages.put(fileId, Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>()));
+      return fileId;
+    } finally {
+      cacheLock.releaseWriteLock();
+    }
+  }
+
+  @Override
   public long openFile(final String fileName) throws IOException {
     cacheLock.acquireWriteLock();
     try {
@@ -187,6 +199,17 @@ public class OReadWriteDiskCache implements ODiskCache {
             + fileId);
 
       writeCache.openFile(fileName, fileId);
+      filePages.put(fileId, Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>()));
+    } finally {
+      cacheLock.releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void addFile(String fileName, long fileId) throws IOException {
+    cacheLock.acquireWriteLock();
+    try {
+      writeCache.addFile(fileName, fileId);
       filePages.put(fileId, Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>()));
     } finally {
       cacheLock.releaseWriteLock();

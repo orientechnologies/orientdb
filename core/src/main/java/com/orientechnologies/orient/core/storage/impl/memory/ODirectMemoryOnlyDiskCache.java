@@ -59,7 +59,7 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   }
 
   @Override
-  public long openFile(String fileName) throws IOException {
+  public long addFile(String fileName) throws IOException {
     metadataLock.lock();
     try {
       Long fileId = fileNameIdMap.get(fileName);
@@ -73,6 +73,24 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
         fileId = id;
 
         fileIdNameMap.put(fileId, fileName);
+      } else {
+        throw new OStorageException(fileName + " already exists.");
+      }
+
+      return fileId;
+    } finally {
+      metadataLock.unlock();
+    }
+  }
+
+  @Override
+  public long openFile(String fileName) throws IOException {
+    metadataLock.lock();
+    try {
+      Long fileId = fileNameIdMap.get(fileName);
+
+      if (fileId == null) {
+        throw new OStorageException("File " + fileName + " does not exist.");
       }
 
       return fileId;
@@ -90,6 +108,11 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
 
   @Override
   public void openFile(String fileName, long fileId) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void addFile(String fileName, long fileId) throws IOException {
     throw new UnsupportedOperationException();
   }
 

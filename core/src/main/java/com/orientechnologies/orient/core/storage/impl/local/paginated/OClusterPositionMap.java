@@ -78,7 +78,7 @@ public class OClusterPositionMap extends ODurableComponent {
   public void create() throws IOException {
     acquireExclusiveLock();
     try {
-      fileId = diskCache.openFile(name + DEF_EXTENSION);
+      fileId = diskCache.addFile(name + DEF_EXTENSION);
     } finally {
       releaseExclusiveLock();
     }

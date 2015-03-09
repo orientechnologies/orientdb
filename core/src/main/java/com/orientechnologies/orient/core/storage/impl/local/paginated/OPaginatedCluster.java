@@ -157,7 +157,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       acquireExclusiveLock();
       try {
-        fileId = diskCache.openFile(name + DEF_EXTENSION);
+        fileId = diskCache.addFile(name + DEF_EXTENSION);
 
         startAtomicOperation();
 
