@@ -180,6 +180,8 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
   $scope.classClickedHeaders = ['Name', 'Type', 'Linked_Type', 'Linked_Class', 'Mandatory', 'Read_Only', 'Not_Null', 'Min', 'Max', 'Collate', 'Actions'];
   $scope.property = null;
   $scope.property = Database.listPropertiesForClass(clazz);
+
+  $scope.clonedProperty = angular.copy($scope.property);
   $scope.propertyNames = new Array;
 
   for (inn in $scope.property) {
@@ -343,6 +345,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
           if (val == 'Case Insensitive')
             val = 'ci';
 
+
           var idx = result;
           PropertyAlterApi.changeProperty($routeParams.database, {
             clazz: $scope.class2show,
@@ -357,7 +360,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
             }).s;
             Notification.push({content: noti});
           }, function (data) {
-            $scope.property[idx][v] = "STRING";
+            $scope.property[idx][v] = $scope.clonedProperty[idx][v];
             Notification.push({content: data, error: true});
           });
         });
@@ -509,6 +512,7 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
   $scope.nameIndexToShow = $scope.classInject + '.';
   $scope.db.refreshMetadata($routeParams.database);
   $scope.property = Database.listPropertiesForClass($scope.classInject);
+
 
   $scope.propertyNames = new Array;
 
