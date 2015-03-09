@@ -250,9 +250,11 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         $scope.context = $scope.items[0];
         $scope.nContext = $scope.items[1];
         Notification.clear();
-        warnings.forEach(function (w) {
-          Notification.push({content: w, autoHide: true, warning: true});
-        });
+        if (warnings) {
+          warnings.forEach(function (w) {
+            Notification.push({content: w, autoHide: true, warning: true});
+          });
+        }
       } else {
         Spinner.stopSpinner();
         Notification.push({content: "The command has been executed", autoHide: true});

@@ -571,7 +571,6 @@ var OrientGraph = (function () {
           var r = bindRadius(v);
           r = parseInt(r);
           var newR = r + ((r * 20) / 100);
-          console.log(newR)
           d3.select(v.elem).selectAll('circle').attr('r', newR)
         }
 
