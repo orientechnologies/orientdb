@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -128,6 +129,8 @@ public class OHashTableDirectory extends ODurableComponent {
   public void open() throws IOException {
     acquireExclusiveLock();
     try {
+      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+
       fileId = diskCache.openFile(name + defaultExtension);
       firstEntry = diskCache.load(fileId, 0, true);
 
@@ -136,7 +139,7 @@ public class OHashTableDirectory extends ODurableComponent {
       diskCache.pinPage(firstEntry);
       diskCache.release(firstEntry);
 
-      final int filledUpTo = (int) diskCache.getFilledUpTo(fileId);
+      final int filledUpTo = (int) getFilledUpTo(atomicOperation, diskCache, fileId);
 
       entries = new ArrayList<OCacheEntry>(filledUpTo - 1);
 

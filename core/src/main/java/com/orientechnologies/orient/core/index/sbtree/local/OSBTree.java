@@ -199,7 +199,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           diskCache.release(keyBucketCacheEntry);
         }
       } else {
-        if (diskCache.getFilledUpTo(nullBucketFileId) == 0)
+        if (getFilledUpTo(atomicOperation, diskCache, nullBucketFileId) == 0)
           return null;
 
         final OCacheEntry nullBucketCacheEntry = diskCache.load(nullBucketFileId, 0, false);
@@ -311,13 +311,13 @@ public class OSBTree<K, V> extends ODurableComponent {
         OCacheEntry cacheEntry;
         boolean isNew = false;
 
-        if (diskCache.getFilledUpTo(nullBucketFileId) == 0) {
+        OAtomicOperation atomicOperation = startAtomicOperation();
+        if (getFilledUpTo(atomicOperation, diskCache, nullBucketFileId) == 0) {
           cacheEntry = diskCache.allocateNewPage(nullBucketFileId);
           isNew = true;
         } else
           cacheEntry = diskCache.load(nullBucketFileId, 0, false);
 
-        OAtomicOperation atomicOperation = startAtomicOperation();
         try {
           final int valueSize = valueSerializer.getObjectSize(value);
           final boolean createLinkToTheValue = valueSize > MAX_EMBEDDED_VALUE_SIZE;
@@ -546,10 +546,11 @@ public class OSBTree<K, V> extends ODurableComponent {
           diskCache.release(keyBucketCacheEntry);
         }
       } else {
-        if (diskCache.getFilledUpTo(nullBucketFileId) == 0)
+        OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+        if (getFilledUpTo(atomicOperation, diskCache, nullBucketFileId) == 0)
           return null;
 
-        OAtomicOperation atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation();
         try {
           V removedValue = null;
 
@@ -1671,7 +1672,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           if (pageIndex == -1)
             break;
 
-          if (pageIndex >= diskCache.getFilledUpTo(fileId)) {
+          if (pageIndex >= getFilledUpTo(atomicOperation, diskCache, fileId)) {
             pageIndex = -1;
             break;
           }
@@ -1757,7 +1758,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           if (pageIndex == -1)
             break;
 
-          if (pageIndex >= diskCache.getFilledUpTo(fileId)) {
+          if (pageIndex >= getFilledUpTo(atomicOperation, diskCache, fileId)) {
             pageIndex = -1;
             break;
           }
@@ -1849,8 +1850,8 @@ public class OSBTree<K, V> extends ODurableComponent {
         OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
         while (dataCache.size() < prefetchSize) {
-          if (pageIndex >= diskCache.getFilledUpTo(fileId))
-            pageIndex = diskCache.getFilledUpTo(fileId) - 1;
+          if (pageIndex >= getFilledUpTo(atomicOperation, diskCache, fileId))
+            pageIndex = getFilledUpTo(atomicOperation, diskCache, fileId) - 1;
 
           if (pageIndex == -1)
             break;

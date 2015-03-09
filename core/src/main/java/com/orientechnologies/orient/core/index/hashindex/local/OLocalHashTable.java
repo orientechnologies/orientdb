@@ -342,7 +342,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
       checkNullSupport(key);
       if (key == null) {
-        if (diskCache.getFilledUpTo(nullBucketFileId) == 0)
+        if (getFilledUpTo(atomicOperation, diskCache, nullBucketFileId) == 0)
           return null;
 
         V result = null;
@@ -473,7 +473,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         endAtomicOperation(false);
         return removed;
       } else {
-        if (diskCache.getFilledUpTo(nullBucketFileId) == 0)
+        if (getFilledUpTo(atomicOperation, diskCache, nullBucketFileId) == 0)
           return null;
 
         V removed = null;
@@ -1480,7 +1480,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     if (key == null) {
       boolean isNew;
       OCacheEntry cacheEntry;
-      if (diskCache.getFilledUpTo(nullBucketFileId) == 0) {
+      if (getFilledUpTo(atomicOperation, diskCache, nullBucketFileId) == 0) {
         cacheEntry = diskCache.allocateNewPage(nullBucketFileId);
         isNew = true;
       } else {
@@ -1941,7 +1941,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           diskCache.release(tombstoneCacheEntry);
         }
       } else
-        updatedBucketIndex = diskCache.getFilledUpTo(metadataPage.getFileId(newFileLevel));
+        updatedBucketIndex = getFilledUpTo(atomicOperation, diskCache, metadataPage.getFileId(newFileLevel));
 
       final long newBucketIndex = updatedBucketIndex + 1;
 

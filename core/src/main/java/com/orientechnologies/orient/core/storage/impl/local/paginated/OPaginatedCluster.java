@@ -515,7 +515,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       int recordPosition = positionEntry.getRecordPosition();
       long pageIndex = positionEntry.getPageIndex();
 
-      if (diskCache.getFilledUpTo(fileId) <= pageIndex)
+      if (getFilledUpTo(atomicOperation, diskCache, fileId) <= pageIndex)
         return null;
 
       ORecordVersion recordVersion = null;
@@ -574,12 +574,14 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         long pageIndex = positionEntry.getPageIndex();
         int recordPosition = positionEntry.getRecordPosition();
 
-        if (diskCache.getFilledUpTo(fileId) <= pageIndex)
+        OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+        if (getFilledUpTo(atomicOperation, diskCache, fileId) <= pageIndex)
           return false;
 
         long nextPagePointer = -1;
         int removedContentSize = 0;
-        OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+
+        atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
         do {
           final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
           cacheEntry.acquireExclusiveLock();
@@ -649,7 +651,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         long pageIndex = positionEntry.getPageIndex();
 
-        if (diskCache.getFilledUpTo(fileId) <= pageIndex)
+        OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+        if (getFilledUpTo(atomicOperation, diskCache, fileId) <= pageIndex)
           return false;
 
         startAtomicOperation();
@@ -923,7 +926,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       long pageIndex = positionEntry.getPageIndex();
       int recordPosition = positionEntry.getRecordPosition();
 
-      long pagesCount = diskCache.getFilledUpTo(fileId);
+      long pagesCount = getFilledUpTo(atomicOperation, diskCache, fileId);
       if (pageIndex >= pagesCount)
         return null;
 
@@ -1245,13 +1248,14 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   private byte[] readFullEntry(long clusterPosition, long pageIndex, int recordPosition) throws IOException {
-    if (diskCache.getFilledUpTo(fileId) <= pageIndex)
+    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+
+    if (getFilledUpTo(atomicOperation, diskCache, fileId) <= pageIndex)
       return null;
 
     final List<byte[]> recordChunks = new ArrayList<byte[]>();
     int contentSize = 0;
 
-    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
     long nextPagePointer = -1;
     boolean firstEntry = true;
     do {
@@ -1361,7 +1365,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         } while (pageIndex < 0 && freePageIndex < FREE_LIST_SIZE);
 
         if (pageIndex < 0)
-          pageIndex = diskCache.getFilledUpTo(fileId);
+          pageIndex = getFilledUpTo(atomicOperation, diskCache, fileId);
         else
           freePageIndex--;
 
