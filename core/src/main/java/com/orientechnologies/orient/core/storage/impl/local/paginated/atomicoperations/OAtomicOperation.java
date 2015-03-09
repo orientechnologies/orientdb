@@ -19,10 +19,13 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 
+import java.io.IOError;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -34,14 +37,14 @@ import java.util.concurrent.locks.Lock;
  * @since 12/3/13
  */
 public class OAtomicOperation {
-  private final OLogSequenceNumber              startLSN;
-  private final OOperationUnitId                operationUnitId;
+  private final OLogSequenceNumber        startLSN;
+  private final OOperationUnitId          operationUnitId;
 
-  private int                                   startCounter;
-  private boolean                               rollback;
+  private int                             startCounter;
+  private boolean                         rollback;
 
-  private Set<Object>                           lockedObjects   = new HashSet<Object>();
-  private Map<Long, Map<Long, OWALChangesTree>> filePageChanges = new HashMap<Long, Map<Long, OWALChangesTree>>();
+  private Set<Object>                     lockedObjects   = new HashSet<Object>();
+  private Map<Long, FileChangesContainer> filePageChanges = new HashMap<Long, FileChangesContainer>();
 
   public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId) {
     this.startLSN = startLSN;
@@ -58,20 +61,30 @@ public class OAtomicOperation {
   }
 
   public OWALChangesTree getChangesTree(long fileId, long pageIndex) {
-    Map<Long, OWALChangesTree> pageChanges = filePageChanges.get(fileId);
+    FileChangesContainer changesContainer = filePageChanges.get(fileId);
 
-    if (pageChanges == null) {
-      pageChanges = new HashMap<Long, OWALChangesTree>();
-      filePageChanges.put(fileId, pageChanges);
+    if (changesContainer == null) {
+      changesContainer = new FileChangesContainer();
+      filePageChanges.put(fileId, changesContainer);
     }
 
-    OWALChangesTree changesTree = pageChanges.get(pageIndex);
+    changesContainer.maxIndex = Math.max(changesContainer.maxIndex, pageIndex);
+
+    OWALChangesTree changesTree = changesContainer.changesTreeMap.get(pageIndex);
     if (changesTree == null) {
       changesTree = new OWALChangesTree();
-      pageChanges.put(pageIndex, changesTree);
+      changesContainer.changesTreeMap.put(pageIndex, changesTree);
     }
 
     return changesTree;
+  }
+
+  public long filledUpTo(long fileId, ODiskCache diskCache) throws IOException {
+    final FileChangesContainer changesContainer = filePageChanges.get(fileId);
+    if (changesContainer == null)
+      return diskCache.getFilledUpTo(fileId);
+
+    return Math.max(changesContainer.maxIndex + 1, diskCache.getFilledUpTo(fileId));
   }
 
   void incrementCounter() {
@@ -121,5 +134,10 @@ public class OAtomicOperation {
   @Override
   public int hashCode() {
     return operationUnitId.hashCode();
+  }
+
+  private static class FileChangesContainer {
+    private Map<Long, OWALChangesTree> changesTreeMap = new HashMap<Long, OWALChangesTree>();
+    private long                       maxIndex       = -1;
   }
 }

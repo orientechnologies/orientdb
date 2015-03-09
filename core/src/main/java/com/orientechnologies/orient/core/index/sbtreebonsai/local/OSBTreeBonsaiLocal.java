@@ -1243,7 +1243,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       final OSysBucket sysBucket = new OSysBucket(sysCacheEntry, getChangesTree(atomicOperation, sysCacheEntry));
       if ((1.0 * sysBucket.freeListLength())
-          / (diskCache.getFilledUpTo(fileId) * PAGE_SIZE / OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES) >= freeSpaceReuseTrigger) {
+          / (getFilledUpTo(atomicOperation, diskCache, fileId) * PAGE_SIZE / OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES) >= freeSpaceReuseTrigger) {
         final AllocationResult allocationResult = reuseBucketFromFreeList(sysBucket);
         return allocationResult;
       } else {

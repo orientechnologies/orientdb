@@ -133,14 +133,16 @@ public class OClusterPositionMap extends ODurableComponent {
   public long add(long pageIndex, int recordPosition) throws IOException {
     acquireExclusiveLock();
     try {
-      long lastPage = diskCache.getFilledUpTo(fileId) - 1;
+      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+
+      long lastPage = getFilledUpTo(atomicOperation, diskCache, fileId) - 1;
       OCacheEntry cacheEntry = diskCache.load(fileId, lastPage, false);
       if (cacheEntry == null)
         cacheEntry = diskCache.allocateNewPage(fileId);
 
       cacheEntry.acquireExclusiveLock();
       try {
-        OAtomicOperation atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation();
 
         OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, getChangesTree(atomicOperation, cacheEntry));
         if (bucket.isFull()) {
@@ -178,7 +180,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
       final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
-      if (pageIndex >= diskCache.getFilledUpTo(fileId))
+      if (pageIndex >= getFilledUpTo(atomicOperation, diskCache, fileId))
         return null;
 
       final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
@@ -247,9 +249,9 @@ public class OClusterPositionMap extends ODurableComponent {
       long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
       int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
-      final long filledUpTo = diskCache.getFilledUpTo(fileId);
-
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      final long filledUpTo = getFilledUpTo(atomicOperation, diskCache, fileId);
+
       if (pageIndex >= filledUpTo)
         return new long[0];
 
@@ -318,7 +320,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
-      final long filledUpTo = diskCache.getFilledUpTo(fileId);
+      final long filledUpTo = getFilledUpTo(atomicOperation, diskCache, fileId);
       long[] result;
 
       if (pageIndex >= filledUpTo) {
@@ -368,7 +370,7 @@ public class OClusterPositionMap extends ODurableComponent {
     acquireSharedLock();
     try {
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-      final long filledUpTo = diskCache.getFilledUpTo(fileId);
+      final long filledUpTo = getFilledUpTo(atomicOperation, diskCache, fileId);
       for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
         OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
         try {
@@ -394,7 +396,8 @@ public class OClusterPositionMap extends ODurableComponent {
     acquireSharedLock();
     try {
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-      final long filledUpTo = diskCache.getFilledUpTo(fileId);
+      final long filledUpTo = getFilledUpTo(atomicOperation, diskCache, fileId);
+
       for (long pageIndex = filledUpTo - 1; pageIndex >= 0; pageIndex--) {
         OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
         try {

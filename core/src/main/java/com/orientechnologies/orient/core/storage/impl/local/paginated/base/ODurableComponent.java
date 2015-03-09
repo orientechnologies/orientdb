@@ -24,6 +24,7 @@ import java.io.IOException;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -140,5 +141,12 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
       return null;
 
     return atomicOperation.getChangesTree(entry.getFileId(), entry.getPageIndex());
+  }
+
+  protected static long getFilledUpTo(OAtomicOperation atomicOperation, ODiskCache diskCache, long fileId) throws IOException {
+    if (atomicOperation == null)
+      return diskCache.getFilledUpTo(fileId);
+
+    return atomicOperation.filledUpTo(fileId, diskCache);
   }
 }
