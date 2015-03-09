@@ -70,6 +70,9 @@ class OrientElementIterator<T extends Element> implements Iterator<T> {
         throw new IllegalArgumentException(
             "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
 
+      if (graph == null)
+        throw new IllegalArgumentException( "The element has been detached, the graph element cannot be retrieved. Reattach the element to a Graph instance");
+
       if (ODocumentInternal.getImmutableSchemaClass(currentDocument).isSubClassOf(graph.getEdgeBaseType()))
         currentElement = new OrientEdge(graph, currentDocument);
       else
