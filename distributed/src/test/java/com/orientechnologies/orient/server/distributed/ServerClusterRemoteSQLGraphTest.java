@@ -34,7 +34,7 @@ public class ServerClusterRemoteSQLGraphTest extends AbstractServerClusterSQLGra
 
   @Override
   public String getDatabaseName() {
-    return "distributed-graph";
+    return "sql-distributed-graph";
   }
 
   protected String getDatabaseURL(final ServerRun server) {
