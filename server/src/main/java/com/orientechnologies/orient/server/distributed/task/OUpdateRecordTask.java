@@ -75,7 +75,13 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     if (loadedRecord instanceof ODocument) {
       // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
       final ODocument newDocument = new ODocument().fromStream(content);
-      ((ODocument) loadedRecord).merge(newDocument, false, false).getRecordVersion().copyFrom(version);
+
+      ODocument loadedDocument = (ODocument) loadedRecord;
+      ORecordVersion loadedRecordVersion = loadedDocument.merge(newDocument, false, false).getRecordVersion();
+      if (loadedRecordVersion.getCounter() != version.getCounter()) {
+        loadedDocument.setDirty();
+      }
+      loadedRecordVersion.copyFrom(version);
     } else
       ORecordInternal.fill(loadedRecord, rid, version, content, true);
 
