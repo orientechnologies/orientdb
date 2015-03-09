@@ -63,6 +63,10 @@ import java.io.IOException;
  * @since 14.03.13
  */
 public interface ODiskCache {
+  long addFile(String fileName) throws IOException;
+
+  void addFile(String fileName, long fileId) throws IOException;
+
   long openFile(String fileName) throws IOException;
 
   void openFile(long fileId) throws IOException;

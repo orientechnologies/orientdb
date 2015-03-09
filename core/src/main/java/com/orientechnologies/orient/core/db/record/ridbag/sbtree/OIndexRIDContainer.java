@@ -29,6 +29,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
@@ -49,6 +50,9 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
                                                       .getValueAsInteger();
   private final boolean      durableNonTxMode;
 
+  /**
+   * Should be called inside of lock to ensure uniqueness of entity on disk !!!
+   */
   public OIndexRIDContainer(String name, boolean durableNonTxMode) {
     fileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);
     underlying = new HashSet<OIdentifiable>();
@@ -73,9 +77,13 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying();
     try {
-      return storage.getDiskCache().openFile(fileName);
+      ODiskCache diskCache = storage.getDiskCache();
+      if (diskCache.exists(fileName))
+        return diskCache.openFile(fileName);
+
+      return diskCache.addFile(fileName);
     } catch (IOException e) {
-      throw new OSBTreeException("Error creation of sbtree with name" + fileName, e);
+      throw new OSBTreeException("Error creation of sbtree with name " + fileName, e);
     }
   }
 

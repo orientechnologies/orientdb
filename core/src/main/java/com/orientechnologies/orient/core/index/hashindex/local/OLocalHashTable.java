@@ -170,7 +170,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
       OAtomicOperation atomicOperation = startAtomicOperation();
       try {
-        fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
+        fileStateId = diskCache.addFile(name + metadataConfigurationFileExtension);
         logFileCreation(name + metadataConfigurationFileExtension, fileStateId);
 
         directory.create();
@@ -195,7 +195,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         initHashTreeState();
 
         if (nullKeyIsSupported) {
-          nullBucketFileId = diskCache.openFile(name + nullBucketFileExtension);
+          nullBucketFileId = diskCache.addFile(name + nullBucketFileExtension);
           logFileCreation(name + nullBucketFileExtension, nullBucketFileId);
         }
 
@@ -326,7 +326,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
   private void createFileMetadata(int fileLevel, OHashIndexFileLevelMetadataPage page) throws IOException {
     final String fileName = name + fileLevel + bucketFileExtension;
-    final long fileId = diskCache.openFile(fileName);
+    final long fileId = diskCache.addFile(fileName);
 
     logFileCreation(fileName, fileId);
 

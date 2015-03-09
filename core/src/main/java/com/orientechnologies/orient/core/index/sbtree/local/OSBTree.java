@@ -129,10 +129,10 @@ public class OSBTree<K, V> extends ODurableComponent {
       this.valueSerializer = valueSerializer;
       this.nullPointerSupport = nullPointerSupport;
 
-      fileId = diskCache.openFile(name + dataFileExtension);
+      fileId = diskCache.addFile(name + dataFileExtension);
 
       if (nullPointerSupport)
-        nullBucketFileId = diskCache.openFile(name + nullFileExtension);
+        nullBucketFileId = diskCache.addFile(name + nullFileExtension);
 
       initDurableComponent(storageLocal);
 
