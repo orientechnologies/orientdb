@@ -70,6 +70,9 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
 
             OrientEdge knows = createEdge(graph, person1, person2);
 
+            Assert.assertEquals( knows.getOutVertex(), person1.getIdentity() );
+            Assert.assertEquals( knows.getInVertex(), person2.getIdentity() );
+
             graph.commit();
 
             updateVertex(graph, person1);
