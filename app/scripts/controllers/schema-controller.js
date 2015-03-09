@@ -442,7 +442,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
               // ($scope.property[entry])
               var index = $scope.property.indexOf($scope.property[entry])
               $scope.property.splice(index, 1)
-              Notification.push({content: "Property '" + elementName + "' succesfully dropped."})
+              Notification.push({content: "Property '" + elementName + "' successfully dropped."})
             }
           }
         });
