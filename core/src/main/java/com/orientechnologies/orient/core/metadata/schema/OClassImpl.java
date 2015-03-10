@@ -66,6 +66,10 @@ import java.util.*;
 public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private static final long serialVersionUID        = 1L;
   private static final int  NOT_EXISTENT_CLUSTER_ID = -1;
+  public static final Set<String> RESERVED_KEYWORDS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+    new String[] { "increment" }
+  )));
+
   final OSchemaShared owner;
   private final Map<String, OProperty> properties       = new HashMap<String, OProperty>();
   private       int                    defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
@@ -1975,6 +1979,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     if (getDatabase().getTransaction().isActive())
       throw new OSchemaException("Cannot create property '" + propertyName + "' inside a transaction");
+
+    if (RESERVED_KEYWORDS.contains(propertyName.trim().toLowerCase())) {
+      throw new OSchemaException("Cannot create property '" + propertyName + "'; Reserved keywords");
+    }
 
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
