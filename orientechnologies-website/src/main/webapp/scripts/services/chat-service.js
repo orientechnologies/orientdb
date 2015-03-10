@@ -1,7 +1,7 @@
 'use strict';
 
 
-angular.module('webappApp').factory("ChatService", function ($rootScope, $location, $timeout,$window, User, Organization) {
+angular.module('webappApp').factory("ChatService", function ($rootScope, $location, $timeout, $window, User, Organization) {
 
 
   var favicon = new Favico({
@@ -76,7 +76,7 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
     }, 1000);
   }
 
-  $window.onfocus = function(){
+  $window.onfocus = function () {
     chatService.clean();
   }
   function initializer() {
@@ -103,7 +103,8 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
     charSocketWrapper.socket.onmessage = function (evt) {
       var msg = JSON.parse(evt.data);
       if (msg.sender.name != chatService.currentUser.name) {
-        chatService.notify(msg);
+        if (!msg.edited)
+          chatService.notify(msg);
         chatService.badge += 1;
         favicon.badge(chatService.badge);
         $rootScope.$broadcast('msg-received', msg);

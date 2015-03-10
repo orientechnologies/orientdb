@@ -61,6 +61,7 @@ public class IssueReopenEvent extends EventInternal<IssueEvent> {
     SimpleMailMessage mailMessage = new SimpleMailMessage();
     OUser owner = comment.getActor();
     List<OUser> involvedActors = issueRepository.findToNotifyActors(issue);
+    involvedActors.addAll(issueRepository.findToNotifyActorsWatching(issue));
     String[] actors = getActorsEmail(owner, involvedActors);
     if (actors.length > 0) {
       mailMessage.setTo(actors);

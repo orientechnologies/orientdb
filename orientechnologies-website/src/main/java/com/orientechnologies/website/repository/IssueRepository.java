@@ -13,4 +13,7 @@ public interface IssueRepository extends BaseRepository<Issue> {
 
 
     List<OUser> findToNotifyActors(Issue issue);
+
+
+    List<OUser> findToNotifyActorsWatching(Issue issue);
 }

@@ -32,7 +32,7 @@
 
             <div class="row" ng-repeat="message in group.messages">
               <div class="col-md-9">
-                <div vue-editor ng-model="message.body"></div>
+                <ng-include src="'views/room/message.html'"></ng-include>
               </div>
             </div>
           </div>

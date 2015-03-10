@@ -58,6 +58,7 @@ public class IssueClosedEvent extends EventInternal<IssueEvent> {
 
     OUser owner = comment.getActor();
     List<OUser> involvedActors = issueRepository.findToNotifyActors(issue);
+    involvedActors.addAll(issueRepository.findToNotifyActorsWatching(issue));
     String[] actors = getActorsEmail(owner, involvedActors);
     if (actors.length > 0) {
       mailMessage.setTo(actors);

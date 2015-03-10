@@ -37,8 +37,8 @@ public class IssueRepositoryImpl extends OrientBaseRepository<Issue> implements 
     OrientGraph graph = dbFactory.getGraph();
     String query = String
         .format(
-                "select  expand(set(user)) from (select unionAll( in('HasOpened'),out('HasEvent')[@class = 'Comment'].user,in('HasIssue').in('HasRepo').out('HasRepo').out('HasMember')) as user from %s )",
-                rid);
+            "select  expand(set(user)) from (select unionAll( in('HasOpened'),out('HasEvent')[@class = 'Comment'].user,in('HasIssue').in('HasRepo').out('HasRepo').out('HasMember')) as user from %s )",
+            rid);
     List<OIdentifiable> vertexes = graph.getRawGraph().query(new OSQLSynchQuery<Object>(query));
     List<OUser> users = new ArrayList<OUser>();
     for (OIdentifiable vertex : vertexes) {
@@ -54,13 +54,30 @@ public class IssueRepositoryImpl extends OrientBaseRepository<Issue> implements 
     OrientGraph graph = dbFactory.getGraph();
     String query = String
         .format(
-                "select  expand(set(user)) from (select unionAll( in('HasOpened'),out('IsAssigned'),out('HasEvent')[@class = 'Comment'].user) as user from %s )",
-                rid);
+            "select  expand(set(user)) from (select unionAll( in('HasOpened'),out('IsAssigned'),out('HasEvent')[@class = 'Comment'].user) as user from %s )",
+            rid);
     List<OIdentifiable> vertexes = graph.getRawGraph().query(new OSQLSynchQuery<Object>(query));
     List<OUser> users = new ArrayList<OUser>();
     for (OIdentifiable vertex : vertexes) {
       ODocument doc = vertex.getRecord();
       users.add(com.orientechnologies.website.model.schema.OUser.ID.fromDoc(doc, graph));
+    }
+    return users;
+  }
+
+  @Override
+  public List<OUser> findToNotifyActorsWatching(Issue issue) {
+
+    OrientGraph graph = dbFactory.getGraph();
+
+    List<OUser> users = new ArrayList<OUser>();
+    if (!Boolean.TRUE.equals(issue.getConfidential())) {
+      String query = String.format("select from OUser where watching = true");
+      List<OIdentifiable> vertexes = graph.getRawGraph().query(new OSQLSynchQuery<Object>(query));
+      for (OIdentifiable vertex : vertexes) {
+        ODocument doc = vertex.getRecord();
+        users.add(com.orientechnologies.website.model.schema.OUser.ID.fromDoc(doc, graph));
+      }
     }
     return users;
   }

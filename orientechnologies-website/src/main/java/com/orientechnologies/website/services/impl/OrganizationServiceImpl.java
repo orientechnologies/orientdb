@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.events.ChatMessageEditEvent;
 import com.orientechnologies.website.events.ChatMessageSentEvent;
 import com.orientechnologies.website.events.EventManager;
 import com.orientechnologies.website.exception.ServiceException;
@@ -298,6 +299,16 @@ public class OrganizationServiceImpl implements OrganizationService {
       return message;
     }
     return null;
+  }
+
+  @Override
+  public Message patchMessage(String name, Integer clientId, String messageId, Message message) {
+    Message saved = messageRepository.findById(messageId);
+    saved.setClientId(clientId);
+    saved.setBody(message.getBody());
+    eventManager.pushInternalEvent(ChatMessageEditEvent.EVENT, saved);
+    message = messageRepository.save(saved);
+    return message;
   }
 
   @Override

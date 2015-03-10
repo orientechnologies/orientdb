@@ -47,6 +47,12 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
       return OType.BOOLEAN;
     }
   },
+  WATCHING("watching") {
+    @Override
+    public OType getType() {
+      return OType.BOOLEAN;
+    }
+  },
   FIRSTNAME("firstName") {
     @Override
     public OType getType() {
@@ -86,9 +92,11 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
     Boolean confirmed = doc.field(CONFIRMED.toString());
     user.setFirstName((String) doc.field(FIRSTNAME.toString()));
     user.setNotification((Boolean) doc.field(NOTIFICATION.toString()));
+    user.setWatching((Boolean) doc.field(WATCHING.toString()));
     user.setSecondName((String) doc.field(SECONDNAME.toString()));
     user.setCompany((String) doc.field(COMPANY.toString()));
     user.setWorkingEmail((String) doc.field(WORKINGEMAIL.toString()));
+
     user.setConfirmed(confirmed != null ? confirmed : false);
 
     return user;
@@ -116,6 +124,7 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
     doc.field(SECONDNAME.toString(), entity.getSecondName());
     doc.field(WORKINGEMAIL.toString(), entity.getWorkingEmail());
     doc.field(NOTIFICATION.toString(), entity.getNotification());
+    doc.field(WATCHING.toString(), entity.getWatching());
     doc.field("status", "active");
     doc.field("password", "test");
     return doc;

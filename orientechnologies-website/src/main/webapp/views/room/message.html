@@ -1,0 +1,14 @@
+<div ng-mouseover="canEdit = true && owner" ng-mouseleave="canEdit = false" class="row" ng-controller="MessageController">
+  <div class="col-md-12">
+    <div vue-editor  preview="preview" on-send="patchMessage()" ng-model="message.body" >
+
+    </div>
+  </div>
+  <div class="edit-msg-container">
+    <a href="javascript:void(0)" class="edit-msg" ng-click="edit()" ng-show="canEdit">
+      <i class="fa fa-edit">
+
+      </i>
+    </a>
+  </div>
+</div>

@@ -1,19 +1,21 @@
 package com.orientechnologies.website.events;
 
-import com.orientechnologies.website.model.schema.dto.Message;
-import com.orientechnologies.website.websocket.ChatHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import reactor.event.Event;
+
+import com.orientechnologies.website.model.schema.dto.Message;
+import com.orientechnologies.website.websocket.ChatHandler;
 
 /**
  * Created by Enrico Risa on 21/01/15.
  */
 
 @Component
-public class ChatMessageSentEvent extends EventInternal<Message> {
+public class ChatMessageEditEvent extends EventInternal<Message> {
 
-  public static String  EVENT = "message_sent";
+  public static String  EVENT = "message_edit";
 
   @Autowired
   protected ChatHandler chatHandler;
@@ -27,6 +29,6 @@ public class ChatMessageSentEvent extends EventInternal<Message> {
   public void accept(Event<Message> messageEvent) {
 
     Message message = messageEvent.getData();
-    chatHandler.broadcast(message.getClientId(), message,false);
+    chatHandler.broadcast(message.getClientId(), message,true);
   }
 }

@@ -13,7 +13,8 @@ public class Message {
   protected Date    date;
   protected Integer clientId;
   protected OUser   sender;
-
+  protected Boolean edited;
+  
   public String getUuid() {
     return uuid;
   }
@@ -60,5 +61,13 @@ public class Message {
 
   public void setClientId(Integer clientId) {
     this.clientId = clientId;
+  }
+
+  public Boolean getEdited() {
+    return edited;
+  }
+
+  public void setEdited(Boolean edited) {
+    this.edited = edited;
   }
 }

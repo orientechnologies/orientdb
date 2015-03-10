@@ -85,6 +85,7 @@ public class UserServiceImpl implements UserService {
     userDTO.setRepositories(repositoryList);
     userDTO.setConfirmed(user.getConfirmed());
     userDTO.setNotification(user.getNotification());
+    userDTO.setWatching(user.getWatching());
     return userDTO;
   }
 

@@ -8,4 +8,6 @@ import com.orientechnologies.website.model.schema.dto.Message;
 public interface MessageRepository extends BaseRepository<Message> {
 
   public Message getLastMessage(Integer roomId);
+
+  public Message findById(String id);
 }

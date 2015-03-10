@@ -432,3 +432,9 @@ span.label-dark {
   display: flex;
   align-items: center;
 }
+.edit-msg-container {
+  position: relative;
+}
+.edit-msg {
+  position: absolute;
+}

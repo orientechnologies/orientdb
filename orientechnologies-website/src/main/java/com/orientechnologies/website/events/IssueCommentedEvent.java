@@ -59,6 +59,7 @@ public class IssueCommentedEvent extends EventInternal<Comment> {
     SimpleMailMessage mailMessage = new SimpleMailMessage();
     OUser owner = comment.getUser();
     List<OUser> involvedActors = issueRepository.findToNotifyActors(issue);
+    involvedActors.addAll(issueRepository.findToNotifyActorsWatching(issue));
     String[] actors = getActorsEmail(owner, involvedActors);
     if (actors.length > 0) {
       mailMessage.setTo(actors);

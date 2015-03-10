@@ -22,20 +22,29 @@ angular.module('webappApp')
 
 
       if (msg.sender.name != $scope.currentUser.name) {
-        if ($scope.clientId == msg.clientId) {
-          $scope.$apply(function () {
-            addNewMessage(msg);
-            visit()
 
-          });
+        if (msg.edited) {
+
+          if ($scope.clientId == msg.clientId) {
+            replaceMsg(msg);
+
+          }
         } else {
-          $scope.$apply(function () {
-            $scope.clients.forEach(function (c) {
-              if (c.clientId == msg.clientId) {
-                c.timestamp = new Date().getTime();
-              }
-            })
-          });
+          if ($scope.clientId == msg.clientId) {
+            $scope.$apply(function () {
+              addNewMessage(msg);
+              visit()
+
+            });
+          } else {
+            $scope.$apply(function () {
+              $scope.clients.forEach(function (c) {
+                if (c.clientId == msg.clientId) {
+                  c.timestamp = new Date().getTime();
+                }
+              })
+            });
+          }
         }
       }
     });
@@ -106,6 +115,16 @@ angular.module('webappApp')
         }
       });
       return newMsg;
+    }
+
+    var replaceMsg = function (msg) {
+      $scope.messages.forEach(function (g) {
+        g.messages.forEach(function (m) {
+          if (m.id === msg.id) {
+            m.body = msg.body;
+          }
+        });
+      })
     }
     var addNewMessage = function (message) {
 
@@ -210,3 +229,22 @@ angular.module('webappApp')
       }
     }
   });
+
+
+angular.module('webappApp').controller('MessageController', function ($scope, Organization) {
+
+
+
+  $scope.owner = $scope.message.sender.name === $scope.currentUser.name;
+  $scope.edit = function () {
+    $scope.preview = false;
+  }
+
+  $scope.patchMessage = function () {
+    Organization.all("clients").one($scope.clientId).all("room").one(encodeURI($scope.message.id.replace("#", ""))).patch({body: $scope.message.body}).then(function (data) {
+      $scope.preview = true
+    }).catch(function () {
+      $scope.preview = true;
+    })
+  }
+});

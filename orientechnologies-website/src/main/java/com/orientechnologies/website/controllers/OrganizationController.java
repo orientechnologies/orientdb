@@ -95,7 +95,7 @@ public class OrganizationController extends ExceptionController {
 
         Client client = issue.getClient();
         Client currentClient = userService.getClient(user, organization);
-        if (currentClient == null || client.getClientId() != currentClient.getClientId()) {
+        if (currentClient == null || client ==null || client.getClientId() != currentClient.getClientId()) {
           return new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
         }
       }
@@ -191,6 +191,19 @@ public class OrganizationController extends ExceptionController {
     Client client = userService.getClient(user, name);
     if (userService.isMember(user, name) || (userService.isClient(user, name) && client.getClientId().equals(clientId))) {
       return new ResponseEntity(organizationService.registerMessage(name, clientId, message), HttpStatus.OK);
+    } else {
+      return new ResponseEntity(null, HttpStatus.NOT_FOUND);
+    }
+  }
+
+  @RequestMapping(value = "{name}/clients/{id}/room/{messageId}", method = RequestMethod.PATCH)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<Message> patchMessage(@PathVariable("name") String name, @PathVariable("id") Integer clientId,
+      @PathVariable("messageId") String messageId, @RequestBody Message message) {
+    OUser user = SecurityHelper.currentUser();
+    Client client = userService.getClient(user, name);
+    if (userService.isMember(user, name) || (userService.isClient(user, name) && client.getClientId().equals(clientId))) {
+      return new ResponseEntity(organizationService.patchMessage(name, clientId,messageId, message), HttpStatus.OK);
     } else {
       return new ResponseEntity(null, HttpStatus.NOT_FOUND);
     }

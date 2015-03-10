@@ -38,6 +38,9 @@ public interface OrganizationService {
   @Transactional
   void checkInRoom(String name, Integer clientId);
 
+  @Transactional
+  Message patchMessage(String name, Integer clientId, String messageId, Message message);
+
   // @Transactional
   // Environment registerClientEnvironment(String name, Integer id, Environment environment);
 

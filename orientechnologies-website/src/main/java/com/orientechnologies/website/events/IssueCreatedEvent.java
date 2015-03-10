@@ -1,5 +1,8 @@
 package com.orientechnologies.website.events;
 
+import com.orientechnologies.website.configuration.AppConfig;
+import com.orientechnologies.website.model.schema.dto.Issue;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.IssueRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -8,15 +11,11 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring4.SpringTemplateEngine;
-
 import reactor.event.Event;
 
-import com.orientechnologies.website.configuration.AppConfig;
-import com.orientechnologies.website.model.schema.dto.Issue;
-import com.orientechnologies.website.model.schema.dto.OUser;
-
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Enrico Risa on 30/12/14.
@@ -55,7 +54,7 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
     OUser owner = issue.getScope().getOwner();
     OUser user = issue.getUser();
 
-    List<String> dests = new ArrayList<String>();
+    Set<String> dests = new HashSet<String>();
     List<OUser> members = issue.getScope().getMembers();
     if (owner != null) {
       boolean found = false;
@@ -68,7 +67,7 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
         members.add(owner);
       }
     }
-
+    members.addAll(issueRepository.findToNotifyActorsWatching(issue));
     for (OUser member : members) {
       if (Boolean.TRUE.equals(member.getNotification())) {
         if (member.getEmail() != null && !member.getEmail().isEmpty())

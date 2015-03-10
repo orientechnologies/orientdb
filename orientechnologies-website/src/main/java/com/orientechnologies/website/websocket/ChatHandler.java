@@ -48,9 +48,10 @@ public class ChatHandler extends TextWebSocketHandler {
     }
   }
 
-  public void broadcast(Integer roomId, Message message) {
+  public void broadcast(Integer roomId, Message message,boolean edited) {
     ObjectMapper mapper = new ObjectMapper();
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    message.setEdited(edited);
     try {
       mapper.writeValue(stream, message);
 

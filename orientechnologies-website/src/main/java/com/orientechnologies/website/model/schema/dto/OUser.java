@@ -26,6 +26,7 @@ public class OUser implements UserDetails {
   private String  company;
 
   private Boolean notification;
+  private Boolean watching;
 
   public Boolean getNotification() {
     return notification;
@@ -167,5 +168,13 @@ public class OUser implements UserDetails {
 
   public void setConfirmed(Boolean confirmed) {
     this.confirmed = confirmed;
+  }
+
+  public Boolean getWatching() {
+    return watching;
+  }
+
+  public void setWatching(Boolean watching) {
+    this.watching = watching;
   }
 }

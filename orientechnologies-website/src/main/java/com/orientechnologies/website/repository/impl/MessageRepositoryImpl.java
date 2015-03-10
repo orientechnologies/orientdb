@@ -1,5 +1,6 @@
 package com.orientechnologies.website.repository.impl;
 
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -44,5 +45,14 @@ public class MessageRepositoryImpl extends OrientBaseRepository<Message> impleme
     } catch (NoSuchElementException e) {
       return null;
     }
+  }
+
+  @Override
+  public Message findById(String id) {
+
+    OrientGraph db = dbFactory.getGraph();
+
+    ODocument msg = db.getRawGraph().load(new ORecordId(id));
+    return OMessage.UUID.fromDoc(msg, db);
   }
 }
