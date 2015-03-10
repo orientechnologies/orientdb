@@ -191,4 +191,25 @@ public class SQLDeleteEdgeTest extends DocumentDBBaseTest {
       Assert.assertTrue(false);
     }
   }
+
+  public void testFromInString(){
+    database.command(new OCommandSQL("CREATE CLASS FromInStringE extends E")).execute();
+    database.command(new OCommandSQL("CREATE CLASS FromInStringV extends V")).execute();
+
+    OIdentifiable v1 = database.command(new OCommandSQL("create vertex FromInStringV set name = ' from '")).execute();
+    OIdentifiable v2 = database.command(new OCommandSQL("create vertex FromInStringV set name = ' FROM '")).execute();
+    OIdentifiable v3 = database.command(new OCommandSQL("create vertex FromInStringV set name = ' TO '")).execute();
+
+    database.command(new OCommandSQL("create edge FromInStringE from "+v1.getIdentity()+" to "+v2.getIdentity())).execute();
+    database.command(new OCommandSQL("create edge FromInStringE from "+v1.getIdentity()+" to "+v3.getIdentity())).execute();
+
+    List<OIdentifiable> result = database.query(new OSQLSynchQuery<ODocument>("SELECT expand(out()[name = ' FROM ']) FROM FromInStringV"));
+    Assert.assertEquals(result.size(), 1);
+
+    result = database.query(new OSQLSynchQuery<ODocument>("SELECT expand(in()[name = ' from ']) FROM FromInStringV"));
+    Assert.assertEquals(result.size(), 2);
+
+    result = database.query(new OSQLSynchQuery<ODocument>("SELECT expand(out()[name = ' TO ']) FROM FromInStringV"));
+    Assert.assertEquals(result.size(), 1);
+  }
 }
