@@ -43,6 +43,9 @@ import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.metadata.security.OSecurityProxy;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerProxy;
@@ -59,6 +62,7 @@ public class OMetadataDefault implements OMetadataInternal {
   protected OSecurity                   security;
   protected OIndexManagerProxy          indexManager;
   protected OFunctionLibraryProxy       functionLibrary;
+  protected OSequenceLibraryProxy       sequenceLibrary;
   protected OSchedulerListenerProxy     scheduler;
   protected static final OProfilerMBean PROFILER                  = Orient.instance().getProfiler();
 
@@ -90,6 +94,7 @@ public class OMetadataDefault implements OMetadataInternal {
     indexManager.create();
     security.create();
     functionLibrary.create();
+    sequenceLibrary.create();
     security.createClassTrigger();
     scheduler.create();
   }
@@ -198,6 +203,17 @@ public class OMetadataDefault implements OMetadataInternal {
             return instance;
           }
         }), database);
+      sequenceLibrary = new OSequenceLibraryProxy(database.getStorage().getResource(OSequenceLibrary.class.getSimpleName(),
+        new Callable<OSequenceLibrary>() {
+          @Override
+          public OSequenceLibrary call() throws Exception {
+            final OSequenceLibraryImpl instance = new OSequenceLibraryImpl();
+            if (iLoad) {
+              instance.load();
+            }
+            return instance;
+          }
+        }), database);
     scheduler = new OSchedulerListenerProxy(database.getStorage().getResource(OSchedulerListener.class.getSimpleName(),
         new Callable<OSchedulerListener>() {
           public OSchedulerListener call() {
@@ -221,6 +237,9 @@ public class OMetadataDefault implements OMetadataInternal {
       security.load();
     if (functionLibrary != null)
       functionLibrary.load();
+    if (sequenceLibrary != null) {
+        sequenceLibrary.load();
+    }
   }
 
   /**
@@ -241,7 +260,12 @@ public class OMetadataDefault implements OMetadataInternal {
     return functionLibrary;
   }
 
-  public OSchedulerListener getSchedulerListener() {
+  @Override
+  public OSequenceLibrary getSequenceLibrary() {
+      return sequenceLibrary;
+  }
+
+    public OSchedulerListener getSchedulerListener() {
     return scheduler;
   }
 }

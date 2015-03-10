@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.methods.OSQLMethodRuntime;
+import com.orientechnologies.orient.core.sql.sequence.OSQLSequenceItem;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -117,6 +118,9 @@ public class ORuntimeResult {
         } else if (v instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime f = (OSQLFunctionRuntime) v;
           projectionValue = f.execute(inputDocument, inputDocument, iValue, iContext);
+        } else if (v instanceof OSQLSequenceItem) {
+          final OSQLSequenceItem s = (OSQLSequenceItem) v;
+          projectionValue = s.getValue(iRecord, null, iContext);
         } else {
           if (v == null) {
             // SIMPLE NULL VALUE: SET IT IN DOCUMENT

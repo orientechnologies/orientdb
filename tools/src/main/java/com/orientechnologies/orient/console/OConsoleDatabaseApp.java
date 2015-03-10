@@ -660,6 +660,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     updateDatabaseInfo();
   }
 
+  @ConsoleCommand(splitInWords = false, description = "Create a sequence in the database")
+  public void createSequence(@ConsoleParameter(name="command-text", description="The command text to execute") String iCommandText) {
+    sqlCommand("create", iCommandText, "\nSequence created successfully. Total sequences in database now: %d\n", true);
+    updateDatabaseInfo();
+  }
+
+  @ConsoleCommand(splitInWords = false, description = "Remove a sequence from the database")
+  public void dropSequence(@ConsoleParameter(name="command-text", description="The command text to execute") String iCommandText) {
+    sqlCommand("drop", iCommandText, "Sequence removed successfully\n", false);
+    updateDatabaseInfo();
+  }
+
   @ConsoleCommand(splitInWords = false, description = "Alter a class property in the database schema")
   public void alterProperty(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {

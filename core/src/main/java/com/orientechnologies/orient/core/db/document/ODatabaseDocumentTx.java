@@ -106,6 +106,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceTrigger;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -2705,6 +2706,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
     registerHook(new OUserTrigger(this), ORecordHook.HOOK_POSITION.EARLY);
     registerHook(new OFunctionTrigger(this), ORecordHook.HOOK_POSITION.REGULAR);
+    registerHook(new OSequenceTrigger(this), ORecordHook.HOOK_POSITION.REGULAR);
     registerHook(new OClassIndexManager(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OSchedulerTrigger(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new ORidBagDeleteHook(this), ORecordHook.HOOK_POSITION.LAST);
