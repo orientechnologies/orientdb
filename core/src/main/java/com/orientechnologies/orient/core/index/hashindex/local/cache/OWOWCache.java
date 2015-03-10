@@ -216,6 +216,16 @@ public class OWOWCache {
     return (int) crc32.getValue();
   }
 
+  public long bookFileId() {
+    filesLock.acquireWriteLock();
+    try {
+      ++fileCounter;
+      return fileCounter;
+    } finally {
+      filesLock.releaseWriteLock();
+    }
+  }
+
   public long openFile(String fileName) throws IOException {
     filesLock.acquireWriteLock();
     try {
@@ -251,7 +261,8 @@ public class OWOWCache {
       if (fileId != null)
         throw new OStorageException("File with name " + fileName + " already exists in storage " + storageLocal.getName());
 
-      fileId = ++fileCounter;
+      ++fileCounter;
+      fileId = fileCounter;
 
       fileClassic = createFile(fileName);
 
