@@ -53,9 +53,8 @@ public class OSequenceCached extends OSequence {
           allocateCache(getCacheSize());
         }
 
-        long value = cacheStart;
-        cacheStart += increment;
-        return value;
+        ++cacheStart;
+        return cacheStart;
       }
     });
   }

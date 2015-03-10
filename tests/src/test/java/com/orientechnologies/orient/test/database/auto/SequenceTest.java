@@ -50,7 +50,6 @@ public class SequenceTest extends DocumentDBBaseTest {
 
     // Doing it twice to check everything works after reset
     for (int i = 0; i < 2; ++i) {
-      Assert.assertEquals(seq.current(), 0L);
       Assert.assertEquals(seq.next(), 1L);
       Assert.assertEquals(seq.current(), 1L);
       Assert.assertEquals(seq.next(), 2L);
