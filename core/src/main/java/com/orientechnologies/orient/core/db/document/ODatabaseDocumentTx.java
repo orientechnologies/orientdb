@@ -1726,9 +1726,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
             final ORecordHook.RESULT hookResult = callbackHooks(triggerType, record);
 
-            if (hookResult == ORecordHook.RESULT.RECORD_CHANGED)
+            if (hookResult == ORecordHook.RESULT.RECORD_CHANGED) {
+              if (record instanceof ODocument)
+                ((ODocument) record).validate();
               stream = updateStream(record);
-            else if (hookResult == ORecordHook.RESULT.SKIP_IO)
+            } else if (hookResult == ORecordHook.RESULT.SKIP_IO)
               return (RET) record;
             else if (hookResult == ORecordHook.RESULT.RECORD_REPLACED)
               // RETURNED THE REPLACED RECORD
