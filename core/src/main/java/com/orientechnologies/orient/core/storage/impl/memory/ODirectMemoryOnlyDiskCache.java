@@ -65,7 +65,8 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
       Long fileId = fileNameIdMap.get(fileName);
 
       if (fileId == null) {
-        final long id = counter++;
+        counter++;
+        final long id = counter;
 
         files.put(id, new MemoryFile(id, pageSize));
         fileNameIdMap.put(fileName, id);
@@ -78,6 +79,17 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
       }
 
       return fileId;
+    } finally {
+      metadataLock.unlock();
+    }
+  }
+
+  @Override
+  public long bookFileId() {
+    metadataLock.lock();
+    try {
+      counter++;
+      return counter;
     } finally {
       metadataLock.unlock();
     }

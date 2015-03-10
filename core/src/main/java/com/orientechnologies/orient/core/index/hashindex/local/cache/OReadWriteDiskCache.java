@@ -166,6 +166,11 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
+  public long bookFileId() {
+    return writeCache.bookFileId();
+  }
+
+  @Override
   public void openFile(final long fileId) throws IOException {
     cacheLock.acquireReadLock();
     Lock fileLock;
