@@ -30,6 +30,7 @@ import java.util.UUID;
 import java.util.WeakHashMap;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -47,7 +48,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   private boolean                                                      contentWasChanged = false;
   private boolean                                                      deserialized      = true;
 
-  private Object[]                                                     entries           = {};
+  private Object[]                                                     entries           = OCommonConst.EMPTY_OBJECT_ARRAY;
   private int                                                          entriesLength     = 0;
 
   private boolean                                                      convertToRecord   = true;

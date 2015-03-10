@@ -505,7 +505,7 @@ public class OHttpResponse {
 
   public void flush() throws IOException {
     out.flush();
-    if (keepAlive) {
+    if (!keepAlive) {
       out.close();
     }
   }

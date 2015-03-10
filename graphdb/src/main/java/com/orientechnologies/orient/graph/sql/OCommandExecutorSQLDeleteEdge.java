@@ -24,6 +24,8 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -40,10 +42,7 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.impls.orient.*;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * SQL DELETE EDGE command.
@@ -53,7 +52,7 @@ import java.util.Set;
 public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstract implements OCommandDistributedReplicateRequest,
     OCommandResultListener {
   public static final String NAME         = "DELETE EDGE";
-  private ORecordId          rid;
+  private List<ORecordId>    rids;
   private String             fromExpr;
   private String             toExpr;
   private int                removed      = 0;
@@ -69,10 +68,11 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
     String queryText = textRequest.getText();
     String originalQuery = queryText;
+
     try {
-//      System.out.println("NEW PARSER FROM: " + queryText);
+      // System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-//      System.out.println("NEW PARSER   TO: " + queryText);
+      // System.out.println("NEW PARSER   TO: " + queryText);
       textRequest.setText(queryText);
 
       init((OCommandRequestText) iRequest);
@@ -90,25 +90,37 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
         originalTemp = parserText.substring(parserGetPreviousPosition(), parserGetCurrentPosition()).trim();
 
       final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+      ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
       final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
       try {
         while (temp != null) {
 
           if (temp.equals("FROM")) {
             fromExpr = parserRequiredWord(false, "Syntax error", " =><,\r\n");
-            if (rid != null)
-              throwSyntaxErrorException("FROM '" + fromExpr + "' is not allowed when specify a RID (" + rid + ")");
+            if (rids != null)
+              throwSyntaxErrorException("FROM '" + fromExpr + "' is not allowed when specify a RIDs (" + rids + ")");
 
           } else if (temp.equals("TO")) {
             toExpr = parserRequiredWord(false, "Syntax error", " =><,\r\n");
-            if (rid != null)
-              throwSyntaxErrorException("TO '" + toExpr + "' is not allowed when specify a RID (" + rid + ")");
+            if (rids != null)
+              throwSyntaxErrorException("TO '" + toExpr + "' is not allowed when specify a RID (" + rids + ")");
 
           } else if (temp.startsWith("#")) {
-            rid = new ORecordId(temp);
+            rids = new ArrayList<ORecordId>();
+            rids.add(new ORecordId(temp));
             if (fromExpr != null || toExpr != null)
-              throwSyntaxErrorException("Specifying the RID " + rid + " is not allowed with FROM/TO");
+              throwSyntaxErrorException("Specifying the RID " + rids + " is not allowed with FROM/TO");
 
+          } else if (temp.startsWith("[") && temp.endsWith("]")) {
+            temp = temp.substring(1, temp.length() - 1);
+            rids = new ArrayList<ORecordId>();
+            for (String rid : temp.split(", ")) {
+              rid = rid.trim();
+              if (!rid.startsWith("#")) {
+                throwSyntaxErrorException("Not a valid RID: " + rid);
+              }
+              rids.add(new ORecordId(rid));
+            }
           } else if (temp.equals(KEYWORD_WHERE)) {
             if (clazz == null)
               // ASSIGN DEFAULT CLASS
@@ -139,7 +151,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
         else
           where = " WHERE " + where;
 
-        if (fromExpr == null && toExpr == null && rid == null)
+        if (fromExpr == null && toExpr == null && rids == null)
           if (clazz == null)
             // DELETE ALL THE EDGES
             query = graph.getRawGraph().command(new OSQLAsynchQuery<ODocument>("select from E" + where, this));
@@ -151,6 +163,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
       } finally {
         if (shutdownFlag.getValue())
           graph.shutdown(false);
+        ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
       }
     } finally {
       textRequest.setText(originalQuery);
@@ -162,23 +175,24 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
    * Execute the command and return the ODocument object created.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (fromExpr == null && toExpr == null && rid == null && query == null && compiledFilter == null)
+    if (fromExpr == null && toExpr == null && rids == null && query == null && compiledFilter == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     for (int r = 0; r < retry; ++r) {
       try {
 
-        if (rid != null) {
+        if (rids != null) {
           // REMOVE PUNCTUAL RID
           OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
             @Override
             public Object call(OrientBaseGraph graph) {
-              final OrientEdge e = graph.getEdge(rid);
-              if (e != null) {
-                e.remove();
-                removed = 1;
+              for (ORecordId rid : rids) {
+                final OrientEdge e = graph.getEdge(rid);
+                if (e != null) {
+                  e.remove();
+                  removed = 1;
+                }
               }
-
               return null;
             }
           });

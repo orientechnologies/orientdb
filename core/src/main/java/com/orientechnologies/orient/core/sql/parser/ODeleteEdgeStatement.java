@@ -12,6 +12,7 @@ public class ODeleteEdgeStatement extends OStatement {
   protected OIdentifier       targetClusterName;
 
   protected ORid              rid;
+  protected List<ORid>        rids;
 
   protected ORid              leftRid;
   protected List<ORid>        leftRids;
@@ -58,10 +59,21 @@ public class ODeleteEdgeStatement extends OStatement {
       }
     }
 
-
     if (rid != null) {
       result.append(" ");
       result.append(rid.toString());
+    }
+    if (rids != null) {
+      result.append("[");
+      boolean first = true;
+      for (ORid rid : rids) {
+        if (!first) {
+          result.append(", ");
+        }
+        result.append(rid.toString());
+        first = false;
+      }
+      result.append("]");
     }
 
     if (leftRid != null || leftRids != null || leftStatement != null || leftParam != null || leftIdentifier != null) {
@@ -131,7 +143,6 @@ public class ODeleteEdgeStatement extends OStatement {
         result.append(rightIdentifier.toString());
       }
     }
-
 
     if (whereClause != null) {
       result.append(" WHERE ");

@@ -664,7 +664,26 @@ ODeleteEdgeStatement DeleteEdgeByRidStatement():
 (
 	<DELETE>
 	<EDGE>
-	jjtThis.rid = Rid()
+	(
+	    jjtThis.rid = Rid()
+	    |
+	    (
+
+	        <LBRACKET>
+            [
+                lastRid = Rid()
+                {
+                    jjtThis.rids = new ArrayList();
+                    jjtThis.rids.add(lastRid);
+                }
+                (
+                    <COMMA>
+                    lastRid = Rid() { jjtThis.rids.add(lastRid); }
+                )*
+            ] <RBRACKET>
+	    )
+	)
+
 
 ) {return jjtThis;}
 }
@@ -1720,24 +1739,32 @@ OFromItem FromItem():
     (
     	lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	|
-    	(
+    	/*(
     	    <LBRACKET> lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	    (
     	        <COMMA> lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	    )* <RBRACKET>
     	)
-    	|
+    	|*/
     	jjtThis.cluster = Cluster()
     	|
     	jjtThis.index = IndexIdentifier()
     	|
         jjtThis.metadata = MetadataIdentifier()
     	|
-    	jjtThis.className = Identifier()
-    	|
+    	/*jjtThis.className = Identifier()
+    	|*/
     	<LPAREN> ( jjtThis.statement = SelectStatement() | jjtThis.statement = TraverseStatement() ) <RPAREN>
     	|
     	jjtThis.inputParam = InputParameter()
+    	|
+    	(
+            jjtThis.identifier = BaseIdentifier()
+            [
+                LOOKAHEAD( Modifier() )
+                jjtThis.modifier = Modifier()
+            ]
+        )
     )
     { return jjtThis; }
 }
@@ -2153,29 +2180,13 @@ OBooleanExpression InCondition():
 	jjtThis.left = Expression()
 	jjtThis.operator = InOperator()
 	(
-	    (
-	        <LBRACKET>
-	        lastExpression = Expression()
-	        {
-	            jjtThis.rightCollection = new java.util.ArrayList();
-	            jjtThis.rightCollection.add(lastExpression);
-	        }
-	        (
-                <COMMA> lastExpression = Expression()
-                {
-                    jjtThis.rightCollection.add(lastExpression);
-                }
-            )*
-            <RBRACKET>
-	    )
-	    |
 	    LOOKAHEAD(2)
 	    ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN>)
 	    |
 	    LOOKAHEAD(2)
 	    ( <LPAREN> jjtThis.rightParam = InputParameter() <RPAREN>)
 	    |
-        jjtThis.rightParam = InputParameter()
+        jjtThis.rightMathExpression = MathExpression()
 	)
 ){return jjtThis;}
 }
@@ -2188,30 +2199,14 @@ OBooleanExpression NotInCondition():
     (
     	jjtThis.left = Expression() <NOT> InOperator()
     	(
-            (
-    	        <LBRACKET>
-    	        lastExpression = Expression()
-    	        {
-    	            jjtThis.rightCollection = new java.util.ArrayList();
-    	            jjtThis.rightCollection.add(lastExpression);
-    	        }
-    	        (
-    	            <COMMA> lastExpression = Expression()
-    	            {
-                        jjtThis.rightCollection.add(lastExpression);
-                    }
-    	        )*
-    	        <RBRACKET>
-    	    )
+            LOOKAHEAD(2)
+            ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN>)
             |
             LOOKAHEAD(2)
-	        ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN>)
-	        |
-	        LOOKAHEAD(2)
-	        ( <LPAREN> jjtThis.rightParam = InputParameter() <RPAREN>)
-	        |
-            jjtThis.rightParam = InputParameter()
-    	)
+            ( <LPAREN> jjtThis.rightParam = InputParameter() <RPAREN>)
+            |
+            jjtThis.rightMathExpression = MathExpression()
+        )
     )
     {return jjtThis;}
 }

@@ -46,6 +46,7 @@ import java.util.concurrent.Callable;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCacheLevelOneLocatorImpl;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -1726,9 +1727,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
             final ORecordHook.RESULT hookResult = callbackHooks(triggerType, record);
 
-            if (hookResult == ORecordHook.RESULT.RECORD_CHANGED)
+            if (hookResult == ORecordHook.RESULT.RECORD_CHANGED) {
+              if (record instanceof ODocument)
+                ((ODocument) record).validate();
               stream = updateStream(record);
-            else if (hookResult == ORecordHook.RESULT.SKIP_IO)
+            } else if (hookResult == ORecordHook.RESULT.SKIP_IO)
               return (RET) record;
             else if (hookResult == ORecordHook.RESULT.RECORD_REPLACED)
               // RETURNED THE REPLACED RECORD
@@ -1745,7 +1748,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         try {
           // SAVE IT
           boolean updateContent = ORecordInternal.isContentChanged(record);
-          byte[] content = (stream == null) ? new byte[0] : stream;
+          byte[] content = (stream == null) ? OCommonConst.EMPTY_BYTE_ARRAY : stream;
           byte recordType = ORecordInternal.getRecordType(record);
           final int modeIndex = mode.ordinal();
 
@@ -2100,8 +2103,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in current database");
 
     checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iClassName);
-
-    return new ORecordIteratorClass<ODocument>(this, this, iClassName, iPolymorphic, true, false);
+    ORecordIteratorClass<ODocument> iter =new ORecordIteratorClass<ODocument>(this, this, iClassName, iPolymorphic, true, false);
+    return iter;
   }
 
   /**

@@ -1,14 +1,11 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import static org.testng.Assert.*;
+import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import static org.testng.Assert.*;
 
 @Test
 public class OSelectStatementTest {
@@ -128,7 +125,7 @@ public class OSelectStatementTest {
 
   }
 
-  public void testIndex1(){
+  public void testIndex1() {
     SimpleNode result = checkRightSyntax("select from index:collateCompositeIndexCS where key = ['VAL', 'VaL']");
     // result.dump("    ");
     assertTrue(result instanceof OSelectStatement);
@@ -167,7 +164,6 @@ public class OSelectStatementTest {
     OSelectStatement select = (OSelectStatement) result;
 
   }
-
 
   public void testNamedParam() {
     SimpleNode result = checkRightSyntax("select from JavaComplexTestClass where enumField = :enumItem");
@@ -230,6 +226,16 @@ public class OSelectStatementTest {
     } catch (Error e) {
 
     }
+  }
+
+  public void testSubConditions() {
+    checkRightSyntax("SELECT @rid as rid, localName FROM Person WHERE ( 'milano' IN out('lives').localName OR 'roma' IN out('lives').localName ) ORDER BY age ASC");
+  }
+
+  // issue #3718
+  public void testComplexTarget1(){
+    checkRightSyntax("SELECT $e FROM [#1:1,#1:2] LET $e = (SELECT FROM $current.prop1)");
+    checkRightSyntax("SELECT $e FROM [#1:1,#1:2] let $e = (SELECT FROM (SELECT FROM $parent.$current))");
   }
 
   private void printTree(String s) {

@@ -32,7 +32,7 @@ public class OFetchPlan {
   final Map<String, OFetchPlanLevel> fetchPlan           = new HashMap<String, OFetchPlanLevel>();
   final Map<String, OFetchPlanLevel> fetchPlanStartsWith = new HashMap<String, OFetchPlanLevel>();
 
-  private class OFetchPlanLevel {
+  private static class OFetchPlanLevel {
     public int depthLevelFrom;
     public int depthLevelTo;
     public int level;
@@ -136,6 +136,13 @@ public class OFetchPlan {
               return fpLevelValue.level;
           }
         }
+      } else {
+        if (iFieldPath.equals(fpLevelKey))
+          // GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
+          return fpLevelValue.level;
+        else if (fpLevelKey.startsWith(iFieldPath))
+          // SETS THE FETCH LEVEL TO 1 (LOADS ALL DOCUMENT FIELDS)
+          return 1;
       }
     }
 
@@ -166,7 +173,7 @@ public class OFetchPlan {
       final OFetchPlanLevel fpLevelValue = fpLevel.getValue();
 
       if (iCurrentLevel >= fpLevelValue.depthLevelFrom
-          && (fpLevelValue.depthLevelTo == -1 || iCurrentLevel <= fpLevelValue.depthLevelTo))
+          && (fpLevelValue.depthLevelTo == -1 || iCurrentLevel <= fpLevelValue.depthLevelTo)) {
         if (iFieldPath.equals(fpLevelKey))
           // GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
           return true;
@@ -174,13 +181,21 @@ public class OFetchPlan {
           // SETS THE FETCH LEVEL TO 1 (LOADS ALL DOCUMENT FIELDS)
           return true;
 
-      for (int i = 0; i < fpParts.length; ++i) {
-        if (i >= fpLevelValue.depthLevelFrom && (fpLevelValue.depthLevelTo == -1 || i <= fpLevelValue.depthLevelTo)) {
-          // IT'S IN RANGE
-          if (fpParts[i].equals(fpLevelKey))
-            // GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
-            return true;
+        for (int i = 0; i < fpParts.length; ++i) {
+          if (i >= fpLevelValue.depthLevelFrom && (fpLevelValue.depthLevelTo == -1 || i <= fpLevelValue.depthLevelTo)) {
+            // IT'S IN RANGE
+            if (fpParts[i].equals(fpLevelKey))
+              // GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
+              return true;
+          }
         }
+      } else {
+        if (iFieldPath.equals(fpLevelKey))
+          // GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
+          return true;
+        else if (fpLevelKey.startsWith(iFieldPath))
+          // SETS THE FETCH LEVEL TO 1 (LOADS ALL DOCUMENT FIELDS)
+          return true;
       }
     }
 

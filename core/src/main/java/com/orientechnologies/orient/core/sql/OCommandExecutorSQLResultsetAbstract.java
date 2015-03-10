@@ -425,9 +425,14 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   protected void searchInClasses(final boolean iAscendentOrder) {
     final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
+    target = searchInClasses(cls, true, iAscendentOrder);
+  }
+
+  protected Iterator<? extends OIdentifiable> searchInClasses(final OClass iCls, final boolean iPolymorphic,
+      final boolean iAscendentOrder) {
 
     final ODatabaseDocumentInternal database = getDatabase();
-    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, cls.getName().toLowerCase());
+    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iCls.getName().toLowerCase());
 
     // NO INDEXES: SCAN THE ENTIRE CLUSTER
 
@@ -436,11 +441,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final ORID[] range = getRange();
     if (iAscendentOrder)
-      target = new ORecordIteratorClass<ORecord>(database, database, cls.getName(), true, request.isUseCache(), false, locking)
-          .setRange(range[0], range[1]);
+      return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, request.isUseCache(), false,
+          locking).setRange(range[0], range[1]);
     else
-      target = new ORecordIteratorClassDescendentOrder<ORecord>(database, database, cls.getName(), true, request.isUseCache(),
-          false, locking).setRange(range[0], range[1]);
+      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic,
+          request.isUseCache(), false, locking).setRange(range[0], range[1]);
   }
 
   protected void searchInClusters() {
@@ -627,8 +632,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     return new ORID[] { beginRange, endRange };
   }
-
-
 
   public void setRequest(OSQLAsynchQuery<ODocument> request) {
     this.request = request;

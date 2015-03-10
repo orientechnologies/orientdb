@@ -24,6 +24,7 @@ import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
 import com.orientechnologies.common.console.DefaultConsoleReader;
 import com.orientechnologies.common.console.OConsoleReader;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -762,8 +763,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       return result;
 
     } catch (Throwable e) {
-      ODistributedServerLog.error(this, getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
-          "error on executing distributed request %d on local node: %s", e, req.getId(), req.getTask());
+      if (!(e instanceof OException))
+        ODistributedServerLog.error(this, getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
+            "error on executing distributed request %d on local node: %s", e, req.getId(), req.getTask());
 
       return e;
     }

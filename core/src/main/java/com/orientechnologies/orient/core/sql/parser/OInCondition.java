@@ -4,15 +4,14 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
-import java.util.Collection;
 import java.util.Map;
 
 public class OInCondition extends OBooleanExpression {
   protected OExpression            left;
   protected OBinaryCompareOperator operator;
   protected OSelectStatement       rightStatement;
-  protected Collection<Object>     rightCollection;
   protected OInputParameter        rightParam;
+  protected OMathExpression        rightMathExpression;
   protected Object                 right;
 
   private static final Object      UNSET           = new Object();
@@ -42,18 +41,15 @@ public class OInCondition extends OBooleanExpression {
     if (rightStatement != null) {
       rightStatement.replaceParameters(params);
     }
-    if (rightCollection != null) {
-      for (Object o : rightCollection) {
-        if (o instanceof OExpression) {
-          ((OExpression) o).replaceParameters(params);
-        }
-      }
-    }
+
     if (rightParam != null) {
       Object result = rightParam.bindFromInputParams(params);
       if (rightParam != result) {
         inputFinalValue = result;
       }
+    }
+    if(rightMathExpression!=null){
+      rightMathExpression.replaceParameters(params);
     }
   }
 
@@ -65,17 +61,6 @@ public class OInCondition extends OBooleanExpression {
       result.append("(");
       result.append(rightStatement.toString());
       result.append(")");
-    } else if (rightCollection != null) {
-      result.append("[");
-      boolean first = true;
-      for (Object o : rightCollection) {
-        if (!first) {
-          result.append(", ");
-        }
-        result.append(convertToString(o));
-        first = false;
-      }
-      result.append("]");
     } else if (right != null) {
       result.append(convertToString(right));
     } else if (rightParam != null) {
@@ -86,6 +71,8 @@ public class OInCondition extends OBooleanExpression {
       } else {
         result.append(inputFinalValue.toString());
       }
+    }else if (rightMathExpression != null) {
+      result.append(rightMathExpression.toString());
     }
     return result.toString();
   }
