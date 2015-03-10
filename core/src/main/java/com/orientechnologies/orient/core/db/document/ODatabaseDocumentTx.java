@@ -2059,8 +2059,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in current database");
 
     checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iClassName);
-
-    return new ORecordIteratorClass<ODocument>(this, this, iClassName, iPolymorphic, true, false);
+    ORecordIteratorClass<ODocument> iter =new ORecordIteratorClass<ODocument>(this, this, iClassName, iPolymorphic, true, false);
+    return iter;
   }
 
   /**

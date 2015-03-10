@@ -62,6 +62,7 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
       final String iClassName, final boolean iPolymorphic, final boolean iUseCache, final boolean iterateThroughTombstones) {
     this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, iUseCache, iterateThroughTombstones,
         OStorage.LOCKING_STRATEGY.DEFAULT);
+    begin();
   }
 
   public ORecordIteratorClass(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
@@ -78,7 +79,6 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
     clusterIds = OClassImpl.readableClusters(iDatabase, clusterIds);
 
     Arrays.sort(clusterIds);
-
     config();
   }
 
@@ -135,6 +135,5 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
           totalAvailableRecords--;
       }
 
-    begin();
   }
 }
