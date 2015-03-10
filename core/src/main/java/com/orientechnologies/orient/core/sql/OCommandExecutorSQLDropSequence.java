@@ -46,6 +46,6 @@ public class OCommandExecutorSQLDropSequence extends OCommandExecutorSQLAbstract
 
     @Override
     public String getSyntax() {
-        return "DROP SEQUENCE <class>";
+        return "DROP SEQUENCE <sequence>";
     }
 }
