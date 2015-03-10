@@ -292,7 +292,7 @@ function ODatabase(databasePath) {
 					errorCallback(this.errorMessage);
 			}
 		});
-		return this.getCommandResult();
+		return successCallback instanceof Function ? null : this.getCommandResult();
 	}
 
 	ODatabase.prototype.load = function(iRID, iFetchPlan) {
