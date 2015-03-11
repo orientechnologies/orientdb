@@ -257,7 +257,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       if (defValue != null && defValue.length() > 0) {
         fieldValue = OSQLHelper.parseDefaultValue(iRecord, defValue);
         iRecord.rawField(p.getName(), fieldValue, null);
-      } else  {
+      } else {
         if (p.isMandatory()) {
           throw new OValidationException("The field '" + p.getFullName() + "' is mandatory, but not found on record: " + iRecord);
         }
@@ -429,10 +429,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   protected static void validateLinkCollection(final OProperty property, Collection<Object> values) {
-    if (property.getLinkedClass() != null)
+    if (property.getLinkedClass() != null) {
       for (Object object : values) {
         validateLink(property, object, OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
       }
+    }
   }
 
   protected static void validateType(final OProperty p, final Object value) {
