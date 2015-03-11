@@ -116,6 +116,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private final ConcurrentMap<String, OCluster>  clusterMap                                 = new ConcurrentHashMap<String, OCluster>();
   private final ThreadLocal<OStorageTransaction> transaction                                = new ThreadLocal<OStorageTransaction>();
   private final OModificationLock                modificationLock                           = new OModificationLock();
+  private final AtomicBoolean                    checkpointInProgress                       = new AtomicBoolean();
   protected volatile OWriteAheadLog              writeAheadLog;
   protected volatile ODiskCache                  diskCache;
   private ORecordConflictStrategy                recordConflictStrategy                     = Orient.instance()
@@ -124,16 +125,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private CopyOnWriteArrayList<OCluster>         clusters                                   = new CopyOnWriteArrayList<OCluster>();
   private volatile int                           defaultClusterId                           = -1;
   private volatile OAtomicOperationsManager      atomicOperationsManager;
-
   private volatile boolean                       wereDataRestoredAfterOpen                  = false;
   private volatile boolean                       wereNonTxOperationsPerformedInPreviousOpen = false;
-
   private boolean                                makeFullCheckPointAfterClusterCreate       = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
                                                                                                 .getValueAsBoolean();
-
   private volatile OLowDiskSpaceInformation      lowDiskSpace                               = null;
   private volatile boolean                       checkpointRequest                          = false;
-  private final AtomicBoolean                    checkpointInProgress                       = new AtomicBoolean();
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode) {
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
@@ -908,9 +905,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
             clientTx.clearRecordEntries();
 
-            for (ORecordOperation txEntry : tmpEntries)
+            for (ORecordOperation txEntry : tmpEntries) {
+              if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
+                final ORecord record = txEntry.getRecord();
+                if (record instanceof ODocument)
+                  ((ODocument) record).validate();
+              }
+
               // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
               commitEntry(clientTx, txEntry);
+            }
           }
 
           if (callback != null)
