@@ -52,6 +52,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
@@ -909,6 +910,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             }
 
           }
+
+          // RESET DIRTY FLAGS TO AVOID CALLING AUTO-SAVE
+          for (ORecordOperation op : tmpEntries) {
+            final ORecord record = op.getRecord();
+            if (record != null)
+              ORecordInternal.unsetDirty(record);
+          }
+
         } else if (result instanceof Throwable) {
           // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
           if (ODistributedServerLog.isDebugEnabled())
