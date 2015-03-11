@@ -193,7 +193,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         pinnedStateEntry = loadPage(atomicOperation, fileId, 0, false, diskCache);
 
         try {
-          diskCache.pinPage(pinnedStateEntry);
+          pinPage(atomicOperation, pinnedStateEntry, diskCache);
         } finally {
           diskCache.release(pinnedStateEntry);
         }
@@ -1527,7 +1527,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       OPaginatedClusterState paginatedClusterState = new OPaginatedClusterState(pinnedStateEntry, getChangesTree(atomicOperation,
           pinnedStateEntry));
 
-      diskCache.pinPage(pinnedStateEntry);
+      pinPage(atomicOperation, pinnedStateEntry, diskCache);
       paginatedClusterState.setSize(0);
       paginatedClusterState.setRecordsSize(0);
 
