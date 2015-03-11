@@ -173,7 +173,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
         directory.create();
 
-        hashStateEntry = diskCache.allocateNewPage(fileStateId);
+        hashStateEntry = addPage(atomicOperation, fileStateId, diskCache);
         pinPage(atomicOperation, hashStateEntry, diskCache);
 
         hashStateEntry.acquireExclusiveLock();
@@ -469,7 +469,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
         OCacheEntry cacheEntry = loadPage(atomicOperation, nullBucketFileId, 0, false, diskCache);
         if (cacheEntry == null)
-          cacheEntry = diskCache.allocateNewPage(nullBucketFileId);
+          cacheEntry = addPage(atomicOperation, nullBucketFileId, diskCache);
 
         cacheEntry.acquireExclusiveLock();
         try {
@@ -1451,7 +1451,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       boolean isNew;
       OCacheEntry cacheEntry;
       if (getFilledUpTo(atomicOperation, diskCache, nullBucketFileId) == 0) {
-        cacheEntry = diskCache.allocateNewPage(nullBucketFileId);
+        cacheEntry = addPage(atomicOperation, nullBucketFileId, diskCache);
         isNew = true;
       } else {
         cacheEntry = loadPage(atomicOperation, nullBucketFileId, 0, false, diskCache);
@@ -2052,7 +2052,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
     OCacheEntry entry = loadPage(atomicOperation, fileId, pageIndex, false, diskCache);
     if (entry == null)
-      entry = diskCache.allocateNewPage(fileId);
+      entry = addPage(atomicOperation, fileId, diskCache);
 
     return entry;
   }

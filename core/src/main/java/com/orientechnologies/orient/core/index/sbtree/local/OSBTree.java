@@ -137,7 +137,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       OAtomicOperation atomicOperation = storageLocal.getAtomicOperationsManager().getCurrentOperation();
 
-      OCacheEntry rootCacheEntry = diskCache.allocateNewPage(fileId);
+      OCacheEntry rootCacheEntry = addPage(atomicOperation, fileId, diskCache);
       rootCacheEntry.acquireExclusiveLock();
       try {
         super.startAtomicOperation();
@@ -313,7 +313,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
         OAtomicOperation atomicOperation = startAtomicOperation();
         if (getFilledUpTo(atomicOperation, diskCache, nullBucketFileId) == 0) {
-          cacheEntry = diskCache.allocateNewPage(nullBucketFileId);
+          cacheEntry = addPage(atomicOperation, nullBucketFileId, diskCache);
           isNew = true;
         } else
           cacheEntry = loadPage(atomicOperation, nullBucketFileId, 0, false, diskCache);
@@ -393,7 +393,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, ROOT_INDEX, false, diskCache);
       if (cacheEntry == null) {
-        cacheEntry = diskCache.allocateNewPage(fileId);
+        cacheEntry = addPage(atomicOperation, fileId, diskCache);
       }
 
       cacheEntry.acquireExclusiveLock();
@@ -792,7 +792,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
     OCacheEntry cacheEntry;
     if (freeListPageIndex < 0)
-      cacheEntry = diskCache.allocateNewPage(fileId);
+      cacheEntry = addPage(atomicOperation, fileId, diskCache);
     else
       cacheEntry = loadPage(atomicOperation, fileId, freeListPageIndex, false, diskCache);
 
@@ -816,7 +816,7 @@ public class OSBTree<K, V> extends ODurableComponent {
       freeListPageIndex = allocateValuePageFromFreeList();
 
       if (freeListPageIndex < 0)
-        cacheEntry = diskCache.allocateNewPage(fileId);
+        cacheEntry = addPage(atomicOperation, fileId, diskCache);
       else
         cacheEntry = loadPage(atomicOperation, fileId, freeListPageIndex, false, diskCache);
 
@@ -1310,7 +1310,7 @@ public class OSBTree<K, V> extends ODurableComponent {
       OSBTreeBucket<K, V> bucketToSplit, boolean splitLeaf, int indexToSplit, K separationKey,
       List<OSBTreeBucket.SBTreeEntry<K, V>> rightEntries) throws IOException {
     OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-    OCacheEntry rightBucketEntry = diskCache.allocateNewPage(fileId);
+    OCacheEntry rightBucketEntry = addPage(atomicOperation, fileId, diskCache);
     rightBucketEntry.acquireExclusiveLock();
 
     try {
@@ -1409,9 +1409,9 @@ public class OSBTree<K, V> extends ODurableComponent {
     for (int i = 0; i < indexToSplit; i++)
       leftEntries.add(bucketToSplit.getEntry(i));
 
-    OCacheEntry leftBucketEntry = diskCache.allocateNewPage(fileId);
+    OCacheEntry leftBucketEntry = addPage(atomicOperation, fileId, diskCache);
 
-    OCacheEntry rightBucketEntry = diskCache.allocateNewPage(fileId);
+    OCacheEntry rightBucketEntry = addPage(atomicOperation, fileId, diskCache);
     leftBucketEntry.acquireExclusiveLock();
     try {
       OSBTreeBucket<K, V> newLeftBucket = new OSBTreeBucket<K, V>(leftBucketEntry, splitLeaf, keySerializer, keyTypes,

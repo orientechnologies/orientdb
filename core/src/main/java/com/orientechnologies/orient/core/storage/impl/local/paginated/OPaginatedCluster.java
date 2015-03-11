@@ -1317,7 +1317,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
     OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, diskCache);
     if (cacheEntry == null)
-      cacheEntry = diskCache.allocateNewPage(fileId);
+      cacheEntry = addPage(atomicOperation, fileId, diskCache);
 
     cacheEntry.acquireExclusiveLock();
     int recordSizesDiff;
@@ -1521,7 +1521,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   private void initCusterState() throws IOException {
     OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-    pinnedStateEntry = diskCache.allocateNewPage(fileId);
+    pinnedStateEntry = addPage(atomicOperation, fileId, diskCache);
     pinnedStateEntry.acquireExclusiveLock();
     try {
       OPaginatedClusterState paginatedClusterState = new OPaginatedClusterState(pinnedStateEntry, getChangesTree(atomicOperation,
