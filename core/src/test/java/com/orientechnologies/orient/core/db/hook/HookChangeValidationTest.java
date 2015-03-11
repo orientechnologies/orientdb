@@ -54,7 +54,7 @@ public class HookChangeValidationTest {
       try {
         doc.save();
         Assert.fail("The document save should fail for validation exception");
-      } catch (ODatabaseException ex) {
+      } catch (OValidationException ex) {
 
       }
     } finally {
