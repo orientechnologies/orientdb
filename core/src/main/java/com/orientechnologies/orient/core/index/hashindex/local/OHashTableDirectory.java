@@ -93,7 +93,7 @@ public class OHashTableDirectory extends ODurableComponent {
         assert firstEntry.getPageIndex() == 0;
       }
 
-      diskCache.pinPage(firstEntry);
+      pinPage(atomicOperation, firstEntry, diskCache);
 
       firstEntry.acquireExclusiveLock();
       try {
@@ -129,7 +129,7 @@ public class OHashTableDirectory extends ODurableComponent {
 
       assert firstEntry != null;
 
-      diskCache.pinPage(firstEntry);
+      pinPage(atomicOperation, firstEntry, diskCache);
       diskCache.release(firstEntry);
 
       final int filledUpTo = (int) getFilledUpTo(atomicOperation, diskCache, fileId);
@@ -140,7 +140,7 @@ public class OHashTableDirectory extends ODurableComponent {
         final OCacheEntry entry = loadPage(atomicOperation, fileId, i, true, diskCache);
         assert entry != null;
 
-        diskCache.pinPage(entry);
+        pinPage(atomicOperation, entry, diskCache);
         diskCache.release(entry);
 
         entries.add(entry);
@@ -223,7 +223,7 @@ public class OHashTableDirectory extends ODurableComponent {
             OCacheEntry cacheEntry = diskCache.allocateNewPage(fileId);
             assert cacheEntry.getPageIndex() == entries.size() + 1;
 
-            diskCache.pinPage(cacheEntry);
+            pinPage(atomicOperation, cacheEntry, diskCache);
             diskCache.release(cacheEntry);
 
             entries.add(cacheEntry);

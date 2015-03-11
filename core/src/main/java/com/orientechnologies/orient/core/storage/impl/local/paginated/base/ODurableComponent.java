@@ -158,7 +158,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return atomicOperation.loadPage(fileId, pageIndex, diskCache, checkPinnedPages);
   }
 
-  protected static void pinPage(OAtomicOperation atomicOperation, ODiskCache diskCache, OCacheEntry cacheEntry) throws IOException {
+  protected static void pinPage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry, ODiskCache diskCache) throws IOException {
     if (atomicOperation == null)
       diskCache.pinPage(cacheEntry);
     else

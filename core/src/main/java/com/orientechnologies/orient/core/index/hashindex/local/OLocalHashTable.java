@@ -175,7 +175,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         directory.create();
 
         hashStateEntry = diskCache.allocateNewPage(fileStateId);
-        diskCache.pinPage(hashStateEntry);
+        pinPage(atomicOperation, hashStateEntry, diskCache);
 
         hashStateEntry.acquireExclusiveLock();
         try {
@@ -657,7 +657,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
       directory.open();
 
-      diskCache.pinPage(hashStateEntry);
+      pinPage(atomicOperation, hashStateEntry, diskCache);
       try {
         OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(hashStateEntry, getChangesTree(atomicOperation,
             hashStateEntry), false);
