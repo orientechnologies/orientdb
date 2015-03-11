@@ -31,10 +31,8 @@ import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -346,7 +344,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           return null;
 
         V result = null;
-        OCacheEntry cacheEntry = diskCache.load(nullBucketFileId, 0, false);
+        OCacheEntry cacheEntry = loadPage(atomicOperation, nullBucketFileId, 0, false, diskCache);
         try {
           ONullBucket<V> nullBucket = new ONullBucket<V>(cacheEntry, getChangesTree(atomicOperation, cacheEntry), valueSerializer,
               false);
@@ -478,7 +476,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
         V removed = null;
 
-        OCacheEntry cacheEntry = diskCache.load(nullBucketFileId, 0, false);
+        OCacheEntry cacheEntry = loadPage(atomicOperation, nullBucketFileId, 0, false, diskCache);
         if (cacheEntry == null)
           cacheEntry = diskCache.allocateNewPage(nullBucketFileId);
 
@@ -654,7 +652,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
       fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
-      hashStateEntry = diskCache.load(fileStateId, 0, true);
+      hashStateEntry = loadPage(atomicOperation, fileStateId, 0, true, diskCache);
 
       directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
       directory.open();
@@ -693,7 +691,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
       fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
-      hashStateEntry = diskCache.load(fileStateId, 0, true);
+      hashStateEntry = loadPage(atomicOperation, fileStateId, 0, true, diskCache);
 
       assert hashStateEntry != null;
 
@@ -1484,7 +1482,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         cacheEntry = diskCache.allocateNewPage(nullBucketFileId);
         isNew = true;
       } else {
-        cacheEntry = diskCache.load(nullBucketFileId, 0, false);
+        cacheEntry = loadPage(atomicOperation, nullBucketFileId, 0, false, diskCache);
         isNew = false;
       }
 
@@ -2080,7 +2078,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       diskCache.release(hashStateEntry);
     }
 
-    OCacheEntry entry = diskCache.load(fileId, pageIndex, false);
+    OCacheEntry entry = loadPage(atomicOperation, fileId, pageIndex, false, diskCache);
     if (entry == null)
       entry = diskCache.allocateNewPage(fileId);
 
