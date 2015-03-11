@@ -45,10 +45,16 @@ public class OWALChangesTree {
     final List<Node> result = new ArrayList<Node>();
     findIntervals(root, offset, end, result);
 
-    if (result.isEmpty())
+    if (result.isEmpty() && pointer != null)
       return pointer.get(offset, len);
 
-    byte[] value = pointer.get(offset, len);
+    byte[] value;
+
+    if (pointer != null)
+      value = pointer.get(offset, len);
+    else
+      value = new byte[len];
+
     applyChanges(value, offset, end, result);
 
     return value;
@@ -60,10 +66,15 @@ public class OWALChangesTree {
     final List<Node> result = new ArrayList<Node>();
     findIntervals(root, offset, end, result);
 
-    if (result.isEmpty())
+    if (result.isEmpty() && pointer != null)
       return pointer.getShort(offset);
 
-    byte[] value = pointer.get(offset, OShortSerializer.SHORT_SIZE);
+    byte[] value;
+    if (pointer != null)
+      value = pointer.get(offset, OShortSerializer.SHORT_SIZE);
+    else
+      value = new byte[OShortSerializer.SHORT_SIZE];
+
     applyChanges(value, offset, end, result);
 
     return OShortSerializer.INSTANCE.deserializeNative(value, 0);
@@ -75,10 +86,15 @@ public class OWALChangesTree {
     final List<Node> result = new ArrayList<Node>();
     findIntervals(root, offset, end, result);
 
-    if (result.isEmpty())
+    if (result.isEmpty() && pointer != null)
       return pointer.getInt(offset);
 
-    byte[] value = pointer.get(offset, OIntegerSerializer.INT_SIZE);
+    byte[] value;
+    if (pointer != null)
+      value = pointer.get(offset, OIntegerSerializer.INT_SIZE);
+    else
+      value = new byte[OIntegerSerializer.INT_SIZE];
+
     applyChanges(value, offset, end, result);
 
     return OIntegerSerializer.INSTANCE.deserializeNative(value, 0);
@@ -90,10 +106,15 @@ public class OWALChangesTree {
     final List<Node> result = new ArrayList<Node>();
     findIntervals(root, offset, end, result);
 
-    if (result.isEmpty())
+    if (result.isEmpty() && pointer != null)
       return pointer.getLong(offset);
 
-    byte[] value = pointer.get(offset, OLongSerializer.LONG_SIZE);
+    byte[] value;
+    if (pointer != null)
+      value = pointer.get(offset, OLongSerializer.LONG_SIZE);
+    else
+      value = new byte[OLongSerializer.LONG_SIZE];
+
     applyChanges(value, offset, end, result);
 
     return OLongSerializer.INSTANCE.deserializeNative(value, offset);

@@ -22,21 +22,17 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -88,18 +84,15 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   private void init() throws IOException {
-    startAtomicOperation();
+    OAtomicOperation atomicOperation = startAtomicOperation();
     try {
-      boolean isNewPage = false;
-      firstEntry = diskCache.load(fileId, 0, true);
+      firstEntry = loadPage(atomicOperation, fileId, 0, true, diskCache);
 
       if (firstEntry == null) {
         firstEntry = diskCache.allocateNewPage(fileId);
-        isNewPage = true;
         assert firstEntry.getPageIndex() == 0;
       }
 
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
       diskCache.pinPage(firstEntry);
 
       firstEntry.acquireExclusiveLock();
@@ -132,7 +125,7 @@ public class OHashTableDirectory extends ODurableComponent {
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
       fileId = diskCache.openFile(name + defaultExtension);
-      firstEntry = diskCache.load(fileId, 0, true);
+      firstEntry = loadPage(atomicOperation, fileId, 0, true, diskCache);
 
       assert firstEntry != null;
 
@@ -144,7 +137,7 @@ public class OHashTableDirectory extends ODurableComponent {
       entries = new ArrayList<OCacheEntry>(filledUpTo - 1);
 
       for (int i = 1; i < filledUpTo; i++) {
-        final OCacheEntry entry = diskCache.load(fileId, i, true);
+        final OCacheEntry entry = loadPage(atomicOperation, fileId, i, true, diskCache);
         assert entry != null;
 
         diskCache.pinPage(entry);

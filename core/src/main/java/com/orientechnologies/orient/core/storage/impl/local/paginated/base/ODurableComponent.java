@@ -149,4 +149,47 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
     return atomicOperation.filledUpTo(fileId, diskCache);
   }
+
+  protected static OCacheEntry loadPage(OAtomicOperation atomicOperation, long fileId, long pageIndex, boolean checkPinnedPages,
+      ODiskCache diskCache) throws IOException {
+    if (atomicOperation == null)
+      return diskCache.load(fileId, pageIndex, checkPinnedPages);
+
+    return atomicOperation.loadPage(fileId, pageIndex, diskCache, checkPinnedPages);
+  }
+
+  protected static void pinPage(OAtomicOperation atomicOperation, ODiskCache diskCache, OCacheEntry cacheEntry) throws IOException {
+    if (atomicOperation == null)
+      diskCache.pinPage(cacheEntry);
+    else
+      atomicOperation.pinPage(cacheEntry);
+  }
+
+  protected static OCacheEntry addPage(OAtomicOperation atomicOperation, long fileId, ODiskCache diskCache) throws IOException {
+    if (atomicOperation == null)
+      return diskCache.allocateNewPage(fileId);
+
+    return atomicOperation.addPage(fileId, diskCache);
+  }
+
+  protected static void cacheEntry(OAtomicOperation atomicOperation, OCacheEntry cacheEntry, ODiskCache diskCache) {
+    if (atomicOperation == null)
+      diskCache.release(cacheEntry);
+    else
+      atomicOperation.releasePage(cacheEntry, diskCache);
+  }
+
+  protected static long addFile(OAtomicOperation atomicOperation, String fileName, ODiskCache diskCache) throws IOException {
+    if (atomicOperation == null)
+      return diskCache.addFile(fileName);
+
+    return atomicOperation.addFile(fileName, diskCache);
+  }
+
+  protected static long openFile(OAtomicOperation atomicOperation, String fileName, ODiskCache diskCache) throws IOException {
+    if (atomicOperation == null)
+      return diskCache.openFile(fileName);
+
+    return atomicOperation.openFile(fileName, diskCache);
+  }
 }
