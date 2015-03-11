@@ -911,10 +911,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
                 if (record instanceof ODocument)
                   ((ODocument) record).validate();
               }
-
+            }
+            for (ORecordOperation txEntry : tmpEntries)
               // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
               commitEntry(clientTx, txEntry);
-            }
+
           }
 
           if (callback != null)

@@ -430,10 +430,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   protected static void validateLinkCollection(final OProperty property, Collection<Object> values) {
-    if (property.getLinkedClass() != null)
+    if (property.getLinkedClass() != null) {
       for (Object object : values) {
         validateLink(property, object, OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
       }
+    }
   }
 
   protected static void validateType(final OProperty p, final Object value) {
