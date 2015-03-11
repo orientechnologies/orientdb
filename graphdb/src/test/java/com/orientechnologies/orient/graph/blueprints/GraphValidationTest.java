@@ -82,18 +82,21 @@ public class GraphValidationTest {
   public void ok() {
     setupSchema();
     final OrientGraphNoTx graphNoTx = new OrientGraphNoTx(URL, "admin", "admin");
-
-    graphNoTx.addVertex("class:M", "name", "n0");
     try {
-      graphNoTx.addVertex("class:M");
-      throw new RuntimeException("Schema problem was not detected!");
-    } catch (Throwable e) {
-      // This is what happens => OK
-      System.out.println("This is the Message I want to see: \n" + e);
-    }
 
-    graphNoTx.commit();
-    graphNoTx.shutdown();
+      graphNoTx.addVertex("class:M", "name", "n0");
+      try {
+        graphNoTx.addVertex("class:M");
+        throw new RuntimeException("Schema problem was not detected!");
+      } catch (Throwable e) {
+        // This is what happens => OK
+        System.out.println("This is the Message I want to see: \n" + e);
+      }
+
+      graphNoTx.commit();
+    } finally {
+      graphNoTx.shutdown();
+    }
   }
 
   @Test
@@ -101,40 +104,47 @@ public class GraphValidationTest {
     setupSchema();
     final OrientGraphFactory orientGraphFactory = new OrientGraphFactory(URL, "admin", "admin").setupPool(1, 10);
     OrientGraph graph = orientGraphFactory.getTx();
-
-    graph.addVertex("class:M", "name", "n0");
     try {
-      graph.addVertex("class:M");
-      graph.commit();
-      // This is what happens => not OK?
-      throw new RuntimeException("Schema problem was not detected!");
-    } catch (OValidationException e) {
-      System.out.println("This is the Message I want to see: \n" + e);
-    }
 
+      graph.addVertex("class:M", "name", "n0");
+      try {
+        graph.addVertex("class:M");
+        graph.commit();
+        // This is what happens => not OK?
+        throw new RuntimeException("Schema problem was not detected!");
+      } catch (OValidationException e) {
+        System.out.println("This is the Message I want to see: \n" + e);
+      }
+
+    } finally {
+      graph.shutdown();
+    }
   }
 
   private void setupSchema() {
     OrientGraphNoTx graphNoTx = new OrientGraphNoTx(URL, "admin", "admin");
+    try {
 
-    ODatabaseDocumentTx database = graphNoTx.getRawGraph();
-    OSchema oScchema = database.getMetadata().getSchema();
+      ODatabaseDocumentTx database = graphNoTx.getRawGraph();
+      OSchema oScchema = database.getMetadata().getSchema();
 
-    oScchema.getClass("V").setStrictMode(true);
-    oScchema.getClass("E").setStrictMode(true);
+      oScchema.getClass("V").setStrictMode(true);
+      oScchema.getClass("E").setStrictMode(true);
 
-    OrientVertexType CmVertexBaseType = graphNoTx.createVertexType("CmVertexBase", "V");
-    CmVertexBaseType.setStrictMode(true);
+      OrientVertexType CmVertexBaseType = graphNoTx.createVertexType("CmVertexBase", "V");
+      CmVertexBaseType.setStrictMode(true);
 
-    OrientVertexType CmEdgeBaseType = graphNoTx.createVertexType("CmEdgeBase", "V");
-    CmEdgeBaseType.setStrictMode(true);
+      OrientVertexType CmEdgeBaseType = graphNoTx.createVertexType("CmEdgeBase", "V");
+      CmEdgeBaseType.setStrictMode(true);
 
-    OClass mOClass = database.getMetadata().getSchema().createClass("M", database.getMetadata().getSchema().getClass("V"));
-    mOClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
-    mOClass.setStrictMode(true);
+      OClass mOClass = database.getMetadata().getSchema().createClass("M", database.getMetadata().getSchema().getClass("V"));
+      mOClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      mOClass.setStrictMode(true);
 
-    graphNoTx.commit();
-    graphNoTx.shutdown();
+      graphNoTx.commit();
+    } finally {
+      graphNoTx.shutdown();
+    }
   }
 
 }
