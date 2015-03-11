@@ -138,7 +138,7 @@ public class OClusterPositionMap extends ODurableComponent {
       long lastPage = getFilledUpTo(atomicOperation, diskCache, fileId) - 1;
       OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, lastPage, false, diskCache);
       if (cacheEntry == null)
-        cacheEntry = diskCache.allocateNewPage(fileId);
+        cacheEntry = addPage(atomicOperation, fileId, diskCache);
 
       cacheEntry.acquireExclusiveLock();
       try {
@@ -149,7 +149,7 @@ public class OClusterPositionMap extends ODurableComponent {
           cacheEntry.releaseExclusiveLock();
           diskCache.release(cacheEntry);
 
-          cacheEntry = diskCache.allocateNewPage(fileId);
+          cacheEntry = addPage(atomicOperation, fileId, diskCache);
 
           cacheEntry.acquireExclusiveLock();
           bucket = new OClusterPositionMapBucket(cacheEntry, getChangesTree(atomicOperation, cacheEntry));

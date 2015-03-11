@@ -1212,7 +1212,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
     OCacheEntry sysCacheEntry = loadPage(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false, diskCache);
     if (sysCacheEntry == null) {
-      sysCacheEntry = diskCache.allocateNewPage(fileId);
+      sysCacheEntry = addPage(atomicOperation, fileId, diskCache);
       assert sysCacheEntry.getPageIndex() == SYS_BUCKET.getPageIndex();
     }
 
@@ -1241,7 +1241,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
     OCacheEntry sysCacheEntry = loadPage(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false, diskCache);
     if (sysCacheEntry == null) {
-      sysCacheEntry = diskCache.allocateNewPage(fileId);
+      sysCacheEntry = addPage(atomicOperation, fileId, diskCache);
       assert sysCacheEntry.getPageIndex() == SYS_BUCKET.getPageIndex();
     }
 
@@ -1255,7 +1255,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       } else {
         final OBonsaiBucketPointer freeSpacePointer = sysBucket.getFreeSpacePointer();
         if (freeSpacePointer.getPageOffset() + OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES > PAGE_SIZE) {
-          final OCacheEntry cacheEntry = diskCache.allocateNewPage(fileId);
+          final OCacheEntry cacheEntry = addPage(atomicOperation, fileId, diskCache);
           final long pageIndex = cacheEntry.getPageIndex();
           sysBucket.setFreeSpacePointer(new OBonsaiBucketPointer(pageIndex, OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
 

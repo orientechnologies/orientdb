@@ -89,7 +89,7 @@ public class OHashTableDirectory extends ODurableComponent {
       firstEntry = loadPage(atomicOperation, fileId, 0, true, diskCache);
 
       if (firstEntry == null) {
-        firstEntry = diskCache.allocateNewPage(fileId);
+        firstEntry = addPage(atomicOperation, fileId, diskCache);
         assert firstEntry.getPageIndex() == 0;
       }
 
@@ -220,7 +220,7 @@ public class OHashTableDirectory extends ODurableComponent {
           final int localLevel = (nodeIndex - ODirectoryFirstPage.NODES_PER_PAGE) % ODirectoryPage.NODES_PER_PAGE;
 
           while (entries.size() <= pageIndex) {
-            OCacheEntry cacheEntry = diskCache.allocateNewPage(fileId);
+            OCacheEntry cacheEntry = addPage(atomicOperation, fileId, diskCache);
             assert cacheEntry.getPageIndex() == entries.size() + 1;
 
             pinPage(atomicOperation, cacheEntry, diskCache);
