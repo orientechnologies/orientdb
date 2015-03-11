@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.test.ConcurrentTestHelper;
+import com.orientechnologies.orient.test.TestFactory;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -110,7 +111,7 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
   public void concurrentCommands() throws Exception {
 //    System.out.println("Create classes, spanning " + THREADS + " threads...");
 
-    ConcurrentTestHelper.test(THREADS, new ConcurrentTestHelper.TestFactory<Void>() {
+    ConcurrentTestHelper.test(THREADS, new TestFactory<Void>() {
       @Override
       public Callable<Void> createWorker() {
         return new CreateClassCommandExecutor(url);
@@ -128,7 +129,7 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
 
 //    System.out.println("Dropping classes, spanning " + THREADS + " threads...");
 
-    ConcurrentTestHelper.test(THREADS, new ConcurrentTestHelper.TestFactory<Void>() {
+    ConcurrentTestHelper.test(THREADS, new TestFactory<Void>() {
       @Override
       public Callable<Void> createWorker() {
         return new DropClassCommandExecutor(url);

@@ -3,8 +3,6 @@ package com.orientechnologies.orient.test;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
-import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -17,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
+ * @param <T> see {@link TestFactory}
  */
 public class ConcurrentTestHelper<T> {
   private final ExecutorService executor;
@@ -27,7 +26,7 @@ public class ConcurrentTestHelper<T> {
     return go(callables);
   }
 
-  private static <T> Collection<T> go(List<Callable<T>> workers) {
+  protected static <T> Collection<T> go(List<Callable<T>> workers) {
     final ConcurrentTestHelper<T> helper = new ConcurrentTestHelper<T>(workers.size());
 
     helper.submit(workers);
@@ -35,7 +34,7 @@ public class ConcurrentTestHelper<T> {
     return helper.assertSuccess();
   }
 
-  private static <T> List<Callable<T>> prepareWorkers(int threadCount, TestFactory<T> factory) {
+  protected static <T> List<Callable<T>> prepareWorkers(int threadCount, TestFactory<T> factory) {
     final List<Callable<T>> callables = new ArrayList<Callable<T>>(threadCount);
     for (int i = 0; i < threadCount; i++) {
       callables.add(factory.createWorker());
@@ -84,61 +83,4 @@ public class ConcurrentTestHelper<T> {
     this.executor = Executors.newFixedThreadPool(threadCount);
   }
 
-  public interface TestFactory<T> {
-    Callable<T> createWorker();
-  }
-
-  public static class CompositeException extends RuntimeException {
-    private final List<Throwable> causes = new ArrayList<Throwable>();
-
-    public CompositeException(Collection<? extends Throwable> causes) {
-      this.causes.addAll(causes);
-    }
-
-    @Override
-    public void printStackTrace() {
-      if (causes.isEmpty()) {
-        super.printStackTrace();
-        return;
-      }
-      for (Throwable cause : causes) {
-        cause.printStackTrace();
-      }
-    }
-
-    @Override
-    public void printStackTrace(PrintStream s) {
-      if (causes.isEmpty()) {
-        super.printStackTrace(s);
-      } else {
-        for (Throwable cause : causes) {
-          cause.printStackTrace(s);
-        }
-      }
-    }
-
-    @Override
-    public void printStackTrace(PrintWriter s) {
-      if (causes.isEmpty()) {
-        super.printStackTrace(s);
-      } else {
-        for (Throwable cause : causes) {
-          cause.printStackTrace(s);
-        }
-      }
-    }
-  }
-
-  public static class TestBuilder<T> {
-    private List<Callable<T>> workers = new ArrayList<Callable<T>>();
-
-    public TestBuilder<T> add(int threadCount, TestFactory<T> factory) {
-      workers.addAll(prepareWorkers(threadCount, factory));
-      return this;
-    }
-
-    public Collection<T> go() {
-      return ConcurrentTestHelper.go(workers);
-    }
-  }
 }
