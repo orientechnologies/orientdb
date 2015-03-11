@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -163,6 +164,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private boolean                                           initialized       = false;
   private OTransaction                                      currentTx;
   private boolean                                           keepStorageOpen   = false;
+  private ORecordHook[]                                     defaultHooks;
+  private ORecordHook[]                                     distributedHooks;
 
   /**
    * Creates a new connection to the database.
@@ -971,7 +974,23 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           hooks.put(e.getKey(), e.getValue());
       }
     }
+    generateHookArray();
     return (DB) this;
+  }
+
+  private void generateHookArray() {
+    List<ORecordHook> defaults = new ArrayList<ORecordHook>();
+    List<ORecordHook> distributed = new ArrayList<ORecordHook>();
+    for (Map.Entry<ORecordHook, ORecordHook.HOOK_POSITION> oRecordHook : hooks.entrySet()) {
+      if (!getStorage().isDistributed()
+          || oRecordHook.getKey().getDistributedExecutionMode() != ORecordHook.DISTRIBUTED_EXECUTION_MODE.TARGET_NODE)
+        defaults.add(oRecordHook.getKey());
+      if (oRecordHook.getKey().getDistributedExecutionMode() != ORecordHook.DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE)
+        // CHECK IF EXECUTE THE TRIGGER BASED ON STORAGE TYPE: DISTRIBUTED OR NOT
+        distributed.add(oRecordHook.getKey());
+    }
+    this.defaultHooks = defaults.toArray(new ORecordHook[defaults.size()]);
+    this.distributedHooks = distributed.toArray(new ORecordHook[distributed.size()]);
   }
 
   /**
@@ -989,6 +1008,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (iHookImpl != null) {
       iHookImpl.onUnregister();
       hooks.remove(iHookImpl);
+      generateHookArray();
     }
     return (DB) this;
   }
@@ -1030,20 +1050,17 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         return ORecordHook.RESULT.RECORD_NOT_CHANGED;
 
       final OScenarioThreadLocal.RUN_MODE runMode = OScenarioThreadLocal.INSTANCE.get();
+      if (runMode != RUN_MODE.RUNNING_DISTRIBUTED && getStorage().isDistributed())
+        return ORecordHook.RESULT.RECORD_NOT_CHANGED;
+
+      ORecordHook[] hooksToRun = null;
+      if (runMode == RUN_MODE.RUNNING_DISTRIBUTED)
+        hooksToRun = distributedHooks;
+      else
+        hooksToRun = defaultHooks;
 
       boolean recordChanged = false;
-      for (ORecordHook hook : hooks.keySet()) {
-        switch (runMode) {
-        case DEFAULT: // NON_DISTRIBUTED OR PROXIED DB
-          if (getStorage().isDistributed()
-              && hook.getDistributedExecutionMode() == ORecordHook.DISTRIBUTED_EXECUTION_MODE.TARGET_NODE)
-            // SKIP
-            continue;
-          break; // TARGET NODE
-        case RUNNING_DISTRIBUTED:
-          if (hook.getDistributedExecutionMode() == ORecordHook.DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE)
-            continue;
-        }
+      for (ORecordHook hook : hooksToRun) {
 
         final ORecordHook.RESULT res = hook.onTrigger(type, rec);
 
