@@ -438,3 +438,7 @@ span.label-dark {
 .edit-msg {
   position: absolute;
 }
+.edit-msg-remove {
+  position: absolute;
+  right: 10px;
+}

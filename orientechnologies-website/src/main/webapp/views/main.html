@@ -60,30 +60,70 @@
       </div>
     </div>
     <div class="col-md-6">
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h3 class="panel-title">In Progress</h3>
-        </div>
-        <div class="list-group">
-          <div class="list-group-item" ng-repeat="issue in inProgress">
-            <div class="row">
-              <div class="col-md-1">
-                <div class="col-md-6">
-                  <i class="fa fa-check-circle-o" ng-class="'issue-' + issue.state.toLowerCase()"></i>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">In Progress</h3>
+            </div>
+            <div class="list-group">
+              <div class="list-group-item" ng-repeat="issue in inProgress">
+                <div class="row">
+                  <div class="col-md-1">
+                    <div class="col-md-6">
+                      <i class="fa fa-check-circle-o" ng-class="'issue-' + issue.state.toLowerCase()"></i>
+                    </div>
+                  </div>
+                  <div class="col-md-7">
+                    <h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">
+                      {{issue.title}}</a>
+                      <span class="label"
+                            style="background-color: #{{issue.priority.color}}">{{issue.priority.name}}</span>
+                      <span class="label label-default">{{issue.scope.name}}</span>
+                    </h5>
+
+                  </div>
+                  <div class="col-md-4">
+                    <div class="col-md-12">
+                      <div ng-if="issue.assignee">
+                        <avatar dim="20" name="true" user="issue.assignee"></avatar>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="col-md-7">
-                <h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">
-                  {{issue.title}}</a>
-                  <span class="label" style="background-color: #{{issue.priority.color}}">{{issue.priority.name}}</span>
-                  <span class="label label-default">{{issue.scope.name}}</span>
-                </h5>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-12">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Without Assignee</h3>
+            </div>
+            <div class="list-group">
+              <div class="list-group-item" ng-repeat="issue in zombies">
+                <div class="row">
+                  <div class="col-md-1">
+                    <div class="col-md-6">
+                      <i class="fa fa-check-circle-o" ng-class="'issue-' + issue.state.toLowerCase()"></i>
+                    </div>
+                  </div>
+                  <div class="col-md-7">
+                    <h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">
+                      {{issue.title}}</a>
+                      <span class="label"
+                            style="background-color: #{{issue.priority.color}}">{{issue.priority.name}}</span>
+                      <span class="label label-default">{{issue.scope.name}}</span>
+                    </h5>
 
-              </div>
-              <div class="col-md-4">
-                <div class="col-md-12">
-                  <div ng-if="issue.assignee">
-                    <avatar dim="20" name="true" user="issue.assignee"></avatar>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="col-md-12">
+                      {{ issue.createdAt | fromNow}}
+                      <div ng-if="issue.assignee">
+                        <avatar dim="20" name="true" user="issue.assignee"></avatar>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -91,7 +131,11 @@
           </div>
         </div>
       </div>
+
     </div>
+  </div>
+  <div class="row">
+
   </div>
   <div class="row" ng-show="!isMember">
     <div class="col-md-6">

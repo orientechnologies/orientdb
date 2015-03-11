@@ -41,7 +41,7 @@
                 </div>
                 <div class="col-md-3">
                   <label>Verified in Version</label>
-                  <select class="form-control" required ng-model="issue.version"
+                  <select class="form-control"  ng-model="issue.version"
                           ng-options="m.number as m.title for m in milestones"></select>
                 </div>
                 <div class="col-md-3" ng-hide="!isMember">

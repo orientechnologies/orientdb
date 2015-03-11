@@ -295,7 +295,7 @@ public class OrganizationServiceImpl implements OrganizationService {
       message.setSender(SecurityHelper.currentUser());
       message.setUuid(UUID.randomUUID().toString());
       eventManager.pushInternalEvent(ChatMessageSentEvent.EVENT, message);
-      message = messageRepository.save(message);
+      message = messageRepository.saveAndCommit(message);
       return message;
     }
     return null;

@@ -15,44 +15,53 @@ import java.util.Collection;
  */
 public abstract class OrientBaseRepository<T> implements BaseRepository<T> {
 
-    @Autowired
-    protected OrientDBFactory dbFactory;
+  @Autowired
+  protected OrientDBFactory dbFactory;
 
-    public ODocument toDoc(T entity) {
-        return getHolder().toDoc(entity, dbFactory.getGraph());
-    }
+  public ODocument toDoc(T entity) {
+    return getHolder().toDoc(entity, dbFactory.getGraph());
+  }
 
-    public T fromDoc(ODocument doc) {
-        return getHolder().fromDoc(doc, dbFactory.getGraph());
-    }
+  public T fromDoc(ODocument doc) {
+    return getHolder().fromDoc(doc, dbFactory.getGraph());
+  }
 
-    @Override
-    public T save(T entity) {
+  @Override
+  public T save(T entity) {
 
-        OrientGraph graph = dbFactory.getGraph();
-        ODocument doc = graph.getRawGraph().save(toDoc(entity));
-        return fromDoc(doc);
-    }
+    OrientGraph graph = dbFactory.getGraph();
+    ODocument doc = graph.getRawGraph().save(toDoc(entity));
+    return fromDoc(doc);
+  }
 
-    @Override
-    public T load(T entity) {
-        OrientGraph graph = dbFactory.getGraph();
-        ODocument doc = graph.getRawGraph().load(toDoc(entity));
-        return fromDoc(doc);
-    }
+  @Override
+  public T saveAndCommit(T entity) {
 
-    @Override
-    public void save(Collection<T> entities) {
+    OrientGraph graph = dbFactory.getGraph();
+    ODocument doc = graph.getRawGraph().save(toDoc(entity));
+    graph.commit();
+    return fromDoc(doc);
+  }
 
-    }
+  @Override
+  public T load(T entity) {
+    OrientGraph graph = dbFactory.getGraph();
+    ODocument doc = graph.getRawGraph().load(toDoc(entity));
+    return fromDoc(doc);
+  }
 
-    @Override
-    public void delete(T entity) {
-        OrientGraph graph = dbFactory.getGraph();
-        ODocument doc = toDoc(entity);
-        OrientVertex vertex = new OrientVertex(graph, doc);
-        vertex.remove();
-    }
+  @Override
+  public void save(Collection<T> entities) {
 
-    public abstract OTypeHolder<T> getHolder();
+  }
+
+  @Override
+  public void delete(T entity) {
+    OrientGraph graph = dbFactory.getGraph();
+    ODocument doc = toDoc(entity);
+    OrientVertex vertex = new OrientVertex(graph, doc);
+    vertex.remove();
+  }
+
+  public abstract OTypeHolder<T> getHolder();
 }

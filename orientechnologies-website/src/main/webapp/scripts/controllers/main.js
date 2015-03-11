@@ -14,6 +14,7 @@ angular.module('webappApp')
     $scope.issue = {}
     User.whoami().then(function (data) {
       $scope.member = data;
+      $scope.issue.assignee = data;
       if (User.isMember(ORGANIZATION)) {
         $scope.query = 'is:open ' + 'assignee:' + $scope.member.name + " sort:priority-desc";
       } else if (User.isClient(ORGANIZATION)) {
@@ -45,13 +46,24 @@ angular.module('webappApp')
         }).then(function (data) {
           $scope.backlogs = data.content;
         });
-        $scope.queryProgress = 'is:open assignee:' + assignee + " label:\"In Progress\" " + milestone + " sort:priority-desc sort:createdAt-desc";
+        milestone = $scope.issue.milestone ? "milestone:\"" + $scope.issue.milestone.title + "\"" : "";
+        $scope.queryProgress = 'is:open ' + assigneeFilter + " label:\"In Progress\" " + milestone + " sort:priority-desc sort:createdAt-desc";
         Organization.all('board').all("issues").customGET("", {
           q: $scope.queryProgress,
           page: $scope.page
         }).then(function (data) {
           $scope.inProgress = data.content;
         });
+
+        $scope.queryZombies = 'is:open no:assignee sort:createdAt-desc'
+        Organization.all('board').all("issues").customGET("", {
+          q: $scope.queryZombies,
+          page: $scope.page,
+          per_page: 6
+        }).then(function (data) {
+          $scope.zombies = data.content;
+        });
+
       }
 
       $scope.isMember = User.isMember(ORGANIZATION);

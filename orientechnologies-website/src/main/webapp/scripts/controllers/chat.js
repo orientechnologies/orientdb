@@ -234,12 +234,30 @@ angular.module('webappApp')
 angular.module('webappApp').controller('MessageController', function ($scope, Organization) {
 
 
+  $scope.placeholder = "This message was deleted";
+
 
   $scope.owner = $scope.message.sender.name === $scope.currentUser.name;
   $scope.edit = function () {
     $scope.preview = false;
   }
 
+  $scope.timeToChange = function (message) {
+    console.log(message);
+    var input = new Date(parseInt(message.date));
+
+    var then = moment(input);
+
+    var now = moment(new Date());
+
+    var difference = moment.duration(now.diff(then))
+    return difference._data.minutes < 10;
+
+  }
+  $scope.delete = function () {
+    $scope.message.body = null;
+    $scope.patchMessage();
+  }
   $scope.patchMessage = function () {
     Organization.all("clients").one($scope.clientId).all("room").one(encodeURI($scope.message.id.replace("#", ""))).patch({body: $scope.message.body}).then(function (data) {
       $scope.preview = true

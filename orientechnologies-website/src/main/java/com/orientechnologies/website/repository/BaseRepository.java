@@ -9,6 +9,8 @@ public interface BaseRepository<T> {
 
     public T save(T entity);
 
+    public T saveAndCommit(T entity);
+
     public void save(Collection<T> entities);
 
     public Class<T> getEntityClass();

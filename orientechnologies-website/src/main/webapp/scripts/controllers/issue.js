@@ -5,6 +5,20 @@ angular.module('webappApp')
     $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
 
 
+    $scope.sorts = [{
+      name: 'Newest',
+      filter: 'createdAt-desc'
+    }, {
+      name: 'Oldest',
+      filter: 'createdAt-asc'
+    }, {
+      name: 'More Priority',
+      filter: 'priority-desc'
+    }, {
+      name: 'Less Priority',
+      filter: 'priority-asc'
+    }]
+
     $scope.query = 'is:open '
     $scope.page = 1;
     // Query By Example
@@ -25,6 +39,12 @@ angular.module('webappApp')
           $scope.matched[splitted[0]] = splitted[1].replace(/"/g, "");
         }
       })
+      $scope.sorts.forEach(function (s) {
+        if (s.filter == $scope.matched['sort']) {
+          $scope.issue.sort = s;
+        }
+      });
+
     }
     if ($routeParams.page) {
       $scope.page = $routeParams.page;
@@ -228,6 +248,19 @@ angular.module('webappApp')
         $scope.issue.labels.splice(idx, 1);
         $scope.search();
       }
+    });
+    $scope.$on("sort:changed", function (e, sort) {
+      if (sort) {
+        if ($scope.issue.sort) {
+          $scope.query = removeCondition($scope.query, "sort", $scope.issue.sort.filter);
+        }
+        $scope.issue.sort = sort;
+
+        $scope.query = addCondition($scope.query, "sort", sort.filter);
+        $scope.search();
+
+      }
+
     });
     $scope.calculatePages = function (pager) {
 
@@ -441,8 +474,6 @@ angular.module('webappApp')
 
     })
     $scope.$on("label:removed", function (e, label) {
-
-
       Repo.one($scope.repo).all("issues").one(number).one("labels", label.name).remove().then(function () {
         var idx = $scope.issue.labels.indexOf(label);
         $scope.issue.labels.splice(idx, 1);
@@ -655,6 +686,21 @@ angular.module('webappApp')
 
   });
 
+angular.module('webappApp')
+  .controller('ChangeSortCtrl', function ($scope) {
+
+
+    $scope.isSortSelected = function (sort) {
+      return $scope.issue.sort ? sort.name == $scope.issue.sort.name : false;
+    }
+    $scope.toggleSort = function (sort) {
+      if (!$scope.isSortSelected(sort)) {
+        $scope.$emit("sort:changed", sort);
+      }
+      $scope.$hide();
+    }
+
+  });
 angular.module('webappApp').controller('CommentController', function ($scope, Repo) {
   $scope.preview = true;
 

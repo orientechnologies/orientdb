@@ -49,11 +49,13 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
     scope: {
       preview: "=?preview",
       placeholder: "=?placeholder",
+      nullValue: "=?nullValue",
       onSend: '&'
     },
     templateUrl: 'views/vueditor.html',
     controller: function ($scope) {
       $scope.preview = $scope.preview || true
+
     },
     link: function (scope, elem, attrs, ngModel) {
       var editor;
@@ -98,8 +100,10 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
               })
             }
           })
+
           scope.placeholder = scope.placeholder || 'Leave a comment'
           var defaultVal = scope.preview ? 'No description' : '';
+          defaultVal = scope.nullValue ? scope.nullValue : defaultVal;
           var elementArea = elem[0];
 
           $(elementArea).focus();
@@ -128,7 +132,6 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
             scope.sending = val;
 
 
-
           })
           editor.$watch('$data.input', function (newVal, oldval) {
             ngModel.$setViewValue(newVal);
@@ -136,6 +139,7 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
           });
         } else {
           var defaultVal = scope.preview ? 'No description' : '';
+          defaultVal = scope.nullValue ? scope.nullValue : defaultVal;
           editor.$data.input = value || defaultVal
         }
 
