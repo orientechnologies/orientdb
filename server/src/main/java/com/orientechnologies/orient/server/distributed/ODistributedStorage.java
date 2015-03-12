@@ -599,7 +599,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         // REPLICATE IT
         final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new OUpdateRecordTask(
-            iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version, iContent, iVersion),
+            iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version, iContent, iVersion, iRecordType),
             EXECUTION_MODE.RESPONSE);
 
         if (result instanceof ONeedRetryException)
@@ -627,7 +627,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
             new OUpdateRecordTask(iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version,
-                iContent, iVersion)));
+                iContent, iVersion, iRecordType)));
       }
 
       return localResult;
@@ -861,7 +861,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               throw new OTransactionException("Cannot update record '" + rid + "' because has been deleted");
 
             task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
-                record.toStream(), record.getRecordVersion());
+                record.toStream(), record.getRecordVersion(), ORecordInternal.getRecordType(record));
             break;
 
           case ORecordOperation.DELETED:
