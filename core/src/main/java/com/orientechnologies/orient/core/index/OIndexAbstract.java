@@ -279,6 +279,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
           OLogManager.instance()
               .warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(), rid);
           try {
+            indexEngine.deleteWithoutLoad(name);
+            indexEngine.create(name, indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
+                determineValueSerializer(), isAutomatic());
+
             rebuild();
           } catch (Throwable t) {
             OLogManager.instance().error(this,
@@ -380,15 +384,12 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         rebuilding = true;
 
         try {
-          indexEngine.deleteWithoutLoad(name);
+          indexEngine.clear();
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during index %s delete .", name);
+          OLogManager.instance().error(this, "Error during index %s clear .", name);
         }
 
         removeValuesContainer();
-
-        indexEngine.create(name, indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
-            determineValueSerializer(), isAutomatic());
 
         long documentNum = 0;
         long documentTotal = 0;
