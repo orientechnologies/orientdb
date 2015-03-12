@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
@@ -77,11 +78,20 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying();
     try {
-      ODiskCache diskCache = storage.getDiskCache();
-      if (diskCache.exists(fileName))
-        return diskCache.openFile(fileName);
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
-      return diskCache.addFile(fileName);
+      final ODiskCache diskCache = storage.getDiskCache();
+      if (diskCache.exists(fileName)) {
+        if (atomicOperation == null)
+          return diskCache.openFile(fileName);
+
+        return atomicOperation.openFile(fileName, diskCache);
+      }
+
+      if (atomicOperation == null)
+        return diskCache.addFile(fileName);
+
+      return atomicOperation.addFile(fileName, diskCache);
     } catch (IOException e) {
       throw new OSBTreeException("Error creation of sbtree with name " + fileName, e);
     }

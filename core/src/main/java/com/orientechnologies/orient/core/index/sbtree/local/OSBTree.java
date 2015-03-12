@@ -128,14 +128,13 @@ public class OSBTree<K, V> extends ODurableComponent {
       this.valueSerializer = valueSerializer;
       this.nullPointerSupport = nullPointerSupport;
 
-      fileId = diskCache.addFile(name + dataFileExtension);
+      OAtomicOperation atomicOperation = storageLocal.getAtomicOperationsManager().getCurrentOperation();
+      fileId = addFile(atomicOperation, name + dataFileExtension, diskCache);
 
       if (nullPointerSupport)
-        nullBucketFileId = diskCache.addFile(name + nullFileExtension);
+        nullBucketFileId = addFile(atomicOperation, name + nullFileExtension, diskCache);
 
       initDurableComponent(storageLocal);
-
-      OAtomicOperation atomicOperation = storageLocal.getAtomicOperationsManager().getCurrentOperation();
 
       OCacheEntry rootCacheEntry = addPage(atomicOperation, fileId, diskCache);
       rootCacheEntry.acquireExclusiveLock();
@@ -439,12 +438,13 @@ public class OSBTree<K, V> extends ODurableComponent {
   public void deleteWithoutLoad(String name, OAbstractPaginatedStorage storageLocal) {
     acquireExclusiveLock();
     try {
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
       final ODiskCache diskCache = storageLocal.getDiskCache();
 
-      final long fileId = diskCache.openFile(name + dataFileExtension);
+      final long fileId = openFile(atomicOperation, name + dataFileExtension, diskCache);
       diskCache.deleteFile(fileId);
 
-      final long nullFileId = diskCache.openFile(name + nullFileExtension);
+      final long nullFileId = openFile(atomicOperation, name + nullFileExtension, diskCache);
       diskCache.deleteFile(nullFileId);
     } catch (IOException ioe) {
       throw new OSBTreeException("Exception during deletion of sbtree " + name, ioe);
@@ -466,9 +466,11 @@ public class OSBTree<K, V> extends ODurableComponent {
       this.name = name;
       this.nullPointerSupport = nullPointerSupport;
 
-      fileId = diskCache.openFile(name + dataFileExtension);
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+
+      fileId = openFile(atomicOperation, name + dataFileExtension, diskCache);
       if (nullPointerSupport)
-        nullBucketFileId = diskCache.openFile(name + nullFileExtension);
+        nullBucketFileId = openFile(atomicOperation, name + nullFileExtension, diskCache);
 
       this.keySerializer = keySerializer;
       this.valueSerializer = (OBinarySerializer<V>) valueSerializer;

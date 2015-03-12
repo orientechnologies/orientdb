@@ -157,9 +157,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       acquireExclusiveLock();
       try {
-        fileId = diskCache.addFile(name + DEF_EXTENSION);
+        OAtomicOperation atomicOperation = startAtomicOperation();
 
-        startAtomicOperation();
+        fileId = addFile(atomicOperation, name + DEF_EXTENSION, diskCache);
 
         initCusterState();
 
@@ -188,10 +188,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       acquireExclusiveLock();
       try {
-        OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-        fileId = diskCache.openFile(name + DEF_EXTENSION);
-        pinnedStateEntry = loadPage(atomicOperation, fileId, 0, false, diskCache);
+        final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+        fileId = openFile(atomicOperation, name + DEF_EXTENSION, diskCache);
 
+        pinnedStateEntry = loadPage(atomicOperation, fileId, 0, false, diskCache);
         try {
           pinPage(atomicOperation, pinnedStateEntry, diskCache);
         } finally {

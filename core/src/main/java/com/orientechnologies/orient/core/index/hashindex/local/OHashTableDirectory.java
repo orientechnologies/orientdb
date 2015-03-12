@@ -68,11 +68,10 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   public void create() throws IOException {
-    startAtomicOperation();
+    OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      fileId = diskCache.addFile(name + defaultExtension);
-      logFileCreation(name + defaultExtension, fileId);
+      fileId = addFile(atomicOperation, name + defaultExtension, diskCache);
       init();
       endAtomicOperation(false);
     } catch (Throwable e) {
@@ -124,7 +123,7 @@ public class OHashTableDirectory extends ODurableComponent {
     try {
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
-      fileId = diskCache.openFile(name + defaultExtension);
+      fileId = openFile(atomicOperation, name + defaultExtension, diskCache);
       firstEntry = loadPage(atomicOperation, fileId, 0, true, diskCache);
 
       assert firstEntry != null;
@@ -171,7 +170,8 @@ public class OHashTableDirectory extends ODurableComponent {
   public void deleteWithoutOpen() throws IOException {
     acquireExclusiveLock();
     try {
-      fileId = diskCache.openFile(name + defaultExtension);
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      fileId = openFile(atomicOperation, name + defaultExtension, diskCache);
       diskCache.deleteFile(fileId);
     } finally {
       releaseExclusiveLock();
@@ -590,12 +590,5 @@ public class OHashTableDirectory extends ODurableComponent {
       return null;
 
     return super.startAtomicOperation();
-  }
-
-  protected void logFileCreation(String fileName, long fileId) throws IOException {
-    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return;
-
-    throw new UnsupportedOperationException();
   }
 }
