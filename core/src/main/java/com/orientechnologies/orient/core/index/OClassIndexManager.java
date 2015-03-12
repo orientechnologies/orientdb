@@ -20,23 +20,9 @@
 
 package com.orientechnologies.orient.core.index;
 
-import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
-import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
@@ -54,6 +40,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.*;
+
+import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
+import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
 
 /**
  * Handles indexing when records change.
@@ -289,6 +280,122 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     return false;
   }
 
+  private static ODocument checkForLoading(final ODocument iRecord) {
+    if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+      try {
+        return (ODocument) iRecord.load();
+      } catch (final ORecordNotFoundException e) {
+        throw new OIndexException("Error during loading of record with id : " + iRecord.getIdentity());
+      }
+    }
+    return iRecord;
+  }
+
+  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
+  }
+
+  @Override
+  public RESULT onRecordBeforeCreate(final ODocument document) {
+    final ODocument replaced = checkIndexes(document, BEFORE_CREATE);
+    if (replaced != null) {
+      OHookReplacedRecordThreadLocal.INSTANCE.set(replaced);
+      return RESULT.RECORD_REPLACED;
+    }
+    return RESULT.RECORD_NOT_CHANGED;
+  }
+
+  @Override
+  public void onRecordAfterCreate(final ODocument iDocument) {
+    addIndexesEntries(iDocument);
+  }
+
+  @Override
+  public void onRecordCreateFailed(final ODocument iDocument) {
+  }
+
+  @Override
+  public void onRecordCreateReplicated(final ODocument iDocument) {
+  }
+
+  @Override
+  public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
+    checkIndexes(iDocument, BEFORE_UPDATE);
+    return RESULT.RECORD_NOT_CHANGED;
+  }
+
+  @Override
+  public void onRecordAfterUpdate(ODocument iDocument) {
+    iDocument = checkForLoading(iDocument);
+
+    final OClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
+    if (cls == null)
+      return;
+
+    final Collection<OIndex<?>> indexes = cls.getIndexes();
+
+    if (!indexes.isEmpty()) {
+      final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iDocument.getDirtyFields()));
+
+      if (!dirtyFields.isEmpty()) {
+        for (final OIndex<?> index : indexes) {
+          if (index.getDefinition() instanceof OCompositeIndexDefinition)
+            processCompositeIndexUpdate(index, dirtyFields, iDocument);
+          else
+            processSingleIndexUpdate(index, dirtyFields, iDocument);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void onRecordUpdateFailed(final ODocument iDocument) {
+  }
+
+  @Override
+  public void onRecordUpdateReplicated(final ODocument iDocument) {
+  }
+
+  @Override
+  public RESULT onRecordBeforeDelete(final ODocument iDocument) {
+    final ORecordVersion version = iDocument.getRecordVersion(); // Cache the transaction-provided value
+    if (iDocument.fields() == 0 && iDocument.getIdentity().isPersistent()) {
+      // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
+      iDocument.reload();
+      if (version.getCounter() > -1 && iDocument.getRecordVersion().compareTo(version) != 0) // check for record version errors
+        if (OFastConcurrentModificationException.enabled())
+          throw OFastConcurrentModificationException.instance();
+        else
+          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getRecordVersion(), version,
+              ORecordOperation.DELETED);
+    }
+
+    return RESULT.RECORD_NOT_CHANGED;
+  }
+
+  @Override
+  public void onRecordAfterDelete(final ODocument iDocument) {
+    deleteIndexEntries(iDocument);
+  }
+
+  @Override
+  public void onRecordDeleteFailed(final ODocument iDocument) {
+  }
+
+  @Override
+  public void onRecordDeleteReplicated(final ODocument iDocument) {
+  }
+
+  @Override
+  public void onRecordFinalizeUpdate(ODocument document) {
+    unlockKeys();
+  }
+
+  @Override
+  public void onRecordFinalizeCreation(ODocument document) {
+    unlockKeys();
+  }
+
   private ODocument checkIndexedPropertiesOnCreation(final ODocument record, final Collection<OIndex<?>> indexes) {
     ODocument replaced = null;
 
@@ -415,112 +522,6 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     return object;
   }
 
-  private static ODocument checkForLoading(final ODocument iRecord) {
-    if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-      try {
-        return (ODocument) iRecord.load();
-      } catch (final ORecordNotFoundException e) {
-        throw new OIndexException("Error during loading of record with id : " + iRecord.getIdentity());
-      }
-    }
-    return iRecord;
-  }
-
-  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
-  }
-
-  @Override
-  public RESULT onRecordBeforeCreate(final ODocument document) {
-    final ODocument replaced = checkIndexes(document, BEFORE_CREATE);
-    if (replaced != null) {
-      OHookReplacedRecordThreadLocal.INSTANCE.set(replaced);
-      return RESULT.RECORD_REPLACED;
-    }
-    return RESULT.RECORD_NOT_CHANGED;
-  }
-
-  @Override
-  public void onRecordAfterCreate(final ODocument iDocument) {
-    addIndexesEntries(iDocument);
-  }
-
-  @Override
-  public void onRecordCreateFailed(final ODocument iDocument) {
-  }
-
-  @Override
-  public void onRecordCreateReplicated(final ODocument iDocument) {
-  }
-
-  @Override
-  public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
-    checkIndexes(iDocument, BEFORE_UPDATE);
-    return RESULT.RECORD_NOT_CHANGED;
-  }
-
-  @Override
-  public void onRecordAfterUpdate(ODocument iDocument) {
-    iDocument = checkForLoading(iDocument);
-
-    final OClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
-    if (cls == null)
-      return;
-
-    final Collection<OIndex<?>> indexes = cls.getIndexes();
-
-    if (!indexes.isEmpty()) {
-      final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iDocument.getDirtyFields()));
-
-      if (!dirtyFields.isEmpty()) {
-        for (final OIndex<?> index : indexes) {
-          if (index.getDefinition() instanceof OCompositeIndexDefinition)
-            processCompositeIndexUpdate(index, dirtyFields, iDocument);
-          else
-            processSingleIndexUpdate(index, dirtyFields, iDocument);
-        }
-      }
-    }
-  }
-
-  @Override
-  public void onRecordUpdateFailed(final ODocument iDocument) {
-  }
-
-  @Override
-  public void onRecordUpdateReplicated(final ODocument iDocument) {
-  }
-
-  @Override
-  public RESULT onRecordBeforeDelete(final ODocument iDocument) {
-    final ORecordVersion version = iDocument.getRecordVersion(); // Cache the transaction-provided value
-    if (iDocument.fields() == 0 && iDocument.getIdentity().isPersistent()) {
-      // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
-      iDocument.reload();
-      if (version.getCounter() > -1 && iDocument.getRecordVersion().compareTo(version) != 0) // check for record version errors
-        if (OFastConcurrentModificationException.enabled())
-          throw OFastConcurrentModificationException.instance();
-        else
-          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getRecordVersion(), version,
-              ORecordOperation.DELETED);
-    }
-
-    return RESULT.RECORD_NOT_CHANGED;
-  }
-
-  @Override
-  public void onRecordAfterDelete(final ODocument iDocument) {
-    deleteIndexEntries(iDocument);
-  }
-
-  @Override
-  public void onRecordDeleteFailed(final ODocument iDocument) {
-  }
-
-  @Override
-  public void onRecordDeleteReplicated(final ODocument iDocument) {
-  }
-
   private void addIndexesEntries(ODocument document) {
     document = checkForLoading(document);
 
@@ -541,13 +542,14 @@ public class OClassIndexManager extends ODocumentHookAbstract {
           try {
             index.put(key, rid);
           } catch (ORecordDuplicatedException e) {
-            if (!database.getTransaction().isActive()) {
+            final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+            if (database != null && !database.getTransaction().isActive()) {
+              // DELETE THE RECORD
               database.delete(document);
             }
             throw e;
           }
       }
-
     }
   }
 
@@ -608,16 +610,6 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     }
 
     return replaced;
-  }
-
-  @Override
-  public void onRecordFinalizeUpdate(ODocument document) {
-    unlockKeys();
-  }
-
-  @Override
-  public void onRecordFinalizeCreation(ODocument document) {
-    unlockKeys();
   }
 
   private void unlockKeys() {
