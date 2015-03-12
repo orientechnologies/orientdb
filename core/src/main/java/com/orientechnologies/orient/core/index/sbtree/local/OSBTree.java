@@ -148,7 +148,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       } finally {
         rootCacheEntry.releaseExclusiveLock();
-        diskCache.release(rootCacheEntry);
+        releasePage(atomicOperation, rootCacheEntry, diskCache);
       }
 
       super.endAtomicOperation(false);
@@ -195,7 +195,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           OSBTreeBucket.SBTreeEntry<K, V> treeEntry = keyBucket.getEntry(bucketSearchResult.itemIndex);
           return readValue(treeEntry.value);
         } finally {
-          diskCache.release(keyBucketCacheEntry);
+          releasePage(atomicOperation, keyBucketCacheEntry, diskCache);
         }
       } else {
         if (getFilledUpTo(atomicOperation, diskCache, nullBucketFileId) == 0)
@@ -211,7 +211,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
           return readValue(treeValue);
         } finally {
-          diskCache.release(nullBucketCacheEntry);
+          releasePage(atomicOperation, nullBucketCacheEntry, diskCache);
         }
       }
     } catch (IOException e) {
@@ -262,7 +262,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
             if (updateResult >= 0) {
               keyBucketCacheEntry.releaseExclusiveLock();
-              diskCache.release(keyBucketCacheEntry);
+              releasePage(atomicOperation, keyBucketCacheEntry, diskCache);
 
               endAtomicOperation(false);
               return;
@@ -283,7 +283,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
           while (!keyBucket.addEntry(insertionIndex, new OSBTreeBucket.SBTreeEntry<K, V>(-1, -1, key, treeValue), true)) {
             keyBucketCacheEntry.releaseExclusiveLock();
-            diskCache.release(keyBucketCacheEntry);
+            releasePage(atomicOperation, keyBucketCacheEntry, diskCache);
 
             bucketSearchResult = splitBucket(bucketSearchResult.path, insertionIndex, key);
 
@@ -297,7 +297,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           }
 
           keyBucketCacheEntry.releaseExclusiveLock();
-          diskCache.release(keyBucketCacheEntry);
+          releasePage(atomicOperation, keyBucketCacheEntry, diskCache);
 
           if (sizeDiff != 0)
             setSize(size() + sizeDiff);
@@ -342,7 +342,7 @@ public class OSBTree<K, V> extends ODurableComponent {
             nullBucket.setValue(treeValue);
           } finally {
             cacheEntry.releaseExclusiveLock();
-            diskCache.release(cacheEntry);
+            releasePage(atomicOperation, cacheEntry, diskCache);
           }
 
           sizeDiff++;
@@ -405,7 +405,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       } finally {
         cacheEntry.releaseExclusiveLock();
-        diskCache.release(cacheEntry);
+        releasePage(atomicOperation, cacheEntry, diskCache);
       }
 
       endAtomicOperation(false);
@@ -492,7 +492,7 @@ public class OSBTree<K, V> extends ODurableComponent {
             getChangesTree(atomicOperation, rootCacheEntry));
         return rootBucket.getTreeSize();
       } finally {
-        diskCache.release(rootCacheEntry);
+        releasePage(atomicOperation, rootCacheEntry, diskCache);
       }
     } catch (IOException e) {
       throw new OSBTreeException("Error during retrieving of size of index " + name);
@@ -537,7 +537,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           throw new OSBTreeException(e);
         } finally {
           keyBucketCacheEntry.releaseExclusiveLock();
-          diskCache.release(keyBucketCacheEntry);
+          releasePage(atomicOperation, keyBucketCacheEntry, diskCache);
         }
       } else {
         OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
@@ -561,7 +561,7 @@ public class OSBTree<K, V> extends ODurableComponent {
             nullBucket.removeValue();
           } finally {
             nullCacheEntry.releaseExclusiveLock();
-            diskCache.release(nullCacheEntry);
+            releasePage(atomicOperation, nullCacheEntry, diskCache);
           }
 
           if (removedValue != null)
@@ -627,7 +627,7 @@ public class OSBTree<K, V> extends ODurableComponent {
             atomicOperation, cacheEntry));
         return bucket.getKey(searchResult.itemIndex);
       } finally {
-        diskCache.release(cacheEntry);
+        releasePage(atomicOperation, cacheEntry, diskCache);
       }
     } catch (IOException e) {
       throw new OSBTreeException("Error during finding first key in sbtree [" + name + "]");
@@ -650,7 +650,7 @@ public class OSBTree<K, V> extends ODurableComponent {
             atomicOperation, cacheEntry));
         return bucket.getKey(searchResult.itemIndex);
       } finally {
-        diskCache.release(cacheEntry);
+        releasePage(atomicOperation, cacheEntry, diskCache);
       }
     } catch (IOException e) {
       throw new OSBTreeException("Error during finding last key in sbtree [" + name + "]");
@@ -744,7 +744,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         OSBTreeValuePage valuePage = new OSBTreeValuePage(valueEntry, getChangesTree(atomicOperation, valueEntry), false);
         nextPage = valuePage.getNextPage();
       } finally {
-        diskCache.release(valueEntry);
+        releasePage(atomicOperation, valueEntry, diskCache);
       }
 
       removeValuePage(removedLink);
@@ -765,7 +765,7 @@ public class OSBTree<K, V> extends ODurableComponent {
       rootBucket.setValuesFreeListFirstIndex(pageIndex);
     } finally {
       rootCacheEntry.releaseExclusiveLock();
-      diskCache.release(rootCacheEntry);
+      releasePage(atomicOperation, rootCacheEntry, diskCache);
     }
 
     OCacheEntry valueEntry = loadPage(atomicOperation, fileId, pageIndex, false, diskCache);
@@ -775,7 +775,7 @@ public class OSBTree<K, V> extends ODurableComponent {
       valuePage.setNextFreeListPage(prevFreeListItem);
     } finally {
       valueEntry.releaseExclusiveLock();
-      diskCache.release(valueEntry);
+      releasePage(atomicOperation, valueEntry, diskCache);
     }
   }
 
@@ -808,7 +808,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
     } finally {
       cacheEntry.releaseExclusiveLock();
-      diskCache.release(cacheEntry);
+      releasePage(atomicOperation, cacheEntry, diskCache);
     }
 
     long prevPage = valueLink;
@@ -831,7 +831,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       } finally {
         cacheEntry.releaseExclusiveLock();
-        diskCache.release(cacheEntry);
+        releasePage(atomicOperation, cacheEntry, diskCache);
       }
 
       OCacheEntry prevPageCacheEntry = loadPage(atomicOperation, fileId, prevPage, false, diskCache);
@@ -843,7 +843,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       } finally {
         prevPageCacheEntry.releaseExclusiveLock();
-        diskCache.release(prevPageCacheEntry);
+        releasePage(atomicOperation, prevPageCacheEntry, diskCache);
       }
 
       prevPage = cacheEntry.getPageIndex();
@@ -864,7 +864,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       freeListFirstIndex = rootBucket.getValuesFreeListFirstIndex();
     } finally {
-      diskCache.release(rootCacheEntry);
+      releasePage(atomicOperation, rootCacheEntry, diskCache);
     }
 
     if (freeListFirstIndex >= 0) {
@@ -883,13 +883,13 @@ public class OSBTree<K, V> extends ODurableComponent {
           rootBucket.setValuesFreeListFirstIndex(nextFreeListIndex);
         } finally {
           rootCacheEntry.releaseExclusiveLock();
-          diskCache.release(rootCacheEntry);
+          releasePage(atomicOperation, rootCacheEntry, diskCache);
         }
 
         valuePage.setNextFreeListPage(-1);
       } finally {
         freePageEntry.releaseExclusiveLock();
-        diskCache.release(freePageEntry);
+        releasePage(atomicOperation, freePageEntry, diskCache);
       }
 
       return freePageEntry.getPageIndex();
@@ -916,7 +916,7 @@ public class OSBTree<K, V> extends ODurableComponent {
       rootBucket.setTreeSize(size);
     } finally {
       rootCacheEntry.releaseExclusiveLock();
-      diskCache.release(rootCacheEntry);
+      releasePage(atomicOperation, rootCacheEntry, diskCache);
     }
   }
 
@@ -1103,14 +1103,14 @@ public class OSBTree<K, V> extends ODurableComponent {
           }
         }
 
-        diskCache.release(cacheEntry);
+        releasePage(atomicOperation, cacheEntry, diskCache);
         cacheEntry = loadPage(atomicOperation, fileId, bucketIndex, false, diskCache);
 
         bucket = new OSBTreeBucket<K, V>(cacheEntry, keySerializer, keyTypes, valueSerializer, getChangesTree(atomicOperation,
             cacheEntry));
       }
     } finally {
-      diskCache.release(cacheEntry);
+      releasePage(atomicOperation, cacheEntry, diskCache);
     }
   }
 
@@ -1169,7 +1169,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           }
         }
 
-        diskCache.release(cacheEntry);
+        releasePage(atomicOperation, cacheEntry, diskCache);
         cacheEntry = loadPage(atomicOperation, fileId, bucketIndex, false, diskCache);
 
         bucket = new OSBTreeBucket<K, V>(cacheEntry, keySerializer, keyTypes, valueSerializer, getChangesTree(atomicOperation,
@@ -1178,7 +1178,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           itemIndex = bucket.size() - 1;
       }
     } finally {
-      diskCache.release(cacheEntry);
+      releasePage(atomicOperation, cacheEntry, diskCache);
     }
   }
 
@@ -1302,7 +1302,7 @@ public class OSBTree<K, V> extends ODurableComponent {
       }
     } finally {
       bucketEntry.releaseExclusiveLock();
-      diskCache.release(bucketEntry);
+      releasePage(atomicOperation, bucketEntry, diskCache);
     }
   }
 
@@ -1337,7 +1337,7 @@ public class OSBTree<K, V> extends ODurableComponent {
             rightSiblingBucket.setLeftSibling(rightBucketEntry.getPageIndex());
           } finally {
             rightSiblingBucketEntry.releaseExclusiveLock();
-            diskCache.release(rightSiblingBucketEntry);
+            releasePage(atomicOperation, rightSiblingBucketEntry, diskCache);
           }
         }
       }
@@ -1357,7 +1357,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         insertionIndex = -insertionIndex - 1;
         while (!parentBucket.addEntry(insertionIndex, parentEntry, true)) {
           parentCacheEntry.releaseExclusiveLock();
-          diskCache.release(parentCacheEntry);
+          releasePage(atomicOperation, parentCacheEntry, diskCache);
 
           BucketSearchResult bucketSearchResult = splitBucket(path.subList(0, path.size() - 1), insertionIndex, separationKey);
 
@@ -1373,12 +1373,12 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       } finally {
         parentCacheEntry.releaseExclusiveLock();
-        diskCache.release(parentCacheEntry);
+        releasePage(atomicOperation, parentCacheEntry, diskCache);
       }
 
     } finally {
       rightBucketEntry.releaseExclusiveLock();
-      diskCache.release(rightBucketEntry);
+      releasePage(atomicOperation, rightBucketEntry, diskCache);
     }
 
     ArrayList<Long> resultPath = new ArrayList<Long>(path.subList(0, path.size() - 1));
@@ -1423,7 +1423,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
     } finally {
       leftBucketEntry.releaseExclusiveLock();
-      diskCache.release(leftBucketEntry);
+      releasePage(atomicOperation, leftBucketEntry, diskCache);
     }
 
     rightBucketEntry.acquireExclusiveLock();
@@ -1436,7 +1436,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         newRightBucket.setLeftSibling(leftBucketEntry.getPageIndex());
     } finally {
       rightBucketEntry.releaseExclusiveLock();
-      diskCache.release(rightBucketEntry);
+      releasePage(atomicOperation, rightBucketEntry, diskCache);
     }
 
     bucketToSplit = new OSBTreeBucket<K, V>(bucketEntry, false, keySerializer, keyTypes, valueSerializer, getChangesTree(
@@ -1495,7 +1495,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         }
 
       } finally {
-        diskCache.release(bucketEntry);
+        releasePage(atomicOperation, bucketEntry, diskCache);
       }
 
       if (comparator.compare(key, entry.key) >= 0)
@@ -1547,14 +1547,14 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       long nextPage = valuePage.getNextPage();
       if (nextPage >= 0) {
-        diskCache.release(cacheEntry);
+        releasePage(atomicOperation, cacheEntry, diskCache);
         cacheEntry = loadPage(atomicOperation, fileId, nextPage, false, diskCache);
 
         valuePage = new OSBTreeValuePage(cacheEntry, getChangesTree(atomicOperation, cacheEntry), false);
       }
     }
 
-    diskCache.release(cacheEntry);
+    releasePage(atomicOperation, cacheEntry, diskCache);
 
     return valueSerializer.deserializeNativeObject(value, 0);
   }
@@ -1690,7 +1690,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
             keysCache.add(entry.getKey());
           } finally {
-            diskCache.release(cacheEntry);
+            releasePage(atomicOperation, cacheEntry, diskCache);
           }
         }
       } catch (IOException e) {
@@ -1787,7 +1787,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
             dataCache.add(entry);
           } finally {
-            diskCache.release(cacheEntry);
+            releasePage(atomicOperation, cacheEntry, diskCache);
           }
         }
       } catch (IOException e) {
@@ -1883,7 +1883,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
             dataCache.add(entry);
           } finally {
-            diskCache.release(cacheEntry);
+            releasePage(atomicOperation, cacheEntry, diskCache);
           }
         }
       } catch (IOException e) {

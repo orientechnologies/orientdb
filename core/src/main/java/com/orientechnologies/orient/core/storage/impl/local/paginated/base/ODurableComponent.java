@@ -172,7 +172,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return atomicOperation.addPage(fileId, diskCache);
   }
 
-  protected static void cacheEntry(OAtomicOperation atomicOperation, OCacheEntry cacheEntry, ODiskCache diskCache) {
+  protected static void releasePage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry, ODiskCache diskCache) {
     if (atomicOperation == null)
       diskCache.release(cacheEntry);
     else

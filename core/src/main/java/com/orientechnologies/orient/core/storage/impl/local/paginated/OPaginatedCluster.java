@@ -195,7 +195,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         try {
           pinPage(atomicOperation, pinnedStateEntry, diskCache);
         } finally {
-          diskCache.release(pinnedStateEntry);
+          releasePage(atomicOperation, pinnedStateEntry, diskCache);
         }
 
         clusterPositionMap.open();
@@ -473,7 +473,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
                   prevPage.setRecordLongValue(prevPageRecordPosition, -OLongSerializer.LONG_SIZE, addedPagePointer);
                 } finally {
                   prevPageCacheEntry.releaseExclusiveLock();
-                  diskCache.release(prevPageCacheEntry);
+                  releasePage(atomicOperation, prevPageCacheEntry, diskCache);
                 }
               }
 
@@ -528,7 +528,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         recordVersion = localPage.getRecordVersion(recordPosition);
       } finally {
-        diskCache.release(cacheEntry);
+        releasePage(atomicOperation, cacheEntry, diskCache);
       }
 
       byte[] fullContent = readFullEntry(clusterPosition, pageIndex, recordPosition);
@@ -613,7 +613,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             nextPagePointer = OLongSerializer.INSTANCE.deserializeNative(content, content.length - OLongSerializer.LONG_SIZE);
           } finally {
             cacheEntry.releaseExclusiveLock();
-            diskCache.release(cacheEntry);
+            releasePage(atomicOperation, cacheEntry, diskCache);
           }
 
           updateFreePagesIndex(initialFreePageIndex, pageIndex);
@@ -793,7 +793,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
                   prevPage.setRecordLongValue(prevPageRecordPosition, -OLongSerializer.LONG_SIZE, pagePointer);
                 } finally {
                   prevPageCacheEntry.releaseExclusiveLock();
-                  diskCache.release(prevPageCacheEntry);
+                  releasePage(atomicOperation, prevPageCacheEntry, diskCache);
                 }
               }
 
@@ -806,7 +806,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
               pagePointer = nextPagePointer;
             } finally {
               cacheEntry.releaseExclusiveLock();
-              diskCache.release(cacheEntry);
+              releasePage(atomicOperation, cacheEntry, diskCache);
             }
 
             updateFreePagesIndex(freePageIndex, pageIndex);
@@ -846,7 +846,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
                 prevPage.setRecordLongValue(prevPageRecordPosition, -OLongSerializer.LONG_SIZE, addedPagePointer);
               } finally {
                 prevPageCacheEntry.releaseExclusiveLock();
-                diskCache.release(prevPageCacheEntry);
+                releasePage(atomicOperation, prevPageCacheEntry, diskCache);
               }
             }
 
@@ -949,7 +949,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         return physicalPosition;
       } finally {
-        diskCache.release(cacheEntry);
+        releasePage(atomicOperation, cacheEntry, diskCache);
       }
 
     } finally {
@@ -966,7 +966,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       try {
         return new OPaginatedClusterState(pinnedStateEntry, getChangesTree(atomicOperation, pinnedStateEntry)).getSize();
       } finally {
-        diskCache.release(pinnedStateEntry);
+        releasePage(atomicOperation, pinnedStateEntry, diskCache);
       }
     } catch (IOException ioe) {
       throw new OStorageException("Error during retrieval of size of " + name + " cluster.");
@@ -1045,7 +1045,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       try {
         return new OPaginatedClusterState(pinnedStateEntry, getChangesTree(atomicOperation, pinnedStateEntry)).getRecordsSize();
       } finally {
-        diskCache.release(pinnedStateEntry);
+        releasePage(atomicOperation, pinnedStateEntry, diskCache);
       }
     } finally {
       releaseSharedLock();
@@ -1156,7 +1156,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       paginatedClusterState.setRecordsSize(paginatedClusterState.getRecordsSize() + recordsSizeDiff);
     } finally {
       pinnedStateEntry.releaseExclusiveLock();
-      diskCache.release(pinnedStateEntry);
+      releasePage(atomicOperation, pinnedStateEntry, diskCache);
     }
   }
 
@@ -1282,7 +1282,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         firstEntry = false;
       } finally {
-        diskCache.release(cacheEntry);
+        releasePage(atomicOperation, cacheEntry, diskCache);
       }
 
       pageIndex = nextPagePointer >>> PAGE_INDEX_OFFSET;
@@ -1339,7 +1339,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       recordSizesDiff = initialFreeSpace - freeSpace;
     } finally {
       cacheEntry.releaseExclusiveLock();
-      diskCache.release(cacheEntry);
+      releasePage(atomicOperation, cacheEntry, diskCache);
     }
 
     updateFreePagesIndex(freePageIndex, pageIndex);
@@ -1348,10 +1348,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   private FindFreePageResult findFreePage(int contentSize) throws IOException {
+    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
     diskCache.loadPinnedPage(pinnedStateEntry);
     try {
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-
       while (true) {
         int freePageIndex = contentSize / ONE_KB;
         freePageIndex -= PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
@@ -1378,7 +1377,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             OClusterPage localPage = new OClusterPage(cacheEntry, false, getChangesTree(atomicOperation, cacheEntry));
             realFreePageIndex = calculateFreePageIndex(localPage);
           } finally {
-            diskCache.release(cacheEntry);
+            releasePage(atomicOperation, cacheEntry, diskCache);
           }
 
           if (realFreePageIndex != freePageIndex) {
@@ -1394,7 +1393,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         return new FindFreePageResult(pageIndex, freePageIndex);
       }
     } finally {
-      diskCache.release(pinnedStateEntry);
+      releasePage(atomicOperation, pinnedStateEntry, diskCache);
     }
   }
 
@@ -1423,7 +1422,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           prevPage.setNextPage(nextPageIndex);
         } finally {
           prevPageCacheEntry.releaseExclusiveLock();
-          diskCache.release(prevPageCacheEntry);
+          releasePage(atomicOperation, prevPageCacheEntry, diskCache);
         }
       }
 
@@ -1441,7 +1440,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         } finally {
           nextPageCacheEntry.releaseExclusiveLock();
-          diskCache.release(nextPageCacheEntry);
+          releasePage(atomicOperation, nextPageCacheEntry, diskCache);
         }
       }
 
@@ -1464,7 +1463,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
               pinnedStateEntry));
           oldFreePage = clusterFreeList.getFreeListPage(newFreePageIndex);
         } finally {
-          diskCache.release(pinnedStateEntry);
+          releasePage(atomicOperation, pinnedStateEntry, diskCache);
         }
 
         if (oldFreePage >= 0) {
@@ -1478,7 +1477,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             oldFreeLocalPage.setPrevPage(pageIndex);
           } finally {
             oldFreePageCacheEntry.releaseExclusiveLock();
-            diskCache.release(oldFreePageCacheEntry);
+            releasePage(atomicOperation, oldFreePageCacheEntry, diskCache);
           }
 
           localPage.setNextPage(oldFreePage);
@@ -1489,7 +1488,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       }
     } finally {
       cacheEntry.releaseExclusiveLock();
-      diskCache.release(cacheEntry);
+      releasePage(atomicOperation, cacheEntry, diskCache);
     }
   }
 
@@ -1503,7 +1502,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       paginatedClusterState.setFreeListPage(freeListIndex, pageIndex);
     } finally {
       pinnedStateEntry.releaseExclusiveLock();
-      diskCache.release(pinnedStateEntry);
+      releasePage(atomicOperation, pinnedStateEntry, diskCache);
     }
   }
 
@@ -1535,7 +1534,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         paginatedClusterState.setFreeListPage(i, -1);
     } finally {
       pinnedStateEntry.releaseExclusiveLock();
-      diskCache.release(pinnedStateEntry);
+      releasePage(atomicOperation, pinnedStateEntry, diskCache);
     }
 
   }
