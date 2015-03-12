@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -79,22 +80,25 @@ public class OTxTask extends OAbstractReplicatedTask {
       for (OAbstractRecordReplicatedTask task : tasks) {
         if (task instanceof OCreateRecordTask) {
           final OCreateRecordTask createRT = (OCreateRecordTask) task;
-          final String clusterName = createRT.getRid().isValid() ? database.getClusterNameById(createRT.getRid().getClusterId())
-              : null;
+          final int clId = createRT.clusterId > -1 ? createRT.clusterId : createRT.getRid().isValid() ? createRT.getRid()
+              .getClusterId() : -1;
+          final String clusterName = clId > -1 ? database.getClusterNameById(clId) : null;
           tx.addRecord(createRT.getRecord(), ORecordOperation.CREATED, clusterName);
         }
       }
 
       for (OAbstractRecordReplicatedTask task : tasks) {
         // ASSURE ALL RIDBAGS ARE UNMARSHALLED TO AVOID STORING TEMP RIDS
-        if (task instanceof OCreateRecordTask) {
-          final ORecord record = ((OCreateRecordTask) task).getRecord();
+        if (task instanceof OAbstractRecordReplicatedTask) {
+          final ORecord record = ((OAbstractRecordReplicatedTask) task).getRecord();
 
           for (String f : ((ODocument) record).fieldNames()) {
             final Object fValue = ((ODocument) record).field(f);
             if (fValue instanceof ORecordLazyMultiValue)
               // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
               ((ORecordLazyMultiValue) fValue).convertLinks2Records();
+            else if (fValue instanceof ORecordId)
+              ((ODocument) record).field(f, ((ORecordId) fValue).getRecord());
           }
         }
       }
