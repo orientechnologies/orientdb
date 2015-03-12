@@ -147,7 +147,7 @@ public class OClusterPositionMap extends ODurableComponent {
         OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, getChangesTree(atomicOperation, cacheEntry));
         if (bucket.isFull()) {
           cacheEntry.releaseExclusiveLock();
-          diskCache.release(cacheEntry);
+          releasePage(atomicOperation, cacheEntry, diskCache);
 
           cacheEntry = addPage(atomicOperation, fileId, diskCache);
 
@@ -165,7 +165,7 @@ public class OClusterPositionMap extends ODurableComponent {
         throw new OStorageException("Error during creation of mapping between logical adn physical record position.", e);
       } finally {
         cacheEntry.releaseExclusiveLock();
-        diskCache.release(cacheEntry);
+        releasePage(atomicOperation, cacheEntry, diskCache);
       }
     } finally {
       releaseExclusiveLock();
@@ -189,7 +189,7 @@ public class OClusterPositionMap extends ODurableComponent {
             cacheEntry));
         return bucket.get(index);
       } finally {
-        diskCache.release(cacheEntry);
+        releasePage(atomicOperation, cacheEntry, diskCache);
       }
     } finally {
       releaseSharedLock();
@@ -222,7 +222,7 @@ public class OClusterPositionMap extends ODurableComponent {
         throw new OStorageException("Error during removal of mapping between logical and physical record position.", e);
       } finally {
         cacheEntry.releaseExclusiveLock();
-        diskCache.release(cacheEntry);
+        releasePage(atomicOperation, cacheEntry, diskCache);
       }
     } finally {
       releaseExclusiveLock();
@@ -263,7 +263,7 @@ public class OClusterPositionMap extends ODurableComponent {
         int resultSize = bucket.getSize() - index;
 
         if (resultSize <= 0) {
-          diskCache.release(cacheEntry);
+          releasePage(atomicOperation, cacheEntry, diskCache);
           pageIndex++;
           index = 0;
         } else {
@@ -285,7 +285,7 @@ public class OClusterPositionMap extends ODurableComponent {
           } else
             result = Arrays.copyOf(result, entriesCount);
 
-          diskCache.release(cacheEntry);
+          releasePage(atomicOperation, cacheEntry, diskCache);
         }
       } while (result == null && pageIndex < filledUpTo);
 
@@ -355,7 +355,7 @@ public class OClusterPositionMap extends ODurableComponent {
         } else
           result = Arrays.copyOf(result, entriesCount);
 
-        diskCache.release(cacheEntry);
+        releasePage(atomicOperation, cacheEntry, diskCache);
       } while (result == null && pageIndex >= 0);
 
       if (result == null)
@@ -383,7 +383,7 @@ public class OClusterPositionMap extends ODurableComponent {
               return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + index;
           }
         } finally {
-          diskCache.release(cacheEntry);
+          releasePage(atomicOperation, cacheEntry, diskCache);
         }
       }
 
@@ -410,7 +410,7 @@ public class OClusterPositionMap extends ODurableComponent {
               return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + index;
           }
         } finally {
-          diskCache.release(cacheEntry);
+          releasePage(atomicOperation, cacheEntry, diskCache);
         }
       }
 
