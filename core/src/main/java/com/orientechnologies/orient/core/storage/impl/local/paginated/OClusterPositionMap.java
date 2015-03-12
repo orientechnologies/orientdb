@@ -69,7 +69,8 @@ public class OClusterPositionMap extends ODurableComponent {
   public void open() throws IOException {
     acquireExclusiveLock();
     try {
-      fileId = diskCache.openFile(name + DEF_EXTENSION);
+      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      fileId = openFile(atomicOperation, name + DEF_EXTENSION, diskCache);
     } finally {
       releaseExclusiveLock();
     }
@@ -78,7 +79,8 @@ public class OClusterPositionMap extends ODurableComponent {
   public void create() throws IOException {
     acquireExclusiveLock();
     try {
-      fileId = diskCache.addFile(name + DEF_EXTENSION);
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      fileId = addFile(atomicOperation, name + DEF_EXTENSION, diskCache);
     } finally {
       releaseExclusiveLock();
     }

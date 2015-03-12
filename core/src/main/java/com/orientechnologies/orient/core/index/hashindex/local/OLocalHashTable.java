@@ -169,8 +169,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
       OAtomicOperation atomicOperation = startAtomicOperation();
       try {
-        fileStateId = diskCache.addFile(name + metadataConfigurationFileExtension);
-        logFileCreation(name + metadataConfigurationFileExtension, fileStateId);
+        fileStateId = addFile(atomicOperation, name + metadataConfigurationFileExtension, diskCache);
 
         directory.create();
 
@@ -182,7 +181,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(hashStateEntry, getChangesTree(
               atomicOperation, hashStateEntry), true);
 
-          createFileMetadata(0, page);
+          createFileMetadata(0, page, atomicOperation);
         } finally {
           hashStateEntry.releaseExclusiveLock();
           releasePage(atomicOperation, hashStateEntry, diskCache);
@@ -193,10 +192,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
         initHashTreeState();
 
-        if (nullKeyIsSupported) {
-          nullBucketFileId = diskCache.addFile(name + nullBucketFileExtension);
-          logFileCreation(name + nullBucketFileExtension, nullBucketFileId);
-        }
+        if (nullKeyIsSupported)
+          nullBucketFileId = addFile(atomicOperation, name + nullBucketFileExtension, diskCache);
 
         endAtomicOperation(false);
       } catch (IOException e) {
@@ -228,13 +225,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       return null;
 
     return super.startAtomicOperation();
-  }
-
-  protected void logFileCreation(String fileName, long fileId) throws IOException {
-    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return;
-
-    throw new UnsupportedOperationException();
   }
 
   public OBinarySerializer<K> getKeySerializer() {
@@ -323,11 +313,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     }
   }
 
-  private void createFileMetadata(int fileLevel, OHashIndexFileLevelMetadataPage page) throws IOException {
+  private void createFileMetadata(int fileLevel, OHashIndexFileLevelMetadataPage page, OAtomicOperation atomicOperation)
+      throws IOException {
     final String fileName = name + fileLevel + bucketFileExtension;
-    final long fileId = diskCache.addFile(fileName);
-
-    logFileCreation(fileName, fileId);
+    final long fileId = addFile(atomicOperation, fileName, diskCache);
 
     page.setFileMetadata(fileLevel, fileId, 0, -1);
   }
@@ -651,7 +640,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
-      fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
+      fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension, diskCache);
       hashStateEntry = loadPage(atomicOperation, fileStateId, 0, true, diskCache);
 
       directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
@@ -674,7 +663,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       }
 
       if (nullKeyIsSupported)
-        nullBucketFileId = diskCache.openFile(name + nullBucketFileExtension);
+        nullBucketFileId = openFile(atomicOperation, name + nullBucketFileExtension, diskCache);
     } catch (IOException e) {
       throw new OIndexException("Exception during hash table loading", e);
     } finally {
@@ -690,7 +679,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       final ODiskCache diskCache = storage.getDiskCache();
 
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-      fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
+      fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension, diskCache);
       hashStateEntry = loadPage(atomicOperation, fileStateId, 0, true, diskCache);
 
       assert hashStateEntry != null;
@@ -713,10 +702,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
       directory.deleteWithoutOpen();
 
-      if (diskCache.exists(name + nullBucketFileExtension)) {
-        final long nullBucketId = diskCache.openFile(name + nullBucketFileExtension);
-        diskCache.deleteFile(nullBucketId);
-      }
+      final long nullBucketId = openFile(atomicOperation, name + nullBucketFileExtension, diskCache);
+      diskCache.deleteFile(nullBucketId);
     } catch (IOException ioe) {
       throw new OIndexException("Can not delete hash table with name " + name, ioe);
     } finally {
@@ -1921,7 +1908,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           atomicOperation, hashStateEntry), false);
 
       if (metadataPage.isRemoved(newFileLevel))
-        createFileMetadata(newFileLevel, metadataPage);
+        createFileMetadata(newFileLevel, metadataPage, atomicOperation);
 
       final long tombstoneIndex = metadataPage.getTombstoneIndex(newFileLevel);
 
