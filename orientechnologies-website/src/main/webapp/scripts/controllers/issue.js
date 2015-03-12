@@ -36,7 +36,11 @@ angular.module('webappApp')
           }
           $scope.matched[splitted[0]].push(splitted[1].replace(/"/g, ""));
         } else {
-          $scope.matched[splitted[0]] = splitted[1].replace(/"/g, "");
+          if (splitted[1]) {
+            $scope.matched[splitted[0]] = splitted[1].replace(/"/g, "");
+          } else {
+            $scope.matched['fulltext'] = splitted[0];
+          }
         }
       })
       $scope.sorts.forEach(function (s) {
