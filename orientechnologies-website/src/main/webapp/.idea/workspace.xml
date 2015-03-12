@@ -27,8 +27,8 @@
       <file leaf-file-name="chat.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/scripts/controllers/chat.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.8578199" vertical-offset="3252" max-vertical-offset="4110">
-              <caret line="253" column="41" selection-start-line="253" selection-start-column="41" selection-end-line="253" selection-end-column="41" />
+            <state vertical-scroll-proportion="0.66824645" vertical-offset="3237" max-vertical-offset="4095">
+              <caret line="244" column="44" selection-start-line="244" selection-start-column="44" selection-end-line="244" selection-end-column="44" />
               <folding />
             </state>
           </provider>
@@ -848,8 +848,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/scripts/controllers/chat.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.8578199" vertical-offset="3252" max-vertical-offset="4110">
-          <caret line="253" column="41" selection-start-line="253" selection-start-column="41" selection-end-line="253" selection-end-column="41" />
+        <state vertical-scroll-proportion="0.66824645" vertical-offset="3237" max-vertical-offset="4095">
+          <caret line="244" column="44" selection-start-line="244" selection-start-column="44" selection-end-line="244" selection-end-column="44" />
           <folding />
         </state>
       </provider>

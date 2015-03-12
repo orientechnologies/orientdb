@@ -243,7 +243,6 @@ angular.module('webappApp').controller('MessageController', function ($scope, Or
   }
 
   $scope.timeToChange = function (message) {
-    console.log(message);
     var input = new Date(parseInt(message.date));
 
     var then = moment(input);
