@@ -47,7 +47,7 @@ public class GithubController {
     String baseUrl = gitHubConfiguration.getLoginUrl() + "/authorize?";
     String s = "client_id=" + gitHubConfiguration.getClientId();
 
-    String locationUrl = baseUrl + s + "&scope=user:email";
+    String locationUrl = baseUrl + s + "&scope=user:email,public_repo";
     RedirectView view = new RedirectView();
     view.setUrl(locationUrl);
     return view;
