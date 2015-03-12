@@ -542,7 +542,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
           try {
             index.put(key, rid);
           } catch (ORecordDuplicatedException e) {
-            final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+            final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
             if (database != null && !database.getTransaction().isActive()) {
               // DELETE THE RECORD
               database.delete(document);
