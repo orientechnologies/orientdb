@@ -61,6 +61,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     public static final Version LUCENE_VERSION = Version.LUCENE_47;
 
     public static final String OLUCENE_BASE_DIR = "luceneIndexes";
+
     protected SearcherManager searcherManager;
     protected OIndexDefinition index;
     protected TrackingIndexWriter mgrWriter;
@@ -97,6 +98,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
     public void addDocument(Document doc) {
         try {
+
             reopenToken = mgrWriter.addDocument(doc);
         } catch (IOException e) {
             OLogManager.instance().error(this, "Error on adding new document '%s' to Lucene index", e, doc);
@@ -379,11 +381,12 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
         return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR + File.separator + indexName;
     }
 
-    private String getIndexBasePath(OLocalPaginatedStorage storageLocalAbstract) {
+
+    protected String getIndexBasePath(OLocalPaginatedStorage storageLocalAbstract) {
         return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR;
     }
 
-    private ODatabaseDocumentInternal getDatabase() {
+    protected ODatabaseDocumentInternal getDatabase() {
         return ODatabaseRecordThreadLocal.INSTANCE.get();
     }
 

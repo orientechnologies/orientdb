@@ -19,6 +19,7 @@
 package com.orientechnologies.lucene.query;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import org.apache.lucene.facet.taxonomy.TaxonomyReader;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -29,44 +30,55 @@ import org.apache.lucene.search.Sort;
  */
 public class QueryContext {
 
-    public final OCommandContext context;
-    public final IndexSearcher searcher;
-    public final Query query;
-    public final Filter filter;
-    public final Sort sort;
-    public QueryContextCFG cfg;
+  public final OCommandContext context;
+  public final IndexSearcher   searcher;
+  public final Query           query;
+  public final Filter          filter;
+  public final Sort            sort;
+  public QueryContextCFG       cfg;
+  public boolean            facet = false;
+  public TaxonomyReader     reader;
 
-    public QueryContext(OCommandContext context, IndexSearcher searcher, Query query) {
-        this(context, searcher, query, null, null);
+  public QueryContext(OCommandContext context, IndexSearcher searcher, Query query) {
+    this(context, searcher, query, null, null);
+  }
+
+  public QueryContext(OCommandContext context, IndexSearcher searcher, Query query, Filter filter) {
+    this(context, searcher, query, filter, null);
+  }
+
+  public QueryContext(OCommandContext context, IndexSearcher searcher, Query query, Filter filter, Sort sort) {
+    this.context = context;
+    this.searcher = searcher;
+    this.query = query;
+    this.filter = filter;
+    this.sort = sort;
+    initCFG();
+  }
+
+  private void initCFG() {
+    if (filter != null && sort != null) {
+      cfg = QueryContextCFG.FILTER_SORT;
+    } else if (filter == null && sort == null) {
+      cfg = QueryContextCFG.NO_FILTER_NO_SORT;
+    } else if (filter != null) {
+      cfg = QueryContextCFG.FILTER;
+    } else {
+      cfg = QueryContextCFG.SORT;
     }
+  }
 
-    public QueryContext(OCommandContext context, IndexSearcher searcher, Query query, Filter filter) {
-        this(context, searcher, query, filter, null);
-    }
+  public QueryContext setFacet(boolean facet) {
+    this.facet = facet;
+    return this;
+  }
 
-    public QueryContext(OCommandContext context, IndexSearcher searcher, Query query, Filter filter, Sort sort) {
-        this.context = context;
-        this.searcher = searcher;
-        this.query = query;
-        this.filter = filter;
-        this.sort = sort;
-        initCFG();
-    }
+  public QueryContext setReader(TaxonomyReader reader) {
+    this.reader = reader;
+    return this;
+  }
 
-    private void initCFG() {
-        if (filter != null && sort != null) {
-            cfg = QueryContextCFG.FILTER_SORT;
-        } else if (filter == null && sort == null) {
-            cfg = QueryContextCFG.NO_FILTER_NO_SORT;
-        } else if (filter != null) {
-            cfg = QueryContextCFG.FILTER;
-        } else {
-            cfg = QueryContextCFG.SORT;
-        }
-    }
-
-
-    public enum QueryContextCFG {
-        NO_FILTER_NO_SORT, FILTER_SORT, FILTER, SORT
-    }
+  public enum QueryContextCFG {
+    NO_FILTER_NO_SORT, FILTER_SORT, FILTER, SORT
+  }
 }

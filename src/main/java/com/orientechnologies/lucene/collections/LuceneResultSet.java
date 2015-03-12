@@ -23,15 +23,16 @@ import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.facet.*;
+import org.apache.lucene.facet.taxonomy.FastTaxonomyFacetCounts;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Enrico Risa on 28/10/14.
@@ -49,6 +50,43 @@ public class LuceneResultSet implements Set<OIdentifiable> {
         this.queryContext = queryContext;
         this.query = queryContext.query;
         fetchFirstBatch();
+        fetchFacet();
+    }
+
+    private void fetchFacet() {
+        if (queryContext.facet) {
+            FacetsCollector facetsCollector = new FacetsCollector(true);
+
+            try {
+                FacetsCollector.search(queryContext.searcher, query, PAGE_SIZE, facetsCollector);
+
+                Facets facets = new FastTaxonomyFacetCounts(queryContext.reader, new FacetsConfig(), facetsCollector);
+                List<FacetResult> res = facets.getAllDims(10);
+
+                int i = 0;
+
+                List<ODocument> documents = new ArrayList<ODocument>();
+                for (FacetResult facetResult : res) {
+
+                    ODocument doc = new ODocument();
+                    doc.field("childCount", facetResult.childCount);
+                    doc.field("value", facetResult.value);
+                    doc.field("dim", facetResult.dim);
+                    List<ODocument> labelsAndValue = new ArrayList<ODocument>();
+                    for (LabelAndValue labelValue : facetResult.labelValues) {
+                        ODocument doc1 = new ODocument();
+                        doc1.field("label", labelValue.label);
+                        doc1.field("value", labelValue.value);
+                        labelsAndValue.add(doc1);
+                    }
+                    doc.field("labelsValue", labelsAndValue);
+                    documents.add(doc);
+                }
+                queryContext.context.setVariable("$facet", documents);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -146,7 +184,6 @@ public class LuceneResultSet implements Set<OIdentifiable> {
         private int localIndex;
         private int totalHits;
 
-
         public OLuceneResultSetIterator() {
             totalHits = topDocs.totalHits;
             index = 0;
@@ -181,7 +218,6 @@ public class LuceneResultSet implements Set<OIdentifiable> {
             return res;
         }
 
-
         private void fetchMoreResult() {
 
             TopDocs topDocs = null;
@@ -193,7 +229,8 @@ public class LuceneResultSet implements Set<OIdentifiable> {
                         topDocs = queryContext.searcher.searchAfter(array[array.length - 1], query, PAGE_SIZE);
                         break;
                     case FILTER_SORT:
-                        topDocs = queryContext.searcher.searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE, queryContext.sort);
+                        topDocs = queryContext.searcher.searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE,
+                                queryContext.sort);
                         break;
                     case FILTER:
                         topDocs = queryContext.searcher.searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE);
