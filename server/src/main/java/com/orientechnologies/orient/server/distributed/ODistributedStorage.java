@@ -52,6 +52,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
@@ -598,7 +599,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         // REPLICATE IT
         final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new OUpdateRecordTask(
-            iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version, iContent, iVersion),
+            iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version, iContent, iVersion, iRecordType),
             EXECUTION_MODE.RESPONSE);
 
         if (result instanceof ONeedRetryException)
@@ -626,7 +627,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
             new OUpdateRecordTask(iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version,
-                iContent, iVersion)));
+                iContent, iVersion, iRecordType)));
       }
 
       return localResult;
@@ -860,7 +861,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               throw new OTransactionException("Cannot update record '" + rid + "' because has been deleted");
 
             task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
-                record.toStream(), record.getRecordVersion());
+                record.toStream(), record.getRecordVersion(), ORecordInternal.getRecordType(record));
             break;
 
           case ORecordOperation.DELETED:
@@ -909,6 +910,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             }
 
           }
+
+          // RESET DIRTY FLAGS TO AVOID CALLING AUTO-SAVE
+          for (ORecordOperation op : tmpEntries) {
+            final ORecord record = op.getRecord();
+            if (record != null)
+              ORecordInternal.unsetDirty(record);
+          }
+
         } else if (result instanceof Throwable) {
           // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
           if (ODistributedServerLog.isDebugEnabled())

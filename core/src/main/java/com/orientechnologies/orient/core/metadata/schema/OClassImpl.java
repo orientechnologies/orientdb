@@ -19,6 +19,19 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
@@ -36,7 +49,12 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -49,13 +67,14 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.io.IOException;
-import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -64,22 +83,22 @@ import java.util.*;
  */
 @SuppressWarnings("unchecked")
 public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
-  private static final long serialVersionUID        = 1L;
-  private static final int  NOT_EXISTENT_CLUSTER_ID = -1;
-  final OSchemaShared owner;
-  private final Map<String, OProperty> properties       = new HashMap<String, OProperty>();
-  private       int                    defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
-  private String       name;
-  private Class<?>     javaClass;
-  private int[]        clusterIds;
-  private OClassImpl   superClass;
-  private int[]        polymorphicClusterIds;
-  private List<OClass> subclasses;
-  private float overSize = 0f;
-  private String shortName;
-  private boolean strictMode    = false;                           // @SINCE v1.0rc8
-  private boolean abstractClass = false;                           // @SINCE v1.2.0
-  private          Map<String, String>       customFields;
+  private static final long                  serialVersionUID        = 1L;
+  private static final int                   NOT_EXISTENT_CLUSTER_ID = -1;
+  final OSchemaShared                        owner;
+  private final Map<String, OProperty>       properties              = new HashMap<String, OProperty>();
+  private int                                defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
+  private String                             name;
+  private Class<?>                           javaClass;
+  private int[]                              clusterIds;
+  private OClassImpl                         superClass;
+  private int[]                              polymorphicClusterIds;
+  private List<OClass>                       subclasses;
+  private float                              overSize                = 0f;
+  private String                             shortName;
+  private boolean                            strictMode              = false;                           // @SINCE v1.0rc8
+  private boolean                            abstractClass           = false;                           // @SINCE v1.2.0
+  private Map<String, String>                customFields;
   private volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
   private volatile int                       hashCode;
 
@@ -1898,8 +1917,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         removePolymorphicClusterId(clusterToRemove);
       }
 
-      if (defaultClusterId == clusterToRemove)
-        defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
+      if (defaultClusterId == clusterToRemove) {
+        if (clusterIds.length >= 1)
+          defaultClusterId = clusterIds[0];
+        else
+          defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
+      }
 
       owner.removeClusterForClass(clusterToRemove, this);
     } finally {

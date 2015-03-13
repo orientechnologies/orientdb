@@ -49,12 +49,12 @@ import java.io.ObjectOutput;
  *
  */
 public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
-  public static final String  SUFFIX_QUEUE_NAME = ".insert";
-  private static final long   serialVersionUID  = 1L;
-  protected byte[]            content;
-  protected byte              recordType;
-  protected transient ORecord record;
-  protected int               clusterId         = -1;
+  public static final String SUFFIX_QUEUE_NAME = ".insert";
+  private static final long  serialVersionUID  = 1L;
+  protected byte[]           content;
+  protected byte             recordType;
+  protected int              clusterId         = -1;
+  private transient ORecord  record;
 
   public OCreateRecordTask() {
   }
@@ -78,6 +78,15 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
         clusterId = db.getDefaultClusterId();
       }
     }
+  }
+
+  @Override
+  public ORecord getRecord() {
+    if (record == null) {
+      record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+      ORecordInternal.fill(record, rid, version, content, true);
+    }
+    return record;
   }
 
   @Override
@@ -167,13 +176,5 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public String getName() {
     return "record_create";
-  }
-
-  public ORecord getRecord() {
-    if (record == null) {
-      record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
-      ORecordInternal.fill(record, rid, version, content, true);
-    }
-    return record;
   }
 }

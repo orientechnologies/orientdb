@@ -664,7 +664,26 @@ ODeleteEdgeStatement DeleteEdgeByRidStatement():
 (
 	<DELETE>
 	<EDGE>
-	jjtThis.rid = Rid()
+	(
+	    jjtThis.rid = Rid()
+	    |
+	    (
+
+	        <LBRACKET>
+            [
+                lastRid = Rid()
+                {
+                    jjtThis.rids = new ArrayList();
+                    jjtThis.rids.add(lastRid);
+                }
+                (
+                    <COMMA>
+                    lastRid = Rid() { jjtThis.rids.add(lastRid); }
+                )*
+            ] <RBRACKET>
+	    )
+	)
+
 
 ) {return jjtThis;}
 }

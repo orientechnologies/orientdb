@@ -18,13 +18,18 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
@@ -33,8 +38,8 @@ public class GraphValidationTest {
 
   public static final String URL = "memory:" + GraphValidationTest.class.getSimpleName();
 
-  @BeforeClass
-  public static void beforeClass() {
+  @Before
+  public void beforeMethod() {
     OrientGraph g = new OrientGraph(URL, "admin", "admin");
     g.drop();
   }
@@ -72,4 +77,74 @@ public class GraphValidationTest {
       g2.shutdown();
     }
   }
+
+  @Test
+  public void ok() {
+    setupSchema();
+    final OrientGraphNoTx graphNoTx = new OrientGraphNoTx(URL, "admin", "admin");
+    try {
+
+      graphNoTx.addVertex("class:M", "name", "n0");
+      try {
+        graphNoTx.addVertex("class:M");
+        throw new RuntimeException("Schema problem was not detected!");
+      } catch (Throwable e) {
+        // This is what happens => OK
+        System.out.println("This is the Message I want to see: \n" + e);
+      }
+
+      graphNoTx.commit();
+    } finally {
+      graphNoTx.shutdown();
+    }
+  }
+
+  @Test
+  public void fail() {
+    setupSchema();
+    final OrientGraphFactory orientGraphFactory = new OrientGraphFactory(URL, "admin", "admin").setupPool(1, 10);
+    OrientGraph graph = orientGraphFactory.getTx();
+    try {
+
+      graph.addVertex("class:M", "name", "n0");
+      try {
+        graph.addVertex("class:M");
+        graph.commit();
+        // This is what happens => not OK?
+        throw new RuntimeException("Schema problem was not detected!");
+      } catch (OValidationException e) {
+        System.out.println("This is the Message I want to see: \n" + e);
+      }
+
+    } finally {
+      graph.shutdown();
+    }
+  }
+
+  private void setupSchema() {
+    OrientGraphNoTx graphNoTx = new OrientGraphNoTx(URL, "admin", "admin");
+    try {
+
+      ODatabaseDocumentTx database = graphNoTx.getRawGraph();
+      OSchema oScchema = database.getMetadata().getSchema();
+
+      oScchema.getClass("V").setStrictMode(true);
+      oScchema.getClass("E").setStrictMode(true);
+
+      OrientVertexType CmVertexBaseType = graphNoTx.createVertexType("CmVertexBase", "V");
+      CmVertexBaseType.setStrictMode(true);
+
+      OrientVertexType CmEdgeBaseType = graphNoTx.createVertexType("CmEdgeBase", "V");
+      CmEdgeBaseType.setStrictMode(true);
+
+      OClass mOClass = database.getMetadata().getSchema().createClass("M", database.getMetadata().getSchema().getClass("V"));
+      mOClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      mOClass.setStrictMode(true);
+
+      graphNoTx.commit();
+    } finally {
+      graphNoTx.shutdown();
+    }
+  }
+
 }

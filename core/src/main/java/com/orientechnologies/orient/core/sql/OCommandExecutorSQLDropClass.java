@@ -98,13 +98,13 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
         throw new OCommandExecutionException(
             "'DROP CLASS' command cannot drop class '"
                 + className
-                + "' because contains Vertices. Use 'DELETE VERTEX' command first to avoid broken edges in database, or apply the 'UNSAFE' keyword to force it");
+                + "' because it contains Vertices. Use 'DELETE VERTEX' command first to avoid broken edges in a database, or apply the 'UNSAFE' keyword to force it");
       } else if (cls.isSubClassOf("E")) {
         // FOUND EDGE CLASS
         throw new OCommandExecutionException(
             "'DROP CLASS' command cannot drop class '"
                 + className
-                + "' because contains Edges. Use 'DELETE EDGE' command first to avoid broken vertices in database, or apply the 'UNSAFE' keyword to force it");
+                + "' because it contains Edges. Use 'DELETE EDGE' command first to avoid broken vertices in a database, or apply the 'UNSAFE' keyword to force it");
       }
     }
 
