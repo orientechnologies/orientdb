@@ -12,10 +12,9 @@ public class UpdatePageRecordTest {
   public void testSerializationPrevLSNIsNotNull() {
     OWALChangesTree changesTree = new OWALChangesTree();
 
-    OLogSequenceNumber prevLsn = new OLogSequenceNumber(12, 124);
     OOperationUnitId unitId = OOperationUnitId.generateId();
 
-    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, unitId, changesTree, prevLsn,
+    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, unitId, changesTree,
         new OLogSequenceNumber(0, 0));
 
     byte[] content = new byte[serializedUpdatePageRecord.serializedSize() + 1];
@@ -33,10 +32,9 @@ public class UpdatePageRecordTest {
   public void testSerializationPrevLSNIsNull() {
     OWALChangesTree changesTree = new OWALChangesTree();
 
-    OLogSequenceNumber prevLsn = new OLogSequenceNumber(12, 124);
     OOperationUnitId unitId = OOperationUnitId.generateId();
 
-    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, unitId, changesTree, prevLsn,
+    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, unitId, changesTree,
         new OLogSequenceNumber(0, 0));
 
     byte[] content = new byte[serializedUpdatePageRecord.serializedSize() + 1];

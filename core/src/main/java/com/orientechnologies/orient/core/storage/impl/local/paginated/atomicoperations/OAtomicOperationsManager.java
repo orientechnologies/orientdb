@@ -105,6 +105,9 @@ public class OAtomicOperationsManager {
     assert counter >= 0;
 
     if (counter == 0) {
+      if (!operation.isRollback())
+        operation.commitChanges(storage.getDiskCache(), writeAheadLog);
+
       for (Object lockObject : operation.lockedObjects())
         lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
 
