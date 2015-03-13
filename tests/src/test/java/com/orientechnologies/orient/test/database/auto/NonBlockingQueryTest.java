@@ -70,7 +70,7 @@ public class NonBlockingQueryTest extends DocumentDBBaseTest {
 
       }
     }));
-    Assert.assertNotEquals(counter.get(), 1000);
+    Assert.assertFalse(counter.get() == 1000);
     try {
       future.get();
       Assert.assertEquals(counter.get(), 1000);
