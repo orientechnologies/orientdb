@@ -100,38 +100,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return atomicOperationsManager.startAtomicOperation();
   }
 
-  // protected void logPageChanges(ODurablePage localPage, long fileId, long pageIndex, boolean isNewPage) throws IOException {
-  // if (writeAheadLog != null) {
-  // final OPageChanges pageChanges = localPage.getChangesTree();
-  // if (pageChanges.isEmpty())
-  // return;
-  //
-  // final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-  // assert atomicOperation != null;
-  //
-  // final OOperationUnitId unitId = atomicOperation.getOperationUnitId();
-  // final OLogSequenceNumber prevLsn;
-  // if (isNewPage)
-  // prevLsn = atomicOperation.getStartLSN();
-  // else
-  // prevLsn = localPage.getLsn();
-  //
-  // final OLogSequenceNumber lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, unitId, pageChanges, prevLsn,
-  // atomicOperation.getStartLSN()));
-  // localPage.setLsn(lsn);
-  // }
-  // }
-
-  // protected void logFileCreation(String fileName, long fileId) throws IOException {
-  // if (writeAheadLog != null) {
-  // final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-  // assert atomicOperation != null;
-  //
-  // final OOperationUnitId unitId = atomicOperation.getOperationUnitId();
-  // writeAheadLog.log(new OFileCreatedCreatedWALRecord(unitId, fileName, fileId, atomicOperation.getStartLSN()));
-  // }
-  // }
-
   protected void lockTillAtomicOperationCompletes() {
     atomicOperationsManager.lockTillOperationComplete(this);
   }

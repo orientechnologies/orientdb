@@ -33,12 +33,9 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   }
 
   public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId,
-      final OWALChangesTree changesTree, final OLogSequenceNumber prevLsn, OLogSequenceNumber startLsn) {
+      final OWALChangesTree changesTree, OLogSequenceNumber startLsn) {
     super(pageIndex, fileId, operationUnitId, startLsn);
     this.changesTree = changesTree;
-    this.lsn = prevLsn;
-
-    assert prevLsn != null;
   }
 
   public OWALChangesTree getChanges() {
