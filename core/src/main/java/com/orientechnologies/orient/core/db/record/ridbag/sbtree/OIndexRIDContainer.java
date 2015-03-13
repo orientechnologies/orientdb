@@ -79,19 +79,19 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
         .getUnderlying();
     try {
       final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-
       final ODiskCache diskCache = storage.getDiskCache();
-      if (diskCache.exists(fileName)) {
-        if (atomicOperation == null)
+
+      if (atomicOperation == null) {
+        if (diskCache.exists(fileName))
           return diskCache.openFile(fileName);
 
-        return atomicOperation.openFile(fileName, diskCache);
-      }
-
-      if (atomicOperation == null)
         return diskCache.addFile(fileName);
+      } else {
+        if (atomicOperation.isFileExists(fileName, diskCache))
+          return atomicOperation.openFile(fileName, diskCache);
 
-      return atomicOperation.addFile(fileName, diskCache);
+        return atomicOperation.addFile(fileName, diskCache);
+      }
     } catch (IOException e) {
       throw new OSBTreeException("Error creation of sbtree with name " + fileName, e);
     }

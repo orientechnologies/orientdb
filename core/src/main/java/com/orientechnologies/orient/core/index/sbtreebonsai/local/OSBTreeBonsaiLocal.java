@@ -45,10 +45,8 @@ import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
  * Tree-based dictionary algorithm. Similar to {@link OSBTree} but uses subpages of disk cache that is more efficient for small data
@@ -134,9 +132,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       this.keySerializer = keySerializer;
       this.valueSerializer = valueSerializer;
 
-      diskCache.openFile(fileId);
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      openFile(atomicOperation, fileId, diskCache);
+
       this.fileId = fileId;
-      this.name = resolveTreeName(fileId);
+      this.name = resolveTreeName(fileId, atomicOperation);
 
       initAfterCreate();
     } catch (IOException e) {
@@ -477,11 +477,13 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
       diskCache = storage.getDiskCache();
 
-      diskCache.openFile(fileId);
-      this.fileId = fileId;
-      this.name = resolveTreeName(fileId);
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      openFile(atomicOperation, fileId, diskCache);
+
+      this.fileId = fileId;
+      this.name = resolveTreeName(fileId, atomicOperation);
+
       OCacheEntry rootCacheEntry = loadPage(atomicOperation, this.fileId, this.rootBucketPointer.getPageIndex(), false, diskCache);
 
       rootCacheEntry.acquireSharedLock();
@@ -505,8 +507,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  private String resolveTreeName(long fileId) {
-    final String fileName = diskCache.fileNameById(fileId);
+  private String resolveTreeName(long fileId, OAtomicOperation atomicOperation) {
+    final String fileName = fileNameById(atomicOperation, fileId, diskCache);
     return fileName.substring(0, fileName.length() - dataFileExtension.length());
   }
 

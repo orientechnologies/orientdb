@@ -48,9 +48,11 @@ public class OAtomicOperation {
   private int                             startCounter;
   private boolean                         rollback;
 
-  private Set<Object>                     lockedObjects   = new HashSet<Object>();
-  private Map<Long, FileChangesContainer> filePageChanges = new HashMap<Long, FileChangesContainer>();
-  private Map<String, Long>               fileNameId      = new HashMap<String, Long>();
+  private Set<Object>                     lockedObjects    = new HashSet<Object>();
+  private Map<Long, FileChangesContainer> fileChanges      = new HashMap<Long, FileChangesContainer>();
+  private Map<String, Long>               newFileNamesId   = new HashMap<String, Long>();
+  private Set<Long>                       deletedFiles     = new HashSet<Long>();
+  private Set<String>                     deletedFileNames = new HashSet<String>();
 
   public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId) {
     this.startLSN = startLSN;
@@ -67,11 +69,14 @@ public class OAtomicOperation {
   }
 
   public OCacheEntry loadPage(long fileId, long pageIndex, ODiskCache diskCache, boolean checkPinnedPages) throws IOException {
-    FileChangesContainer changesContainer = filePageChanges.get(fileId);
+    if (deletedFiles.contains(fileId))
+      throw new OStorageException("File with id " + fileId + " is deleted.");
+
+    FileChangesContainer changesContainer = fileChanges.get(fileId);
 
     if (changesContainer == null) {
       changesContainer = new FileChangesContainer();
-      filePageChanges.put(fileId, changesContainer);
+      fileChanges.put(fileId, changesContainer);
     }
 
     FilePageChangesContainer pageChangesContainer = changesContainer.pageChangesMap.get(pageIndex);
@@ -102,7 +107,10 @@ public class OAtomicOperation {
   }
 
   public void pinPage(OCacheEntry cacheEntry) throws IOException {
-    final FileChangesContainer changesContainer = filePageChanges.get(cacheEntry.getFileId());
+    if (deletedFiles.contains(cacheEntry.getFileId()))
+      throw new OStorageException("File with id " + cacheEntry.getFileId() + " is deleted.");
+
+    final FileChangesContainer changesContainer = fileChanges.get(cacheEntry.getFileId());
     assert changesContainer != null;
 
     final FilePageChangesContainer pageChangesContainer = changesContainer.pageChangesMap.get(cacheEntry.getPageIndex());
@@ -112,9 +120,12 @@ public class OAtomicOperation {
   }
 
   public OCacheEntry addPage(long fileId, ODiskCache diskCache) throws IOException {
+    if (deletedFiles.contains(fileId))
+      throw new OStorageException("File with id " + fileId + " is deleted.");
+
     final long filledUpTo = filledUpTo(fileId, diskCache);
 
-    final FileChangesContainer changesContainer = filePageChanges.get(fileId);
+    final FileChangesContainer changesContainer = fileChanges.get(fileId);
     assert changesContainer != null;
 
     FilePageChangesContainer pageChangesContainer = changesContainer.pageChangesMap.get(filledUpTo);
@@ -131,12 +142,18 @@ public class OAtomicOperation {
   }
 
   public void releasePage(OCacheEntry cacheEntry, ODiskCache diskCache) {
+    if (deletedFiles.contains(cacheEntry.getFileId()))
+      throw new OStorageException("File with id " + cacheEntry.getFileId() + " is deleted.");
+
     if (cacheEntry.getCachePointer().getDataPointer() != null)
       diskCache.release(cacheEntry);
   }
 
   public OWALChangesTree getChangesTree(long fileId, long pageIndex) {
-    final FileChangesContainer changesContainer = filePageChanges.get(fileId);
+    if (deletedFiles.contains(fileId))
+      throw new OStorageException("File with id " + fileId + " is deleted.");
+
+    final FileChangesContainer changesContainer = fileChanges.get(fileId);
     assert changesContainer != null;
 
     final FilePageChangesContainer pageChangesContainer = changesContainer.pageChangesMap.get(pageIndex);
@@ -146,11 +163,14 @@ public class OAtomicOperation {
   }
 
   public long filledUpTo(long fileId, ODiskCache diskCache) throws IOException {
-    FileChangesContainer changesContainer = filePageChanges.get(fileId);
+    if (deletedFiles.contains(fileId))
+      throw new OStorageException("File with id " + fileId + " is deleted.");
+
+    FileChangesContainer changesContainer = fileChanges.get(fileId);
 
     if (changesContainer == null) {
       changesContainer = new FileChangesContainer();
-      filePageChanges.put(fileId, changesContainer);
+      fileChanges.put(fileId, changesContainer);
     } else if (changesContainer.isNew || changesContainer.maxNewPageIndex > -1)
       return changesContainer.maxNewPageIndex + 1;
 
@@ -158,33 +178,76 @@ public class OAtomicOperation {
   }
 
   public long addFile(String fileName, ODiskCache diskCache) {
-    if (fileNameId.containsKey(fileName))
+    if (newFileNamesId.containsKey(fileName))
       throw new OStorageException("File with name " + fileName + " already exists.");
 
     final long fileId = diskCache.bookFileId();
-    fileNameId.put(fileName, fileId);
+    newFileNamesId.put(fileName, fileId);
 
     FileChangesContainer fileChangesContainer = new FileChangesContainer();
     fileChangesContainer.isNew = true;
+    fileChangesContainer.fileName = fileName;
 
-    filePageChanges.put(fileId, fileChangesContainer);
+    fileChanges.put(fileId, fileChangesContainer);
+    deletedFileNames.remove(fileName);
 
     return fileId;
   }
 
   public long openFile(String fileName, ODiskCache diskCache) throws IOException {
-    Long fileId = fileNameId.get(fileName);
+    Long fileId = newFileNamesId.get(fileName);
 
     if (fileId == null)
       fileId = diskCache.openFile(fileName);
 
-    FileChangesContainer fileChangesContainer = filePageChanges.get(fileId);
+    FileChangesContainer fileChangesContainer = fileChanges.get(fileId);
     if (fileChangesContainer == null) {
       fileChangesContainer = new FileChangesContainer();
-      filePageChanges.put(fileId, fileChangesContainer);
+      fileChanges.put(fileId, fileChangesContainer);
     }
 
     return fileId;
+  }
+
+  public void openFile(long fileId, ODiskCache diskCache) throws IOException {
+    if (deletedFiles.contains(fileId))
+      throw new OStorageException("File with id " + fileId + " is deleted.");
+
+    FileChangesContainer changesContainer = fileChanges.get(fileId);
+    if (changesContainer == null || !changesContainer.isNew)
+      diskCache.openFile(fileId);
+  }
+
+  public void deleteFile(long fileId, ODiskCache diskCache) {
+    final FileChangesContainer fileChangesContainer = fileChanges.remove(fileId);
+    if (fileChangesContainer != null && fileChangesContainer.fileName != null)
+      newFileNamesId.remove(fileChangesContainer.fileName);
+    else {
+      deletedFiles.add(fileId);
+      deletedFileNames.add(diskCache.fileNameById(fileId));
+    }
+  }
+
+  public boolean isFileExists(String fileName, ODiskCache diskCache) {
+    if (newFileNamesId.containsKey(fileName))
+      return true;
+
+    if (deletedFileNames.contains(fileName))
+      return false;
+
+    return diskCache.exists(fileName);
+  }
+
+  public String fileNameById(long fileId, ODiskCache diskCache) {
+    FileChangesContainer fileChangesContainer = fileChanges.get(fileId);
+
+    if (fileChangesContainer != null && fileChangesContainer.fileName != null)
+      return fileChangesContainer.fileName;
+
+    if (deletedFiles.contains(fileId))
+      throw new OStorageException("File with id " + fileId + " was deleted.");
+
+    return diskCache.fileNameById(fileId);
   }
 
   void incrementCounter() {
@@ -240,6 +303,7 @@ public class OAtomicOperation {
     private Map<Long, FilePageChangesContainer> pageChangesMap  = new HashMap<Long, FilePageChangesContainer>();
     private long                                maxNewPageIndex = -1;
     private boolean                             isNew           = false;
+    private String                              fileName        = null;
   }
 
   private static class FilePageChangesContainer {

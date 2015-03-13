@@ -423,10 +423,11 @@ public class OSBTree<K, V> extends ODurableComponent {
   public void delete() {
     acquireExclusiveLock();
     try {
-      diskCache.deleteFile(fileId);
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      deleteFile(atomicOperation, fileId, diskCache);
 
       if (nullPointerSupport)
-        diskCache.deleteFile(nullBucketFileId);
+        deleteFile(atomicOperation, nullBucketFileId, diskCache);
 
     } catch (IOException e) {
       throw new OSBTreeException("Error during delete of sbtree with name " + name, e);
@@ -442,10 +443,10 @@ public class OSBTree<K, V> extends ODurableComponent {
       final ODiskCache diskCache = storageLocal.getDiskCache();
 
       final long fileId = openFile(atomicOperation, name + dataFileExtension, diskCache);
-      diskCache.deleteFile(fileId);
+      deleteFile(atomicOperation, fileId, diskCache);
 
       final long nullFileId = openFile(atomicOperation, name + nullFileExtension, diskCache);
-      diskCache.deleteFile(nullFileId);
+      deleteFile(atomicOperation, nullFileId, diskCache);
     } catch (IOException ioe) {
       throw new OSBTreeException("Exception during deletion of sbtree " + name, ioe);
     } finally {

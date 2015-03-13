@@ -192,4 +192,32 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
     return atomicOperation.openFile(fileName, diskCache);
   }
+
+  protected static void openFile(OAtomicOperation atomicOperation, long fileId, ODiskCache diskCache) throws IOException {
+    if (atomicOperation == null)
+      diskCache.openFile(fileId);
+    else
+      atomicOperation.openFile(fileId, diskCache);
+  }
+
+  protected static void deleteFile(OAtomicOperation atomicOperation, long fileId, ODiskCache diskCache) throws IOException {
+    if (atomicOperation == null)
+      diskCache.deleteFile(fileId);
+    else
+      atomicOperation.deleteFile(fileId, diskCache);
+  }
+
+  protected static boolean isFileExists(OAtomicOperation atomicOperation, String fileName, ODiskCache diskCache) {
+    if (atomicOperation == null)
+      return diskCache.exists(fileName);
+
+    return atomicOperation.isFileExists(fileName, diskCache);
+  }
+
+  protected static String fileNameById(OAtomicOperation atomicOperation, long fileId, ODiskCache diskCache) {
+    if (atomicOperation == null)
+      return diskCache.fileNameById(fileId);
+
+    return atomicOperation.fileNameById(fileId, diskCache);
+  }
 }

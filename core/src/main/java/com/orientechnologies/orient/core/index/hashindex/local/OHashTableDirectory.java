@@ -161,7 +161,8 @@ public class OHashTableDirectory extends ODurableComponent {
   public void delete() throws IOException {
     acquireExclusiveLock();
     try {
-      diskCache.deleteFile(fileId);
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      atomicOperation.deleteFile(fileId, diskCache);
     } finally {
       releaseExclusiveLock();
     }
@@ -172,7 +173,7 @@ public class OHashTableDirectory extends ODurableComponent {
     try {
       final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
       fileId = openFile(atomicOperation, name + defaultExtension, diskCache);
-      diskCache.deleteFile(fileId);
+      deleteFile(atomicOperation, fileId, diskCache);
     } finally {
       releaseExclusiveLock();
     }

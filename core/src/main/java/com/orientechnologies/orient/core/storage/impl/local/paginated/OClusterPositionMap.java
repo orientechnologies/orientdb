@@ -116,7 +116,8 @@ public class OClusterPositionMap extends ODurableComponent {
   public void delete() throws IOException {
     acquireExclusiveLock();
     try {
-      diskCache.deleteFile(fileId);
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      deleteFile(atomicOperation, fileId, diskCache);
     } finally {
       releaseExclusiveLock();
     }
