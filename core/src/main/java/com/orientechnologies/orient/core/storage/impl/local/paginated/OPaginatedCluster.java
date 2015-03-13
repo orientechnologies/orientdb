@@ -148,7 +148,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   public boolean exists() {
-    return diskCache.exists(name + DEF_EXTENSION);
+    final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+    return isFileExists(atomicOperation, name + DEF_EXTENSION, diskCache);
   }
 
   @Override
@@ -236,7 +237,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       acquireExclusiveLock();
       try {
-        diskCache.deleteFile(fileId);
+        final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+        deleteFile(atomicOperation, fileId, diskCache);
+
         clusterPositionMap.delete();
       } finally {
         releaseExclusiveLock();

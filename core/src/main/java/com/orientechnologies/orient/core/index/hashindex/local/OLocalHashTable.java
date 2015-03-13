@@ -657,7 +657,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
         for (int i = 0; i < HASH_CODE_SIZE; i++)
           if (!page.isRemoved(i))
-            diskCache.openFile(page.getFileId(i));
+            openFile(atomicOperation, page.getFileId(i), diskCache);
       } finally {
         releasePage(atomicOperation, hashStateEntry, diskCache);
       }
@@ -689,21 +689,20 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
             atomicOperation, hashStateEntry), false);
         for (int i = 0; i < HASH_CODE_SIZE; i++) {
           if (!metadataPage.isRemoved(i)) {
-            diskCache.openFile(metadataPage.getFileId(i));
-            diskCache.deleteFile(metadataPage.getFileId(i));
+            openFile(atomicOperation, metadataPage.getFileId(i), diskCache);
+            deleteFile(atomicOperation, metadataPage.getFileId(i), diskCache);
           }
         }
       } finally {
         releasePage(atomicOperation, hashStateEntry, diskCache);
       }
 
-      diskCache.deleteFile(fileStateId);
-
+      deleteFile(atomicOperation, fileStateId, diskCache);
       directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
       directory.deleteWithoutOpen();
 
       final long nullBucketId = openFile(atomicOperation, name + nullBucketFileExtension, diskCache);
-      diskCache.deleteFile(nullBucketId);
+      deleteFile(atomicOperation, nullBucketId, diskCache);
     } catch (IOException ioe) {
       throw new OIndexException("Can not delete hash table with name " + name, ioe);
     } finally {
@@ -1245,7 +1244,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry, getChangesTree(
               atomicOperation, hashStateEntry), false);
           if (!metadataPage.isRemoved(i)) {
-            diskCache.deleteFile(metadataPage.getFileId(i));
+            deleteFile(atomicOperation, metadataPage.getFileId(i), diskCache);
           }
         }
       } finally {
@@ -1253,10 +1252,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       }
 
       directory.delete();
-      diskCache.deleteFile(fileStateId);
+      deleteFile(atomicOperation, fileStateId, diskCache);
 
       if (nullKeyIsSupported)
-        diskCache.deleteFile(nullBucketFileId);
+        deleteFile(atomicOperation, nullBucketFileId, diskCache);
 
     } catch (IOException e) {
       throw new OIndexException("Exception during index deletion", e);
