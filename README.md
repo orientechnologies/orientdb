@@ -44,6 +44,7 @@ OrientDB is free for any use (Apache 2 license). If you are in production don't 
 - For any questions visit the [OrientDB Community Group](http://www.orientechnologies.com/active-user-community/)
 - [Professional Support](www.orientechnologies.com/support/).
 
+[Get started with OrientDB](http://www.orientechnologies.com/getting-started/).
 
 [![](http://www.softpedia.com/_img/softpedia_100_free.png)](http://mac.softpedia.com/get/Developer-Tools/Orient.shtml)
 
