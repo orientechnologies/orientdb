@@ -194,7 +194,7 @@ public class OServerNetworkListener extends Thread {
             final ODistributedServerManager.NODE_STATUS nodeStatus = server.getDistributedManager().getNodeStatus();
             if (nodeStatus != ODistributedServerManager.NODE_STATUS.ONLINE) {
               OLogManager.instance().warn(this,
-                  "Distributed server is not yet ONLINE (status=%s), reject incoming connection from %s", nodeStatus,
+                  "Distributed server is not yet ONLINE (status=%s), reject incoming connection from %s. If you are trying to shutdown the server, please kill the process", nodeStatus,
                   socket.getRemoteSocketAddress());
               socket.close();
 
