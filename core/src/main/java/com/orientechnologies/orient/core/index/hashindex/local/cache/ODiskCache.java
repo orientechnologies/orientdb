@@ -79,8 +79,6 @@ public interface ODiskCache {
 
   void pinPage(OCacheEntry cacheEntry) throws IOException;
 
-  void loadPinnedPage(OCacheEntry cacheEntry) throws IOException;
-
   OCacheEntry allocateNewPage(long fileId) throws IOException;
 
   void release(OCacheEntry cacheEntry);
