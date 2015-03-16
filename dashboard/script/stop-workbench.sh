@@ -38,7 +38,15 @@ LOG_FILE=$ORIENTDB_HOME/config/workbench-log.properties
 WWW_PATH=$ORIENTDB_HOME/www
 JAVA_OPTS=-Djava.awt.headless=true
 
-java -client $JAVA_OPTS -Dorientdb.config.file="$CONFIG_FILE" -cp "$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerShutdownMain $*
+# Set JavaHome if it exists
+if [ -f "${JAVA_HOME}/bin/java" ]; then
+   JAVA=${JAVA_HOME}/bin/java
+else
+   JAVA=java
+fi
+export JAVA
+
+exec "$JAVA" -client $JAVA_OPTS -Dorientdb.config.file="$CONFIG_FILE" -cp "$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerShutdownMain $*
 
 if [ "x$wait" == "xyes" ] ; then
   while true ; do
