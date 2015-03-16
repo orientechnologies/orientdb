@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.compression.OCompression;
+import com.orientechnologies.orient.core.config.*;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
@@ -17,10 +18,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import org.testng.Assert;
 import org.testng.annotations.*;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
@@ -57,6 +54,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   private void createPaginatedCluster() throws IOException {
     storage = mock(OLocalPaginatedStorage.class);
     OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
+    when(storageConfiguration.getContextConfiguration()).thenReturn(new OContextConfiguration());
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
     storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
@@ -65,6 +63,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     when(storage.getStoragePath()).thenReturn(storageDir);
     when(storage.getName()).thenReturn("localPaginatedClusterWithWALTestOne");
     when(storage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
+    when(storage.getVariableParser()).thenReturn(new OStorageVariableParser(storageDir));
 
     File buildDir = new File(buildDirectory);
     if (!buildDir.exists())
@@ -80,18 +79,17 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, storage, null, false, false);
 
     when(storage.getStorageTransaction()).thenReturn(null);
+    when(storage.getWALInstance()).thenReturn(writeAheadLog);
+    atomicOperationsManager = new OAtomicOperationsManager(storage);
     when(storage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
     when(storage.getDiskCache()).thenReturn(diskCache);
-    when(storage.getWALInstance()).thenReturn(writeAheadLog);
     when(storage.getConfiguration()).thenReturn(storageConfiguration);
     when(storage.getMode()).thenReturn("rw");
-
-    atomicOperationsManager = new OAtomicOperationsManager(storage);
 
     when(storageConfiguration.getDirectory()).thenReturn(storageDir);
 
     paginatedCluster = new OPaginatedCluster();
-    testCluster.configure(testStorage, 6, "testPaginatedClusterWithWALTest", buildDirectory, -1);
+    paginatedCluster.configure(storage, 6, "testPaginatedClusterWithWALTest", buildDirectory, -1);
     paginatedCluster.create(-1);
   }
 
@@ -101,12 +99,14 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
     storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
+    when(storageConfiguration.getContextConfiguration()).thenReturn(new OContextConfiguration());
 
     testStorageDir = buildDirectory + "/localPaginatedClusterWithWALTestTwo";
     when(testStorage.getStoragePath()).thenReturn(testStorageDir);
     when(testStorage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
 
     when(testStorage.getName()).thenReturn("localPaginatedClusterWithWALTestTwo");
+    when(testStorage.getVariableParser()).thenReturn(new OStorageVariableParser(testStorageDir));
 
     File buildDir = new File(buildDirectory);
     if (!buildDir.exists())
@@ -120,12 +120,12 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, testStorage, null, false, false);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(testStorageDir);
-    final OAtomicOperationsManager testAtomicOperationsManager = new OAtomicOperationsManager(null);
+    final OAtomicOperationsManager testAtomicOperationsManager = new OAtomicOperationsManager(testStorage);
 
+    when(testStorage.getWALInstance()).thenReturn(null);
     when(testStorage.getStorageTransaction()).thenReturn(null);
     when(testStorage.getAtomicOperationsManager()).thenReturn(testAtomicOperationsManager);
     when(testStorage.getDiskCache()).thenReturn(testDiskCache);
-    when(testStorage.getWALInstance()).thenReturn(null);
     when(testStorage.getVariableParser()).thenReturn(variableParser);
     when(testStorage.getConfiguration()).thenReturn(storageConfiguration);
     when(testStorage.getMode()).thenReturn("rw");
