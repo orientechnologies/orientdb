@@ -117,7 +117,7 @@ public class OWALChangesTree {
 
     applyChanges(value, offset, end, result);
 
-    return OLongSerializer.INSTANCE.deserializeNative(value, offset);
+    return OLongSerializer.INSTANCE.deserializeNative(value, 0);
   }
 
   public void add(byte[] value, int start) {
