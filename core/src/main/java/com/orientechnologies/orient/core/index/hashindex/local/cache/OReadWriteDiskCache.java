@@ -271,29 +271,6 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
-  public void loadPinnedPage(final OCacheEntry cacheEntry) throws IOException {
-    Lock fileLock;
-    Lock pageLock;
-
-    cacheLock.acquireReadLock();
-    try {
-      fileLock = fileLockManager.acquireSharedLock(cacheEntry.fileId);
-      try {
-        pageLock = pageLockManager.acquireExclusiveLock(new PageKey(cacheEntry.fileId, cacheEntry.pageIndex));
-        try {
-          cacheEntry.usagesCount++;
-        } finally {
-          pageLockManager.releaseLock(pageLock);
-        }
-      } finally {
-        fileLockManager.releaseLock(fileLock);
-      }
-    } finally {
-      cacheLock.releaseReadLock();
-    }
-  }
-
-  @Override
   public OCacheEntry load(final long fileId, final long pageIndex, final boolean checkPinnedPages) throws IOException {
     final UpdateCacheResult cacheResult = doLoad(fileId, pageIndex, checkPinnedPages, false);
     if (cacheResult == null)

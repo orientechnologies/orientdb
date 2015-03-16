@@ -51,8 +51,8 @@ public class OHashTableDirectory extends ODurableComponent {
 
   private long                            fileId;
 
-  private OCacheEntry                     firstEntry;
-  private List<OCacheEntry>               entries;
+  private final long                      firstEntryIndex;
+  private List<Integer>                   entries;
 
   private final boolean                   durableInNonTxMode;
   private final OAbstractPaginatedStorage storage;
@@ -63,6 +63,7 @@ public class OHashTableDirectory extends ODurableComponent {
     this.diskCache = storage.getDiskCache();
     this.durableInNonTxMode = durableInNonTxMode;
     this.storage = storage;
+    this.firstEntryIndex = 0;
 
     init(storage);
   }
@@ -85,7 +86,7 @@ public class OHashTableDirectory extends ODurableComponent {
   private void init() throws IOException {
     OAtomicOperation atomicOperation = startAtomicOperation();
     try {
-      firstEntry = loadPage(atomicOperation, fileId, 0, true, diskCache);
+      OCacheEntry firstEntry = loadPage(atomicOperation, fileId, firstEntryIndex, true, diskCache);
 
       if (firstEntry == null) {
         firstEntry = addPage(atomicOperation, fileId, diskCache);
@@ -106,7 +107,7 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(atomicOperation, firstEntry, diskCache);
       }
 
-      entries = new ArrayList<OCacheEntry>();
+      entries = new ArrayList<Integer>();
 
       endAtomicOperation(false);
     } catch (IOException e) {
@@ -124,7 +125,7 @@ public class OHashTableDirectory extends ODurableComponent {
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
       fileId = openFile(atomicOperation, name + defaultExtension, diskCache);
-      firstEntry = loadPage(atomicOperation, fileId, 0, true, diskCache);
+      OCacheEntry firstEntry = loadPage(atomicOperation, fileId, 0, true, diskCache);
 
       assert firstEntry != null;
 
@@ -133,7 +134,7 @@ public class OHashTableDirectory extends ODurableComponent {
 
       final int filledUpTo = (int) getFilledUpTo(atomicOperation, diskCache, fileId);
 
-      entries = new ArrayList<OCacheEntry>(filledUpTo - 1);
+      entries = new ArrayList<Integer>(filledUpTo - 1);
 
       for (int i = 1; i < filledUpTo; i++) {
         final OCacheEntry entry = loadPage(atomicOperation, fileId, i, true, diskCache);
@@ -142,7 +143,7 @@ public class OHashTableDirectory extends ODurableComponent {
         pinPage(atomicOperation, entry, diskCache);
         releasePage(atomicOperation, entry, diskCache);
 
-        entries.add(entry);
+        entries.add(i);
       }
     } finally {
       releaseExclusiveLock();
@@ -186,8 +187,7 @@ public class OHashTableDirectory extends ODurableComponent {
     try {
       OAtomicOperation atomicOperation = startAtomicOperation();
 
-      diskCache.loadPinnedPage(firstEntry);
-
+      OCacheEntry firstEntry = loadPage(atomicOperation, fileId, firstEntryIndex, true, diskCache);
       firstEntry.acquireExclusiveLock();
       try {
         ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, getChangesTree(atomicOperation, firstEntry), firstEntry);
@@ -225,13 +225,10 @@ public class OHashTableDirectory extends ODurableComponent {
             pinPage(atomicOperation, cacheEntry, diskCache);
             releasePage(atomicOperation, cacheEntry, diskCache);
 
-            entries.add(cacheEntry);
+            entries.add(pageIndex);
           }
 
-          OCacheEntry cacheEntry = entries.get(pageIndex);
-
-          diskCache.loadPinnedPage(cacheEntry);
-
+          OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, entries.get(pageIndex), true, diskCache);
           cacheEntry.acquireExclusiveLock();
 
           try {
@@ -278,8 +275,7 @@ public class OHashTableDirectory extends ODurableComponent {
     try {
       final OAtomicOperation atomicOperation = startAtomicOperation();
 
-      diskCache.loadPinnedPage(firstEntry);
-
+      OCacheEntry firstEntry = loadPage(atomicOperation, fileId, firstEntryIndex, true, diskCache);
       firstEntry.acquireExclusiveLock();
       try {
         ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, getChangesTree(atomicOperation, firstEntry), firstEntry);
@@ -290,9 +286,7 @@ public class OHashTableDirectory extends ODurableComponent {
           final int pageIndex = (nodeIndex - ODirectoryFirstPage.NODES_PER_PAGE) / ODirectoryPage.NODES_PER_PAGE;
           final int localNodeIndex = (nodeIndex - ODirectoryFirstPage.NODES_PER_PAGE) % ODirectoryPage.NODES_PER_PAGE;
 
-          final OCacheEntry cacheEntry = entries.get(pageIndex);
-          diskCache.loadPinnedPage(cacheEntry);
-
+          final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, entries.get(pageIndex), true, diskCache);
           cacheEntry.acquireExclusiveLock();
           try {
             ODirectoryPage page = new ODirectoryPage(cacheEntry, getChangesTree(atomicOperation, cacheEntry), cacheEntry);
@@ -543,16 +537,15 @@ public class OHashTableDirectory extends ODurableComponent {
 
   private ODirectoryPage loadPage(int nodeIndex, boolean exclusiveLock, OAtomicOperation atomicOperation) throws IOException {
     if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
-      diskCache.loadPinnedPage(firstEntry);
+      OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, firstEntryIndex, true, diskCache);
       if (exclusiveLock)
-        firstEntry.acquireExclusiveLock();
+        cacheEntry.acquireExclusiveLock();
 
-      return new ODirectoryFirstPage(firstEntry, getChangesTree(atomicOperation, firstEntry), firstEntry);
+      return new ODirectoryFirstPage(cacheEntry, getChangesTree(atomicOperation, cacheEntry), cacheEntry);
     }
 
     final int pageIndex = (nodeIndex - ODirectoryFirstPage.NODES_PER_PAGE) / ODirectoryPage.NODES_PER_PAGE;
-    final OCacheEntry cacheEntry = entries.get(pageIndex);
-    diskCache.loadPinnedPage(cacheEntry);
+    final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, entries.get(pageIndex), true, diskCache);
 
     if (exclusiveLock)
       cacheEntry.acquireExclusiveLock();

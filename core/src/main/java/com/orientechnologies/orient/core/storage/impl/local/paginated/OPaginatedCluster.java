@@ -74,7 +74,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   private volatile int                          id;
   private long                                  fileId;
   private OStoragePaginatedClusterConfiguration config;
-  private OCacheEntry                           pinnedStateEntry;
+  private long                                  pinnedStateEntryIndex;
   private boolean                               useCRC32;
   private ORecordConflictStrategy               recordConflictStrategy;
 
@@ -192,9 +192,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
         fileId = openFile(atomicOperation, name + DEF_EXTENSION, diskCache);
 
-        pinnedStateEntry = loadPage(atomicOperation, fileId, 0, false, diskCache);
+        OCacheEntry pinnedStateEntry = loadPage(atomicOperation, fileId, 0, false, diskCache);
         try {
           pinPage(atomicOperation, pinnedStateEntry, diskCache);
+          pinnedStateEntryIndex = pinnedStateEntry.getPageIndex();
         } finally {
           releasePage(atomicOperation, pinnedStateEntry, diskCache);
         }
@@ -964,8 +965,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public long getEntries() {
     acquireSharedLock();
     try {
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-      diskCache.loadPinnedPage(pinnedStateEntry);
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      final OCacheEntry pinnedStateEntry = loadPage(atomicOperation, fileId, pinnedStateEntryIndex, true, diskCache);
       try {
         return new OPaginatedClusterState(pinnedStateEntry, getChangesTree(atomicOperation, pinnedStateEntry)).getSize();
       } finally {
@@ -1043,8 +1044,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public long getRecordsSize() throws IOException {
     acquireSharedLock();
     try {
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-      diskCache.loadPinnedPage(pinnedStateEntry);
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      final OCacheEntry pinnedStateEntry = loadPage(atomicOperation, fileId, pinnedStateEntryIndex, true, diskCache);
       try {
         return new OPaginatedClusterState(pinnedStateEntry, getChangesTree(atomicOperation, pinnedStateEntry)).getRecordsSize();
       } finally {
@@ -1149,8 +1150,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   private void updateClusterState(long sizeDiff, long recordsSizeDiff) throws IOException {
-    diskCache.loadPinnedPage(pinnedStateEntry);
-    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+    final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+    final OCacheEntry pinnedStateEntry = loadPage(atomicOperation, fileId, pinnedStateEntryIndex, true, diskCache);
     pinnedStateEntry.acquireExclusiveLock();
     try {
       OPaginatedClusterState paginatedClusterState = new OPaginatedClusterState(pinnedStateEntry, getChangesTree(atomicOperation,
@@ -1351,8 +1352,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   private FindFreePageResult findFreePage(int contentSize) throws IOException {
-    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-    diskCache.loadPinnedPage(pinnedStateEntry);
+    final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+    final OCacheEntry pinnedStateEntry = loadPage(atomicOperation, fileId, pinnedStateEntryIndex, true, diskCache);
     try {
       while (true) {
         int freePageIndex = contentSize / ONE_KB;
@@ -1460,7 +1461,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
       if (newFreePageIndex >= 0) {
         long oldFreePage;
-        diskCache.loadPinnedPage(pinnedStateEntry);
+        OCacheEntry pinnedStateEntry = loadPage(atomicOperation, fileId, pinnedStateEntryIndex, true, diskCache);
         try {
           OPaginatedClusterState clusterFreeList = new OPaginatedClusterState(pinnedStateEntry, getChangesTree(atomicOperation,
               pinnedStateEntry));
@@ -1496,8 +1497,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   private void updateFreePagesList(int freeListIndex, long pageIndex) throws IOException {
-    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-    diskCache.loadPinnedPage(pinnedStateEntry);
+    final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+    final OCacheEntry pinnedStateEntry = loadPage(atomicOperation, fileId, pinnedStateEntryIndex, true, diskCache);
     pinnedStateEntry.acquireExclusiveLock();
     try {
       OPaginatedClusterState paginatedClusterState = new OPaginatedClusterState(pinnedStateEntry, getChangesTree(atomicOperation,
@@ -1523,7 +1524,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   private void initCusterState() throws IOException {
     OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-    pinnedStateEntry = addPage(atomicOperation, fileId, diskCache);
+    OCacheEntry pinnedStateEntry = addPage(atomicOperation, fileId, diskCache);
     pinnedStateEntry.acquireExclusiveLock();
     try {
       OPaginatedClusterState paginatedClusterState = new OPaginatedClusterState(pinnedStateEntry, getChangesTree(atomicOperation,
@@ -1535,6 +1536,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
       for (int i = 0; i < FREE_LIST_SIZE; i++)
         paginatedClusterState.setFreeListPage(i, -1);
+
+      pinnedStateEntryIndex = pinnedStateEntry.getPageIndex();
     } finally {
       pinnedStateEntry.releaseExclusiveLock();
       releasePage(atomicOperation, pinnedStateEntry, diskCache);

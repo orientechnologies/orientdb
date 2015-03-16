@@ -147,13 +147,6 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   }
 
   @Override
-  public void loadPinnedPage(OCacheEntry cacheEntry) throws IOException {
-    synchronized (cacheEntry) {
-      cacheEntry.incrementUsages();
-    }
-  }
-
-  @Override
   public OCacheEntry allocateNewPage(long fileId) throws IOException {
     final MemoryFile memoryFile = getFile(fileId);
     final OCacheEntry cacheEntry = memoryFile.addNewPage();
