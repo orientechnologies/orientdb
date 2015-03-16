@@ -79,10 +79,6 @@ public class OAtomicOperation {
     }
 
     FilePageChanges pageChangesContainer = changesContainer.pageChangesMap.get(pageIndex);
-    if (pageChangesContainer == null) {
-      pageChangesContainer = new FilePageChanges();
-      changesContainer.pageChangesMap.put(pageIndex, pageChangesContainer);
-    }
 
     if (changesContainer.isNew) {
       if (pageIndex <= changesContainer.maxNewPageIndex)
@@ -94,6 +90,11 @@ public class OAtomicOperation {
       final long filledUpTo = filledUpTo(fileId, diskCache);
 
       if (pageIndex < filledUpTo) {
+        if (pageChangesContainer == null) {
+          pageChangesContainer = new FilePageChanges();
+          changesContainer.pageChangesMap.put(pageIndex, pageChangesContainer);
+        }
+
         if (pageChangesContainer.isNew)
           return new OCacheEntry(fileId, pageIndex, new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1)),
               false);
