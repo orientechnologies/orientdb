@@ -77,7 +77,13 @@ public class IssueServiceGithub implements IssueService {
 
   @Override
   public List<Label> addLabels(Issue issue, List<String> labels, OUser actor, boolean fire, boolean remote) {
-    GitHub github = new GitHub(SecurityHelper.currentToken());
+    String token = null;
+    if (actor != null) {
+      token = actor.getToken();
+    } else {
+      token = SecurityHelper.currentToken();
+    }
+    GitHub github = new GitHub(token);
 
     ODocument doc = new ODocument();
 

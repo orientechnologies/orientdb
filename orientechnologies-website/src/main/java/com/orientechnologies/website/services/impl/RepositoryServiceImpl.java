@@ -162,7 +162,7 @@ public class RepositoryServiceImpl implements RepositoryService {
     return original;
   }
 
-  private Issue createPrivateIssue(Repository repository, IssueDTO issue) {
+  private Issue createPrivateIssue(Repository repository, final IssueDTO issue) {
     String assignee = issue.getAssignee();
     Integer milestoneId = issue.getMilestone();
     Integer versionId = issue.getVersion();
@@ -190,6 +190,14 @@ public class RepositoryServiceImpl implements RepositoryService {
     handleAssignee(issueDomain, assignee);
     Issue issue1 = issueRepository.save(issueDomain);
     eventManager.pushInternalEvent(IssueCreatedEvent.EVENT, issue1);
+    List<OUser> bots = organizationRepo.findBots(repository.getOrganization().getName());
+    if (bots.size() > 0 && issue.getType() != null) {
+      issueService.addLabels(issue1, new ArrayList<String>() {
+        {
+          add(issue.getType());
+        }
+      }, bots.iterator().next(), true, false);
+    }
     return issue1;
   }
 

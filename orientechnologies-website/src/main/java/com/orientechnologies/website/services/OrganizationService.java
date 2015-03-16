@@ -41,10 +41,8 @@ public interface OrganizationService {
   @Transactional
   Message patchMessage(String name, Integer clientId, String messageId, Message message);
 
-  // @Transactional
-  // Environment registerClientEnvironment(String name, Integer id, Environment environment);
+  @Transactional
+  OUser registerBot(String name, String username);
 
-  // @Transactional
-  // Sla registerClientSlaToEnvironment(String name, Integer id, String env, Sla sla);
 
 }

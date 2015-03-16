@@ -143,6 +143,10 @@ angular.module('webappApp')
       $scope.areas = data.plain();
     })
 
+    Organization.all("bots").getList().then(function (data) {
+      $scope.bots = data.plain();
+    })
+
     Organization.all("milestones").all('current').getList().then(function (data) {
       var currents = data.plain();
       Organization.all("milestones").getList().then(function (data) {
@@ -157,6 +161,12 @@ angular.module('webappApp')
       })
     })
 
+
+    $scope.addBot = function () {
+      Organization.all("bots").one($scope.newBot).post().then(function (data) {
+        $scope.bots.push(data);
+      });
+    }
     $scope.addRepository = function () {
       Organization.all("repos").one($scope.newRepo).post().then(function (data) {
         $scope.repositories.push(data.plain());

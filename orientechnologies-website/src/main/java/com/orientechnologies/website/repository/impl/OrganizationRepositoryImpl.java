@@ -675,13 +675,14 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     }
     return milestones;
   }
+
   @Override
   public List<Milestone> findCurrentMilestones(String name) {
     OrientGraph db = dbFactory.getGraph();
     String query = String
-            .format(
-                    "select distinct(title) as title from (select  from (select expand(out('HasRepo').out('HasMilestone')) from Organization where name = '%s') where current = true)",
-                    name);
+        .format(
+            "select distinct(title) as title from (select  from (select expand(out('HasRepo').out('HasMilestone')) from Organization where name = '%s') where current = true)",
+            name);
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
 
     List<Milestone> milestones = new ArrayList<Milestone>();
@@ -691,6 +692,21 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     }
     return milestones;
   }
+
+  @Override
+  public List<OUser> findBots(String name) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select  from (select expand(out('HasBot')) from Organization where name = '%s') ", name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<OUser> bots = new ArrayList<OUser>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      bots.add(com.orientechnologies.website.model.schema.OUser.NAME.fromDoc(doc, db));
+    }
+    return bots;
+  }
+
   @Override
   public List<Label> findLabels(String name) {
     OrientGraph db = dbFactory.getGraph();

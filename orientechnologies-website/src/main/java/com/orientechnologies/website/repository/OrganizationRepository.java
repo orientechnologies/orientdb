@@ -69,4 +69,7 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
   void setCurrentMilestones(String name, String title, Boolean current);
 
   List<Milestone> findCurrentMilestones(String name);
+
+  List<OUser> findBots(String name);
+
 }

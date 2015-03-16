@@ -95,7 +95,7 @@ public class OrganizationController extends ExceptionController {
 
         Client client = issue.getClient();
         Client currentClient = userService.getClient(user, organization);
-        if (currentClient == null || client ==null || client.getClientId() != currentClient.getClientId()) {
+        if (currentClient == null || client == null || client.getClientId() != currentClient.getClientId()) {
           return new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
         }
       }
@@ -148,6 +148,18 @@ public class OrganizationController extends ExceptionController {
   @ResponseStatus(HttpStatus.OK)
   public List<Label> findLabels(@PathVariable("name") String name) {
     return orgRepository.findLabels(name);
+  }
+
+  @RequestMapping(value = "{name}/bots", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public List<OUser> findBots(@PathVariable("name") String name) {
+    return orgRepository.findBots(name);
+  }
+
+  @RequestMapping(value = "{name}/bots/{username}", method = RequestMethod.POST)
+  @ResponseStatus(HttpStatus.OK)
+  public OUser addBotToOrg(@PathVariable("name") String name, @PathVariable("username") String username) {
+    return organizationService.registerBot(name, username);
   }
 
   @RequestMapping(value = "{name}/clients", method = RequestMethod.POST)
@@ -203,7 +215,7 @@ public class OrganizationController extends ExceptionController {
     OUser user = SecurityHelper.currentUser();
     Client client = userService.getClient(user, name);
     if (userService.isMember(user, name) || (userService.isClient(user, name) && client.getClientId().equals(clientId))) {
-      return new ResponseEntity(organizationService.patchMessage(name, clientId,messageId, message), HttpStatus.OK);
+      return new ResponseEntity(organizationService.patchMessage(name, clientId, messageId, message), HttpStatus.OK);
     } else {
       return new ResponseEntity(null, HttpStatus.NOT_FOUND);
     }

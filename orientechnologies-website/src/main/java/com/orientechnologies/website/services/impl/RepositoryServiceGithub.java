@@ -8,14 +8,13 @@ import com.orientechnologies.website.github.GIssue;
 import com.orientechnologies.website.github.GRepo;
 import com.orientechnologies.website.github.GitHub;
 import com.orientechnologies.website.helper.SecurityHelper;
-import com.orientechnologies.website.model.schema.dto.Issue;
-import com.orientechnologies.website.model.schema.dto.Label;
-import com.orientechnologies.website.model.schema.dto.Milestone;
-import com.orientechnologies.website.model.schema.dto.Repository;
+import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
 import com.orientechnologies.website.services.RepositoryService;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Enrico Risa on 14/11/14.
@@ -39,7 +38,7 @@ public class RepositoryServiceGithub implements RepositoryService {
   }
 
   @Override
-  public Issue openIssue(Repository repository, IssueDTO issue) {
+  public Issue openIssue(Repository repository, final IssueDTO issue) {
 
     GitHub github = new GitHub(SecurityHelper.currentToken());
 
@@ -75,6 +74,14 @@ public class RepositoryServiceGithub implements RepositoryService {
       repositoryService.handleClient(repository, i, issue.getClient());
       Issue issue1 = repositoryService.issueRepository.save(i);
       repositoryService.eventManager.pushInternalEvent(IssueCreatedEvent.EVENT, issue1);
+      List<OUser> bots = repositoryService.organizationRepo.findBots(repository.getOrganization().getName());
+      if (bots.size() > 0 && issue.getType() != null) {
+        repositoryService.issueService.addLabels(issue1, new ArrayList<String>() {
+          {
+            add(issue.getType());
+          }
+        }, bots.iterator().next(), false, true);
+      }
       return issue1;
     } catch (IOException e) {
       e.printStackTrace();

@@ -16,7 +16,8 @@ public class IssueDTO {
   private String       body;
   private String       state;
   private List<String> labels = new ArrayList<String>();
-  private Environment environment;
+  private Environment  environment;
+  private String       type;
   private Integer      milestone;
   private Integer      version;
   private Integer      client;
@@ -93,6 +94,14 @@ public class IssueDTO {
 
   public void setLabels(List<String> labels) {
     this.labels = labels;
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  public void setType(String type) {
+    this.type = type;
   }
 
   public Environment getEnvironment() {

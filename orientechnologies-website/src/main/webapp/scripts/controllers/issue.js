@@ -309,6 +309,7 @@ angular.module('webappApp')
   .controller('IssueNewCtrl', function ($scope, Organization, Repo, $location, User) {
 
 
+    $scope.types = ['bug', 'Performance', 'Documentation', 'Enhancement', 'Question']
     $scope.issue = {}
     $scope.save = function () {
       $scope.issue.scope = $scope.scope.number;
@@ -319,6 +320,7 @@ angular.module('webappApp')
     Organization.all("scopes").getList().then(function (data) {
       $scope.scopes = data.plain();
     })
+    $scope.labels = $scope.types;
     User.whoami().then(function (data) {
       $scope.user = data;
       $scope.isMember = User.isMember(ORGANIZATION);

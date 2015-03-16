@@ -109,7 +109,8 @@ public class IssueServiceImpl implements IssueService {
 
     for (String label : labels) {
       Label l = repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
-      lbs.add(l);
+      if (l != null)
+        lbs.add(l);
     }
     changeLabels(issue, lbs, false);
 

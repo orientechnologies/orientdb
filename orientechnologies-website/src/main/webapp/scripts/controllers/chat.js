@@ -8,7 +8,7 @@
  * Controller of the webappApp
  */
 angular.module('webappApp')
-  .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb, $location, ChatService, $rootScope) {
+  .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb, $location, ChatService, $rootScope,$filter) {
 
     $scope.isNew = false;
     $scope.placeholder = "Click here to type a message. Enter to send.";
@@ -170,6 +170,8 @@ angular.module('webappApp')
         if (clients.length > 0) {
           $scope.clients = clients;
           if (!$scope.clientId) {
+
+            $scope.clients = $filter('orderBy')($scope.clients, "timestamp", true);
             $scope.clientId = $scope.clients[0].clientId.toString();
             $scope.client = $scope.clients[0];
           } else {

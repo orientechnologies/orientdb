@@ -312,6 +312,19 @@ public class OrganizationServiceImpl implements OrganizationService {
   }
 
   @Override
+  public OUser registerBot(String name, String username) {
+
+    Organization organization = organizationRepository.findOneByName(name);
+    OUser developer = userRepository.findUserByLogin(username);
+
+    if (organization != null && developer != null) {
+      createBotORgRelationship(organization, developer);
+      return developer;
+    }
+    return null;
+  }
+
+  @Override
   public void checkInRoom(String name, Integer clientId) {
 
     final Client client = organizationRepository.findClient(name, clientId);
@@ -353,6 +366,16 @@ public class OrganizationServiceImpl implements OrganizationService {
       orgVertex.addEdge(HasMember.class.getSimpleName(), devVertex);
     }
 
+  }
+
+  private void createBotORgRelationship(Organization organization, OUser bot) {
+    OrientGraph graph = dbFactory.getGraph();
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(organization.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(bot.getRid()));
+    for (Edge edge : orgVertex.getEdges(Direction.OUT, HasBot.class.getSimpleName())) {
+      edge.remove();
+    }
+    orgVertex.addEdge(HasBot.class.getSimpleName(), devVertex);
   }
 
   private void createOwnerScopeRelationship(Scope scope, OUser owner) {
