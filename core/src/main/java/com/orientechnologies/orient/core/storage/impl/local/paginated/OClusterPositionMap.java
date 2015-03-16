@@ -139,9 +139,11 @@ public class OClusterPositionMap extends ODurableComponent {
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
       long lastPage = getFilledUpTo(atomicOperation, diskCache, fileId) - 1;
-      OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, lastPage, false, diskCache);
-      if (cacheEntry == null)
+      OCacheEntry cacheEntry;
+      if (lastPage < 0)
         cacheEntry = addPage(atomicOperation, fileId, diskCache);
+      else
+        cacheEntry = loadPage(atomicOperation, fileId, lastPage, false, diskCache);
 
       cacheEntry.acquireExclusiveLock();
       try {
