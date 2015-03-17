@@ -172,7 +172,8 @@ public class LocalPaginatedClusterTest {
   public void testAddManySmallRecords() throws IOException {
     final int records = 10000;
 
-    long seed = System.currentTimeMillis();
+    long seed = 1426587095601L;
+    System.currentTimeMillis();
     MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
     System.out.println("testAddManySmallRecords seed : " + seed);
 

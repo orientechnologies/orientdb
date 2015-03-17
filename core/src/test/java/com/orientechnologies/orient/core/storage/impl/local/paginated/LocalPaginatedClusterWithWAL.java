@@ -397,6 +397,9 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
           OCacheEntry cacheEntry = testDiskCache.load(fileId, pageIndex, true);
           if (cacheEntry == null) {
             do {
+              if (cacheEntry != null)
+                diskCache.release(cacheEntry);
+
               cacheEntry = testDiskCache.allocateNewPage(fileId);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }

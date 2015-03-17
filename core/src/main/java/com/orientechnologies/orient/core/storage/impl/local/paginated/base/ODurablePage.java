@@ -87,10 +87,6 @@ public class ODurablePage {
     this.changesTree = changesTree;
   }
 
-  public void setChangesTree(OWALChangesTree changesTree) {
-    this.changesTree = changesTree;
-  }
-
   public static OLogSequenceNumber getLogSequenceNumberFromPage(ODirectMemoryPointer dataPointer) {
     final long segment = OLongSerializer.INSTANCE.deserializeFromDirectMemory(dataPointer, WAL_SEGMENT_OFFSET + PAGE_PADDING);
     final long position = OLongSerializer.INSTANCE.deserializeFromDirectMemory(dataPointer, WAL_POSITION_OFFSET + PAGE_PADDING);
