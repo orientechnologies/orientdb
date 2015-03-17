@@ -28,12 +28,11 @@ public class SBTreeNonLeafBucketTest {
     cachePointer.incrementReferrer();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, false,
-        OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, new OWALChangesTree());
+        OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, null);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertFalse(treeBucket.isLeaf());
 
-    treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE,
-        new OWALChangesTree());
+    treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, null);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertFalse(treeBucket.isLeaf());
     Assert.assertEquals(treeBucket.getLeftSibling(), -1);

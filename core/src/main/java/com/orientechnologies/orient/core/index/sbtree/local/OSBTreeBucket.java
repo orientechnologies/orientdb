@@ -340,7 +340,10 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
   public int updateValue(int index, OSBTreeValue<V> value) throws IOException {
     int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
-    entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition) + OByteSerializer.BYTE_SIZE;
+    entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
+    boolean isLinkValue = getByteValue(entryPosition) > 0;
+
+    entryPosition += OByteSerializer.BYTE_SIZE;
 
     int newSize = 0;
     if (value.isLink())
@@ -348,7 +351,12 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     else
       newSize = valueSerializer.getObjectSize(value.getValue());
 
-    final int oldSize = getObjectSizeInDirectMemory(valueSerializer, entryPosition);
+    final int oldSize;
+    if (isLinkValue)
+      oldSize = OLongSerializer.LONG_SIZE;
+    else
+      oldSize = getObjectSizeInDirectMemory(valueSerializer, entryPosition);
+
     if (newSize != oldSize)
       return -1;
 

@@ -257,9 +257,9 @@ public class SBTreeTestBigValues {
 
   public void testKeysUpdateFromBigToSmall() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 2 == 0)
+      if (i % 2 == 0) {
         sbTree.put(i, createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
-      else
+      } else
         sbTree.put(i / 2, createValue(i / 2, 1024));
     }
 
