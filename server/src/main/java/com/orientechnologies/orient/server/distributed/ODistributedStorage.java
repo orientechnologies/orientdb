@@ -71,6 +71,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
@@ -599,8 +600,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         // REPLICATE IT
         final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new OUpdateRecordTask(
-            iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version, iContent, iVersion, iRecordType),
-            EXECUTION_MODE.RESPONSE);
+            iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version, iContent, iVersion,
+            iRecordType), EXECUTION_MODE.RESPONSE);
 
         if (result instanceof ONeedRetryException)
           throw (ONeedRetryException) result;
@@ -940,9 +941,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         return;
       }
 
+      // ASYNCH
       ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
         @Override
         public Object call() throws Exception {
+          ((OTransactionRealAbstract) iTx).restore();
           wrapped.commit(iTx, callback);
           return null;
         }
