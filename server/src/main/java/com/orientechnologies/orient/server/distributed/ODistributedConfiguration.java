@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.server.distributed;
 
 import java.util.ArrayList;
@@ -42,6 +42,10 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 public class ODistributedConfiguration {
   public static final String NEW_NODE_TAG = "<NEW_NODE>";
   private ODocument          configuration;
+
+  public enum ROLES {
+    MASTER, SLAVE
+  };
 
   public ODistributedConfiguration(final ODocument iConfiguration) {
     configuration = iConfiguration;
@@ -388,6 +392,48 @@ public class ODistributedConfiguration {
     synchronized (configuration) {
       final ODocument clusters = configuration.field("clusters");
       return clusters.fieldNames();
+    }
+  }
+
+  /**
+   * Returns the default server role between MASTER (default) and SLAVE.
+   */
+  public ROLES getDefaultServerRole() {
+    synchronized (configuration) {
+      final ODocument servers = configuration.field("servers");
+      if (servers == null)
+        // DEFAULT: MASTER
+        return ROLES.MASTER;
+
+      final String role = servers.field("*");
+      if (role == null)
+        // DEFAULT: MASTER
+        return ROLES.MASTER;
+
+      return ROLES.valueOf(role.toUpperCase());
+    }
+  }
+
+  /**
+   * Returns the server role between MASTER (default) and SLAVE.
+   */
+  public ROLES getServerRole(final String iServerName) {
+    synchronized (configuration) {
+      final ODocument servers = configuration.field("servers");
+      if (servers == null)
+        // DEFAULT: MASTER
+        return ROLES.MASTER;
+
+      String role = servers.field(iServerName);
+      if (role == null) {
+        // DEFAULT: MASTER
+        role = servers.field("*");
+        if (role == null)
+          // DEFAULT: MASTER
+          return ROLES.MASTER;
+      }
+
+      return ROLES.valueOf(role.toUpperCase());
     }
   }
 

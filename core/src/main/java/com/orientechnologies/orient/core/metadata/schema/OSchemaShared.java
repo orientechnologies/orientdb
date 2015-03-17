@@ -53,7 +53,16 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
@@ -1118,14 +1127,22 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
     setDirty();
 
-    try {
-      super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
-      if (fullCheckpointOnChange)
-        getDatabase().getStorage().synch();
-    } catch (OConcurrentModificationException e) {
-      reload(null, true);
-      throw e;
-    }
+    OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
+      @Override
+      public Object call() {
+        try {
+          toStream();
+          document.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
+          if (fullCheckpointOnChange)
+            getDatabase().getStorage().synch();
+        } catch (OConcurrentModificationException e) {
+          reload(null, true);
+          throw e;
+        }
+        return null;
+      }
+    });
+
     snapshot = new OImmutableSchema(this);
   }
 
