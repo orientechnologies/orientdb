@@ -286,6 +286,9 @@ public class OAtomicOperation {
         if (cacheEntry == null) {
           assert filePageChanges.isNew;
           do {
+            if (cacheEntry != null)
+              diskCache.release(cacheEntry);
+
             cacheEntry = diskCache.allocateNewPage(fileId);
           } while (cacheEntry.getPageIndex() != pageIndex);
         }

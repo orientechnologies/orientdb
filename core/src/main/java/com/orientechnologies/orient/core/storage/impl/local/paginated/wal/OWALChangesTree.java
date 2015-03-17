@@ -335,6 +335,8 @@ public class OWALChangesTree {
   public int toStream(int offset, byte[] stream) {
     OIntegerSerializer.INSTANCE.serializeNative(serializedSize, stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
+    if (root == null)
+      return offset;
 
     offset = toStream(root, offset, stream);
 

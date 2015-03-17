@@ -588,11 +588,11 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
         do {
-          final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, diskCache);
+          OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, diskCache);
           cacheEntry.acquireExclusiveLock();
           int initialFreePageIndex;
           try {
-            final OClusterPage localPage = new OClusterPage(cacheEntry, false, getChangesTree(atomicOperation, cacheEntry));
+            OClusterPage localPage = new OClusterPage(cacheEntry, false, getChangesTree(atomicOperation, cacheEntry));
             initialFreePageIndex = calculateFreePageIndex(localPage);
 
             if (localPage.isDeleted(recordPosition)) {
@@ -601,11 +601,18 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
               else
                 throw new OStorageException("Content of record " + new ORecordId(id, clusterPosition) + " was broken.");
             } else if (removedContentSize == 0) {
+              cacheEntry.releaseExclusiveLock();
+              releasePage(atomicOperation, cacheEntry, diskCache);
+
               atomicOperation = startAtomicOperation();
-              localPage.setChangesTree(getChangesTree(atomicOperation, cacheEntry));
+              lockTillAtomicOperationCompletes();
+
+              cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, diskCache);
+              cacheEntry.acquireExclusiveLock();
+
+              localPage = new OClusterPage(cacheEntry, false, getChangesTree(atomicOperation, cacheEntry));
 
               operationStarted = true;
-              lockTillAtomicOperationCompletes();
             }
 
             byte[] content = localPage.getRecordBinaryValue(recordPosition, 0, localPage.getRecordSize(recordPosition));
