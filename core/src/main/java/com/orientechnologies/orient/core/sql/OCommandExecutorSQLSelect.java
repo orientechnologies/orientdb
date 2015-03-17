@@ -572,7 +572,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected boolean addResult(OIdentifiable iRecord) {
-    System.out.println("adding "+iRecord);
     if (iRecord == null)
       return true;
 
