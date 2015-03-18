@@ -17,13 +17,19 @@
  */
 package com.orientechnologies.agent;
 
-import com.orientechnologies.agent.http.command.*;
+import com.orientechnologies.agent.http.command.OServerCommandConfiguration;
+import com.orientechnologies.agent.http.command.OServerCommandGetDeployDb;
+import com.orientechnologies.agent.http.command.OServerCommandGetDistributed;
+import com.orientechnologies.agent.http.command.OServerCommandGetLog;
+import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
+import com.orientechnologies.agent.http.command.OServerCommandPostBackupDatabase;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
@@ -38,12 +44,11 @@ import java.util.Map;
 
 public class OEnterpriseAgent extends OServerPluginAbstract {
   public static final String  EE                         = "ee.";
+  private static final String ORIENDB_ENTERPRISE_VERSION = "2.1"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
   private OServer             server;
   private String              license;
   private String              version;
   private boolean             enabled                    = false;
-  private static final String ORIENDB_ENTERPRISE_VERSION = "2.0.3"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH
-                                                                    // THIS
 
   public OEnterpriseAgent() {
   }
@@ -173,17 +178,17 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
     System.out.printf("\n\n********************************************************************");
     System.out.printf("\n*                 ORIENTDB  -  ENTERPRISE EDITION                  *");
     System.out.printf("\n*                                                                  *");
-    System.out.printf("\n*            Copyrights (c) 2014 Orient Technologies LTD           *");
+    System.out.printf("\n*            " + OConstants.COPYRIGHT + "           *");
     System.out.printf("\n********************************************************************");
     System.out.printf("\n* Version...: %-52s *", ORIENDB_ENTERPRISE_VERSION);
-//    System.out.printf("\n* License...: %-52s *", license);
-//    if (dayLeft < 0) {
-//      System.out.printf("\n* Licence expired since: %03d days                                  *", Math.abs(dayLeft));
-//      System.out.printf("\n* Enterprise features will be disabled in : %03d days               *", OL.DELAY + dayLeft);
-//      System.out.printf("\n* Please contact Orient Technologies at: info@orientechonogies.com *");
-//    } else {
-//      System.out.printf("\n* Expires in: %03d days                                             *", dayLeft);
-//    }
+    // System.out.printf("\n* License...: %-52s *", license);
+    // if (dayLeft < 0) {
+    // System.out.printf("\n* Licence expired since: %03d days                                  *", Math.abs(dayLeft));
+    // System.out.printf("\n* Enterprise features will be disabled in : %03d days               *", OL.DELAY + dayLeft);
+    // System.out.printf("\n* Please contact Orient Technologies at: info@orientechonogies.com *");
+    // } else {
+    // System.out.printf("\n* Expires in: %03d days                                             *", dayLeft);
+    // }
 
     System.out.printf("\n********************************************************************\n");
 

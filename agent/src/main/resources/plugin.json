@@ -1,6 +1,6 @@
 {
 	"name" : "enterprise-agent",
-	"version" : "1.7",
+	"version" : "2.1",
 	"javaClass": "com.orientechnologies.agent.OEnterpriseAgent",
 	"parameters" : {
 		"license" : "@LICENSE@"
