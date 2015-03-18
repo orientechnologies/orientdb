@@ -152,7 +152,7 @@
                 <div class="btn-group pull-right">
                   <button class="btn btn-sm btn-default" ng-show="issue.state == 'OPEN' && (isOwner || isMember)"
                           ng-click="close()">
-                    Close
+                    {{ closeComment ? 'Close and comment' : 'Close'}}
                   </button>
                   <button class="btn btn-sm btn-default" ng-show="issue.state == 'CLOSED' && (isOwner || isMember)"
                           ng-click="reopen()">
@@ -299,8 +299,9 @@
     <div class="col-md-12">
       <button class="btn btn-transparent " ng-disabled="!isMember" data-placement="bottom-right"
               data-template="views/issues/popover/milestones.html" title="{{popover.title}}"
-              data-content="{{popover.content}}" data-auto-close="1" data-trigger="click" bs-popover>Resolve in Milestone <i
-        class="fa fa-gear pull-right"></i></button>
+              data-content="{{popover.content}}" data-auto-close="1" data-trigger="click" bs-popover>Resolve in
+        Milestone <i
+          class="fa fa-gear pull-right"></i></button>
     </div>
     <div class="col-md-12 milestone">
       <span ng-show="issue.milestone" class="label label-primary">{{issue.milestone.title}}</span>

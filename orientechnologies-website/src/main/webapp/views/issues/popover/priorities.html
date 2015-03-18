@@ -3,9 +3,9 @@
   <h3 class="popover-title">Apply priority to this issue</h3>
 
   <div class="popover-content">
-    <form>
+    <form ng-submit="selectFirst()">
       <div class="form-group">
-        <input type="text" class="form-control" placeholder="Filter priority">
+        <input autofocus type="text" class="form-control"  ng-model="filter" placeholder="Filter priority">
       </div>
     </form>
     <hr class="priority-popover-divider"/>
@@ -13,7 +13,7 @@
       <li class="priority-item" ng-click="togglePriority(priority)"
           ng-class="{ 'priority-unselected' : !isPrioritized(priority)  }"
           style="background-color: {{priority.color | toRgbString:0.4}}"
-          ng-repeat="priority in priorities">
+          ng-repeat="priority in priorities | filter:filter">
         <div class="container-fluid">
           <div class="row">
             <div class="col-md-1 text-center">

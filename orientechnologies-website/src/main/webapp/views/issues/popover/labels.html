@@ -3,9 +3,9 @@
   <h3 class="popover-title">{{title}}</h3>
 
   <div class="popover-content">
-    <form>
+    <form ng-submit="selectFirst()">
       <div class="form-group">
-        <input type="text" class="form-control" ng-model="labelFilter" placeholder="Filter labels">
+        <input autofocus type="text" class="form-control" ng-model="labelFilter" placeholder="Filter labels">
       </div>
     </form>
     <hr class="label-popover-divider"/>

@@ -3,9 +3,9 @@
   <h3 class="popover-title">{{title}}</h3>
 
   <div class="popover-content">
-    <form>
+    <form ng-submit="selectFirst()">
       <div class="form-group">
-        <input type="text" class="form-control" placeholder="Filter users">
+        <input autofocus type="text" class="form-control" ng-model="filter"  placeholder="Filter users">
       </div>
     </form>
     <hr class="assignee-popover-divider"/>
@@ -22,7 +22,7 @@
       </li>
       <li class="assignee-item" ng-click="toggleAssignee(assignee)"
           ng-class="{ 'assignee-selected' : isAssigneeSelected(assignee)  }"
-          ng-repeat="assignee in assignees">
+          ng-repeat="assignee in assignees | filter:filter">
         <div class="container-fluid">
           <div class="row">
             <div class="col-md-1 text-center">

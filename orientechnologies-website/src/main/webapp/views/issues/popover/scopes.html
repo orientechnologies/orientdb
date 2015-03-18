@@ -3,9 +3,9 @@
   <h3 class="popover-title">{{title}}</h3>
 
   <div class="popover-content">
-    <form>
+    <form ng-submit="selectFirst()">
       <div class="form-group">
-        <input type="text" class="form-control" placeholder="Filter areas">
+        <input autofocus type="text" class="form-control" ng-model="filter" placeholder="Filter areas">
       </div>
     </form>
     <hr class="scope-popover-divider"/>
@@ -21,7 +21,7 @@
       <!--</li>-->
       <li class="scope-item" ng-click="toggleScope(scope)"
           ng-class="{ 'scope-selected' : isScoped(scope)  }"
-          ng-repeat="scope in scopes">
+          ng-repeat="scope in scopes | filter:filter">
         <div class="container-fluid">
           <div class="row">
             <div class="col-md-1 text-center">

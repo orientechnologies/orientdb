@@ -3,9 +3,9 @@
   <h3 class="popover-title">{{title}}</h3>
 
   <div class="popover-content">
-    <form>
+    <form ng-submit="selectFirst()">
       <div class="form-group">
-        <input type="text" class="form-control" placeholder="Filter milestones">
+        <input autofocus type="text" class="form-control" ng-model="filter" placeholder="Filter milestones">
       </div>
     </form>
     <hr class="milestone-popover-divider"/>
@@ -19,7 +19,7 @@
       </li>
       <li class="milestone-item" ng-click="toggleMilestone(milestone)"
           ng-class="{ 'milestone-selected' : isMilestoneSelected(milestone)  }"
-          ng-repeat="milestone in milestones">
+          ng-repeat="milestone in milestones | filter:filter">
         <div class="container-fluid">
           <div class="row">
             <div class="col-md-1 text-center">

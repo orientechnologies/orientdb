@@ -25,6 +25,7 @@ angular
     'mentio',
     'luegg.directives',
     'scroll',
+    'utils.autofocus',
     'angular-otobox'
   ])
   .config(function ($routeProvider, $httpProvider, RestangularProvider) {
@@ -115,10 +116,10 @@ angular.module('webappApp').factory('oauthHttpInterceptor', function ($cookies, 
 
 
 var API = "v1/"
-//var ORGANIZATION = 'orientechnologies';
-var ORGANIZATION = 'romeshell';
-var DEFAULT_REPO = 'shell-notifications';
-//var DEFAULT_REPO = 'orientdb';
+var ORGANIZATION = 'orientechnologies';
+//var ORGANIZATION = 'romeshell';
+//var DEFAULT_REPO = 'shell-notifications';
+var DEFAULT_REPO = 'orientdb';
 var GITHUB = "https://github.com"
 
 if (location.hostname == 'localhost') {
@@ -127,10 +128,6 @@ if (location.hostname == 'localhost') {
 else {
   var WEBSOCKET = "ws://" + location.hostname + "/chat";
 }
-
-//WEBSOCKET = 'ws://www.prjhub.com/chat';
-//var WEBSOCKET = 'ws://prjhub.com/chat'
-//var WEBSOCKET = 'ws://localhost:8080/chat'
 
 String.prototype.capitalize = function() {
   return this.charAt(0).toUpperCase() + this.slice(1);

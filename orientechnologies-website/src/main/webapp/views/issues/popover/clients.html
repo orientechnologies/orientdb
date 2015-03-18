@@ -3,9 +3,9 @@
   <h3 class="popover-title">Change client</h3>
 
   <div class="popover-content">
-    <form>
+    <form ng-submit="selectFirst()">
       <div class="form-group">
-        <input type="text" class="form-control" placeholder="Filter client" ng-model="queryClient">
+        <input autofocus type="text" class="form-control" placeholder="Filter client" ng-model="queryClient">
       </div>
     </form>
     <hr class="client-popover-divider"/>

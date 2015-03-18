@@ -3,16 +3,16 @@
   <h3 class="popover-title">{{title}}</h3>
 
   <div class="popover-content">
-    <form>
+    <form ng-submit="selectFirst()">
       <div class="form-group">
-        <input type="text" class="form-control" placeholder="Filter repository">
+        <input autofocus type="text" class="form-control" ng-model="filter" placeholder="Filter repository">
       </div>
     </form>
     <hr class="scope-popover-divider"/>
     <ul class="scopes-group">
       <li class="scope-item" ng-click="toggleRepo(repo)"
           ng-class="{ 'scope-selected' : isRepo(repo)  }"
-          ng-repeat="repo in repositories">
+          ng-repeat="repo in repositories | filter:filter">
         <div class="container-fluid">
           <div class="row">
             <div class="col-md-1 text-center">

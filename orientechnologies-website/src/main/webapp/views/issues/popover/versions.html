@@ -3,16 +3,16 @@
   <h3 class="popover-title">{{title}}</h3>
 
   <div class="popover-content">
-    <form>
+    <form ng-submit="selectFirst()">
       <div class="form-group">
-        <input type="text" class="form-control" placeholder="Filter versions">
+        <input autofocus type="text" class="form-control" ng-model="filter" placeholder="Filter versions">
       </div>
     </form>
     <hr class="version-popover-divider"/>
     <ul class="versions-group">
       <li class="version-item" ng-click="toggleVersion(version)"
           ng-class="{ 'version-selected' : isVersionSelected(version)  }"
-          ng-repeat="version in versions">
+          ng-repeat="version in versions | filter:filter">
         <div class="container-fluid">
           <div class="row">
             <div class="col-md-1 text-center">
