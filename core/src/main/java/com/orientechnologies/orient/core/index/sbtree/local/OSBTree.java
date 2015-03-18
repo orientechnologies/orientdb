@@ -515,12 +515,10 @@ public class OSBTree<K, V> extends ODurableComponent {
         if (bucketSearchResult.itemIndex < 0)
           return null;
 
-        OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+        OAtomicOperation atomicOperation = startAtomicOperation();
         OCacheEntry keyBucketCacheEntry = loadPage(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false, diskCache);
         keyBucketCacheEntry.acquireExclusiveLock();
         try {
-          atomicOperation = startAtomicOperation();
-
           OSBTreeBucket<K, V> keyBucket = new OSBTreeBucket<K, V>(keyBucketCacheEntry, keySerializer, keyTypes, valueSerializer,
               getChangesTree(atomicOperation, keyBucketCacheEntry));
 
