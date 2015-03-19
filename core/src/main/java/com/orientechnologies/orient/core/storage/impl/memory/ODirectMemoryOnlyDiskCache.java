@@ -125,7 +125,20 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
 
   @Override
   public void addFile(String fileName, long fileId) throws IOException {
-    throw new UnsupportedOperationException();
+    metadataLock.lock();
+    try {
+      if (files.containsKey(fileId))
+        throw new OStorageException("File with id " + fileId + " already exists.");
+
+      if (fileNameIdMap.containsKey(fileName))
+        throw new OStorageException(fileName + " already exists.");
+
+      files.put(fileId, new MemoryFile(fileId, pageSize));
+      fileNameIdMap.put(fileName, fileId);
+      fileIdNameMap.put(fileId, fileName);
+    } finally {
+      metadataLock.unlock();
+    }
   }
 
   @Override
