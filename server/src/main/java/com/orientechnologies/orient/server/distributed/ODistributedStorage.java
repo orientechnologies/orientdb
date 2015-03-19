@@ -89,9 +89,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimerTask;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -108,7 +109,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   protected final ConcurrentHashMap<ORecordId, OPair<Long, ORecordVersion>> deletedRecords  = new ConcurrentHashMap<ORecordId, OPair<Long, ORecordVersion>>();
   protected final AtomicLong                                                lastOperationId = new AtomicLong();
 
-  protected final ArrayBlockingQueue<OAsynchDistributedOperation>           asynchronousOperationsQueue;
+  protected final BlockingQueue<OAsynchDistributedOperation>                asynchronousOperationsQueue;
   protected final Thread                                                    asynchWorker;
   protected volatile boolean                                                running         = true;
 
@@ -150,7 +151,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong(),
         OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong());
 
-    asynchronousOperationsQueue = new ArrayBlockingQueue<OAsynchDistributedOperation>(OGlobalConfiguration.DISTRIBUTED_ASYNCH_QUEUE_SIZE.getValueAsInteger());
+    final int queueSize = OGlobalConfiguration.DISTRIBUTED_ASYNCH_QUEUE_SIZE.getValueAsInteger();
+    if (queueSize <= 0)
+      asynchronousOperationsQueue = new LinkedBlockingQueue<OAsynchDistributedOperation>();
+    else
+      asynchronousOperationsQueue = new LinkedBlockingQueue<OAsynchDistributedOperation>(queueSize);
+
     asynchWorker = new Thread() {
       @Override
       public void run() {
@@ -550,7 +556,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       }
 
       // DISTRIBUTE IT
-      final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new OReadRecordTask(iRecordId), EXECUTION_MODE.RESPONSE);
+      final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new OReadRecordTask(
+          iRecordId), EXECUTION_MODE.RESPONSE);
 
       if (result instanceof ONeedRetryException)
         throw (ONeedRetryException) result;
@@ -609,7 +616,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       if (executionModeSynch) {
         // SYNCHRONOUS: LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
-        final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null, false, LOCKING_STRATEGY.DEFAULT);
+        final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null, false,
+            LOCKING_STRATEGY.DEFAULT);
 
         // REPLICATE IT
         final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new OUpdateRecordTask(
