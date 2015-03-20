@@ -79,6 +79,7 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
             if (val) {
               scope.actors = val;
 
+              var text = elem.children()[0];
               $(elem.children()[0]).suggest('@', {
                 data: scope.actors,
                 map: function (user) {
@@ -91,6 +92,7 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
                   showing = true;
                 },
                 onselect: function (e) {
+                  editor.$data.input = $(text).val()
                   showing = false;
                 },
                 onhide: function () {
@@ -186,13 +188,13 @@ angular.module('scroll', []).directive('whenScrolled', function () {
  */
 angular.module('utils.autofocus', [])
 
-  .directive('autofocus', ['$timeout', function($timeout) {
+  .directive('autofocus', ['$timeout', function ($timeout) {
     return {
       restrict: 'A',
-      link : function($scope, $element) {
-        $timeout(function() {
+      link: function ($scope, $element) {
+        $timeout(function () {
           $element[0].focus();
-        },200);
+        }, 200);
       }
     }
   }]);

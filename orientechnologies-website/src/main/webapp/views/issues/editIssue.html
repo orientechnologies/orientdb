@@ -46,7 +46,8 @@
         #{{issue.iid}} <a ng-show="issue.number"
                           href="{{githubIssue + '/' + issue.repository.name + '/issues/' + issue.number}}"
                           target="_blank"><span
-        class="label label-warning">{{ issue.repository.name + '/' + issue.number }}</span></a>
+        class="label label-warning">{{ issue.repository.name + '/' + issue.number }}</span> </a>
+        <a ng-show="issue.number" href="javascript:void(0)" ng-click="copyIssueNumber()"><i class="fa fa-copy"></i></a>
       </div>
     </div>
     <div class="row">

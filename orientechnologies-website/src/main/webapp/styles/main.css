@@ -442,3 +442,12 @@ span.label-dark {
   position: absolute;
   right: 10px;
 }
+
+.icon-red {
+  background-color: #bd2c00 !important;
+  color: white !important;
+}
+.icon-green {
+  background-color: #6cc644 !important;
+  color: white !important;
+}

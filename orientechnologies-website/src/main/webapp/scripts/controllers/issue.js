@@ -467,6 +467,11 @@ angular.module('webappApp')
         refreshEvents();
       });
     }
+    $scope.copyIssueNumber = function () {
+
+      var copyEvent = new ClipboardEvent('copy', { dataType: 'text/plain', data: 'Data to be copied' } );fi
+      document.dispatchEvent(copyEvent);
+    }
     $scope.close = function () {
 
       Repo.one($scope.repo).all("issues").one(number).patch({state: "closed"}).then(function (data) {
@@ -554,7 +559,7 @@ angular.module('webappApp')
   });
 
 angular.module('webappApp')
-  .controller('ChangeLabelCtrl', function ($scope,$filter) {
+  .controller('ChangeLabelCtrl', function ($scope, $filter) {
 
     $scope.title = $scope.title || 'Apply labels to this issue';
     $scope.isLabeled = function (label) {
@@ -577,17 +582,17 @@ angular.module('webappApp')
       }
     }
 
-    $scope.selectFirst = function(){
+    $scope.selectFirst = function () {
 
       var filtered = $filter('filter')($scope.labels, $scope.labelFilter);
-      if(filtered.length == 1){
+      if (filtered.length == 1) {
         $scope.toggleLabel(filtered[0]);
       }
     }
   });
 
 angular.module('webappApp')
-  .controller('ChangeMilestoneCtrl', function ($scope,$filter, $routeParams, Repo, $popover) {
+  .controller('ChangeMilestoneCtrl', function ($scope, $filter, $routeParams, Repo, $popover) {
 
     $scope.title = $scope.title || 'Change target milestone';
     $scope.isMilestoneSelected = function (milestone) {
@@ -612,16 +617,16 @@ angular.module('webappApp')
       }
     }
 
-    $scope.selectFirst = function(){
+    $scope.selectFirst = function () {
 
       var filtered = $filter('filter')($scope.milestones, $scope.filter);
-      if(filtered.length == 1){
+      if (filtered.length == 1) {
         $scope.toggleMilestone(filtered[0]);
       }
     }
   });
 angular.module('webappApp')
-  .controller('ChangeVersionCtrl', function ($scope,$filter) {
+  .controller('ChangeVersionCtrl', function ($scope, $filter) {
 
     $scope.title = $scope.title || 'Change affected version';
     $scope.isVersionSelected = function (version) {
@@ -643,16 +648,16 @@ angular.module('webappApp')
       }
     }
 
-    $scope.selectFirst = function(){
+    $scope.selectFirst = function () {
 
       var filtered = $filter('filter')($scope.versions, $scope.filter);
-      if(filtered.length == 1){
+      if (filtered.length == 1) {
         $scope.toggleVersion(filtered[0]);
       }
     }
   });
 angular.module('webappApp')
-  .controller('ChangeAssigneeCtrl', function ($scope,$filter) {
+  .controller('ChangeAssigneeCtrl', function ($scope, $filter) {
     $scope.title = $scope.title || 'Assign this issue';
 
     $scope.isAssigneeSelected = function (assignee) {
@@ -668,17 +673,17 @@ angular.module('webappApp')
       }
     }
 
-    $scope.selectFirst = function(){
+    $scope.selectFirst = function () {
 
       var filtered = $filter('filter')($scope.assignees, $scope.filter);
-      if(filtered.length == 1){
+      if (filtered.length == 1) {
         $scope.toggleAssignee(filtered[0]);
       }
     }
   });
 
 angular.module('webappApp')
-  .controller('ChangePriorityCtrl', function ($scope,$filter) {
+  .controller('ChangePriorityCtrl', function ($scope, $filter) {
 
     $scope.isPrioritized = function (priority) {
       return $scope.issue.priority ? priority.name == $scope.issue.priority.name : false;
@@ -690,17 +695,17 @@ angular.module('webappApp')
       }
     }
 
-    $scope.selectFirst = function(){
+    $scope.selectFirst = function () {
 
       var filtered = $filter('filter')($scope.priorities, $scope.filter);
-      if(filtered.length == 1){
+      if (filtered.length == 1) {
         $scope.togglePriority(filtered[0]);
       }
     }
   });
 
 angular.module('webappApp')
-  .controller('ChangeScopeCtrl', function ($scope,$filter) {
+  .controller('ChangeScopeCtrl', function ($scope, $filter) {
     $scope.title = $scope.title || 'Change Area';
     $scope.isScoped = function (scope) {
       return $scope.issue.scope ? scope.name == $scope.issue.scope.name : false;
@@ -712,16 +717,16 @@ angular.module('webappApp')
       $scope.$hide();
     }
 
-    $scope.selectFirst = function(){
+    $scope.selectFirst = function () {
 
       var filtered = $filter('filter')($scope.scopes, $scope.filter);
-      if(filtered.length == 1){
+      if (filtered.length == 1) {
         $scope.toggleScope(filtered[0]);
       }
     }
   });
 angular.module('webappApp')
-  .controller('ChangeRepoCtrl', function ($scope,$filter) {
+  .controller('ChangeRepoCtrl', function ($scope, $filter) {
     $scope.title = $scope.title || 'Change Repository';
     $scope.isRepo = function (repository) {
       return $scope.issue.repository ? repository.name == $scope.issue.repository.name : false;
@@ -733,17 +738,17 @@ angular.module('webappApp')
       $scope.$hide();
     }
 
-    $scope.selectFirst = function(){
+    $scope.selectFirst = function () {
 
       var filtered = $filter('filter')($scope.repositories, $scope.filter);
-      if(filtered.length == 1){
+      if (filtered.length == 1) {
         $scope.toggleRepo(filtered[0]);
       }
     }
 
   });
 angular.module('webappApp')
-  .controller('ChangeClientCtrl', function ($scope,$filter) {
+  .controller('ChangeClientCtrl', function ($scope, $filter) {
 
     $scope.isClientSelected = function (client) {
       return $scope.issue.client ? client.name == $scope.issue.client.name : false;
@@ -755,10 +760,10 @@ angular.module('webappApp')
       $scope.$hide();
     }
 
-    $scope.selectFirst = function(){
+    $scope.selectFirst = function () {
 
       var filtered = $filter('filter')($scope.clients, $scope.queryClient);
-      if(filtered.length == 1){
+      if (filtered.length == 1) {
         $scope.toggleClient(filtered[0]);
       }
     }
