@@ -107,7 +107,8 @@ public class OClusterPositionMap extends ODurableComponent {
   public void truncate() throws IOException {
     acquireExclusiveLock();
     try {
-      diskCache.truncateFile(fileId);
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      truncateFile(atomicOperation, fileId, diskCache);
     } finally {
       releaseExclusiveLock();
     }

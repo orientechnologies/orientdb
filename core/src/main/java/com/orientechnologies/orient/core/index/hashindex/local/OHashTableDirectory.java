@@ -500,7 +500,8 @@ public class OHashTableDirectory extends ODurableComponent {
   public void clear() throws IOException {
     acquireExclusiveLock();
     try {
-      diskCache.truncateFile(fileId);
+      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      truncateFile(atomicOperation, fileId, diskCache);
 
       init();
     } finally {

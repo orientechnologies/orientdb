@@ -385,10 +385,10 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       OAtomicOperation atomicOperation = startAtomicOperation();
 
-      diskCache.truncateFile(fileId);
+      truncateFile(atomicOperation, fileId, diskCache);
 
       if (nullPointerSupport)
-        diskCache.truncateFile(nullBucketFileId);
+        truncateFile(atomicOperation, nullBucketFileId, diskCache);
 
       OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, ROOT_INDEX, false, diskCache);
       if (cacheEntry == null) {

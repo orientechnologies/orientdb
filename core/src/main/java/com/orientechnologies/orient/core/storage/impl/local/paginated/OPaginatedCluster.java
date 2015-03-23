@@ -901,10 +901,14 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       acquireExclusiveLock();
       try {
-        if (config.useWal)
-          startAtomicOperation();
+        OAtomicOperation atomicOperation;
 
-        diskCache.truncateFile(fileId);
+        if (config.useWal)
+          atomicOperation = startAtomicOperation();
+        else
+          atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+
+        truncateFile(atomicOperation, fileId, diskCache);
         clusterPositionMap.truncate();
 
         initCusterState();
