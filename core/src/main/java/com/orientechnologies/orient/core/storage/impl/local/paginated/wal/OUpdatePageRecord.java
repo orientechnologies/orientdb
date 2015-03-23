@@ -84,6 +84,15 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
 
     final OUpdatePageRecord that = (OUpdatePageRecord) o;
 
+    if (lsn == null && that.lsn == null)
+      return true;
+
+    if (lsn == null)
+      return false;
+
+    if (that.lsn == null)
+      return false;
+
     if (!lsn.equals(that.lsn))
       return false;
 

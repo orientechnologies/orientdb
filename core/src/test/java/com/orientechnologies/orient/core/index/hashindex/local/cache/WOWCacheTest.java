@@ -100,7 +100,7 @@ public class WOWCacheTest {
     Random random = new Random();
 
     byte[][] pageData = new byte[200][];
-    long fileId = wowCache.openFile(fileName);
+    long fileId = wowCache.addFile(fileName);
 
     for (int i = 0; i < pageData.length; i++) {
       byte[] data = new byte[8];
@@ -137,7 +137,7 @@ public class WOWCacheTest {
 
   public void testDataUpdate() throws Exception {
     final NavigableMap<Long, byte[]> pageIndexDataMap = new TreeMap<Long, byte[]>();
-    long fileId = wowCache.openFile(fileName);
+    long fileId = wowCache.addFile(fileName);
 
     Random random = new Random();
 
@@ -212,7 +212,7 @@ public class WOWCacheTest {
     Random random = new Random();
 
     byte[][] pageData = new byte[200][];
-    long fileId = wowCache.openFile(fileName);
+    long fileId = wowCache.addFile(fileName);
 
     for (int i = 0; i < pageData.length; i++) {
       byte[] data = new byte[8];
