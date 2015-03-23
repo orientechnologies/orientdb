@@ -67,7 +67,6 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  * @since 8/27/13
  */
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
-  private OWriteAheadLog              writeAheadLog;
   private OAtomicOperationsManager    atomicOperationsManager;
   protected OAbstractPaginatedStorage storage;
 
@@ -89,7 +88,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected void init(final OAbstractPaginatedStorage storage) {
     this.storage = storage;
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
-    this.writeAheadLog = storage.getWALInstance();
   }
 
   protected void endAtomicOperation(boolean rollback) throws IOException {
@@ -97,11 +95,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation();
-  }
-
-  protected void lockTillAtomicOperationCompletes() {
-    atomicOperationsManager.lockTillOperationComplete(this);
+    return atomicOperationsManager.startAtomicOperation(this);
   }
 
   protected static OWALChangesTree getChangesTree(OAtomicOperation atomicOperation, OCacheEntry entry) {

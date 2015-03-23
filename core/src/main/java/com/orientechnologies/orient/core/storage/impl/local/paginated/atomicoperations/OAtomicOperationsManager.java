@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 import java.io.IOException;
@@ -62,13 +63,17 @@ public class OAtomicOperationsManager {
     this.writeAheadLog = storage.getWALInstance();
   }
 
-  public OAtomicOperation startAtomicOperation() throws IOException {
+  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent) throws IOException {
     if (writeAheadLog == null)
       return null;
 
     OAtomicOperation operation = currentOperation.get();
     if (operation != null) {
       operation.incrementCounter();
+
+      if (durableComponent != null)
+        lockTillOperationComplete(durableComponent);
+
       return operation;
     }
 
@@ -80,6 +85,9 @@ public class OAtomicOperationsManager {
 
     if (storage.getStorageTransaction() == null)
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
+
+    if (durableComponent != null)
+      lockTillOperationComplete(durableComponent);
 
     return operation;
   }
@@ -118,15 +126,15 @@ public class OAtomicOperationsManager {
     return operation;
   }
 
-  public void lockTillOperationComplete(Object lockObject) {
+  private void lockTillOperationComplete(ODurableComponent durableComponent) {
     final OAtomicOperation operation = currentOperation.get();
     if (operation == null)
       return;
 
-    if (operation.containsInLockedObjects(lockObject))
+    if (operation.containsInLockedObjects(durableComponent))
       return;
 
-    lockManager.acquireLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
-    operation.addLockedObject(lockObject);
+    lockManager.acquireLock(this, durableComponent, OLockManager.LOCK.EXCLUSIVE);
+    operation.addLockedObject(durableComponent);
   }
 }

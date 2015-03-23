@@ -259,7 +259,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     acquireExclusiveLock();
     try {
       OAtomicOperation atomicOperation = startAtomicOperation();
-      lockTillAtomicOperationCompletes();
 
       BucketSearchResult bucketSearchResult = findBucket(key);
       OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
@@ -457,7 +456,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     acquireExclusiveLock();
     try {
       startAtomicOperation();
-      lockTillAtomicOperationCompletes();
 
       final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<OBonsaiBucketPointer>();
       subTreesToDelete.add(rootBucketPointer);
@@ -570,7 +568,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       keyBucketCacheEntry.acquireExclusiveLock();
       try {
         atomicOperation = startAtomicOperation();
-        lockTillAtomicOperationCompletes();
 
         OSBTreeBonsaiBucket<K, V> keyBucket = new OSBTreeBonsaiBucket<K, V>(keyBucketCacheEntry, bucketPointer.getPageOffset(),
             keySerializer, valueSerializer, getChangesTree(atomicOperation, keyBucketCacheEntry));
