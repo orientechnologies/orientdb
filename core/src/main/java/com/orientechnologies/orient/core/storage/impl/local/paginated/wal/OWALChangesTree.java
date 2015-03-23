@@ -30,7 +30,7 @@ public class OWALChangesTree {
     final List<Node> result = new ArrayList<Node>();
     findIntervals(root, offset, end, result);
 
-    if (result.isEmpty())
+    if (pointer != null && result.isEmpty())
       return pointer.getByte(offset);
 
     byte[] value = new byte[] { 0 };

@@ -107,7 +107,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       this.valueSerializer = valueSerializer;
 
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-      this.fileId = addFile(atomicOperation, name + dataFileExtension, diskCache);
+      if (isFileExists(atomicOperation, name + dataFileExtension, diskCache))
+        this.fileId = openFile(atomicOperation, name + dataFileExtension, diskCache);
+      else
+        this.fileId = addFile(atomicOperation, name + dataFileExtension, diskCache);
+
       this.name = name;
 
       initAfterCreate();
