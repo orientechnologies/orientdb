@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -76,6 +77,7 @@ public abstract class OClassAbstractDelegate implements OClass {
     delegate.setSuperClass(iSuperClass);
     return this;
   }
+  
 
   @Override
   public String getName() {
@@ -83,6 +85,33 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
+  public List<? extends OClass> getSuperClasses() {
+	return delegate.getSuperClasses();
+  }
+
+  @Override
+  public OClass setSuperClasses(List<? extends OClass> classes) {
+	delegate.setSuperClasses(classes);
+	return this;
+  }
+	
+	@Override
+	public List<String> getSuperClassesNames() {
+		return delegate.getSuperClassesNames();
+	}
+	
+	@Override
+	public void getIndexes(Collection<OIndex<?>> indexes) {
+		delegate.getIndexes(indexes);
+	}
+
+@Override
+  public OClass addSuperClass(OClass superClass) {
+	delegate.addSuperClass(superClass);
+	return this;
+  }
+
+@Override
   public OClass setName(String iName) {
     delegate.setName(iName);
     return this;

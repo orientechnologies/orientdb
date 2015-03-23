@@ -17,10 +17,10 @@ import java.util.*;
  * @since 10/21/14
  */
 public class OImmutableClass implements OClass {
+  private boolean inited = false;
   private final boolean isAbstract;
   private final boolean strictMode;
 
-  private final String                    superClassName;
   private final String                    name;
   private final String                    streamAbleName;
   private final Map<String, OProperty>    properties;
@@ -32,6 +32,7 @@ public class OImmutableClass implements OClass {
   private final int[]                     clusterIds;
   private final int[]                     polymorphicClusterIds;
   private final Collection<String>        baseClassesNames;
+  private final List<String>			  superClassesNames;
   private final float                     overSize;
   private final float                     classOverSize;
   private final String                    shortName;
@@ -39,7 +40,7 @@ public class OImmutableClass implements OClass {
 
   private final OImmutableSchema            schema;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
-  private       OImmutableClass             superClass;
+  private final List<OImmutableClass>		superClasses;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
   private       Collection<OImmutableClass> subclasses;
   private       boolean                     restricted;
@@ -49,10 +50,8 @@ public class OImmutableClass implements OClass {
     strictMode = oClass.isStrictMode();
     this.schema = schema;
 
-    if (oClass.getSuperClass() != null)
-      superClassName = oClass.getSuperClass().getName();
-    else
-      superClassName = null;
+    superClassesNames = oClass.getSuperClassesNames();
+    superClasses = new ArrayList<OImmutableClass>();
 
     name = oClass.getName();
     streamAbleName = oClass.getStreamableName();
@@ -82,39 +81,30 @@ public class OImmutableClass implements OClass {
   }
 
   public void init() {
-    initSuperClass();
-
-    final Collection<OProperty> allProperties = new ArrayList<OProperty>();
-
-    OImmutableClass currentClass = this;
-    do {
-      allProperties.addAll(currentClass.properties.values());
-
-      currentClass.initSuperClass();
-      currentClass = currentClass.superClass;
-
-    } while (currentClass != null);
-    this.allProperties = Collections.unmodifiableCollection(allProperties);
-
-    final Map<String, OProperty> allPropsMap = new HashMap<String, OProperty>(20);
-
-    OImmutableClass currentMapClass = this;
-    do {
-
-      for (OProperty p : currentMapClass.properties.values()) {
-        final String propName = p.getName();
-
-        if (!allPropsMap.containsKey(propName))
-          allPropsMap.put(propName, p);
-      }
-
-      currentMapClass.initSuperClass();
-      currentMapClass = currentMapClass.superClass;
-
-    } while (currentMapClass != null);
-    allPropertiesMap = Collections.unmodifiableMap(allPropsMap);
-    this.restricted = isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME);
-
+	  if(!inited)
+	  {
+	    initSuperClasses();
+	
+	    final Collection<OProperty> allProperties = new ArrayList<OProperty>();
+	    final Map<String, OProperty> allPropsMap = new HashMap<String, OProperty>(20);
+	    for(int i=superClasses.size()-1;i>=0;i--)
+	    {
+	    	allProperties.addAll(superClasses.get(i).allProperties);
+	    	allPropsMap.putAll(superClasses.get(i).allPropertiesMap);
+	    }
+	    allProperties.addAll(properties.values());
+	    for (OProperty p : properties.values()) {
+	        final String propName = p.getName();
+	
+	        if (!allPropsMap.containsKey(propName))
+	          allPropsMap.put(propName, p);
+	      }
+	
+	    this.allProperties = Collections.unmodifiableCollection(allProperties);
+	    this.allPropertiesMap = Collections.unmodifiableMap(allPropsMap);
+	    this.restricted = isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME);
+	    inited = true;
+	  }
   }
 
   @Override
@@ -144,15 +134,35 @@ public class OImmutableClass implements OClass {
 
   @Override
   public OClass getSuperClass() {
-    initSuperClass();
+    initSuperClasses();
 
-    return superClass;
+    return superClasses.isEmpty()?null:superClasses.get(0);
   }
 
   @Override
   public OClass setSuperClass(OClass iSuperClass) {
     throw new UnsupportedOperationException();
   }
+  
+  @Override
+	public List<? extends OClass> getSuperClasses() {
+		return superClasses;
+	}
+  
+   @Override
+	public List<String> getSuperClassesNames() {
+		return superClassesNames;
+	}
+  
+  @Override
+	public OClass setSuperClasses(List<? extends OClass> classes) {
+	  throw new UnsupportedOperationException();
+	}
+  
+  @Override
+	public OClass addSuperClass(OClass superClass) {
+	  throw new UnsupportedOperationException();
+	}
 
   @Override
   public String getName() {
@@ -183,51 +193,37 @@ public class OImmutableClass implements OClass {
   public Map<String, OProperty> propertiesMap() {
     return allPropertiesMap;
   }
+  
+  public void getIndexedProperties(Collection<OProperty> indexedProperties) {
+	  for (OProperty p : properties.values())
+	        if (areIndexed(p.getName())) indexedProperties.add(p);
+	  initSuperClasses();
+	  for(OImmutableClass superClass: superClasses)
+	  {
+		  superClass.getIndexedProperties(indexedProperties);
+	  }
+  }
 
   @Override
   public Collection<OProperty> getIndexedProperties() {
-    Collection<OProperty> indexedProps = null;
-
-    OImmutableClass currentClass = this;
-
-    initSuperClass();
-
-    do {
-      for (OProperty p : currentClass.properties.values())
-        if (areIndexed(p.getName())) {
-          if (indexedProps == null)
-            indexedProps = new ArrayList<OProperty>();
-          indexedProps.add(p);
-        }
-
-      currentClass.initSuperClass();
-      currentClass = currentClass.superClass;
-
-    } while (currentClass != null);
-
-    return (Collection<OProperty>) (indexedProps != null ? Collections.unmodifiableCollection(indexedProps) : Collections
-        .emptyList());
+    Collection<OProperty> indexedProps = new HashSet<OProperty>();
+    getIndexedProperties(indexedProps);
+    return indexedProps;
   }
 
   @Override
   public OProperty getProperty(String propertyName) {
-    initSuperClass();
+    initSuperClasses();
 
     propertyName = propertyName.toLowerCase();
-
-    OImmutableClass currentClass = this;
-
-    do {
-      final OProperty p = currentClass.properties.get(propertyName);
-
-      if (p != null)
-        return p;
-
-      currentClass.initSuperClass();
-      currentClass = currentClass.superClass;
-    } while (currentClass != null);
-
-    return null;
+    
+    OProperty p = properties.get(propertyName);
+    if(p!=null) return p;
+    for(int i=0;i<superClasses.size() && p==null;i++)
+    {
+    	p = superClasses.get(i).getProperty(propertyName);
+    }
+    return p;
   }
 
   @Override
@@ -252,20 +248,15 @@ public class OImmutableClass implements OClass {
 
   @Override
   public boolean existsProperty(String propertyName) {
-    propertyName = propertyName.toLowerCase();
-
-    OImmutableClass currentClass = this;
-    do {
-      final boolean result = currentClass.properties.containsKey(propertyName);
-
-      if (result)
-        return true;
-
-      currentClass = (OImmutableClass) currentClass.getSuperClass();
-
-    } while (currentClass != null);
-
-    return false;
+      propertyName = propertyName.toLowerCase();
+      boolean result = properties.containsKey(propertyName);
+      if(result) return true;
+      for(OImmutableClass superClass: superClasses)
+      {
+    	  result = superClass.existsProperty(propertyName);
+    	  if(result) return true;
+      }
+      return false;
   }
 
   @Override
@@ -409,33 +400,25 @@ public class OImmutableClass implements OClass {
 
   @Override
   public boolean isSubClassOf(String iClassName) {
-    if (iClassName == null)
-      return false;
-
-    OClass cls = this;
-    do {
-      if (iClassName.equalsIgnoreCase(cls.getName()) || iClassName.equalsIgnoreCase(cls.getShortName()))
-        return true;
-
-      cls = cls.getSuperClass();
-    } while (cls != null);
-
+    if (iClassName == null) return false;
+    
+    if(iClassName.equalsIgnoreCase(getName()) || iClassName.equalsIgnoreCase(getShortName())) return true;
+    for(OImmutableClass superClass: superClasses)
+    {
+    	if(superClass.isSubClassOf(iClassName)) return true;
+    }
     return false;
   }
 
   @Override
   public boolean isSubClassOf(OClass clazz) {
-    if (clazz == null)
-      return false;
-
-    OClass cls = this;
-    while (cls != null) {
-      if (cls.equals(clazz))
-        return true;
-      cls = cls.getSuperClass();
+    if (clazz == null) return false;
+    if(equals(clazz)) return true;
+    for(OImmutableClass superClass: superClasses)
+    {
+    	if(superClass.isSubClassOf(clazz)) return true;
     }
     return false;
-
   }
 
   @Override
@@ -465,6 +448,8 @@ public class OImmutableClass implements OClass {
       return getShortName();
     case SUPERCLASS:
       return getSuperClass();
+    case SUPERCLASSES:
+      return getSuperClasses();
     case OVERSIZE:
       return getOverSize();
     case STRICTMODE:
@@ -514,13 +499,14 @@ public class OImmutableClass implements OClass {
 
   @Override
   public Set<OIndex<?>> getInvolvedIndexes(Collection<String> fields) {
-    initSuperClass();
+    initSuperClasses();
 
     final Set<OIndex<?>> result = new HashSet<OIndex<?>>(getClassInvolvedIndexes(fields));
 
-    if (superClass != null)
-      result.addAll(superClass.getInvolvedIndexes(fields));
-
+    for(OImmutableClass superClass: superClasses)
+    {
+    	result.addAll(superClass.getInvolvedIndexes(fields));
+    }
     return result;
   }
 
@@ -545,11 +531,15 @@ public class OImmutableClass implements OClass {
     final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
     final boolean currentClassResult = indexManager.areIndexed(name, fields);
 
-    initSuperClass();
+    initSuperClasses();
 
-    if (superClass != null)
-      return currentClassResult || superClass.areIndexed(fields);
-    return currentClassResult;
+    if(currentClassResult) return true;
+    for(OImmutableClass superClass: superClasses)
+    {
+  	  if(superClass.areIndexed(fields)) return true;
+    }
+    return false;
+    
   }
 
   @Override
@@ -571,16 +561,23 @@ public class OImmutableClass implements OClass {
   public void getClassIndexes(Collection<OIndex<?>> indexes) {
     getDatabase().getMetadata().getIndexManager().getClassIndexes(name, indexes);
   }
+  
+  @Override
+  public void getIndexes(Collection<OIndex<?>> indexes) {
+	  initSuperClasses();
+	  
+	  getClassIndexes(indexes);
+	  for(OClass superClass: superClasses)
+	  {
+		  superClass.getIndexes(indexes);
+	  }
+  }
 
   @Override
   public Set<OIndex<?>> getIndexes() {
-    initSuperClass();
-
-    final Set<OIndex<?>> indexes = getClassIndexes();
-    for (OClass s = superClass; s != null; s = s.getSuperClass()) {
-      s.getClassIndexes(indexes);
-    }
-    return indexes;
+	  Set<OIndex<?>> indexes = new HashSet<OIndex<?>>();
+	  getIndexes(indexes);
+	  return indexes;
   }
 
   @Override
@@ -656,10 +653,17 @@ public class OImmutableClass implements OClass {
     return customFields;
   }
 
-  private void initSuperClass() {
-    if (superClassName != null && superClass == null) {
-      superClass = (OImmutableClass) schema.getClass(superClassName);
-    }
+  private void initSuperClasses() {
+	  if(superClassesNames!=null && superClassesNames.size()!=superClasses.size())
+	  {
+		  superClasses.clear();
+		  for(String superClassName:superClassesNames)
+		  {
+			  OImmutableClass superClass = (OImmutableClass) schema.getClass(superClassName);
+			  superClass.init();
+			  superClasses.add(superClass);
+		  }
+	  }
   }
 
   private void initBaseClasses() {
