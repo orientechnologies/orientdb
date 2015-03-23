@@ -171,8 +171,10 @@ public class OAtomicOperation {
     if (changesContainer == null) {
       changesContainer = new FileChanges();
       fileChanges.put(fileId, changesContainer);
-    } else if (changesContainer.isNew || changesContainer.maxNewPageIndex > -1)
+    } else if (changesContainer.isNew || changesContainer.maxNewPageIndex > -1) {
       return changesContainer.maxNewPageIndex + 1;
+    } else if (changesContainer.truncate)
+      return 0;
 
     return diskCache.getFilledUpTo(fileId);
   }
@@ -250,6 +252,23 @@ public class OAtomicOperation {
     return diskCache.fileNameById(fileId);
   }
 
+  public void truncateFile(long fileId) {
+    FileChanges fileChanges = this.fileChanges.get(fileId);
+
+    if (fileChanges == null) {
+      fileChanges = new FileChanges();
+      this.fileChanges.put(fileId, fileChanges);
+    }
+
+    fileChanges.pageChangesMap.clear();
+    fileChanges.maxNewPageIndex = -1;
+
+    if (fileChanges.isNew)
+      return;
+
+    fileChanges.truncate = true;
+  }
+
   public void commitChanges(ODiskCache diskCache, OWriteAheadLog writeAheadLog) throws IOException {
     for (long deletedFileId : deletedFiles) {
       diskCache.deleteFile(deletedFileId);
@@ -277,6 +296,8 @@ public class OAtomicOperation {
 
       if (fileChanges.isNew)
         diskCache.addFile(fileChanges.fileName, newFileNamesId.get(fileChanges.fileName));
+      else if (fileChanges.truncate)
+        diskCache.truncateFile(fileId);
 
       for (Map.Entry<Long, FilePageChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
         final long pageIndex = filePageChangesEntry.getKey();
@@ -363,6 +384,7 @@ public class OAtomicOperation {
     private Map<Long, FilePageChanges> pageChangesMap  = new HashMap<Long, FilePageChanges>();
     private long                       maxNewPageIndex = -1;
     private boolean                    isNew           = false;
+    private boolean                    truncate        = false;
     private String                     fileName        = null;
   }
 

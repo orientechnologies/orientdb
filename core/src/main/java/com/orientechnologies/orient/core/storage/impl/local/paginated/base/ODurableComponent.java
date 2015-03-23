@@ -188,4 +188,11 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
     return atomicOperation.fileNameById(fileId, diskCache);
   }
+
+  protected static void truncateFile(OAtomicOperation atomicOperation, long filedId, ODiskCache diskCache) throws IOException {
+    if (atomicOperation == null)
+      diskCache.truncateFile(filedId);
+    else
+      atomicOperation.truncateFile(filedId);
+  }
 }

@@ -522,7 +522,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
         for (int i = 0; i < HASH_CODE_SIZE; i++) {
           if (!page.isRemoved(i)) {
-            diskCache.truncateFile(page.getFileId(i));
+            truncateFile(atomicOperation, page.getFileId(i), diskCache);
             page.setBucketsCount(i, 0);
             page.setTombstoneIndex(i, -1);
           }
@@ -533,7 +533,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       }
 
       if (nullKeyIsSupported)
-        diskCache.truncateFile(nullBucketFileId);
+        truncateFile(atomicOperation, nullBucketFileId, diskCache);
 
       initHashTreeState();
 
@@ -1916,7 +1916,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           final OHashIndexBucket<K, V> updatedBucket = new OHashIndexBucket<K, V>(newBucketDepth, updatedBucketCacheEntry,
               keySerializer, valueSerializer, keyTypes, getChangesTree(atomicOperation, updatedBucketCacheEntry));
           final OHashIndexBucket<K, V> newBucket = new OHashIndexBucket<K, V>(newBucketDepth, newBucketCacheEntry, keySerializer,
-              valueSerializer, keyTypes, getChangesTree(atomicOperation, updatedBucketCacheEntry));
+              valueSerializer, keyTypes, getChangesTree(atomicOperation, newBucketCacheEntry));
 
           splitBucketContent(bucket, updatedBucket, newBucket, newBucketDepth);
 
