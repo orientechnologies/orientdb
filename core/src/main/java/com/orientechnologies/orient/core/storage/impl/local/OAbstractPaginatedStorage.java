@@ -1443,54 +1443,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  private void undoOperation(List<OLogSequenceNumber> operationUnit) throws IOException {
-    // for (int i = operationUnit.size() - 1; i >= 0; i--) {
-    // OWALRecord record = writeAheadLog.read(operationUnit.get(i));
-    // if (checkFirstAtomicUnitRecord(i, record)) {
-    // assert ((OAtomicUnitStartRecord) record).isRollbackSupported();
-    // continue;
-    // }
-    //
-    // if (checkLastAtomicUnitRecord(i, record, operationUnit.size())) {
-    // assert ((OAtomicUnitEndRecord) record).isRollback();
-    // continue;
-    // }
-    //
-    // if (record instanceof OUpdatePageRecord) {
-    // OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) record;
-    // final long fileId = updatePageRecord.getFileId();
-    // final long pageIndex = updatePageRecord.getPageIndex();
-    //
-    // if (!diskCache.isOpen(fileId))
-    // diskCache.openFile(fileId);
-    //
-    // OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
-    // OCachePointer cachePointer = cacheEntry.getCachePointer();
-    // cachePointer.acquireExclusiveLock();
-    // try {
-    // ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
-    //
-    // OPageChanges pageChanges = updatePageRecord.getChanges();
-    // durablePage.revertChanges(pageChanges);
-    //
-    // durablePage.setLsn(updatePageRecord.getLsn());
-    // } finally {
-    // cachePointer.releaseExclusiveLock();
-    // diskCache.release(cacheEntry);
-    // }
-    // } else if (record instanceof OFileCreatedCreatedWALRecord) {
-    // final OFileCreatedCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedCreatedWALRecord) record;
-    //
-    // diskCache.openFile(fileCreatedCreatedRecord.getFileName(), fileCreatedCreatedRecord.getFileId());
-    // diskCache.deleteFile(fileCreatedCreatedRecord.getFileId());
-    // } else {
-    // OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
-    // record.getClass());
-    // assert false : "Invalid WAL record type was passed " + record.getClass().getName();
-    // }
-    // }
-  }
-
   private boolean checkFirstAtomicUnitRecord(int index, OWALRecord record) {
     boolean isAtomicUnitStartRecord = record instanceof OAtomicUnitStartRecord;
     if (isAtomicUnitStartRecord && index != 0) {
@@ -1554,12 +1506,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (writeAheadLog == null || transaction.get() == null)
       return;
 
-    final OAtomicOperation operation = atomicOperationsManager.endAtomicOperation(true);
+    atomicOperationsManager.endAtomicOperation(true);
 
     assert atomicOperationsManager.getCurrentOperation() == null;
-
-    final List<OLogSequenceNumber> operationUnit = readOperationUnit(operation.getStartLSN(), operation.getOperationUnitId());
-    undoOperation(operationUnit);
   }
 
   private void restoreIfNeeded() throws Exception {
@@ -2508,7 +2457,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           if (atomicUnitEndRecord.isRollback()) {
             // it is needed because we can start to restore atomic operation from the middle
             List<OLogSequenceNumber> recordsToRollback = readOperationUnit(atomicUnitEndRecord.getStartLsn(), unitId);
-            undoOperation(recordsToRollback);
           } else {
             if (nonTxOperationWasUsed && !wereNonTxOperationsPerformedInPreviousOpen) {
               OLogManager.instance().warn(this, "Non tx operation was used during data modification we will need index rebuild.");
@@ -2561,10 +2509,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         continue;
 
       writeAheadLog.logAtomicOperationEndRecord(startRecord.getOperationUnitId(), true, startRecord.getLsn());
-
-      // it is needed because we can start to restore atomic operation from the middle
-      List<OLogSequenceNumber> records = readOperationUnit(startRecord.getLsn(), startRecord.getOperationUnitId());
-      undoOperation(records);
     }
   }
 
