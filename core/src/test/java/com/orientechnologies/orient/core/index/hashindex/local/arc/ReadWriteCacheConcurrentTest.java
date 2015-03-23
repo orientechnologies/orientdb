@@ -168,7 +168,7 @@ public class ReadWriteCacheConcurrentTest {
 
   private void getIdentitiesOfFiles() throws IOException {
     for (int i = 0; i < fileIds.length(); i++) {
-      fileIds.set(i, buffer.openFile(fileNames[i]));
+      fileIds.set(i, buffer.addFile(fileNames[i]));
     }
   }
 
@@ -230,6 +230,8 @@ public class ReadWriteCacheConcurrentTest {
 
       pointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING,
           new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) }, 0, 8);
+      cacheEntry.markDirty();
+
       pointer.releaseExclusiveLock();
       buffer.release(cacheEntry);
     }

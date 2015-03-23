@@ -115,7 +115,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   public void testAddFourItems() throws IOException {
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry[] entries = new OCacheEntry[4];
 
@@ -159,7 +159,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   public void testFrequentlyReadItemsAreMovedInAm() throws Exception {
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry[] entries = new OCacheEntry[10];
 
@@ -223,7 +223,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   public void testCacheShouldCreateFileIfItIsNotExisted() throws Exception {
-    buffer.openFile(fileName);
+    buffer.addFile(fileName);
 
     File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
 
@@ -232,7 +232,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   public void testFrequentlyAddItemsAreMovedInAm() throws Exception {
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry[] entries = new OCacheEntry[10];
 
@@ -307,7 +307,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   public void testReadFourItems() throws IOException {
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry[] entries = new OCacheEntry[4];
 
@@ -358,7 +358,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   public void testLoadAndLockForReadShouldHitCache() throws Exception {
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry cacheEntry = buffer.load(fileId, 0, false);
     if (cacheEntry == null) {
@@ -381,7 +381,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   public void testCloseFileShouldFlushData() throws Exception {
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry[] entries = new OCacheEntry[4];
 
@@ -424,7 +424,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   public void testCloseFileShouldRemoveFilePagesFromBuffer() throws Exception {
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry[] entries = new OCacheEntry[4];
 
@@ -468,7 +468,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   public void testDeleteFileShouldDeleteFileFromHardDrive() throws Exception {
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry[] entries = new OCacheEntry[4];
 
@@ -499,7 +499,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   public void testFlushData() throws Exception {
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry[] entries = new OCacheEntry[4];
 
@@ -547,7 +547,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   public void testIfNotEnoughSpaceOldPagesShouldBeMovedToA1Out() throws Exception {
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry[] entries = new OCacheEntry[6];
 
@@ -597,7 +597,7 @@ public class ReadWriteDiskCacheTest {
     boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean();
 
     OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(true);
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry[] entries = new OCacheEntry[5];
 
@@ -638,7 +638,7 @@ public class ReadWriteDiskCacheTest {
     boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean();
 
     OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(true);
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry[] entries = new OCacheEntry[20];
 
@@ -683,7 +683,7 @@ public class ReadWriteDiskCacheTest {
     boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean();
 
     OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(false);
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry[] entries = new OCacheEntry[5];
     try {
@@ -716,7 +716,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   public void testDataVerificationOK() throws Exception {
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry[] entries = new OCacheEntry[6];
 
@@ -741,7 +741,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   public void testMagicNumberIsBroken() throws Exception {
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry[] entries = new OCacheEntry[6];
 
@@ -785,7 +785,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   public void testCheckSumIsBroken() throws Exception {
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
 
     OCacheEntry[] entries = new OCacheEntry[6];
 
@@ -843,7 +843,7 @@ public class ReadWriteDiskCacheTest {
     buffer = new OReadWriteDiskCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING),
         2 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, 10000, -1, storageLocal, writeAheadLog, true, false);
 
-    long fileId = buffer.openFile(fileName);
+    long fileId = buffer.addFile(fileName);
     OLogSequenceNumber lsnToFlush = null;
     for (int i = 0; i < 8; i++) {
       OCacheEntry cacheEntry = buffer.load(fileId, i, false);
