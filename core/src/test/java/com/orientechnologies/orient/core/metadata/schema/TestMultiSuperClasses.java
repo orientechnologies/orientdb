@@ -76,4 +76,23 @@ public class TestMultiSuperClasses {
 		  assertFalse(cClass.isSubClassOf(aClass));
 		  assertTrue(cClass.isSubClassOf(bClass));
 	  }
+	  
+	  @Test
+	  public void testCreationBySql()
+	  {
+		  final OSchema oSchema = db.getMetadata().getSchema();
+
+		  db.command(new OCommandSQL("create class sql2A abstract")).execute();
+		  db.command(new OCommandSQL("create class sql2B abstract")).execute();
+		  db.command(new OCommandSQL("create class sql2C extends sql2A, sql2B abstract")).execute();
+		  oSchema.reload();
+		  OClass aClass = oSchema.getClass("sql2A");
+		  OClass bClass = oSchema.getClass("sql2B");
+		  OClass cClass = oSchema.getClass("sql2C");
+		  assertNotNull(aClass);
+		  assertNotNull(bClass);
+		  assertNotNull(cClass);
+		  assertTrue(cClass.isSubClassOf(aClass));
+		  assertTrue(cClass.isSubClassOf(bClass));
+	  }
 }
