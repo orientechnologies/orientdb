@@ -446,6 +446,6 @@ public class OClusterPositionMap extends ODurableComponent {
     if (useWal)
       return super.startAtomicOperation();
 
-    return null;
+    return storage.getAtomicOperationsManager().getCurrentOperation();
   }
 }

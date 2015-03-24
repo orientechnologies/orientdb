@@ -30,6 +30,7 @@ import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -273,12 +274,12 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       try {
         indexEngine.load(rid, name, indexDefinition, determineValueSerializer(), isAutomatic());
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during load of index %s .", e, name != null ? name : "null");
-
-        if (isAutomatic() && getStorage() instanceof OAbstractPaginatedStorage) {
-          // AUTOMATIC REBUILD IT
-          OLogManager.instance()
-              .warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(), rid);
+        OLogManager.instance().error(this, "");
+        if (onCorruptionRepairDatabase(null, "load", "Index will be rebuilt")) {
+          if (isAutomatic() && getStorage() instanceof OAbstractPaginatedStorage)
+            // AUTOMATIC REBUILD IT
+            OLogManager.instance().warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(),
+                rid);
           try {
             indexEngine.deleteWithoutLoad(name);
             indexEngine.create(name, indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
