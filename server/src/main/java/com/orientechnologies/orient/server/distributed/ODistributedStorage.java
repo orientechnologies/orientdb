@@ -873,7 +873,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           switch (op.type) {
           case ORecordOperation.CREATED:
             if (rid.isNew()) {
-              task = new OCreateRecordTask(record.copy());
+              task = new OCreateRecordTask(record);
               if (record instanceof ODocument)
                 ((ODocument) record).validate();
               break;
