@@ -163,7 +163,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
       sbTree.load(indexName, determineKeySerializer(indexDefinition), valueSerializer,
           indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract, determineKeySize(indexDefinition),
-          indexDefinition != null && indexDefinition.isNullValuesIgnored());
+          indexDefinition != null && !indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();
     }

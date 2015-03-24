@@ -1143,7 +1143,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
     if (!config.useWal)
-      return null;
+      return storage.getAtomicOperationsManager().getCurrentOperation();
 
     return super.startAtomicOperation();
   }

@@ -125,6 +125,9 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       this.name = name;
       this.keySerializer = keySerializer;
+      if (keySerializer == null)
+        System.out.println("sdf");
+
       this.valueSerializer = valueSerializer;
       this.nullPointerSupport = nullPointerSupport;
 
@@ -474,6 +477,9 @@ public class OSBTree<K, V> extends ODurableComponent {
         nullBucketFileId = openFile(atomicOperation, name + nullFileExtension, diskCache);
 
       this.keySerializer = keySerializer;
+      if (keySerializer == null)
+        System.out.println("sdf");
+
       this.valueSerializer = (OBinarySerializer<V>) valueSerializer;
 
       initDurableComponent(storageLocal);
@@ -728,7 +734,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
     if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return null;
+      return storage.getAtomicOperationsManager().getCurrentOperation();
 
     return super.startAtomicOperation();
   }

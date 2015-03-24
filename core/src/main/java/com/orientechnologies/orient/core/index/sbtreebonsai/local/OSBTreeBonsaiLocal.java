@@ -601,7 +601,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
     if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return null;
+      return storage.getAtomicOperationsManager().getCurrentOperation();
 
     return super.startAtomicOperation();
   }

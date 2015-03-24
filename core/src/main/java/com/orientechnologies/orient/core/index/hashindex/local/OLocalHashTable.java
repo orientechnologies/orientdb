@@ -222,7 +222,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
     if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return null;
+      return storage.getAtomicOperationsManager().getCurrentOperation();
 
     return super.startAtomicOperation();
   }
