@@ -764,6 +764,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       } else {
         // REPLACE WITH NEW VERTEX
         oe.vOut = newIdentity;
+        oe.getRecord().field(OrientBaseGraph.CONNECTION_OUT, newIdentity);
+        oe.save();
       }
     }
 
@@ -780,6 +782,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       } else {
         // REPLACE WITH NEW VERTEX
         oe.vIn = newIdentity;
+        oe.getRecord().field(OrientBaseGraph.CONNECTION_IN, newIdentity);
+        oe.save();
       }
     }
 

@@ -24,20 +24,21 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.graph.GraphNoTxAbstractTest;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.ArrayList;
+
 public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
   private static OrientVertexType customer;
-	private static OrientVertexType provider;
-	private static OrientEdgeType   knows;
-	private static int              customerGeniusCluster;
+  private static OrientVertexType provider;
+  private static OrientEdgeType   knows;
+  private static int              customerGeniusCluster;
 
   @BeforeClass
   public static void setUp() throws Exception {
@@ -74,12 +75,15 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
         new OCommandSQL("MOVE VERTEX " + v1.getIdentity() + " TO CLUSTER:Customer_genius")).execute();
 
     // CHECK RESULT
+    final ArrayList<OIdentifiable> newRids = new ArrayList<OIdentifiable>();
     int tot = 0;
     for (OrientVertex v : result) {
       tot++;
       ODocument fromTo = v.getRecord();
       OIdentifiable from = fromTo.field("old");
       OIdentifiable to = fromTo.field("new");
+
+      newRids.add(to);
 
       // CHECK FROM
       Assert.assertEquals(from, v1.getIdentity());
@@ -91,8 +95,13 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
       Assert.assertEquals(newDocument.field("name"), "Jay1");
       Assert.assertEquals(newDocument.field("test"), "testMoveSingleRecordToAnotherCluster");
     }
-
     Assert.assertEquals(tot, 1);
+
+    Iterable<OrientEdge> result2 = graph.command(
+        new OCommandSQL("SELECT FROM knows where out = " + v1.getIdentity() + " or in = " + v1.getIdentity())).execute();
+
+    Assert.assertFalse(result2.iterator().hasNext());
+
   }
 
   @Test
