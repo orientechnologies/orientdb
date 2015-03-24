@@ -830,6 +830,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final OTxTask txTask = new OTxTask();
       final Set<String> involvedClusters = new HashSet<String>();
 
+      final Set<String> nodes = dbCfg.getServers(involvedClusters);
+
+      Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(null);
+      if (executionModeSynch == null)
+        executionModeSynch = Boolean.TRUE;
+
       final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
       while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
@@ -848,7 +854,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           switch (op.type) {
           case ORecordOperation.CREATED:
             if (rid.isNew()) {
-              task = new OCreateRecordTask(record.copy());
+              // CREATE THE TASK PASSING THE RECORD OR A COPY BASED ON EXECUTION TYPE: IF ASYNCHRONOUS THE COPY PREVENT TO EARLY ASSIGN CLUSTER IDS
+              final ORecord rec = executionModeSynch ? record : record.copy();
+              task = new OCreateRecordTask(rec);
               if (record instanceof ODocument)
                 ((ODocument) record).validate();
               break;
@@ -885,12 +893,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       }
 
       OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
-
-      final Set<String> nodes = dbCfg.getServers(involvedClusters);
-
-      Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(null);
-      if (executionModeSynch == null)
-        executionModeSynch = Boolean.TRUE;
 
       // if (executionModeSynch && !iTx.hasRecordCreation()) {
       if (executionModeSynch) {
