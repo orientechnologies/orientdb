@@ -154,11 +154,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     initDurableComponent(storage);
 
     try {
-      initSysBucket();
-
       final OAtomicOperation atomicOperation = super.startAtomicOperation();
 
-      final AllocationResult allocationResult = allocateBucket();
+      initSysBucket(atomicOperation);
+
+      final AllocationResult allocationResult = allocateBucket(atomicOperation);
       OCacheEntry rootCacheEntry = allocationResult.getCacheEntry();
       this.rootBucketPointer = allocationResult.getPointer();
 
@@ -231,13 +231,14 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   public V get(K key) {
     acquireSharedLock();
     try {
-      BucketSearchResult bucketSearchResult = findBucket(key);
+      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+
+      BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
       if (bucketSearchResult.itemIndex < 0)
         return null;
 
       OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
 
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
       OCacheEntry keyBucketCacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false, diskCache);
       try {
         OSBTreeBonsaiBucket<K, V> keyBucket = new OSBTreeBonsaiBucket<K, V>(keyBucketCacheEntry, bucketPointer.getPageOffset(),
@@ -261,7 +262,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       OAtomicOperation atomicOperation = startAtomicOperation();
       lockTillAtomicOperationCompletes();
 
-      BucketSearchResult bucketSearchResult = findBucket(key);
+      BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
       OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
 
       OCacheEntry keyBucketCacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false, diskCache);
@@ -284,7 +285,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
           keyBucketCacheEntry.releaseExclusiveLock();
           releasePage(atomicOperation, keyBucketCacheEntry, diskCache);
 
-          bucketSearchResult = splitBucket(bucketSearchResult.path, insertionIndex, key);
+          bucketSearchResult = splitBucket(bucketSearchResult.path, insertionIndex, key, atomicOperation);
           bucketPointer = bucketSearchResult.getLastPathItem();
 
           insertionIndex = bucketSearchResult.itemIndex;
@@ -302,7 +303,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       releasePage(atomicOperation, keyBucketCacheEntry, diskCache);
 
       if (!itemFound)
-        setSize(size() + 1);
+        setSize(size() + 1, atomicOperation);
 
       endAtomicOperation(false);
       return result;
@@ -366,7 +367,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         releasePage(atomicOperation, cacheEntry, diskCache);
       }
 
-      recycleSubTrees(subTreesToDelete);
+      recycleSubTrees(subTreesToDelete, atomicOperation);
 
       endAtomicOperation(false);
     } catch (Throwable e) {
@@ -391,12 +392,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  private void recycleSubTrees(Queue<OBonsaiBucketPointer> subTreesToDelete) throws IOException {
+  private void recycleSubTrees(Queue<OBonsaiBucketPointer> subTreesToDelete, OAtomicOperation atomicOperation) throws IOException {
     OBonsaiBucketPointer head = OBonsaiBucketPointer.NULL;
     OBonsaiBucketPointer tail = subTreesToDelete.peek();
 
     int bucketCount = 0;
-    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
     while (!subTreesToDelete.isEmpty()) {
       final OBonsaiBucketPointer bucketPointer = subTreesToDelete.poll();
       OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false, diskCache);
@@ -422,7 +422,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       try {
         final OSysBucket sysBucket = new OSysBucket(sysCacheEntry, getChangesTree(atomicOperation, sysCacheEntry));
 
-        attachFreeListHead(tail, sysBucket.getFreeListHead());
+        attachFreeListHead(tail, sysBucket.getFreeListHead(), atomicOperation);
         sysBucket.setFreeListHead(head);
         sysBucket.setFreeListLength(sysBucket.freeListLength() + bucketCount);
 
@@ -433,9 +433,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  private void attachFreeListHead(OBonsaiBucketPointer bucketPointer, OBonsaiBucketPointer freeListHead) throws IOException {
-    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-
+  private void attachFreeListHead(OBonsaiBucketPointer bucketPointer, OBonsaiBucketPointer freeListHead,
+      OAtomicOperation atomicOperation) throws IOException {
     OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false, diskCache);
     cacheEntry.acquireExclusiveLock();
     try {
@@ -456,12 +455,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   public void delete() {
     acquireExclusiveLock();
     try {
-      startAtomicOperation();
-      lockTillAtomicOperationCompletes();
+      OAtomicOperation atomicOperation = startAtomicOperation();
 
       final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<OBonsaiBucketPointer>();
       subTreesToDelete.add(rootBucketPointer);
-      recycleSubTrees(subTreesToDelete);
+      recycleSubTrees(subTreesToDelete, atomicOperation);
 
       endAtomicOperation(false);
     } catch (Throwable e) {
@@ -516,8 +514,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     return fileName.substring(0, fileName.length() - dataFileExtension.length());
   }
 
-  private void setSize(long size) throws IOException {
-    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+  private void setSize(long size, OAtomicOperation atomicOperation) throws IOException {
     OCacheEntry rootCacheEntry = loadPage(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false, diskCache);
 
     rootCacheEntry.acquireExclusiveLock();
@@ -556,14 +553,14 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   public V remove(K key) {
     acquireExclusiveLock();
     try {
+      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
-      BucketSearchResult bucketSearchResult = findBucket(key);
+      BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
       if (bucketSearchResult.itemIndex < 0)
         return null;
 
       OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
 
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
       OCacheEntry keyBucketCacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false, diskCache);
       final V removed;
 
@@ -582,7 +579,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         keyBucketCacheEntry.releaseExclusiveLock();
         releasePage(atomicOperation, keyBucketCacheEntry, diskCache);
       }
-      setSize(size() - 1);
+      setSize(size() - 1, atomicOperation);
       endAtomicOperation(false);
       return removed;
 
@@ -633,7 +630,9 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   public void loadEntriesMinor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
     acquireSharedLock();
     try {
-      BucketSearchResult bucketSearchResult = findBucket(key);
+      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+
+      BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
 
       OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
       int index;
@@ -643,7 +642,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         index = -bucketSearchResult.itemIndex - 2;
       }
 
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
       boolean firstBucket = true;
       do {
         OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false, diskCache);
@@ -708,7 +706,9 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
     acquireSharedLock();
     try {
-      BucketSearchResult bucketSearchResult = findBucket(key);
+      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+
+      BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
       OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
 
       int index;
@@ -718,7 +718,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         index = -bucketSearchResult.itemIndex - 1;
       }
 
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
       do {
         final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false, diskCache);
         try {
@@ -909,7 +908,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     acquireSharedLock();
     try {
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-      BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom);
+      BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom, atomicOperation);
 
       OBonsaiBucketPointer bucketPointerFrom = bucketSearchResultFrom.getLastPathItem();
 
@@ -920,7 +919,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         indexFrom = -bucketSearchResultFrom.itemIndex - 1;
       }
 
-      BucketSearchResult bucketSearchResultTo = findBucket(keyTo);
+      BucketSearchResult bucketSearchResultTo = findBucket(keyTo, atomicOperation);
       OBonsaiBucketPointer bucketPointerTo = bucketSearchResultTo.getLastPathItem();
 
       int indexTo;
@@ -984,9 +983,9 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  private BucketSearchResult splitBucket(List<OBonsaiBucketPointer> path, int keyIndex, K keyToInsert) throws IOException {
+  private BucketSearchResult splitBucket(List<OBonsaiBucketPointer> path, int keyIndex, K keyToInsert,
+      OAtomicOperation atomicOperation) throws IOException {
     final OBonsaiBucketPointer bucketPointer = path.get(path.size() - 1);
-    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
     OCacheEntry bucketEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false, diskCache);
 
@@ -1009,7 +1008,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         rightEntries.add(bucketToSplit.getEntry(i));
 
       if (!bucketPointer.equals(rootBucketPointer)) {
-        final AllocationResult allocationResult = allocateBucket();
+        final AllocationResult allocationResult = allocateBucket(atomicOperation);
         OCacheEntry rightBucketEntry = allocationResult.getCacheEntry();
         final OBonsaiBucketPointer rightBucketPointer = allocationResult.getPointer();
         rightBucketEntry.acquireExclusiveLock();
@@ -1066,7 +1065,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
               parentCacheEntry.releaseExclusiveLock();
               releasePage(atomicOperation, parentCacheEntry, diskCache);
 
-              BucketSearchResult bucketSearchResult = splitBucket(path.subList(0, path.size() - 1), insertionIndex, separationKey);
+              BucketSearchResult bucketSearchResult = splitBucket(path.subList(0, path.size() - 1), insertionIndex, separationKey,
+                  atomicOperation);
 
               parentBucketPointer = bucketSearchResult.getLastPathItem();
               parentCacheEntry = loadPage(atomicOperation, fileId, parentBucketPointer.getPageIndex(), false, diskCache);
@@ -1112,11 +1112,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         for (int i = 0; i < indexToSplit; i++)
           leftEntries.add(bucketToSplit.getEntry(i));
 
-        final AllocationResult leftAllocationResult = allocateBucket();
+        final AllocationResult leftAllocationResult = allocateBucket(atomicOperation);
         OCacheEntry leftBucketEntry = leftAllocationResult.getCacheEntry();
         OBonsaiBucketPointer leftBucketPointer = leftAllocationResult.getPointer();
 
-        final AllocationResult rightAllocationResult = allocateBucket();
+        final AllocationResult rightAllocationResult = allocateBucket(atomicOperation);
         OCacheEntry rightBucketEntry = rightAllocationResult.getCacheEntry();
         OBonsaiBucketPointer rightBucketPointer = rightAllocationResult.getPointer();
         leftBucketEntry.acquireExclusiveLock();
@@ -1175,11 +1175,10 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  private BucketSearchResult findBucket(K key) throws IOException {
+  private BucketSearchResult findBucket(K key, OAtomicOperation atomicOperation) throws IOException {
     OBonsaiBucketPointer bucketPointer = rootBucketPointer;
     final ArrayList<OBonsaiBucketPointer> path = new ArrayList<OBonsaiBucketPointer>();
 
-    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
     while (true) {
       path.add(bucketPointer);
       final OCacheEntry bucketEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false, diskCache);
@@ -1214,9 +1213,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  private void initSysBucket() throws IOException {
-    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-
+  private void initSysBucket(OAtomicOperation atomicOperation) throws IOException {
     OCacheEntry sysCacheEntry = loadPage(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false, diskCache);
     if (sysCacheEntry == null) {
       sysCacheEntry = addPage(atomicOperation, fileId, diskCache);
@@ -1243,9 +1240,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  private AllocationResult allocateBucket() throws IOException {
-    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-
+  private AllocationResult allocateBucket(OAtomicOperation atomicOperation) throws IOException {
     OCacheEntry sysCacheEntry = loadPage(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false, diskCache);
     if (sysCacheEntry == null) {
       sysCacheEntry = addPage(atomicOperation, fileId, diskCache);
@@ -1257,7 +1252,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       final OSysBucket sysBucket = new OSysBucket(sysCacheEntry, getChangesTree(atomicOperation, sysCacheEntry));
       if ((1.0 * sysBucket.freeListLength())
           / (getFilledUpTo(atomicOperation, diskCache, fileId) * PAGE_SIZE / OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES) >= freeSpaceReuseTrigger) {
-        final AllocationResult allocationResult = reuseBucketFromFreeList(sysBucket);
+        final AllocationResult allocationResult = reuseBucketFromFreeList(sysBucket, atomicOperation);
         return allocationResult;
       } else {
         final OBonsaiBucketPointer freeSpacePointer = sysBucket.getFreeSpacePointer();
@@ -1281,11 +1276,10 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  private AllocationResult reuseBucketFromFreeList(OSysBucket sysBucket) throws IOException {
+  private AllocationResult reuseBucketFromFreeList(OSysBucket sysBucket, OAtomicOperation atomicOperation) throws IOException {
     final OBonsaiBucketPointer oldFreeListHead = sysBucket.getFreeListHead();
     assert oldFreeListHead.isValid();
 
-    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
     OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, oldFreeListHead.getPageIndex(), false, diskCache);
     cacheEntry.acquireExclusiveLock();
     try {
