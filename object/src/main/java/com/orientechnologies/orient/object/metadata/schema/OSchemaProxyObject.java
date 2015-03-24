@@ -20,6 +20,7 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
 import javassist.util.proxy.Proxy;
 
 import com.orientechnologies.common.exception.OException;
@@ -77,6 +78,11 @@ public class OSchemaProxyObject implements OSchema {
   public OClass createClass(String iClassName, OClass iSuperClass) {
     return underlying.createClass(iClassName, iSuperClass);
   }
+  
+  @Override
+  public OClass createClass(String iClassName, OClass... superClasses) {
+	return underlying.createClass(iClassName, superClasses);
+  }
 
   @Override
   public OClass createClass(String iClassName, int iDefaultClusterId) {
@@ -92,6 +98,12 @@ public class OSchemaProxyObject implements OSchema {
   public OClass createClass(String iClassName, OClass iSuperClass, int[] iClusterIds) {
     return underlying.createClass(iClassName, iSuperClass, iClusterIds);
   }
+  
+  @Override
+	public OClass createClass(String className, int[] clusterIds,
+			OClass... superClasses) {
+		return underlying.createClass(className, clusterIds, superClasses);
+	}
 
   @Override
   public OClass createAbstractClass(Class<?> iClass) {
@@ -142,6 +154,11 @@ public class OSchemaProxyObject implements OSchema {
   public OClass getOrCreateClass(String iClassName, OClass iSuperClass) {
     return underlying.getOrCreateClass(iClassName, iSuperClass);
   }
+  
+  @Override
+	public OClass getOrCreateClass(String iClassName, OClass... superClasses) {
+	  return underlying.getOrCreateClass(iClassName, superClasses);
+	}
 
   @Override
   public OGlobalProperty getGlobalPropertyById(int id) {

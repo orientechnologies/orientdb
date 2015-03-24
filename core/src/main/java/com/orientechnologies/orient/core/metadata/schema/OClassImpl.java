@@ -333,7 +333,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   @Override
   public OClass setSuperClass(OClass iSuperClass) {
-	setSuperClasses(Arrays.asList(iSuperClass));
+	setSuperClasses(iSuperClass!=null?Arrays.asList(iSuperClass):Collections.EMPTY_LIST);
 	return this;
   }
 
@@ -519,10 +519,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	      final OStorage storage = database.getStorage();
 
 	      if (storage instanceof OStorageProxy) {
-	        final String cmd = String.format("alter class %s superclass add %s", name, superClass != null ? superClass.getName() : null);
+	        final String cmd = String.format("alter class %s superclass +%s", name, superClass != null ? superClass.getName() : null);
 	        database.command(new OCommandSQL(cmd)).execute();
 	      } else if (isDistributedCommand()) {
-	        final String cmd = String.format("alter class %s superclass add %s", name, superClass != null ? superClass.getName() : null);
+	        final String cmd = String.format("alter class %s superclass +%s", name, superClass != null ? superClass.getName() : null);
 	        final OCommandSQL commandSQL = new OCommandSQL(cmd);
 	        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
@@ -552,6 +552,55 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	        cls.addBaseClasses(this);
 	      
 	      superClasses.add(cls);
+	    } finally {
+	      releaseSchemaWriteLock();
+	    }
+	  }
+  
+  @Override
+  public OClass removeSuperClass(OClass superClass) {
+	  getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+	    acquireSchemaWriteLock();
+	    try {
+	      final ODatabaseDocumentInternal database = getDatabase();
+	      final OStorage storage = database.getStorage();
+
+	      if (storage instanceof OStorageProxy) {
+	        final String cmd = String.format("alter class %s superclass -%s", name, superClass != null ? superClass.getName() : null);
+	        database.command(new OCommandSQL(cmd)).execute();
+	      } else if (isDistributedCommand()) {
+	        final String cmd = String.format("alter class %s superclass -%s", name, superClass != null ? superClass.getName() : null);
+	        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+	        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+	        database.command(commandSQL).execute();
+
+	        removeSuperClassInternal(superClass);
+	      } else
+	    	  removeSuperClassInternal(superClass);
+
+	    } finally {
+	      releaseSchemaWriteLock();
+	    }
+	    return this;
+  }
+  
+  void removeSuperClassInternal(final OClass superClass) {
+	    acquireSchemaWriteLock();
+	    try {
+	      final OClassImpl cls;
+
+	      if (superClass instanceof OClassAbstractDelegate)
+	        cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
+	      else
+	        cls = (OClassImpl) superClass;
+	      
+	      if(superClasses.contains(cls))
+	      {
+		      if (cls != null) cls.removeBaseClassInternal(this);
+		      
+		      superClasses.remove(superClass);
+	      }
 	    } finally {
 	      releaseSchemaWriteLock();
 	    }
@@ -1480,10 +1529,21 @@ public OClass setName(final String name) {
       setShortName(stringValue);
       break;
     case SUPERCLASS:
-      setSuperClass(getDatabase().getMetadata().getSchema().getClass(stringValue));
+      if(stringValue.startsWith("+"))
+      {
+    	  addSuperClass(getDatabase().getMetadata().getSchema().getClass(stringValue.substring(1)));
+      }
+      else if(stringValue.startsWith("-"))
+      {
+    	  removeSuperClass(getDatabase().getMetadata().getSchema().getClass(stringValue.substring(1)));
+      }
+      else
+      {
+    	  setSuperClass(getDatabase().getMetadata().getSchema().getClass(stringValue));
+      }
       break;
     case SUPERCLASSES:
-    	setSuperClassesByNames(Arrays.asList(stringValue.split(",")));
+    	setSuperClassesByNames(Arrays.asList(stringValue.split(",\\s*")));
     	break;
     case OVERSIZE:
       setOverSize(Float.parseFloat(stringValue));

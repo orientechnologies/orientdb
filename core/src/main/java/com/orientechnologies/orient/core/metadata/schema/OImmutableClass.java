@@ -163,6 +163,11 @@ public class OImmutableClass implements OClass {
 	public OClass addSuperClass(OClass superClass) {
 	  throw new UnsupportedOperationException();
 	}
+  
+  @Override
+	public OClass removeSuperClass(OClass superClass) {
+	  throw new UnsupportedOperationException();
+	}
 
   @Override
   public String getName() {

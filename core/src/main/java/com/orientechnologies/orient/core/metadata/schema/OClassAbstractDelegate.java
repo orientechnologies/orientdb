@@ -111,6 +111,12 @@ public abstract class OClassAbstractDelegate implements OClass {
 	return this;
   }
 
+  @Override
+  public OClass removeSuperClass(OClass superClass) {
+	delegate.removeSuperClass(superClass);
+	return this;
+  }
+
 @Override
   public OClass setName(String iName) {
     delegate.setName(iName);

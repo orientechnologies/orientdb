@@ -212,7 +212,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
           else
             cls = null;
 
-          result = doCreateClass(clazz.getSimpleName(), Arrays.asList(cls), clusterIds, retry);
+          result = doCreateClass(clazz.getSimpleName(), clusterIds, retry, cls);
           break;
         } finally {
           releaseSchemaWriteLock();
@@ -226,6 +226,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return result;
   }
 
+  @Override
   public OClass createClass(final Class<?> clazz, final int iDefaultClusterId) {
     OClass result;
 
@@ -244,7 +245,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
           else
             cls = null;
 
-          result = doCreateClass(clazz.getSimpleName(), Arrays.asList(cls), clusterIds, retry);
+          result = doCreateClass(clazz.getSimpleName(), clusterIds, retry, cls);
         } finally {
           releaseSchemaWriteLock();
         }
@@ -258,30 +259,42 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return result;
   }
 
+  @Override
   public OClass createClass(final String className) {
     return createClass(className, (OClass) null, (int[]) null);
   }
 
+  @Override
   public OClass createClass(final String iClassName, final OClass iSuperClass) {
     return createClass(iClassName, iSuperClass, (int[]) null);
   }
+  
+  @Override
+	public OClass createClass(String iClassName, OClass... superClasses) {
+		return createClass(iClassName, (int[])null, superClasses);
+	}
 
+  @Override
   public OClass createClass(final String className, final int iDefaultClusterId) {
     return createClass(className, (OClass)null, new int[] { iDefaultClusterId });
   }
 
+  @Override
   public OClass createClass(final String className, final OClass iSuperClass, final int iDefaultClusterId) {
     return createClass(className, iSuperClass, new int[] { iDefaultClusterId });
   }
 
+  @Override
   public OClass getOrCreateClass(final String iClassName) {
     return getOrCreateClass(iClassName, (OClass)null);
   }
   
+  @Override
   public OClass getOrCreateClass(final String iClassName, final OClass superClass) {
 	return getOrCreateClass(iClassName, superClass==null?new OClass[0]:new OClass[]{superClass});  
   }
 
+  @Override
   public OClass getOrCreateClass(final String iClassName, final OClass... superClasses) {
     if (iClassName == null)
       return null;
@@ -308,7 +321,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
           if (cls != null)
             return cls;
 
-          cls = doCreateClass(iClassName, Arrays.asList(superClasses), clusterIds, retry);
+          cls = doCreateClass(iClassName, clusterIds, retry, superClasses);
           //TODO: revisit this exception
 //          if (superClass != null && !cls.isSubClassOf(superClass))
 //            throw new IllegalArgumentException("Class '" + iClassName + "' is not an instance of " + superClass.getShortName());
@@ -342,7 +355,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
             cls = getClass(superClass.getSimpleName());
           else
             cls = null;
-          cls = doCreateClass(iClass.getSimpleName(), cls, clusterIds, retry);
+          cls = doCreateClass(iClass.getSimpleName(), clusterIds, retry, cls);
         } finally {
           releaseSchemaWriteLock();
         }
@@ -366,12 +379,13 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return createClass(className, superClass, -1);
   }
   
+  @Override
   public OClass createClass(final String className, final OClass superClass, int[] clusterIds) {
-	  return createClass(className, superClass!=null?Arrays.asList(superClass):null, clusterIds);
+	  return createClass(className, clusterIds, superClass);
   }
   
-
-  public OClass createClass(final String className, final List<OClass> superClasses, int[] clusterIds) {
+  @Override
+  public OClass createClass(final String className, int[] clusterIds, OClass... superClasses) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(className);
     if (wrongCharacter != null)
       throw new OSchemaException("Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '"
@@ -382,7 +396,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
     while (true)
       try {
-        result = doCreateClass(className, superClasses, clusterIds, retry);
+        result = doCreateClass(className, clusterIds, retry, superClasses);
         break;
       } catch (ClusterIdsAreEmptyException e) {
         classes.remove(className.toLowerCase());
@@ -926,12 +940,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return global;
   }
   
-  private OClass doCreateClass(final String className, final OClass superClass, final int[] clusterIds, int retry)
-	      throws ClusterIdsAreEmptyException {
-	  return doCreateClass(className, superClass!=null?Arrays.asList(superClass):null, clusterIds, retry);
-  }
-
-  private OClass doCreateClass(final String className, final List<OClass> superClasses, final int[] clusterIds, int retry)
+  private OClass doCreateClass(final String className, final int[] clusterIds, int retry, OClass... superClasses)
       throws ClusterIdsAreEmptyException {
     OClass result;
 
@@ -952,12 +961,21 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
       cmd = new StringBuilder("create class ");
       cmd.append(className);
-
-      if (superClasses != null && !superClasses.isEmpty()) {
+      
+      List<OClass> superClassesList = new ArrayList<OClass>();
+      if (superClasses != null && superClasses.length>0) {
         cmd.append(" extends ");
+        boolean first=true;
         for(OClass superClass: superClasses)
         {
-        	cmd.append(superClass.getName()).append(", ");
+        	//Filtering for null
+        	if(superClass!=null)
+        	{
+        		if(!first)cmd.append(", ");
+        		cmd.append(superClass.getName());
+        		first = false;
+        		superClassesList.add(superClass);
+        	}
         }
         cmd.setLength(cmd.length()-2);
       }
@@ -979,7 +997,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       }
 
       if (isDistributedCommand()) {
-        createClassInternal(className, superClasses, clusterIds);
+        createClassInternal(className, clusterIds, superClassesList);
 
         final OAutoshardedStorage autoshardedStorage = (OAutoshardedStorage) storage;
         OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
@@ -991,7 +1009,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         db.command(new OCommandSQL(cmd.toString())).execute();
         reload();
       } else
-        createClassInternal(className, superClasses, clusterIds);
+        createClassInternal(className, clusterIds, superClassesList);
 
       result = classes.get(className.toLowerCase());
 
@@ -1011,7 +1029,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         && OScenarioThreadLocal.INSTANCE.get() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
   }
 
-  private OClass createClassInternal(final String className, final List<OClass> superClasses, final int[] clusterIdsToAdd)
+  private OClass createClassInternal(final String className, final int[] clusterIdsToAdd, final List<OClass> superClasses)
       throws ClusterIdsAreEmptyException {
     acquireSchemaWriteLock();
     try {
@@ -1052,7 +1070,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         // BIND SHORT NAME TOO
         classes.put(cls.getShortName().toLowerCase(), cls);
 
-      if (superClasses != null && !superClasses.isEmpty()) {
+      if (superClasses != null && superClasses.size()>0) {
         cls.setSuperClassesInternal(superClasses);
         for(OClass superClass: superClasses)
         {
