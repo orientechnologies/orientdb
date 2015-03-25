@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.testng.annotations.AfterMethod;
@@ -9,6 +10,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 public class TestMultiSuperClasses {
@@ -107,5 +109,16 @@ public class TestMultiSuperClasses {
 		  assertNotNull(cClass);
 		  assertTrue(cClass.isSubClassOf(aClass));
 		  assertTrue(cClass.isSubClassOf(bClass));
+	  }
+	  
+	  @Test(expectedExceptions={OSchemaException.class}, expectedExceptionsMessageRegExp=".*recursion.*")
+	  public void testPreventionOfCycles()
+	  {
+		  final OSchema oSchema = db.getMetadata().getSchema();
+		  OClass aClass = oSchema.createAbstractClass("cycleA");
+		  OClass bClass = oSchema.createAbstractClass("cycleB", aClass);
+		  OClass cClass = oSchema.createAbstractClass("cycleC", bClass);
+		  
+		  aClass.setSuperClasses(Arrays.asList(cClass));
 	  }
 }

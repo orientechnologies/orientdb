@@ -977,7 +977,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         		superClassesList.add(superClass);
         	}
         }
-        cmd.setLength(cmd.length()-2);
       }
 
       if (clusterIds != null) {

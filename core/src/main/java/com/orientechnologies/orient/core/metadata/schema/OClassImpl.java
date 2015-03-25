@@ -2435,7 +2435,7 @@ public OClass setName(final String name) {
 	  addPolymorphicClusterIds(iBaseClass);
 	  for(OClassImpl superClass: superClasses)
 	  {
-		  addPolymorphicClusterIdsWithInheritance(iBaseClass);
+		  superClass.addPolymorphicClusterIdsWithInheritance(iBaseClass);
 	  }
   }
 
