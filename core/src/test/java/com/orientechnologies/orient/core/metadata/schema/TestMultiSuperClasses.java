@@ -31,24 +31,37 @@ public class TestMultiSuperClasses {
 	  @Test
 	  public void testClassCreation()
 	  {
-		  final OSchema oSchema = db.getMetadata().getSchema();
+		  OSchema oSchema = db.getMetadata().getSchema();
 
 		  OClass aClass = oSchema.createAbstractClass("javaA");
 		  OClass bClass = oSchema.createAbstractClass("javaB");
+		  aClass.createProperty("property", OType.INTEGER);
+		  bClass.createProperty("property", OType.DOUBLE);
 		  OClass cClass = oSchema.createClass("javaC", aClass,bClass);
-		  List<? extends OClass> superClasses;
-		  //Run twice to be sure after schema reload
-		  for(int i=0;i<2;i++)
-		  {
-			  superClasses = cClass.getSuperClasses();
-			  assertTrue(superClasses.contains(aClass));
-			  assertTrue(superClasses.contains(bClass));
-			  assertTrue(cClass.isSubClassOf(aClass));
-			  assertTrue(cClass.isSubClassOf(bClass));
-			  assertTrue(aClass.isSuperClassOf(cClass));
-			  assertTrue(bClass.isSuperClassOf(cClass));
-			  oSchema.reload();
-		  }
+		  testClassClreationBranch(aClass, bClass, cClass);
+		  oSchema.reload();
+		  testClassClreationBranch(aClass, bClass, cClass);
+		  oSchema = db.getMetadata().getImmutableSchemaSnapshot();
+		  aClass = oSchema.getClass("javaA");
+		  bClass = oSchema.getClass("javaB");
+		  cClass = oSchema.getClass("javaC");
+		  testClassClreationBranch(aClass, bClass, cClass);
+	  }
+	  
+	  private void testClassClreationBranch(OClass aClass, OClass bClass, OClass cClass)
+	  {
+		  List<? extends OClass> superClasses = cClass.getSuperClasses();
+		  assertTrue(superClasses.contains(aClass));
+		  assertTrue(superClasses.contains(bClass));
+		  assertTrue(cClass.isSubClassOf(aClass));
+		  assertTrue(cClass.isSubClassOf(bClass));
+		  assertTrue(aClass.isSuperClassOf(cClass));
+		  assertTrue(bClass.isSuperClassOf(cClass));
+		  
+		  OProperty property = cClass.getProperty("property");
+		  assertEquals(OType.INTEGER, property.getType());
+		  property = cClass.propertiesMap().get("property");
+		  assertEquals(OType.INTEGER, property.getType());
 	  }
 	  
 	  @Test
