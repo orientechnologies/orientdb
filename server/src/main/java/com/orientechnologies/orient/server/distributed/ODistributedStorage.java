@@ -198,7 +198,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public boolean isAssigningClusterIds() {
-    return OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED;
+    return true;
   }
 
   @Override
