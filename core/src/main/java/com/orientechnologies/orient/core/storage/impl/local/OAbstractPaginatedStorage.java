@@ -1985,7 +1985,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private void commitEntry(final OTransaction clientTx, final ORecordOperation txEntry) throws IOException {
 
     final ORecord rec = txEntry.getRecord();
-    if (txEntry.type != ORecordOperation.DELETED && !rec.isDirty())
+    if (txEntry.type != ORecordOperation.DELETED && !rec.isDirty() && rec.getIdentity().getClusterId() > -1)
       return;
 
     ORecordId rid = (ORecordId) rec.getIdentity();
@@ -2046,6 +2046,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           rec.getRecordVersion().copyFrom(
               updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, rec.getRecordVersion(),
                   ORecordInternal.getRecordType(rec), -1, null).getResult());
+          rid.clusterId = cluster.getId();
         }
         break;
       }
