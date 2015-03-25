@@ -72,6 +72,8 @@ public interface OClass extends Comparable<OClass> {
   @Deprecated
   public OClass setSuperClass(OClass iSuperClass);
   
+  public boolean hasSuperClasses();
+  
   public List<String> getSuperClassesNames();
   
   public List<OClass> getSuperClasses();

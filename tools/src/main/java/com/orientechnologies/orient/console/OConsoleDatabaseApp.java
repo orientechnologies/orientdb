@@ -1107,8 +1107,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\nClass................: " + cls);
     if (cls.getShortName() != null)
       message("\nAlias................: " + cls.getShortName());
-    if (cls.getSuperClass() != null)
-      message("\nSuper class..........: " + cls.getSuperClass());
+    if (cls.hasSuperClasses())
+      message("\nSuper classes..........: " + Arrays.toString(cls.getSuperClassesNames().toArray()));
     message("\nDefault cluster......: " + currentDatabase.getClusterNameById(cls.getDefaultClusterId()) + " (id="
         + cls.getDefaultClusterId() + ")");
     message("\nSupported cluster ids: " + Arrays.toString(cls.getClusterIds()));
@@ -1295,9 +1295,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           count = currentDatabase.countClass(cls.getName(), false);
           totalElements += count;
 
-          final String superClass = cls.getSuperClass() != null ? cls.getSuperClass().getName() : "";
+          final String superClasses = cls.hasSuperClasses()? Arrays.toString(cls.getSuperClassesNames().toArray()) : "";
 
-          message("\n %-45s| %-35s| %-11s|%15d |", format(cls.getName(), 45), format(superClass, 35), clusters.toString(), count);
+          message("\n %-45s| %-35s| %-11s|%15d |", format(cls.getName(), 45), format(superClasses, 35), clusters.toString(), count);
         } catch (Exception ignored) {
         }
       }

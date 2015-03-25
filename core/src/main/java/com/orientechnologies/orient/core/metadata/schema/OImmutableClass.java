@@ -149,6 +149,11 @@ public class OImmutableClass implements OClass {
 		return Collections.unmodifiableList((List<? extends OClass>)superClasses);
 	}
   
+  @Override
+	public boolean hasSuperClasses() {
+		return !superClasses.isEmpty();
+	}
+  
    @Override
 	public List<String> getSuperClassesNames() {
 		return superClassesNames;

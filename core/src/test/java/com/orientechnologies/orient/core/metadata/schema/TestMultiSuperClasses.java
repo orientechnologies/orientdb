@@ -52,6 +52,13 @@ public class TestMultiSuperClasses {
 	  
 	  private void testClassClreationBranch(OClass aClass, OClass bClass, OClass cClass)
 	  {
+		  assertNotNull(aClass.getSuperClasses());
+		  assertEquals(aClass.getSuperClasses().size(), 0);
+		  assertNotNull(bClass.getSuperClassesNames());
+		  assertEquals(bClass.getSuperClassesNames().size(), 0);
+		  assertNotNull(cClass.getSuperClassesNames());
+		  assertEquals(cClass.getSuperClassesNames().size(), 2);
+		  
 		  List<? extends OClass> superClasses = cClass.getSuperClasses();
 		  assertTrue(superClasses.contains(aClass));
 		  assertTrue(superClasses.contains(bClass));

@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.object.metadata.schema;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -388,8 +389,8 @@ public class OSchemaProxyObject implements OSchema {
             reloadSchema = true;
           }
 
-          if (currentOClass.getSuperClass() == null || !currentOClass.getSuperClass().equals(oSuperClass)) {
-            currentOClass.setSuperClass(oSuperClass);
+          if (!currentOClass.getSuperClasses().contains(oSuperClass)) {
+            currentOClass.setSuperClasses(Arrays.asList(oSuperClass));
             reloadSchema = true;
           }
 
@@ -425,8 +426,8 @@ public class OSchemaProxyObject implements OSchema {
           reloadSchema = true;
         }
 
-        if (currentOClass.getSuperClass() == null || !currentOClass.getSuperClass().equals(oSuperClass)) {
-          currentOClass.setSuperClass(oSuperClass);
+        if (!currentOClass.getSuperClasses().contains(oSuperClass)) {
+          currentOClass.setSuperClasses(Arrays.asList(oSuperClass));
           reloadSchema = true;
         }
 

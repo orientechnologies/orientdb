@@ -415,6 +415,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
   
   @Override
+	public boolean hasSuperClasses() {
+	  acquireSchemaReadLock();
+      try {
+    	  return !superClasses.isEmpty();
+      } finally {
+         releaseSchemaReadLock();
+      }
+	}
+  
+  @Override
 	public List<String> getSuperClassesNames() {
 	  acquireSchemaReadLock();
       try {
@@ -1661,17 +1671,10 @@ public OClass setName(final String name) {
 
     acquireSchemaReadLock();
     try {
-      final Set<String> existingFieldNames = new HashSet<String>();
-      OClassImpl currentClass = this;
-      do {
-        existingFieldNames.addAll(currentClass.properties.keySet());
-        currentClass = (OClassImpl) currentClass.getSuperClass();
-      } while (currentClass != null);
-
       for (final String fieldToIndex : fields) {
         final String fieldName = OIndexDefinitionFactory.extractFieldName(fieldToIndex);
 
-        if (!fieldName.equals("@rid") && !existingFieldNames.contains(fieldName.toLowerCase()))
+        if (!fieldName.equals("@rid") && !existsProperty(fieldName))
           throw new OIndexException("Index with name : '" + name + "' cannot be created on class : '" + this.name
               + "' because field: '" + fieldName + "' is absent in class definition.");
       }
