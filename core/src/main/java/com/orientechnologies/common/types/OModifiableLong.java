@@ -105,7 +105,7 @@ public class OModifiableLong extends Number implements Comparable<OModifiableLon
 
   @Override
   public int hashCode() {
-    return Long.hashCode(value);
+    return Long.valueOf(value).hashCode();
   }
 
   @Override
