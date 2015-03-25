@@ -5,11 +5,14 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.Map;
 
 public class OArrayNumberSelector extends SimpleNode {
-  OInputParameter inputValue;
+  private static final Object UNSET           = new Object();
+  private Object              inputFinalValue = UNSET;
 
-  OMathExpression expressionValue;
+  OInputParameter             inputValue;
 
-  Integer integer;
+  OMathExpression             expressionValue;
+
+  Integer                     integer;
 
   public OArrayNumberSelector(int id) {
     super(id);
@@ -27,20 +30,29 @@ public class OArrayNumberSelector extends SimpleNode {
   @Override
   public String toString() {
     if (inputValue != null) {
-      return inputValue.toString();
+      if (inputFinalValue == UNSET) {
+        return inputValue.toString();
+      } else if (inputFinalValue == null) {
+        return "NULL";
+      } else {
+        return inputFinalValue.toString();
+      }
     } else if (expressionValue != null) {
       return expressionValue.toString();
-    }else if(integer!=null){
+    } else if (integer != null) {
       return integer.toString();
     }
     return super.toString();
   }
 
   public void replaceParameters(Map<Object, Object> params) {
-    if(inputValue!=null){
-      inputValue.bindFromInputParams(params);
+    if (inputValue != null) {
+      Object result = inputValue.bindFromInputParams(params);
+      if (result != inputValue) {
+        inputFinalValue = result;
+      }
     }
-    if(expressionValue!=null){
+    if (expressionValue != null) {
       expressionValue.replaceParameters(params);
     }
   }

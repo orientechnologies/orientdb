@@ -119,9 +119,24 @@ public interface OClass extends Comparable<OClass> {
 
   public int[] getPolymorphicClusterIds();
 
+  @Deprecated
   public Collection<OClass> getBaseClasses();
 
+  @Deprecated
   public Collection<OClass> getAllBaseClasses();
+
+  /**
+   *
+   * @return all the subclasses (one level hierarchy only)
+   */
+  public Collection<OClass> getSubclasses();
+
+  /**
+   *
+   * @return all the subclass hierarchy
+   */
+  public Collection<OClass> getAllSubclasses();
+
 
   public long getSize();
 

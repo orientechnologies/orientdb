@@ -19,15 +19,9 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.*;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -53,13 +47,12 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
-import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.sql.parser.OrientSql;
-import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.*;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -432,9 +425,14 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   protected void searchInClasses(final boolean iAscendentOrder) {
     final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
+    target = searchInClasses(cls, true, iAscendentOrder);
+  }
+
+  protected Iterator<? extends OIdentifiable> searchInClasses(final OClass iCls, final boolean iPolymorphic,
+      final boolean iAscendentOrder) {
 
     final ODatabaseDocumentInternal database = getDatabase();
-    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, cls.getName().toLowerCase());
+    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iCls.getName().toLowerCase());
 
     // NO INDEXES: SCAN THE ENTIRE CLUSTER
 
@@ -443,11 +441,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final ORID[] range = getRange();
     if (iAscendentOrder)
-      target = new ORecordIteratorClass<ORecord>(database, database, cls.getName(), true, request.isUseCache(), false, locking)
-          .setRange(range[0], range[1]);
+      return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, request.isUseCache(), false,
+          locking).setRange(range[0], range[1]);
     else
-      target = new ORecordIteratorClassDescendentOrder<ORecord>(database, database, cls.getName(), true, request.isUseCache(),
-          false, locking).setRange(range[0], range[1]);
+      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic,
+          request.isUseCache(), false, locking).setRange(range[0], range[1]);
   }
 
   protected void searchInClusters() {
@@ -633,38 +631,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     }
 
     return new ORID[] { beginRange, endRange };
-  }
-
-  protected String preParse(String queryText, OCommandRequest iRequest) {
-    boolean strict = false;
-    for (Iterator<OStorageEntryConfiguration> it = getDatabase().getStorage().getConfiguration().properties.iterator(); it
-        .hasNext();) {
-      final OStorageEntryConfiguration e = it.next();
-      if (e.name.equals(OStatement.CUSTOM_STRICT_SQL)) {
-        strict = "true".equals(("" + e.value).toLowerCase());
-        break;
-      }
-    }
-    if (strict) {
-      InputStream is = new ByteArrayInputStream(queryText.getBytes());
-      OrientSql osql = new OrientSql(is);
-      try {
-        OStatement result = osql.parse();
-
-        if (iRequest instanceof OCommandRequestAbstract) {
-          Map<Object, Object> params = ((OCommandRequestAbstract) iRequest).getParameters();
-          result.replaceParameters(params);
-        }
-
-        return result.toString();
-      } catch (ParseException e) {
-        System.out.println("NEW PARSER FAILED: " + queryText);
-        e.printStackTrace();
-        throwParsingException(e.getMessage());
-      }
-      return "ERROR!";
-    }
-    return queryText;
   }
 
   public void setRequest(OSQLAsynchQuery<ODocument> request) {

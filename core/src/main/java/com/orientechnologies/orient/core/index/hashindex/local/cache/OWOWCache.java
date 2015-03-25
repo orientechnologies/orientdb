@@ -1055,7 +1055,7 @@ public class OWOWCache {
     }
   }
 
-  private final class GroupKey implements Comparable<GroupKey> {
+  private static final class GroupKey implements Comparable<GroupKey> {
     private final long fileId;
     private final long groupIndex;
 

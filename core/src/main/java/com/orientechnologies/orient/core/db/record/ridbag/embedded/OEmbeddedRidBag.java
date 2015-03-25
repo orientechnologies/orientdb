@@ -19,7 +19,18 @@
  */
 package com.orientechnologies.orient.core.db.record.ridbag.embedded;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.UUID;
+import java.util.WeakHashMap;
+
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -31,23 +42,13 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.UUID;
-import java.util.WeakHashMap;
-
 public class OEmbeddedRidBag implements ORidBagDelegate {
   private byte[]                                                       serializedContent = null;
 
   private boolean                                                      contentWasChanged = false;
   private boolean                                                      deserialized      = true;
 
-  private Object[]                                                     entries           = {};
+  private Object[]                                                     entries           = OCommonConst.EMPTY_OBJECT_ARRAY;
   private int                                                          entriesLength     = 0;
 
   private boolean                                                      convertToRecord   = true;
@@ -230,7 +231,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
       if (entry instanceof OIdentifiable) {
         final OIdentifiable identifiable = (OIdentifiable) entry;
-        entries[i] = identifiable.getRecord();
+        ORecord record = identifiable.getRecord();
+        if (record != null)
+          entries[i] = record;
       }
     }
   }

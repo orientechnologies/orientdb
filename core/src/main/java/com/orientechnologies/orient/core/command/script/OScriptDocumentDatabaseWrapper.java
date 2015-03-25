@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
@@ -90,7 +91,7 @@ public class OScriptDocumentDatabaseWrapper {
   public OIdentifiable[] query(final OSQLQuery iQuery, final Object... iParameters) {
     final List<OIdentifiable> res = database.query(iQuery, convertParameters(iParameters));
     if (res == null)
-      return new OIdentifiable[] {};
+      return OCommonConst.EMPTY_IDENTIFIABLE_ARRAY;
     return res.toArray(new OIdentifiable[res.size()]);
   }
 

@@ -19,9 +19,23 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -62,9 +76,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
-import java.io.IOException;
-import java.util.*;
-
 /**
  * Schema Class implementation.
  *
@@ -82,7 +93,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private int[]                              clusterIds;
   private OClassImpl                         superClass;
   private int[]                              polymorphicClusterIds;
-  private List<OClass>                       baseClasses;
+  private List<OClass>                       subclasses;
   private float                              overSize                = 0f;
   private String                             shortName;
   private boolean                            strictMode              = false;                           // @SINCE v1.0rc8
@@ -107,7 +118,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       abstractClass = true;
 
     if (abstractClass)
-      setPolymorphicClusterIds(new int[0]);
+      setPolymorphicClusterIds(OCommonConst.EMPTY_INT_ARRAY);
     else
       setPolymorphicClusterIds(iClusterIds);
 
@@ -652,7 +663,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   @Override
   public void fromStream() {
-    baseClasses = null;
+    subclasses = null;
     superClass = null;
 
     name = document.field("name");
@@ -688,7 +699,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     Arrays.sort(clusterIds);
 
     if (clusterIds.length == 1 && clusterIds[0] == -1)
-      setPolymorphicClusterIds(new int[0]);
+      setPolymorphicClusterIds(OCommonConst.EMPTY_INT_ARRAY);
     else
       setPolymorphicClusterIds(clusterIds);
 
@@ -907,27 +918,27 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
-  public Collection<OClass> getBaseClasses() {
+  public Collection<OClass> getSubclasses() {
     acquireSchemaReadLock();
     try {
-      if (baseClasses == null || baseClasses.size() == 0)
+      if (subclasses == null || subclasses.size() == 0)
         return Collections.emptyList();
 
-      return Collections.unmodifiableCollection(baseClasses);
+      return Collections.unmodifiableCollection(subclasses);
     } finally {
       releaseSchemaReadLock();
     }
   }
 
-  public Collection<OClass> getAllBaseClasses() {
+  public Collection<OClass> getAllSubclasses() {
     acquireSchemaReadLock();
     try {
       final Set<OClass> set = new HashSet<OClass>();
-      if (baseClasses != null) {
-        set.addAll(baseClasses);
+      if (subclasses != null) {
+        set.addAll(subclasses);
 
-        for (OClass c : baseClasses)
-          set.addAll(c.getAllBaseClasses());
+        for (OClass c : subclasses)
+          set.addAll(c.getAllSubclasses());
       }
       return set;
     } finally {
@@ -935,15 +946,23 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
+  public Collection<OClass> getBaseClasses() {
+    return getSubclasses();
+  }
+
+  public Collection<OClass> getAllBaseClasses() {
+    return getAllSubclasses();
+  }
+
   OClass removeBaseClassInternal(final OClass baseClass) {
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
 
-      if (baseClasses == null)
+      if (subclasses == null)
         return this;
 
-      if (baseClasses.remove(baseClass))
+      if (subclasses.remove(baseClass))
         removePolymorphicClusterIds((OClassImpl) baseClass);
 
       return this;
@@ -1898,8 +1917,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         removePolymorphicClusterId(clusterToRemove);
       }
 
-      if (defaultClusterId == clusterToRemove)
-        defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
+      if (defaultClusterId == clusterToRemove) {
+        if (clusterIds.length >= 1)
+          defaultClusterId = clusterIds[0];
+        else
+          defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
+      }
 
       owner.removeClusterForClass(clusterToRemove, this);
     } finally {
@@ -2058,13 +2081,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    *          The base class to add.
    */
   private OClass addBaseClasses(final OClass iBaseClass) {
-    if (baseClasses == null)
-      baseClasses = new ArrayList<OClass>();
+    if (subclasses == null)
+      subclasses = new ArrayList<OClass>();
 
-    if (baseClasses.contains(iBaseClass))
+    if (subclasses.contains(iBaseClass))
       return this;
 
-    baseClasses.add(iBaseClass);
+    subclasses.add(iBaseClass);
 
     final Set<String> browsedClasses = new HashSet<String>();
 

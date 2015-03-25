@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.OIndexException;
@@ -347,6 +348,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       } else {
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
+        if (keyHashFunction instanceof OMurmurHash3HashFunction) {
+          ((OMurmurHash3HashFunction) keyHashFunction).setValueSerializer(keySerializer);
+        }
+
         final long hashCode = keyHashFunction.hashCode(key);
 
         BucketPath bucketPath = getBucket(hashCode);
@@ -412,6 +417,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
         final long hashCode = keyHashFunction.hashCode(key);
+
+        if (keyHashFunction instanceof OMurmurHash3HashFunction) {
+          ((OMurmurHash3HashFunction) keyHashFunction).setValueSerializer(keySerializer);
+        }
 
         final BucketPath nodePath = getBucket(hashCode);
         final long bucketPointer = directory.getNodePointer(nodePath.nodeIndex, nodePath.itemIndex + nodePath.hashMapOffset);
@@ -559,6 +568,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
+      if (keyHashFunction instanceof OMurmurHash3HashFunction) {
+        ((OMurmurHash3HashFunction) keyHashFunction).setValueSerializer(keySerializer);
+      }
+
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);
       long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
@@ -574,7 +587,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         while (bucket.size() == 0 || comparator.compare(bucket.getKey(bucket.size() - 1), key) <= 0) {
           bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
           if (bucketPath == null)
-            return new OHashIndexBucket.Entry[0];
+            return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
 
           releasePage(atomicOperation, cacheEntry, diskCache);
 
@@ -665,34 +678,36 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       storage = storageLocal;
 
       final ODiskCache diskCache = storage.getDiskCache();
-
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-      fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension, diskCache);
-      final OCacheEntry hashStateEntry = loadPage(atomicOperation, fileStateId, 0, true, diskCache);
 
-      hashStateEntryIndex = hashStateEntry.getPageIndex();
-
-      assert hashStateEntry != null;
-
-      try {
-        OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry, getChangesTree(
-            atomicOperation, hashStateEntry), false);
-        for (int i = 0; i < HASH_CODE_SIZE; i++) {
-          if (!metadataPage.isRemoved(i)) {
-            openFile(atomicOperation, metadataPage.getFileId(i), diskCache);
-            deleteFile(atomicOperation, metadataPage.getFileId(i), diskCache);
+      if (isFileExists(atomicOperation, name + metadataConfigurationFileExtension, diskCache)) {
+        fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension, diskCache);
+        OCacheEntry hashStateEntry = loadPage(atomicOperation, fileStateId, 0, true, diskCache);
+        
+        try {
+          OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry, getChangesTree(
+              atomicOperation, hashStateEntry), false);
+          for (int i = 0; i < HASH_CODE_SIZE; i++) {
+            if (!metadataPage.isRemoved(i)) {
+              final long fileId = metadataPage.getFileId(i);
+              openFile(atomicOperation, fileId, diskCache);
+              deleteFile(atomicOperation, fileId, diskCache);
+            }
           }
+        } finally {
+          diskCache.release(hashStateEntry);
         }
-      } finally {
-        releasePage(atomicOperation, hashStateEntry, diskCache);
+
+        diskCache.deleteFile(fileStateId);
+
+        directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
+        directory.deleteWithoutOpen();
+
+        if (isFileExists(atomicOperation, name + nullBucketFileExtension, diskCache)) {
+          final long nullBucketId = openFile(atomicOperation, name + nullBucketFileExtension , diskCache);
+          deleteFile(atomicOperation, nullBucketId, diskCache);
+        }
       }
-
-      deleteFile(atomicOperation, fileStateId, diskCache);
-      directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
-      directory.deleteWithoutOpen();
-
-      final long nullBucketId = openFile(atomicOperation, name + nullBucketFileExtension, diskCache);
-      deleteFile(atomicOperation, nullBucketId, diskCache);
     } catch (IOException ioe) {
       throw new OIndexException("Can not delete hash table with name " + name, ioe);
     } finally {
@@ -819,6 +834,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
+      if (keyHashFunction instanceof OMurmurHash3HashFunction) {
+        ((OMurmurHash3HashFunction) keyHashFunction).setValueSerializer(keySerializer);
+      }
+
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);
 
@@ -834,7 +853,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         while (bucket.size() == 0) {
           bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
           if (bucketPath == null)
-            return new OHashIndexBucket.Entry[0];
+            return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
 
           releasePage(atomicOperation, cacheEntry, diskCache);
           final long nextPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
@@ -960,6 +979,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     try {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
+      if (keyHashFunction instanceof OMurmurHash3HashFunction) {
+        ((OMurmurHash3HashFunction) keyHashFunction).setValueSerializer(keySerializer);
+      }
+
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);
 
@@ -976,7 +999,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         while (bucket.size() == 0 || comparator.compare(bucket.getKey(0), key) >= 0) {
           final BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
           if (prevBucketPath == null)
-            return new OHashIndexBucket.Entry[0];
+            return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
 
           releasePage(atomicOperation, cacheEntry, diskCache);
 
@@ -1019,6 +1042,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
+      if (keyHashFunction instanceof OMurmurHash3HashFunction) {
+        ((OMurmurHash3HashFunction) keyHashFunction).setValueSerializer(keySerializer);
+      }
+
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);
 
@@ -1034,7 +1061,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         while (bucket.size() == 0) {
           final BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
           if (prevBucketPath == null)
-            return new OHashIndexBucket.Entry[0];
+            return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
 
           releasePage(atomicOperation, cacheEntry, diskCache);
 

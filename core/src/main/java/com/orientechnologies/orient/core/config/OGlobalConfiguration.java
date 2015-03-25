@@ -290,7 +290,7 @@ public enum OGlobalConfiguration {
   PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental.", Boolean.class, false),
 
   // FILE
-  FILE_LOCK("file.lock", "Locks files when used. Default is false", boolean.class, true),
+  FILE_LOCK("file.lock", "Locks files when used. Default is true", boolean.class, true),
 
   FILE_DELETE_DELAY("file.deleteDelay", "Delay time in ms to wait for another attempt to delete a locked file", Integer.class, 10),
 
@@ -438,10 +438,10 @@ public enum OGlobalConfiguration {
 
   // DISTRIBUTED
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout",
-      "Maximum timeout in milliseconds to wait for CRUD remote tasks", Integer.class, 3000l),
+      "Maximum timeout in milliseconds to wait for CRUD remote tasks", Integer.class, 3000),
 
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
-      "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 60000l),
+      "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 60000),
 
   DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout",
       "Maximum timeout in milliseconds to wait for database deployment", Long.class, 1200000l),
@@ -455,11 +455,14 @@ public enum OGlobalConfiguration {
   DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout", "Maximum timeout in milliseconds to wait for the response in replication",
       Integer.class, 5000l),
 
+  DISTRIBUTED_ASYNCH_QUEUE_SIZE("distributed.asynchQueueSize",
+      "Queue size to handle distributed asynchronous operations. 0 = dynamic allocation (up to 2^31-1 entries)", Integer.class, 0),
+
   DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT("distributed.asynchResponsesTimeout",
-      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
+      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000),
 
   DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY("distributed.purgeResponsesTimerDelay",
-      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
+      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000),
 
   DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE("db.makeFullCheckpointOnIndexChange",
       "When index metadata is changed full checkpoint is performed", Boolean.class, true),
@@ -667,15 +670,6 @@ public enum OGlobalConfiguration {
         // INCREASE WAL RESTORE BATCH SIZE TO 10K INSTEAD OF DEFAULT 1K
         WAL_RESTORE_BATCH_SIZE.setValue(10000);
     }
-
-    if (System.getProperty(WAL_MAX_SIZE.key) == null) {
-      long walSize = DISK_CACHE_SIZE.getValueAsInteger() * 4;
-
-      if (walSize > freeSpaceInMB / 2)
-        walSize = freeSpaceInMB / 2;
-
-      WAL_MAX_SIZE.setValue(walSize);
-    }
   }
 
   private static void autoConfigDiskCacheSize(final long freeSpaceInMB) {
@@ -705,7 +699,7 @@ public enum OGlobalConfiguration {
             .instance()
             .warn(
                 null,
-                "No enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE="
+                "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE="
                     + OReadWriteDiskCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
         DISK_CACHE_SIZE.setValue(OReadWriteDiskCache.MIN_CACHE_SIZE);
       }

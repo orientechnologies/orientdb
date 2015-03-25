@@ -62,6 +62,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
@@ -96,6 +97,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   private final Map<String, OGlobalProperty>    propertiesByNameType    = new HashMap<String, OGlobalProperty>();
   private volatile int                          version                 = 0;
   private volatile boolean                      fullCheckpointOnChange  = false;
+  private volatile OImmutableSchema             snapshot;
 
   private static final class ClusterIdsAreEmptyException extends Exception {
   }
@@ -157,12 +159,18 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   @Override
   public OImmutableSchema makeSnapshot() {
-    acquireSchemaReadLock();
-    try {
-      return new OImmutableSchema(this);
-    } finally {
-      releaseSchemaReadLock();
+    if (snapshot == null) {
+      // Is null only in the case that is asked while the schema is created
+      // all the other cases are already protected by a write lock
+      acquireSchemaReadLock();
+      try {
+        if (snapshot == null)
+          snapshot = new OImmutableSchema(this);
+      } finally {
+        releaseSchemaReadLock();
+      }
     }
+    return snapshot;
   }
 
   public boolean isClustersCanNotBeSharedAmongClasses() {
@@ -352,7 +360,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   public OClass createClass(final String className, final OClass superClass, int[] clusterIds) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(className);
     if (wrongCharacter != null)
-      throw new OSchemaException("Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name");
+      throw new OSchemaException("Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '"
+          + className + "'");
 
     OClass result;
     int retry = 0;
@@ -473,7 +482,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       if (cls == null)
         throw new OSchemaException("Class " + className + " was not found in current database");
 
-      if (!cls.getBaseClasses().isEmpty())
+      if (!cls.getSubclasses().isEmpty())
         throw new OSchemaException("Class " + className
             + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
@@ -508,7 +517,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     rwSpinLock.acquireWriteLock();
     try {
       reload(null);
-
+      snapshot = new OImmutableSchema(this);
       return (RET) this;
     } finally {
       rwSpinLock.releaseWriteLock();
@@ -584,6 +593,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
             saveInternal();
           else
             reload();
+        else
+          snapshot = new OImmutableSchema(this);
 
         version++;
       }
@@ -784,6 +795,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().schemaRecordId);
       reload("*:-1 index:0");
 
+      snapshot = new OImmutableSchema(this);
+
       return this;
     } finally {
       rwSpinLock.releaseWriteLock();
@@ -797,6 +810,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
       db.getStorage().getConfiguration().schemaRecordId = document.getIdentity().toString();
       db.getStorage().getConfiguration().update();
+      snapshot = new OImmutableSchema(this);
     } finally {
       rwSpinLock.releaseWriteLock();
     }
@@ -1068,7 +1082,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       if (cls == null)
         throw new OSchemaException("Class " + className + " was not found in current database");
 
-      if (!cls.getBaseClasses().isEmpty())
+      if (!cls.getSubclasses().isEmpty())
         throw new OSchemaException("Class " + className
             + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
@@ -1113,14 +1127,23 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
     setDirty();
 
-    try {
-      super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
-      if (fullCheckpointOnChange)
-        getDatabase().getStorage().synch();
-    } catch (OConcurrentModificationException e) {
-      reload(null, true);
-      throw e;
-    }
+    OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
+      @Override
+      public Object call() {
+        try {
+          toStream();
+          document.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
+          if (fullCheckpointOnChange)
+            getDatabase().getStorage().synch();
+        } catch (OConcurrentModificationException e) {
+          reload(null, true);
+          throw e;
+        }
+        return null;
+      }
+    });
+
+    snapshot = new OImmutableSchema(this);
   }
 
   private void addClusterClassMap(final OClass cls) {

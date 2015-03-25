@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -37,15 +46,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 @SuppressWarnings("serial")
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer, Serializable {
@@ -325,8 +325,11 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
     // CHECK IF THE DECIMAL NUMBER IS A FLOAT OR DOUBLE
     final double dou = Double.parseDouble(iValue);
-    if (dou <= Float.MAX_VALUE || dou >= Float.MIN_VALUE)
+    if ((dou <= Float.MAX_VALUE || dou >= Float.MIN_VALUE) && new Double(new Double(dou).floatValue()).doubleValue() == dou) {
       return OType.FLOAT;
+    } else if (!new Double(dou).toString().equals(iValue)) {
+      return OType.DECIMAL;
+    }
 
     return OType.DOUBLE;
   }

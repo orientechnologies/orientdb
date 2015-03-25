@@ -17,22 +17,51 @@
 package com.orientechnologies.orient.object.enhancement;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.annotation.*;
+import com.orientechnologies.orient.core.annotation.OAccess;
+import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
+import com.orientechnologies.orient.core.annotation.OAfterSerialization;
+import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
+import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
+import com.orientechnologies.orient.core.annotation.ODocumentInstance;
+import com.orientechnologies.orient.core.annotation.OId;
+import com.orientechnologies.orient.core.annotation.OVersion;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -202,7 +231,12 @@ public class OObjectEntitySerializer {
         if (returnNonProxiedInstance) {
           o = getNonProxiedInstance(o);
         }
-        alreadyDetached.put(handler.getDoc().hashCode(), o);
+        ORID identity = handler.getDoc().getIdentity();
+          if (!alreadyDetached.containsKey(identity)){
+          alreadyDetached.put(identity, o);
+        } else if (returnNonProxiedInstance){
+          return (T) alreadyDetached.get(identity);
+        }
         handler.detachAll(o, returnNonProxiedInstance, alreadyDetached);
       } catch (IllegalArgumentException e) {
         throw new OSerializationException("Error detaching object of class " + o.getClass(), e);

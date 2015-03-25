@@ -333,14 +333,14 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
     // create record using content keyword and update it in sql batch passing recordID between commands
     final String sql2 = "let var1=INSERT INTO Actor2 CONTENT {Name:\"content\"} RETURN $current.@rid\n"
-        + "let var2=UPDATE $var1 SET Bingo=1 RETURN AFTER @rid\n" + "return $var2\n" + "end";
+        + "let var2=UPDATE $var1 SET Bingo=1 RETURN AFTER @rid\n" + "return $var2";
     List<?> res_sql2 = database.command(new OCommandScript("sql", sql2)).execute();
     Assert.assertEquals(res_sql2.size(), 1);
     Assert.assertTrue(((List) res_sql2).get(0) instanceof ORecordId);
 
     // create record using content keyword and update it in sql batch passing recordID between commands
     final String sql3 = "let var1=INSERT INTO Actor2 CONTENT {Name:\"Bingo owner\"} RETURN @this\n"
-        + "let var2=UPDATE $var1 SET Bingo=1 RETURN AFTER\n" + "return $var2\n" + "end";
+        + "let var2=UPDATE $var1 SET Bingo=1 RETURN AFTER\n" + "return $var2";
     List<?> res_sql3 = database.command(new OCommandScript("sql", sql3)).execute();
     Assert.assertEquals(res_sql3.size(), 1);
     Assert.assertTrue(((List) res_sql3).get(0) instanceof ODocument);

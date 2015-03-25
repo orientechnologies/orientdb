@@ -27,8 +27,12 @@ public class OPositionalParameter extends OInputParameter {
   }
 
   public Object bindFromInputParams(Map<Object, Object> params) {
-    Object value = params.get(paramNumber);
-    return toParsedTree(value);
+    if (params != null) {
+      Object value = params.get(paramNumber);
+      Object result = toParsedTree(value);
+      return result;
+    }
+    return this;
   }
 
 }

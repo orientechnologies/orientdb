@@ -19,15 +19,11 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -44,6 +40,20 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Abstract class to manage indexes.
@@ -106,26 +116,38 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   @Override
   public <RET extends ODocumentWrapper> RET save() {
-    acquireExclusiveLock();
-    try {
-      for (int retry = 0; retry < 10; retry++)
+
+    OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        acquireExclusiveLock();
+
         try {
+          for (int retry = 0; retry < 10; retry++)
+            try {
 
-          super.save();
+              toStream();
+              document.save();
+
+              getDatabase().getStorage().synch();
+              break;
+
+            } catch (OConcurrentModificationException e) {
+              reload(null, true);
+            }
+
+          document.save();
           getDatabase().getStorage().synch();
-          return (RET) this;
-        } catch (OConcurrentModificationException e) {
-          reload(null, true);
+
+          return null;
+
+        } finally {
+          releaseExclusiveLock();
         }
+      }
+    });
 
-      super.save();
-      getDatabase().getStorage().synch();
-
-      return (RET) this;
-
-    } finally {
-      releaseExclusiveLock();
-    }
+    return (RET) this;
   }
 
   public void create() {

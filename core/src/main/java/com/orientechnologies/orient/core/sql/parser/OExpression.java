@@ -6,7 +6,9 @@ import java.util.Map;
 
 public class OExpression extends SimpleNode {
 
-  protected Object value;
+  protected Object  value;
+  protected Boolean singleQuotes;
+  protected Boolean doubleQuotes;
 
   public OExpression(int id) {
     super(id);
@@ -71,21 +73,24 @@ public class OExpression extends SimpleNode {
     } else if (value instanceof SimpleNode) {
       return value.toString();
     } else if (value instanceof String) {
-      return "\"" + encode("" + value) + "\"";
+      if (Boolean.TRUE.equals(singleQuotes)) {
+        return "'" + value + "'";
+      }
+      return "\"" + value + "\"";
     } else {
       return "" + value;
     }
   }
 
-  private String encode(String s) {
+  public static String encode(String s) {
     return s.replaceAll("\"", "\\\\\"");
   }
 
   public void replaceParameters(Map<Object, Object> params) {
-    if(value instanceof OInputParameter){
-      value = ((OInputParameter)value).bindFromInputParams(params);
-    }else if(value instanceof OBaseExpression){
-      ((OBaseExpression)value).replaceParameters(params);
+    if (value instanceof OInputParameter) {
+      value = ((OInputParameter) value).bindFromInputParams(params);
+    } else if (value instanceof OBaseExpression) {
+      ((OBaseExpression) value).replaceParameters(params);
     }
   }
 }

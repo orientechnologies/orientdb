@@ -25,6 +25,7 @@ options {
   	MULTI=true;
   	VISITOR=true;
   	STATIC=false;
+  	USER_CHAR_STREAM = true ;
   	JAVA_UNICODE_ESCAPE=true;
   	NODE_PREFIX="O";
 }
@@ -32,6 +33,10 @@ options {
 PARSER_BEGIN(OrientSql)
 
 package com.orientechnologies.orient.core.sql.parser;
+
+import java.io.InputStream;
+import java.util.List;
+import java.util.ArrayList;
 
 /** Orient Database Sql grammar. */
 public class OrientSql {
@@ -52,6 +57,10 @@ public class OrientSql {
       e.printStackTrace();
     }
   }
+
+    public OrientSql(InputStream stream) {
+      this(new JavaCharStream(stream));
+    }
 
 }
 
@@ -170,6 +179,8 @@ TOKEN:
     < DEPTH_FIRST: ( "d" | "d" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) ( "_" )  ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
     |
     < BREADTH_FIRST: ( "b" | "B" ) ( "r" | "R" ) ( "e" | "E" ) ( "a" | "A" ) ( "d" | "D" ) ( "t" | "T" )  ( "h" | "H" ) ( "_" ) ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
+	|
+	< LUCENE: ( "l" | "L" ) ( "u" | "U" ) ( "c" | "C" ) ( "e" | "E" ) ( "n" | "N" ) ( "e" | "E" ) >
 	|
 	< THIS: "@this" >
 	|
@@ -441,6 +452,8 @@ OIdentifier Identifier():
     token = <RECORD>
     |
     token = <TO>
+    |
+    token = <LUCENE>
 ) { jjtThis.value = token.image; return jjtThis; }
 }
 
@@ -499,6 +512,9 @@ OStatement Statement():
 		|
 		LOOKAHEAD(2)
 		result = DeleteVertexStatement()
+		|
+		LOOKAHEAD(2)
+        result = DeleteEdgeStatement()
 		|
 		result = InsertStatement()
 		|
@@ -596,11 +612,11 @@ ODeleteStatement DeleteStatement():
 (
 	<DELETE>
 	<FROM>
-	FromClause()
-	[ <WHERE> WhereClause() ]
-	[ <RETURN> <BEFORE> ]
-	[ <LIMIT> Integer() ]
-	[ <UNSAFE> ]
+	jjtThis.fromClause = FromClause()
+	[ <WHERE> jjtThis.whereClause = WhereClause() ]
+	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
+	[ <LIMIT> jjtThis.limit = Integer() ]
+	[ <UNSAFE> { jjtThis.unsafe = true; }]
 ) {return jjtThis;}
 }
 
@@ -610,57 +626,370 @@ ODeleteVertexStatement DeleteVertexStatement():
 (
 	<DELETE>
 	<VERTEX>
-	FromClause()
-	[ <WHERE> WhereClause() ]
+	jjtThis.fromClause = FromClause()
+	[ <WHERE> jjtThis.whereClause = WhereClause() ]
+	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
+    [ <LIMIT> jjtThis.limit = Integer() ]
 ) {return jjtThis;}
+}
+
+ODeleteEdgeStatement DeleteEdgeStatement():
+{ ODeleteEdgeStatement result; }
+{
+    (
+        LOOKAHEAD(DeleteEdgeByRidStatement())
+        result = DeleteEdgeByRidStatement()
+        |
+        LOOKAHEAD(DeleteEdgeFromToStatement())
+        result = DeleteEdgeFromToStatement()
+        |
+        LOOKAHEAD(DeleteEdgeVToStatement())
+        result = DeleteEdgeVToStatement()
+        |
+        LOOKAHEAD(DeleteEdgeToStatement())
+        result = DeleteEdgeToStatement()
+        |
+        LOOKAHEAD(DeleteEdgeWhereStatement())
+        result = DeleteEdgeWhereStatement()
+    )
+    {return result;}
+}
+
+
+ODeleteEdgeStatement DeleteEdgeByRidStatement():
+{
+    ORid lastRid;
+}
+{
+(
+	<DELETE>
+	<EDGE>
+	(
+	    jjtThis.rid = Rid()
+	    |
+	    (
+
+	        <LBRACKET>
+            [
+                lastRid = Rid()
+                {
+                    jjtThis.rids = new ArrayList();
+                    jjtThis.rids.add(lastRid);
+                }
+                (
+                    <COMMA>
+                    lastRid = Rid() { jjtThis.rids.add(lastRid); }
+                )*
+            ] <RBRACKET>
+	    )
+	)
+
+
+) {return jjtThis;}
+}
+
+
+
+ODeleteEdgeStatement DeleteEdgeFromToStatement():
+{
+    ORid lastRid;
+}
+{
+(
+	<DELETE>
+	<EDGE>
+
+	[ jjtThis.className = Identifier() ]
+
+
+        <FROM>
+        (
+            jjtThis.leftRid = Rid()
+            |
+            (
+                <LBRACKET>
+                [
+                    lastRid = Rid()
+                    {
+                        jjtThis.leftRids=new ArrayList();
+                        jjtThis.leftRids.add(lastRid);
+                    }
+                    (
+                        <COMMA>
+                        lastRid = Rid() { jjtThis.leftRids.add(lastRid); }
+                    )*
+                ] <RBRACKET>
+            )
+            |
+            (
+                <LPAREN>
+                (
+                    LOOKAHEAD(SelectStatement()) jjtThis.leftStatement = SelectStatement()
+                    |
+                    LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.leftStatement = SelectWithoutTargetStatement()
+                )
+                <RPAREN>
+            )
+            |
+            jjtThis.leftParam = InputParameter()
+            |
+            jjtThis.leftIdentifier = Identifier()
+        )
+
+        [
+            <TO>
+            (
+                 jjtThis.rightRid = Rid()
+                |
+                (
+                    <LBRACKET>
+                    [
+                        lastRid = Rid()
+                        {
+                            jjtThis.rightRids=new ArrayList();
+                            jjtThis.rightRids.add(lastRid);
+                        }
+                        (
+                            <COMMA>
+                            lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
+                        )*
+                    ] <RBRACKET>
+                )
+                |
+                (
+                    <LPAREN>
+                    (
+                        LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
+                        |
+                        LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
+                    )
+                    <RPAREN>
+                )
+                |
+                jjtThis.rightParam = InputParameter()
+                |
+                jjtThis.rightIdentifier = Identifier()
+            )
+        ]
+
+
+
+    [ <WHERE> jjtThis.whereClause = WhereClause() ]
+    [ jjtThis.limit = Limit() ]
+
+) {return jjtThis;}
+}
+
+
+ODeleteEdgeStatement DeleteEdgeToStatement():
+{
+    ORid lastRid;
+}
+{
+    (
+        <DELETE>
+        <EDGE>
+
+        jjtThis.className = Identifier()
+
+        <TO>
+        (
+             jjtThis.rightRid = Rid()
+            |
+            (
+                <LBRACKET>
+                [
+                    lastRid = Rid()
+                    {
+                        jjtThis.rightRids=new ArrayList();
+                        jjtThis.rightRids.add(lastRid);
+                    }
+                    (
+                        <COMMA>
+                        lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
+                    )*
+                ] <RBRACKET>
+            )
+            |
+            (
+                <LPAREN>
+                (
+                    LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
+                    |
+                    LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
+                )
+                <RPAREN>
+            )
+            |
+            jjtThis.rightParam = InputParameter()
+            |
+            jjtThis.rightIdentifier = Identifier()
+        )
+
+
+        [ <WHERE> jjtThis.whereClause = WhereClause() ]
+        [ jjtThis.limit = Limit() ]
+
+	)
+     {return jjtThis;}
+}
+
+ODeleteEdgeStatement DeleteEdgeVToStatement():
+{
+    ORid lastRid;
+}
+{
+    (
+        <DELETE>
+        <EDGE>
+
+        <TO>
+        (
+             jjtThis.rightRid = Rid()
+            |
+            (
+                <LBRACKET>
+                [
+                    lastRid = Rid()
+                    {
+                        jjtThis.rightRids=new ArrayList();
+                        jjtThis.rightRids.add(lastRid);
+                    }
+                    (
+                        <COMMA>
+                        lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
+                    )*
+                ] <RBRACKET>
+            )
+            |
+            (
+                <LPAREN>
+                (
+                    LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
+                    |
+                    LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
+                )
+                <RPAREN>
+            )
+            |
+            jjtThis.rightParam = InputParameter()
+            |
+            jjtThis.rightIdentifier = Identifier()
+        )
+
+
+        [ <WHERE> jjtThis.whereClause = WhereClause() ]
+        [ jjtThis.limit = Limit() ]
+
+	)
+     {return jjtThis;}
+}
+
+ODeleteEdgeStatement DeleteEdgeWhereStatement():
+{
+    ORid lastRid;
+}
+{
+    (
+        <DELETE>
+        <EDGE>
+
+        [ jjtThis.className = Identifier() ]
+
+        [ <WHERE> jjtThis.whereClause = WhereClause() ]
+        [ jjtThis.limit = Limit() ]
+
+	)
+     {return jjtThis;}
 }
 
 OUpdateStatement UpdateStatement():
-{}
+{ OUpdateOperations lastOperations; }
 {
-(
-	<UPDATE>
-	(
-	    Rid()
-	    |
-		Identifier()
-		|
-		Cluster()
-		|
-		IndexIdentifier()
-	)
-	( UpdateOperations() )+
-	[ <UPSERT> ]
-	[ <RETURN> ( <BEFORE> | <AFTER> ) [ Projection() ] ]
-	[ <WHERE> WhereClause() ]
-	[ <LOCK> <RECORD> ]
-	[ Limit() ]
-	[ Timeout() ]
-) {return jjtThis;}
+    (
+    	<UPDATE>
+    	(
+    	    jjtThis.targetRid = Rid()
+    	    |
+    		jjtThis.targetClass = Identifier()
+    		|
+    		jjtThis.targetCluster = Cluster()
+    		|
+    		jjtThis.targetIndex = IndexIdentifier()
+    	)
+    	( lastOperations = UpdateOperations() { jjtThis.operations.add(lastOperations); } )+
+    	[ <UPSERT> { jjtThis.upsert = true; } ]
+    	[
+    	    <RETURN>
+    	    ( <BEFORE> { jjtThis.returnBefore = true; } | <AFTER> { jjtThis.returnAfter = true; } )
+    	    [
+    	        jjtThis.returnProjection = Projection()
+    	    ]
+    	]
+    	[ <WHERE> jjtThis.whereClause = WhereClause() ]
+    	[ <LOCK> <RECORD> { jjtThis.lockRecord = true; } ]
+    	[ jjtThis.limit = Limit() ]
+    	[ jjtThis.timeout = Timeout() ]
+    )
+    {return jjtThis;}
 }
 
-void UpdateOperations():
-{}
+OUpdateOperations UpdateOperations():
 {
-    ( <SET> UpdateItem() ( <COMMA> UpdateItem() )* )
-    |
-    ( <PUT> UpdatePutItem() ( <COMMA> UpdatePutItem() )* )
-    |
-    (
-        ( <MERGE> | <CONTENT> )
-        Json()
-    )
-    |
+    OUpdateItem lastItem;
+    OUpdatePutItem lastPutItem;
+    OUpdateIncrementItem lastIncrementItem;
+    OUpdateRemoveItem lastRemoveItem;
+}
+{
     (
         (
-            <INCREMENT>
-            |
-            <ADD>
+            <SET> { jjtThis.type = OUpdateOperations.TYPE_SET; }
+            lastItem = UpdateItem() { jjtThis.updateItems.add(lastItem); }
+            (
+                <COMMA> lastItem = UpdateItem() { jjtThis.updateItems.add(lastItem); }
+            )*
         )
-        UpdateIncrementItem() ( <COMMA> UpdateIncrementItem() )*
-     )
-     |
-     ( <REMOVE> UpdateRemoveItem() ( <COMMA> UpdateRemoveItem() )* )
+        |
+        (
+            <PUT> { jjtThis.type = OUpdateOperations.TYPE_PUT; }
+            lastPutItem = UpdatePutItem()  { jjtThis.updatePutItems.add(lastPutItem); }
+            (
+                <COMMA> lastPutItem = UpdatePutItem()  { jjtThis.updatePutItems.add(lastPutItem); }
+            )*
+        )
+        |
+        (
+            (
+                <MERGE> { jjtThis.type = OUpdateOperations.TYPE_MERGE; }
+                |
+                <CONTENT> { jjtThis.type = OUpdateOperations.TYPE_CONTENT; }
+            )
+            jjtThis.json = Json()
+        )
+        |
+        (
+            (
+                <INCREMENT> { jjtThis.type = OUpdateOperations.TYPE_INCREMENT; }
+                |
+                <ADD> { jjtThis.type = OUpdateOperations.TYPE_ADD; }
+            )
+            lastIncrementItem = UpdateIncrementItem() { jjtThis.updateIncrementItems.add(lastIncrementItem); }
+            (
+                <COMMA> lastIncrementItem = UpdateIncrementItem() { jjtThis.updateIncrementItems.add(lastIncrementItem); }
+            )*
+         )
+         |
+         (
+            <REMOVE> { jjtThis.type = OUpdateOperations.TYPE_REMOVE; }
+            lastRemoveItem = UpdateRemoveItem()  { jjtThis.updateRemoveItems.add(lastRemoveItem); }
+            (
+                <COMMA>
+                lastRemoveItem = UpdateRemoveItem()  { jjtThis.updateRemoveItems.add(lastRemoveItem); }
+            )*
+         )
+    )
+    { return jjtThis; }
 }
 
 
@@ -668,61 +997,58 @@ OUpdateItem UpdateItem():
 {}
 {
 (
-	Identifier()
+	jjtThis.left = Identifier()
 	(
-	    <EQ>
+	    <EQ> { jjtThis.operator = OUpdateItem.OPERATOR_EQ; }
 	    |
-	    <PLUSASSIGN>
+	    <PLUSASSIGN> { jjtThis.operator = OUpdateItem.OPERATOR_PLUSASSIGN; }
         |
-        <MINUSASSIGN>
+        <MINUSASSIGN> { jjtThis.operator = OUpdateItem.OPERATOR_MINUSASSIGN; }
         |
-        <STARASSIGN>
+        <STARASSIGN> { jjtThis.operator = OUpdateItem.OPERATOR_STARASSIGN; }
         |
-        <SLASHASSIGN>
+        <SLASHASSIGN> { jjtThis.operator = OUpdateItem.OPERATOR_SLASHASSIGN; }
 	)
-	Expression()
+	jjtThis.right = Expression()
 ) { return jjtThis; }
 }
 
-void UpdateIncrementItem():
+OUpdateIncrementItem UpdateIncrementItem():
 {}
 {
-	Identifier() <EQ> Expression()
-}
-
-void UpdateRemoveItem():
-{}
-{
-	Identifier() [ <EQ> Expression() ]
-}
-
-void UpdatePutItem():
-{}
-{
-	Identifier() <EQ> Expression() <COMMA> Expression()
-}
-
-
-void UpdateAddItem():
-{}
-{
-	Identifier() <EQ>
-	(
-		<STRING_LITERAL>
-		|
-		LOOKAHEAD(Rid())
-		Rid()
-		|
-		LOOKAHEAD(3)
-		Integer()
-		|
-		<FLOATING_POINT_LITERAL>
-		|
-		<CHARACTER_LITERAL>
-		|
-		<LBRACKET> Rid() ("," Rid())* <RBRACKET>
+    (
+	    jjtThis.left = Identifier() <EQ> jjtThis.right = Expression()
 	)
+	{ return jjtThis; }
+}
 
+OUpdateRemoveItem UpdateRemoveItem():
+{}
+{
+    (
+	    jjtThis.left = Identifier() [ <EQ> jjtThis.right = Expression() ]
+	)
+    { return jjtThis; }
+}
+
+OUpdatePutItem UpdatePutItem():
+{}
+{
+    (
+	    jjtThis.left = Identifier() <EQ> jjtThis.key = Expression() <COMMA> jjtThis.value = Expression()
+    )
+    { return jjtThis; }
+}
+
+
+OUpdateAddItem UpdateAddItem():
+{}
+{
+    (
+    	jjtThis.left = Identifier() <EQ>
+    	jjtThis.right = Expression()
+    )
+    { return jjtThis; }
 }
 
 
@@ -733,53 +1059,107 @@ OInsertStatement InsertStatement():
 	<INSERT>
 	<INTO>
 	(
-	    Identifier() [<CLUSTER> Identifier()]
+	    jjtThis.targetClass = Identifier() [<CLUSTER> jjtThis.targetClusterName = Identifier()]
 	    |
-	    Cluster()
+	    jjtThis.targetCluster = Cluster()
 	    |
-	    IndexIdentifier()
+	    jjtThis.targetIndex = IndexIdentifier()
 	)
-	[ <RETURN> Projection() ]
-    InsertBody()
-    [ <UNSAFE> ]
+	[ <RETURN> jjtThis.returnStatement = Projection() ]
+    jjtThis.insertBody = InsertBody()
+    [ <UNSAFE> { jjtThis.unsafe = true; }]
 ) {return jjtThis;}
 }
 
 
-void InsertBody():
-{}
+OInsertBody InsertBody():
+{
+    OIdentifier lastIdentifier;
+    OExpression lastExpression;
+    List<OExpression> lastExpressionList;
+}
 {
     (
-        LOOKAHEAD(3)
         (
-            <LPAREN> Identifier() (<COMMA> Identifier())* <RPAREN>
-            <VALUES>
-            <LPAREN> Expression() (<COMMA> Expression())* <RPAREN>
-            ( <COMMA> <LPAREN> Expression() (<COMMA> Expression())* <RPAREN> )*
-        )
-        |
-        LOOKAHEAD(3)
-        (
-            <SET>
-            Identifier() <EQ> Expression()
-            ( <COMMA> Identifier() <EQ> Expression() )*
-        )
-        |
-        (
-            [ <FROM> ]
+            LOOKAHEAD(3)
             (
-                SelectStatement()
-                |
-                LOOKAHEAD(2)
+                <LPAREN>
+                lastIdentifier = Identifier()
+                {
+                    jjtThis.identifierList = new ArrayList<OIdentifier>();
+                    jjtThis.identifierList.add(lastIdentifier);
+                }
                 (
-                    <LPAREN> SelectStatement() <RPAREN>
+                    <COMMA>
+                    lastIdentifier = Identifier() { jjtThis.identifierList.add(lastIdentifier); }
+                )*
+                <RPAREN>
+                <VALUES>
+                <LPAREN>
+                {
+                    jjtThis.valueExpressions = new ArrayList<List<OExpression>>();
+                    lastExpressionList = new ArrayList<OExpression>();
+                    jjtThis.valueExpressions.add(lastExpressionList);
+                }
+                lastExpression = Expression() { lastExpressionList.add(lastExpression); }
+                (
+                    <COMMA>
+                    lastExpression = Expression() { lastExpressionList.add(lastExpression); }
+                )*
+                <RPAREN>
+                (
+                    <COMMA>
+                    <LPAREN>
+                    {
+                        lastExpressionList = new ArrayList<OExpression>();
+                        jjtThis.valueExpressions.add(lastExpressionList);
+                    }
+                    lastExpression = Expression() { lastExpressionList.add(lastExpression); }
+                    (
+                        <COMMA>
+                        lastExpression = Expression() { lastExpressionList.add(lastExpression); }
+                    )*
+                    <RPAREN>
+                )*
+            )
+            |
+            LOOKAHEAD(3)
+            (
+                <SET>
+                {
+                    jjtThis.setExpressions = new ArrayList<OInsertSetExpression>();
+                    OInsertSetExpression lastSetExpr = new OInsertSetExpression();
+                    jjtThis.setExpressions.add(lastSetExpr);
+                }
+                lastSetExpr.left = Identifier() <EQ> lastSetExpr.right = Expression()
+
+                (
+                    <COMMA>
+                    {
+                         lastSetExpr = new OInsertSetExpression();
+                         jjtThis.setExpressions.add(lastSetExpr);
+                    }
+                    lastSetExpr.left = Identifier() <EQ> lastSetExpr.right = Expression()
+                )*
+            )
+            |
+            (
+                [ <FROM> ]
+                (
+                     jjtThis.selectStatement = SelectStatement()
+                     |
+                     LOOKAHEAD(2)
+                    (
+                        <LPAREN> jjtThis.selectStatement = SelectStatement() { jjtThis.selectInParentheses = true; } <RPAREN>
+                    )
                 )
             )
-        )
-        |
-        ( <CONTENT> Json() )
+            |
+            ( <CONTENT> jjtThis.content = Json() )
+         )
+        [ <RETURN> jjtThis.returnProjection = Projection() ]
     )
-    [ <RETURN> Projection() ]
+    { return jjtThis; }
 }
 
 OCreateVertexStatementEmptyNoTarget CreateVertexStatementEmptyNoTarget():
@@ -796,7 +1176,11 @@ OCreateVertexStatementEmpty CreateVertexStatementEmpty():
 
 	<CREATE>
 	<VERTEX>
-	Identifier() [ <CLUSTER> Identifier() ]
+	jjtThis.targetClass = Identifier()
+    [
+        <CLUSTER>
+        jjtThis.targetClusterName = Identifier()
+    ]
     {return jjtThis;}
 }
 
@@ -809,12 +1193,19 @@ OCreateVertexStatement CreateVertexStatement():
 	<VERTEX>
 	(
 	    LOOKAHEAD( Identifier() )
-	    ( Identifier() [<CLUSTER> Identifier()] )
+	    (
+	        jjtThis.targetClass = Identifier()
+	        [
+	            <CLUSTER>
+	            jjtThis.targetClusterName = Identifier()
+	        ]
+	    )
 	    |
 	    LOOKAHEAD( Cluster() )
-	    Cluster()
+	    jjtThis.targetCluster = Cluster()
 	)
-	[ LOOKAHEAD(InsertBody()) InsertBody() ]
+	[ <RETURN> jjtThis.returnStatement = Projection() ]
+	[ LOOKAHEAD(InsertBody()) jjtThis.insertBody = InsertBody() ]
 ) {return jjtThis;}
 }
 
@@ -825,45 +1216,89 @@ OCreateVertexStatementNoTarget CreateVertexStatementNoTarget():
 (
 	<CREATE>
 	<VERTEX>
-	InsertBody()
+	jjtThis.insertBody = InsertBody()
 ) {return jjtThis;}
 }
 
 
 OCreateEdgeStatement CreateEdgeStatement():
-{}
+{
+    ORid lastRid;
+}
 {
 (
 	<CREATE>
 	<EDGE>
-	[ Identifier() [ <CLUSTER> Identifier() ]]
+	[ jjtThis.targetClass = Identifier() [<CLUSTER> jjtThis.targetClusterName = Identifier()]]
 	<FROM>
 	(
-	    Rid()
+	    jjtThis.leftRid = Rid()
 	    |
-	    ( <LBRACKET> [ Rid() ( <COMMA> Rid() )* ] <RBRACKET> )
+	    (
+	        <LBRACKET>
+	        [
+	            lastRid = Rid()
+	            {
+	                jjtThis.leftRids=new ArrayList();
+	                jjtThis.leftRids.add(lastRid);
+	            }
+	            (
+	                <COMMA>
+	                lastRid = Rid() { jjtThis.leftRids.add(lastRid); }
+	            )*
+	        ] <RBRACKET>
+	    )
 	    |
-	    ( <LPAREN> ( LOOKAHEAD(SelectStatement()) SelectStatement() | LOOKAHEAD(SelectWithoutTargetStatement()) SelectWithoutTargetStatement() ) <RPAREN> )
+	    (
+	        <LPAREN>
+	        (
+	            LOOKAHEAD(SelectStatement()) jjtThis.leftStatement = SelectStatement()
+	            |
+	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.leftStatement = SelectWithoutTargetStatement()
+	        )
+	        <RPAREN>
+	    )
 	    |
-	    InputParameter()
+	    jjtThis.leftParam = InputParameter()
 	    |
-	    Identifier()
+	    jjtThis.leftIdentifier = Identifier()
 	)
 	<TO>
 	(
-        Rid()
-        |
-        ( <LBRACKET> [ Rid() ( <COMMA> Rid() )* ] <RBRACKET> )
-        |
-        ( <LPAREN> ( LOOKAHEAD(SelectStatement()) SelectStatement() | LOOKAHEAD(SelectWithoutTargetStatement()) SelectWithoutTargetStatement() ) <RPAREN> )
-        |
-        InputParameter()
-        |
-        Identifier()
-    )
-    [ InsertBody() ]
-    [ Retry() ]
-    [ Wait() ]
+        jjtThis.rightRid = Rid()
+	    |
+	    (
+	        <LBRACKET>
+	        [
+	            lastRid = Rid()
+	            {
+	                jjtThis.rightRids=new ArrayList();
+	                jjtThis.rightRids.add(lastRid);
+	            }
+	            (
+	                <COMMA>
+	                lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
+	            )*
+	        ] <RBRACKET>
+	    )
+	    |
+	    (
+	        <LPAREN>
+	        (
+	            LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
+	            |
+	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
+	        )
+	        <RPAREN>
+	    )
+	    |
+	    jjtThis.rightParam = InputParameter()
+	    |
+	    jjtThis.rightIdentifier = Identifier()
+	)
+    [ jjtThis.body = InsertBody() ]
+    [ jjtThis.retry = Retry() ]
+    [ jjtThis.wait = Wait() ]
 ) {return jjtThis;}
 }
 
@@ -931,44 +1366,6 @@ OProjectionItem ProjectionItem():
 ){return jjtThis;}
 }
 
-void ValueItem():
-{}
-{
-    (
-        <NULL>
-        |
-        <FLOATING_POINT_LITERAL>
-        |
-        LOOKAHEAD( Integer() )
-        Integer()
-        |
-        (
-            (
-                LOOKAHEAD( Rid() )
-                Rid()
-                |
-                Array()
-                |
-                Json()
-                |
-                <CHARACTER_LITERAL>
-                |
-                LOOKAHEAD(2)
-                <STRING_LITERAL>
-                |
-                LOOKAHEAD( InputParameter() )
-                InputParameter()
-                |
-                LOOKAHEAD( FunctionCall() )
-                FunctionCall()
-            )
-            [ LOOKAHEAD( Modifier() ) Modifier() ]
-        )
-        |
-        LOOKAHEAD(2)
-        (<LPAREN> SelectStatement() <RPAREN> )
-    )
-}
 
 OArraySelector ArraySelector():
 {}
@@ -1052,12 +1449,6 @@ ORecordAttribute RecordAttribute():
 	    token = <RECORD_ATTRIBUTE> { jjtThis.name = token.image; }
 	)
 	{ return jjtThis; }
-}
-
-void ThisOperation():
-{}
-{
-	<THIS> ( MethodCall() )*
 }
 
 OFunctionCall FunctionCall():
@@ -1179,9 +1570,19 @@ OExpression Expression():
         <NULL> {jjtThis.value = null;}
         |
         LOOKAHEAD(2)
-        token = <STRING_LITERAL> {jjtThis.value = token.image.substring(1, token.image.length() - 1);}
+        token = <STRING_LITERAL>
+        {
+            jjtThis.value = token.image.substring(1, token.image.length() - 1);
+            if(token.image.startsWith("'")) {
+                jjtThis.singleQuotes = true;
+            }else{
+                jjtThis.doubleQuotes = true;
+            }
+
+        }
+
         |
-        token = <CHARACTER_LITERAL> {jjtThis.value = token.image.substring(1, token.image.length() - 1);}
+        token = <CHARACTER_LITERAL> {jjtThis.value = token.image.substring(1, token.image.length() - 1);  jjtThis.singleQuotes = true;}
         |
         LOOKAHEAD( Rid() )
         jjtThis.value = Rid()
@@ -1338,22 +1739,32 @@ OFromItem FromItem():
     (
     	lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	|
-    	(
+    	/*(
     	    <LBRACKET> lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	    (
     	        <COMMA> lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	    )* <RBRACKET>
     	)
-    	|
+    	|*/
     	jjtThis.cluster = Cluster()
     	|
     	jjtThis.index = IndexIdentifier()
     	|
         jjtThis.metadata = MetadataIdentifier()
     	|
-    	jjtThis.className = Identifier()
-    	|
+    	/*jjtThis.className = Identifier()
+    	|*/
     	<LPAREN> ( jjtThis.statement = SelectStatement() | jjtThis.statement = TraverseStatement() ) <RPAREN>
+    	|
+    	jjtThis.inputParam = InputParameter()
+    	|
+    	(
+            jjtThis.identifier = BaseIdentifier()
+            [
+                LOOKAHEAD( Modifier() )
+                jjtThis.modifier = Modifier()
+            ]
+        )
     )
     { return jjtThis; }
 }
@@ -1524,6 +1935,7 @@ OBinaryCompareOperator CompareOperator():
       | result = LeOperator()
       | result = LikeOperator()
       | result = ContainsKeyOperator()
+      | result = LuceneOperator()
 ){return result;}
 }
 
@@ -1581,6 +1993,14 @@ OLikeOperator LikeOperator():
 {
 (
 	<LIKE>
+){return jjtThis;}
+}
+
+OLuceneOperator LuceneOperator():
+{}
+{
+(
+	<LUCENE>
 ){return jjtThis;}
 }
 
@@ -1760,29 +2180,13 @@ OBooleanExpression InCondition():
 	jjtThis.left = Expression()
 	jjtThis.operator = InOperator()
 	(
-	    (
-	        <LBRACKET>
-	        lastExpression = Expression()
-	        {
-	            jjtThis.rightCollection = new java.util.ArrayList();
-	            jjtThis.rightCollection.add(lastExpression);
-	        }
-	        (
-                <COMMA> lastExpression = Expression()
-                {
-                    jjtThis.rightCollection.add(lastExpression);
-                }
-            )*
-            <RBRACKET>
-	    )
-	    |
 	    LOOKAHEAD(2)
 	    ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN>)
 	    |
 	    LOOKAHEAD(2)
 	    ( <LPAREN> jjtThis.rightParam = InputParameter() <RPAREN>)
 	    |
-        jjtThis.rightParam = InputParameter()
+        jjtThis.rightMathExpression = MathExpression()
 	)
 ){return jjtThis;}
 }
@@ -1795,30 +2199,14 @@ OBooleanExpression NotInCondition():
     (
     	jjtThis.left = Expression() <NOT> InOperator()
     	(
-            (
-    	        <LBRACKET>
-    	        lastExpression = Expression()
-    	        {
-    	            jjtThis.rightCollection = new java.util.ArrayList();
-    	            jjtThis.rightCollection.add(lastExpression);
-    	        }
-    	        (
-    	            <COMMA> lastExpression = Expression()
-    	            {
-                        jjtThis.rightCollection.add(lastExpression);
-                    }
-    	        )*
-    	        <RBRACKET>
-    	    )
+            LOOKAHEAD(2)
+            ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN>)
             |
             LOOKAHEAD(2)
-	        ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN>)
-	        |
-	        LOOKAHEAD(2)
-	        ( <LPAREN> jjtThis.rightParam = InputParameter() <RPAREN>)
-	        |
-            jjtThis.rightParam = InputParameter()
-    	)
+            ( <LPAREN> jjtThis.rightParam = InputParameter() <RPAREN>)
+            |
+            jjtThis.rightMathExpression = MathExpression()
+        )
     )
     {return jjtThis;}
 }
@@ -1977,11 +2365,15 @@ OCollection Collection():
 }
 {
     (
-        <LBRACKET> lastExpression = Expression() { jjtThis.expressions.add(lastExpression); }
-        (
-            <COMMA>
+
+        <LBRACKET>
+        [
             lastExpression = Expression() { jjtThis.expressions.add(lastExpression); }
-        )*
+            (
+                <COMMA>
+                lastExpression = Expression() { jjtThis.expressions.add(lastExpression); }
+            )*
+        ]
         <RBRACKET>
     )
     { return jjtThis; }
@@ -2065,13 +2457,37 @@ OArray Array():
 
 
 OJson Json():
-{}
+{
+    OJsonItem lastItem;
+    Token token;
+}
 {
     (
         <LBRACE>
         [
-         ( Identifier() | <STRING_LITERAL> | <CHARACTER_LITERAL>) <COLON> Expression()
-         ( <COMMA> ( Identifier() | <STRING_LITERAL> | <CHARACTER_LITERAL> ) <COLON> Expression() )*
+            { lastItem = new OJsonItem(); }
+            (
+                lastItem.leftIdentifier = Identifier()
+                |
+                token = <STRING_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
+                |
+                token = <CHARACTER_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
+            )
+            <COLON>
+            lastItem.right = Expression() { jjtThis.items.add(lastItem); }
+            (
+                <COMMA>
+                { lastItem = new OJsonItem(); }
+                (
+                    lastItem.leftIdentifier = Identifier()
+                    |
+                    token = <STRING_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
+                    |
+                    token = <CHARACTER_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
+                )
+                <COLON>
+                lastItem.right = Expression() { jjtThis.items.add(lastItem); }
+            )*
         ]
         <RBRACE>
     )

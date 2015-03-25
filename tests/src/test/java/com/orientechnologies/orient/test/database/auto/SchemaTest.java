@@ -309,7 +309,7 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(superClass);
     boolean found = false;
-    for (OClass c : superClass.getBaseClasses()) {
+    for (OClass c : superClass.getSubclasses()) {
       if (c.equals(company)) {
         found = true;
         break;
@@ -319,7 +319,7 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     company.setSuperClass(null);
     Assert.assertNull(company.getSuperClass());
-    for (OClass c : superClass.getBaseClasses()) {
+    for (OClass c : superClass.getSubclasses()) {
       Assert.assertNotSame(c, company);
     }
 
@@ -331,7 +331,7 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(company.getSuperClass());
     found = false;
-    for (OClass c : superClass.getBaseClasses()) {
+    for (OClass c : superClass.getSubclasses()) {
       if (c.equals(company)) {
         found = true;
         break;

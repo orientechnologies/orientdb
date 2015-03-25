@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
  import com.orientechnologies.orient.server.OServer;
  import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
@@ -34,9 +35,9 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 public class OHttpNetworkCommandManager {
 
    private static final String               URL_PART_PATTERN   = "([a-zA-Z0-9%:\\\\+]*)";
-   private static final String               REST_PARAM_PATTERN = "\\{[a-zA-Z0-9%:]*\\}";
 
-   private final Map<String, OServerCommand> exactCommands      = new ConcurrentHashMap<String, OServerCommand>();
+
+    private final Map<String, OServerCommand> exactCommands      = new ConcurrentHashMap<String, OServerCommand>();
    private final Map<String, OServerCommand> wildcardCommands   = new ConcurrentHashMap<String, OServerCommand>();
    private final Map<String, OServerCommand> restCommands       = new ConcurrentHashMap<String, OServerCommand>();
    private final OHttpNetworkCommandManager  parent;
@@ -101,7 +102,7 @@ public class OHttpNetworkCommandManager {
      if (urlPattern == null) {
        return result;
      }
-     String matcherUrl = urlPattern.replaceAll(REST_PARAM_PATTERN, URL_PART_PATTERN);
+     String matcherUrl = OPatternConst.PATTERN_REST_URL.matcher(urlPattern).replaceAll(URL_PART_PATTERN);
 
      matcherUrl = matcherUrl.substring(matcherUrl.indexOf('|') + 1);
      requestUrl = requestUrl.substring(requestUrl.indexOf('|') + 1);
@@ -109,8 +110,7 @@ public class OHttpNetworkCommandManager {
      Pattern pattern = Pattern.compile(matcherUrl);
      Matcher matcher = pattern.matcher(requestUrl);
      if (matcher.find()) {
-       Pattern templateUrlPattern = Pattern.compile(REST_PARAM_PATTERN);
-       Matcher templateMatcher = templateUrlPattern.matcher(urlPattern);
+       Matcher templateMatcher = OPatternConst.PATTERN_REST_URL.matcher(urlPattern);
        int i = 1;
        String key;
        while (templateMatcher.find()) {
@@ -138,7 +138,7 @@ public class OHttpNetworkCommandManager {
    }
 
    private boolean matches(String urlPattern, String requestUrl) {
-     String matcherUrl = urlPattern.replaceAll(REST_PARAM_PATTERN, URL_PART_PATTERN);
+     String matcherUrl = OPatternConst.PATTERN_REST_URL.matcher(urlPattern).replaceAll(URL_PART_PATTERN);
 
      if (!matcherUrl.substring(0, matcherUrl.indexOf('|') + 1).equals(requestUrl.substring(0, requestUrl.indexOf('|') + 1))) {
        return false;

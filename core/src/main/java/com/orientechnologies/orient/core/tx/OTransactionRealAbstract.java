@@ -123,6 +123,11 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     recordEntries.clear();
   }
 
+  public void restore(){
+    recordEntries.putAll(allEntries);
+    allEntries.clear();
+  }
+
   @Override
   public int getEntryCount() {
     return recordEntries.size();

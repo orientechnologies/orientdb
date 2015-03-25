@@ -24,6 +24,7 @@ import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
 import com.orientechnologies.common.console.DefaultConsoleReader;
 import com.orientechnologies.common.console.OConsoleReader;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -755,15 +756,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       final Serializable result = (Serializable) task.execute(serverInstance, this, database);
 
-      if (result instanceof Throwable)
+      if (result instanceof Throwable && !(result instanceof OException))
         ODistributedServerLog.error(this, getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
             "error on executing request %d (%s) on local node: ", (Throwable) result, req.getId(), req.getTask());
 
       return result;
 
     } catch (Throwable e) {
-      ODistributedServerLog.error(this, getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
-          "error on executing distributed request %d on local node: %s", e, req.getId(), req.getTask());
+      if (!(e instanceof OException))
+        ODistributedServerLog.error(this, getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
+            "error on executing distributed request %d on local node: %s", e, req.getId(), req.getTask());
 
       return e;
     }
@@ -1072,12 +1074,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   protected boolean installDbClustersForLocalNode(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg) {
+    final String nodeName = getLocalNodeName();
+    final ODistributedConfiguration.ROLES role = cfg.getServerRole(nodeName);
+    if (role != ODistributedConfiguration.ROLES.MASTER)
+      // NO MASTER, DON'T CREATE LOCAL CLUSTERS
+      return false;
+
     if (iDatabase.isClosed())
       getServerInstance().openDatabase(iDatabase);
 
     // OVERWRITE CLUSTER SELECTION STRATEGY
-    final String nodeName = getLocalNodeName();
-
     final OSchema schema = ((ODatabaseInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
 
     boolean distribCfgDirty = false;

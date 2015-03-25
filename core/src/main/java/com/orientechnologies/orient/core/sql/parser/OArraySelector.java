@@ -6,10 +6,13 @@ import java.util.Map;
 
 public class OArraySelector extends SimpleNode {
 
-  protected ORid            rid;
-  protected OInputParameter inputParam;
-  protected OExpression     expression;
-  protected OInteger        integer;
+  private static final Object UNSET           = new Object();
+  private Object              inputFinalValue = UNSET;
+
+  protected ORid              rid;
+  protected OInputParameter   inputParam;
+  protected OExpression       expression;
+  protected OInteger          integer;
 
   public OArraySelector(int id) {
     super(id);
@@ -29,7 +32,13 @@ public class OArraySelector extends SimpleNode {
     if (rid != null) {
       return rid.toString();
     } else if (inputParam != null) {
-      return inputParam.toString();
+      if (inputFinalValue == UNSET) {
+        return inputParam.toString();
+      } else if (inputFinalValue == null) {
+        return "NULL";
+      } else {
+        return inputFinalValue.toString();
+      }
     } else if (expression != null) {
       return expression.toString();
     } else if (integer != null) {
@@ -40,7 +49,10 @@ public class OArraySelector extends SimpleNode {
 
   public void replaceParameters(Map<Object, Object> params) {
     if (inputParam != null) {
-      inputParam.bindFromInputParams(params);
+      Object result = inputParam.bindFromInputParams(params);
+      if (result != inputParam) {
+        inputFinalValue = result;
+      }
     }
     if (expression != null) {
       expression.replaceParameters(params);

@@ -30,6 +30,8 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -59,6 +61,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       final OCommandContext iContext) {
     final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+    ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
     try {
       final ORecord record = (ORecord) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
@@ -123,6 +126,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     } finally {
       if (shutdownFlag.getValue())
         graph.shutdown(false);
+      ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
     }
   }
 

@@ -2,19 +2,22 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import java.util.Collection;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
+import java.util.Map;
 
 public class ONotInCondition extends OBooleanExpression {
 
   protected OExpression            left;
   protected OBinaryCompareOperator operator;
   protected OSelectStatement       rightStatement;
-  protected Collection<Object>     rightCollection;
+
   protected Object                 right;
-  protected OInputParameter                 rightParam;
+  protected OInputParameter        rightParam;
+  protected OMathExpression        rightMathExpression;
+
+  private static final Object      UNSET           = new Object();
+  private Object                   inputFinalValue = UNSET;
 
   public ONotInCondition(int id) {
     super(id);
@@ -42,22 +45,18 @@ public class ONotInCondition extends OBooleanExpression {
       result.append("(");
       result.append(rightStatement.toString());
       result.append(")");
-    } else if (rightCollection != null) {
-      result.append("[");
-      boolean first = true;
-      for (Object o : rightCollection) {
-        if (!first) {
-          result.append(", ");
-        }
-        result.append(convertToString(o));
-        first = false;
-      }
-
-      result.append("]");
     } else if (right != null) {
       result.append(convertToString(right));
     } else if (rightParam != null) {
-      result.append(convertToString(rightParam));
+      if (inputFinalValue == UNSET) {
+        result.append(rightParam.toString());
+      } else if (inputFinalValue == null) {
+        result.append("NULL");
+      } else {
+        result.append(inputFinalValue.toString());
+      }
+    } else if (rightMathExpression != null) {
+      result.append(rightMathExpression.toString());
     }
     return result.toString();
   }
@@ -69,21 +68,22 @@ public class ONotInCondition extends OBooleanExpression {
     return o.toString();
   }
 
-  @Override public void replaceParameters(Map<Object, Object> params) {
+  @Override
+  public void replaceParameters(Map<Object, Object> params) {
     left.replaceParameters(params);
     if (rightStatement != null) {
       rightStatement.replaceParameters(params);
     }
-    if(rightCollection!=null){
-      for(Object o:rightCollection){
-        if(o instanceof OExpression){
-          ((OExpression) o).replaceParameters(params);
-        }
+    if (rightParam != null) {
+      Object result = rightParam.bindFromInputParams(params);
+      if (rightParam != result) {
+        inputFinalValue = result;
       }
     }
-    if(rightParam!=null){
-      rightParam.bindFromInputParams(params);
+    if (rightMathExpression != null) {
+      rightMathExpression.replaceParameters(params);
     }
+
   }
 }
 /* JavaCC - OriginalChecksum=8fb82bf72cc7d9cbdf2f9e2323ca8ee1 (do not edit this line) */

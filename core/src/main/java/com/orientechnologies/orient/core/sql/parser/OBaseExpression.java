@@ -6,6 +6,9 @@ import java.util.Map;
 
 public class OBaseExpression extends OMathExpression {
 
+  private static final Object UNSET           = new Object();
+  private Object              inputFinalValue = UNSET;
+
   protected ONumber         number;
 
   protected OBaseIdentifier identifier;
@@ -13,6 +16,8 @@ public class OBaseExpression extends OMathExpression {
   protected OInputParameter inputParam;
 
   OModifier                 modifier;
+
+
 
   public OBaseExpression(int id) {
     super(id);
@@ -35,7 +40,13 @@ public class OBaseExpression extends OMathExpression {
     } else if (identifier != null) {
       result.append(identifier.toString());
     } else if (inputParam != null) {
-      result.append(inputParam.toString());
+      if (inputFinalValue == UNSET) {
+        result.append(inputParam.toString());
+      } else if (inputFinalValue == null) {
+        result.append("NULL");
+      } else {
+        result.append(inputFinalValue.toString());
+      }
     }
 
     if (modifier != null) {
@@ -49,7 +60,10 @@ public class OBaseExpression extends OMathExpression {
       identifier.replaceParameters(params);
     }
     if (inputParam != null) {
-      inputParam.bindFromInputParams(params);
+      Object result = inputParam.bindFromInputParams(params);
+      if(inputParam!=result){
+        inputFinalValue = result;
+      }
     }
     if (modifier != null) {
       modifier.replaceParameters(params);

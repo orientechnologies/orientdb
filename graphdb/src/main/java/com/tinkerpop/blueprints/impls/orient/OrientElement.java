@@ -20,13 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Arrays;
-import java.util.Map;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -50,6 +43,13 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.util.ElementHelper;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Arrays;
+import java.util.Map;
 
 /**
  * Base Graph Element where OrientVertex and OrientEdge classes extends from. Labels are managed as OrientDB classes.
@@ -249,7 +249,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       return (T) rawElement.getIdentity().toString();
 
     final Object fieldValue = getRecord().field(key);
-    if (fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof ORecordBytes))
+    if (graph != null && fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof ORecordBytes))
       // CONVERT IT TO VERTEX/EDGE
       return (T) graph.getElement(fieldValue);
     else if (OMultiValue.isMultiValue(fieldValue) && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable) {
@@ -262,8 +262,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
           return (T) fieldValue;
       }
 
-      // CONVERT IT TO ITERABLE<VERTEX/EDGE>
-      return (T) new OrientElementIterable<OrientElement>(graph, OMultiValue.getMultiValueIterable(fieldValue));
+      if (graph != null)
+        // CONVERT IT TO ITERABLE<VERTEX/EDGE>
+        return (T) new OrientElementIterable<OrientElement>(graph, OMultiValue.getMultiValueIterable(fieldValue));
     }
 
     return (T) fieldValue;

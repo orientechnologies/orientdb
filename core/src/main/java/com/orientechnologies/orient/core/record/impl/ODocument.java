@@ -19,9 +19,21 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.text.ParseException;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -40,6 +52,7 @@ import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -55,17 +68,7 @@ import com.orientechnologies.orient.core.serialization.serializer.ONetworkThread
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.text.ParseException;
-import java.util.*;
-import java.util.Map.Entry;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -87,7 +90,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   protected transient List<WeakReference<ORecordElement>> _owners                 = null;
   protected OImmutableSchema                              _schema;
   private String                                          _className;
-  private OClass                                          _immutableClazz;
+  private OImmutableClass                                 _immutableClazz;
   private int                                             _immutableSchemaVersion = 1;
 
   /**
@@ -250,9 +253,16 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       }
 
     } else {
-      if (p.isMandatory())
-        throw new OValidationException("The field '" + p.getFullName() + "' is mandatory, but not found on record: " + iRecord);
-      fieldValue = null;
+      String defValue = p.getDefaultValue();
+      if (defValue != null && defValue.length() > 0) {
+        fieldValue = OSQLHelper.parseDefaultValue(iRecord, defValue);
+        iRecord.rawField(p.getName(), fieldValue, null);
+      } else {
+        if (p.isMandatory()) {
+          throw new OValidationException("The field '" + p.getFullName() + "' is mandatory, but not found on record: " + iRecord);
+        }
+        fieldValue = null;
+      }
     }
 
     final OType type = p.getType();
@@ -419,10 +429,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   protected static void validateLinkCollection(final OProperty property, Collection<Object> values) {
-    if (property.getLinkedClass() != null)
+    if (property.getLinkedClass() != null) {
       for (Object object : values) {
         validateLink(property, object, OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
       }
+    }
   }
 
   protected static void validateType(final OProperty p, final Object value) {
@@ -879,7 +890,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   public ODocument field(final String iFieldName, Object iPropertyValue) {
-    return field(iFieldName, iPropertyValue, new OType[0]);
+    return field(iFieldName, iPropertyValue, OCommonConst.EMPTY_TYPES_ARRAY);
   }
 
   /**
@@ -1555,6 +1566,28 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return this;
   }
 
+  protected void clearTrackData() {
+    if (_fields != null) {
+      // FREE RESOURCES
+      Iterator<Entry<String, ODocumentEntry>> iter = _fields.entrySet().iterator();
+      while (iter.hasNext()) {
+        Entry<String, ODocumentEntry> cur = iter.next();
+        if (!cur.getValue().exist())
+          iter.remove();
+        else {
+          cur.getValue().setCreated(false);
+          cur.getValue().setChanged(false);
+          cur.getValue().original = null;
+          cur.getValue().timeLine = null;
+          if (cur.getValue().value instanceof OTrackedMultiValue<?, ?>) {
+            removeCollectionChangeListener(cur.getValue(), cur.getValue().value);
+            addCollectionChangeListener(cur.getKey(), cur.getValue(), cur.getValue().value);
+          }
+        }
+      }
+    }
+  }
+
   public boolean isOrdered() {
     return _ordered;
   }
@@ -1827,7 +1860,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     OMetadataInternal metadata = (OMetadataInternal) getDatabase().getMetadata();
-    this._immutableClazz = metadata.getImmutableSchemaSnapshot().getClass(className);
+    this._immutableClazz = (OImmutableClass) metadata.getImmutableSchemaSnapshot().getClass(className);
     OClass clazz;
     if (this._immutableClazz != null) {
       clazz = this._immutableClazz;
@@ -1966,7 +1999,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
             map.put(entry.getKey(), entry.getValue());
           }
           continue;
-        } else if (OMultiValue.isMultiValue(value)) {
+        } else if (OMultiValue.isMultiValue(value) && !(value instanceof ORidBag)) {
           for (Object item : OMultiValue.getMultiValueIterable(otherValue)) {
             if (!OMultiValue.contains(value, item))
               OMultiValue.add(value, item);
@@ -2039,24 +2072,24 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       setClassNameIfExists(iClassName);
   }
 
-  protected OClass getImmutableSchemaClass() {
+  protected OImmutableClass getImmutableSchemaClass() {
     if (_className == null)
       fetchClassName();
 
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
 
-    if (databaseRecord != null) {
+    if (databaseRecord != null && !databaseRecord.isClosed()) {
       final OSchema immutableSchema = ((OMetadataInternal) databaseRecord.getMetadata()).getImmutableSchemaSnapshot();
       if (immutableSchema == null)
         return null;
 
       if (_immutableClazz == null) {
         _immutableSchemaVersion = immutableSchema.getVersion();
-        _immutableClazz = immutableSchema.getClass(_className);
+        _immutableClazz = (OImmutableClass) immutableSchema.getClass(_className);
       } else {
         if (_immutableSchemaVersion < immutableSchema.getVersion()) {
           _immutableSchemaVersion = immutableSchema.getVersion();
-          _immutableClazz = immutableSchema.getClass(_className);
+          _immutableClazz = (OImmutableClass) immutableSchema.getClass(_className);
         }
       }
     }

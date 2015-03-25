@@ -2,8 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OJson extends SimpleNode {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+public class OJson extends SimpleNode {
+
+  protected List<OJsonItem> items = new ArrayList<OJsonItem>();
+
   public OJson(int id) {
     super(id);
   }
@@ -12,10 +18,32 @@ class OJson extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    for (OJsonItem item : items) {
+      item.replaceParameters(params);
+    }
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append("{");
+    boolean first = true;
+    for (OJsonItem item : items) {
+      if (!first) {
+        result.append(", ");
+      }
+      result.append(item.toString());
+
+      first = false;
+    }
+    result.append("}");
+    return result.toString();
   }
 }
 /* JavaCC - OriginalChecksum=3beec9f6db486de944498588b51a505d (do not edit this line) */

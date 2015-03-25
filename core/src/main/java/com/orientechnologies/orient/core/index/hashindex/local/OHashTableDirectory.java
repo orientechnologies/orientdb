@@ -159,8 +159,11 @@ public class OHashTableDirectory extends ODurableComponent {
     acquireExclusiveLock();
     try {
       final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-      fileId = openFile(atomicOperation, name + defaultExtension, diskCache);
-      deleteFile(atomicOperation, fileId, diskCache);
+      
+      if (isFileExists(atomicOperation, name + defaultExtension, diskCache)) {
+        fileId = openFile(atomicOperation, name + defaultExtension, diskCache);
+        deleteFile(atomicOperation, fileId, diskCache);
+      }
     } finally {
       releaseExclusiveLock();
     }

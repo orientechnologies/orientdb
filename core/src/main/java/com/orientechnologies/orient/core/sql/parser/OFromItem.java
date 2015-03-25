@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.util.OPatternConst;
+
 import java.util.List;
 import java.util.Map;
 
@@ -9,10 +11,16 @@ public class OFromItem extends SimpleNode {
 
   protected List<ORid>          rids;
   protected OCluster            cluster;
-  protected OIdentifier         className;
+//  protected OIdentifier         className;
   protected OIndexIdentifier    index;
   protected OMetadataIdentifier metadata;
   protected OStatement          statement;
+  protected OInputParameter     inputParam;
+  protected OBaseIdentifier     identifier;
+  protected OModifier           modifier;
+
+  private static final Object   UNSET           = new Object();
+  private Object                inputFinalValue = UNSET;
 
   public OFromItem(int id) {
     super(id);
@@ -48,14 +56,34 @@ public class OFromItem extends SimpleNode {
       }
     } else if (cluster != null) {
       return cluster.toString();
-    } else if (className != null) {
-      return className.getValue();
+//    } else if (className != null) {
+//      return className.getValue();
     } else if (metadata != null) {
       return metadata.toString();
     } else if (statement != null) {
       return "(" + statement.toString() + ")";
     } else if (index != null) {
       return index.toString();
+    } else if (inputParam != null) {
+      if (inputFinalValue == UNSET) {
+        return inputParam.toString();
+      } else if (inputFinalValue == null) {
+        return "NULL";
+      } else {
+        if (inputFinalValue instanceof String) {
+          inputFinalValue = OPatternConst.PATTERN_SINGLE_SPACE.matcher(((String) inputFinalValue)).replaceAll("");// avoid SQL
+                                                                                                                  // injection,
+                                                                                                                  // temporary patch
+        }
+        return inputFinalValue.toString();
+      }
+    } else if (identifier != null) {
+      StringBuilder result = new StringBuilder();
+      result.append(identifier.toString());
+      if (modifier != null) {
+        result.append(modifier.toString());
+      }
+      return result.toString();
     }
 
     return super.toString();
@@ -67,8 +95,20 @@ public class OFromItem extends SimpleNode {
   }
 
   public void replaceParameters(Map<Object, Object> params) {
-    if(statement!=null) {
+    if (statement != null) {
       statement.replaceParameters(params);
+    }
+    if (inputParam != null) {
+      Object result = inputParam.bindFromInputParams(params);
+      if (inputParam != result) {
+        inputFinalValue = result;
+      }
+    }
+    if (identifier != null) {
+      identifier.replaceParameters(params);
+    }
+    if (modifier != null) {
+      modifier.replaceParameters(params);
     }
   }
 }

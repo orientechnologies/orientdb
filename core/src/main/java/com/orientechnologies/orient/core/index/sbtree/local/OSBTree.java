@@ -445,11 +445,16 @@ public class OSBTree<K, V> extends ODurableComponent {
       final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
       final ODiskCache diskCache = storageLocal.getDiskCache();
 
-      final long fileId = openFile(atomicOperation, name + dataFileExtension, diskCache);
-      deleteFile(atomicOperation, fileId, diskCache);
+      if (isFileExists(atomicOperation, name + dataFileExtension, diskCache)) {
+        final long fileId = openFile(atomicOperation, name + dataFileExtension, diskCache);
+        deleteFile(atomicOperation, fileId, diskCache);
+      }
 
-      final long nullFileId = openFile(atomicOperation, name + nullFileExtension, diskCache);
-      deleteFile(atomicOperation, nullFileId, diskCache);
+      if (isFileExists(atomicOperation, name + nullFileExtension, diskCache)) {
+        final long nullFileId = openFile(atomicOperation, name + nullFileExtension, diskCache);
+        deleteFile(atomicOperation, nullFileId, diskCache);
+      }
+
     } catch (IOException ioe) {
       throw new OSBTreeException("Exception during deletion of sbtree " + name, ioe);
     } finally {

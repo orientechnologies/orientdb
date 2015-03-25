@@ -36,7 +36,7 @@ public class OParenthesisBlock extends OBooleanExpression {
 
   @Override
   public String toString() {
-    return "(" + subElement.toString() + ")";
+    return "(" + subElement.toString() + " )";
   }
 }
 /* JavaCC - OriginalChecksum=9a16b6cf7d051382acb94c45067631a9 (do not edit this line) */

@@ -26,6 +26,7 @@ import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableBoolean;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -116,6 +117,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private final ConcurrentMap<String, OCluster>  clusterMap                                 = new ConcurrentHashMap<String, OCluster>();
   private final ThreadLocal<OStorageTransaction> transaction                                = new ThreadLocal<OStorageTransaction>();
   private final OModificationLock                modificationLock                           = new OModificationLock();
+  private final AtomicBoolean                    checkpointInProgress                       = new AtomicBoolean();
   protected volatile OWriteAheadLog              writeAheadLog;
   protected volatile ODiskCache                  diskCache;
   private ORecordConflictStrategy                recordConflictStrategy                     = Orient.instance()
@@ -124,25 +126,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private CopyOnWriteArrayList<OCluster>         clusters                                   = new CopyOnWriteArrayList<OCluster>();
   private volatile int                           defaultClusterId                           = -1;
   private volatile OAtomicOperationsManager      atomicOperationsManager;
-
   private volatile boolean                       wereDataRestoredAfterOpen                  = false;
   private volatile boolean                       wereNonTxOperationsPerformedInPreviousOpen = false;
-
   private boolean                                makeFullCheckPointAfterClusterCreate       = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
                                                                                                 .getValueAsBoolean();
-
   private volatile OLowDiskSpaceInformation      lowDiskSpace                               = null;
   private volatile boolean                       checkpointRequest                          = false;
-  private final AtomicBoolean                    checkpointInProgress                       = new AtomicBoolean();
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode) {
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
     lockManager = new ONewLockManager<ORID>();
 
-    PROFILER_CREATE_RECORD = "db." + name + ".createRecord";
-    PROFILER_READ_RECORD = "db." + name + ".readRecord";
-    PROFILER_UPDATE_RECORD = "db." + name + ".updateRecord";
-    PROFILER_DELETE_RECORD = "db." + name + ".deleteRecord";
+    PROFILER_CREATE_RECORD = "db." + this.name + ".createRecord";
+    PROFILER_READ_RECORD = "db." + this.name + ".readRecord";
+    PROFILER_UPDATE_RECORD = "db." + this.name + ".updateRecord";
+    PROFILER_DELETE_RECORD = "db." + this.name + ".deleteRecord";
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -592,7 +590,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     checkOpeness();
     try {
       return clusters.get(iClusterId) != null ? new long[] { clusters.get(iClusterId).getFirstPosition(),
-          clusters.get(iClusterId).getLastPosition() } : new long[0];
+          clusters.get(iClusterId).getLastPosition() } : OCommonConst.EMPTY_LONG_ARRAY;
 
     } catch (IOException ioe) {
       throw new OStorageException("Can not retrieve information about data range", ioe);
@@ -908,9 +906,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
             clientTx.clearRecordEntries();
 
+            for (ORecordOperation txEntry : tmpEntries) {
+              if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
+                final ORecord record = txEntry.getRecord();
+                if (record instanceof ODocument)
+                  ((ODocument) record).validate();
+              }
+            }
             for (ORecordOperation txEntry : tmpEntries)
               // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
               commitEntry(clientTx, txEntry);
+
           }
 
           if (callback != null)
@@ -1411,7 +1417,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null) {
       final long timer = Orient.instance().getProfiler().startChrono();
       try {
-        assert iLockingStrategy.equals(LOCKING_STRATEGY.DEFAULT);
+        // Disabled this assert have no meaning anymore
+        // assert iLockingStrategy.equals(LOCKING_STRATEGY.DEFAULT);
         return doReadRecord(clusterSegment, rid);
       } finally {
         Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
@@ -1966,7 +1973,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       } else if (!version.equals(iDatabaseVersion)) {
         final ORecordConflictStrategy strategy = iCluster.getRecordConflictStrategy() != null ? iCluster
             .getRecordConflictStrategy() : recordConflictStrategy;
-        return strategy.onUpdate(iRecordType, rid, version, iRecordContent, iDatabaseVersion);
+        return strategy.onUpdate(this, iRecordType, rid, version, iRecordContent, iDatabaseVersion);
       } else
         // OK, INCREMENT DB VERSION
         iDatabaseVersion.increment();
@@ -2187,7 +2194,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         if (checkPointRecord != null) {
           OLogManager.instance().warn(this, "Restore will start from the previous checkpoint.");
-
+          return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
         } else {
           OLogManager.instance().warn(this, "Restore will start from the beginning.");
           return restoreFromBegging();

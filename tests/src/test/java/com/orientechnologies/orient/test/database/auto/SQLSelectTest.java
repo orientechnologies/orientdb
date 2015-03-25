@@ -971,7 +971,7 @@ public class SQLSelectTest extends AbstractSelectTest {
       last = resultset.get(resultset.size() - 1).getIdentity();
 
       iterationCount++;
-      resultset = database.query(query);
+      resultset = database.query(query, 0);
     }
 
     Assert.assertTrue(iterationCount > 1);

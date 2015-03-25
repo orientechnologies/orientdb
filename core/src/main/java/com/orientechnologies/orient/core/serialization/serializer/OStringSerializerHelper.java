@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer;
 
-import java.math.BigDecimal;
-import java.util.*;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.types.OBinary;
@@ -39,6 +36,9 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+
+import java.math.BigDecimal;
+import java.util.*;
 
 public abstract class OStringSerializerHelper {
   public static final char   RECORD_SEPARATOR        = ',';
@@ -574,8 +574,7 @@ public abstract class OStringSerializerHelper {
           iCollection.add(buffer.toString().trim());
           buffer.setLength(0);
         }
-      }
-      else if (!escape && ((insideQuote == ' ' && (c == '"' || c == '\'')) || (insideQuote==c))) {
+      } else if (!escape && ((insideQuote == ' ' && (c == '"' || c == '\'')) || (insideQuote == c))) {
         insideQuote = insideQuote == ' ' ? c : ' ';
         buffer.append(c);
       } else {
@@ -921,10 +920,40 @@ public abstract class OStringSerializerHelper {
   public static int getLowerIndexOf(final String iText, final int iBeginOffset, final String... iToSearch) {
     int lowest = -1;
     for (String toSearch : iToSearch) {
-      int index = iText.indexOf(toSearch, iBeginOffset);
-      if (index > -1 && (lowest == -1 || index < lowest))
-        lowest = index;
+      boolean singleQuote = false;
+      boolean doubleQuote = false;
+      boolean backslash = false;
+      for (int i = iBeginOffset; i < iText.length(); i++) {
+        if (lowest == -1 || i < lowest) {
+          if (backslash && (iText.charAt(i) == '\'' || iText.charAt(i) == '"')) {
+            backslash = false;
+            continue;
+          }
+          if (iText.charAt(i) == '\\') {
+            backslash = true;
+            continue;
+          }
+          if (iText.charAt(i) == '\'' && !doubleQuote) {
+            singleQuote = !singleQuote;
+            continue;
+          }
+          if (iText.charAt(i) == '"' && !singleQuote) {
+            singleQuote = !singleQuote;
+            continue;
+          }
+
+          if (!singleQuote && !doubleQuote && iText.startsWith(toSearch, i)) {
+            lowest = i;
+          }
+        }
+      }
     }
+
+    // for (String toSearch : iToSearch) {
+    // int index = iText.indexOf(toSearch, iBeginOffset);
+    // if (index > -1 && (lowest == -1 || index < lowest))
+    // lowest = index;
+    // }
     return lowest;
   }
 

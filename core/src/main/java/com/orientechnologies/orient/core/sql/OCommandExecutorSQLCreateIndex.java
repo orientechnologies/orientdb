@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -117,7 +118,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       final String props = parserText.substring(oldPos, pos).trim().substring(1);
 
       List<String> propList = new ArrayList<String>();
-      Collections.addAll(propList, props.trim().split("\\s*,\\s*"));
+      Collections.addAll(propList, OPatternConst.PATTERN_COMMA_SEPARATED.split(props.trim()));
 
       fields = new String[propList.size()];
       propList.toArray(fields);
@@ -199,7 +200,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
         serializerKeyId = Byte.parseByte(word.toString());
       } else {
         ArrayList<OType> keyTypeList = new ArrayList<OType>();
-        for (String typeName : typesString.split("\\s*,\\s*")) {
+        for (String typeName : OPatternConst.PATTERN_COMMA_SEPARATED.split(typesString)) {
           keyTypeList.add(OType.valueOf(typeName));
         }
 
@@ -288,7 +289,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
   }
 
   private void checkMapIndexSpecifier(final String fieldName, final String text, final int pos) {
-    final String[] fieldNameParts = fieldName.split("\\s+");
+    final String[] fieldNameParts = OPatternConst.PATTERN_SPACES.split(fieldName);
     if (fieldNameParts.length == 1)
       return;
 

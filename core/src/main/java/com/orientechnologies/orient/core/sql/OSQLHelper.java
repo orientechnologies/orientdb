@@ -19,6 +19,14 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
@@ -42,13 +50,6 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 /**
  * SQL Helper class
  * 
@@ -63,6 +64,23 @@ public class OSQLHelper {
   public static final String DEFINED           = "_DEFINED_";
 
   private static ClassLoader orientClassLoader = OSQLFilterItemAbstract.class.getClassLoader();
+
+  public static Object parseDefaultValue(ODocument iRecord, final String iWord) {
+    final Object v = OSQLHelper.parseValue(iWord, null);
+
+    if (v != VALUE_NOT_PARSED) {
+      return v;
+    }
+
+    // TRY TO PARSE AS FUNCTION
+    final OSQLFunctionRuntime func = OSQLHelper.getFunction(null, iWord);
+    if (func != null) {
+      return func.execute(iRecord, iRecord, null, null);
+    }
+
+    // PARSE AS FIELD
+    return new OSQLFilterItemField(null, iWord);
+  }
 
   /**
    * Convert fields from text to real value. Supports: String, RID, Boolean, Float, Integer and NULL.
@@ -166,6 +184,8 @@ public class OSQLHelper {
       return Byte.parseByte(iValue);
     else if (t == OType.DOUBLE)
       return Double.parseDouble(iValue);
+    else if (t == OType.DECIMAL)
+      return new BigDecimal(iValue);
     else if (t == OType.DATE || t == OType.DATETIME)
       return new Date(Long.parseLong(iValue));
 

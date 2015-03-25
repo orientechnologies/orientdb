@@ -18,9 +18,21 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -29,15 +41,6 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import static org.junit.Assert.fail;
 
 public class GraphTests {
 
@@ -186,6 +189,42 @@ public class GraphTests {
       }
 
       Assert.assertEquals(2, counter);
+    } finally {
+      g.shutdown();
+    }
+  }
+
+  @Test
+  public void testBrokenVertex1() {
+    OrientGraph g = new OrientGraph(URL, "admin", "admin");
+    try {
+      g.createVertexType("BrokenVertex1V");
+      g.createEdgeType("BrokenVertex1E");
+
+      OrientVertex vertexOne = g.addVertex("class:BrokenVertex1V");
+
+      OrientVertex vertexTwo = g.addVertex("class:BrokenVertex1V");
+
+      vertexOne.addEdge("BrokenVertex1E", vertexTwo);
+
+      g.commit();
+
+      g.command(new OCommandSQL("delete from " + vertexTwo.getRecord().getIdentity() + " unsafe")).execute();
+      // g.command(new OCommandSQL("update BrokenVertex1E set out = null")).execute();
+
+      g.shutdown();
+      g = new OrientGraph(URL, "admin", "admin");
+      Iterable<Vertex> iterable = g.command(new OCommandSQL("select from BrokenVertex1V")).execute();
+      Iterator<Vertex> iterator = iterable.iterator();
+
+      int counter = 0;
+      while (iterator.hasNext()) {
+        OrientVertex v = (OrientVertex) iterator.next();
+        for (Vertex v1 : v.getVertices(Direction.OUT, "BrokenVertex1E")) {
+          assertNotNull(((OrientVertex) v1).getRecord());
+        }
+      }
+
     } finally {
       g.shutdown();
     }

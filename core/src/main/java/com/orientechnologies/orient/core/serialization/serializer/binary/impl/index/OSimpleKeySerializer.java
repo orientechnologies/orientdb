@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.serialization.serializer.binary.impl.i
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
@@ -88,7 +89,7 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
       if (hints != null && hints.length > 0)
         types = (OType[]) hints;
       else
-        types = new OType[0];
+        types = OCommonConst.EMPTY_TYPES_ARRAY;
 
       if (types.length > 0)
         type = types[0];

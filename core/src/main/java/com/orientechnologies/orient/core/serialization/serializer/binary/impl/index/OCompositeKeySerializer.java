@@ -24,6 +24,7 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.ONullSerializer;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -288,7 +289,7 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
     if (hints != null && hints.length > 0)
       types = (OType[]) hints;
     else
-      types = new OType[0];
+      types = OCommonConst.EMPTY_TYPES_ARRAY;
     return types;
   }
 

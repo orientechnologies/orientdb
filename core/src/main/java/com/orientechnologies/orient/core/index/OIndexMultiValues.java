@@ -210,7 +210,10 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
             return false;
           }
 
-          if (values.remove(value)) {
+          if (value == null) {
+            indexEngine.remove(key);
+          }
+          else if (values.remove(value)) {
             if (values.isEmpty())
               indexEngine.remove(key);
             else

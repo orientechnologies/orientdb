@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyRuntime;
 
@@ -65,7 +66,7 @@ public class OStreamSerializerAnyRuntime implements OStreamSerializer {
 
 	public byte[] toStream(final Object iObject) throws IOException {
 		if (iObject == null)
-			return new byte[0];
+			return OCommonConst.EMPTY_BYTE_ARRAY;
 
 		final ByteArrayOutputStream os = new ByteArrayOutputStream();
 		final ObjectOutputStream oos = new ObjectOutputStream(os);

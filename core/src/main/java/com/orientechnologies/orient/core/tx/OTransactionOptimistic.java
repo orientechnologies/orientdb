@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -267,14 +268,17 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = iStatus;
   }
 
-  protected void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName) {
+  public void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName) {
     checkTransaction();
 
     try {
       switch (iStatus) {
-      case ORecordOperation.CREATED:
+      case ORecordOperation.CREATED: {
         database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
-        database.callbackHooks(TYPE.BEFORE_CREATE, iRecord);
+        RESULT res = database.callbackHooks(TYPE.BEFORE_CREATE, iRecord);
+        if (res == RESULT.RECORD_CHANGED && iRecord instanceof ODocument)
+          ((ODocument) iRecord).validate();
+      }
         break;
       case ORecordOperation.LOADED:
         /**
@@ -282,10 +286,14 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
          * .
          */
         break;
-      case ORecordOperation.UPDATED:
+      case ORecordOperation.UPDATED: {
         database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
-        database.callbackHooks(TYPE.BEFORE_UPDATE, iRecord);
+        RESULT res = database.callbackHooks(TYPE.BEFORE_UPDATE, iRecord);
+        if (res == RESULT.RECORD_CHANGED && iRecord instanceof ODocument)
+          ((ODocument) iRecord).validate();
+      }
         break;
+
       case ORecordOperation.DELETED:
         database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
         database.callbackHooks(TYPE.BEFORE_DELETE, iRecord);

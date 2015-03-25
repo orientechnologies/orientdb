@@ -40,5 +40,4 @@ public class AlterPropertyTest {
     assertEquals(property, classA.getProperty("propertyNew"));
     db.drop();
   }
-
 }

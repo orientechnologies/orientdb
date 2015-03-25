@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import java.io.IOException;
 
 import com.orientechnologies.common.concur.lock.OModificationLock;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.id.ORID;
@@ -234,22 +235,22 @@ public class OOfflineCluster implements OCluster {
 
   @Override
   public OPhysicalPosition[] higherPositions(OPhysicalPosition position) throws IOException {
-    return new OPhysicalPosition[0];
+    return OCommonConst.EMPTY_PHYSICAL_POSITIONS_ARRAY;
   }
 
   @Override
   public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) throws IOException {
-    return new OPhysicalPosition[0];
+    return OCommonConst.EMPTY_PHYSICAL_POSITIONS_ARRAY;
   }
 
   @Override
   public OPhysicalPosition[] lowerPositions(OPhysicalPosition position) throws IOException {
-    return new OPhysicalPosition[0];
+    return OCommonConst.EMPTY_PHYSICAL_POSITIONS_ARRAY;
   }
 
   @Override
   public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
-    return new OPhysicalPosition[0];
+    return OCommonConst.EMPTY_PHYSICAL_POSITIONS_ARRAY;
   }
 
   @Override

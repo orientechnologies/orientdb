@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
@@ -239,7 +240,7 @@ public class OClusterPositionMap extends ODurableComponent {
     acquireSharedLock();
     try {
       if (clusterPosition == Long.MAX_VALUE)
-        return new long[0];
+        return OCommonConst.EMPTY_LONG_ARRAY;
 
       return ceilingPositions(clusterPosition + 1);
     } finally {
@@ -260,7 +261,7 @@ public class OClusterPositionMap extends ODurableComponent {
       final long filledUpTo = getFilledUpTo(atomicOperation, diskCache, fileId);
 
       if (pageIndex >= filledUpTo)
-        return new long[0];
+        return OCommonConst.EMPTY_LONG_ARRAY;
 
       long[] result = null;
       do {
@@ -296,7 +297,7 @@ public class OClusterPositionMap extends ODurableComponent {
       } while (result == null && pageIndex < filledUpTo);
 
       if (result == null)
-        result = new long[0];
+        result = OCommonConst.EMPTY_LONG_ARRAY;
 
       return result;
     } finally {
@@ -308,7 +309,7 @@ public class OClusterPositionMap extends ODurableComponent {
     acquireSharedLock();
     try {
       if (clusterPosition == 0)
-        return new long[0];
+        return OCommonConst.EMPTY_LONG_ARRAY;
 
       return floorPositions(clusterPosition - 1);
     } finally {
@@ -320,7 +321,7 @@ public class OClusterPositionMap extends ODurableComponent {
     acquireSharedLock();
     try {
       if (clusterPosition < 0)
-        return new long[0];
+        return OCommonConst.EMPTY_LONG_ARRAY;
 
       long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
       int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
@@ -333,6 +334,10 @@ public class OClusterPositionMap extends ODurableComponent {
       if (pageIndex >= filledUpTo) {
         pageIndex = filledUpTo - 1;
         index = Integer.MIN_VALUE;
+      }
+
+      if(pageIndex < 0){
+        return OCommonConst.EMPTY_LONG_ARRAY;
       }
 
       do {
@@ -365,7 +370,7 @@ public class OClusterPositionMap extends ODurableComponent {
       } while (result == null && pageIndex >= 0);
 
       if (result == null)
-        result = new long[0];
+        result = OCommonConst.EMPTY_LONG_ARRAY;
 
       return result;
     } finally {

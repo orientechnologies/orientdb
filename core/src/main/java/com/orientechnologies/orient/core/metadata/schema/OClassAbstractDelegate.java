@@ -16,15 +16,15 @@
 
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Abstract Delegate for OClass interface.
@@ -208,14 +208,24 @@ public abstract class OClassAbstractDelegate implements OClass {
     return delegate.getPolymorphicClusterIds();
   }
 
+
+  @Override
+  public Collection<OClass> getSubclasses() {
+    return delegate.getSubclasses();
+  }
+
   @Override
   public Collection<OClass> getBaseClasses() {
-    return delegate.getBaseClasses();
+    return delegate.getSubclasses();
+  }
+  @Override
+  public Collection<OClass> getAllSubclasses() {
+    return delegate.getAllSubclasses();
   }
 
   @Override
   public Collection<OClass> getAllBaseClasses() {
-    return delegate.getAllBaseClasses();
+    return delegate.getAllSubclasses();
   }
 
   @Override

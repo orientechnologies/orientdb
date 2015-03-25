@@ -20,16 +20,10 @@
 
 package com.orientechnologies.orient.core.db.document;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCacheLevelOneLocatorImpl;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -51,7 +45,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollecti
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
-import com.orientechnologies.orient.core.hook.OHookThreadLocal;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -95,6 +88,13 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
@@ -131,6 +131,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private boolean                                           initialized       = false;
   private OTransaction                                      currentTx;
   private boolean                                           keepStorageOpen   = false;
+  private final Set<OIdentifiable>                          inHook            = new HashSet<OIdentifiable>();
 
   /**
    * Creates a new connection to the database.
@@ -377,7 +378,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       getStorage().getConfiguration().setRecordSerializer(getSerializer().toString());
       getStorage().getConfiguration().setRecordSerializerVersion(getSerializer().getCurrentVersion());
 
-      //since 2.1 newly created databases use strinct SQL validation by default
+      // since 2.1 newly created databases use strinct SQL validation by default
       getStorage().getConfiguration().properties.add(new OStorageEntryConfiguration(OStatement.CUSTOM_STRICT_SQL, "true"));
 
       getStorage().getConfiguration().update();
@@ -389,7 +390,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       metadata = new OMetadataDefault();
       metadata.create();
 
-      registerHook(new OSecurityTrackerHook(metadata.getSecurity()), ORecordHook.HOOK_POSITION.LAST);
+      registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
 
       final OUser usr = getMetadata().getSecurity().getUser(OUser.ADMIN);
 
@@ -469,6 +470,26 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     } catch (Exception e) {
       throw new ODatabaseException("Cannot delete database", e);
     }
+  }
+
+  public ODatabaseDocumentTx copy() {
+    if (this.isClosed()) {
+      throw new ODatabaseException("trying to copy a closed db");
+    }
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(this.url);
+    db.user = this.user;
+    db.properties.putAll(this.properties);
+    db.serializer = this.serializer;
+    db.metadata = new OMetadataDefault();
+    db.initialized = true;
+    db.storage = storage;
+    db.storage.addUser();
+    db.setStatus(STATUS.OPEN);
+    db.setCurrentDatabaseInThreadLocal();
+    db.metadata.load();
+//    callOnOpenListeners();
+    setCurrentDatabaseInThreadLocal();
+    return db;
   }
 
   public void callOnCloseListeners() {
@@ -922,7 +943,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * @return True if the input record is changed, otherwise false
    */
   public ORecordHook.RESULT callbackHooks(final ORecordHook.TYPE type, final OIdentifiable id) {
-    if (id == null || !OHookThreadLocal.INSTANCE.push(id))
+    if (id == null || !pushInHook(id) || hooks.isEmpty())
       return ORecordHook.RESULT.RECORD_NOT_CHANGED;
 
     try {
@@ -934,7 +955,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       boolean recordChanged = false;
       for (ORecordHook hook : hooks.keySet()) {
-        // CHECK IF EXECUTE THE TRIGGER BASED ON STORAGE TYPE: DISTRIBUTED OR NOT
         switch (runMode) {
         case DEFAULT: // NON_DISTRIBUTED OR PROXIED DB
           if (getStorage().isDistributed()
@@ -964,8 +984,20 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       return recordChanged ? ORecordHook.RESULT.RECORD_CHANGED : ORecordHook.RESULT.RECORD_NOT_CHANGED;
 
     } finally {
-      OHookThreadLocal.INSTANCE.pop(id);
+      popInHook(id);
     }
+  }
+
+  private void popInHook(OIdentifiable id) {
+    inHook.remove(id);
+  }
+
+  private boolean pushInHook(OIdentifiable id) {
+    if (!inHook.contains(id)) {
+      inHook.add(id);
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -1669,9 +1701,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
             final ORecordHook.RESULT hookResult = callbackHooks(triggerType, record);
 
-            if (hookResult == ORecordHook.RESULT.RECORD_CHANGED)
+            if (hookResult == ORecordHook.RESULT.RECORD_CHANGED) {
+              if (record instanceof ODocument)
+                ((ODocument) record).validate();
               stream = updateStream(record);
-            else if (hookResult == ORecordHook.RESULT.SKIP_IO)
+            } else if (hookResult == ORecordHook.RESULT.SKIP_IO)
               return (RET) record;
             else if (hookResult == ORecordHook.RESULT.RECORD_REPLACED)
               // RETURNED THE REPLACED RECORD
@@ -1688,7 +1722,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         try {
           // SAVE IT
           boolean updateContent = ORecordInternal.isContentChanged(record);
-          byte[] content = (stream == null) ? new byte[0] : stream;
+          byte[] content = (stream == null) ? OCommonConst.EMPTY_BYTE_ARRAY : stream;
           byte recordType = ORecordInternal.getRecordType(record);
           final int modeIndex = mode.ordinal();
 
@@ -2043,8 +2077,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in current database");
 
     checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iClassName);
-
-    return new ORecordIteratorClass<ODocument>(this, this, iClassName, iPolymorphic, true, false);
+    ORecordIteratorClass<ODocument> iter = new ORecordIteratorClass<ODocument>(this, this, iClassName, iPolymorphic, true, false);
+    return iter;
   }
 
   /**
@@ -2199,7 +2233,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       return (RET) currentTx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
     ODocument doc = (ODocument) iRecord;
-    doc.validate();
+    if (!getTransaction().isActive() || getTransaction().getStatus() == OTransaction.TXSTATUS.COMMITTING)
+      // EXECUTE VALIDATION ONLY IF NOT IN TX
+      doc.validate();
+
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
 
     if (iForceCreate || !doc.getIdentity().isValid()) {
@@ -2571,10 +2608,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new ODatabaseException("Database '" + getURL() + "' is closed");
   }
 
-  private void setCurrentDatabaseinThreadLocal() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(this);
-  }
-
   private void initAtFirstOpen(String iUserName, String iUserPassword) {
     if (initialized)
       return;
@@ -2624,7 +2657,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       }
 
       installHooks();
-      registerHook(new OSecurityTrackerHook(metadata.getSecurity()), ORecordHook.HOOK_POSITION.LAST);
+      registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
 
       user = null;
     } else if (iUserName != null && iUserPassword != null)
@@ -2646,13 +2679,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   private void installHooks() {
-    registerHook(new OClassTrigger(), ORecordHook.HOOK_POSITION.FIRST);
-    registerHook(new ORestrictedAccessHook(), ORecordHook.HOOK_POSITION.FIRST);
-    registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
-    registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
-    registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
-    registerHook(new OSchedulerTrigger(), ORecordHook.HOOK_POSITION.LAST);
-    registerHook(new ORidBagDeleteHook(), ORecordHook.HOOK_POSITION.LAST);
+    registerHook(new OClassTrigger(this), ORecordHook.HOOK_POSITION.FIRST);
+    registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
+    registerHook(new OUserTrigger(this), ORecordHook.HOOK_POSITION.EARLY);
+    registerHook(new OFunctionTrigger(this), ORecordHook.HOOK_POSITION.REGULAR);
+    registerHook(new OClassIndexManager(this), ORecordHook.HOOK_POSITION.LAST);
+    registerHook(new OSchedulerTrigger(this), ORecordHook.HOOK_POSITION.LAST);
+    registerHook(new ORidBagDeleteHook(this), ORecordHook.HOOK_POSITION.LAST);
   }
 
   private void closeOnDelete() {
@@ -2741,8 +2774,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   private void clearDocumentTracking(final ORecord record) {
     if (record instanceof ODocument && ((ODocument) record).isTrackingChanges()) {
-      ((ODocument) record).setTrackingChanges(false);
-      ((ODocument) record).setTrackingChanges(true);
+      ODocumentInternal.clearTrackData((ODocument) record);
     }
   }
 

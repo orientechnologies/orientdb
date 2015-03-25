@@ -52,6 +52,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
   protected final ConcurrentHashMap<String, String>        dictionary    = new ConcurrentHashMap<String, String>();
   protected final ConcurrentHashMap<String, METRIC_TYPE>   types         = new ConcurrentHashMap<String, METRIC_TYPE>();
   protected final ConcurrentHashMap<String, AtomicInteger> tips          = new ConcurrentHashMap<String, AtomicInteger>();
+  protected final ConcurrentHashMap<String, Long>          tipsTimestamp = new ConcurrentHashMap<String, Long>();
   protected long                                           recordingFrom = -1;
 
   public interface OProfilerHookValue {
@@ -169,9 +170,10 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
       OLogManager.instance().info(this, "[TIP] " + iMessage);
 
       tips.put(iMessage, new AtomicInteger(1));
+      tipsTimestamp.put(iMessage, System.currentTimeMillis());
       return 1;
     }
-
+    tipsTimestamp.put(iMessage, System.currentTimeMillis());
     return counter.incrementAndGet();
   }
 
