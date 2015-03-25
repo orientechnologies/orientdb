@@ -85,7 +85,7 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public List<? extends OClass> getSuperClasses() {
+  public List<OClass> getSuperClasses() {
 	return delegate.getSuperClasses();
   }
 

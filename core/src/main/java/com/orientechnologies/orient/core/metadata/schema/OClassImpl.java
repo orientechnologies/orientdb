@@ -405,10 +405,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   @Override
-  public List<? extends OClass> getSuperClasses() {
+  public List<OClass> getSuperClasses() {
 	  acquireSchemaReadLock();
       try {
-         return superClasses;
+    	  return Collections.unmodifiableList((List<? extends OClass>)superClasses);
       } finally {
          releaseSchemaReadLock();
       }

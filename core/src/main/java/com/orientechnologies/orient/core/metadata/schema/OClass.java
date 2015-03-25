@@ -74,7 +74,7 @@ public interface OClass extends Comparable<OClass> {
   
   public List<String> getSuperClassesNames();
   
-  public List<? extends OClass> getSuperClasses();
+  public List<OClass> getSuperClasses();
   
   public OClass setSuperClasses(List<? extends OClass> classes);
   
