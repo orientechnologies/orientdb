@@ -29,18 +29,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 public class EdgeTransformerTest extends ETLBaseTest {
   OrientGraph graph;
 
-  public void testNotLightweightEdge() {
-    OETLProcessor proc = getProcessor(
-        "{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { row: {} },"
-            + " transformers: [{csv: {}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
-            + "], loader: { orientdb: { dbURL: 'memory:EdgeTransformerTest', dbType:'graph', useLightweightEdges:false } } }")
-        .execute();
-
-    assertEquals(graph.countVertices("V1"), 1);
-    assertEquals(graph.countVertices("V2"), 1);
-    assertEquals(graph.countEdges("Friend"), 1);
-  }
-
+  @Override
   public void setUp() {
     graph = new OrientGraph("memory:EdgeTransformerTest");
     graph.setUseLightweightEdges(false);
@@ -53,7 +42,20 @@ public class EdgeTransformerTest extends ETLBaseTest {
     graph.commit();
   }
 
+  @Override
   public void tearDown() {
     graph.drop();
+  }
+
+  public void testNotLightweightEdge() {
+    OETLProcessor proc = getProcessor(
+        "{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { row: {} },"
+            + " transformers: [{csv: {}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
+            + "], loader: { orientdb: { dbURL: 'memory:EdgeTransformerTest', dbType:'graph', useLightweightEdges:false } } }")
+        .execute();
+
+    assertEquals(graph.countVertices("V1"), 1);
+    assertEquals(graph.countVertices("V2"), 1);
+    assertEquals(graph.countEdges("Friend"), 1);
   }
 }
