@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.etl.extractor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.loader.OAbstractLoader;
 
 import java.util.ArrayList;
@@ -32,18 +33,18 @@ import java.util.List;
  * @author Luca Garulli on 27/11/14.
  */
 public class TestLoader extends OAbstractLoader {
-  private List<Object> result = new ArrayList<Object>();
+  private List<ODocument> result = new ArrayList<ODocument>();
 
   public TestLoader() {
   }
 
-  public List<Object> getResult() {
+  public List<ODocument> getResult() {
     return result;
   }
 
   @Override
   public void load(Object input, OCommandContext context) {
-    result.add(input);
+    result.add((ODocument)input);
   }
 
   @Override

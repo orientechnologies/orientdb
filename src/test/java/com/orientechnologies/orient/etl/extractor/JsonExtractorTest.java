@@ -36,13 +36,14 @@ public class JsonExtractorTest extends ETLBaseTest {
   public void testEmptyObject() {
     OETLProcessor proc = getProcessor("{source: { content: { value: {} }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
-    ODocument doc = ((ODocument) ((TestLoader) proc.getLoader()).getResult().get(0));
+    ODocument doc = ((TestLoader) proc.getLoader()).getResult().get(0);
     assertEquals(doc.fields(), 0);
   }
 
   public void testOneObject() {
-    OETLProcessor proc = getProcessor("{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {} }, loader: { test: {} } }").execute(); assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
-    ODocument doc = ((ODocument) ((TestLoader) proc.getLoader()).getResult().get(0));
+    OETLProcessor proc = getProcessor("{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {} }, loader: { test: {} } }").execute();
+    assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
+    ODocument doc = ((TestLoader) proc.getLoader()).getResult().get(0);
     assertEquals(doc.fields(), 2);
     assertEquals(doc.field("name"), "Jay");
     assertEquals(doc.field("surname"), "Miner");
@@ -56,14 +57,12 @@ public class JsonExtractorTest extends ETLBaseTest {
       content += "{name:'" + names[i] + "',surname:'" + surnames[i] + "',id:" + i + "}";
     }
 
-    OETLProcessor proc = getProcessor(
-        "{source: { content: { value: [" + content + "] } }, extractor : { json: {} }, loader: { test: {} } }").execute();
+    OETLProcessor proc = getProcessor("{source: { content: { value: [" + content + "] } }, extractor : { json: {} }, loader: { test: {} } }").execute();
 
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), names.length);
 
     int i = 0;
-    for (Object o : ((TestLoader) proc.getLoader()).getResult()) {
-      ODocument doc = (ODocument) o;
+    for (ODocument doc : ((TestLoader) proc.getLoader()).getResult()) {
       assertEquals(doc.fields(), 3);
       assertEquals(doc.field("name"), names[i]);
       assertEquals(doc.field("surname"), surnames[i]);

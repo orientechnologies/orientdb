@@ -33,7 +33,7 @@ public class FieldTransformerTest extends ETLBaseTest {
     OETLProcessor proc = getProcessor("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field: {fieldName:'test', value: 33}}], loader: { test: {} } }").execute();
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
 
-    ODocument doc = ((ODocument) ((TestLoader) proc.getLoader()).getResult().get(0));
+    ODocument doc = ((TestLoader) proc.getLoader()).getResult().get(0);
     assertEquals(doc.fields(), 3);
     assertEquals(doc.field("name"), "Jay");
     assertEquals(doc.field("surname"), "Miner");
@@ -44,7 +44,7 @@ public class FieldTransformerTest extends ETLBaseTest {
     OETLProcessor proc = getProcessor("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field: {fieldName:'test', expression: 'surname'}}], loader: { test: {} } }").execute();
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
 
-    ODocument doc = ((ODocument) ((TestLoader) proc.getLoader()).getResult().get(0));
+    ODocument doc = ((TestLoader) proc.getLoader()).getResult().get(0);
     assertEquals(doc.fields(), 3);
     assertEquals(doc.field("name"), "Jay");
     assertEquals(doc.field("surname"), "Miner");
@@ -55,7 +55,7 @@ public class FieldTransformerTest extends ETLBaseTest {
     OETLProcessor proc = getProcessor("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field: {fieldName:'surname', operation: 'remove'}}], loader: { test: {} } }").execute();
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
 
-    ODocument doc = ((ODocument) ((TestLoader) proc.getLoader()).getResult().get(0));
+    ODocument doc = ((TestLoader) proc.getLoader()).getResult().get(0);
     assertEquals(doc.fields(), 1);
     assertEquals(doc.field("name"), "Jay");
   }
