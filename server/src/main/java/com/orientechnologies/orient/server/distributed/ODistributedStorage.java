@@ -89,9 +89,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimerTask;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -108,7 +109,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   protected final ConcurrentHashMap<ORecordId, OPair<Long, ORecordVersion>> deletedRecords  = new ConcurrentHashMap<ORecordId, OPair<Long, ORecordVersion>>();
   protected final AtomicLong                                                lastOperationId = new AtomicLong();
 
-  protected final ArrayBlockingQueue<OAsynchDistributedOperation>           asynchronousOperationsQueue;
+  protected final BlockingQueue<OAsynchDistributedOperation>                asynchronousOperationsQueue;
   protected final Thread                                                    asynchWorker;
   protected volatile boolean                                                running         = true;
 
@@ -150,7 +151,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong(),
         OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong());
 
-    asynchronousOperationsQueue = new ArrayBlockingQueue<OAsynchDistributedOperation>(10000);
+    final int queueSize = OGlobalConfiguration.DISTRIBUTED_ASYNCH_QUEUE_SIZE.getValueAsInteger();
+    if (queueSize <= 0)
+      asynchronousOperationsQueue = new LinkedBlockingQueue<OAsynchDistributedOperation>();
+    else
+      asynchronousOperationsQueue = new LinkedBlockingQueue<OAsynchDistributedOperation>(queueSize);
+
     asynchWorker = new Thread() {
       @Override
       public void run() {
@@ -192,7 +198,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public boolean isAssigningClusterIds() {
-    return OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED;
+    return true;
   }
 
   @Override
@@ -849,6 +855,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final OTxTask txTask = new OTxTask();
       final Set<String> involvedClusters = new HashSet<String>();
 
+      final Set<String> nodes = dbCfg.getServers(involvedClusters);
+
+      Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(null);
+      if (executionModeSynch == null)
+        executionModeSynch = Boolean.TRUE;
+
       final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
       while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
@@ -867,7 +879,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           switch (op.type) {
           case ORecordOperation.CREATED:
             if (rid.isNew()) {
-              task = new OCreateRecordTask(record);
+              // CREATE THE TASK PASSING THE RECORD OR A COPY BASED ON EXECUTION TYPE: IF ASYNCHRONOUS THE COPY PREVENT TO EARLY ASSIGN CLUSTER IDS
+              final ORecord rec = executionModeSynch ? record : record.copy();
+              task = new OCreateRecordTask(rec);
               if (record instanceof ODocument)
                 ((ODocument) record).validate();
               break;
@@ -904,12 +918,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       }
 
       OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
-
-      final Set<String> nodes = dbCfg.getServers(involvedClusters);
-
-      Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(null);
-      if (executionModeSynch == null)
-        executionModeSynch = Boolean.TRUE;
 
       // if (executionModeSynch && !iTx.hasRecordCreation()) {
       if (executionModeSynch) {

@@ -288,7 +288,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       makeStorageDirty();
 
-      atomicOperationsManager.startAtomicOperation();
+      atomicOperationsManager.startAtomicOperation(null);
     } finally {
       lock.releaseSharedLock();
     }
@@ -1450,54 +1450,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  private void undoOperation(List<OLogSequenceNumber> operationUnit) throws IOException {
-    for (int i = operationUnit.size() - 1; i >= 0; i--) {
-      OWALRecord record = writeAheadLog.read(operationUnit.get(i));
-      if (checkFirstAtomicUnitRecord(i, record)) {
-        assert ((OAtomicUnitStartRecord) record).isRollbackSupported();
-        continue;
-      }
-
-      if (checkLastAtomicUnitRecord(i, record, operationUnit.size())) {
-        assert ((OAtomicUnitEndRecord) record).isRollback();
-        continue;
-      }
-
-      if (record instanceof OUpdatePageRecord) {
-        OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) record;
-        final long fileId = updatePageRecord.getFileId();
-        final long pageIndex = updatePageRecord.getPageIndex();
-
-        if (!diskCache.isOpen(fileId))
-          diskCache.openFile(fileId);
-
-        OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
-        OCachePointer cachePointer = cacheEntry.getCachePointer();
-        cachePointer.acquireExclusiveLock();
-        try {
-          ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
-
-          OPageChanges pageChanges = updatePageRecord.getChanges();
-          durablePage.revertChanges(pageChanges);
-
-          durablePage.setLsn(updatePageRecord.getLsn());
-        } finally {
-          cachePointer.releaseExclusiveLock();
-          diskCache.release(cacheEntry);
-        }
-      } else if (record instanceof OFileCreatedCreatedWALRecord) {
-        final OFileCreatedCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedCreatedWALRecord) record;
-
-        diskCache.openFile(fileCreatedCreatedRecord.getFileName(), fileCreatedCreatedRecord.getFileId());
-        diskCache.deleteFile(fileCreatedCreatedRecord.getFileId());
-      } else {
-        OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
-            record.getClass());
-        assert false : "Invalid WAL record type was passed " + record.getClass().getName();
-      }
-    }
-  }
-
   private boolean checkFirstAtomicUnitRecord(int index, OWALRecord record) {
     boolean isAtomicUnitStartRecord = record instanceof OAtomicUnitStartRecord;
     if (isAtomicUnitStartRecord && index != 0) {
@@ -1550,7 +1502,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     transaction.set(new OStorageTransaction(clientTx));
     try {
-      atomicOperationsManager.startAtomicOperation();
+      atomicOperationsManager.startAtomicOperation(null);
     } catch (RuntimeException e) {
       transaction.set(null);
       throw e;
@@ -1561,12 +1513,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (writeAheadLog == null || transaction.get() == null)
       return;
 
-    final OAtomicOperation operation = atomicOperationsManager.endAtomicOperation(true);
+    atomicOperationsManager.endAtomicOperation(true);
 
     assert atomicOperationsManager.getCurrentOperation() == null;
-
-    final List<OLogSequenceNumber> operationUnit = readOperationUnit(operation.getStartLSN(), operation.getOperationUnitId());
-    undoOperation(operationUnit);
   }
 
   private void restoreIfNeeded() throws Exception {
@@ -1595,7 +1544,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         recordVersion = OVersionFactory.instance().createVersion();
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation();
+      atomicOperationsManager.startAtomicOperation(null);
       try {
         ppos = cluster.createRecord(content, recordVersion, recordType);
         rid.clusterPosition = ppos.clusterPosition;
@@ -1663,7 +1612,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation();
+      atomicOperationsManager.startAtomicOperation(null);
       try {
         if (updateContent)
           cluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
@@ -1718,7 +1667,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation();
+      atomicOperationsManager.startAtomicOperation(null);
       try {
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
@@ -1748,7 +1697,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         return new OStorageOperationResult<Boolean>(false);
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation();
+      atomicOperationsManager.startAtomicOperation(null);
       try {
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
@@ -2036,7 +1985,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private void commitEntry(final OTransaction clientTx, final ORecordOperation txEntry) throws IOException {
 
     final ORecord rec = txEntry.getRecord();
-    if (txEntry.type != ORecordOperation.DELETED && !rec.isDirty())
+    if (txEntry.type != ORecordOperation.DELETED && !rec.isDirty() && rec.getIdentity().getClusterId() > -1)
       return;
 
     ORecordId rid = (ORecordId) rec.getIdentity();
@@ -2097,6 +2046,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           rec.getRecordVersion().copyFrom(
               updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, rec.getRecordVersion(),
                   ORecordInternal.getRecordType(rec), -1, null).getResult());
+          rid.clusterId = cluster.getId();
         }
         break;
       }
@@ -2486,15 +2436,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           if (!diskCache.isOpen(fileId))
             diskCache.openFile(fileId);
 
-          final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
+          OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
+          if (cacheEntry == null) {
+            do {
+              cacheEntry = diskCache.allocateNewPage(fileId);
+            } while (cacheEntry.getPageIndex() != pageIndex);
+          }
           final OCachePointer cachePointer = cacheEntry.getCachePointer();
           cachePointer.acquireExclusiveLock();
           try {
-            ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
+            ODurablePage durablePage = new ODurablePage(cacheEntry, null);
             durablePage.restoreChanges(updatePageRecord.getChanges());
             durablePage.setLsn(lsn);
-
-            cacheEntry.markDirty();
           } finally {
             cachePointer.releaseExclusiveLock();
             diskCache.release(cacheEntry);
@@ -2512,7 +2465,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           if (atomicUnitEndRecord.isRollback()) {
             // it is needed because we can start to restore atomic operation from the middle
             List<OLogSequenceNumber> recordsToRollback = readOperationUnit(atomicUnitEndRecord.getStartLsn(), unitId);
-            undoOperation(recordsToRollback);
           } else {
             if (nonTxOperationWasUsed && !wereNonTxOperationsPerformedInPreviousOpen) {
               OLogManager.instance().warn(this, "Non tx operation was used during data modification we will need index rebuild.");
@@ -2565,10 +2517,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         continue;
 
       writeAheadLog.logAtomicOperationEndRecord(startRecord.getOperationUnitId(), true, startRecord.getLsn());
-
-      // it is needed because we can start to restore atomic operation from the middle
-      List<OLogSequenceNumber> records = readOperationUnit(startRecord.getLsn(), startRecord.getOperationUnitId());
-      undoOperation(records);
     }
   }
 

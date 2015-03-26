@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageChanges;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 
 import java.io.IOException;
 
@@ -47,8 +47,6 @@ import java.io.IOException;
  * 
  * Developer which will extend this class should use all page memory starting from {@link #NEXT_FREE_POSITION} offset.
  * 
- * To make page changes durable method {@link ODurableComponent#logPageChanges(ODurablePage, long, long, boolean)} should be called
- * just before release of page
  * {@link com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache#release(com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry)}
  * back to the cache.
  * 
@@ -59,7 +57,7 @@ import java.io.IOException;
  * @since 16.08.13
  */
 public class ODurablePage {
-  public static final int         PAGE_PADDING        = OWOWCache.PAGE_PADDING;
+  public static final int            PAGE_PADDING        = OWOWCache.PAGE_PADDING;
 
   protected static final int         MAGIC_NUMBER_OFFSET = 0;
   protected static final int         CRC32_OFFSET        = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
@@ -70,20 +68,23 @@ public class ODurablePage {
 
   protected static final int         NEXT_FREE_POSITION  = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
 
-  protected OPageChanges             pageChanges         = new OPageChanges();
+  protected OWALChangesTree          changesTree;
 
   private final OCacheEntry          cacheEntry;
   private final ODirectMemoryPointer pagePointer;
 
-  protected final TrackMode          trackMode;
+  public ODurablePage(OCacheEntry cacheEntry, OWALChangesTree changesTree) {
+    assert cacheEntry != null || changesTree != null;
 
-  public ODurablePage(OCacheEntry cacheEntry, TrackMode trackMode) {
     this.cacheEntry = cacheEntry;
 
-    final OCachePointer cachePointer = cacheEntry.getCachePointer();
-    this.pagePointer = cachePointer.getDataPointer();
+    if (cacheEntry != null) {
+      final OCachePointer cachePointer = cacheEntry.getCachePointer();
+      this.pagePointer = cachePointer.getDataPointer();
+    } else
+      this.pagePointer = null;
 
-    this.trackMode = trackMode;
+    this.changesTree = changesTree;
   }
 
   public static OLogSequenceNumber getLogSequenceNumberFromPage(ODirectMemoryPointer dataPointer) {
@@ -93,46 +94,54 @@ public class ODurablePage {
     return new OLogSequenceNumber(segment, position);
   }
 
-  public static enum TrackMode {
-    NONE, FULL, ROLLBACK_ONLY
-  }
-
   protected int getIntValue(int pageOffset) {
-    return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset + PAGE_PADDING);
+    if (changesTree == null)
+      return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset + PAGE_PADDING);
+
+    return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(changesTree.wrap(pagePointer), pageOffset + PAGE_PADDING);
   }
 
   protected long getLongValue(int pageOffset) {
-    return OLongSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset + PAGE_PADDING);
+    if (changesTree == null)
+      return OLongSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset + PAGE_PADDING);
+
+    return OLongSerializer.INSTANCE.deserializeFromDirectMemory(changesTree.wrap(pagePointer), pageOffset + PAGE_PADDING);
   }
 
   protected byte[] getBinaryValue(int pageOffset, int valLen) {
-    return pagePointer.get(pageOffset + PAGE_PADDING, valLen);
+    if (changesTree == null)
+      return pagePointer.get(pageOffset + PAGE_PADDING, valLen);
+
+    return changesTree.getBinaryValue(pagePointer, pageOffset + PAGE_PADDING, valLen);
   }
 
   protected int getObjectSizeInDirectMemory(OBinarySerializer binarySerializer, long offset) {
-    return binarySerializer.getObjectSizeInDirectMemory(pagePointer, offset + PAGE_PADDING);
+    if (changesTree == null)
+      return binarySerializer.getObjectSizeInDirectMemory(pagePointer, offset + PAGE_PADDING);
+
+    return binarySerializer.getObjectSizeInDirectMemory(changesTree.wrap(pagePointer), offset + PAGE_PADDING);
   }
 
   protected <T> T deserializeFromDirectMemory(OBinarySerializer<T> binarySerializer, long offset) {
-    return binarySerializer.deserializeFromDirectMemoryObject(pagePointer, offset + PAGE_PADDING);
+    if (changesTree == null)
+      return binarySerializer.deserializeFromDirectMemoryObject(pagePointer, offset + PAGE_PADDING);
+
+    return binarySerializer.deserializeFromDirectMemoryObject(changesTree.wrap(pagePointer), offset + PAGE_PADDING);
   }
 
   protected byte getByteValue(int pageOffset) {
-    return pagePointer.getByte(pageOffset + PAGE_PADDING);
+    if (changesTree == null)
+      return pagePointer.getByte(pageOffset + PAGE_PADDING);
+
+    return changesTree.getByteValue(pagePointer, pageOffset + PAGE_PADDING);
   }
 
   protected int setIntValue(int pageOffset, int value) throws IOException {
-    if (trackMode.equals(TrackMode.FULL)) {
-      byte[] oldValues = pagePointer.get(pageOffset + PAGE_PADDING, OIntegerSerializer.INT_SIZE);
-      OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset + PAGE_PADDING);
-      byte[] newValues = pagePointer.get(pageOffset + PAGE_PADDING, OIntegerSerializer.INT_SIZE);
+    if (changesTree != null) {
+      byte[] svalue = new byte[OIntegerSerializer.INT_SIZE];
+      OIntegerSerializer.INSTANCE.serializeNative(value, svalue, 0);
 
-      pageChanges.addChanges(pageOffset, newValues, oldValues);
-    } else if (trackMode.equals(TrackMode.ROLLBACK_ONLY)) {
-      byte[] oldValues = pagePointer.get(pageOffset + PAGE_PADDING, OIntegerSerializer.INT_SIZE);
-      OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset + PAGE_PADDING);
-
-      pageChanges.addChanges(pageOffset, null, oldValues);
+      changesTree.add(svalue, pageOffset + PAGE_PADDING);
     } else
       OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset + PAGE_PADDING);
 
@@ -143,17 +152,8 @@ public class ODurablePage {
   }
 
   protected int setByteValue(int pageOffset, byte value) {
-    if (trackMode.equals(TrackMode.FULL)) {
-      byte[] oldValues = new byte[] { pagePointer.getByte(pageOffset + PAGE_PADDING) };
-      pagePointer.setByte(pageOffset + PAGE_PADDING, value);
-      byte[] newValues = new byte[] { pagePointer.getByte(pageOffset + PAGE_PADDING) };
-
-      pageChanges.addChanges(pageOffset, newValues, oldValues);
-    } else if (trackMode.equals(TrackMode.ROLLBACK_ONLY)) {
-      byte[] oldValues = new byte[] { pagePointer.getByte(pageOffset + PAGE_PADDING) };
-      pagePointer.setByte(pageOffset + PAGE_PADDING, value);
-
-      pageChanges.addChanges(pageOffset, null, oldValues);
+    if (changesTree != null) {
+      changesTree.add(new byte[] { value }, pageOffset + PAGE_PADDING);
     } else
       pagePointer.setByte(pageOffset + PAGE_PADDING, value);
 
@@ -163,17 +163,11 @@ public class ODurablePage {
   }
 
   protected int setLongValue(int pageOffset, long value) throws IOException {
-    if (trackMode.equals(TrackMode.FULL)) {
-      byte[] oldValues = pagePointer.get(pageOffset + PAGE_PADDING, OLongSerializer.LONG_SIZE);
-      OLongSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset + PAGE_PADDING);
-      byte[] newValues = pagePointer.get(pageOffset + PAGE_PADDING, OLongSerializer.LONG_SIZE);
+    if (changesTree != null) {
+      byte[] svalue = new byte[OLongSerializer.LONG_SIZE];
+      OLongSerializer.INSTANCE.serializeNative(value, svalue, 0);
 
-      pageChanges.addChanges(pageOffset, newValues, oldValues);
-    } else if (trackMode.equals(TrackMode.ROLLBACK_ONLY)) {
-      byte[] oldValues = pagePointer.get(pageOffset + PAGE_PADDING, OLongSerializer.LONG_SIZE);
-      OLongSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset + PAGE_PADDING);
-
-      pageChanges.addChanges(pageOffset, null, oldValues);
+      changesTree.add(svalue, pageOffset + PAGE_PADDING);
     } else
       OLongSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset + PAGE_PADDING);
 
@@ -186,16 +180,8 @@ public class ODurablePage {
     if (value.length == 0)
       return 0;
 
-    if (trackMode.equals(TrackMode.FULL)) {
-      byte[] oldValues = pagePointer.get(pageOffset + PAGE_PADDING, value.length);
-      pagePointer.set(pageOffset + PAGE_PADDING, value, 0, value.length);
-
-      pageChanges.addChanges(pageOffset, value, oldValues);
-    } else if (trackMode.equals(TrackMode.ROLLBACK_ONLY)) {
-      byte[] oldValues = pagePointer.get(pageOffset + PAGE_PADDING, value.length);
-      pagePointer.set(pageOffset + PAGE_PADDING, value, 0, value.length);
-
-      pageChanges.addChanges(pageOffset, null, oldValues);
+    if (changesTree != null) {
+      changesTree.add(value, pageOffset + PAGE_PADDING);
     } else
       pagePointer.set(pageOffset + PAGE_PADDING, value, 0, value.length);
 
@@ -208,37 +194,22 @@ public class ODurablePage {
     if (len == 0)
       return;
 
-    if (trackMode.equals(TrackMode.FULL)) {
-      byte[] content = pagePointer.get(from + PAGE_PADDING, len);
-      byte[] oldContent = pagePointer.get(to + PAGE_PADDING, len);
+    if (changesTree != null) {
+      byte[] content = changesTree.getBinaryValue(pagePointer, from + PAGE_PADDING, len);
 
-      pagePointer.moveData(from + PAGE_PADDING, pagePointer, to + PAGE_PADDING, len);
-
-      pageChanges.addChanges(to, content, oldContent);
-    } else if (trackMode.equals(TrackMode.ROLLBACK_ONLY)) {
-      byte[] oldContent = pagePointer.get(to + PAGE_PADDING, len);
-
-      pagePointer.moveData(from + PAGE_PADDING, pagePointer, to + PAGE_PADDING, len);
-
-      pageChanges.addChanges(to, null, oldContent);
-
+      changesTree.add(content, to + PAGE_PADDING);
     } else
       pagePointer.moveData(from + PAGE_PADDING, pagePointer, to + PAGE_PADDING, len);
 
     cacheEntry.markDirty();
   }
 
-  public OPageChanges getPageChanges() {
-    return pageChanges;
+  public OWALChangesTree getChangesTree() {
+    return changesTree;
   }
 
-  public void restoreChanges(OPageChanges pageChanges) {
-    pageChanges.applyChanges(pagePointer);
-    cacheEntry.markDirty();
-  }
-
-  public void revertChanges(OPageChanges pageChanges) {
-    pageChanges.revertChanges(pagePointer);
+  public void restoreChanges(OWALChangesTree changesTree) {
+    changesTree.applyChanges(cacheEntry.getCachePointer().getDataPointer());
     cacheEntry.markDirty();
   }
 

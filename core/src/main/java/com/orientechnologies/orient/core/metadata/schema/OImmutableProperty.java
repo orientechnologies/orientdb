@@ -15,7 +15,7 @@ public class OImmutableProperty implements OProperty {
   private final String              fullName;
   private final OType               type;
 
-  //do not make it volatile it is already thread safe.
+  // do not make it volatile it is already thread safe.
   private OClass                    linkedClass = null;
 
   private final String              linkedClassName;
@@ -88,14 +88,14 @@ public class OImmutableProperty implements OProperty {
 
   @Override
   public OClass getLinkedClass() {
-		if (linkedClassName == null)
-			return null;
+    if (linkedClassName == null)
+      return null;
 
-		if(linkedClass != null)
-			return linkedClass;
+    if (linkedClass != null)
+      return linkedClass;
 
-		OSchema schema = ((OImmutableClass)owner).getSchema();
-		linkedClass = schema.getClass(linkedClassName);
+    OSchema schema = ((OImmutableClass) owner).getSchema();
+    linkedClass = schema.getClass(linkedClassName);
 
     return linkedClass;
   }

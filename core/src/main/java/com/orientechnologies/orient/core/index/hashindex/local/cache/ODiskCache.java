@@ -63,17 +63,21 @@ import java.io.IOException;
  * @since 14.03.13
  */
 public interface ODiskCache {
+  long addFile(String fileName) throws IOException;
+
+  void addFile(String fileName, long fileId) throws IOException;
+
   long openFile(String fileName) throws IOException;
 
   void openFile(long fileId) throws IOException;
 
   void openFile(String fileName, long fileId) throws IOException;
 
+  long bookFileId();
+
   OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages) throws IOException;
 
   void pinPage(OCacheEntry cacheEntry) throws IOException;
-
-  void loadPinnedPage(OCacheEntry cacheEntry) throws IOException;
 
   OCacheEntry allocateNewPage(long fileId) throws IOException;
 

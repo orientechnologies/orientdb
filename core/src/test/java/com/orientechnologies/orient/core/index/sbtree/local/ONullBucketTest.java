@@ -22,7 +22,7 @@ public class ONullBucketTest {
     OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
 
-    ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, ODurablePage.TrackMode.NONE, OStringSerializer.INSTANCE, true);
+    ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, null, OStringSerializer.INSTANCE, true);
     Assert.assertNull(bucket.getValue());
 
     cachePointer.decrementReferrer();
@@ -33,7 +33,7 @@ public class ONullBucketTest {
     OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
 
-    ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, ODurablePage.TrackMode.NONE, OStringSerializer.INSTANCE, true);
+    ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, null, OStringSerializer.INSTANCE, true);
 
     bucket.setValue(new OSBTreeValue<String>(false, -1, "test"));
     OSBTreeValue<String> treeValue = bucket.getValue();
@@ -47,7 +47,7 @@ public class ONullBucketTest {
     OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
 
-    ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, ODurablePage.TrackMode.NONE, OStringSerializer.INSTANCE, true);
+    ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, null, OStringSerializer.INSTANCE, true);
 
     bucket.setValue(new OSBTreeValue<String>(false, -1, "test"));
     bucket.removeValue();
@@ -60,10 +60,10 @@ public class ONullBucketTest {
 
   public void testAddRemoveAddValue() throws IOException {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
-		OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
-		OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
 
-    ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, ODurablePage.TrackMode.NONE, OStringSerializer.INSTANCE, true);
+    ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, null, OStringSerializer.INSTANCE, true);
 
     bucket.setValue(new OSBTreeValue<String>(false, -1, "test"));
     bucket.removeValue();

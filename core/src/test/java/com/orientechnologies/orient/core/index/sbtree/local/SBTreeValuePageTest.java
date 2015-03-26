@@ -23,7 +23,7 @@ public class SBTreeValuePageTest {
     cachePointerOne.incrementReferrer();
 
     OCacheEntry cacheEntryOne = new OCacheEntry(0, 0, cachePointerOne, false);
-    OSBTreeValuePage valuePageOne = new OSBTreeValuePage(cacheEntryOne, ODurablePage.TrackMode.NONE, true);
+    OSBTreeValuePage valuePageOne = new OSBTreeValuePage(cacheEntryOne, null, true);
 
     byte[] data = new byte[ODurablePage.MAX_PAGE_SIZE_BYTES + 100];
     Random random = new Random();
@@ -37,7 +37,7 @@ public class SBTreeValuePageTest {
     cachePointerTwo.incrementReferrer();
 
     OCacheEntry cacheEntryTwo = new OCacheEntry(0, 0, cachePointerTwo, false);
-    OSBTreeValuePage valuePageTwo = new OSBTreeValuePage(cacheEntryTwo, ODurablePage.TrackMode.NONE, true);
+    OSBTreeValuePage valuePageTwo = new OSBTreeValuePage(cacheEntryTwo, null, true);
     offset = valuePageTwo.fillBinaryContent(data, offset);
 
     Assert.assertEquals(offset, data.length);
@@ -65,7 +65,7 @@ public class SBTreeValuePageTest {
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
-    OSBTreeValuePage valuePage = new OSBTreeValuePage(cacheEntry, ODurablePage.TrackMode.NONE, true);
+    OSBTreeValuePage valuePage = new OSBTreeValuePage(cacheEntry, null, true);
     valuePage.setNextFreeListPage(124);
     Assert.assertEquals(valuePage.getNextFreeListPage(), 124);
 

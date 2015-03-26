@@ -1,25 +1,31 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.common.comparator;
 
+import java.text.Collator;
 import java.util.Comparator;
+import java.util.Locale;
+
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 
 /**
  * Comparator that calls {@link Comparable#compareTo(Object)} methods for getting results for all {@link Comparable} types.
@@ -43,8 +49,13 @@ public class ODefaultComparator implements Comparator<Object> {
         return -1;
     } else if (objectTwo == null)
       return 1;
-
-    if (objectOne instanceof Comparable)
+    ODatabaseDocumentInternal internal;
+    if (objectOne instanceof String && objectTwo instanceof String
+        && (internal = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined()) != null) {
+      Collator collator = Collator.getInstance(new Locale(internal.get(ATTRIBUTES.LOCALECOUNTRY) + "_"
+          + internal.get(ATTRIBUTES.LOCALELANGUAGE)));
+      return collator.compare(objectOne, objectTwo);
+    } else if (objectOne instanceof Comparable)
       return ((Comparable<Object>) objectOne).compareTo(objectTwo);
 
     final Comparator<?> comparator = OComparatorFactory.INSTANCE.getComparator(objectOne.getClass());

@@ -52,7 +52,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   private ORID                     identity;
   private final OSBTree<Object, V> sbTree;
 
-  public OSBTreeIndexEngine(Boolean durableInNonTxMode, ODurablePage.TrackMode trackMode) {
+  public OSBTreeIndexEngine(Boolean durableInNonTxMode) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
 
@@ -63,7 +63,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     else
       durableInNonTx = durableInNonTxMode;
 
-    sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, durableInNonTx, NULL_BUCKET_FILE_EXTENSION, trackMode);
+    sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, durableInNonTx, NULL_BUCKET_FILE_EXTENSION);
   }
 
   @Override
@@ -163,7 +163,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
       sbTree.load(indexName, determineKeySerializer(indexDefinition), valueSerializer,
           indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract, determineKeySize(indexDefinition),
-          indexDefinition != null && indexDefinition.isNullValuesIgnored());
+          indexDefinition != null && !indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();
     }

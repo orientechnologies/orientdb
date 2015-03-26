@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.index.sbtree.local;
 
@@ -34,6 +34,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 
 /**
  * @author Andrey Lomakin
@@ -70,8 +71,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
   private final Comparator<? super K> comparator              = ODefaultComparator.INSTANCE;
 
   public OSBTreeBucket(OCacheEntry cacheEntry, boolean isLeaf, OBinarySerializer<K> keySerializer, OType[] keyTypes,
-      OBinarySerializer<V> valueSerializer, TrackMode trackMode) throws IOException {
-    super(cacheEntry, trackMode);
+      OBinarySerializer<V> valueSerializer, OWALChangesTree changesTree) throws IOException {
+    super(cacheEntry, changesTree);
 
     this.isLeaf = isLeaf;
     this.keySerializer = keySerializer;
@@ -93,8 +94,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
   }
 
   public OSBTreeBucket(OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer, OType[] keyTypes,
-      OBinarySerializer<V> valueSerializer, TrackMode trackMode) {
-    super(cacheEntry, trackMode);
+      OBinarySerializer<V> valueSerializer, OWALChangesTree changesTree) {
+    super(cacheEntry, changesTree);
     this.keyTypes = keyTypes;
 
     this.isLeaf = getByteValue(IS_LEAF_OFFSET) > 0;
@@ -339,7 +340,10 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
   public int updateValue(int index, OSBTreeValue<V> value) throws IOException {
     int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
-    entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition) + OByteSerializer.BYTE_SIZE;
+    entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
+    boolean isLinkValue = getByteValue(entryPosition) > 0;
+
+    entryPosition += OByteSerializer.BYTE_SIZE;
 
     int newSize = 0;
     if (value.isLink())
@@ -347,7 +351,12 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     else
       newSize = valueSerializer.getObjectSize(value.getValue());
 
-    final int oldSize = getObjectSizeInDirectMemory(valueSerializer, entryPosition);
+    final int oldSize;
+    if (isLinkValue)
+      oldSize = OLongSerializer.LONG_SIZE;
+    else
+      oldSize = getObjectSizeInDirectMemory(valueSerializer, entryPosition);
+
     if (newSize != oldSize)
       return -1;
 

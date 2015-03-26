@@ -107,18 +107,9 @@ public class ODefaultIndexFactory implements OIndexFactory {
     Boolean durableInNonTxMode;
 
     Object durable = null;
-    ODurablePage.TrackMode trackMode = null;
 
     if (metadata != null) {
       durable = metadata.field("durableInNonTxMode");
-
-      if (metadata.field("trackMode") instanceof String) {
-        try {
-          trackMode = ODurablePage.TrackMode.valueOf(metadata.<String> field("trackMode"));
-        } catch (IllegalArgumentException e) {
-          OLogManager.instance().error(this, "Invalid track mode", e);
-        }
-      }
     }
 
     if (durable instanceof Boolean)
@@ -127,17 +118,17 @@ public class ODefaultIndexFactory implements OIndexFactory {
       durableInNonTxMode = null;
 
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
-      return new OIndexUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(durableInNonTxMode, trackMode),
+      return new OIndexUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(durableInNonTxMode),
           valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
-      return new OIndexNotUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(durableInNonTxMode,
-          trackMode), valueContainerAlgorithm, metadata);
+      return new OIndexNotUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(durableInNonTxMode),
+          valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OIndexFullText(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(durableInNonTxMode,
-          trackMode), valueContainerAlgorithm, metadata);
+      return new OIndexFullText(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(durableInNonTxMode),
+          valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
-      return new OIndexDictionary(indexType, SBTREE_ALGORITHM,
-          new OSBTreeIndexEngine<OIdentifiable>(durableInNonTxMode, trackMode), valueContainerAlgorithm, metadata);
+      return new OIndexDictionary(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(durableInNonTxMode),
+          valueContainerAlgorithm, metadata);
     }
 
     throw new OConfigurationException("Unsupported type : " + indexType);

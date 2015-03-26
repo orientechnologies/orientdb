@@ -20,18 +20,16 @@
 
 package com.orientechnologies.common.concur.lock;
 
-import com.orientechnologies.common.types.OModifiableInteger;
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
-import com.orientechnologies.orient.core.Orient;
-
-import java.util.HashSet;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.AbstractOwnableSynchronizer;
 import java.util.concurrent.locks.LockSupport;
+
+import com.orientechnologies.common.types.OModifiableInteger;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
+import com.orientechnologies.orient.core.Orient;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -41,19 +39,9 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
   private final OThreadCountersHashTable           threadCountersHashTable = new OThreadCountersHashTable();
 
   private final AtomicReference<WNode>             tail                    = new AtomicReference<WNode>();
-  private volatile ThreadLocal<OModifiableInteger> lockHolds               = new ThreadLocal<OModifiableInteger>() {
-                                                                             @Override
-                                                                             protected OModifiableInteger initialValue() {
-                                                                               return new OModifiableInteger();
-                                                                             }
-                                                                           };
+  private volatile ThreadLocal<OModifiableInteger> lockHolds               = new InitOModifiableInteger();
 
-  private volatile ThreadLocal<WNode>              myNode                  = new ThreadLocal<WNode>() {
-                                                                             @Override
-                                                                             protected WNode initialValue() {
-                                                                               return new WNode();
-                                                                             }
-                                                                           };
+  private volatile ThreadLocal<WNode>              myNode                  = new InitWNode();
   private volatile ThreadLocal<WNode>              predNode                = new ThreadLocal<WNode>();
 
   public OReadersWriterSpinLock() {
@@ -191,24 +179,28 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
   @Override
   public void onStartup() {
     if (lockHolds == null)
-      lockHolds = new ThreadLocal<OModifiableInteger>() {
-        @Override
-        protected OModifiableInteger initialValue() {
-          return new OModifiableInteger();
-        }
-      };
+      lockHolds = new InitOModifiableInteger();
 
     if (myNode == null)
-      myNode = new ThreadLocal<WNode>() {
-        @Override
-        protected WNode initialValue() {
-          return new WNode();
-        }
-      };
+      myNode = new InitWNode();
 
     if (predNode == null)
       predNode = new ThreadLocal<WNode>();
 
+  }
+
+  private static final class InitWNode extends ThreadLocal<WNode> {
+    @Override
+    protected WNode initialValue() {
+      return new WNode();
+    }
+  }
+
+  private static final class InitOModifiableInteger extends ThreadLocal<OModifiableInteger> {
+    @Override
+    protected OModifiableInteger initialValue() {
+      return new OModifiableInteger();
+    }
   }
 
   private final static class WNode {
