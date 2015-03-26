@@ -20,6 +20,8 @@ package com.orientechnologies.orient.etl.extractor;
 
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 
 /**
  * Tests ETL Field Transformer.
@@ -30,6 +32,7 @@ public class EdgeTransformerTest extends ETLBaseTest {
   OrientGraph graph;
 
   @Override
+  @BeforeMethod
   public void setUp() {
     graph = new OrientGraph("memory:EdgeTransformerTest");
     graph.setUseLightweightEdges(false);
@@ -43,6 +46,7 @@ public class EdgeTransformerTest extends ETLBaseTest {
   }
 
   @Override
+  @AfterMethod
   public void tearDown() {
     graph.drop();
   }

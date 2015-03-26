@@ -22,6 +22,9 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.util.Iterator;
 
@@ -34,15 +37,18 @@ public class FlowTransformerTest extends ETLBaseTest {
   OrientGraph graph;
 
   @Override
+  @BeforeMethod
   public void setUp() {
     graph = new OrientGraph("memory:FlowTransformerTest");
   }
 
   @Override
+  @AfterMethod
   public void tearDown() {
     graph.drop();
   }
 
+  @Test
   public void testSkip() {
     OETLProcessor proc = getProcessor(
         "{source: { content: { value: 'name,surname\nJay,Miner\nJay,Test' } }, extractor : { row: {} },"
@@ -64,6 +70,7 @@ public class FlowTransformerTest extends ETLBaseTest {
     graph.command(new OCommandSQL("delete vertex V")).execute();
   }
 
+  @Test
   public void testSkipNever() {
     OETLProcessor proc = getProcessor(
         "{source: { content: { value: 'name,surname\nJay,Miner\nTest,Test' } }, extractor : { row: {} },"

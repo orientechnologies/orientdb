@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.extractor;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
+import org.testng.annotations.Test;
 
 /**
  * Tests ETL CSV Transformer.
@@ -28,11 +29,13 @@ import com.orientechnologies.orient.etl.OETLProcessor;
  */
 public class CSVTransformerTest extends ETLBaseTest {
 
+  @Test
   public void testEmpty() {
     OETLProcessor proc = getProcessor("{source: { content: { value: '' }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 0);
   }
 
+  @Test
   public void testOneObject() {
     OETLProcessor proc = getProcessor("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }], loader: { test: {} } }").execute();
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
@@ -42,6 +45,7 @@ public class CSVTransformerTest extends ETLBaseTest {
     assertEquals(doc.field("surname"), "Miner");
   }
 
+  @Test
   public void testSmallSet() {
     String content = "name,surname,id";
     for (int i = 0; i < names.length; ++i)

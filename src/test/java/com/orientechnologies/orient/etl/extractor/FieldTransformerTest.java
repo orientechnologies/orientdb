@@ -21,6 +21,7 @@ package com.orientechnologies.orient.etl.extractor;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
+import org.testng.annotations.Test;
 
 /**
  * Tests ETL Field Transformer.
@@ -29,6 +30,7 @@ import com.orientechnologies.orient.etl.OETLProcessor;
  */
 public class FieldTransformerTest extends ETLBaseTest {
 
+  @Test
   public void testValue() {
     OETLProcessor proc = getProcessor("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field: {fieldName:'test', value: 33}}], loader: { test: {} } }").execute();
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
@@ -40,6 +42,7 @@ public class FieldTransformerTest extends ETLBaseTest {
     assertEquals(doc.field("test"), 33);
   }
 
+  @Test
   public void testExpression() {
     OETLProcessor proc = getProcessor("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field: {fieldName:'test', expression: 'surname'}}], loader: { test: {} } }").execute();
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
@@ -51,6 +54,7 @@ public class FieldTransformerTest extends ETLBaseTest {
     assertEquals(doc.field("test"), "Miner");
   }
 
+  @Test
   public void testRemove() {
     OETLProcessor proc = getProcessor("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field: {fieldName:'surname', operation: 'remove'}}], loader: { test: {} } }").execute();
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
@@ -60,6 +64,7 @@ public class FieldTransformerTest extends ETLBaseTest {
     assertEquals(doc.field("name"), "Jay");
   }
 
+  @Test
   public void testSave() {
     OETLProcessor proc = getProcessor("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field:{fieldName:'@class', value:'Test'}}, {field:{ fieldName:'test', value: 33, save: true}}], loader: { orientdb: { dbURL: 'memory:FieldTransformerTest' } } }").execute();
 

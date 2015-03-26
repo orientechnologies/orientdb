@@ -32,11 +32,10 @@ import org.testng.annotations.Test;
  * @author Gregor Frey
  */
 public class OVertexTransformerNGTest extends ETLBaseTest {
-
   OrientGraph graph;
 
-  @BeforeMethod
   @Override
+  @BeforeMethod
   public void setUp() {
     graph = new OrientGraph("memory:EdgeTransformerTest");
     graph.setUseLightweightEdges(false);
@@ -61,7 +60,6 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
             + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
             + "], loader: { orientdb: { dbURL: 'memory:EdgeTransformerTest', dbType:'graph', useLightweightEdges:false } } }")
             .execute();
-
     assertEquals(graph.countVertices("Person"), 1);
   }
 
@@ -72,7 +70,6 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
             + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
             + "], loader: { orientdb: { dbURL: 'memory:EdgeTransformerTest', dbType:'graph', useLightweightEdges:false } } }")
             .execute();
-
     assertEquals(graph.countVertices("Person"), 1);
   }
 
@@ -83,7 +80,6 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
             + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:true}},"
             + "], loader: { orientdb: { dbURL: 'memory:EdgeTransformerTest', dbType:'graph', useLightweightEdges:false } } }")
             .execute();
-
     assertEquals(graph.countVertices("Person"), 2);
   }
 }

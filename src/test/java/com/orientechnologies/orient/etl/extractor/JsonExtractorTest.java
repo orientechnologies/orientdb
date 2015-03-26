@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.extractor;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
+import org.testng.annotations.Test;
 
 /**
  * Tests ETL JSON Extractor.
@@ -28,11 +29,13 @@ import com.orientechnologies.orient.etl.OETLProcessor;
  */
 public class JsonExtractorTest extends ETLBaseTest {
 
+  @Test
   public void testEmptyCollection() {
     OETLProcessor proc = getProcessor("{source: { content: { value: [] }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 0);
   }
 
+  @Test
   public void testEmptyObject() {
     OETLProcessor proc = getProcessor("{source: { content: { value: {} }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
@@ -40,6 +43,7 @@ public class JsonExtractorTest extends ETLBaseTest {
     assertEquals(doc.fields(), 0);
   }
 
+  @Test
   public void testOneObject() {
     OETLProcessor proc = getProcessor("{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {} }, loader: { test: {} } }").execute();
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
@@ -49,6 +53,7 @@ public class JsonExtractorTest extends ETLBaseTest {
     assertEquals(doc.field("surname"), "Miner");
   }
 
+  @Test
   public void testSmallSet() {
     String content = "";
     for (int i = 0; i < names.length; ++i) {
