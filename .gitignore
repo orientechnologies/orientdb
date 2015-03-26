@@ -5,5 +5,4 @@ pom.xml.next
 release.properties
 
 *.iml
-
-3rdy-party-drivers/*
+.idea
