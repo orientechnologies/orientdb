@@ -19,10 +19,10 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.Orient;
+
+import java.io.IOException;
 
 /**
  * Service thread that catches internal messages sent by the server
@@ -52,6 +52,7 @@ public class OAsynchChannelServiceThread extends OSoftThread {
       final byte request = network.readByte();
       switch (request) {
       case OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG:
+      case OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY:
         obj = network.readBytes();
         break;
       }

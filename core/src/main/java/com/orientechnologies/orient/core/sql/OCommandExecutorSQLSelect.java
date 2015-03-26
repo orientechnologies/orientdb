@@ -548,8 +548,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       resultCount++;
 
-      if (!addResult(lastRecord))
+      if (!addResult(lastRecord)){
         return false;
+      }
 
       return !((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && !isAnyFunctionAggregates()
           && (groupByFields == null || groupByFields.isEmpty()) && fetchLimit > -1 && resultCount >= fetchLimit);
@@ -1815,7 +1816,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       uniqueResult = new HashSet<ORID>();
       for (OIndexCursor cursor : cursors) {
-        fetchValuesFromIndexCursor(cursor);
+        if (!fetchValuesFromIndexCursor(cursor)) {
+          break;
+        }
       }
       uniqueResult.clear();
       uniqueResult = null;

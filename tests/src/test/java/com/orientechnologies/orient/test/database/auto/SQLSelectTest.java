@@ -15,8 +15,11 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -29,6 +32,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.query.OLiveQuery;
+import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
@@ -1600,6 +1605,68 @@ public class SQLSelectTest extends AbstractSelectTest {
     for (OIdentifiable r : result) {
       Assert.assertEquals(((ODocument) r.getRecord()).field("counter"), i++);
     }
+  }
+
+  // TODO REMOVE THIS!!!
+  public void testLiveQuery() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:localhost/test");
+    db.open("admin", "admin");
+//    try {
+//      db.command(new OCommandSQL("remove property V.pippo")).execute();
+//    }catch (Exception e){}
+//    db.command(new OCommandSQL("create property V.pippo STRING")).execute();
+    final ODatabaseDocumentTx dbCopy = db.copy();
+
+    // ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:test");
+    // db.create();
+
+    new ODocument("V").field("pippo", "pluto").save();
+    new ODocument("V").field("pluto", "paperino").save();
+    List<ODocument> tokenDoc = db.query(new OLiveQuery<Object>("live Select from V", new OLiveResultListener() {
+
+      @Override
+      public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
+        dbCopy.setCurrentDatabaseInThreadLocal();
+        System.out.println("" + iLiveToken + " - " + iOp.type + " - " + iOp.getRecord());
+      }
+
+    }));
+    System.out.println("token: " + tokenDoc.get(0).field("token"));
+
+    new ODocument("V").field("pluto", "paperino").save();
+    db.command(new OCommandSQL("update V set name = 'antani'")).execute();
+
+    System.out.println("non e' scoppiato");
+    try {
+      Thread.sleep(60000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    db.close();
+
+
+  }
+
+  // TODO REMOVE THIS!!!
+  public void testAsyncQuery() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:localhost/test");
+    db.open("admin", "admin");
+
+    db.query(new OSQLAsynchQuery<Object>("Select from V", new OCommandResultListener() {
+      @Override
+      public boolean result(Object iRecord) {
+        System.out.println(iRecord);
+        return true;
+      }
+
+      @Override
+      public void end() {
+        System.out.println("ended");
+      }
+    }));
+
+    db.close();
+
   }
 
   private List<Long> getValidPositions(int clusterId) {

@@ -20,13 +20,26 @@
 
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
+import com.orientechnologies.orient.server.OClientConnectionManager;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -38,7 +51,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public class OAsyncCommandResultListener extends OAbstractCommandResultListener {
+public class OLiveCommandResultListener extends OAbstractCommandResultListener implements OLiveResultListener {
 
   private final ONetworkProtocolBinary protocol;
   private final AtomicBoolean          empty       = new AtomicBoolean(true);
@@ -46,7 +59,7 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
   private final OCommandResultListener resultListener;
   private final Set<ORID>              alreadySent = new HashSet<ORID>();
 
-  public OAsyncCommandResultListener(final ONetworkProtocolBinary iNetworkProtocolBinary, final int txId,
+  public OLiveCommandResultListener(final ONetworkProtocolBinary iNetworkProtocolBinary, final int txId,
       OCommandResultListener resultListener) {
     this.protocol = iNetworkProtocolBinary;
     this.txId = txId;
@@ -81,7 +94,7 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
       alreadySent.add(((OIdentifiable) iRecord).getIdentity());
       protocol.channel.writeByte((byte) 1); // ONE MORE RECORD
       protocol.writeIdentifiable(((OIdentifiable) iRecord).getRecord());
-      protocol.channel.flush();// TODO review this flush... it's for non blocking...
+      protocol.channel.flush();
     } catch (IOException e) {
       return false;
     }
@@ -98,6 +111,57 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
 
   public boolean isEmpty() {
     return empty.get();
+  }
+
+  public void onLiveResult(int iToken, ORecordOperation iOp) throws OException {
+    OChannelBinaryServer channel = protocol.channel;
+    try {
+      channel.acquireWriteLock();
+      try {
+
+        ByteArrayOutputStream content = new ByteArrayOutputStream();
+
+        DataOutputStream out = new DataOutputStream(content);
+        out.writeByte(iOp.type);
+        out.writeInt(iToken);
+        out.writeByte(ORecordInternal.getRecordType(iOp.getRecord()));
+        writeVersion(out, iOp.getRecord().getRecordVersion());
+        writeRID(out, (ORecordId) iOp.getRecord().getIdentity());
+        writeBytes(out, protocol.getRecordBytes(iOp.getRecord()));
+
+        channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
+        channel.writeInt(Integer.MIN_VALUE);
+        channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY);
+        channel.writeBytes(content.toByteArray());
+        channel.flush();
+
+      } finally {
+        channel.releaseWriteLock();
+      }
+    } catch (IOException e) {
+      OLiveQueryHook.unsubscribe(iToken);
+    } catch (Exception e) {
+      OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e,
+          protocol.connection.getRemoteAddress());
+      OClientConnectionManager.instance().disconnect(protocol.connection);
+      OLiveQueryHook.unsubscribe(iToken);
+    }
+
+  }
+
+  private void writeVersion(DataOutputStream out, ORecordVersion v) throws IOException {
+    final ORecordVersion version = OVersionFactory.instance().createVersion();
+    out.writeInt(version.getCounter());
+  }
+
+  private void writeRID(DataOutputStream out, ORecordId record) throws IOException {
+    out.writeShort((short) record.getClusterId());
+    out.writeLong(record.getClusterPosition());
+  }
+
+  public void writeBytes(DataOutputStream out, byte[] bytes) throws IOException {
+    out.writeInt(bytes.length);
+    out.write(bytes);
   }
 
 }
