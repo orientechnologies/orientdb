@@ -21,7 +21,7 @@ package com.orientechnologies.orient.etl.extractor;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 /**
  * Tests ETL Field Transformer.

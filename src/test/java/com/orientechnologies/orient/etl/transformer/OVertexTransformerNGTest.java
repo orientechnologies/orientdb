@@ -22,9 +22,7 @@ import com.orientechnologies.orient.etl.extractor.ETLBaseTest;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 /**
  * Tests ETL Vertex Transformer.
@@ -35,7 +33,6 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
   OrientGraph graph;
 
   @Override
-  @BeforeMethod
   public void setUp() {
     graph = new OrientGraph("memory:EdgeTransformerTest");
     graph.setUseLightweightEdges(false);
@@ -48,7 +45,6 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
   }
 
   @Override
-  @AfterMethod
   public void tearDown() {
         graph.drop();
     }
