@@ -1,18 +1,21 @@
 {
-    "autoDeploy": true,
-    "hotAlignment": false,
-    "executionMode": "undefined",
-    "readQuorum": 1,
-    "writeQuorum": 2,
-    "failureAvailableNodesLessQuorum": false,
-    "readYourWrites": true,
-    "clusters": {
-        "internal": {
-        },
-        "index": {
-        },
-        "*": {
-            "servers" : [ "<NEW_NODE>" ]
-        }
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "executionMode": "undefined",
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,
+  "roles": {
+    "*": "master"
+  },
+  "clusters": {
+    "internal": {
+    },
+    "index": {
+    },
+    "*": {
+      "servers": ["<NEW_NODE>"]
     }
+  }
 }

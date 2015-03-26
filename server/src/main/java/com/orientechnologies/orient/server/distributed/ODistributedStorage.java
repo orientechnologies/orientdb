@@ -71,6 +71,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
@@ -206,14 +207,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       servers = new ArrayList<String>();
       iCommand.getContext().setVariable("servers", servers);
     }
-    servers.add(dManager.getLocalNodeName());
+    final String localNodeName = dManager.getLocalNodeName();
+
+    servers.add(localNodeName);
 
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
       // ALREADY DISTRIBUTED
       return wrapped.command(iCommand);
 
     final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
-    if (!dbCfg.isReplicationActive(null, dManager.getLocalNodeName()))
+    if (!dbCfg.isReplicationActive(null, localNodeName))
       // DON'T REPLICATE
       return wrapped.command(iCommand);
 
@@ -224,6 +227,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
     final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ? ((OCommandExecutorSQLDelegate) executor)
         .getDelegate() : executor;
+
+    if (!exec.isIdempotent())
+      checkNodeIsMaster(localNodeName, dbCfg);
 
     try {
       final OAbstractCommandTask task = iCommand instanceof OCommandScript ? new OScriptTask(iCommand) : new OSQLCommandTask(
@@ -269,7 +275,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.UNION);
 
-        nodes = dbCfg.getOneServerPerCluster(involvedClusters, dManager.getLocalNodeName());
+        nodes = dbCfg.getOneServerPerCluster(involvedClusters, localNodeName);
 
         if (iCommand instanceof ODistributedCommand)
           nodes.removeAll(((ODistributedCommand) iCommand).nodesToExclude());
@@ -286,10 +292,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               maxReadQuorum = Math.max(maxReadQuorum, dbCfg.getReadQuorum(cl));
           }
 
-          if (nodes.size() == 1 && nodes.iterator().next().equals(dManager.getLocalNodeName()) && maxReadQuorum <= 1)
+          if (nodes.size() == 1 && nodes.iterator().next().equals(localNodeName) && maxReadQuorum <= 1)
             executeLocally = true;
 
-        } else if (nodes.size() == 1 && nodes.iterator().next().equals(dManager.getLocalNodeName()))
+        } else if (nodes.size() == 1 && nodes.iterator().next().equals(localNodeName))
           executeLocally = true;
 
         if (executeLocally)
@@ -422,7 +428,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       if (clusterId == ORID.CLUSTER_ID_INVALID)
         throw new IllegalArgumentException("Cluster not valid");
 
+      final String localNodeName = dManager.getLocalNodeName();
+
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+
+      checkNodeIsMaster(localNodeName, dbCfg);
+
       List<String> nodes = dbCfg.getServers(clusterName, null);
 
       if (nodes.isEmpty()) {
@@ -436,7 +447,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       }
 
       String masterNode = nodes.get(0);
-      if (!masterNode.equals(dManager.getLocalNodeName())) {
+      if (!masterNode.equals(localNodeName)) {
         final OCluster cl = getClusterByName(clusterName);
         final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
         final OClass cls = db.getMetadata().getSchema().getClassByClusterId(cl.getId());
@@ -453,14 +464,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           masterNode = nodes.get(0);
         }
 
-        if (!masterNode.equals(dManager.getLocalNodeName()))
+        if (!masterNode.equals(localNodeName))
           throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '"
-              + dManager.getLocalNodeName() + "' is not the master of it, but it's '" + masterNode + "'");
+              + localNodeName + "' is not the master of it, but it's '" + masterNode + "'");
 
         OLogManager.instance().warn(
             this,
-            "Local node '" + dManager.getLocalNodeName() + "' is not the master for cluster '" + clusterName + "' (it's '"
-                + masterNode + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
+            "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName + "' (it's '" + masterNode
+                + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
       }
 
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
@@ -495,7 +506,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       });
 
       // ASYNCHRONOUSLY REPLICATE IT TO ALL THE OTHER NODES
-      nodes.remove(dManager.getLocalNodeName());
+      nodes.remove(localNodeName);
       if (!nodes.isEmpty()) {
         asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
             new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType)));
@@ -575,6 +586,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final String clusterName = getClusterNameByRID(iRecordId);
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+
+      final String localNodeName = dManager.getLocalNodeName();
+
+      checkNodeIsMaster(localNodeName, dbCfg);
+
       final List<String> nodes = dbCfg.getServers(clusterName, null);
 
       if (nodes.isEmpty()) {
@@ -599,8 +615,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         // REPLICATE IT
         final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new OUpdateRecordTask(
-            iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version, iContent, iVersion, iRecordType),
-            EXECUTION_MODE.RESPONSE);
+            iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version, iContent, iVersion,
+            iRecordType), EXECUTION_MODE.RESPONSE);
 
         if (result instanceof ONeedRetryException)
           throw (ONeedRetryException) result;
@@ -619,7 +635,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         }
       });
 
-      nodes.remove(dManager.getLocalNodeName());
+      nodes.remove(localNodeName);
       if (!nodes.isEmpty()) {
         // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
         final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null, false,
@@ -653,6 +669,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final String clusterName = getClusterNameByRID(iRecordId);
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+
+      final String localNodeName = dManager.getLocalNodeName();
+
+      checkNodeIsMaster(localNodeName, dbCfg);
+
       final List<String> nodes = dbCfg.getServers(clusterName, null);
 
       if (nodes.isEmpty()) {
@@ -690,7 +711,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         }
       });
 
-      nodes.remove(dManager.getLocalNodeName());
+      nodes.remove(localNodeName);
       if (!nodes.isEmpty())
         asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
             new ODeleteRecordTask(iRecordId, iVersion)));
@@ -803,9 +824,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       return;
     }
 
+    final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+
+    final String localNodeName = dManager.getLocalNodeName();
+
+    checkNodeIsMaster(localNodeName, dbCfg);
+
     try {
-      final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
-      if (!dbCfg.isReplicationActive(null, dManager.getLocalNodeName())) {
+      if (!dbCfg.isReplicationActive(null, localNodeName)) {
         // DON'T REPLICATE
         ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
           @Override
@@ -921,7 +947,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         } else if (result instanceof Throwable) {
           // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
           if (ODistributedServerLog.isDebugEnabled())
-            ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
                 "distributed transaction error: %s", result, result.toString());
 
           if (result instanceof OTransactionException || result instanceof ONeedRetryException)
@@ -931,7 +957,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         } else {
           // UNKNOWN RESPONSE TYPE
           if (ODistributedServerLog.isDebugEnabled())
-            ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
                 "distributed transaction error, received unknown response type: %s", result);
 
           throw new OTransactionException("Error on committing distributed transaction, received unknown response type " + result);
@@ -940,15 +966,17 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         return;
       }
 
+      // ASYNCH
       ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
         @Override
         public Object call() throws Exception {
+          ((OTransactionRealAbstract) iTx).restore();
           wrapped.commit(iTx, callback);
           return null;
         }
       });
 
-      nodes.remove(dManager.getLocalNodeName());
+      nodes.remove(localNodeName);
       if (!nodes.isEmpty()) {
         if (executionModeSynch)
           dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE);
@@ -1264,6 +1292,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     } catch (InterruptedException e) {
     }
     asynchronousOperationsQueue.clear();
+  }
+
+  protected void checkNodeIsMaster(final String localNodeName, final ODistributedConfiguration dbCfg) {
+    final ODistributedConfiguration.ROLES nodeRole = dbCfg.getServerRole(localNodeName);
+    if (nodeRole != ODistributedConfiguration.ROLES.MASTER)
+      throw new ODistributedException("Cannot execute write operation on node '" + localNodeName + "' because is non master");
   }
 
   protected void asynchronousExecution(final OAsynchDistributedOperation iOperation) {
