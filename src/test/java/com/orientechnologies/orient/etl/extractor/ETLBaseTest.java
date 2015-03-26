@@ -32,11 +32,9 @@ public abstract class ETLBaseTest extends TestCase {
   protected String[] names    = new String[] { "Jay", "Luca", "Bill", "Steve", "Jill", "Luigi", "Enrico", "Emanuele" };
   protected String[] surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles", "Ironcutter" };
 
-  protected OETLProcessor getProcessor(final String cfg) {
-    final OETLProcessor proc = new OETLProcessor();
-    proc.getFactory().registerLoader(TestLoader.class);
-    proc.parse(new ODocument().fromJSON(cfg, "noMap"), null);
-    return proc;
+  protected OETLProcessor getProcessor(final String cfgJson) {
+    ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
+    return getProcessor(cfg);
   }
 
   protected OETLProcessor getProcessor(final ODocument cfg) {
