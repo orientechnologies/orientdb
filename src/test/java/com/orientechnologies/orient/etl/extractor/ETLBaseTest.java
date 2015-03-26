@@ -30,8 +30,7 @@ import com.orientechnologies.orient.etl.OETLProcessor;
  */
 public abstract class ETLBaseTest extends TestCase {
   protected String[] names    = new String[] { "Jay", "Luca", "Bill", "Steve", "Jill", "Luigi", "Enrico", "Emanuele" };
-  protected String[] surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles",
-      "Ironcutter"           };
+  protected String[] surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles", "Ironcutter" };
 
   protected OETLProcessor getProcessor(final String cfg) {
     final OETLProcessor proc = new OETLProcessor();

@@ -35,6 +35,25 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
 
   OrientGraph graph;
 
+  @BeforeMethod
+  @Override
+  public void setUp() {
+    graph = new OrientGraph("memory:EdgeTransformerTest");
+    graph.setUseLightweightEdges(false);
+
+    graph.createVertexType("Person");
+    graph.createKeyIndex("name", Vertex.class,
+      new Parameter<String, String>("type", "UNIQUE"),
+      new Parameter<String, String>("class", "Person"));
+    graph.commit();
+  }
+
+  @Override
+  @AfterMethod
+  public void tearDown() {
+        graph.drop();
+    }
+
   @Test
   public void testCreateVertex() {
     OETLProcessor proc = getProcessor(
@@ -66,24 +85,5 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
             .execute();
 
     assertEquals(graph.countVertices("Person"), 2);
-  }
-
-  @BeforeMethod
-  @Override
-  public void setUp() {
-    graph = new OrientGraph("memory:EdgeTransformerTest");
-    graph.setUseLightweightEdges(false);
-
-    graph.createVertexType("Person");
-    graph.createKeyIndex("name", Vertex.class,
-            new Parameter<String, String>("type", "UNIQUE"),
-            new Parameter<String, String>("class", "Person"));
-    graph.commit();
-  }
-
-  @Override
-  @AfterMethod
-  public void tearDown() {
-    graph.drop();
   }
 }

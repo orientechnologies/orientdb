@@ -29,26 +29,19 @@ import com.orientechnologies.orient.etl.OETLProcessor;
 public class JsonExtractorTest extends ETLBaseTest {
 
   public void testEmptyCollection() {
-    OETLProcessor proc = getProcessor("{source: { content: { value: [] }  }, extractor : { json: {} }, loader: { test: {} } }")
-        .execute();
+    OETLProcessor proc = getProcessor("{source: { content: { value: [] }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 0);
   }
 
   public void testEmptyObject() {
-    OETLProcessor proc = getProcessor("{source: { content: { value: {} }  }, extractor : { json: {} }, loader: { test: {} } }")
-        .execute();
+    OETLProcessor proc = getProcessor("{source: { content: { value: {} }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
-
     ODocument doc = ((ODocument) ((TestLoader) proc.getLoader()).getResult().get(0));
     assertEquals(doc.fields(), 0);
   }
 
   public void testOneObject() {
-    OETLProcessor proc = getProcessor(
-        "{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {} }, loader: { test: {} } }")
-        .execute();
-    assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
-
+    OETLProcessor proc = getProcessor("{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {} }, loader: { test: {} } }").execute(); assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
     ODocument doc = ((ODocument) ((TestLoader) proc.getLoader()).getResult().get(0));
     assertEquals(doc.fields(), 2);
     assertEquals(doc.field("name"), "Jay");
@@ -71,14 +64,11 @@ public class JsonExtractorTest extends ETLBaseTest {
     int i = 0;
     for (Object o : ((TestLoader) proc.getLoader()).getResult()) {
       ODocument doc = (ODocument) o;
-
       assertEquals(doc.fields(), 3);
-
       assertEquals(doc.field("name"), names[i]);
       assertEquals(doc.field("surname"), surnames[i]);
       assertEquals(doc.field("id"), i);
-
-      ++i;
+      i++;
     }
   }
 }

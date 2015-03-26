@@ -33,6 +33,16 @@ import java.util.Iterator;
 public class FlowTransformerTest extends ETLBaseTest {
   OrientGraph graph;
 
+  @Override
+  public void setUp() {
+    graph = new OrientGraph("memory:FlowTransformerTest");
+  }
+
+  @Override
+  public void tearDown() {
+    graph.drop();
+  }
+
   public void testSkip() {
     OETLProcessor proc = getProcessor(
         "{source: { content: { value: 'name,surname\nJay,Miner\nJay,Test' } }, extractor : { row: {} },"
@@ -73,13 +83,5 @@ public class FlowTransformerTest extends ETLBaseTest {
     assertEquals(value2, "3");
 
     graph.command(new OCommandSQL("delete vertex V")).execute();
-  }
-
-  public void setUp() {
-    graph = new OrientGraph("memory:FlowTransformerTest");
-  }
-
-  public void tearDown() {
-    graph.drop();
   }
 }
