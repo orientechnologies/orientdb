@@ -27,7 +27,7 @@ import org.junit.Test;
  *
  * @author Gregor Frey
  */
-public class OVertexTransformerNGTest extends ETLBaseTest {
+public class OVertexTransformerTest extends ETLBaseTest {
   @Override
   public void setUp() {
     super.setUp();
