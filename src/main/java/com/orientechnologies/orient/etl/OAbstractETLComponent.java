@@ -84,7 +84,7 @@ public abstract class OAbstractETLComponent implements OETLComponent {
         throw new OConfigurationException("'if' expression in Transformer " + getName() + " returned '" + result
             + "' instead of boolean");
 
-      return !((Boolean) result).booleanValue();
+      return !(Boolean) result;
     }
     return false;
   }

@@ -135,9 +135,7 @@ public class OETLProcessor {
 
     ODocument configuration = null;
 
-    for (int i = 0; i < args.length; ++i) {
-      final String arg = args[i];
-
+    for (final String arg : args) {
       if (arg.charAt(0) == '-') {
         final String[] parts = arg.substring(1).split("=");
         context.setVariable(parts[0].toUpperCase(), parts[1]);
@@ -146,7 +144,6 @@ public class OETLProcessor {
           final String config = OIOUtils.readFileAsString(new File(arg));
           configuration = new ODocument().fromJSON(config, "noMap");
           cfgGlobal = configuration.field("config");
-
         } catch (IOException e) {
           throw new OConfigurationException("Error on loading config file: " + arg);
         }
