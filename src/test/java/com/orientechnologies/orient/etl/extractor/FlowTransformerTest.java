@@ -37,7 +37,7 @@ public class FlowTransformerTest extends ETLBaseTest {
     OETLProcessor proc = getProcessor(
         "{source: { content: { value: 'name,surname\nJay,Miner\nJay,Test' } }, extractor : { row: {} },"
             + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name <> \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
-            + "], loader: { orientdb: { dbURL: 'memory:FlowTransformerTest', dbType:'graph' } } }").execute();
+            + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph' } } }").execute();
 
     assertEquals(graph.countVertices("V"), 2);
 
@@ -59,7 +59,7 @@ public class FlowTransformerTest extends ETLBaseTest {
     OETLProcessor proc = getProcessor(
         "{source: { content: { value: 'name,surname\nJay,Miner\nTest,Test' } }, extractor : { row: {} },"
             + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name = \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
-            + "], loader: { orientdb: { dbURL: 'memory:FlowTransformerTest', dbType:'graph'} } }").execute();
+            + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph'} } }").execute();
 
     assertEquals(graph.countVertices("V"), 2);
 

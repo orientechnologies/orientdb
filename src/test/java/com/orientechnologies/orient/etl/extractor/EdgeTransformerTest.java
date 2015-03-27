@@ -45,7 +45,7 @@ public class EdgeTransformerTest extends ETLBaseTest {
     OETLProcessor proc = getProcessor(
         "{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { row: {} },"
             + " transformers: [{csv: {}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
-            + "], loader: { orientdb: { dbURL: 'memory:EdgeTransformerTest', dbType:'graph', useLightweightEdges:false } } }")
+            + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }")
         .execute();
 
     assertEquals(graph.countVertices("V1"), 1);

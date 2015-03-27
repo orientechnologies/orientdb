@@ -45,7 +45,7 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
     OETLProcessor proc = getProcessor(
             "{source: { content: { value: 'name,\nGregor' } }, extractor : { row: {} },"
             + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
-            + "], loader: { orientdb: { dbURL: 'memory:EdgeTransformerTest', dbType:'graph', useLightweightEdges:false } } }")
+            + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }")
             .execute();
     assertEquals(1, graph.countVertices("Person"));
   }
@@ -55,7 +55,7 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
     OETLProcessor proc = getProcessor(
             "{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { row: {} },"
             + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
-            + "], loader: { orientdb: { dbURL: 'memory:EdgeTransformerTest', dbType:'graph', useLightweightEdges:false } } }")
+            + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }")
             .execute();
     assertEquals(1, graph.countVertices("Person"));
   }
@@ -65,7 +65,7 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
     OETLProcessor proc = getProcessor(
             "{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { row: {} },"
             + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:true}},"
-            + "], loader: { orientdb: { dbURL: 'memory:EdgeTransformerTest', dbType:'graph', useLightweightEdges:false } } }")
+            + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }")
             .execute();
     assertEquals(2, graph.countVertices("Person"));
   }
