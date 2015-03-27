@@ -60,6 +60,7 @@ public class OFileSource extends OAbstractSource {
     return null;
   }
 
+  @Override
   public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
 

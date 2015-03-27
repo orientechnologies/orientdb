@@ -72,6 +72,7 @@ public class OJsonExtractor extends OAbstractSourceExtractor {
     }
   }
 
+  @Override
   public void extract(final Reader iReader) {
     super.extract(iReader);
     try {

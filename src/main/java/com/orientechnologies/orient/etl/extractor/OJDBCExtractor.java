@@ -36,9 +36,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-/**
- * Created by luca on 04/07/14.
- */
 public class OJDBCExtractor extends OAbstractExtractor {
   protected String       url;
   protected String       userName;

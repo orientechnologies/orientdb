@@ -26,19 +26,24 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class ODefaultImporterListener implements OImporterListener {
 
+  @Override
   public void onBeforeFile(final ODatabaseDocumentTx db, final OCommandContext iContext) {
   }
 
+  @Override
   public void onAfterFile(final ODatabaseDocumentTx db, final OCommandContext iContext) {
   }
 
+  @Override
   public boolean onBeforeLine(final ODatabaseDocumentTx db, final OCommandContext iContext) {
     return true;
   }
 
+  @Override
   public void onAfterLine(final ODatabaseDocumentTx db, final OCommandContext iContext) {
   }
 
+  @Override
   public void onDump(final ODatabaseDocumentTx db, final OCommandContext iContext) {
   }
 

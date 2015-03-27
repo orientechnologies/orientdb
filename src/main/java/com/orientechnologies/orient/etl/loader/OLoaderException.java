@@ -18,9 +18,6 @@
 
 package com.orientechnologies.orient.etl.loader;
 
-/**
- * Created by luca on 26/06/14.
- */
 public class OLoaderException extends RuntimeException {
 
   public OLoaderException(final Exception e) {

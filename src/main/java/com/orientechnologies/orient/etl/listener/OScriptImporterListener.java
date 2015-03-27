@@ -39,14 +39,17 @@ public class OScriptImporterListener implements OImporterListener {
     events = iEvents;
   }
 
+  @Override
   public void onBeforeFile(final ODatabaseDocumentTx db, final OCommandContext iContext) {
     executeEvent(db, "onBeforeFile", iContext);
   }
 
+  @Override
   public void onAfterFile(final ODatabaseDocumentTx db, final OCommandContext iContext) {
     executeEvent(db, "onAfterFile", iContext);
   }
 
+  @Override
   public boolean onBeforeLine(final ODatabaseDocumentTx db, final OCommandContext iContext) {
     final Object ret = executeEvent(db, "onBeforeLine", iContext);
     if (ret != null && ret instanceof Boolean)
@@ -54,10 +57,12 @@ public class OScriptImporterListener implements OImporterListener {
     return true;
   }
 
+  @Override
   public void onAfterLine(final ODatabaseDocumentTx db, final OCommandContext iContext) {
     executeEvent(db, "onAfterLine", iContext);
   }
 
+  @Override
   public void onDump(final ODatabaseDocumentTx db, final OCommandContext iContext) {
     executeEvent(db, "onDump", iContext);
   }

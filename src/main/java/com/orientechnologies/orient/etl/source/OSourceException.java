@@ -18,9 +18,6 @@
 
 package com.orientechnologies.orient.etl.source;
 
-/**
- * Created by luca on 26/06/14.
- */
 public class OSourceException extends RuntimeException {
 
   public OSourceException(final Exception e) {

@@ -18,9 +18,6 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-/**
- * Created by luca on 26/06/14.
- */
 public class OTransformException extends RuntimeException {
 
   public OTransformException(final Exception e) {
