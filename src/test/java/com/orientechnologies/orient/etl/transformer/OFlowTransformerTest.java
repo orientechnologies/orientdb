@@ -30,7 +30,7 @@ import java.util.Iterator;
  *
  * @author Luca Garulli
  */
-public class FlowTransformerTest extends ETLBaseTest {
+public class OFlowTransformerTest extends ETLBaseTest {
   @Test
   public void testSkip() {
     process("{source: { content: { value: 'name,surname\nJay,Miner\nJay,Test' } }, extractor : { row: {} },"

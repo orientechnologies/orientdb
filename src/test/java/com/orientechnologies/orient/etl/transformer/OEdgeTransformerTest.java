@@ -26,7 +26,7 @@ import org.junit.Test;
  *
  * @author Luca Garulli
  */
-public class EdgeTransformerTest extends ETLBaseTest {
+public class OEdgeTransformerTest extends ETLBaseTest {
 
   @Override
   public void setUp() {

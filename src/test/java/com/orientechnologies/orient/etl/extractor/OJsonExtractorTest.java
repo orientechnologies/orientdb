@@ -27,7 +27,7 @@ import org.junit.Test;
  *
  * @author Luca Garulli
  */
-public class JsonExtractorTest extends ETLBaseTest {
+public class OJsonExtractorTest extends ETLBaseTest {
 
   @Test
   public void testEmptyCollection() {

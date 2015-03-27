@@ -27,7 +27,7 @@ import org.junit.Test;
  *
  * @author Luca Garulli
  */
-public class CSVTransformerTest extends ETLBaseTest {
+public class OCSVTransformerTest extends ETLBaseTest {
 
   @Test
   public void testEmpty() {

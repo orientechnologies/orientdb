@@ -27,7 +27,7 @@ import org.junit.Test;
  *
  * @author Luca Garulli
  */
-public class FieldTransformerTest extends ETLBaseTest {
+public class OFieldTransformerTest extends ETLBaseTest {
 
   @Test
   public void testValue() {
