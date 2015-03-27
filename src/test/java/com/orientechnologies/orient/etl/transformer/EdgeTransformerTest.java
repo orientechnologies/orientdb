@@ -19,7 +19,6 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.etl.ETLBaseTest;
-import com.orientechnologies.orient.etl.OETLProcessor;
 import org.junit.Test;
 
 /**

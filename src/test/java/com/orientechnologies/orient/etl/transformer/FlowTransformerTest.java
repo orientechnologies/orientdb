@@ -20,7 +20,6 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.etl.ETLBaseTest;
-import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.Vertex;
 import org.junit.Test;
 

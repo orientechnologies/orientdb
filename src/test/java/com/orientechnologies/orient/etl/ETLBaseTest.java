@@ -18,10 +18,9 @@
 
 package com.orientechnologies.orient.etl;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import junit.framework.TestCase;
-
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.List;
 

@@ -20,11 +20,7 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.ETLBaseTest;
-import com.orientechnologies.orient.etl.OETLProcessor;
-import com.orientechnologies.orient.etl.TestLoader;
 import org.junit.Test;
-
-import java.util.List;
 
 /**
  * Tests ETL CSV Transformer.
