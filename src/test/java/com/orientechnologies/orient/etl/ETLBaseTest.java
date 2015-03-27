@@ -36,7 +36,7 @@ public abstract class ETLBaseTest extends TestCase {
 
   @Override
   protected void setUp() {
-    graph = new OrientGraph("memory:EtlTest");
+    graph = new OrientGraph("memory:ETLBaseTest");
     graph.setUseLightweightEdges(false);
   }
 
