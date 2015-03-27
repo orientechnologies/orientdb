@@ -468,6 +468,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             this,
             "Local node '" + dManager.getLocalNodeName() + "' is not the master for cluster '" + clusterName + "' (it's '"
                 + masterNode + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
+
+        clusterName = newClusterName;
       }
 
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
