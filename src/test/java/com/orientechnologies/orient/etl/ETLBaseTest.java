@@ -50,16 +50,13 @@ public abstract class ETLBaseTest extends TestCase {
     graph.drop();
   }
 
-  protected OETLProcessor getProcessor(final String cfgJson) {
-    ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
-    return proc.parse(cfg, null);
-  }
-
   protected List<ODocument> getResult() {
     return ((TestLoader) proc.getLoader()).getResult();
   }
 
   protected void process(String cfgJson) {
-    getProcessor(cfgJson).execute();
+    ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
+    proc.parse(cfg, null);
+    proc.execute();
   }
 }
