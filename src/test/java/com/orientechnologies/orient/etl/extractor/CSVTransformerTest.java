@@ -39,10 +39,6 @@ public class CSVTransformerTest extends ETLBaseTest {
     assertEquals(0, getResult().size());
   }
 
-  protected List<ODocument> getResult() {
-    return ((TestLoader) proc.getLoader()).getResult();
-  }
-
   @Test
   public void testOneObject() {
     getProcessor("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }], loader: { test: {} } }").execute();

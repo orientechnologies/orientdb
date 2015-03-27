@@ -23,6 +23,8 @@ import junit.framework.TestCase;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.List;
+
 /**
  * Tests ETL JSON Extractor.
  *
@@ -51,5 +53,9 @@ public abstract class ETLBaseTest extends TestCase {
   protected OETLProcessor getProcessor(final String cfgJson) {
     ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
     return proc.parse(cfg, null);
+  }
+
+  protected List<ODocument> getResult() {
+    return ((TestLoader) proc.getLoader()).getResult();
   }
 }

@@ -34,22 +34,22 @@ public class JsonExtractorTest extends ETLBaseTest {
   @Test
   public void testEmptyCollection() {
     getProcessor("{source: { content: { value: [] }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
-    assertEquals(0, ((TestLoader) proc.getLoader()).getResult().size());
+    assertEquals(0, getResult().size());
   }
 
   @Test
   public void testEmptyObject() {
     getProcessor("{source: { content: { value: {} }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
-    assertEquals(1, ((TestLoader) proc.getLoader()).getResult().size());
-    ODocument doc = ((TestLoader) proc.getLoader()).getResult().get(0);
+    assertEquals(1, getResult().size());
+    ODocument doc = getResult().get(0);
     assertEquals(0, doc.fields());
   }
 
   @Test
   public void testOneObject() {
     getProcessor("{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {} }, loader: { test: {} } }").execute();
-    assertEquals(1, ((TestLoader) proc.getLoader()).getResult().size());
-    ODocument doc = ((TestLoader) proc.getLoader()).getResult().get(0);
+    assertEquals(1, getResult().size());
+    ODocument doc = getResult().get(0);
     assertEquals(2, doc.fields());
     assertEquals("Jay", doc.field("name"));
     assertEquals("Miner", doc.field("surname"));
@@ -66,10 +66,10 @@ public class JsonExtractorTest extends ETLBaseTest {
 
     getProcessor("{source: { content: { value: [" + content + "] } }, extractor : { json: {} }, loader: { test: {} } }").execute();
 
-    assertEquals(((TestLoader) proc.getLoader()).getResult().size(), names.length);
+    assertEquals(getResult().size(), names.length);
 
     int i = 0;
-    for (ODocument doc : ((TestLoader) proc.getLoader()).getResult()) {
+    for (ODocument doc : getResult()) {
       assertEquals(3, doc.fields());
       assertEquals(names[i], doc.field("name"));
       assertEquals(surnames[i], doc.field("surname"));
