@@ -93,14 +93,15 @@ public class OTxTask extends OAbstractReplicatedTask {
         if (task instanceof OAbstractRecordReplicatedTask) {
           final ORecord record = ((OAbstractRecordReplicatedTask) task).getRecord();
 
-          for (String f : ((ODocument) record).fieldNames()) {
-            final Object fValue = ((ODocument) record).field(f);
-            if (fValue instanceof ORecordLazyMultiValue)
-              // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
-              ((ORecordLazyMultiValue) fValue).convertLinks2Records();
-            else if (fValue instanceof ORecordId)
-              ((ODocument) record).field(f, ((ORecordId) fValue).getRecord());
-          }
+          if (record != null)
+            for (String f : ((ODocument) record).fieldNames()) {
+              final Object fValue = ((ODocument) record).field(f);
+              if (fValue instanceof ORecordLazyMultiValue)
+                // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
+                ((ORecordLazyMultiValue) fValue).convertLinks2Records();
+              else if (fValue instanceof ORecordId)
+                ((ODocument) record).field(f, ((ORecordId) fValue).getRecord());
+            }
         }
       }
 
