@@ -32,18 +32,6 @@ import java.util.Iterator;
  * @author Luca Garulli
  */
 public class FlowTransformerTest extends ETLBaseTest {
-  OrientGraph graph;
-
-  @Override
-  public void setUp() {
-    graph = new OrientGraph("memory:FlowTransformerTest");
-  }
-
-  @Override
-  public void tearDown() {
-    graph.drop();
-  }
-
   @Test
   public void testSkip() {
     OETLProcessor proc = getProcessor(

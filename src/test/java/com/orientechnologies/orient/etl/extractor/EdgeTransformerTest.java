@@ -28,24 +28,16 @@ import org.junit.Test;
  * @author Luca Garulli
  */
 public class EdgeTransformerTest extends ETLBaseTest {
-  OrientGraph graph;
 
   @Override
   public void setUp() {
-    graph = new OrientGraph("memory:EdgeTransformerTest");
-    graph.setUseLightweightEdges(false);
-
+    super.setUp();
     graph.createVertexType("V1");
     graph.createVertexType("V2");
     graph.createEdgeType("Friend");
 
     graph.addVertex("class:V2").setProperty("name", "Luca");
     graph.commit();
-  }
-
-  @Override
-  public void tearDown() {
-    graph.drop();
   }
 
   @Test

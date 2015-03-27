@@ -30,24 +30,15 @@ import org.junit.Test;
  * @author Gregor Frey
  */
 public class OVertexTransformerNGTest extends ETLBaseTest {
-  OrientGraph graph;
-
   @Override
   public void setUp() {
-    graph = new OrientGraph("memory:EdgeTransformerTest");
-    graph.setUseLightweightEdges(false);
-
+    super.setUp();
     graph.createVertexType("Person");
     graph.createKeyIndex("name", Vertex.class,
       new Parameter<String, String>("type", "UNIQUE"),
       new Parameter<String, String>("class", "Person"));
     graph.commit();
   }
-
-  @Override
-  public void tearDown() {
-        graph.drop();
-    }
 
   @Test
   public void testCreateVertex() {
