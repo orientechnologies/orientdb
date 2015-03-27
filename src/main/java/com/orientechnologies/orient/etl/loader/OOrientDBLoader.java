@@ -106,8 +106,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
           final OrientElement element = (OrientElement) input;
 
           final OClass cls;
-          final String clsName = className != null ? className : (element instanceof OrientVertex ? ((OrientVertex) element)
-              .getLabel() : ((OrientEdge) element).getLabel());
+          final String clsName = className != null ? className : (element instanceof OrientVertex ? element
+              .getLabel() : element.getLabel());
           if (clsName != null)
             cls = getOrCreateClass(clsName, element.getBaseClassName());
           else
