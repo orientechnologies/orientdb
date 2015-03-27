@@ -24,17 +24,17 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface OImporterListener {
-  public void onBeforeFile(ODatabaseDocumentTx db, OCommandContext iContext);
+  void onBeforeFile(ODatabaseDocumentTx db, OCommandContext iContext);
 
-  public void onAfterFile(ODatabaseDocumentTx db, OCommandContext iContext);
+  void onAfterFile(ODatabaseDocumentTx db, OCommandContext iContext);
 
-  public boolean onBeforeLine(ODatabaseDocumentTx db, OCommandContext iContext);
+  boolean onBeforeLine(ODatabaseDocumentTx db, OCommandContext iContext);
 
-  public void onAfterLine(ODatabaseDocumentTx db, OCommandContext iContext);
+  void onAfterLine(ODatabaseDocumentTx db, OCommandContext iContext);
 
-  public void onDump(ODatabaseDocumentTx db, OCommandContext iContext);
+  void onDump(ODatabaseDocumentTx db, OCommandContext iContext);
 
-  public void onJoinNotFound(ODatabaseDocumentTx db, OCommandContext iContext, final OIndex<?> iIndex, final Object iKey);
+  void onJoinNotFound(ODatabaseDocumentTx db, OCommandContext iContext, final OIndex<?> iIndex, final Object iKey);
 
-  public void validate(ODatabaseDocumentTx db, OCommandContext iContext, ODocument iRecord);
+  void validate(ODatabaseDocumentTx db, OCommandContext iContext, ODocument iRecord);
 }

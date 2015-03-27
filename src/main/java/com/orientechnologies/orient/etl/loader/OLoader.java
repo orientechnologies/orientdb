@@ -25,11 +25,11 @@ import com.orientechnologies.orient.etl.OETLPipelineComponent;
  * ETL Loader.
  */
 public interface OLoader extends OETLPipelineComponent {
-  public void load(final Object input, OCommandContext context);
+  void load(final Object input, OCommandContext context);
 
-  public long getProgress();
+  long getProgress();
 
-  public String getUnit();
+  String getUnit();
 
-  public void rollback();
+  void rollback();
 }

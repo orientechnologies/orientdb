@@ -28,11 +28,11 @@ import com.orientechnologies.orient.etl.OExtractedItem;
  * ETL Extractor.
  */
 public interface OExtractor extends OETLComponent, Iterator<OExtractedItem> {
-  public void extract(final Reader iReader);
+  void extract(final Reader iReader);
 
-  public long getProgress();
+  long getProgress();
 
-  public long getTotal();
+  long getTotal();
 
-  public String getUnit();
+  String getUnit();
 }
