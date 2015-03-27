@@ -24,6 +24,8 @@ import com.orientechnologies.orient.etl.OETLProcessor;
 import com.orientechnologies.orient.etl.TestLoader;
 import org.junit.Test;
 
+import java.util.List;
+
 /**
  * Tests ETL CSV Transformer.
  *
@@ -34,14 +36,18 @@ public class CSVTransformerTest extends ETLBaseTest {
   @Test
   public void testEmpty() {
     getProcessor("{source: { content: { value: '' }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
-    assertEquals(0, ((TestLoader) proc.getLoader()).getResult().size());
+    assertEquals(0, getResult().size());
+  }
+
+  protected List<ODocument> getResult() {
+    return ((TestLoader) proc.getLoader()).getResult();
   }
 
   @Test
   public void testOneObject() {
     getProcessor("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }], loader: { test: {} } }").execute();
-    assertEquals(1, ((TestLoader) proc.getLoader()).getResult().size());
-    ODocument doc = ((TestLoader) proc.getLoader()).getResult().get(0);
+    assertEquals(1, getResult().size());
+    ODocument doc = getResult().get(0);
     assertEquals(2, doc.fields());
     assertEquals("Jay", doc.field("name"));
     assertEquals("Miner", doc.field("surname"));
@@ -54,10 +60,10 @@ public class CSVTransformerTest extends ETLBaseTest {
       content += "\n" + names[i] + "," + surnames[i] + "," + i;
     getProcessor("{source: { content: { value: '" + content + "' } }, extractor : { row: {} }, transformers: [{ csv: {} }], loader: { test: {} } }").execute();
 
-    assertEquals(((TestLoader) proc.getLoader()).getResult().size(), names.length);
+    assertEquals(getResult().size(), names.length);
 
     int i = 0;
-    for (ODocument doc : ((TestLoader) proc.getLoader()).getResult()) {
+    for (ODocument doc : getResult()) {
       assertEquals(3, doc.fields());
       assertEquals(names[i], doc.field("name"));
       assertEquals(surnames[i], doc.field("surname"));
