@@ -39,17 +39,17 @@ public class FlowTransformerTest extends ETLBaseTest {
             + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name <> \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
             + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph' } } }").execute();
 
-    assertEquals(graph.countVertices("V"), 2);
+    assertEquals(2, graph.countVertices("V"));
 
     Iterator<Vertex> it = graph.getVertices().iterator();
 
     Vertex v1 = it.next();
     Object value1 = v1.getProperty("name");
-    assertEquals(value1, "3");
+    assertEquals("3", value1);
 
     Vertex v2 = it.next();
     Object value2 = v2.getProperty("name");
-    assertEquals(value2, "3");
+    assertEquals("3", value2);
 
     graph.command(new OCommandSQL("delete vertex V")).execute();
   }
@@ -61,17 +61,17 @@ public class FlowTransformerTest extends ETLBaseTest {
             + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name = \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
             + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph'} } }").execute();
 
-    assertEquals(graph.countVertices("V"), 2);
+    assertEquals(2, graph.countVertices("V"));
 
     Iterator<Vertex> it = graph.getVertices().iterator();
 
     Vertex v1 = it.next();
     Object value1 = v1.getProperty("name");
-    assertEquals(value1, "Jay");
+    assertEquals("Jay", value1);
 
     Vertex v2 = it.next();
     Object value2 = v2.getProperty("name");
-    assertEquals(value2, "3");
+    assertEquals("3", value2);
 
     graph.command(new OCommandSQL("delete vertex V")).execute();
   }

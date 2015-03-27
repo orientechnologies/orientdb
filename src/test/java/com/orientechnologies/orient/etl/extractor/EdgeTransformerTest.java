@@ -48,8 +48,8 @@ public class EdgeTransformerTest extends ETLBaseTest {
             + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }")
         .execute();
 
-    assertEquals(graph.countVertices("V1"), 1);
-    assertEquals(graph.countVertices("V2"), 1);
-    assertEquals(graph.countEdges("Friend"), 1);
+    assertEquals(1, graph.countVertices("V1"));
+    assertEquals(1, graph.countVertices("V2"));
+    assertEquals(1, graph.countEdges("Friend"));
   }
 }

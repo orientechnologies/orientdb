@@ -34,40 +34,40 @@ public class FieldTransformerTest extends ETLBaseTest {
   @Test
   public void testValue() {
     OETLProcessor proc = getProcessor("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field: {fieldName:'test', value: 33}}], loader: { test: {} } }").execute();
-    assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
+    assertEquals(1, ((TestLoader) proc.getLoader()).getResult().size());
 
     ODocument doc = ((TestLoader) proc.getLoader()).getResult().get(0);
-    assertEquals(doc.fields(), 3);
-    assertEquals(doc.field("name"), "Jay");
-    assertEquals(doc.field("surname"), "Miner");
-    assertEquals(doc.field("test"), 33);
+    assertEquals(3, doc.fields());
+    assertEquals("Jay", doc.field("name"));
+    assertEquals("Miner", doc.field("surname"));
+    assertEquals(33, doc.field("test"));
   }
 
   @Test
   public void testExpression() {
     OETLProcessor proc = getProcessor("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field: {fieldName:'test', expression: 'surname'}}], loader: { test: {} } }").execute();
-    assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
+    assertEquals(1, ((TestLoader) proc.getLoader()).getResult().size());
 
     ODocument doc = ((TestLoader) proc.getLoader()).getResult().get(0);
-    assertEquals(doc.fields(), 3);
-    assertEquals(doc.field("name"), "Jay");
-    assertEquals(doc.field("surname"), "Miner");
-    assertEquals(doc.field("test"), "Miner");
+    assertEquals(3, doc.fields());
+    assertEquals("Jay", doc.field("name"));
+    assertEquals("Miner", doc.field("surname"));
+    assertEquals("Miner", doc.field("test"));
   }
 
   @Test
   public void testRemove() {
     OETLProcessor proc = getProcessor("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field: {fieldName:'surname', operation: 'remove'}}], loader: { test: {} } }").execute();
-    assertEquals(((TestLoader) proc.getLoader()).getResult().size(), 1);
+    assertEquals(1, ((TestLoader) proc.getLoader()).getResult().size());
 
     ODocument doc = ((TestLoader) proc.getLoader()).getResult().get(0);
-    assertEquals(doc.fields(), 1);
-    assertEquals(doc.field("name"), "Jay");
+    assertEquals(1, doc.fields());
+    assertEquals("Jay", doc.field("name"));
   }
 
   @Test
   public void testSave() {
     OETLProcessor proc = getProcessor("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field:{fieldName:'@class', value:'Test'}}, {field:{ fieldName:'test', value: 33, save: true}}], loader: { orientdb: { dbURL: 'memory:ETLBaseTest' } } }").execute();
-    assertEquals(graph.countVertices("Test"), 1);
+    assertEquals(1, graph.countVertices("Test"));
   }
 }
