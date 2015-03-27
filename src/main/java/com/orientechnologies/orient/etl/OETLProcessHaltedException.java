@@ -20,9 +20,6 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.exception.OException;
 
-/**
- * Created by luca on 30/06/14.
- */
 public class OETLProcessHaltedException extends OException {
   public OETLProcessHaltedException(Throwable iNested) {
     super(iNested);

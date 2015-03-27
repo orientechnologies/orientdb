@@ -60,6 +60,7 @@ public class OFileSource extends OAbstractSource {
     return null;
   }
 
+  @Override
   public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
 
@@ -163,8 +164,6 @@ public class OFileSource extends OAbstractSource {
       }
 
     log(OETLProcessor.LOG_LEVELS.DEBUG, "Reading from file " + path);
-
-    final long startTime = System.currentTimeMillis();
   }
 
   public boolean isClosed() {

@@ -16,12 +16,13 @@
  *
  */
 
-package com.orientechnologies.orient.etl.extractor;
-
-import junit.framework.TestCase;
+package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OETLProcessor;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import junit.framework.TestCase;
+
+import java.util.List;
 
 /**
  * Tests ETL JSON Extractor.
@@ -30,20 +31,31 @@ import com.orientechnologies.orient.etl.OETLProcessor;
  */
 public abstract class ETLBaseTest extends TestCase {
   protected String[] names    = new String[] { "Jay", "Luca", "Bill", "Steve", "Jill", "Luigi", "Enrico", "Emanuele" };
-  protected String[] surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles",
-      "Ironcutter"           };
+  protected String[] surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles", "Ironcutter" };
 
-  protected OETLProcessor getProcessor(final String cfg) {
-    final OETLProcessor proc = new OETLProcessor();
+  protected OrientGraph graph;
+  protected OETLProcessor proc;
+
+  @Override
+  protected void setUp() {
+    graph = new OrientGraph("memory:ETLBaseTest");
+    graph.setUseLightweightEdges(false);
+    proc = new OETLProcessor();
     proc.getFactory().registerLoader(TestLoader.class);
-    proc.parse(new ODocument().fromJSON(cfg, "noMap"), null);
-    return proc;
   }
 
-  protected OETLProcessor getProcessor(final ODocument cfg) {
-    final OETLProcessor proc = new OETLProcessor();
-    proc.getFactory().registerLoader(TestLoader.class);
+  @Override
+  public void tearDown() {
+    graph.drop();
+  }
+
+  protected List<ODocument> getResult() {
+    return ((TestLoader) proc.getLoader()).getResult();
+  }
+
+  protected void process(String cfgJson) {
+    ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
     proc.parse(cfg, null);
-    return proc;
+    proc.execute();
   }
 }

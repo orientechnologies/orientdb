@@ -74,6 +74,7 @@ public class ORowExtractor extends OAbstractSourceExtractor {
     bReader = new BufferedReader(reader);
   }
 
+  @Override
   public void end() {
     if (bReader != null)
       try {

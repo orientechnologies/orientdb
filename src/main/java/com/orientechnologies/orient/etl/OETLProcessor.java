@@ -135,9 +135,7 @@ public class OETLProcessor {
 
     ODocument configuration = null;
 
-    for (int i = 0; i < args.length; ++i) {
-      final String arg = args[i];
-
+    for (final String arg : args) {
       if (arg.charAt(0) == '-') {
         final String[] parts = arg.substring(1).split("=");
         context.setVariable(parts[0].toUpperCase(), parts[1]);
@@ -146,7 +144,6 @@ public class OETLProcessor {
           final String config = OIOUtils.readFileAsString(new File(arg));
           configuration = new ODocument().fromJSON(config, "noMap");
           cfgGlobal = configuration.field("config");
-
         } catch (IOException e) {
           throw new OConfigurationException("Error on loading config file: " + arg);
         }
@@ -170,15 +167,15 @@ public class OETLProcessor {
   }
 
   protected static Collection<ODocument> parseTransformers(final String value) {
-    final ArrayList<ODocument> cfgTransformers = new ArrayList<ODocument>();
+    final Collection<ODocument> cfgTransformers = new ArrayList<ODocument>();
     if (!value.isEmpty()) {
       if (value.charAt(0) == '{') {
-        cfgTransformers.add((ODocument) new ODocument().fromJSON(value, "noMap"));
+        cfgTransformers.add(new ODocument().fromJSON(value, "noMap"));
       } else if (value.charAt(0) == '[') {
-        final ArrayList<String> items = new ArrayList<String>();
+        final List<String> items = new ArrayList<String>();
         OStringSerializerHelper.getCollection(value, 0, items);
         for (String item : items)
-          cfgTransformers.add((ODocument) new ODocument().fromJSON(item, "noMap"));
+          cfgTransformers.add(new ODocument().fromJSON(item, "noMap"));
       }
     }
     return cfgTransformers;
@@ -420,7 +417,7 @@ public class OETLProcessor {
         }
       };
 
-      Orient.instance().getTimer().schedule(dumpTask, dumpEveryMs, dumpEveryMs);
+      Orient.instance().scheduleTask(dumpTask, dumpEveryMs, dumpEveryMs);
 
       startTime = System.currentTimeMillis();
     }
@@ -609,7 +606,7 @@ public class OETLProcessor {
 
     final Object parallelSetting = context.getVariable("parallel");
     if (parallelSetting != null)
-      parallel = ((Boolean) parallelSetting).booleanValue();
+      parallel = (Boolean) parallelSetting;
 
     if (parallel) {
       final int cores = Runtime.getRuntime().availableProcessors();

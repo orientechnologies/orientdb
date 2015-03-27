@@ -26,7 +26,7 @@ import java.io.Reader;
  * ETL Source interface.
  */
 public interface OSource extends OETLComponent {
-  public String getUnit();
+  String getUnit();
 
-  public Reader read();
+  Reader read();
 }

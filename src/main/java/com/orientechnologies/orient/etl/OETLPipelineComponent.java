@@ -22,5 +22,5 @@ package com.orientechnologies.orient.etl;
  * ETL basic component.
  */
 public interface OETLPipelineComponent extends OETLComponent {
-  public void setPipeline(OETLPipeline iPipeline);
+  void setPipeline(OETLPipeline iPipeline);
 }

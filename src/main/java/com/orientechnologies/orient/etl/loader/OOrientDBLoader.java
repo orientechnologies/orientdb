@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -70,6 +69,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   public OOrientDBLoader() {
   }
 
+  @Override
   public void load(final Object input, OCommandContext context) {
     if (input == null)
       return;
@@ -106,8 +106,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
           final OrientElement element = (OrientElement) input;
 
           final OClass cls;
-          final String clsName = className != null ? className : (element instanceof OrientVertex ? ((OrientVertex) element)
-              .getLabel() : ((OrientEdge) element).getLabel());
+          final String clsName = className != null ? className : (element instanceof OrientVertex ? element
+              .getLabel() : element.getLabel());
           if (clsName != null)
             cls = getOrCreateClass(clsName, element.getBaseClassName());
           else
@@ -315,6 +315,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     return "orientdb";
   }
 
+  @Override
   public String getUnit() {
     return dbType == DB_TYPE.DOCUMENT ? "documents" : "vertices";
   }

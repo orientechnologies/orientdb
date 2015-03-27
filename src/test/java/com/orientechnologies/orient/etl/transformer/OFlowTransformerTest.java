@@ -16,12 +16,12 @@
  *
  */
 
-package com.orientechnologies.orient.etl.extractor;
+package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.etl.OETLProcessor;
+import com.orientechnologies.orient.etl.ETLBaseTest;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import org.junit.Test;
 
 import java.util.Iterator;
 
@@ -30,56 +30,46 @@ import java.util.Iterator;
  *
  * @author Luca Garulli
  */
-public class FlowTransformerTest extends ETLBaseTest {
-  OrientGraph graph;
-
+public class OFlowTransformerTest extends ETLBaseTest {
+  @Test
   public void testSkip() {
-    OETLProcessor proc = getProcessor(
-        "{source: { content: { value: 'name,surname\nJay,Miner\nJay,Test' } }, extractor : { row: {} },"
-            + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name <> \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
-            + "], loader: { orientdb: { dbURL: 'memory:FlowTransformerTest', dbType:'graph' } } }").execute();
+    process("{source: { content: { value: 'name,surname\nJay,Miner\nJay,Test' } }, extractor : { row: {} },"
+        + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name <> \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
+        + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph' } } }");
 
-    assertEquals(graph.countVertices("V"), 2);
+    assertEquals(2, graph.countVertices("V"));
 
     Iterator<Vertex> it = graph.getVertices().iterator();
 
     Vertex v1 = it.next();
     Object value1 = v1.getProperty("name");
-    assertEquals(value1, "3");
+    assertEquals("3", value1);
 
     Vertex v2 = it.next();
     Object value2 = v2.getProperty("name");
-    assertEquals(value2, "3");
+    assertEquals("3", value2);
 
     graph.command(new OCommandSQL("delete vertex V")).execute();
   }
 
+  @Test
   public void testSkipNever() {
-    OETLProcessor proc = getProcessor(
-        "{source: { content: { value: 'name,surname\nJay,Miner\nTest,Test' } }, extractor : { row: {} },"
-            + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name = \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
-            + "], loader: { orientdb: { dbURL: 'memory:FlowTransformerTest', dbType:'graph'} } }").execute();
+    process("{source: { content: { value: 'name,surname\nJay,Miner\nTest,Test' } }, extractor : { row: {} },"
+        + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name = \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
+        + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph'} } }");
 
-    assertEquals(graph.countVertices("V"), 2);
+    assertEquals(2, graph.countVertices("V"));
 
     Iterator<Vertex> it = graph.getVertices().iterator();
 
     Vertex v1 = it.next();
     Object value1 = v1.getProperty("name");
-    assertEquals(value1, "Jay");
+    assertEquals("Jay", value1);
 
     Vertex v2 = it.next();
     Object value2 = v2.getProperty("name");
-    assertEquals(value2, "3");
+    assertEquals("3", value2);
 
     graph.command(new OCommandSQL("delete vertex V")).execute();
-  }
-
-  public void setUp() {
-    graph = new OrientGraph("memory:FlowTransformerTest");
-  }
-
-  public void tearDown() {
-    graph.drop();
   }
 }

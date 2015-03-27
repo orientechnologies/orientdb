@@ -18,9 +18,6 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
-/**
- * Created by luca on 26/06/14.
- */
 public class OExtractorException extends RuntimeException {
 
   public OExtractorException(final Exception e) {

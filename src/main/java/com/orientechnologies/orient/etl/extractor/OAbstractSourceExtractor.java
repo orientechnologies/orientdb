@@ -44,6 +44,7 @@ public abstract class OAbstractSourceExtractor extends OAbstractExtractor {
     }
   }
 
+  @Override
   public void end() {
     if (reader != null)
       try {

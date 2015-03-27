@@ -94,7 +94,7 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
       result = new ArrayList<Object>();
       for (Object o : OMultiValue.getMultiValueIterable(joinRuntimeValue)) {
         final Object r = lookup(o, true);
-        ((List<Object>) result).add(r);
+        ((List) result).add(r);
       }
     } else
       result = lookup(joinRuntimeValue, true);

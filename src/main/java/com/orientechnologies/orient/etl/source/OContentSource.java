@@ -36,11 +36,10 @@ public class OContentSource extends OAbstractSource {
   @Override
   public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
     final Object value = iConfiguration.field("value");
-
     if (value != null) {
       String stringContent;
       if (value instanceof ODocument)
-        stringContent = ((ODocument) value).toJSON(null).toString();
+        stringContent = ((ODocument) value).toJSON(null);
       else if (OMultiValue.isMultiValue(value)) {
         stringContent = "[";
         int i = 0;
@@ -50,7 +49,7 @@ public class OContentSource extends OAbstractSource {
               stringContent += ",";
 
             if (o instanceof ODocument)
-              stringContent += ((ODocument) o).toJSON(null).toString();
+              stringContent += ((ODocument) o).toJSON(null);
             else
               stringContent += o.toString();
             ++i;
