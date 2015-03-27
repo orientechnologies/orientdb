@@ -86,6 +86,11 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     super(iConcurrent, iTimeout, ignoreThreadInterruption);
   }
 
+  @Override
+  protected void acquireSharedLock() {
+    super.acquireSharedLock();
+  }
+
   protected void init(final OAbstractPaginatedStorage storage) {
     this.storage = storage;
     this.atomicOperationsManager = storage.getAtomicOperationsManager();

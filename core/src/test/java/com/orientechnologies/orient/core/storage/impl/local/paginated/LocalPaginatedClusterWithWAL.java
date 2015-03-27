@@ -30,6 +30,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
  */
 @Test
 public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
+  {
+    OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(1000000000);
+  }
   private ODiskWriteAheadLog     writeAheadLog;
 
   private OPaginatedCluster      testCluster;

@@ -22,8 +22,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
@@ -69,6 +67,10 @@ public class OAtomicOperationsManager {
     OAtomicOperation operation = currentOperation.get();
     if (operation != null) {
       operation.incrementCounter();
+
+      if (durableComponent != null)
+        acquireExclusiveLockTillOperationComplete(durableComponent);
+
       return operation;
     }
 
@@ -80,6 +82,9 @@ public class OAtomicOperationsManager {
 
     if (storage.getStorageTransaction() == null)
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
+
+    if (durableComponent != null)
+      acquireExclusiveLockTillOperationComplete(durableComponent);
 
     return operation;
   }
@@ -118,7 +123,7 @@ public class OAtomicOperationsManager {
     return operation;
   }
 
-  public void lockTillOperationComplete(Object lockObject) {
+  private void acquireExclusiveLockTillOperationComplete(ODurableComponent durableComponent) {
     final OAtomicOperation operation = currentOperation.get();
     if (operation == null)
       return;
@@ -126,7 +131,21 @@ public class OAtomicOperationsManager {
     if (operation.containsInLockedObjects(lockObject))
       return;
 
-    lockManager.acquireLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
-    operation.addLockedObject(lockObject);
+    lockManager.acquireLock(this, durableComponent, OLockManager.LOCK.EXCLUSIVE);
+    operation.addLockedObject(durableComponent);
+  }
+
+  public void acquireReadLock(ODurableComponent durableComponent) {
+    if (writeAheadLog == null)
+      return;
+
+    lockManager.acquireLock(this, durableComponent, OLockManager.LOCK.SHARED);
+  }
+
+  public void releaseReadLock(ODurableComponent durableComponent) {
+    if (writeAheadLog == null)
+      return;
+
+    lockManager.releaseLock(this, durableComponent, OLockManager.LOCK.SHARED);
   }
 }

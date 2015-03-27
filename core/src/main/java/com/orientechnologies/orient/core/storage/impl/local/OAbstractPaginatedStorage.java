@@ -1978,7 +1978,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private void commitEntry(final OTransaction clientTx, final ORecordOperation txEntry) throws IOException {
 
     final ORecord rec = txEntry.getRecord();
-    if (txEntry.type != ORecordOperation.DELETED && !rec.isDirty() && rec.getIdentity().getClusterId() > -1)
+    if (txEntry.type != ORecordOperation.DELETED && !rec.isDirty())
       return;
 
     ORecordId rid = (ORecordId) rec.getIdentity();
@@ -2039,7 +2039,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           rec.getRecordVersion().copyFrom(
               updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, rec.getRecordVersion(),
                   ORecordInternal.getRecordType(rec), -1, null).getResult());
-          rid.clusterId = cluster.getId();
         }
         break;
       }
@@ -2282,110 +2281,47 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean(false);
 
     long recordsProcessed = 0;
-    int reportInterval = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
-    int batchSize = OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getValueAsInteger();
 
-    Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits = new HashMap<OOperationUnitId, List<OLogSequenceNumber>>();
-    ReferenceQueue<OWALRecord> batchQueue = new ReferenceQueue<OWALRecord>();
-
-    List<SoftReference<OWALRecord>> batch = new ArrayList<SoftReference<OWALRecord>>();
-
-    OLogSequenceNumber startLsn = lsn;
+    final int reportInterval = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
+    final Map<OOperationUnitId, List<OWALRecord>> operationUnits = new HashMap<OOperationUnitId, List<OWALRecord>>();
 
     try {
-      restoreLoop: while (lsn != null) {
+      while (lsn != null) {
         OWALRecord walRecord = writeAheadLog.read(lsn);
 
-        batch.add(new SoftReference<OWALRecord>(walRecord, batchQueue));
-        if (batchQueue.poll() != null) {
-          lsn = startLsn;
+        if (walRecord instanceof OAtomicUnitEndRecord) {
+          OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
+          List<OWALRecord> atomicUnit = operationUnits.remove(atomicUnitEndRecord.getOperationUnitId());
+          atomicUnit.add(walRecord);
 
-          batchSize = batchSize / 2;
+          restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate);
+        } else if (walRecord instanceof OAtomicUnitStartRecord) {
+          List<OWALRecord> operationList = new ArrayList<OWALRecord>();
 
-          batch = new ArrayList<SoftReference<OWALRecord>>(batchSize);
-          batchQueue = new ReferenceQueue<OWALRecord>();
-          System.gc();
+          assert operationUnits.containsKey(((OAtomicUnitStartRecord) walRecord).getOperationUnitId());
 
-          OLogManager.instance().error(
-              this,
-              "You have not enough amount of heap to operate with restore buffer of size %d, size of buffer will be decreased too %d, "
-                  + "during next start of JVM please set this parameter %s to %d to avoid this message.", batchSize * 2, batchSize,
-              OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(), batchSize);
+          operationUnits.put(((OAtomicUnitStartRecord) walRecord).getOperationUnitId(), operationList);
+          operationList.add(walRecord);
+        } else if (walRecord instanceof OOperationUnitRecord) {
+          OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
 
-          continue restoreLoop;
-        }
-
-        if (batch.size() >= batchSize) {
-          OLogManager.instance().info(this,
-              "WAL size exceed configured heap memory for recovery (%s=%d). Fetching WAL records in batch",
-              OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(), batchSize);
-
-          final List<OWALRecord> hardBatch = new ArrayList<OWALRecord>(batch.size());
-          for (SoftReference<OWALRecord> reference : batch) {
-            final OWALRecord record = reference.get();
-
-            if (batchQueue.poll() != null || record == null) {
-              lsn = startLsn;
-
-              batchSize = batchSize / 2;
-
-              batch = new ArrayList<SoftReference<OWALRecord>>(batchSize);
-              batchQueue = new ReferenceQueue<OWALRecord>();
-
-              System.gc();
-
-              OLogManager.instance().error(
-                  this,
-                  "You have not enough amount of heap to operate with restore buffer of size %d, size of buffer will be decreased too %d, "
-                      + "during next start of JVM please set this parameter %s to %d to avoid this message.", batchSize * 2,
-                  batchSize, OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(), batchSize);
-
-              continue restoreLoop;
-            } else {
-              hardBatch.add(record);
-            }
+          List<OWALRecord> operationList = operationUnits.get(operationUnitRecord.getOperationUnitId());
+          operationList.add(operationUnitRecord);
+        } else if (walRecord instanceof ONonTxOperationPerformedWALRecord) {
+          if (!wereNonTxOperationsPerformedInPreviousOpen) {
+            OLogManager.instance().warn(this, "Non tx operation was used during data modification we will need index rebuild.");
+            wereNonTxOperationsPerformedInPreviousOpen = true;
           }
+        } else
+          OLogManager.instance().warn(this, "Record %s will be skipped during data restore.", walRecord);
 
-          recordsProcessed = restoreWALBatch(hardBatch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
-          hardBatch.clear();
+        recordsProcessed++;
 
-          batch = new ArrayList<SoftReference<OWALRecord>>();
-          batchQueue = new ReferenceQueue<OWALRecord>();
-        }
+        if (reportInterval > 0 && recordsProcessed % reportInterval == 0)
+          OLogManager.instance().info(this, "%d operations were processed, current LSN is %s last LSN is %s", recordsProcessed,
+              lsn, writeAheadLog.end());
 
         lsn = writeAheadLog.next(lsn);
-        if (lsn == null) {
-          final List<OWALRecord> hardBatch = new ArrayList<OWALRecord>();
-          for (SoftReference<OWALRecord> reference : batch) {
-            final OWALRecord record = reference.get();
-
-            if (batchQueue.poll() != null || record == null) {
-              lsn = startLsn;
-
-              batchSize = batchSize / 2;
-
-              batch = new ArrayList<SoftReference<OWALRecord>>(batchSize);
-              batchQueue = new ReferenceQueue<OWALRecord>();
-              System.gc();
-
-              OLogManager.instance().error(
-                  this,
-                  "You have not enough amount of heap to operate with restore buffer of size %d, size of buffer will be decreased too %d, "
-                      + "during next start of JVM please set this parameter %s to %d to avoid this message.", batchSize * 2,
-                  batchSize, OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(), batchSize);
-
-              continue restoreLoop;
-            } else {
-              hardBatch.add(record);
-            }
-          }
-
-          OLogManager.instance().info(this, "Apply last batch of operations are read from WAL.");
-          restoreWALBatch(hardBatch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
-          break;
-        }
-
-        startLsn = lsn;
       }
     } catch (OWALPageBrokenException e) {
       OLogManager.instance().error(this,
@@ -2410,132 +2346,58 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       restoreWALBatch(hardBatch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
     }
 
-    rollbackAllUnfinishedWALOperations(operationUnits);
-    operationUnits.clear();
-
     return atLeastOnePageUpdate.getValue();
   }
 
-  private long restoreWALBatch(List<OWALRecord> batch, Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits,
-      long recordsProcessed, int reportInterval, OModifiableBoolean atLestOnePageUpdate) throws IOException {
+  protected void restoreAtomicUnit(List<OWALRecord> atomicUnit, OModifiableBoolean atLeastOnePageUpdate) throws IOException {
+    assert atomicUnit.get(0) instanceof OAtomicUnitStartRecord;
+    assert atomicUnit.get(atomicUnit.size() - 1) instanceof OAtomicUnitEndRecord;
 
-    boolean nonTxOperationWasUsed = false;
-    for (OWALRecord walRecord : batch) {
-      final OLogSequenceNumber lsn = walRecord.getLsn();
-
-      if (walRecord instanceof OAtomicUnitStartRecord) {
-        List<OLogSequenceNumber> operationList = new ArrayList<OLogSequenceNumber>();
-        operationUnits.put(((OAtomicUnitStartRecord) walRecord).getOperationUnitId(), operationList);
-        operationList.add(lsn);
-
-        nonTxOperationWasUsed = false;
-      } else if (walRecord instanceof OOperationUnitRecord) {
-        OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
-        OOperationUnitId unitId = operationUnitRecord.getOperationUnitId();
-
-        List<OLogSequenceNumber> records = operationUnits.get(unitId);
-
-        if (records == null) {
-          records = new ArrayList<OLogSequenceNumber>();
-          operationUnits.put(unitId, records);
-        }
-
-        records.add(lsn);
-
-        if (operationUnitRecord instanceof OUpdatePageRecord) {
-          final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) operationUnitRecord;
-
-          final long fileId = updatePageRecord.getFileId();
-          final long pageIndex = updatePageRecord.getPageIndex();
-
-          if (!diskCache.isOpen(fileId))
-            diskCache.openFile(fileId);
-
-          OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
-          if (cacheEntry == null) {
-            do {
-              cacheEntry = diskCache.allocateNewPage(fileId);
-            } while (cacheEntry.getPageIndex() != pageIndex);
-          }
-          final OCachePointer cachePointer = cacheEntry.getCachePointer();
-          cachePointer.acquireExclusiveLock();
-          try {
-            ODurablePage durablePage = new ODurablePage(cacheEntry, null);
-            durablePage.restoreChanges(updatePageRecord.getChanges());
-            durablePage.setLsn(lsn);
-          } finally {
-            cachePointer.releaseExclusiveLock();
-            diskCache.release(cacheEntry);
-          }
-
-          atLestOnePageUpdate.setValue(true);
-        } else if (operationUnitRecord instanceof OFileCreatedCreatedWALRecord) {
-
-          final OFileCreatedCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedCreatedWALRecord) operationUnitRecord;
-          diskCache.openFile(fileCreatedCreatedRecord.getFileName(), fileCreatedCreatedRecord.getFileId());
-
-        } else if (operationUnitRecord instanceof OAtomicUnitEndRecord) {
-          final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
-
-          if (atomicUnitEndRecord.isRollback()) {
-            // it is needed because we can start to restore atomic operation from the middle
-            List<OLogSequenceNumber> recordsToRollback = readOperationUnit(atomicUnitEndRecord.getStartLsn(), unitId);
-          } else {
-            if (nonTxOperationWasUsed && !wereNonTxOperationsPerformedInPreviousOpen) {
-              OLogManager.instance().warn(this, "Non tx operation was used during data modification we will need index rebuild.");
-              wereNonTxOperationsPerformedInPreviousOpen = true;
-            }
-          }
-
-          operationUnits.remove(unitId);
+    for (OWALRecord walRecord : atomicUnit.subList(1, atomicUnit.size() - 1)) {
+      if (walRecord instanceof OFileCreatedCreatedWALRecord) {
+        OFileCreatedCreatedWALRecord fileCreatedCreatedWALRecord = (OFileCreatedCreatedWALRecord) walRecord;
+        if (diskCache.exists(fileCreatedCreatedWALRecord.getFileName())) {
+          diskCache.openFile(fileCreatedCreatedWALRecord.getFileName(), fileCreatedCreatedWALRecord.getFileId());
         } else {
-          OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
-              operationUnitRecord.getClass());
-          assert false : "Invalid WAL record type was passed " + operationUnitRecord.getClass().getName();
+          diskCache.addFile(fileCreatedCreatedWALRecord.getFileName(), fileCreatedCreatedWALRecord.getFileId());
         }
-      } else if (walRecord instanceof ONonTxOperationPerformedWALRecord) {
-        nonTxOperationWasUsed = true;
-      } else
-        OLogManager.instance().warn(this, "Record %s will be skipped during data restore.", walRecord);
+      } else if (walRecord instanceof OUpdatePageRecord) {
+        final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) walRecord;
 
-      recordsProcessed++;
-      if (reportInterval > 0 && recordsProcessed % reportInterval == 0)
-        OLogManager.instance().info(this, "%d operations were processed, current LSN is %s last LSN is %s", recordsProcessed, lsn,
-            writeAheadLog.end());
-    }
+        final long fileId = updatePageRecord.getFileId();
+        final long pageIndex = updatePageRecord.getPageIndex();
 
-    return recordsProcessed;
-  }
+        if (!diskCache.isOpen(fileId))
+          diskCache.openFile(fileId);
 
-  private void rollbackAllUnfinishedWALOperations(Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits)
-      throws IOException {
-    for (List<OLogSequenceNumber> operationUnit : operationUnits.values()) {
-      if (operationUnit.isEmpty())
-        continue;
+        OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
+        if (cacheEntry == null) {
+          do {
+            if (cacheEntry != null)
+              diskCache.release(cacheEntry);
 
-      final OOperationUnitRecord atomicOperationRecord;
-      try {
-        atomicOperationRecord = (OOperationUnitRecord) writeAheadLog.read(operationUnit.get(0));
-        if (atomicOperationRecord == null)
-          continue;
-      } catch (OWALPageBrokenException e) {
-        continue;
+            cacheEntry = diskCache.allocateNewPage(fileId);
+          } while (cacheEntry.getPageIndex() != pageIndex);
+        }
+
+        final OCachePointer cachePointer = cacheEntry.getCachePointer();
+        cachePointer.acquireExclusiveLock();
+        try {
+          ODurablePage durablePage = new ODurablePage(cacheEntry, null);
+          durablePage.restoreChanges(updatePageRecord.getChanges());
+          durablePage.setLsn(updatePageRecord.getLsn());
+        } finally {
+          cachePointer.releaseExclusiveLock();
+          diskCache.release(cacheEntry);
+        }
+
+        atLeastOnePageUpdate.setValue(true);
+      } else {
+        OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
+            walRecord.getClass());
+
+        assert false : "Invalid WAL record type was passed " + walRecord.getClass().getName();
       }
-
-      final OAtomicUnitStartRecord startRecord;
-
-      if (atomicOperationRecord instanceof OAtomicUnitStartRecord)
-        startRecord = (OAtomicUnitStartRecord) atomicOperationRecord;
-      else {
-        OLogManager.instance().info(this, "Rollback operation with id %s  and lsn %s", atomicOperationRecord.getOperationUnitId(),
-            ((OOperationUnitBodyRecord) atomicOperationRecord).getStartLsn());
-        startRecord = (OAtomicUnitStartRecord) writeAheadLog.read(((OOperationUnitBodyRecord) atomicOperationRecord).getStartLsn());
-      }
-
-      if (!startRecord.isRollbackSupported())
-        continue;
-
-      writeAheadLog.logAtomicOperationEndRecord(startRecord.getOperationUnitId(), true, startRecord.getLsn());
     }
   }
 

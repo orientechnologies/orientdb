@@ -53,6 +53,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
   public void beforeClass() {
     OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.setValue(-1);
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("nothing");
+    OGlobalConfiguration.FILE_LOCK.setValue(false);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageRestoreFromWAL";
@@ -96,7 +97,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
 
     baseDocumentTx.declareIntent(new OIntentMassiveInsert());
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 2; i++)
       futures.add(executorService.submit(new DataPropagationTask()));
 
     for (Future<Void> future : futures)
@@ -119,7 +120,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
             System.out.println(text);
           }
         });
-		databaseCompare.setCompareIndexMetadata(true);
+    databaseCompare.setCompareIndexMetadata(true);
 
     Assert.assertTrue(databaseCompare.compare());
   }
@@ -159,7 +160,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
     testOneClass.createProperty("intProp", OType.INTEGER);
     testOneClass.createProperty("stringProp", OType.STRING);
     testOneClass.createProperty("stringSet", OType.EMBEDDEDSET, OType.STRING);
-    testOneClass.createProperty("linkMap", OType.LINKMAP, OType.STRING);
+    testOneClass.createProperty("linkMap", OType.LINKMAP);
 
     OClass testTwoClass = schema.createClass("TestTwo");
 
