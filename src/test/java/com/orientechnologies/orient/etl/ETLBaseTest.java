@@ -16,13 +16,12 @@
  *
  */
 
-package com.orientechnologies.orient.etl.extractor;
+package com.orientechnologies.orient.etl;
 
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import junit.framework.TestCase;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OETLProcessor;
 
 /**
  * Tests ETL JSON Extractor.

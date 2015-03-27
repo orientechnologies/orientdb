@@ -18,8 +18,8 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
+import com.orientechnologies.orient.etl.ETLBaseTest;
 import com.orientechnologies.orient.etl.OETLProcessor;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.junit.Test;
 
 /**

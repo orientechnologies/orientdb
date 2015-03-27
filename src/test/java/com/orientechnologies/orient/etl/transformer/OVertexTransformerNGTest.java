@@ -18,10 +18,9 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.etl.OETLProcessor;
-import com.orientechnologies.orient.etl.extractor.ETLBaseTest;
+import com.orientechnologies.orient.etl.ETLBaseTest;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.junit.Test;
 
 /**
