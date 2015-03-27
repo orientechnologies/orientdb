@@ -35,13 +35,18 @@ public class CSVTransformerTest extends ETLBaseTest {
 
   @Test
   public void testEmpty() {
-    getProcessor("{source: { content: { value: '' }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
+    String cfgJson = "{source: { content: { value: '' }  }, extractor : { json: {} }, loader: { test: {} } }";
+    process(cfgJson);
     assertEquals(0, getResult().size());
+  }
+
+  protected OETLProcessor process(String cfgJson) {
+    return getProcessor(cfgJson).execute();
   }
 
   @Test
   public void testOneObject() {
-    getProcessor("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }], loader: { test: {} } }").execute();
+    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }], loader: { test: {} } }");
     assertEquals(1, getResult().size());
     ODocument doc = getResult().get(0);
     assertEquals(2, doc.fields());
@@ -54,7 +59,7 @@ public class CSVTransformerTest extends ETLBaseTest {
     String content = "name,surname,id";
     for (int i = 0; i < names.length; ++i)
       content += "\n" + names[i] + "," + surnames[i] + "," + i;
-    getProcessor("{source: { content: { value: '" + content + "' } }, extractor : { row: {} }, transformers: [{ csv: {} }], loader: { test: {} } }").execute();
+    process("{source: { content: { value: '" + content + "' } }, extractor : { row: {} }, transformers: [{ csv: {} }], loader: { test: {} } }");
 
     assertEquals(getResult().size(), names.length);
 
