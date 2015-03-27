@@ -47,7 +47,7 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
             + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
             + "], loader: { orientdb: { dbURL: 'memory:EdgeTransformerTest', dbType:'graph', useLightweightEdges:false } } }")
             .execute();
-    assertEquals(graph.countVertices("Person"), 1);
+    assertEquals(1, graph.countVertices("Person"));
   }
 
   @Test
@@ -57,7 +57,7 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
             + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
             + "], loader: { orientdb: { dbURL: 'memory:EdgeTransformerTest', dbType:'graph', useLightweightEdges:false } } }")
             .execute();
-    assertEquals(graph.countVertices("Person"), 1);
+    assertEquals(1, graph.countVertices("Person"));
   }
 
   @Test
@@ -67,6 +67,6 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
             + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:true}},"
             + "], loader: { orientdb: { dbURL: 'memory:EdgeTransformerTest', dbType:'graph', useLightweightEdges:false } } }")
             .execute();
-    assertEquals(graph.countVertices("Person"), 2);
+    assertEquals(2, graph.countVertices("Person"));
   }
 }
