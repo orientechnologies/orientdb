@@ -41,31 +41,25 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
 
   @Test
   public void testCreateVertex() {
-    getProcessor(
-            "{source: { content: { value: 'name,\nGregor' } }, extractor : { row: {} },"
-            + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
-            + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }")
-            .execute();
+    process("{source: { content: { value: 'name,\nGregor' } }, extractor : { row: {} },"
+    + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
+    + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
     assertEquals(1, graph.countVertices("Person"));
   }
 
   @Test
   public void testErrorOnDuplicateVertex() {
-    getProcessor(
-            "{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { row: {} },"
-            + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
-            + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }")
-            .execute();
+    process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { row: {} },"
+    + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
+    + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
     assertEquals(1, graph.countVertices("Person"));
   }
 
   @Test
   public void testSkipDuplicateVertex() {
-    getProcessor(
-            "{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { row: {} },"
-            + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:true}},"
-            + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }")
-            .execute();
+    process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { row: {} },"
+    + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:true}},"
+    + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
     assertEquals(2, graph.countVertices("Person"));
   }
 }

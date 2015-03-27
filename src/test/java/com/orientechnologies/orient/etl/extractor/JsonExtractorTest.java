@@ -33,13 +33,13 @@ public class JsonExtractorTest extends ETLBaseTest {
 
   @Test
   public void testEmptyCollection() {
-    getProcessor("{source: { content: { value: [] }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
+    process("{source: { content: { value: [] }  }, extractor : { json: {} }, loader: { test: {} } }");
     assertEquals(0, getResult().size());
   }
 
   @Test
   public void testEmptyObject() {
-    getProcessor("{source: { content: { value: {} }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
+    process("{source: { content: { value: {} }  }, extractor : { json: {} }, loader: { test: {} } }");
     assertEquals(1, getResult().size());
     ODocument doc = getResult().get(0);
     assertEquals(0, doc.fields());
@@ -47,7 +47,7 @@ public class JsonExtractorTest extends ETLBaseTest {
 
   @Test
   public void testOneObject() {
-    getProcessor("{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {} }, loader: { test: {} } }").execute();
+    process("{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {} }, loader: { test: {} } }");
     assertEquals(1, getResult().size());
     ODocument doc = getResult().get(0);
     assertEquals(2, doc.fields());
@@ -64,7 +64,7 @@ public class JsonExtractorTest extends ETLBaseTest {
       content += "{name:'" + names[i] + "',surname:'" + surnames[i] + "',id:" + i + "}";
     }
 
-    getProcessor("{source: { content: { value: [" + content + "] } }, extractor : { json: {} }, loader: { test: {} } }").execute();
+    process("{source: { content: { value: [" + content + "] } }, extractor : { json: {} }, loader: { test: {} } }");
 
     assertEquals(getResult().size(), names.length);
 

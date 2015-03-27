@@ -42,11 +42,9 @@ public class EdgeTransformerTest extends ETLBaseTest {
 
   @Test
   public void testNotLightweightEdge() {
-    getProcessor(
-        "{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { row: {} },"
-            + " transformers: [{csv: {}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
-            + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }")
-        .execute();
+    process("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { row: {} },"
+        + " transformers: [{csv: {}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
+        + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
     assertEquals(1, graph.countVertices("V1"));
     assertEquals(1, graph.countVertices("V2"));

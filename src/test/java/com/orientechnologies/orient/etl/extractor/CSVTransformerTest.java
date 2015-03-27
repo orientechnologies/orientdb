@@ -40,10 +40,6 @@ public class CSVTransformerTest extends ETLBaseTest {
     assertEquals(0, getResult().size());
   }
 
-  protected OETLProcessor process(String cfgJson) {
-    return getProcessor(cfgJson).execute();
-  }
-
   @Test
   public void testOneObject() {
     process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }], loader: { test: {} } }");

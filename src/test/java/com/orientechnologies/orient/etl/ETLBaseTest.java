@@ -58,4 +58,8 @@ public abstract class ETLBaseTest extends TestCase {
   protected List<ODocument> getResult() {
     return ((TestLoader) proc.getLoader()).getResult();
   }
+
+  protected void process(String cfgJson) {
+    getProcessor(cfgJson).execute();
+  }
 }

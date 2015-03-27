@@ -34,10 +34,9 @@ import java.util.Iterator;
 public class FlowTransformerTest extends ETLBaseTest {
   @Test
   public void testSkip() {
-    getProcessor(
-        "{source: { content: { value: 'name,surname\nJay,Miner\nJay,Test' } }, extractor : { row: {} },"
-            + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name <> \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
-            + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph' } } }").execute();
+    process("{source: { content: { value: 'name,surname\nJay,Miner\nJay,Test' } }, extractor : { row: {} },"
+        + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name <> \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
+        + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph' } } }");
 
     assertEquals(2, graph.countVertices("V"));
 
@@ -56,10 +55,9 @@ public class FlowTransformerTest extends ETLBaseTest {
 
   @Test
   public void testSkipNever() {
-    getProcessor(
-        "{source: { content: { value: 'name,surname\nJay,Miner\nTest,Test' } }, extractor : { row: {} },"
-            + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name = \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
-            + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph'} } }").execute();
+    process("{source: { content: { value: 'name,surname\nJay,Miner\nTest,Test' } }, extractor : { row: {} },"
+        + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name = \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
+        + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph'} } }");
 
     assertEquals(2, graph.countVertices("V"));
 
