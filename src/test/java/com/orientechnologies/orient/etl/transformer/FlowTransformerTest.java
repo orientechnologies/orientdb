@@ -16,7 +16,7 @@
  *
  */
 
-package com.orientechnologies.orient.etl.extractor;
+package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.etl.ETLBaseTest;
