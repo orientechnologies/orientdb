@@ -33,13 +33,13 @@ public class JsonExtractorTest extends ETLBaseTest {
 
   @Test
   public void testEmptyCollection() {
-    OETLProcessor proc = getProcessor("{source: { content: { value: [] }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
+    getProcessor("{source: { content: { value: [] }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
     assertEquals(0, ((TestLoader) proc.getLoader()).getResult().size());
   }
 
   @Test
   public void testEmptyObject() {
-    OETLProcessor proc = getProcessor("{source: { content: { value: {} }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
+    getProcessor("{source: { content: { value: {} }  }, extractor : { json: {} }, loader: { test: {} } }").execute();
     assertEquals(1, ((TestLoader) proc.getLoader()).getResult().size());
     ODocument doc = ((TestLoader) proc.getLoader()).getResult().get(0);
     assertEquals(0, doc.fields());
@@ -47,7 +47,7 @@ public class JsonExtractorTest extends ETLBaseTest {
 
   @Test
   public void testOneObject() {
-    OETLProcessor proc = getProcessor("{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {} }, loader: { test: {} } }").execute();
+    getProcessor("{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {} }, loader: { test: {} } }").execute();
     assertEquals(1, ((TestLoader) proc.getLoader()).getResult().size());
     ODocument doc = ((TestLoader) proc.getLoader()).getResult().get(0);
     assertEquals(2, doc.fields());
@@ -64,7 +64,7 @@ public class JsonExtractorTest extends ETLBaseTest {
       content += "{name:'" + names[i] + "',surname:'" + surnames[i] + "',id:" + i + "}";
     }
 
-    OETLProcessor proc = getProcessor("{source: { content: { value: [" + content + "] } }, extractor : { json: {} }, loader: { test: {} } }").execute();
+    getProcessor("{source: { content: { value: [" + content + "] } }, extractor : { json: {} }, loader: { test: {} } }").execute();
 
     assertEquals(((TestLoader) proc.getLoader()).getResult().size(), names.length);
 

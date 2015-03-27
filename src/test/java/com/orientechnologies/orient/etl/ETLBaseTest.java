@@ -33,11 +33,14 @@ public abstract class ETLBaseTest extends TestCase {
   protected String[] surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles", "Ironcutter" };
 
   protected OrientGraph graph;
+  protected OETLProcessor proc;
 
   @Override
   protected void setUp() {
     graph = new OrientGraph("memory:ETLBaseTest");
     graph.setUseLightweightEdges(false);
+    proc = new OETLProcessor();
+    proc.getFactory().registerLoader(TestLoader.class);
   }
 
   @Override
@@ -47,13 +50,6 @@ public abstract class ETLBaseTest extends TestCase {
 
   protected OETLProcessor getProcessor(final String cfgJson) {
     ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
-    return getProcessor(cfg);
-  }
-
-  protected OETLProcessor getProcessor(final ODocument cfg) {
-    final OETLProcessor proc = new OETLProcessor();
-    proc.getFactory().registerLoader(TestLoader.class);
-    proc.parse(cfg, null);
-    return proc;
+    return proc.parse(cfg, null);
   }
 }

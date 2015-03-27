@@ -34,7 +34,7 @@ import java.util.Iterator;
 public class FlowTransformerTest extends ETLBaseTest {
   @Test
   public void testSkip() {
-    OETLProcessor proc = getProcessor(
+    getProcessor(
         "{source: { content: { value: 'name,surname\nJay,Miner\nJay,Test' } }, extractor : { row: {} },"
             + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name <> \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
             + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph' } } }").execute();
@@ -56,7 +56,7 @@ public class FlowTransformerTest extends ETLBaseTest {
 
   @Test
   public void testSkipNever() {
-    OETLProcessor proc = getProcessor(
+    getProcessor(
         "{source: { content: { value: 'name,surname\nJay,Miner\nTest,Test' } }, extractor : { row: {} },"
             + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name = \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
             + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph'} } }").execute();

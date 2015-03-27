@@ -42,7 +42,7 @@ public class EdgeTransformerTest extends ETLBaseTest {
 
   @Test
   public void testNotLightweightEdge() {
-    OETLProcessor proc = getProcessor(
+    getProcessor(
         "{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { row: {} },"
             + " transformers: [{csv: {}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
             + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }")

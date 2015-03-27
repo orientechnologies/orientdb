@@ -41,7 +41,7 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
 
   @Test
   public void testCreateVertex() {
-    OETLProcessor proc = getProcessor(
+    getProcessor(
             "{source: { content: { value: 'name,\nGregor' } }, extractor : { row: {} },"
             + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
             + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }")
@@ -51,7 +51,7 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
 
   @Test
   public void testErrorOnDuplicateVertex() {
-    OETLProcessor proc = getProcessor(
+    getProcessor(
             "{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { row: {} },"
             + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
             + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }")
@@ -61,7 +61,7 @@ public class OVertexTransformerNGTest extends ETLBaseTest {
 
   @Test
   public void testSkipDuplicateVertex() {
-    OETLProcessor proc = getProcessor(
+    getProcessor(
             "{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { row: {} },"
             + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:true}},"
             + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }")
