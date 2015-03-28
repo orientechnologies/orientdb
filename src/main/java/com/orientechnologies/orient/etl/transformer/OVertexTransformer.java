@@ -68,10 +68,7 @@ public class OVertexTransformer extends OAbstractTransformer {
     if (vertexClass != null) {
       final OClass cls = graph.getVertexType(vertexClass);
       if (cls == null)
-        try {
-          graph.createVertexType(vertexClass);
-        } catch (OSchemaException e) {
-        }
+        graph.createVertexType(vertexClass);
     }
 
     final OrientVertex v = graph.getVertex(input);

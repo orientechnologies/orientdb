@@ -60,7 +60,6 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
         directionOut = false;
       else
         throw new OConfigurationException("Direction can be 'in' or 'out', but found: " + direction);
-
     }
   }
 
@@ -92,10 +91,10 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
 
     // GET JOIN VALUE
     final OrientVertex vertex;
-    if (input instanceof OIdentifiable)
-      vertex = graph.getVertex(input);
-    else if (input instanceof OrientVertex)
+    if (input instanceof OrientVertex)
       vertex = (OrientVertex) input;
+    else if (input instanceof OIdentifiable)
+      vertex = graph.getVertex(input);
     else
       throw new OTransformException(getName() + ": input type '" + input + "' is not supported");
 

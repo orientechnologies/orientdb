@@ -79,19 +79,20 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
     }
 
     final ODocument doc = ((OIdentifiable) input).getRecord();
-    Object joinRuntimeValue = null;
+    final Object joinRuntimeValue;
     if (joinFieldName != null)
       joinRuntimeValue = doc.field(joinFieldName);
     else if (joinValue != null)
       joinRuntimeValue = resolve(joinValue);
+    else
+      joinRuntimeValue = null;
 
     Object result;
     if (OMultiValue.isMultiValue(joinRuntimeValue)) {
       // RESOLVE SINGLE JOINS
       final Collection<Object> singleJoinsResult = new ArrayList<Object>();
       for (Object o : OMultiValue.getMultiValueIterable(joinRuntimeValue)) {
-        final Object r = lookup(o, true);
-        singleJoinsResult.add(r);
+        singleJoinsResult.add(lookup(o, true));
       }
       result = singleJoinsResult;
     } else
