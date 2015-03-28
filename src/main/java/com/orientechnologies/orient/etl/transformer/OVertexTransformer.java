@@ -19,19 +19,15 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OVertexTransformer extends OAbstractTransformer {
-  private String        vertexClass;
-  private OrientBaseGraph graph;
-  private boolean         skipDuplicates = false;
+  private String  vertexClass;
+  private boolean skipDuplicates = false;
 
   @Override
   public ODocument getConfiguration() {
@@ -44,7 +40,6 @@ public class OVertexTransformer extends OAbstractTransformer {
   @Override
   public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
-
     if (iConfiguration.containsField("class"))
       vertexClass = (String) resolve(iConfiguration.field("class"));
     if (iConfiguration.containsField("skipDuplicates"))
@@ -58,20 +53,14 @@ public class OVertexTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-    if (graph == null)
-      graph = pipeline.getGraphDatabase();
-
-    if (graph == null)
-      throw new OETLProcessHaltedException("Graph instance not found. Assure you have configured it in the Loader");
-
     vertexClass = (String) resolve(vertexClass);
     if (vertexClass != null) {
-      final OClass cls = graph.getVertexType(vertexClass);
+      final OClass cls = pipeline.getGraphDatabase().getVertexType(vertexClass);
       if (cls == null)
-        graph.createVertexType(vertexClass);
+        pipeline.getGraphDatabase().createVertexType(vertexClass);
     }
 
-    final OrientVertex v = graph.getVertex(input);
+    final OrientVertex v = pipeline.getGraphDatabase().getVertex(input);
     if (v == null)
       return null;
 

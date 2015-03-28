@@ -30,8 +30,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OEdgeTransformer extends OAbstractLookupTransformer {
-  private String          edgeClass    = "E";
-  private boolean         directionOut = true;
+  private String  edgeClass    = "E";
+  private boolean directionOut = true;
 
   @Override
   public ODocument getConfiguration() {
@@ -49,7 +49,6 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
   public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
     edgeClass = iConfiguration.field("class");
-
     if (iConfiguration.containsField("direction")) {
       final String direction = iConfiguration.field("direction");
       if ("out".equalsIgnoreCase(direction))
