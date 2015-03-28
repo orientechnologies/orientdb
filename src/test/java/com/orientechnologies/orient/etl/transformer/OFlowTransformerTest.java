@@ -48,8 +48,6 @@ public class OFlowTransformerTest extends ETLBaseTest {
     Vertex v2 = it.next();
     Object value2 = v2.getProperty("name");
     assertEquals("3", value2);
-
-    graph.command(new OCommandSQL("delete vertex V")).execute();
   }
 
   @Test
@@ -69,7 +67,5 @@ public class OFlowTransformerTest extends ETLBaseTest {
     Vertex v2 = it.next();
     Object value2 = v2.getProperty("name");
     assertEquals("3", value2);
-
-    graph.command(new OCommandSQL("delete vertex V")).execute();
   }
 }
