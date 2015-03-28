@@ -19,7 +19,6 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -62,10 +61,6 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
       unresolvedLinkAction = ACTION.valueOf(iConfiguration.field("unresolvedLinkAction").toString().toUpperCase());
   }
 
-  protected ODatabaseDocumentTx getDocumentDatabase() {
-    return pipeline.getDocumentDatabase();
-  }
-
   protected Object lookup(Object joinValue, final boolean iReturnRIDS) {
     Object result = null;
 
@@ -75,7 +70,7 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
         if (lookup.toUpperCase().startsWith("SELECT"))
           sqlQuery = new OSQLSynchQuery<ODocument>(lookup);
         else {
-          index = getDocumentDatabase().getMetadata().getIndexManager().getIndex(lookup);
+          index = pipeline.getDocumentDatabase().getMetadata().getIndexManager().getIndex(lookup);
           if (index == null) {
             log(OETLProcessor.LOG_LEVELS.DEBUG, "WARNING: index %s not found. Lookups could be really slow", lookup);
             final String[] parts = lookup.split("\\.");
@@ -89,7 +84,7 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
         joinValue = OType.convert(joinValue, idxFieldType.getDefaultJavaType());
         result = index.get(joinValue);
       } else
-        result = getDocumentDatabase().query(sqlQuery, joinValue);
+        result = pipeline.getDocumentDatabase().query(sqlQuery, joinValue);
 
       if (result != null)
         if (result instanceof Collection) {
