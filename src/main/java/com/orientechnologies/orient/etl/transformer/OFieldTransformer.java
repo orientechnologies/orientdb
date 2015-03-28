@@ -97,11 +97,8 @@ public class OFieldTransformer extends OAbstractTransformer {
         }
 
         if (save) {
-          final ODatabaseDocumentTx db = super.pipeline.getDocumentDatabase();
-          if (db == null)
-            throw new OTransformException("Database instance not found in pipeline");
-
           log(OETLProcessor.LOG_LEVELS.DEBUG, "saving record %s", doc);
+          final ODatabaseDocumentTx db = super.pipeline.getDocumentDatabase();
           db.save(doc);
         }
       }

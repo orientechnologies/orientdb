@@ -41,7 +41,6 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
   protected ACTION               unresolvedLinkAction = ACTION.NOTHING;
   private OSQLQuery<ODocument> sqlQuery;
   private OIndex<?>            index;
-  private ODatabaseDocumentTx  db;
 
   protected enum ACTION {
     NOTHING, WARNING, ERROR, HALT, SKIP, CREATE
@@ -63,13 +62,8 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
       unresolvedLinkAction = ACTION.valueOf(iConfiguration.field("unresolvedLinkAction").toString().toUpperCase());
   }
 
-  @Override
-  public void begin() {
-    if (db == null) {
-      db = pipeline.getDocumentDatabase();
-      if (db == null)
-        throw new OTransformException("[" + getName() + " Transformer] database is not configured");
-    }
+  protected ODatabaseDocumentTx getDocumentDatabase() {
+    return pipeline.getDocumentDatabase();
   }
 
   protected Object lookup(Object joinValue, final boolean iReturnRIDS) {
@@ -81,7 +75,7 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
         if (lookup.toUpperCase().startsWith("SELECT"))
           sqlQuery = new OSQLSynchQuery<ODocument>(lookup);
         else {
-          index = db.getMetadata().getIndexManager().getIndex(lookup);
+          index = getDocumentDatabase().getMetadata().getIndexManager().getIndex(lookup);
           if (index == null) {
             log(OETLProcessor.LOG_LEVELS.DEBUG, "WARNING: index %s not found. Lookups could be really slow", lookup);
             final String[] parts = lookup.split("\\.");
@@ -95,7 +89,7 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
         joinValue = OType.convert(joinValue, idxFieldType.getDefaultJavaType());
         result = index.get(joinValue);
       } else
-        result = db.query(sqlQuery, joinValue);
+        result = getDocumentDatabase().query(sqlQuery, joinValue);
 
       if (result != null)
         if (result instanceof Collection) {
@@ -108,7 +102,6 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
 
       if (iReturnRIDS && result instanceof ORecord)
         result = ((ORecord) result).getIdentity();
-
     }
 
     return result;

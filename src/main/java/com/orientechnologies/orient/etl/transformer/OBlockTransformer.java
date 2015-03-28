@@ -64,9 +64,7 @@ public class OBlockTransformer extends OAbstractTransformer {
   @Override
   protected Object executeTransform(final Object input) {
     context.setVariable("input", input);
-
     block.execute();
-
     return input;
   }
 }
