@@ -32,10 +32,10 @@ import java.util.Map;
  * Executes arbitrary code in any supported language by JVM.
  */
 public class OCodeTransformer extends OAbstractTransformer {
-  protected String                 language = "javascript";
-  protected String                 code;
-  protected OCommandExecutorScript cmd;
-  protected Map<Object, Object>    params   = new HashMap<Object, Object>();
+  private String                 language = "javascript";
+  private String                 code;
+  private OCommandExecutorScript cmd;
+  private final Map<Object, Object>    params   = new HashMap<Object, Object>();
 
   @Override
   public ODocument getConfiguration() {

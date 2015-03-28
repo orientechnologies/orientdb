@@ -30,8 +30,8 @@ import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
  * Executes a command.
  */
 public class OCommandTransformer extends OAbstractTransformer {
-  protected String language = "sql";
-  protected String command;
+  private String language = "sql";
+  private String command;
 
   @Override
   public ODocument getConfiguration() {

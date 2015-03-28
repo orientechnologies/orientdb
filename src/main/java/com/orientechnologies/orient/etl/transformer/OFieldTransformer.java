@@ -27,12 +27,12 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
 public class OFieldTransformer extends OAbstractTransformer {
-  protected String     fieldName;
-  protected String     expression;
-  protected Object     value;
-  protected boolean    setOperation = true;
-  protected OSQLFilter sqlFilter;
-  protected boolean    save         = false;
+  private String     fieldName;
+  private String     expression;
+  private Object     value;
+  private boolean    setOperation = true;
+  private OSQLFilter sqlFilter;
+  private boolean    save         = false;
 
   @Override
   public ODocument getConfiguration() {

@@ -29,7 +29,7 @@ import com.orientechnologies.orient.etl.block.OBlock;
  * Pass-through Transformer that execute a block.
  */
 public class OBlockTransformer extends OAbstractTransformer {
-  protected OBlock block;
+  private OBlock block;
 
   @Override
   public ODocument getConfiguration() {

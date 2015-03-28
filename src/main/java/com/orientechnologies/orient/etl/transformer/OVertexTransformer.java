@@ -29,7 +29,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OVertexTransformer extends OAbstractTransformer {
-  protected String        vertexClass;
+  private String        vertexClass;
   private OrientBaseGraph graph;
   private boolean         skipDuplicates = false;
 

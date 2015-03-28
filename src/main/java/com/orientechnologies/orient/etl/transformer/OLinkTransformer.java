@@ -37,9 +37,9 @@ import java.util.Set;
  * Converts a JOIN in LINK
  */
 public class OLinkTransformer extends OAbstractLookupTransformer {
-  protected String joinValue;
-  protected String linkFieldName;
-  protected OType  linkFieldType;
+  private String joinValue;
+  private String linkFieldName;
+  private OType  linkFieldType;
 
   @Override
   public ODocument getConfiguration() {
@@ -73,15 +73,12 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-    ODocument doc;
-
     if (!(input instanceof OIdentifiable)) {
       log(OETLProcessor.LOG_LEVELS.DEBUG, "skip because input value is not a record, but rather an instance of class: %s", input.getClass());
       return null;
     }
 
-    doc = ((OIdentifiable) input).getRecord();
-
+    final ODocument doc = ((OIdentifiable) input).getRecord();
     Object joinRuntimeValue = null;
     if (joinFieldName != null)
       joinRuntimeValue = doc.field(joinFieldName);
@@ -91,11 +88,12 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
     Object result;
     if (OMultiValue.isMultiValue(joinRuntimeValue)) {
       // RESOLVE SINGLE JOINS
-      result = new ArrayList<Object>();
+      final Collection<Object> singleJoinsResult = new ArrayList<Object>();
       for (Object o : OMultiValue.getMultiValueIterable(joinRuntimeValue)) {
         final Object r = lookup(o, true);
-        ((List) result).add(r);
+        singleJoinsResult.add(r);
       }
+      result = singleJoinsResult;
     } else
       result = lookup(joinRuntimeValue, true);
 

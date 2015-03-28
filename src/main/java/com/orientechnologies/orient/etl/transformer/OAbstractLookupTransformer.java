@@ -39,9 +39,9 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
   protected Object               joinValue;
   protected String               lookup;
   protected ACTION               unresolvedLinkAction = ACTION.NOTHING;
-  protected OSQLQuery<ODocument> sqlQuery;
-  protected OIndex<?>            index;
-  protected ODatabaseDocumentTx  db;
+  private OSQLQuery<ODocument> sqlQuery;
+  private OIndex<?>            index;
+  private ODatabaseDocumentTx  db;
 
   protected enum ACTION {
     NOTHING, WARNING, ERROR, HALT, SKIP, CREATE

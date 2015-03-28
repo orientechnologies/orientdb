@@ -31,9 +31,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OEdgeTransformer extends OAbstractLookupTransformer {
-  protected OrientBaseGraph graph;
-  protected String          edgeClass    = "E";
-  protected boolean         directionOut = true;
+  private OrientBaseGraph graph;
+  private String          edgeClass    = "E";
+  private boolean         directionOut = true;
 
   @Override
   public ODocument getConfiguration() {
@@ -116,7 +116,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
     return input;
   }
 
-  protected OrientEdge createEdge(OrientVertex vertex, Object joinCurrentValue, Object result) {
+  private OrientEdge createEdge(OrientVertex vertex, Object joinCurrentValue, Object result) {
     log(OETLProcessor.LOG_LEVELS.DEBUG, "joinCurrentValue=%s, lookupResult=%s", joinCurrentValue, result);
 
     if (result == null) {
