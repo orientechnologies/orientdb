@@ -39,10 +39,8 @@ public abstract class OAbstractTransformer extends OAbstractETLPipelineComponent
         log(OETLProcessor.LOG_LEVELS.DEBUG, "Transformer output: %s", result);
         return result;
       }
-
       context.setVariable(output, result);
     }
-
     log(OETLProcessor.LOG_LEVELS.DEBUG, "Transformer output (same as input): %s", input);
     return input;
   }

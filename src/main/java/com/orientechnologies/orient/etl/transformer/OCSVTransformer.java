@@ -28,15 +28,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OCSVTransformer extends OAbstractTransformer {
-  protected char         separator          = ',';
-  protected boolean      columnsOnFirstLine = true;
-  protected List<String> columnNames        = null;
-  protected List<OType>  columnTypes        = null;
-  protected long         skipFrom           = -1;
-  protected long         skipTo             = -1;
-  protected long         line               = -1;
-  protected String       nullValue;
-  protected char         stringCharacter    = '"';
+  private char         separator          = ',';
+  private boolean      columnsOnFirstLine = true;
+  private List<String> columnNames        = null;
+  private List<OType>  columnTypes        = null;
+  private long         skipFrom           = -1;
+  private long         skipTo             = -1;
+  private long         line               = -1;
+  private String       nullValue;
+  private char         stringCharacter    = '"';
 
   @Override
   public ODocument getConfiguration() {

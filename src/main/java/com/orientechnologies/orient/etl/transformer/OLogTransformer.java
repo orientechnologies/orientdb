@@ -28,9 +28,9 @@ import java.io.PrintStream;
  * ETL Transformer that logs the input.
  */
 public class OLogTransformer extends OAbstractTransformer {
-  final PrintStream out     = System.out;
-  protected String  prefix  = "";
-  protected String  postfix = "";
+  private final PrintStream out     = System.out;
+  private String  prefix  = "";
+  private String  postfix = "";
 
   @Override
   public ODocument getConfiguration() {
@@ -66,7 +66,7 @@ public class OLogTransformer extends OAbstractTransformer {
     if (postfix != null && !postfix.isEmpty())
       buffer.append(resolve(postfix));
 
-    out.println(buffer.toString());
+    out.println(buffer.toString()); //TODO    log(OETLProcessor.LOG_LEVELS.INFO, buffer.toString());
 
     return input;
   }

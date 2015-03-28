@@ -25,7 +25,7 @@ import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
 public class OFlowTransformer extends OAbstractTransformer {
-  protected String operation;
+  private String operation;
 
   @Override
   public ODocument getConfiguration() {

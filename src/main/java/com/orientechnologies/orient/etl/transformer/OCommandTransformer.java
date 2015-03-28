@@ -30,8 +30,8 @@ import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
  * Executes a command.
  */
 public class OCommandTransformer extends OAbstractTransformer {
-  protected String language = "sql";
-  protected String command;
+  private String language = "sql";
+  private String command;
 
   @Override
   public ODocument getConfiguration() {
@@ -56,25 +56,19 @@ public class OCommandTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-
-    final OCommandRequest cmd;
-
     String runtimeCommand = (String) resolve(command);
-
+    final OCommandRequest cmd;
     if (language.equals("sql")) {
       cmd = new OCommandSQL(runtimeCommand);
       log(OETLProcessor.LOG_LEVELS.DEBUG, "executing command=%s...", runtimeCommand);
     } else if (language.equals("gremlin")) {
       cmd = new OCommandGremlin(runtimeCommand);
-    } else
+    } else {
       cmd = new OCommandScript(language, runtimeCommand);
-
+    }
     cmd.setContext(context);
-
     Object result = pipeline.getDocumentDatabase().command(cmd).execute();
-
     log(OETLProcessor.LOG_LEVELS.DEBUG, "executed command=%s, result=%s", cmd, result);
-
     return result;
   }
 }

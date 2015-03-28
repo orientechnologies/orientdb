@@ -26,14 +26,12 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OEdgeTransformer extends OAbstractLookupTransformer {
-  protected OrientBaseGraph graph;
-  protected String          edgeClass    = "E";
-  protected boolean         directionOut = true;
+  private String  edgeClass    = "E";
+  private boolean directionOut = true;
 
   @Override
   public ODocument getConfiguration() {
@@ -51,7 +49,6 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
   public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
     edgeClass = iConfiguration.field("class");
-
     if (iConfiguration.containsField("direction")) {
       final String direction = iConfiguration.field("direction");
       if ("out".equalsIgnoreCase(direction))
@@ -60,7 +57,6 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
         directionOut = false;
       else
         throw new OConfigurationException("Direction can be 'in' or 'out', but found: " + direction);
-
     }
   }
 
@@ -71,31 +67,20 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
 
   @Override
   public void begin() {
-    if (graph == null) {
-      graph = pipeline.getGraphDatabase();
-
-      if (graph == null)
-        throw new OTransformException(getName() + ": graph instance not set");
-
-      final OClass cls = graph.getEdgeType(edgeClass);
-      if (cls == null)
-        graph.createEdgeType(edgeClass);
-    }
-
+    final OClass cls = pipeline.getGraphDatabase().getEdgeType(edgeClass);
+    if (cls == null)
+      pipeline.getGraphDatabase().createEdgeType(edgeClass);
     super.begin();
   }
 
   @Override
   public Object executeTransform(final Object input) {
-    if (graph == null)
-      throw new OETLProcessHaltedException("Graph instance not found. Assure you have configured it in the Loader");
-
     // GET JOIN VALUE
     final OrientVertex vertex;
-    if (input instanceof OIdentifiable)
-      vertex = graph.getVertex(input);
-    else if (input instanceof OrientVertex)
+    if (input instanceof OrientVertex)
       vertex = (OrientVertex) input;
+    else if (input instanceof OIdentifiable)
+      vertex = pipeline.getGraphDatabase().getVertex(input);
     else
       throw new OTransformException(getName() + ": input type '" + input + "' is not supported");
 
@@ -116,7 +101,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
     return input;
   }
 
-  protected OrientEdge createEdge(OrientVertex vertex, Object joinCurrentValue, Object result) {
+  private OrientEdge createEdge(final OrientVertex vertex, final Object joinCurrentValue, Object result) {
     log(OETLProcessor.LOG_LEVELS.DEBUG, "joinCurrentValue=%s, lookupResult=%s", joinCurrentValue, result);
 
     if (result == null) {
@@ -125,7 +110,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
       case CREATE:
         if (lookup != null) {
           final String[] lookupParts = lookup.split("\\.");
-          final OrientVertex linkedV = graph.addTemporaryVertex(lookupParts[0]);
+          final OrientVertex linkedV = pipeline.getGraphDatabase().addTemporaryVertex(lookupParts[0]);
           linkedV.setProperty(lookupParts[1], joinCurrentValue);
           linkedV.save();
 
@@ -151,7 +136,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
     }
 
     if (result != null) {
-      final OrientVertex targetVertex = graph.getVertex(result);
+      final OrientVertex targetVertex = pipeline.getGraphDatabase().getVertex(result);
 
       // CREATE THE EDGE
       final OrientEdge edge;
