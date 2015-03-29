@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -113,7 +114,7 @@ public class OCSVTransformer extends OAbstractTransformer {
 
       // REMOVE ANY STRING CHARACTERS IF ANY
       for (int i = 0; i < columnNames.size(); ++i)
-        columnNames.set(i, OStringSerializerHelper.getStringContent(columnNames.get(i)));
+        columnNames.set(i, getCellContent(columnNames.get(i)));
 
       return null;
     }
@@ -123,13 +124,13 @@ public class OCSVTransformer extends OAbstractTransformer {
       final String fieldName = columnNames.get(i);
       Object fieldValue = null;
       try {
-        final String fieldStringValue = fields.get(i);
+        final String fieldStringValue = getCellContent(fields.get(i));
 
         final OType fieldType = columnTypes != null ? columnTypes.get(i) : null;
 
         if (fieldType != null && fieldType != OType.ANY) {
           // DEFINED TYPE
-          fieldValue = OStringSerializerHelper.getStringContent(fieldStringValue);
+          fieldValue = getCellContent(fieldStringValue);
           try {
             fieldValue = OType.convert(fieldValue, fieldType.getDefaultJavaType());
             doc.field(fieldName, fieldValue);
@@ -141,11 +142,7 @@ public class OCSVTransformer extends OAbstractTransformer {
         } else if (fieldStringValue != null && !fieldStringValue.isEmpty()) {
           // DETERMINE THE TYPE
           final char firstChar = fieldStringValue.charAt(0);
-          if (firstChar == stringCharacter) {
-              // STRING
-              fieldValue = OStringSerializerHelper.getStringContent(fieldStringValue);
-          }
-          else if (Character.isDigit(firstChar)) {
+          if (Character.isDigit(firstChar)) {
               // NUMBER
               if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
                   fieldValue = Float.parseFloat(fieldStringValue);
@@ -179,4 +176,15 @@ public class OCSVTransformer extends OAbstractTransformer {
 
     return doc;
   }
+    //TODO Test, and double doubleqoutes case
+    public String getCellContent(String iValue) {
+        if (iValue == null)
+            return null;
+
+        if (iValue.length() > 1
+                && (iValue.charAt(0) == stringCharacter && iValue.charAt(iValue.length() - 1) == stringCharacter))
+            return iValue.substring(1, iValue.length() - 1);
+
+        return iValue;
+    }
 }
