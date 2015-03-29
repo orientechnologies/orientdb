@@ -17,6 +17,9 @@
  */
 package com.orientechnologies.agent;
 
+import java.util.Map;
+
+import com.orientechnologies.agent.hook.OAuditingHook;
 import com.orientechnologies.agent.http.command.OServerCommandConfiguration;
 import com.orientechnologies.agent.http.command.OServerCommandGetDeployDb;
 import com.orientechnologies.agent.http.command.OServerCommandGetDistributed;
@@ -24,6 +27,7 @@ import com.orientechnologies.agent.http.command.OServerCommandGetLog;
 import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
 import com.orientechnologies.agent.http.command.OServerCommandPostBackupDatabase;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -31,7 +35,11 @@ import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -40,9 +48,7 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
-import java.util.Map;
-
-public class OEnterpriseAgent extends OServerPluginAbstract {
+public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener {
   public static final String  EE                         = "ee.";
   private static final String ORIENDB_ENTERPRISE_VERSION = "2.1"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
   private OServer             server;
@@ -114,7 +120,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
 
       installer.setDaemon(true);
       installer.start();
-
+      Orient.instance().addDbLifecycleListener(this);
     }
   }
 
@@ -123,7 +129,48 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
     if (enabled) {
       uninstallCommands();
       uninstallProfiler();
+      Orient.instance().removeDbLifecycleListener(this);
     }
+  }
+
+  @Override
+  public PRIORITY getPriority() {
+    return null;
+  }
+
+  /**
+   * Auto register myself as hook.
+   */
+  @Override
+  public void onOpen(final ODatabaseInternal iDatabase) {
+    final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
+
+    // REGISTER AUDITING
+    final ODocument auditingCfg = new ODocument();
+    final OAuditingHook auditing = new OAuditingHook(auditingCfg);
+    iDatabase.registerHook(auditing);
+  }
+
+  @Override
+  public void onCreate(ODatabaseInternal iDatabase) {
+    onOpen(iDatabase);
+  }
+
+  /**
+   * Remove myself as hook.
+   */
+  @Override
+  public void onClose(final ODatabaseInternal iDatabase) {
+  }
+
+  @Override
+  public void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {
+
+  }
+
+  @Override
+  public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
+
   }
 
   private void installCommands() {
