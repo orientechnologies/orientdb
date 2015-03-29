@@ -38,10 +38,6 @@ public class TestLoader extends OAbstractLoader {
   public TestLoader() {
   }
 
-  public List<ODocument> getResult() {
-    return loadedRecords;
-  }
-
   @Override
   public void load(Object input, OCommandContext context) {
     loadedRecords.add((ODocument) input);
