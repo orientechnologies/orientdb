@@ -50,7 +50,7 @@ public abstract class ETLBaseTest extends TestCase {
   }
 
   protected List<ODocument> getResult() {
-    return ((TestLoader) proc.getLoader()).getResult();
+    return ((TestLoader) proc.getLoader()).loadedRecords;
   }
 
   protected void process(String cfgJson) {

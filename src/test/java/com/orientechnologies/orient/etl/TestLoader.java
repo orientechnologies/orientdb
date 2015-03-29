@@ -33,18 +33,14 @@ import java.util.List;
  * @author Luca Garulli on 27/11/14.
  */
 public class TestLoader extends OAbstractLoader {
-  private List<ODocument> result = new ArrayList<ODocument>();
+  public final List<ODocument> loadedRecords = new ArrayList<ODocument>();
 
   public TestLoader() {
   }
 
-  public List<ODocument> getResult() {
-    return result;
-  }
-
   @Override
   public void load(Object input, OCommandContext context) {
-    result.add((ODocument)input);
+    loadedRecords.add((ODocument) input);
   }
 
   @Override
