@@ -78,4 +78,14 @@ public class OCSVTransformerTest extends ETLBaseTest {
         assertEquals(3, birthday.getMonth());
         assertEquals(30, birthday.getDate());
     }
+
+    @Test
+    public void testStringInDblQoutes() throws Exception {
+        String cfgJson = "{source: { content: { value: 'text\n\"Hello, quotes are here!\"' }  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        String text = doc.field("text");
+        assertEquals("Hello, quotes are here!", text);
+    }
 }
