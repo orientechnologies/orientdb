@@ -91,41 +91,41 @@ public class OCSVTransformerTest extends ETLBaseTest {
 
     @Test
     public void testFloat() {
-        String cfgJson = "{source: { content: { value: 'firstDig\n10.78,'}  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
+        String cfgJson = "{source: { content: { value: 'firstNumber\n10.78'}  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
-        assertEquals(10.78f, doc.field("firstDig"));
+        assertEquals(10.78f, doc.field("firstNumber"));
     }
 
     @Test
     public void testFloatWithinQoutes() {
-        String cfgJson = "{source: { content: { value: 'firstDig\n\"10.78\",'}  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
+        String cfgJson = "{source: { content: { value: 'firstNumber\n\"10.78\"'}  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
-        assertEquals(10.78f, (Float)doc.field("firstDig"));
+        assertEquals(10.78f, (Float)doc.field("firstNumber"));
     }
 
     @Test
     public void testDouble() {
         Double minDouble =540282346638528870000000000000000000000.0d;
 
-        String cfgJson = "{source: { content: { value: 'secondDig\n540282346638528870000000000000000000000.0'}  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
+        String cfgJson = "{source: { content: { value: 'secondNumber\n540282346638528870000000000000000000000.0'}  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
-        assertEquals(minDouble, (Double)doc.field("secondDig"));
+        assertEquals(minDouble, (Double)doc.field("secondNumber"));
     }
     @Test
     public void testDoubleWithingQuotes() {
         Double minDouble = 540282346638528870000000000000000000000.0d;
 
-        String cfgJson = "{source: { content: { value: 'secondDig\n\"540282346638528870000000000000000000000.0\"'}  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
+        String cfgJson = "{source: { content: { value: 'secondNumber\n\"540282346638528870000000000000000000000.0\"'}  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
-        assertEquals(minDouble, (Double)doc.field("secondDig"));
+        assertEquals(minDouble, (Double)doc.field("secondNumber"));
     }
 
     @Test
