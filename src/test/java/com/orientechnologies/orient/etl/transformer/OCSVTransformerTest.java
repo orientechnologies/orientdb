@@ -80,7 +80,7 @@ public class OCSVTransformerTest extends ETLBaseTest {
     }
 
     @Test
-    public void testStringInDblQoutes() throws Exception {
+    public void testStringInDblQuotes() throws Exception {
         String cfgJson = "{source: { content: { value: 'text\n\"Hello, quotes are here!\"' }  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
         process(cfgJson);
         List<ODocument> res = getResult();
@@ -99,8 +99,17 @@ public class OCSVTransformerTest extends ETLBaseTest {
     }
 
     @Test
-    public void testFloatWithinQoutes() {
+    public void testFloatWithinQuotes() {
         String cfgJson = "{source: { content: { value: 'firstNumber\n\"10.78\"'}  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(10.78f, (Float)doc.field("firstNumber"));
+    }
+
+    @Test
+    public void testFloatWithinQuotesAndCommaAsDecimalSeparator() {
+        String cfgJson = "{source: { content: { value: 'firstNumber\n\"10,78\"'}  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
@@ -125,6 +134,16 @@ public class OCSVTransformerTest extends ETLBaseTest {
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
+        assertEquals(minDouble, (Double) doc.field("secondNumber"));
+    }
+    @Test
+    public void testDoubleWithingQuotesAndCommaAsDecimalSeparator() {
+        Double minDouble = 540282346638528870000000000000000000000.0d;
+
+        String cfgJson = "{source: { content: { value: 'secondNumber\n\"540282346638528870000000000000000000000,0\"'}  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
         assertEquals(minDouble, (Double)doc.field("secondNumber"));
     }
 
@@ -137,7 +156,7 @@ public class OCSVTransformerTest extends ETLBaseTest {
         assertEquals(new Integer(100), (Integer)doc.field("number"));
     }
     @Test
-    public void testIntegerWithingQoutes() {
+    public void testIntegerWithingQuotes() {
         String cfgJson = "{source: { content: { value: 'number\n\"100\"'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
         process(cfgJson);
         List<ODocument> res = getResult();
@@ -153,7 +172,7 @@ public class OCSVTransformerTest extends ETLBaseTest {
         assertEquals(new Long(3000000000L), (Long)doc.field("number"));
     }
     @Test
-    public void testLongWithingQoutes() {
+    public void testLongWithingQuotes() {
         String cfgJson = "{source: { content: { value: 'number\n\"3000000000\"'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
         process(cfgJson);
         List<ODocument> res = getResult();

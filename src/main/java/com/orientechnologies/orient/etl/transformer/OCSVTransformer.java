@@ -145,15 +145,16 @@ public class OCSVTransformer extends OAbstractTransformer {
           if (Character.isDigit(firstChar)) {
               // NUMBER
               if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
-                  fieldValue = Float.parseFloat(fieldStringValue);
+                  String numberAsString = fieldStringValue.replaceAll(",", ".");
+                  fieldValue = new Float(numberAsString);
                   if (!Float.isFinite((Float) fieldValue)) {
-                      fieldValue = Double.parseDouble(fieldStringValue);
+                      fieldValue = new Double(numberAsString);
                   }
               } else
                   try {
-                      fieldValue = Integer.parseInt(fieldStringValue);
+                      fieldValue = new Integer(fieldStringValue);
                   } catch (Exception e) {
-                      fieldValue = Long.parseLong(fieldStringValue);
+                      fieldValue = new Long(fieldStringValue);
                   }
           }
           else
