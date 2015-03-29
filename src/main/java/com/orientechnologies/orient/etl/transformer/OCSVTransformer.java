@@ -25,6 +25,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -143,19 +146,26 @@ public class OCSVTransformer extends OAbstractTransformer {
           // DETERMINE THE TYPE
           final char firstChar = fieldStringValue.charAt(0);
           if (Character.isDigit(firstChar)) {
-              // NUMBER
-              if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
-                  String numberAsString = fieldStringValue.replaceAll(",", ".");
-                  fieldValue = new Float(numberAsString);
-                  if (!Float.isFinite((Float) fieldValue)) {
-                      fieldValue = new Double(numberAsString);
-                  }
-              } else
-                  try {
-                      fieldValue = new Integer(fieldStringValue);
-                  } catch (Exception e) {
-                      fieldValue = new Long(fieldStringValue);
-                  }
+              //DATE
+              DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+              df.setLenient(true);
+              try {
+                  fieldValue = df.parse(fieldStringValue);
+              } catch (ParseException pe) {
+                  // NUMBER
+                  if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
+                      String numberAsString = fieldStringValue.replaceAll(",", ".");
+                      fieldValue = new Float(numberAsString);
+                      if (!Float.isFinite((Float) fieldValue)) {
+                          fieldValue = new Double(numberAsString);
+                      }
+                  } else
+                      try {
+                          fieldValue = new Integer(fieldStringValue);
+                      } catch (Exception e) {
+                          fieldValue = new Long(fieldStringValue);
+                      }
+              }
           }
           else
             fieldValue = fieldStringValue;

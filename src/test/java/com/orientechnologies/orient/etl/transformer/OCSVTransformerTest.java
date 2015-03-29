@@ -74,8 +74,8 @@ public class OCSVTransformerTest extends ETLBaseTest {
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
         Date birthday = doc.field("BirthDay");
-        assertEquals(2008, birthday.getYear());
-        assertEquals(3, birthday.getMonth());
+        assertEquals(2008, birthday.getYear()+1900);
+        assertEquals(4, birthday.getMonth()+1);
         assertEquals(30, birthday.getDate());
     }
 
