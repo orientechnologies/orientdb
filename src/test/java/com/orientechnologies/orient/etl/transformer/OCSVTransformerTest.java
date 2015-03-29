@@ -88,4 +88,14 @@ public class OCSVTransformerTest extends ETLBaseTest {
         String text = doc.field("text");
         assertEquals("Hello, quotes are here!", text);
     }
+
+    @Test
+    public void testFloatDouble() {
+        String cfgJson = "{source: { content: { value: 'firstDig,secondDig\n10.78, \"888888888888888888878,9\"' }  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(10.78f, doc.field("firstDig"));
+        assertEquals(888888888888888888878.9d, doc.field("secondDig"));
+    }
 }
