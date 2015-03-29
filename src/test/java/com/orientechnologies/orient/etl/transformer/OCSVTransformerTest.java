@@ -90,12 +90,22 @@ public class OCSVTransformerTest extends ETLBaseTest {
     }
 
     @Test
-    public void testFloatDouble() {
-        String cfgJson = "{source: { content: { value: 'firstDig,secondDig\n10.78, \"888888888888888888878,9\"' }  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
+    public void testFloat() {
+        String cfgJson = "{source: { content: { value: 'firstDig\n10.78,'}  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
         assertEquals(10.78f, doc.field("firstDig"));
-        assertEquals(888888888888888888878.9d, doc.field("secondDig"));
+    }
+
+    @Test
+    public void testDouble() {
+        Double minDouble =540282346638528870000000000000000000000.0d;
+
+        String cfgJson = "{source: { content: { value: 'secondDig\n540282346638528870000000000000000000000.0'}  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(minDouble, (Double)doc.field("secondDig"));
     }
 }

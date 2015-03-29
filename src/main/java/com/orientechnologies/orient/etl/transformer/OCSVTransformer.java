@@ -146,12 +146,12 @@ public class OCSVTransformer extends OAbstractTransformer {
             fieldValue = OStringSerializerHelper.getStringContent(fieldStringValue);
           else if (Character.isDigit(firstChar))
             // NUMBER
-            if (fieldStringValue.contains(".") || fieldStringValue.contains(","))
-              try {
+            if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
                 fieldValue = Float.parseFloat(fieldStringValue);
-              } catch (Exception e) {
-                fieldValue = Double.parseDouble(fieldStringValue);
-              }
+                if (!Float.isFinite((Float)fieldValue)) {
+                    fieldValue = Double.parseDouble(fieldStringValue);
+                }
+            }
             else
               try {
                 fieldValue = Integer.parseInt(fieldStringValue);
