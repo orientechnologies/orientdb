@@ -88,6 +88,15 @@ public class OCSVTransformerTest extends ETLBaseTest {
         String text = doc.field("text");
         assertEquals("Hello, quotes are here!", text);
     }
+    @Test
+    public void testStringStartedFromDigit() throws Exception {
+        String cfgJson = "{source: { content: { value: 'address\n\"401 Congress Ave, Suite 2450\"' }  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        String text = doc.field("address");
+        assertEquals("401 Congress Ave, Suite 2450", text);
+    }
 
     @Test
     public void testFloat() {
