@@ -94,8 +94,8 @@ public class OCSVTransformerTest extends ETLBaseTest {
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
-        String text = doc.field("address");
-        assertEquals("401 Congress Ave, Suite 2450", text);
+        String address = doc.field("address");
+        assertEquals("401 Congress Ave, Suite 2450", address);
     }
 
     @Test
