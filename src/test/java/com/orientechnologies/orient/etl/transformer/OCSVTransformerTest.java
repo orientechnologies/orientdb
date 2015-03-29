@@ -22,6 +22,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.ETLBaseTest;
 import org.junit.Test;
 
+import java.util.Date;
+import java.util.List;
+
 /**
  * Tests ETL CSV Transformer.
  *
@@ -64,4 +67,15 @@ public class OCSVTransformerTest extends ETLBaseTest {
       i++;
     }
   }
+    @Test
+    public void testDateTypeAutodetection(){
+        String cfgJson = "{source: { content: { value: 'BirthDay\n2008-04-30' }  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        Date birthday = doc.field("BirthDay");
+        assertEquals(2008, birthday.getYear());
+        assertEquals(3, birthday.getMonth());
+        assertEquals(30, birthday.getDate());
+    }
 }
