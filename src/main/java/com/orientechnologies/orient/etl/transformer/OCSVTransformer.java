@@ -141,23 +141,24 @@ public class OCSVTransformer extends OAbstractTransformer {
         } else if (fieldStringValue != null && !fieldStringValue.isEmpty()) {
           // DETERMINE THE TYPE
           final char firstChar = fieldStringValue.charAt(0);
-          if (firstChar == stringCharacter)
-            // STRING
-            fieldValue = OStringSerializerHelper.getStringContent(fieldStringValue);
-          else if (Character.isDigit(firstChar))
-            // NUMBER
-            if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
-                fieldValue = Float.parseFloat(fieldStringValue);
-                if (!Float.isFinite((Float)fieldValue)) {
-                    fieldValue = Double.parseDouble(fieldStringValue);
-                }
-            }
-            else
-              try {
-                fieldValue = Integer.parseInt(fieldStringValue);
-              } catch (Exception e) {
-                fieldValue = Long.parseLong(fieldStringValue);
-              }
+          if (firstChar == stringCharacter) {
+              // STRING
+              fieldValue = OStringSerializerHelper.getStringContent(fieldStringValue);
+          }
+          else if (Character.isDigit(firstChar)) {
+              // NUMBER
+              if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
+                  fieldValue = Float.parseFloat(fieldStringValue);
+                  if (!Float.isFinite((Float) fieldValue)) {
+                      fieldValue = Double.parseDouble(fieldStringValue);
+                  }
+              } else
+                  try {
+                      fieldValue = Integer.parseInt(fieldStringValue);
+                  } catch (Exception e) {
+                      fieldValue = Long.parseLong(fieldStringValue);
+                  }
+          }
           else
             fieldValue = fieldStringValue;
 
