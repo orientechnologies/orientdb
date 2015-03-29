@@ -99,6 +99,15 @@ public class OCSVTransformerTest extends ETLBaseTest {
     }
 
     @Test
+    public void testFloatWithinQoutes() {
+        String cfgJson = "{source: { content: { value: 'firstDig\n\"10.78\",'}  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(10.78f, Float.parseFloat(doc.field("firstDig").toString()));
+    }
+
+    @Test
     public void testDouble() {
         Double minDouble =540282346638528870000000000000000000000.0d;
 
@@ -107,5 +116,48 @@ public class OCSVTransformerTest extends ETLBaseTest {
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
         assertEquals(minDouble, (Double)doc.field("secondDig"));
+    }
+    @Test
+    public void testDoubleWithingQuotes() {
+        Double minDouble = 540282346638528870000000000000000000000.0d;
+
+        String cfgJson = "{source: { content: { value: 'secondDig\n\"540282346638528870000000000000000000000.0\"'}  }, extractor : { row: {} }, transformers : [{ csv: {} }], loader: { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(minDouble, Double.parseDouble(doc.field("secondDig").toString()));
+    }
+
+    @Test
+    public void testInteger() {
+        String cfgJson = "{source: { content: { value: 'number\n100'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(100, doc.field("number"));
+    }
+    @Test
+    public void testIntegerWithingQoutes() {
+        String cfgJson = "{source: { content: { value: 'number\n\"100\"'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(100, Integer.parseInt(doc.field("number").toString()));
+    }
+    @Test
+    public void testLong() {
+        String cfgJson = "{source: { content: { value: 'number\n3000000000'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(3000000000l, doc.field("number"));
+    }
+    @Test
+    public void testLongWithingQoutes() {
+        String cfgJson = "{source: { content: { value: 'number\n\"3000000000\"'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(3000000000l, Long.parseLong(doc.field("number").toString()));
     }
 }
