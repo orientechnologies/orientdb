@@ -104,7 +104,7 @@ public class OCSVTransformerTest extends ETLBaseTest {
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
-        assertEquals(10.78f, Float.parseFloat(doc.field("firstDig").toString()));
+        assertEquals(10.78f, (Float)doc.field("firstDig"));
     }
 
     @Test
@@ -125,7 +125,7 @@ public class OCSVTransformerTest extends ETLBaseTest {
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
-        assertEquals(minDouble, Double.parseDouble(doc.field("secondDig").toString()));
+        assertEquals(minDouble, (Double)doc.field("secondDig"));
     }
 
     @Test
@@ -134,7 +134,7 @@ public class OCSVTransformerTest extends ETLBaseTest {
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
-        assertEquals(100, doc.field("number"));
+        assertEquals(new Integer(100), (Integer)doc.field("number"));
     }
     @Test
     public void testIntegerWithingQoutes() {
@@ -142,7 +142,7 @@ public class OCSVTransformerTest extends ETLBaseTest {
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
-        assertEquals(100, Integer.parseInt(doc.field("number").toString()));
+        assertEquals(new Integer(100), (Integer)doc.field("number"));
     }
     @Test
     public void testLong() {
@@ -150,7 +150,7 @@ public class OCSVTransformerTest extends ETLBaseTest {
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
-        assertEquals(3000000000l, doc.field("number"));
+        assertEquals(new Long(3000000000L), (Long)doc.field("number"));
     }
     @Test
     public void testLongWithingQoutes() {
@@ -158,6 +158,6 @@ public class OCSVTransformerTest extends ETLBaseTest {
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
-        assertEquals(3000000000l, Long.parseLong(doc.field("number").toString()));
+        assertEquals(new Long(3000000000L), (Long)doc.field("number"));
     }
 }
