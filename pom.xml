@@ -56,9 +56,10 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git@github.com:orientechnologies/orientdb-etl.git</connection>
+        <connection>scm:git:https://github.com/orientechnologies/orientdb-etl.git</connection>
         <developerConnection>scm:git:git@github.com:orientechnologies/orientdb-etl.git</developerConnection>
-        <url>scm:git:git@github.com:orientechnologies/orientdb-etl.git</url>
+        <url>https://github.com/orientechnologies/orientdb-etl</url>
+        <tag>HEAD</tag>
     </scm>
     <issueManagement>
         <system>GitHub Issues</system>
@@ -121,14 +122,15 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.2.2</version>
+                <version>2.5.1</version>
                 <configuration>
                     <mavenExecutorId>forked-path</mavenExecutorId>
                     <useReleaseProfile>false</useReleaseProfile>
                     <localCheckout>true</localCheckout>
                     <pushChanges>false</pushChanges>
                     <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
-                    <arguments>-Prelease</arguments>
+                    <!-- During release:perform, enable the "release" profile -->
+                    <releaseProfiles>release</releaseProfiles>
                 </configuration>
             </plugin>
 
