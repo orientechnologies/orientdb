@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.etl.OETLProcessor;
+import sun.misc.FloatConsts;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -157,7 +158,7 @@ public class OCSVTransformer extends OAbstractTransformer {
                       if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
                           String numberAsString = fieldStringValue.replaceAll(",", ".");
                           fieldValue = new Float(numberAsString);
-                          if (!Float.isFinite((Float) fieldValue)) {
+                          if (!isFinite((Float) fieldValue)) {
                               fieldValue = new Double(numberAsString);
                           }
                       } else
@@ -191,6 +192,15 @@ public class OCSVTransformer extends OAbstractTransformer {
 
     return doc;
   }
+
+  /**
+   * Backport copy of {@link Float#isFinite()} method that was introduced since Java 1.8 but we must support 1.6
+   * TODO replace after choosing Java 1.8 as minimal supported
+   **/
+  protected boolean isFinite(Float f) {
+    return Math.abs(f) <= FloatConsts.MAX_VALUE;
+  }
+
     //TODO Test, and double doubleqoutes case
     public String getCellContent(String iValue) {
         if (iValue == null)

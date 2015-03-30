@@ -111,6 +111,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
+                    <fork>true</fork>
                     <source>${maven.compile.sourceLevel}</source>
                     <target>${maven.compile.targetLevel}</target>
                     <encoding>${project.build.sourceEncoding}</encoding>
