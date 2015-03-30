@@ -22,7 +22,7 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-etl</artifactId>
-    <version>2.0.3</version>
+    <version>2.0.3-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>orientdb-etl</name>
@@ -82,11 +82,12 @@
     </distributionManagement>
 
     <properties>
-        <blueprints.version>2.6.0</blueprints.version>
-        <javac.src.version>1.6</javac.src.version>
-        <javac.target.version>1.6</javac.target.version>
-        <orientdb.version>2.0</orientdb.version>
+        <jdkVersion>1.6</jdkVersion>
+        <maven.compile.targetLevel>${jdkVersion}</maven.compile.targetLevel>
+        <maven.compile.sourceLevel>${jdkVersion}</maven.compile.sourceLevel>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <blueprints.version>2.6.0</blueprints.version>
+        <orientdb.version>2.0</orientdb.version>
     </properties>
 
     <repositories>
@@ -110,6 +111,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
+                    <source>${maven.compile.sourceLevel}</source>
+                    <target>${maven.compile.targetLevel}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
 
