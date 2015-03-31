@@ -167,6 +167,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       atomicOperationsManager = new OAtomicOperationsManager(this);
 
+      restoreIfNeeded();
+
       // OPEN BASIC SEGMENTS
       int pos;
       addDefaultClusters();
@@ -202,7 +204,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         }
       }
 
-      restoreIfNeeded();
       if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN.getValueAsBoolean())
         makeFullCheckpoint();
 
@@ -494,7 +495,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         newCluster = new OOfflineCluster(this, clusterId, cluster.getName());
       } else {
 
-        newCluster = OPaginatedClusterFactory.INSTANCE.createCluster(configuration.version);
+        newCluster = OPaginatedClusterFactory.INSTANCE.createCluster(configuration.version, this);
         newCluster.configure(this, clusterId, cluster.getName());
         newCluster.open();
       }
@@ -1449,39 +1450,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  private boolean checkFirstAtomicUnitRecord(int index, OWALRecord record) {
-    boolean isAtomicUnitStartRecord = record instanceof OAtomicUnitStartRecord;
-    if (isAtomicUnitStartRecord && index != 0) {
-      OLogManager.instance().error(this, "Record %s should be the first record in WAL record list.",
-          OAtomicUnitStartRecord.class.getName());
-      assert false : "Record " + OAtomicUnitStartRecord.class.getName() + " should be the first record in WAL record list.";
-    }
-
-    if (index == 0 && !isAtomicUnitStartRecord) {
-      OLogManager.instance().error(this, "Record %s should be the first record in WAL record list.",
-          OAtomicUnitStartRecord.class.getName());
-      assert false : "Record " + OAtomicUnitStartRecord.class.getName() + " should be the first record in WAL record list.";
-    }
-
-    return isAtomicUnitStartRecord;
-  }
-
-  private boolean checkLastAtomicUnitRecord(int index, OWALRecord record, int size) {
-    boolean isAtomicUnitEndRecord = record instanceof OAtomicUnitEndRecord;
-    if (isAtomicUnitEndRecord && index != size - 1) {
-      OLogManager.instance().error(this, "Record %s should be the last record in WAL record list.",
-          OAtomicUnitEndRecord.class.getName());
-      assert false : "Record " + OAtomicUnitEndRecord.class.getName() + " should be the last record in WAL record list.";
-    }
-
-    if (index == size - 1 && !isAtomicUnitEndRecord) {
-      OLogManager.instance().error(this, "Record %s should be the last record in WAL record list.",
-          OAtomicUnitEndRecord.class.getName());
-      assert false : "Record " + OAtomicUnitEndRecord.class.getName() + " should be the last record in WAL record list.";
-    }
-
-    return isAtomicUnitEndRecord;
-  }
 
   private void endStorageTx() throws IOException {
     atomicOperationsManager.endAtomicOperation(false);
@@ -1784,7 +1752,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
 
     if (config.getStatus() == OStorageClusterConfiguration.STATUS.ONLINE)
-      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(configuration.version);
+      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(configuration.version, this);
     else
       cluster = new OOfflineCluster(this, config.getId(), config.getName());
     cluster.configure(this, config);
@@ -1850,7 +1818,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (clusterName != null) {
       clusterName = clusterName.toLowerCase();
 
-      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(configuration.version);
+      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(configuration.version, this);
       cluster.configure(this, clusterPos, clusterName, parameters);
 
       if (clusterName.equals(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME.toLowerCase())) {
@@ -2298,7 +2266,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         } else if (walRecord instanceof OAtomicUnitStartRecord) {
           List<OWALRecord> operationList = new ArrayList<OWALRecord>();
 
-          assert operationUnits.containsKey(((OAtomicUnitStartRecord) walRecord).getOperationUnitId());
+          assert !operationUnits.containsKey(((OAtomicUnitStartRecord) walRecord).getOperationUnitId());
 
           operationUnits.put(((OAtomicUnitStartRecord) walRecord).getOperationUnitId(), operationList);
           operationList.add(walRecord);

@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
@@ -99,10 +100,10 @@ public class OHashIndexFactory implements OIndexFactory {
 
     final String storageType = storage.getType();
     if (storageType.equals("memory") || storageType.equals("plocal"))
-      indexEngine = new OHashTableIndexEngine(durableInNonTxMode);
+      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage());
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OHashTableIndexEngine(durableInNonTxMode);
+      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage());
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine();
     else

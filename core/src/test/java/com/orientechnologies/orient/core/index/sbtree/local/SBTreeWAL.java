@@ -144,8 +144,8 @@ public class SBTreeWAL extends SBTreeTest {
 
     when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", true, ".nbt");
-    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, actualStorage, 1, false);
+    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", true, ".nbt", actualStorage);
+    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
   }
 
   private void createExpectedSBTree() {
@@ -184,8 +184,8 @@ public class SBTreeWAL extends SBTreeTest {
 
     when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", true, ".nbt");
-    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, expectedStorage, 1, false);
+    expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", true, ".nbt", expectedStorage);
+    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
   }
 
   @Override

@@ -240,6 +240,16 @@ public class OAtomicOperation {
     return diskCache.exists(fileName);
   }
 
+  public boolean isFileExists(long fileId, ODiskCache diskCache) {
+    if (fileChanges.containsKey(fileId))
+      return true;
+
+    if (deletedFiles.contains(fileId))
+      return false;
+
+    return diskCache.exists(fileId);
+  }
+
   public String fileNameById(long fileId, ODiskCache diskCache) {
     FileChanges fileChanges = this.fileChanges.get(fileId);
 
