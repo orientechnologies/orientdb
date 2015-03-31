@@ -629,8 +629,8 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
         else
           type = "TABLE";
 
-        doc.field("TABLE_TYPE", type);
         doc.field("TABLE_NAME", className);
+        doc.field("TABLE_TYPE", type);
         doc.field("REMARKS", (Object) null);
         doc.field("TYPE_NAME", (Object) null);
         doc.field("REF_GENERATION", (Object) null);
