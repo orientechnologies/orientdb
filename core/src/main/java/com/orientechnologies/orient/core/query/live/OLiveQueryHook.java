@@ -157,7 +157,7 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
 
   @Override
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE;
+    return DISTRIBUTED_EXECUTION_MODE.BOTH;
   }
 
   @Override
