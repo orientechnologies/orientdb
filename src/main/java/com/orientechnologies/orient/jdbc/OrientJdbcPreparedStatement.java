@@ -55,6 +55,7 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   @SuppressWarnings("unchecked")
   public ResultSet executeQuery() throws SQLException {
     if (sql.equalsIgnoreCase("select 1")) {
+      // OPTIMIZATION
       documents = new ArrayList<ODocument>();
       documents.add(new ODocument().field("1", 1));
     } else {
