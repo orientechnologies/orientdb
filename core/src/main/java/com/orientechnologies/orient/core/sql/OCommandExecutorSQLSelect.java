@@ -547,8 +547,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       resultCount++;
 
-      if (!addResult(lastRecord))
+      if (!addResult(lastRecord)) {
         return false;
+      }
+
 
       return !((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && !isAnyFunctionAggregates()
           && (groupByFields == null || groupByFields.isEmpty()) && fetchLimit > -1 && resultCount >= fetchLimit);
@@ -1285,7 +1287,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     metricRecorder.setContext(context);
   }
 
-  private void fetchFromTarget(final Iterator<? extends OIdentifiable> iTarget) {
+  private boolean fetchFromTarget(final Iterator<? extends OIdentifiable> iTarget) {
     fetchLimit = getQueryFetchLimit();
 
     final long startFetching = System.currentTimeMillis();
@@ -1313,7 +1315,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
 
           if (!executeSearchRecord(next))
-            break;
+            return false;
 
           if (queryScanThresholdWarning > 0 && browsed > queryScanThresholdWarning && compiledFilter != null) {
             reportTip(String
@@ -1324,6 +1326,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
         }
       }
+      return true;
 
     } finally {
       context.setVariable("fetchingFromTargetElapsed", (System.currentTimeMillis() - startFetching));
@@ -1572,7 +1575,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       uniqueResult = new HashSet<ORID>();
       for (OIndexCursor cursor : cursors) {
-        fetchValuesFromIndexCursor(cursor);
+        if(!fetchValuesFromIndexCursor(cursor)){
+          break;
+        }
       }
       uniqueResult.clear();
       uniqueResult = null;
@@ -1662,7 +1667,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return false;
   }
 
-  private void fetchValuesFromIndexCursor(final OIndexCursor cursor) {
+  private boolean fetchValuesFromIndexCursor(final OIndexCursor cursor) {
     int needsToFetch;
     if (fetchLimit > 0) {
       needsToFetch = fetchLimit + skip;
@@ -1671,7 +1676,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     cursor.setPrefetchSize(needsToFetch);
-    fetchFromTarget(cursor);
+    return fetchFromTarget(cursor);
   }
 
   private void fetchEntriesFromIndexCursor(final OIndexCursor cursor) {

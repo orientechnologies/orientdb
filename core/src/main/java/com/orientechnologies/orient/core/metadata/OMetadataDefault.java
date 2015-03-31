@@ -118,14 +118,15 @@ public class OMetadataDefault implements OMetadataInternal {
   @Override
   public void clearThreadLocalSchemaSnapshot() {
     ThreadLocalSchemaSnapshot schemaSnapshot = threadLocalSchemaSnapshot.get();
+    if (schemaSnapshot != null) {
+      if (schemaSnapshot.snapshotCounter <= 0)
+        throw new IllegalStateException("Thread local schema snapshot is cleared more times than it is done");
 
-    if (schemaSnapshot.snapshotCounter <= 0)
-      throw new IllegalStateException("Thread local schema snapshot is cleared more times than it is done");
+      schemaSnapshot.snapshotCounter--;
 
-    schemaSnapshot.snapshotCounter--;
-
-    if (schemaSnapshot.snapshotCounter == 0)
-      threadLocalSchemaSnapshot.set(null);
+      if (schemaSnapshot.snapshotCounter == 0)
+        threadLocalSchemaSnapshot.set(null);
+    }
   }
 
   @Override

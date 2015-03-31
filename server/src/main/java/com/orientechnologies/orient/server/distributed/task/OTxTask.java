@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
@@ -92,14 +93,15 @@ public class OTxTask extends OAbstractReplicatedTask {
         if (task instanceof OAbstractRecordReplicatedTask) {
           final ORecord record = ((OAbstractRecordReplicatedTask) task).getRecord();
 
-          for (String f : ((ODocument) record).fieldNames()) {
-            final Object fValue = ((ODocument) record).field(f);
-            if (fValue instanceof ORecordLazyMultiValue)
-              // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
-              ((ORecordLazyMultiValue) fValue).convertLinks2Records();
-            else if (fValue instanceof ORecordId)
-              ((ODocument) record).field(f, ((ORecordId) fValue).getRecord());
-          }
+          if (record != null)
+            for (String f : ((ODocument) record).fieldNames()) {
+              final Object fValue = ((ODocument) record).field(f);
+              if (fValue instanceof ORecordLazyMultiValue)
+                // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
+                ((ORecordLazyMultiValue) fValue).convertLinks2Records();
+              else if (fValue instanceof ORecordId)
+                ((ODocument) record).field(f, ((ORecordId) fValue).getRecord());
+            }
         }
       }
 
@@ -207,6 +209,17 @@ public class OTxTask extends OAbstractReplicatedTask {
     final int size = in.readInt();
     for (int i = 0; i < size; ++i)
       tasks.add((OAbstractRecordReplicatedTask) in.readObject());
+  }
+
+  /**
+   * Computes the timeout according to the transaction size.
+   * 
+   * @return
+   */
+  @Override
+  public long getTimeout() {
+    final long to = OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    return to + ((to / 2) * tasks.size());
   }
 
   @Override
