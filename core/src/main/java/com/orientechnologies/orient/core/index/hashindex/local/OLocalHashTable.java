@@ -113,8 +113,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
   public static final int                LEVEL_MASK          = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
 
-  private OAbstractPaginatedStorage      storage;
-
   private String                         name;
 
   private ODiskCache                     diskCache;
@@ -139,8 +137,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   private final boolean                  durableInNonTxMode;
 
   public OLocalHashTable(String metadataConfigurationFileExtension, String treeStateFileExtension, String bucketFileExtension,
-      String nullBucketFileExtension, OHashFunction<K> keyHashFunction, boolean durableInNonTxMode) {
-    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
+      String nullBucketFileExtension, OHashFunction<K> keyHashFunction, boolean durableInNonTxMode,
+      OAbstractPaginatedStorage abstractPaginatedStorage) {
+    super(abstractPaginatedStorage);
+
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
     this.bucketFileExtension = bucketFileExtension;
@@ -152,24 +152,23 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   }
 
   public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
-      OAbstractPaginatedStorage storageLocal, boolean nullKeyIsSupported) {
+      boolean nullKeyIsSupported) {
     acquireExclusiveLock();
     try {
-      this.storage = storageLocal;
-      this.keyTypes = keyTypes;
-      this.nullKeyIsSupported = nullKeyIsSupported;
-
-      this.diskCache = storage.getDiskCache();
-      if (this.diskCache == null)
-        throw new IllegalStateException("Disk cache was not initialized on storage level");
-
-      this.name = name;
-
-      init(storage);
-      this.directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
-
-      OAtomicOperation atomicOperation = startAtomicOperation();
       try {
+        OAtomicOperation atomicOperation = startAtomicOperation();
+
+        this.keyTypes = keyTypes;
+        this.nullKeyIsSupported = nullKeyIsSupported;
+
+        this.diskCache = storage.getDiskCache();
+        if (this.diskCache == null)
+          throw new IllegalStateException("Disk cache was not initialized on storage level");
+
+        this.name = name;
+
+        this.directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
+
         fileStateId = addFile(atomicOperation, name + metadataConfigurationFileExtension, diskCache);
 
         directory.create();
@@ -205,7 +204,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         endAtomicOperation(true);
         throw new OStorageException(null, e);
       }
-
     } catch (IOException e) {
       throw new OIndexException("Error during local hash table creation.", e);
     } finally {
@@ -224,7 +222,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
     if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return storage.getAtomicOperationsManager().getCurrentOperation();
+      return atomicOperationsManager.getCurrentOperation();
 
     return super.startAtomicOperation();
   }
@@ -327,10 +325,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   public V get(K key) {
     acquireSharedLock();
     try {
-      final OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
-        final OAtomicOperation atomicOperation = operationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         checkNullSupport(key);
         if (key == null) {
@@ -378,7 +375,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         }
 
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } catch (IOException e) {
       throw new OIndexException("Exception during index value retrieval", e);
@@ -564,10 +561,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   public OHashIndexBucket.Entry<K, V>[] higherEntries(K key, int limit) {
     acquireSharedLock();
     try {
-      final OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
-        final OAtomicOperation atomicOperation = operationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
@@ -620,7 +616,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         }
 
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } catch (IOException ioe) {
       throw new OIndexException("Exception during data retrieval", ioe);
@@ -629,10 +625,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     }
   }
 
-  public void load(String name, OType[] keyTypes, OAbstractPaginatedStorage storageLocal, boolean nullKeyIsSupported) {
+  public void load(String name, OType[] keyTypes, boolean nullKeyIsSupported) {
     acquireExclusiveLock();
     try {
-      this.storage = storageLocal;
       this.keyTypes = keyTypes;
       this.nullKeyIsSupported = nullKeyIsSupported;
 
@@ -640,9 +635,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
       this.name = name;
 
-      init(storage);
-
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
       fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension, diskCache);
       final OCacheEntry hashStateEntry = loadPage(atomicOperation, fileStateId, 0, true, diskCache);
@@ -679,10 +672,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   public void deleteWithoutLoad(String name, OAbstractPaginatedStorage storageLocal) {
     acquireExclusiveLock();
     try {
-      storage = storageLocal;
-
+      OAtomicOperation atomicOperation = startAtomicOperation();
       final ODiskCache diskCache = storage.getDiskCache();
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
       if (isFileExists(atomicOperation, name + metadataConfigurationFileExtension, diskCache)) {
         fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension, diskCache);
@@ -699,10 +690,11 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
             }
           }
         } finally {
-          diskCache.release(hashStateEntry);
+          releasePage(atomicOperation, hashStateEntry, diskCache);
         }
 
-        diskCache.deleteFile(fileStateId);
+        if (isFileExists(atomicOperation, fileStateId, diskCache))
+          deleteFile(atomicOperation, fileStateId, diskCache);
 
         directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
         directory.deleteWithoutOpen();
@@ -712,8 +704,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           deleteFile(atomicOperation, nullBucketId, diskCache);
         }
       }
+
+      endAtomicOperation(false);
     } catch (IOException ioe) {
+      rollback();
       throw new OIndexException("Can not delete hash table with name " + name, ioe);
+    } catch (Exception e) {
+      rollback();
+      throw new OIndexException("Can not delete hash table with name " + name, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -834,10 +832,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   public OHashIndexBucket.Entry<K, V>[] ceilingEntries(K key) {
     acquireSharedLock();
     try {
-      OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
-        OAtomicOperation atomicOperation = operationsManager.getCurrentOperation();
+        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
@@ -883,7 +880,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           releasePage(atomicOperation, cacheEntry, diskCache);
         }
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
 
     } catch (IOException ioe) {
@@ -896,15 +893,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   public OHashIndexBucket.Entry<K, V> firstEntry() {
     acquireSharedLock();
     try {
-      OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
         BucketPath bucketPath = getBucket(HASH_CODE_MIN_VALUE);
         long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex);
 
         int fileLevel = getFileLevel(bucketPointer);
         long pageIndex = getPageIndex(bucketPointer);
-        OAtomicOperation atomicOperation = operationsManager.getCurrentOperation();
+        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         OCacheEntry cacheEntry = loadPageEntry(pageIndex, fileLevel, atomicOperation);
         try {
@@ -933,7 +929,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           releasePage(atomicOperation, cacheEntry, diskCache);
         }
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } catch (IOException ioe) {
       throw new OIndexException("Exception during data read", ioe);
@@ -945,10 +941,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   public OHashIndexBucket.Entry<K, V> lastEntry() {
     acquireSharedLock();
     try {
-      OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
-        OAtomicOperation atomicOperation = operationsManager.getCurrentOperation();
+        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         BucketPath bucketPath = getBucket(HASH_CODE_MAX_VALUE);
         long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
@@ -985,7 +980,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           releasePage(atomicOperation, cacheEntry, diskCache);
         }
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } catch (IOException ioe) {
       throw new OIndexException("Exception during data read", ioe);
@@ -997,8 +992,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   public OHashIndexBucket.Entry<K, V>[] lowerEntries(K key) {
     acquireSharedLock();
     try {
-      OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
@@ -1009,7 +1003,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
         int fileLevel = getFileLevel(bucketPointer);
         long pageIndex = getPageIndex(bucketPointer);
-        OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         OCacheEntry cacheEntry = loadPageEntry(pageIndex, fileLevel, atomicOperation);
         try {
@@ -1049,7 +1043,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           releasePage(atomicOperation, cacheEntry, diskCache);
         }
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } catch (IOException ioe) {
       throw new OIndexException("Exception during data read", ioe);
@@ -1061,10 +1055,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   public OHashIndexBucket.Entry<K, V>[] floorEntries(K key) {
     acquireSharedLock();
     try {
-      OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
-        OAtomicOperation atomicOperation = operationsManager.getCurrentOperation();
+        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
         final long hashCode = keyHashFunction.hashCode(key);
@@ -1114,7 +1107,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           releasePage(atomicOperation, cacheEntry, diskCache);
         }
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } catch (IOException ioe) {
       throw new OIndexException("Exception during data read", ioe);
@@ -1217,10 +1210,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   public long size() {
     acquireSharedLock();
     try {
-      OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
-        final OAtomicOperation atomicOperation = operationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final OCacheEntry hashStateEntry = loadPage(atomicOperation, fileStateId, hashStateEntryIndex, true, diskCache);
         try {
           OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry, getChangesTree(
@@ -1230,7 +1222,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           releasePage(atomicOperation, hashStateEntry, diskCache);
         }
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } catch (IOException e) {
       throw new OIndexException("Error during index size request.", e);
@@ -1244,7 +1236,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     try {
       flush();
 
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
       directory.close();
 
       final OCacheEntry hashStateEntry = loadPage(atomicOperation, fileStateId, hashStateEntryIndex, true, diskCache);
@@ -1271,7 +1263,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   public void delete() {
     acquireExclusiveLock();
     try {
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation();
       final OCacheEntry hashStateEntry = loadPage(atomicOperation, fileStateId, hashStateEntryIndex, true, diskCache);
       try {
         for (int i = 0; i < HASH_CODE_SIZE; i++) {
@@ -1291,7 +1283,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       if (nullKeyIsSupported)
         deleteFile(atomicOperation, nullBucketFileId, diskCache);
 
+      endAtomicOperation(false);
     } catch (IOException e) {
+      rollback();
+
+      throw new OIndexException("Exception during index deletion", e);
+    } catch (Exception e) {
+      rollback();
+
       throw new OIndexException("Exception during index deletion", e);
     } finally {
       releaseExclusiveLock();
@@ -1465,7 +1464,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   public void flush() {
     acquireExclusiveLock();
     try {
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
       final OCacheEntry hashStateEntry = loadPage(atomicOperation, fileStateId, hashStateEntryIndex, true, diskCache);
       try {
         for (int i = 0; i < HASH_CODE_SIZE; i++) {

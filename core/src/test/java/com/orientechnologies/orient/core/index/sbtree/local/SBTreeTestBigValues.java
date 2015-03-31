@@ -42,9 +42,8 @@ public class SBTreeTestBigValues {
 
     databaseDocumentTx.create();
 
-    sbTree = new OSBTree<Integer, byte[]>(".sbt", false, ".nbt");
-    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null,
-        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage().getUnderlying(), 1, false);
+    sbTree = new OSBTree<Integer, byte[]>(".sbt", false, ".nbt", (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, 1, false);
   }
 
   @AfterMethod

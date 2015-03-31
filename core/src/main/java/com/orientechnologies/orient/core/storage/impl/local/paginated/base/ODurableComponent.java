@@ -67,28 +67,19 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  * @since 8/27/13
  */
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
-  private OAtomicOperationsManager    atomicOperationsManager;
-  protected OAbstractPaginatedStorage storage;
+  protected final OAtomicOperationsManager  atomicOperationsManager;
+  protected final OAbstractPaginatedStorage storage;
 
-  public ODurableComponent() {
-  }
+  public ODurableComponent(OAbstractPaginatedStorage storage) {
+    super(true);
 
-  public ODurableComponent(int iTimeout) {
-    super(iTimeout);
-  }
-
-  public ODurableComponent(boolean iConcurrent) {
-    super(iConcurrent);
-  }
-
-  public ODurableComponent(boolean iConcurrent, int iTimeout, boolean ignoreThreadInterruption) {
-    super(iConcurrent, iTimeout, ignoreThreadInterruption);
-  }
-
-
-  protected void init(final OAbstractPaginatedStorage storage) {
     this.storage = storage;
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
+  }
+
+  @Override
+  protected void acquireExclusiveLock() {
+    super.acquireExclusiveLock();
   }
 
   protected void endAtomicOperation(boolean rollback) throws IOException {
@@ -175,6 +166,13 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
       return diskCache.exists(fileName);
 
     return atomicOperation.isFileExists(fileName, diskCache);
+  }
+
+  protected static boolean isFileExists(OAtomicOperation atomicOperation, long fileId, ODiskCache diskCache) {
+    if (atomicOperation == null)
+      return diskCache.exists(fileId);
+
+    return atomicOperation.isFileExists(fileId, diskCache);
   }
 
   protected static String fileNameById(OAtomicOperation atomicOperation, long fileId, ODiskCache diskCache) {

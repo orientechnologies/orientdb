@@ -59,8 +59,6 @@ public class LocalPaginatedClusterTest {
 
   @BeforeClass
   public void beforeClass() throws IOException {
-    paginatedCluster = new OPaginatedCluster();
-
     System.out.println("Start LocalPaginatedClusterTest");
     buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null || buildDirectory.isEmpty())
@@ -94,6 +92,7 @@ public class LocalPaginatedClusterTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
 
+    paginatedCluster = new OPaginatedCluster(storage);
     paginatedCluster.configure(storage, 5, "paginatedClusterTest", buildDirectory, -1);
     paginatedCluster.create(-1);
   }

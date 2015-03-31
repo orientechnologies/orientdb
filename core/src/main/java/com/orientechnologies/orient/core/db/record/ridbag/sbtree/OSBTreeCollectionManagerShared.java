@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -37,19 +38,22 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbstract {
+  private final OAbstractPaginatedStorage                        storage;
   private final ThreadLocal<Map<UUID, OBonsaiCollectionPointer>> collectionPointerChanges = new ThreadLocal<Map<UUID, OBonsaiCollectionPointer>>() {
-                                                                                      @Override
-                                                                                      protected Map<UUID, OBonsaiCollectionPointer> initialValue() {
-                                                                                        return new HashMap<UUID, OBonsaiCollectionPointer>();
-                                                                                      }
-                                                                                    };
+                                                                                            @Override
+                                                                                            protected Map<UUID, OBonsaiCollectionPointer> initialValue() {
+                                                                                              return new HashMap<UUID, OBonsaiCollectionPointer>();
+                                                                                            }
+                                                                                          };
 
   public OSBTreeCollectionManagerShared() {
-    super();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    this.storage = (OAbstractPaginatedStorage) db.getStorage().getUnderlying();
   }
 
-  public OSBTreeCollectionManagerShared(int evictionThreshold, int cacheMaxSize) {
+  public OSBTreeCollectionManagerShared(int evictionThreshold, int cacheMaxSize, OAbstractPaginatedStorage storage) {
     super(evictionThreshold, cacheMaxSize);
+    this.storage = storage;
   }
 
   @Override
@@ -66,7 +70,9 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
 
   @Override
   protected OSBTreeBonsaiLocal<OIdentifiable, Integer> createTree(int clusterId) {
-    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(DEFAULT_EXTENSION, true);
+
+    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(DEFAULT_EXTENSION, true,
+        storage);
     tree.create(FILE_NAME_PREFIX + clusterId, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
 
     return tree;
@@ -74,10 +80,10 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
 
   @Override
   protected OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer) {
-    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(DEFAULT_EXTENSION, true);
+    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(DEFAULT_EXTENSION, true,
+        storage);
 
-    tree.load(collectionPointer.getFileId(), collectionPointer.getRootPointer(),
-        (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
+    tree.load(collectionPointer.getFileId(), collectionPointer.getRootPointer());
 
     return tree;
   }

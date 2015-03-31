@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
@@ -47,13 +48,13 @@ public class OClusterPositionMap extends ODurableComponent {
   private boolean            useWal;
 
   public OClusterPositionMap(OAbstractPaginatedStorage storage, ODiskCache diskCache, String name, boolean useWal) {
+    super(storage);
+
     acquireExclusiveLock();
     try {
       this.diskCache = diskCache;
       this.name = name;
       this.useWal = useWal;
-
-      init(storage);
     } finally {
       releaseExclusiveLock();
     }
@@ -71,7 +72,7 @@ public class OClusterPositionMap extends ODurableComponent {
   public void open() throws IOException {
     acquireExclusiveLock();
     try {
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
       fileId = openFile(atomicOperation, name + DEF_EXTENSION, diskCache);
     } finally {
       releaseExclusiveLock();
@@ -81,8 +82,15 @@ public class OClusterPositionMap extends ODurableComponent {
   public void create() throws IOException {
     acquireExclusiveLock();
     try {
-      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      final OAtomicOperation atomicOperation = startAtomicOperation();
       fileId = addFile(atomicOperation, name + DEF_EXTENSION, diskCache);
+      endAtomicOperation(false);
+    } catch (IOException ioe) {
+      endAtomicOperation(true);
+      throw ioe;
+    } catch (Exception e) {
+      endAtomicOperation(true);
+      throw new OStorageException("Error during cluster position - physical position map.", e);
     } finally {
       releaseExclusiveLock();
     }
@@ -91,12 +99,11 @@ public class OClusterPositionMap extends ODurableComponent {
   public void flush() throws IOException {
     acquireSharedLock();
     try {
-      OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
         diskCache.flushFile(fileId);
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
       releaseSharedLock();
@@ -115,8 +122,15 @@ public class OClusterPositionMap extends ODurableComponent {
   public void truncate() throws IOException {
     acquireExclusiveLock();
     try {
-      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      final OAtomicOperation atomicOperation = startAtomicOperation();
       truncateFile(atomicOperation, fileId, diskCache);
+      endAtomicOperation(false);
+    } catch (IOException ioe) {
+      endAtomicOperation(true);
+      throw ioe;
+    } catch (Exception e) {
+      endAtomicOperation(true);
+      throw new OStorageException("Error during truncation of cluster position - physical position map", e);
     } finally {
       releaseExclusiveLock();
     }
@@ -125,8 +139,15 @@ public class OClusterPositionMap extends ODurableComponent {
   public void delete() throws IOException {
     acquireExclusiveLock();
     try {
-      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      final OAtomicOperation atomicOperation = startAtomicOperation();
       deleteFile(atomicOperation, fileId, diskCache);
+      endAtomicOperation(false);
+    } catch (IOException ioe) {
+      endAtomicOperation(true);
+      throw ioe;
+    } catch (Exception e) {
+      endAtomicOperation(true);
+      throw new OStorageException("Error during deletion of cluster position - physical position map.", e);
     } finally {
       releaseExclusiveLock();
     }
@@ -135,8 +156,16 @@ public class OClusterPositionMap extends ODurableComponent {
   public void rename(String newName) throws IOException {
     acquireExclusiveLock();
     try {
+      startAtomicOperation();
       diskCache.renameFile(fileId, this.name + DEF_EXTENSION, newName + DEF_EXTENSION);
       name = newName;
+      endAtomicOperation(false);
+    } catch (IOException ioe) {
+      endAtomicOperation(true);
+      throw ioe;
+    } catch (Exception e) {
+      endAtomicOperation(true);
+      throw new OStorageException("Error during rename of cluster position - physical position map.");
     } finally {
       releaseExclusiveLock();
     }
@@ -188,13 +217,12 @@ public class OClusterPositionMap extends ODurableComponent {
   public OClusterPositionMapBucket.PositionEntry get(final long clusterPosition) throws IOException {
     acquireSharedLock();
     try {
-      OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
         long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
         int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
-        final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         if (pageIndex >= getFilledUpTo(atomicOperation, diskCache, fileId))
           return null;
@@ -208,7 +236,7 @@ public class OClusterPositionMap extends ODurableComponent {
           releasePage(atomicOperation, cacheEntry, diskCache);
         }
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
       releaseSharedLock();
@@ -218,14 +246,13 @@ public class OClusterPositionMap extends ODurableComponent {
   public OClusterPositionMapBucket.PositionEntry remove(final long clusterPosition) throws IOException {
     acquireExclusiveLock();
     try {
+      OAtomicOperation atomicOperation = startAtomicOperation();
       long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
       int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
       final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, diskCache);
       cacheEntry.acquireExclusiveLock();
       try {
-        atomicOperation = startAtomicOperation();
         final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, getChangesTree(atomicOperation,
             cacheEntry));
 
@@ -251,15 +278,14 @@ public class OClusterPositionMap extends ODurableComponent {
   public long[] higherPositions(final long clusterPosition) throws IOException {
     acquireSharedLock();
     try {
-      OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
         if (clusterPosition == Long.MAX_VALUE)
           return OCommonConst.EMPTY_LONG_ARRAY;
 
         return ceilingPositions(clusterPosition + 1);
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
       releaseSharedLock();
@@ -269,8 +295,7 @@ public class OClusterPositionMap extends ODurableComponent {
   public long[] ceilingPositions(long clusterPosition) throws IOException {
     acquireSharedLock();
     try {
-      OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
         if (clusterPosition < 0)
           clusterPosition = 0;
@@ -278,7 +303,7 @@ public class OClusterPositionMap extends ODurableComponent {
         long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
         int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
-        OAtomicOperation atomicOperation = operationsManager.getCurrentOperation();
+        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final long filledUpTo = getFilledUpTo(atomicOperation, diskCache, fileId);
 
         if (pageIndex >= filledUpTo)
@@ -322,7 +347,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
         return result;
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
       releaseSharedLock();
@@ -332,15 +357,14 @@ public class OClusterPositionMap extends ODurableComponent {
   public long[] lowerPositions(final long clusterPosition) throws IOException {
     acquireSharedLock();
     try {
-      OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
         if (clusterPosition == 0)
           return OCommonConst.EMPTY_LONG_ARRAY;
 
         return floorPositions(clusterPosition - 1);
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
       releaseSharedLock();
@@ -350,8 +374,7 @@ public class OClusterPositionMap extends ODurableComponent {
   public long[] floorPositions(final long clusterPosition) throws IOException {
     acquireSharedLock();
     try {
-      OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
         if (clusterPosition < 0)
           return OCommonConst.EMPTY_LONG_ARRAY;
@@ -359,7 +382,7 @@ public class OClusterPositionMap extends ODurableComponent {
         long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
         int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
-        OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         final long filledUpTo = getFilledUpTo(atomicOperation, diskCache, fileId);
         long[] result;
@@ -407,7 +430,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
         return result;
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
       releaseSharedLock();
@@ -417,10 +440,9 @@ public class OClusterPositionMap extends ODurableComponent {
   public long getFirstPosition() throws IOException {
     acquireSharedLock();
     try {
-      OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
-        OAtomicOperation atomicOperation = operationsManager.getCurrentOperation();
+        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         final long filledUpTo = getFilledUpTo(atomicOperation, diskCache, fileId);
         for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
@@ -441,7 +463,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
         return ORID.CLUSTER_POS_INVALID;
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
       releaseSharedLock();
@@ -451,10 +473,9 @@ public class OClusterPositionMap extends ODurableComponent {
   public long getLastPosition() throws IOException {
     acquireSharedLock();
     try {
-      OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
-        OAtomicOperation atomicOperation = operationsManager.getCurrentOperation();
+        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final long filledUpTo = getFilledUpTo(atomicOperation, diskCache, fileId);
 
         for (long pageIndex = filledUpTo - 1; pageIndex >= 0; pageIndex--) {
@@ -475,7 +496,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
         return ORID.CLUSTER_POS_INVALID;
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
       releaseSharedLock();
@@ -485,12 +506,11 @@ public class OClusterPositionMap extends ODurableComponent {
   public boolean wasSoftlyClosed() throws IOException {
     acquireSharedLock();
     try {
-      OAtomicOperationsManager operationsManager = storage.getAtomicOperationsManager();
-      operationsManager.acquireReadLock(this);
+      atomicOperationsManager.acquireReadLock(this);
       try {
         return diskCache.wasSoftlyClosed(fileId);
       } finally {
-        operationsManager.releaseReadLock(this);
+        atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
       releaseSharedLock();
@@ -508,6 +528,6 @@ public class OClusterPositionMap extends ODurableComponent {
     if (useWal)
       return super.startAtomicOperation();
 
-    return storage.getAtomicOperationsManager().getCurrentOperation();
+    return atomicOperationsManager.getCurrentOperation();
   }
 }
