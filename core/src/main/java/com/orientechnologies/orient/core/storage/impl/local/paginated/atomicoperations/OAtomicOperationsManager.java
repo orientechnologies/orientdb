@@ -114,11 +114,11 @@ public class OAtomicOperationsManager {
       if (!operation.isRollback())
         operation.commitChanges(storage.getDiskCache(), writeAheadLog);
 
-      for (Object lockObject : operation.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
-
       writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
       currentOperation.set(null);
+
+      for (Object lockObject : operation.lockedObjects())
+        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
     }
 
     return operation;
