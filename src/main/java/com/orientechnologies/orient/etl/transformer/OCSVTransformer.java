@@ -18,7 +18,6 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -147,32 +146,31 @@ public class OCSVTransformer extends OAbstractTransformer {
           // DETERMINE THE TYPE
           final char firstChar = fieldStringValue.charAt(0);
           if (Character.isDigit(firstChar)) {
-              //DATE
-              DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-              df.setLenient(true);
+            // DATE
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            df.setLenient(true);
+            try {
+              fieldValue = df.parse(fieldStringValue);
+            } catch (ParseException pe) {
+              // NUMBER
               try {
-                  fieldValue = df.parse(fieldStringValue);
-              } catch (ParseException pe) {
-                  // NUMBER
-                  try {
-                      if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
-                          String numberAsString = fieldStringValue.replaceAll(",", ".");
-                          fieldValue = new Float(numberAsString);
-                          if (!isFinite((Float) fieldValue)) {
-                              fieldValue = new Double(numberAsString);
-                          }
-                      } else
-                          try {
-                              fieldValue = new Integer(fieldStringValue);
-                          } catch (Exception e) {
-                              fieldValue = new Long(fieldStringValue);
-                          }
-                  } catch (NumberFormatException nf) {
-                      fieldValue = fieldStringValue;
+                if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
+                  String numberAsString = fieldStringValue.replaceAll(",", ".");
+                  fieldValue = new Float(numberAsString);
+                  if (!isFinite((Float) fieldValue)) {
+                    fieldValue = new Double(numberAsString);
                   }
+                } else
+                  try {
+                    fieldValue = new Integer(fieldStringValue);
+                  } catch (Exception e) {
+                    fieldValue = new Long(fieldStringValue);
+                  }
+              } catch (NumberFormatException nf) {
+                fieldValue = fieldStringValue;
               }
-          }
-          else
+            }
+          } else
             fieldValue = fieldStringValue;
 
           if (nullValue != null && nullValue.equals(fieldValue))
@@ -194,22 +192,21 @@ public class OCSVTransformer extends OAbstractTransformer {
   }
 
   /**
-   * Backport copy of {@link Float#isFinite()} method that was introduced since Java 1.8 but we must support 1.6
-   * TODO replace after choosing Java 1.8 as minimal supported
+   * Backport copy of Float.isFinite() method that was introduced since Java 1.8 but we must support 1.6. TODO replace after
+   * choosing Java 1.8 as minimal supported
    **/
   protected boolean isFinite(Float f) {
     return Math.abs(f) <= FloatConsts.MAX_VALUE;
   }
 
-    //TODO Test, and double doubleqoutes case
-    public String getCellContent(String iValue) {
-        if (iValue == null)
-            return null;
+  // TODO Test, and double doubleqoutes case
+  public String getCellContent(String iValue) {
+    if (iValue == null)
+      return null;
 
-        if (iValue.length() > 1
-                && (iValue.charAt(0) == stringCharacter && iValue.charAt(iValue.length() - 1) == stringCharacter))
-            return iValue.substring(1, iValue.length() - 1);
+    if (iValue.length() > 1 && (iValue.charAt(0) == stringCharacter && iValue.charAt(iValue.length() - 1) == stringCharacter))
+      return iValue.substring(1, iValue.length() - 1);
 
-        return iValue;
-    }
+    return iValue;
+  }
 }

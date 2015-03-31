@@ -204,6 +204,8 @@ public class OETLProcessor {
    *          List of Block configurations to execute at the end of processing
    * @param iContext
    *          Execution Context
+   * 
+   * @return Current OETProcessor instance
    **/
   public OETLProcessor parse(final Collection<ODocument> iBeginBlocks, final ODocument iSource, final ODocument iExtractor,
       final Collection<ODocument> iTransformers, final ODocument iLoader, final Collection<ODocument> iEndBlocks,
