@@ -94,35 +94,16 @@ public class OCSVTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-    line++;
+      if (skipTransform()) return null;
 
-    if (skipFrom > -1) {
-      if (skipTo > -1) {
-        if (line >= skipFrom && line <= skipTo)
-          return null;
-      } else if (line >= skipFrom)
-        // SKIP IT
-        return null;
-    }
-
-    log(OETLProcessor.LOG_LEVELS.DEBUG, "parsing=%s", input);
+      log(OETLProcessor.LOG_LEVELS.DEBUG, "parsing=%s", input);
 
     final List<String> fields = OStringSerializerHelper.smartSplit(input.toString(), new char[] { separator }, 0, -1, false, false,
         false, false);
 
-    if (columnNames == null) {
-      if (!columnsOnFirstLine)
-        throw new OTransformException(getName() + ": columnsOnFirstLine=false and no columns declared");
-      columnNames = fields;
+      if (!isColumnNamesCorrect(fields)) return null;
 
-      // REMOVE ANY STRING CHARACTERS IF ANY
-      for (int i = 0; i < columnNames.size(); ++i)
-        columnNames.set(i, getCellContent(columnNames.get(i)));
-
-      return null;
-    }
-
-    final ODocument doc = new ODocument();
+      final ODocument doc = new ODocument();
     for (int i = 0; i < columnNames.size() && i < fields.size(); ++i) {
       final String fieldName = columnNames.get(i);
       Object fieldValue = null;
@@ -144,36 +125,8 @@ public class OCSVTransformer extends OAbstractTransformer {
           }
         } else if (fieldStringValue != null && !fieldStringValue.isEmpty()) {
           // DETERMINE THE TYPE
-          final char firstChar = fieldStringValue.charAt(0);
-          if (Character.isDigit(firstChar)) {
-            // DATE
-            DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-            df.setLenient(true);
-            try {
-              fieldValue = df.parse(fieldStringValue);
-            } catch (ParseException pe) {
-              // NUMBER
-              try {
-                if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
-                  String numberAsString = fieldStringValue.replaceAll(",", ".");
-                  fieldValue = new Float(numberAsString);
-                  if (!isFinite((Float) fieldValue)) {
-                    fieldValue = new Double(numberAsString);
-                  }
-                } else
-                  try {
-                    fieldValue = new Integer(fieldStringValue);
-                  } catch (Exception e) {
-                    fieldValue = new Long(fieldStringValue);
-                  }
-              } catch (NumberFormatException nf) {
-                fieldValue = fieldStringValue;
-              }
-            }
-          } else
-            fieldValue = fieldStringValue;
-
-          if (nullValue != null && nullValue.equals(fieldValue))
+            fieldValue = determineTheType(fieldStringValue);
+            if (nullValue != null && nullValue.equals(fieldValue))
             // NULL VALUE, SKIP
             continue;
 
@@ -191,7 +144,78 @@ public class OCSVTransformer extends OAbstractTransformer {
     return doc;
   }
 
-  /**
+    private Object determineTheType(String fieldStringValue) {
+        Object fieldValue;
+        if ((fieldValue = transformToDate(fieldStringValue)) == null)// try maybe Date type
+            if ((fieldValue = transformToNumeric(fieldStringValue)) == null)// try maybe Numeric type
+                fieldValue = fieldStringValue; // type String
+        return fieldValue;
+    }
+
+    private Object transformToDate(String fieldStringValue) {
+        // DATE
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        df.setLenient(true);
+        Object fieldValue;
+        try {
+            fieldValue = df.parse(fieldStringValue);
+        } catch (ParseException pe) {
+            fieldValue = null;
+        }
+        return fieldValue;
+    }
+
+    private Object transformToNumeric(String fieldStringValue) {
+        Object fieldValue;
+        try {
+            if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
+                String numberAsString = fieldStringValue.replaceAll(",", ".");
+                fieldValue = new Float(numberAsString);
+                if (!isFinite((Float) fieldValue)) {
+                    fieldValue = new Double(numberAsString);
+                }
+            } else
+                try {
+                    fieldValue = new Integer(fieldStringValue);
+                } catch (Exception e) {
+                    fieldValue = new Long(fieldStringValue);
+                }
+        } catch (NumberFormatException nf) {
+            fieldValue = fieldStringValue;
+        }
+        return fieldValue;
+    }
+
+    private boolean isColumnNamesCorrect(List<String> fields) {
+        if (columnNames == null) {
+            if (!columnsOnFirstLine)
+                throw new OTransformException(getName() + ": columnsOnFirstLine=false and no columns declared");
+            columnNames = fields;
+
+            // REMOVE ANY STRING CHARACTERS IF ANY
+            for (int i = 0; i < columnNames.size(); ++i)
+                columnNames.set(i, getCellContent(columnNames.get(i)));
+
+            return false;
+        }
+        return true;
+    }
+
+    private boolean skipTransform() {
+        line++;
+
+        if (skipFrom > -1) {
+            if (skipTo > -1) {
+                if (line >= skipFrom && line <= skipTo)
+                    return true;
+            } else if (line >= skipFrom)
+                // SKIP IT
+                return true;
+        }
+        return false;
+    }
+
+    /**
    * Backport copy of Float.isFinite() method that was introduced since Java 1.8 but we must support 1.6. TODO replace after
    * choosing Java 1.8 as minimal supported
    **/
