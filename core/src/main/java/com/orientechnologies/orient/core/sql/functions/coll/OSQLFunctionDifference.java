@@ -192,10 +192,20 @@ public class OSQLFunctionDifference extends OSQLFunctionMultiValueAbstract<Set<O
 
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
-    final Set<Object> result = new HashSet<Object>();
+    Set<Object> result = new HashSet<Object>();
 
+    boolean first = true;
     for (Object item : resultsToMerge) {
-      getDifferenceOf(result, item);
+      if (first) {
+        if (item instanceof Collection) {
+          result.addAll((Collection<?>) item);
+        } else {
+          result.add(item);
+        }
+        first = false;
+      } else {
+        result = getDifferenceOf(result, item);
+      }
     }
     return result;
   }
