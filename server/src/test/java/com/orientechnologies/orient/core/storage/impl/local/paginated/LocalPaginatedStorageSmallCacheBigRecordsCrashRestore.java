@@ -163,7 +163,7 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestore {
     Thread.sleep(300000);
 
     long lastTs = System.currentTimeMillis();
-    process.destroyForcibly();
+    // process.destroyForcibly();
     process.waitFor();
 
     System.out.println("Process was destroyed");
