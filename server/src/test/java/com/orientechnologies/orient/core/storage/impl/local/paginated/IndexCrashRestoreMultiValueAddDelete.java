@@ -122,7 +122,7 @@ public class IndexCrashRestoreMultiValueAddDelete {
     Thread.sleep(300000);
 
     System.out.println("Wait for process to destroy");
-    process.destroyForcibly();
+    // process.destroyForcibly();
 
     process.waitFor();
     System.out.println("Process was destroyed");

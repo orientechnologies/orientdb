@@ -286,7 +286,7 @@ public class LocalPaginatedStorageMixCrashRestore {
 
     long lastTs = System.currentTimeMillis();
     System.out.println("Wait for process to destroy");
-    process.destroyForcibly();
+    // process.destroyForcibly();
 
     process.waitFor();
     System.out.println("Process was destroyed");
