@@ -155,6 +155,9 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
       final Random random = new Random();
       try {
         while (true) {
+          if (lastClusterPosition <= 0)
+            continue;
+
           final long ts = System.currentTimeMillis();
           final long position = random.nextInt((int) lastClusterPosition);
           final ORID orid = new ORecordId(defaultClusterId, position);
