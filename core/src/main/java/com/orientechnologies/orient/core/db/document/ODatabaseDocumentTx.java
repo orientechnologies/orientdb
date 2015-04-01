@@ -20,6 +20,13 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -105,13 +112,6 @@ import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>implements ODatabaseDocumentInternal {
@@ -1669,7 +1669,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
         }
       }
 
-      final Collection<OPair<ORecordId, ORawBuffer>> rawRecords = ((OAbstractPaginatedStorage) storage).readRecords(rids);
+      final Collection<OPair<ORecordId, ORawBuffer>> rawRecords = ((OAbstractPaginatedStorage) storage.getUnderlying())
+          .readRecords(rids);
       for (OPair<ORecordId, ORawBuffer> entry : rawRecords) {
         // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
         final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(entry.value.recordType);
@@ -2545,6 +2546,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     long totalOnDb = cls.count(iPolymorphic);
 
     long deletedInTx = 0;
+    long addedInTx = 0;
     if (getTransaction().isActive())
       for (ORecordOperation op : getTransaction().getCurrentRecordEntries()) {
         if (op.type == ORecordOperation.DELETED) {
@@ -2554,10 +2556,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
               deletedInTx++;
           }
         }
+        if (op.type == ORecordOperation.CREATED) {
+          final ORecord rec = op.getRecord();
+          if (rec != null && rec instanceof ODocument) {
+            if (((ODocument) rec).getSchemaClass().isSubClassOf(iClassName))
+              addedInTx++;
+          }
+        }
       }
 
-    return totalOnDb - deletedInTx;
-
+    return (totalOnDb + addedInTx) - deletedInTx;
   }
 
   /**
