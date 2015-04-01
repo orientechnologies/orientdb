@@ -2260,9 +2260,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         if (walRecord instanceof OAtomicUnitEndRecord) {
           OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
           List<OWALRecord> atomicUnit = operationUnits.remove(atomicUnitEndRecord.getOperationUnitId());
-          atomicUnit.add(walRecord);
 
-          restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate);
+          // in case of data restore from fuzzy checkpoint part of operations may be already flushed to the disk
+          if (atomicUnit != null) {
+            atomicUnit.add(walRecord);
+            restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate);
+          }
+
         } else if (walRecord instanceof OAtomicUnitStartRecord) {
           List<OWALRecord> operationList = new ArrayList<OWALRecord>();
 
