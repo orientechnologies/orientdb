@@ -2591,6 +2591,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     long totalOnDb = cls.count(iPolymorphic);
 
     long deletedInTx = 0;
+    long addedInTx = 0;
     if (getTransaction().isActive())
       for (ORecordOperation op : getTransaction().getCurrentRecordEntries()) {
         if (op.type == ORecordOperation.DELETED) {
@@ -2600,10 +2601,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
               deletedInTx++;
           }
         }
+        if (op.type == ORecordOperation.CREATED){
+          final ORecord rec = op.getRecord();
+          if (rec != null && rec instanceof ODocument) {
+            if (((ODocument) rec).getSchemaClass().isSubClassOf(iClassName))
+              addedInTx++;
+          }
+        }
       }
 
-    return totalOnDb - deletedInTx;
-
+    return (totalOnDb + addedInTx) - deletedInTx;
   }
 
   /**
