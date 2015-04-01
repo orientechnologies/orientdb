@@ -9,7 +9,6 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.orient.core.compression.OCompression;
 import com.orientechnologies.orient.core.config.*;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
@@ -385,8 +384,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
 
         for (OWALRecord restoreRecord : atomicUnit) {
           if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord
-              || restoreRecord instanceof OFileCreatedCreatedWALRecord
-              || restoreRecord instanceof ONonTxOperationPerformedWALRecord)
+              || restoreRecord instanceof OFileCreatedWALRecord || restoreRecord instanceof ONonTxOperationPerformedWALRecord)
             continue;
 
           final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
@@ -420,7 +418,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
         }
         atomicUnit.clear();
       } else {
-        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedCreatedWALRecord
+        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
             || walRecord instanceof ONonTxOperationPerformedWALRecord);
       }
 

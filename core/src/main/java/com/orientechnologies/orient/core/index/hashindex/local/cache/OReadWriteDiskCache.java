@@ -166,8 +166,8 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
-  public long bookFileId() {
-    return writeCache.bookFileId();
+  public long bookFileId(String fileName) throws IOException {
+    return writeCache.bookFileId(fileName);
   }
 
   @Override

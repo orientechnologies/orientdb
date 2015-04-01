@@ -359,8 +359,7 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
         for (OWALRecord restoreRecord : atomicUnit) {
           if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord
-              || restoreRecord instanceof ONonTxOperationPerformedWALRecord
-              || restoreRecord instanceof OFileCreatedCreatedWALRecord)
+              || restoreRecord instanceof ONonTxOperationPerformedWALRecord || restoreRecord instanceof OFileCreatedWALRecord)
             continue;
 
           final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
@@ -395,7 +394,7 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
         atomicUnit.clear();
       } else {
         Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof ONonTxOperationPerformedWALRecord
-            || walRecord instanceof OFileCreatedCreatedWALRecord);
+            || walRecord instanceof OFileCreatedWALRecord);
       }
 
       lsn = log.next(lsn);

@@ -34,24 +34,24 @@ import com.orientechnologies.orient.server.OServerMain;
 
 @Test
 public class LocalPaginatedStorageLinkBagCrashRestore {
-  private static String                      URL_BASE;
-  private static String                      URL_TEST;
-  private final OLockManager<ORID, Callable> lockManager     = new OLockManager<ORID, Callable>(true, 30000);
-  private final AtomicInteger                positionCounter = new AtomicInteger();
-  private File                               buildDir;
+  private static String                         URL_BASE;
+  private static String                         URL_TEST;
+  private final OLockManager<ORID, Callable>    lockManager     = new OLockManager<ORID, Callable>(true, 30000);
+  private final AtomicInteger                   positionCounter = new AtomicInteger();
+  private File                                  buildDir;
 
-  private ExecutorService                    executorService = Executors.newCachedThreadPool();
-  private Process                            process;
+  private ExecutorService                       executorService = Executors.newCachedThreadPool();
+  private Process                               process;
 
-  private int                                defaultClusterId;
+  private int                                   defaultClusterId;
 
-  private volatile long                      lastClusterPosition;
+  private volatile long                         lastClusterPosition;
 
-	private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
+  private final OPartitionedDatabasePoolFactory poolFactory     = new OPartitionedDatabasePoolFactory();
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
-			OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+      OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(30);
       OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(20);
 
@@ -211,7 +211,7 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
   public void beforeClass() throws Exception {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(10);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(5);
-		OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+    OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageLinkBagCrashRestore";
@@ -253,18 +253,17 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
     futures.add(executorService.submit(new DocumentAdder()));
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 8; i++)
       futures.add(executorService.submit(new RidAdder()));
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 8; i++)
       futures.add(executorService.submit(new RidDeleter()));
 
-		Thread.sleep(1800000);
+    Thread.sleep(300000);
     long lastTs = System.currentTimeMillis();
 
     System.out.println("Wait for process to destroy");
-    Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
-    p.waitFor();
+    process.destroyForcibly();
 
     process.waitFor();
     System.out.println("Process was destroyed");

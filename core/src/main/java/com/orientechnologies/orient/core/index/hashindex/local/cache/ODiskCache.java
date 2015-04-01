@@ -73,7 +73,7 @@ public interface ODiskCache {
 
   void openFile(String fileName, long fileId) throws IOException;
 
-  long bookFileId();
+  long bookFileId(String fileName) throws IOException;
 
   OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages) throws IOException;
 

@@ -85,7 +85,7 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   }
 
   @Override
-  public long bookFileId() {
+  public long bookFileId(String fileName) {
     metadataLock.lock();
     try {
       counter++;

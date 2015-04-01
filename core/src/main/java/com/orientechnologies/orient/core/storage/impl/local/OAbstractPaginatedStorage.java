@@ -71,7 +71,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineCl
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
@@ -84,8 +83,6 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -2322,8 +2319,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     assert atomicUnit.get(atomicUnit.size() - 1) instanceof OAtomicUnitEndRecord;
 
     for (OWALRecord walRecord : atomicUnit.subList(1, atomicUnit.size() - 1)) {
-      if (walRecord instanceof OFileCreatedCreatedWALRecord) {
-        OFileCreatedCreatedWALRecord fileCreatedCreatedWALRecord = (OFileCreatedCreatedWALRecord) walRecord;
+      if (walRecord instanceof OFileDeletedWALRecord) {
+        OFileDeletedWALRecord fileDeletedWALRecord = (OFileDeletedWALRecord) walRecord;
+        if (diskCache.exists(fileDeletedWALRecord.getFileId()))
+          diskCache.deleteFile(fileDeletedWALRecord.getFileId());
+      } else if (walRecord instanceof OFileCreatedWALRecord) {
+        OFileCreatedWALRecord fileCreatedCreatedWALRecord = (OFileCreatedWALRecord) walRecord;
         if (diskCache.exists(fileCreatedCreatedWALRecord.getFileName())) {
           diskCache.openFile(fileCreatedCreatedWALRecord.getFileName(), fileCreatedCreatedWALRecord.getFileId());
         } else {

@@ -216,9 +216,15 @@ public class OWOWCache {
     return (int) crc32.getValue();
   }
 
-  public long bookFileId() {
+  public long bookFileId(String fileName) throws IOException {
     filesLock.acquireWriteLock();
     try {
+      initNameIdMapping();
+      Long fileId = nameIdMap.get(fileName);
+
+      if (fileId != null && fileId < 0)
+        return -fileId;
+
       ++fileCounter;
       return fileCounter;
     } finally {
@@ -233,7 +239,8 @@ public class OWOWCache {
 
       Long fileId = nameIdMap.get(fileName);
       OFileClassic fileClassic;
-      if (fileId == null)
+
+      if (fileId == null || fileId < 0)
         fileClassic = null;
       else
         fileClassic = files.get(fileId);
@@ -258,11 +265,14 @@ public class OWOWCache {
       Long fileId = nameIdMap.get(fileName);
       OFileClassic fileClassic;
 
-      if (fileId != null)
+      if (fileId != null && fileId >= 0)
         throw new OStorageException("File with name " + fileName + " already exists in storage " + storageLocal.getName());
 
-      ++fileCounter;
-      fileId = fileCounter;
+      if (fileId == null) {
+        ++fileCounter;
+        fileId = fileCounter;
+      } else
+        fileId = -fileId;
 
       fileClassic = createFile(fileName);
 
@@ -288,7 +298,7 @@ public class OWOWCache {
 
       Long existingFileId = nameIdMap.get(fileName);
 
-      if (existingFileId != null) {
+      if (existingFileId != null && fileId >= 0) {
         if (existingFileId == fileId)
           fileClassic = files.get(fileId);
         else
@@ -313,7 +323,7 @@ public class OWOWCache {
 
       Long existingFileId = nameIdMap.get(fileName);
 
-      if (existingFileId != null) {
+      if (existingFileId != null && existingFileId >= 0) {
         if (existingFileId == fileId)
           throw new OStorageException("File with name " + fileName + " already exists in storage " + storageLocal.getName());
         else
@@ -394,8 +404,11 @@ public class OWOWCache {
   public boolean exists(String fileName) {
     filesLock.acquireReadLock();
     try {
-      if (nameIdMap != null && nameIdMap.containsKey(fileName))
-        return true;
+      if (nameIdMap != null) {
+        Long fileId = nameIdMap.get(fileName);
+        if (fileId != null && fileId >= 0)
+          return true;
+      }
 
       final File file = new File(storageLocal.getVariableParser().resolveVariables(
           storageLocal.getStoragePath() + File.separator + fileName));
@@ -549,7 +562,7 @@ public class OWOWCache {
       initNameIdMapping();
 
       final Long fileId = nameIdMap.get(fileName);
-      if (fileId == null)
+      if (fileId == null || fileId < 0)
         return -1;
 
       final OFileClassic fileClassic = files.get(fileId);
@@ -601,8 +614,8 @@ public class OWOWCache {
     try {
       final String name = doDeleteFile(fileId);
       if (name != null) {
-        nameIdMap.remove(name);
-        writeNameIdEntry(new NameFileIdEntry(name, -1), true);
+        nameIdMap.put(name, -fileId);
+        writeNameIdEntry(new NameFileIdEntry(name, -fileId), true);
       }
     } finally {
       filesLock.releaseWriteLock();
@@ -881,17 +894,14 @@ public class OWOWCache {
       if (localFileCounter < nameFileIdEntry.fileId)
         localFileCounter = nameFileIdEntry.fileId;
 
-      if (nameFileIdEntry.fileId >= 0)
-        nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
-      else
-        nameIdMap.remove(nameFileIdEntry.name);
+      nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
     }
 
     if (localFileCounter > 0)
       fileCounter = localFileCounter;
 
     for (Map.Entry<String, Long> nameIdEntry : nameIdMap.entrySet()) {
-      if (!files.containsKey(nameIdEntry.getValue())) {
+      if (nameIdEntry.getValue() >= 0 && !files.containsKey(nameIdEntry.getValue())) {
         OFileClassic fileClassic = createFile(nameIdEntry.getKey());
         files.put(nameIdEntry.getValue(), fileClassic);
       }
@@ -1251,7 +1261,7 @@ public class OWOWCache {
           WriteGroup group = entry.getValue();
           for (int i = 0; i < 16; i++) {
             final OCachePointer pagePointer = group.pages[i];
-            if (pagePointer != null) {
+            if (pagePointer != null && pagePointer.getLastFlushedLsn() != null) {
               if (minLsn.compareTo(pagePointer.getLastFlushedLsn()) > 0) {
                 minLsn = pagePointer.getLastFlushedLsn();
               }
