@@ -2273,7 +2273,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         } else if (walRecord instanceof OOperationUnitRecord) {
           OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
 
+          // in case of data restore from fuzzy checkpoint part of operations may be already flushed to the disk
           List<OWALRecord> operationList = operationUnits.get(operationUnitRecord.getOperationUnitId());
+          if (operationList == null) {
+            operationList = new ArrayList<OWALRecord>();
+            operationUnits.put(operationUnitRecord.getOperationUnitId(), operationList);
+          }
+
           operationList.add(operationUnitRecord);
         } else if (walRecord instanceof ONonTxOperationPerformedWALRecord) {
           if (!wereNonTxOperationsPerformedInPreviousOpen) {
@@ -2300,10 +2306,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   protected void restoreAtomicUnit(List<OWALRecord> atomicUnit, OModifiableBoolean atLeastOnePageUpdate) throws IOException {
-    assert atomicUnit.get(0) instanceof OAtomicUnitStartRecord;
     assert atomicUnit.get(atomicUnit.size() - 1) instanceof OAtomicUnitEndRecord;
 
-    for (OWALRecord walRecord : atomicUnit.subList(1, atomicUnit.size() - 1)) {
+    for (OWALRecord walRecord : atomicUnit) {
       if (walRecord instanceof OFileDeletedWALRecord) {
         OFileDeletedWALRecord fileDeletedWALRecord = (OFileDeletedWALRecord) walRecord;
         if (diskCache.exists(fileDeletedWALRecord.getFileId()))
@@ -2346,6 +2351,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         }
 
         atLeastOnePageUpdate.setValue(true);
+      } else if (walRecord instanceof OAtomicUnitStartRecord) {
+        continue;
+      } else if (walRecord instanceof OAtomicUnitEndRecord) {
+        continue;
       } else {
         OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
             walRecord.getClass());
