@@ -99,7 +99,8 @@ public class ODefaultIndexFactory implements OIndexFactory {
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
 
     if (SBTREE_ALGORITHM.equals(algorithm))
-      return createSBTreeIndex(indexType, valueContainerAlgorithm, metadata, (OAbstractPaginatedStorage) database.getStorage());
+      return createSBTreeIndex(indexType, valueContainerAlgorithm, metadata, (OAbstractPaginatedStorage) database.getStorage()
+          .getUnderlying());
 
     throw new OConfigurationException("Unsupported type : " + indexType);
   }
