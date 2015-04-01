@@ -188,4 +188,158 @@ public class OCSVTransformerTest extends ETLBaseTest {
         ODocument doc = res.get(0);
         assertEquals(new Long(3000000000L), (Long)doc.field("number"));
     }
+
+    @Test
+    public void testGetCellContentSingleQuoted() {
+        String singleQuotedString = "\"aaa\"";
+        String unQuotedString = "aaa";
+        OCSVTransformer ocsvTransformer = new OCSVTransformer();
+        assertEquals(unQuotedString, ocsvTransformer.getCellContent(singleQuotedString));
+    }
+
+    @Test
+    public void testGetCellContentDoubleQuoted() {
+        String doubleQuotedString = "\"\"aaa\"\"";
+        String unQuotedString = "\"aaa\"";
+        OCSVTransformer ocsvTransformer = new OCSVTransformer();
+        assertEquals(unQuotedString, ocsvTransformer.getCellContent(doubleQuotedString));
+    }
+
+    @Test
+    public void testGetCellContentNullValue() {
+        OCSVTransformer ocsvTransformer = new OCSVTransformer();
+        assertEquals(null, ocsvTransformer.getCellContent(null));
+    }
+
+    @Test
+    public void testGetCellContentWithoutQuoteString() {
+        String unQuotedString = "aaa";
+        OCSVTransformer ocsvTransformer = new OCSVTransformer();
+        assertEquals(unQuotedString, ocsvTransformer.getCellContent(unQuotedString));
+    }
+
+    @Test
+    public void testIsFiniteFloat() {
+        OCSVTransformer ocsvTransformer = new OCSVTransformer();
+        assertFalse(ocsvTransformer.isFinite(Float.NaN));
+        assertFalse(ocsvTransformer.isFinite(Float.POSITIVE_INFINITY));
+        assertFalse(ocsvTransformer.isFinite(Float.NEGATIVE_INFINITY));
+        assertTrue(ocsvTransformer.isFinite(0f));
+    }
+
+    @Test
+    public void testNullCell() {
+        String cfgJson = "{source: { content: { value: 'id,postId,text\n1,,Hello'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(new Integer(1), (Integer) doc.field("id"));
+        assertNull((Integer) doc.field("postId"));
+        assertEquals("Hello", (String) doc.field("text"));
+    }
+
+    @Test
+    public void testNullValueInCell() {
+        String cfgJson = "{source: { content: { value: 'id,postId,text\n1,NULL,Hello'} }, extractor : { row : {} }, transformers : [{ csv : {nullValue: 'NULL'} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(new Integer(1), (Integer) doc.field("id"));
+        assertNull((Integer) doc.field("postId"));
+        assertEquals("Hello", (String) doc.field("text"));
+    }
+
+    @Test
+    public void testNullValueInCellEmptyString() {
+        String cfgJson = "{source: { content: { value: 'id,title,text\n1,,Hello'} }, extractor : { row : {} }, transformers : [{ csv : {nullValue: 'NULL'} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(new Integer(1), (Integer) doc.field("id"));
+        assertEquals("", (String) doc.field("title"));
+        assertEquals("Hello", (String) doc.field("text"));
+    }
+
+    @Test
+    public void testQuotedEmptyString() {
+        String cfgJson = "{source: { content: { value: 'id,title,text\n1,\"\",Hello'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(new Integer(1), (Integer) doc.field("id"));
+        assertEquals("", (String) doc.field("title"));
+        assertEquals("Hello", (String) doc.field("text"));
+    }
+
+    @Test
+    public void testCRLFDelimiter() {
+        String cfgJson = "{source: { content: { value: 'id,text,num\r\n1,my test text,1'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(new Integer(1), (Integer) doc.field("id"));
+        assertEquals("my test text", (String) doc.field("text"));
+        assertEquals(new Integer(1), (Integer) doc.field("num"));
+    }
+
+    @Test
+    public void testEndingLineBreak() {
+        String cfgJson = "{source: { content: { value: 'id,text,num\r\n1,my test text,1\r\n'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(new Integer(1), (Integer) doc.field("id"));
+        assertEquals("my test text", (String) doc.field("text"));
+        assertEquals(new Integer(1), (Integer) doc.field("num"));
+    }
+
+    @Test
+    public void testEndingSpaceInFieldName() {
+        String cfgJson = "{source: { content: { value: 'id ,text ,num \r\n1,my test text,1\r\n'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(new Integer(1), (Integer) doc.field("id "));
+        assertNotSame("my test text", (String) doc.field("text"));
+        assertEquals(new Integer(1), (Integer) doc.field("num "));
+    }
+
+    @Test
+    public void testCRLFIWithinQuotes() {
+        String cfgJson = "{source: { content: { value: 'id ,text ,num \r\n1,\"my test\r\n text\",1\r\n'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(new Integer(1), (Integer) doc.field("id "));
+        assertEquals("my test\r\n text", (String) doc.field("text "));
+        assertEquals(new Integer(1), (Integer) doc.field("num "));
+    }
+
+    @Test
+    public void testEscapingDoubleQuotes() {
+        String cfgJson = "{source: { content: { value: 'id ,text ,num \r\n1,\"my test \"\" text\",1\r\n'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(new Integer(1), (Integer) doc.field("id "));
+        assertEquals("my test \"\" text", (String) doc.field("text "));
+        assertEquals(new Integer(1), (Integer) doc.field("num "));
+    }
+
+    public void testNegativeInteger() {
+        String cfgJson = "{source: { content: { value: 'id\r\n-1'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(new Integer(-1), (Integer) doc.field("id"));
+
+    }
+
+    public void testNegativeFloat() {
+        String cfgJson = "{source: { content: { value: 'id\r\n-1.0'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(new Float(-1.0f), (Float) doc.field("id"));
+    }
 }
