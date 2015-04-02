@@ -1177,11 +1177,18 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @Override
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
+    int clusterId = getClusterIdByName(iClusterName);
+    OClass clazz = metadata.getSchema().getClassByClusterId(clusterId);
+    if (clazz != null)
+      clazz.removeClusterId(clusterId);
     return storage.dropCluster(iClusterName, iTruncate);
   }
 
   @Override
   public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
+    OClass clazz = metadata.getSchema().getClassByClusterId(iClusterId);
+    if (clazz != null)
+      clazz.removeClusterId(iClusterId);
     return storage.dropCluster(iClusterId, iTruncate);
   }
 
