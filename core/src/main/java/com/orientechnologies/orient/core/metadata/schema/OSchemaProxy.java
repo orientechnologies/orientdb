@@ -152,6 +152,12 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     setCurrentDatabaseInThreadLocal();
     return delegate.createAbstractClass(iClassName, iSuperClass);
   }
+  
+  @Override
+	public OClass createAbstractClass(String iClassName, OClass... superClasses) {
+	  setCurrentDatabaseInThreadLocal();
+	  return delegate.createAbstractClass(iClassName, superClasses);
+	}
 
   public void dropClass(final String iClassName) {
     setCurrentDatabaseInThreadLocal();

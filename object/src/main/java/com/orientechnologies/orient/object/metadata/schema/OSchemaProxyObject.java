@@ -120,6 +120,11 @@ public class OSchemaProxyObject implements OSchema {
   public OClass createAbstractClass(String iClassName, OClass iSuperClass) {
     return underlying.createAbstractClass(iClassName, iSuperClass);
   }
+  
+  @Override
+	public OClass createAbstractClass(String iClassName, OClass... superClasses) {
+		return underlying.createAbstractClass(iClassName, superClasses);
+	}
 
   @Override
   public void dropClass(String iClassName) {

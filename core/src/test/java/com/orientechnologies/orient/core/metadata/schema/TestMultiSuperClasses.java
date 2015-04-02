@@ -37,20 +37,20 @@ public class TestMultiSuperClasses {
 
 		  OClass aClass = oSchema.createAbstractClass("javaA");
 		  OClass bClass = oSchema.createAbstractClass("javaB");
-		  aClass.createProperty("property", OType.INTEGER);
-		  bClass.createProperty("property", OType.DOUBLE);
+		  aClass.createProperty("propertyInt", OType.INTEGER);
+		  bClass.createProperty("propertyDouble", OType.DOUBLE);
 		  OClass cClass = oSchema.createClass("javaC", aClass,bClass);
-		  testClassClreationBranch(aClass, bClass, cClass);
+		  testClassCreationBranch(aClass, bClass, cClass);
 		  oSchema.reload();
-		  testClassClreationBranch(aClass, bClass, cClass);
+		  testClassCreationBranch(aClass, bClass, cClass);
 		  oSchema = db.getMetadata().getImmutableSchemaSnapshot();
 		  aClass = oSchema.getClass("javaA");
 		  bClass = oSchema.getClass("javaB");
 		  cClass = oSchema.getClass("javaC");
-		  testClassClreationBranch(aClass, bClass, cClass);
+		  testClassCreationBranch(aClass, bClass, cClass);
 	  }
 	  
-	  private void testClassClreationBranch(OClass aClass, OClass bClass, OClass cClass)
+	  private void testClassCreationBranch(OClass aClass, OClass bClass, OClass cClass)
 	  {
 		  assertNotNull(aClass.getSuperClasses());
 		  assertEquals(aClass.getSuperClasses().size(), 0);
@@ -67,10 +67,15 @@ public class TestMultiSuperClasses {
 		  assertTrue(aClass.isSuperClassOf(cClass));
 		  assertTrue(bClass.isSuperClassOf(cClass));
 		  
-		  OProperty property = cClass.getProperty("property");
+		  OProperty property = cClass.getProperty("propertyInt");
 		  assertEquals(OType.INTEGER, property.getType());
-		  property = cClass.propertiesMap().get("property");
+		  property = cClass.propertiesMap().get("propertyInt");
 		  assertEquals(OType.INTEGER, property.getType());
+		  
+		  property = cClass.getProperty("propertyDouble");
+		  assertEquals(OType.DOUBLE, property.getType());
+		  property = cClass.propertiesMap().get("propertyDouble");
+		  assertEquals(OType.DOUBLE, property.getType());
 	  }
 	  
 	  @Test
@@ -127,5 +132,28 @@ public class TestMultiSuperClasses {
 		  OClass cClass = oSchema.createAbstractClass("cycleC", bClass);
 		  
 		  aClass.setSuperClasses(Arrays.asList(cClass));
+	  }
+	  
+	  @Test
+	  public void testParametersImpactGoodScenario()
+	  {
+		  final OSchema oSchema = db.getMetadata().getSchema();
+		  OClass aClass = oSchema.createAbstractClass("impactGoodA");
+		  aClass.createProperty("property", OType.STRING);
+		  OClass bClass = oSchema.createAbstractClass("impactGoodB");
+		  bClass.createProperty("property", OType.STRING);
+		  OClass cClass = oSchema.createAbstractClass("impactGoodC", aClass, bClass);
+		  assertTrue(cClass.existsProperty("property"));
+	  }
+	  
+	  @Test(expectedExceptions={OSchemaException.class}, expectedExceptionsMessageRegExp=".*conflict.*")
+	  public void testParametersImpactBadScenario()
+	  {
+		  final OSchema oSchema = db.getMetadata().getSchema();
+		  OClass aClass = oSchema.createAbstractClass("impactBadA");
+		  aClass.createProperty("property", OType.STRING);
+		  OClass bClass = oSchema.createAbstractClass("impactBadB");
+		  bClass.createProperty("property", OType.INTEGER);
+		  oSchema.createAbstractClass("impactBadC", aClass, bClass);
 	  }
 }

@@ -54,6 +54,8 @@ public interface OSchema {
   public OClass createAbstractClass(final String iClassName);
 
   public OClass createAbstractClass(final String iClassName, final OClass iSuperClass);
+  
+  public OClass createAbstractClass(final String iClassName, final OClass... superClasses);
 
   public void dropClass(final String iClassName);
 

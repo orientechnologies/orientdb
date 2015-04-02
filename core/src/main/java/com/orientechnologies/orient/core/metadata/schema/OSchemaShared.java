@@ -380,6 +380,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
   
   @Override
+	public OClass createAbstractClass(String iClassName, OClass... superClasses) {
+		return createClass(iClassName, new int[]{-1}, superClasses);
+	}
+  
+  @Override
   public OClass createClass(final String className, final OClass superClass, int[] clusterIds) {
 	  return createClass(className, clusterIds, superClass);
   }

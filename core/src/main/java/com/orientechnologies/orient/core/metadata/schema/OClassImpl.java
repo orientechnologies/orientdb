@@ -500,6 +500,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	    			cls = (OClassImpl) superClass;
 	    		newSuperClasses.add(cls);
 	    	}
+	    	checkParametersConflict(newSuperClasses);
 	    	List<OClassImpl> toAddList = new ArrayList<OClassImpl>(newSuperClasses);
 	    	toAddList.removeAll(superClasses);
 	    	List<OClassImpl> toRemoveList = new ArrayList<OClassImpl>(superClasses);
@@ -507,7 +508,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	    	
 	    	for(OClassImpl addTo: toAddList)
 	    	{
-	    		addTo.addBaseClasses(this);
+	    		addTo.addBaseClass(this);
 	    	}
 	    	for(OClassImpl toRemove: toRemoveList)
 	    	{
@@ -557,11 +558,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	        cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
 	      else
 	        cls = (OClassImpl) superClass;
-
-	      if (cls != null)
-	        cls.addBaseClasses(this);
 	      
-	      superClasses.add(cls);
+	      if (cls != null)
+	      {
+	    	cls.checkParametersConflict(this);
+	        cls.addBaseClass(this);
+	        superClasses.add(cls);
+	      }
 	    } finally {
 	      releaseSchemaWriteLock();
 	    }
@@ -724,24 +727,24 @@ public OClass setName(final String name) {
     acquireSchemaReadLock();
     try {
       final Map<String, OProperty> props = new HashMap<String, OProperty>(20);
-      propertiesMap(props);
+      propertiesMap(props, true);
       return props;
     } finally {
       releaseSchemaReadLock();
     }
   }
   
-  public void propertiesMap(Map<String, OProperty> propertiesMap)
+  private void propertiesMap(Map<String, OProperty> propertiesMap, boolean keepCase)
   {
 	  for (OProperty p : properties.values()) {
-          final String propName = p.getName();
-
+          String propName = p.getName();
+          if(!keepCase) propName = propName.toLowerCase();
           if (!propertiesMap.containsKey(propName))
         	  propertiesMap.put(propName, p);
         }
 	  for(OClassImpl superClass: superClasses)
 	  {
-		  superClass.propertiesMap(propertiesMap);
+		  superClass.propertiesMap(propertiesMap, keepCase);
 	  }
   }
 
@@ -2327,11 +2330,9 @@ public OClass setName(final String name) {
    * @param iBaseClass
    *          The base class to add.
    */
-  private OClass addBaseClasses(final OClassImpl iBaseClass) {
-	  if(checkRecursion(iBaseClass))
-	  {
-		  throw new OSchemaException("Can't add base class, because of recursion");
-	  }
+  private OClass addBaseClass(final OClassImpl iBaseClass) {
+	checkRecursion(iBaseClass);
+	checkParametersConflict(iBaseClass);
 	            
     if (subclasses == null)
       subclasses = new ArrayList<OClass>();
@@ -2344,11 +2345,52 @@ public OClass setName(final String name) {
     return this;
   }
   
-  private boolean checkRecursion(OClass baseClass)
+  private void checkParametersConflict(OClass baseClass)
+  {
+	  Collection<OProperty> baseClassProperties = baseClass.properties();
+	  for(OProperty property:baseClassProperties)
+	  {
+		  OProperty thisProperty = getProperty(property.getName());
+		  if(thisProperty!=null && thisProperty.getType().equals(property.getType()))
+		  {
+			  throw new OSchemaException("Can't add base class '"+baseClass.getName()+"', because of paramaters conflict: "+thisProperty+" vs "+property);
+		  }
+	  }
+  }
+  
+  private void checkParametersConflict(List<OClassImpl> classes)
+  {
+	  Map<String, OProperty> commulative = new HashMap<String, OProperty>();
+	  Map<String, OProperty> properties  = new HashMap<String, OProperty>();;
+	  for(OClassImpl superClass:classes)
+	  {
+		  superClass.propertiesMap(properties, false);
+		  for(Map.Entry<String, OProperty> entry: properties.entrySet())
+		  {
+			  if(commulative.containsKey(entry.getKey()))
+			  {
+				  String property = entry.getKey();
+				  OProperty existingProperty = commulative.get(property);
+				  if(!existingProperty.getType().equals(entry.getValue().getType()))
+				  {
+					  throw new OSchemaException("Properties conflict detected: ["+existingProperty+"] vs ["+entry.getValue()+"]");
+				  }
+			  }
+		  }
+		  
+		  commulative.putAll(properties);
+		  properties.clear();
+	  }
+  }
+  
+  private void checkRecursion(OClass baseClass)
   {
 	  Set<String> browsed = new HashSet<String>();
 	  browsed.add(baseClass.getName());
-	  return checkRecursion(browsed);
+	  if(checkRecursion(browsed))
+	  {
+		  throw new OSchemaException("Can't add base class '"+baseClass.getName()+"', because of recursion");
+	  }
   }
   
   private boolean checkRecursion(Set<String> browsedClasses)
