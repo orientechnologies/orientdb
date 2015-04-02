@@ -68,9 +68,9 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   public void create() throws IOException {
+    OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
 
       fileId = addFile(atomicOperation, name + defaultExtension, diskCache);
       init();
@@ -150,10 +150,9 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   public void delete() throws IOException {
+    final OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      final OAtomicOperation atomicOperation = startAtomicOperation();
-
       deleteFile(atomicOperation, fileId, diskCache);
       endAtomicOperation(false);
     } catch (IOException e) {
@@ -168,10 +167,9 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   public void deleteWithoutOpen() throws IOException {
+    final OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      final OAtomicOperation atomicOperation = startAtomicOperation();
-
       if (isFileExists(atomicOperation, name + defaultExtension, diskCache)) {
         fileId = openFile(atomicOperation, name + defaultExtension, diskCache);
         deleteFile(atomicOperation, fileId, diskCache);
@@ -192,10 +190,9 @@ public class OHashTableDirectory extends ODurableComponent {
   public int addNewNode(byte maxLeftChildDepth, byte maxRightChildDepth, byte nodeLocalDepth, long[] newNode) throws IOException {
     int nodeIndex;
 
+    OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
-
       OCacheEntry firstEntry = loadPage(atomicOperation, fileId, firstEntryIndex, true, diskCache);
       firstEntry.acquireExclusiveLock();
       try {
@@ -276,10 +273,9 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   public void deleteNode(int nodeIndex) throws IOException {
+    final OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      final OAtomicOperation atomicOperation = startAtomicOperation();
-
       OCacheEntry firstEntry = loadPage(atomicOperation, fileId, firstEntryIndex, true, diskCache);
       firstEntry.acquireExclusiveLock();
       try {
@@ -322,9 +318,9 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   public byte getMaxLeftChildDepth(int nodeIndex) throws IOException {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
@@ -335,17 +331,17 @@ public class OHashTableDirectory extends ODurableComponent {
           releasePage(page, false, atomicOperation);
         }
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   public void setMaxLeftChildDepth(int nodeIndex, byte maxLeftChildDepth) throws IOException {
+    OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
 
       final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
       try {
@@ -367,9 +363,9 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   public byte getMaxRightChildDepth(int nodeIndex) throws IOException {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final ODirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
@@ -379,17 +375,18 @@ public class OHashTableDirectory extends ODurableComponent {
           releasePage(page, false, atomicOperation);
         }
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   public void setMaxRightChildDepth(int nodeIndex, byte maxRightChildDepth) throws IOException {
+    OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
+
       final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
       try {
         page.setMaxRightChildDepth(getLocalNodeIndex(nodeIndex), maxRightChildDepth);
@@ -410,9 +407,9 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   public byte getNodeLocalDepth(int nodeIndex) throws IOException {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final ODirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
@@ -422,18 +419,17 @@ public class OHashTableDirectory extends ODurableComponent {
           releasePage(page, false, atomicOperation);
         }
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   public void setNodeLocalDepth(int nodeIndex, byte localNodeDepth) throws IOException {
+    OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
-
       final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
       try {
         page.setNodeLocalDepth(getLocalNodeIndex(nodeIndex), localNodeDepth);
@@ -456,9 +452,9 @@ public class OHashTableDirectory extends ODurableComponent {
   public long[] getNode(int nodeIndex) throws IOException {
     final long[] node = new long[LEVEL_SIZE];
 
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final ODirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
@@ -470,19 +466,19 @@ public class OHashTableDirectory extends ODurableComponent {
           releasePage(page, false, atomicOperation);
         }
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
 
     return node;
   }
 
   public void setNode(int nodeIndex, long[] node) throws IOException {
+    OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
 
       final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
       try {
@@ -506,9 +502,9 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   public long getNodePointer(int nodeIndex, int index) throws IOException {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final ODirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
@@ -518,18 +514,17 @@ public class OHashTableDirectory extends ODurableComponent {
           releasePage(page, false, atomicOperation);
         }
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   public void setNodePointer(int nodeIndex, int index, long pointer) throws IOException {
+    OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
-
       final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
       try {
         page.setPointer(getLocalNodeIndex(nodeIndex), index, pointer);
@@ -550,9 +545,9 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   public void clear() throws IOException {
+    OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
       truncateFile(atomicOperation, fileId, diskCache);
 
       init();
@@ -570,16 +565,16 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   public void flush() throws IOException {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         diskCache.flushFile(fileId);
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 

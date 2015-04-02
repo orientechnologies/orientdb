@@ -149,17 +149,17 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   public boolean exists() {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         return isFileExists(atomicOperation, name + DEF_EXTENSION, diskCache);
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
@@ -167,10 +167,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public void create(int startSize) throws IOException {
     externalModificationLock.requestModificationLock();
     try {
+      OAtomicOperation atomicOperation = startAtomicOperation();
       acquireExclusiveLock();
       try {
-        OAtomicOperation atomicOperation = startAtomicOperation();
-
         fileId = addFile(atomicOperation, name + DEF_EXTENSION, diskCache);
 
         initCusterState(atomicOperation);
@@ -247,9 +246,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public void delete() throws IOException {
     externalModificationLock.requestModificationLock();
     try {
+      final OAtomicOperation atomicOperation = startAtomicOperation();
       acquireExclusiveLock();
       try {
-        final OAtomicOperation atomicOperation = startAtomicOperation();
         deleteFile(atomicOperation, fileId, diskCache);
 
         clusterPositionMap.delete();
@@ -374,10 +373,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
     externalModificationLock.requestModificationLock();
     try {
+      OAtomicOperation atomicOperation = startAtomicOperation();
       acquireExclusiveLock();
       try {
-        OAtomicOperation atomicOperation = startAtomicOperation();
-
         int grownContentSize = (int) (config.recordGrowFactor * content.length);
         int entryContentLength = grownContentSize + 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE
             + OLongSerializer.LONG_SIZE;
@@ -530,9 +528,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   public ORawBuffer readRecord(long clusterPosition) throws IOException {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
@@ -584,19 +582,19 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         byte[] recordContent = compression.uncompress(fullContent, fullContentPosition, readContentSize);
         return new ORawBuffer(recordContent, recordVersion, recordType);
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   public boolean deleteRecord(long clusterPosition) throws IOException {
     externalModificationLock.requestModificationLock();
     try {
+      OAtomicOperation atomicOperation = startAtomicOperation();
       acquireExclusiveLock();
       try {
-        OAtomicOperation atomicOperation = startAtomicOperation();
 
         OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
         if (positionEntry == null) {
@@ -677,9 +675,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public boolean hideRecord(long position) throws IOException {
     externalModificationLock.requestModificationLock();
     try {
+      OAtomicOperation atomicOperation = startAtomicOperation();
       acquireExclusiveLock();
       try {
-        OAtomicOperation atomicOperation = startAtomicOperation();
         OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(position);
 
         if (positionEntry == null) {
@@ -718,9 +716,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
     externalModificationLock.requestModificationLock();
     try {
+      OAtomicOperation atomicOperation = startAtomicOperation();
       acquireExclusiveLock();
       try {
-        OAtomicOperation atomicOperation = startAtomicOperation();
         OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
 
         if (positionEntry == null) {
@@ -928,15 +926,15 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
     externalModificationLock.requestModificationLock();
     try {
+      OAtomicOperation atomicOperation;
+
+      if (config.useWal)
+        atomicOperation = startAtomicOperation();
+      else
+        atomicOperation = atomicOperationsManager.getCurrentOperation();
+
       acquireExclusiveLock();
       try {
-        OAtomicOperation atomicOperation;
-
-        if (config.useWal)
-          atomicOperation = startAtomicOperation();
-        else
-          atomicOperation = atomicOperationsManager.getCurrentOperation();
-
         truncateFile(atomicOperation, fileId, diskCache);
         clusterPositionMap.truncate();
 
@@ -959,9 +957,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   @Override
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition position) throws IOException {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         long clusterPosition = position.clusterPosition;
         OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
@@ -998,18 +996,18 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           releasePage(atomicOperation, cacheEntry, diskCache);
         }
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   @Override
   public long getEntries() {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final OCacheEntry pinnedStateEntry = loadPage(atomicOperation, fileId, pinnedStateEntryIndex, true, diskCache);
@@ -1019,42 +1017,42 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           releasePage(atomicOperation, pinnedStateEntry, diskCache);
         }
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } catch (IOException ioe) {
       throw new OStorageException("Error during retrieval of size of " + name + " cluster.");
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   @Override
   public long getFirstPosition() throws IOException {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         return clusterPositionMap.getFirstPosition();
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   @Override
   public long getLastPosition() throws IOException {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         return clusterPositionMap.getLastPosition();
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
@@ -1065,17 +1063,17 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   @Override
   public void synch() throws IOException {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         diskCache.flushFile(fileId);
         clusterPositionMap.flush();
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
@@ -1106,9 +1104,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   @Override
   public long getRecordsSize() throws IOException {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
@@ -1119,10 +1117,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           releasePage(atomicOperation, pinnedStateEntry, diskCache);
         }
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
@@ -1133,80 +1131,80 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   @Override
   public OClusterEntryIterator absoluteIterator() {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         return new OClusterEntryIterator(this);
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   @Override
   public OPhysicalPosition[] higherPositions(OPhysicalPosition position) throws IOException {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         final long[] clusterPositions = clusterPositionMap.higherPositions(position.clusterPosition);
         return convertToPhysicalPositions(clusterPositions);
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   @Override
   public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) throws IOException {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         final long[] clusterPositions = clusterPositionMap.ceilingPositions(position.clusterPosition);
         return convertToPhysicalPositions(clusterPositions);
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   @Override
   public OPhysicalPosition[] lowerPositions(OPhysicalPosition position) throws IOException {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         final long[] clusterPositions = clusterPositionMap.lowerPositions(position.clusterPosition);
         return convertToPhysicalPositions(clusterPositions);
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   @Override
   public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
-    acquireSharedLock();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
         final long[] clusterPositions = clusterPositionMap.floorPositions(position.clusterPosition);
         return convertToPhysicalPositions(clusterPositions);
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      releaseSharedLock();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
