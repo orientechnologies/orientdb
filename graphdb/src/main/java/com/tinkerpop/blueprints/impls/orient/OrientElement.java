@@ -115,7 +115,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
 
   /**
    * (Blueprints Extension) Sets multiple properties in one shot against Vertices and Edges. This improves performance avoiding to
-   * save the graph element at every property set. Example:
+   * save the graph element at every property set. After calling this method, the vertex is dirty and need to be saved by calling
+   * the {@link #save()} method.<br>
+   * Example:
    * 
    * <code>
    * vertex.setProperties( "name", "Jill", "age", 33, "city", "Rome", "born", "Victoria, TX" );
