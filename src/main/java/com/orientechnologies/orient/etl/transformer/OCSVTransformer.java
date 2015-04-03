@@ -112,26 +112,15 @@ public class OCSVTransformer extends OAbstractTransformer {
 
         final OType fieldType = columnTypes != null ? columnTypes.get(i) : null;
 
-        if (fieldType != null && fieldType != OType.ANY) {
-          // DEFINED TYPE
-          fieldValue = getCellContent(fieldStringValue);
-          try {
-            fieldValue = OType.convert(fieldValue, fieldType.getDefaultJavaType());
-            doc.field(fieldName, fieldValue);
-          } catch (Exception e) {
-            processor.getStats().incrementErrors();
-            log(OETLProcessor.LOG_LEVELS.ERROR, "Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s",
-                processor.getExtractor().getProgress(), fieldName, i, fieldValue, fieldValue.getClass().getName(), fieldType);
+          if (fieldType != null && fieldType != OType.ANY) {
+              // DEFINED TYPE
+              fieldValue = processKnownType(doc, i, fieldName, fieldStringValue, fieldType);
+          } else {
+              // DETERMINE THE TYPE
+              if (fieldStringValue == null) fieldValue = null;
+              else fieldValue = determineTheType(fieldStringValue);
           }
-        } else if (fieldStringValue != null && !fieldStringValue.isEmpty()) {
-          // DETERMINE THE TYPE
-            fieldValue = determineTheType(fieldStringValue);
-            if (nullValue != null && nullValue.equals(fieldValue))
-            // NULL VALUE, SKIP
-            continue;
-
           doc.field(fieldName, fieldValue);
-        }
 
       } catch (Exception e) {
         processor.getStats().incrementErrors();
@@ -143,6 +132,20 @@ public class OCSVTransformer extends OAbstractTransformer {
 
     return doc;
   }
+
+    private Object processKnownType(ODocument doc, int i, String fieldName, String fieldStringValue, OType fieldType) {
+        Object fieldValue;
+        fieldValue = getCellContent(fieldStringValue);
+        try {
+            fieldValue = OType.convert(fieldValue, fieldType.getDefaultJavaType());
+            doc.field(fieldName, fieldValue);
+        } catch (Exception e) {
+            processor.getStats().incrementErrors();
+            log(OETLProcessor.LOG_LEVELS.ERROR, "Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s",
+                    processor.getExtractor().getProgress(), fieldName, i, fieldValue, fieldValue.getClass().getName(), fieldType);
+        }
+        return fieldValue;
+    }
 
     private Object determineTheType(String fieldStringValue) {
         Object fieldValue;
@@ -225,7 +228,7 @@ public class OCSVTransformer extends OAbstractTransformer {
 
   // TODO Test, and double doubleqoutes case
   public String getCellContent(String iValue) {
-    if (iValue == null)
+      if (iValue == null || iValue.length() == 0 || "NULL".equals(iValue))
       return null;
 
     if (iValue.length() > 1 && (iValue.charAt(0) == stringCharacter && iValue.charAt(iValue.length() - 1) == stringCharacter))
