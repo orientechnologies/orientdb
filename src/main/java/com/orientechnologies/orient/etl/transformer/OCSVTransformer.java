@@ -109,7 +109,6 @@ public class OCSVTransformer extends OAbstractTransformer {
       Object fieldValue = null;
       try {
         final String fieldStringValue = getCellContent(fields.get(i));
-
         final OType fieldType = columnTypes != null ? columnTypes.get(i) : null;
 
           if (fieldType != null && fieldType != OType.ANY) {
@@ -129,7 +128,6 @@ public class OCSVTransformer extends OAbstractTransformer {
     }
 
     log(OETLProcessor.LOG_LEVELS.DEBUG, "document=%s", doc);
-
     return doc;
   }
 
@@ -228,7 +226,7 @@ public class OCSVTransformer extends OAbstractTransformer {
 
   // TODO Test, and double doubleqoutes case
   public String getCellContent(String iValue) {
-      if (iValue == null || iValue.length() == 0 || "NULL".equals(iValue))
+      if (iValue == null || iValue.isEmpty() || "NULL".equals(iValue))
       return null;
 
     if (iValue.length() > 1 && (iValue.charAt(0) == stringCharacter && iValue.charAt(iValue.length() - 1) == stringCharacter))
