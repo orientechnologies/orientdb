@@ -359,6 +359,14 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   }
 
   /**
+   * (Blueprints Extension) Checks if an Element is locked
+   */
+  @Override
+  public boolean isLocked() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().isLockedRecord(this);
+  }
+
+  /**
    * (Blueprints Extension) Unlocks previous acquired @lock against the Element.
    * 
    * @see #lock(boolean)

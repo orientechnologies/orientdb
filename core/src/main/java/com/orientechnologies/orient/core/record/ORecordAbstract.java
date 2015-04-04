@@ -301,6 +301,11 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   @Override
+  public boolean isLocked() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().isLockedRecord(this);
+  }
+
+  @Override
   public void unlock() {
     ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().unlockRecord(this);
   }

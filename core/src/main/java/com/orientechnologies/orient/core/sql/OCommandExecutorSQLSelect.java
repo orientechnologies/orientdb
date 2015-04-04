@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -79,12 +85,6 @@ import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
-
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -510,14 +510,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
     } finally {
-      if (record != null) {
-        if (localLockingStrategy != null)
+      if (record != null && localLockingStrategy != null && record.isLocked()) {
         // CONTEXT LOCK: lock must be released (no matter if filtered or not)
-        {
-          if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
-              || localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
-            record.unlock();
-          }
+        if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
+            || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+          record.unlock();
         }
       }
     }
@@ -550,7 +547,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (!addResult(lastRecord)) {
         return false;
       }
-
 
       return !((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && !isAnyFunctionAggregates()
           && (groupByFields == null || groupByFields.isEmpty()) && fetchLimit > -1 && resultCount >= fetchLimit);
@@ -1575,7 +1571,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       uniqueResult = new HashSet<ORID>();
       for (OIndexCursor cursor : cursors) {
-        if(!fetchValuesFromIndexCursor(cursor)){
+        if (!fetchValuesFromIndexCursor(cursor)) {
           break;
         }
       }
