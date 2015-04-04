@@ -234,7 +234,7 @@ public class OCSVTransformerTest extends ETLBaseTest {
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
         assertEquals(new Integer(1), (Integer) doc.field("id"));
-        assertNull((Integer) doc.field("postId"));
+        assertNull(doc.field("postId"));
         assertEquals("Hello", (String) doc.field("text"));
     }
 
@@ -245,13 +245,13 @@ public class OCSVTransformerTest extends ETLBaseTest {
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
         assertEquals(new Integer(1), (Integer) doc.field("id"));
-        assertNull((Integer) doc.field("postId"));
+        assertNull(doc.field("postId"));
         assertEquals("Hello", (String) doc.field("text"));
     }
 
     @Test
     public void testNullValueInCellEmptyString() {
-        String cfgJson = "{source: { content: { value: 'id,title,text\n1,,Hello'} }, extractor : { row : {} }, transformers : [{ csv : {nullValue: 'NULL'} }], loader : { test: {} } }";
+        String cfgJson = "{source: { content: { value: 'id,title,text\n1,\"\",Hello'} }, extractor : { row : {} }, transformers : [{ csv : {nullValue: 'NULL'} }], loader : { test: {} } }";
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
