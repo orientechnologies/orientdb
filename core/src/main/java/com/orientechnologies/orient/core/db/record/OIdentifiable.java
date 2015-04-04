@@ -46,6 +46,8 @@ public interface OIdentifiable extends Comparable<OIdentifiable>, Comparator<OId
   public <T extends ORecord> T getRecord();
 
   public void lock(boolean iExclusive);
+  
+  public boolean isLocked();
 
   public void unlock();
 }

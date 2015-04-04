@@ -512,12 +512,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     } finally {
       if (record != null) {
-        if (localLockingStrategy != null)
-        // CONTEXT LOCK: lock must be released (no matter if filtered or not)
-        {
-          if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
-              || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
-            record.unlock();
+        if (record.isLocked()) {
+          if (localLockingStrategy != null)
+          // CONTEXT LOCK: lock must be released (no matter if filtered or not)
+          {
+            if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
+                || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+              record.unlock();
+            }
           }
         }
       }
