@@ -107,7 +107,7 @@ public class IndexCrashRestoreSingleValue {
     System.out.println("Start data propagation");
 
     List<Future> futures = new ArrayList<Future>();
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 5; i++) {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 

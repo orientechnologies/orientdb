@@ -13,6 +13,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -72,14 +73,18 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
 
         try {
           ODatabaseDocumentTx base_db = poolFactory.get(URL_BASE, "admin", "admin").acquire();
+          ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
+
           ODocument base_document = addDocument(ts);
-          base_db.close();
 
           ODatabaseDocumentTx test_db = poolFactory.get(URL_TEST, "admin", "admin").acquire();
+          ODatabaseRecordThreadLocal.INSTANCE.set(test_db);
           ODocument test_document = addDocument(ts);
-          test_db.close();
 
-          Assert.assertEquals(base_document, test_document);
+          Assert.assertTrue(ODocumentHelper.hasSameContentOf(base_document, base_db, test_document, test_db, null));
+
+          base_db.close();
+          test_db.close();
 
           lastClusterPosition = base_document.getIdentity().getClusterPosition();
         } catch (RuntimeException e) {
@@ -256,14 +261,18 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
     futures.add(executorService.submit(new DocumentAdder()));
 
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 5; i++)
       futures.add(executorService.submit(new RidAdder()));
 
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 5; i++)
       futures.add(executorService.submit(new RidDeleter()));
 
     Thread.sleep(300000);
     long lastTs = System.currentTimeMillis();
+
+    ODatabaseDocumentTx test_db = poolFactory.get(URL_TEST, "admin", "admin").acquire();
+    System.out.println(test_db.countClusterElements(test_db.getDefaultClusterId()));
+    test_db.close();
 
     System.out.println("Wait for process to destroy");
     // process.destroyForcibly();
@@ -326,13 +335,12 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
 
         ODatabaseRecordThreadLocal.INSTANCE.set(test_db);
         ODocument testDocument = test_db.load(rid);
-        testDocument.setLazyLoad(false);
-
         if (testDocument == null) {
           ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
           if (((Long) baseDocument.field("ts")) < minTs)
             minTs = baseDocument.field("ts");
         } else {
+          testDocument.setLazyLoad(false);
           long baseTs;
           long testTs;
 
@@ -362,11 +370,11 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
             equals = baseRids.equals(testRids);
           }
 
-          if (!equals)
+          if (!equals) {
             if (((Long) baseDocument.field("ts")) < minTs)
               minTs = baseDocument.field("ts");
-            else
-              recordsRestored++;
+          } else
+            recordsRestored++;
         }
 
         recordsTested++;

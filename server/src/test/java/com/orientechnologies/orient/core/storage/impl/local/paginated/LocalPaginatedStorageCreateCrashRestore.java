@@ -157,7 +157,7 @@ public class LocalPaginatedStorageCreateCrashRestore {
     createSchema(testDocumentTx);
 
     List<Future> futures = new ArrayList<Future>();
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 5; i++) {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
