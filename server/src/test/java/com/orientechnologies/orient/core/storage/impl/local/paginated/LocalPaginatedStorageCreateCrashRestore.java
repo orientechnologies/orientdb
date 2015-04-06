@@ -45,7 +45,7 @@ public class LocalPaginatedStorageCreateCrashRestore {
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
-			OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+      OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
 
       OServer server = OServerMain.create();
       server.startup(RemoteDBRunner.class
@@ -90,23 +90,23 @@ public class LocalPaginatedStorageCreateCrashRestore {
     private void saveDoc(ODocument document) {
       ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
 
-			baseDB.begin();
+      baseDB.begin();
       ODocument testDoc = new ODocument();
       document.copyTo(testDoc);
       document.save();
-			baseDB.commit();
+      baseDB.commit();
 
       ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
-			testDB.begin();
+      testDB.begin();
       testDoc.save();
-			testDB.commit();
+      testDB.commit();
       ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
     }
   }
 
   @BeforeClass
   public void beforeClass() throws Exception {
-		OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+    OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageCreateCrashRestore";
@@ -157,7 +157,7 @@ public class LocalPaginatedStorageCreateCrashRestore {
     createSchema(testDocumentTx);
 
     List<Future> futures = new ArrayList<Future>();
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 5; i++) {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
