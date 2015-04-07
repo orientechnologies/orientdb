@@ -36,13 +36,13 @@ import com.orientechnologies.orient.core.Orient;
  * @since 8/18/14
  */
 public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implements OOrientStartupListener, OOrientShutdownListener {
-  private final OThreadCountersHashTable           threadCountersHashTable = new OThreadCountersHashTable();
+  private final ODistributedCounter                distributedCounter = new ODistributedCounter();
 
-  private final AtomicReference<WNode>             tail                    = new AtomicReference<WNode>();
-  private volatile ThreadLocal<OModifiableInteger> lockHolds               = new InitOModifiableInteger();
+  private final AtomicReference<WNode>             tail               = new AtomicReference<WNode>();
+  private volatile ThreadLocal<OModifiableInteger> lockHolds          = new InitOModifiableInteger();
 
-  private volatile ThreadLocal<WNode>              myNode                  = new InitWNode();
-  private volatile ThreadLocal<WNode>              predNode                = new ThreadLocal<WNode>();
+  private volatile ThreadLocal<WNode>              myNode             = new InitWNode();
+  private volatile ThreadLocal<WNode>              predNode           = new ThreadLocal<WNode>();
 
   public OReadersWriterSpinLock() {
     final WNode wNode = new WNode();
@@ -67,11 +67,11 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
       return;
     }
 
-    threadCountersHashTable.increment();
+    distributedCounter.increment();
 
     WNode wNode = tail.get();
     while (wNode.locked) {
-      threadCountersHashTable.decrement();
+      distributedCounter.decrement();
 
       while (wNode.locked && wNode == tail.get()) {
         wNode.waitingReaders.add(Thread.currentThread());
@@ -82,7 +82,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
         wNode = tail.get();
       }
 
-      threadCountersHashTable.increment();
+      distributedCounter.increment();
 
       wNode = tail.get();
     }
@@ -102,7 +102,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
       return;
     }
 
-    threadCountersHashTable.decrement();
+    distributedCounter.decrement();
 
     lHolds.decrement();
     assert lHolds.intValue() == 0;
@@ -131,7 +131,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
 
     pNode.waitingWriter = null;
 
-    while (!threadCountersHashTable.isEmpty())
+    while (!distributedCounter.isEmpty())
       ;
 
     setExclusiveOwnerThread(Thread.currentThread());
