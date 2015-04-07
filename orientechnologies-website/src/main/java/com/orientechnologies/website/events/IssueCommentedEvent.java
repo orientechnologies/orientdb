@@ -56,17 +56,20 @@ public class IssueCommentedEvent extends EventInternal<Comment> {
 
     fillContextVariable(context, issue, comment);
     String htmlContent = templateEngine.process("newComment.html", context);
-    SimpleMailMessage mailMessage = new SimpleMailMessage();
+
     OUser owner = comment.getUser();
     List<OUser> involvedActors = issueRepository.findToNotifyActors(issue);
     involvedActors.addAll(issueRepository.findToNotifyActorsWatching(issue));
     String[] actors = getActorsEmail(owner, involvedActors);
     if (actors.length > 0) {
-      mailMessage.setTo(actors);
-      mailMessage.setFrom("prjhub@orientechnologies.com");
-      mailMessage.setSubject(issue.getTitle());
-      mailMessage.setText(htmlContent);
-      sender.send(mailMessage);
+      for (String actor : actors) {
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setTo(actor);
+        mailMessage.setFrom("prjhub@orientechnologies.com");
+        mailMessage.setSubject(issue.getTitle());
+        mailMessage.setText(htmlContent);
+        sender.send(mailMessage);
+      }
     }
 
   }

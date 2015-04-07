@@ -58,17 +58,20 @@ public class IssueReopenEvent extends EventInternal<IssueEvent> {
     Context context = new Context();
     fillContextVariable(context, issue, comment);
     String htmlContent = templateEngine.process("newReopen.html", context);
-    SimpleMailMessage mailMessage = new SimpleMailMessage();
+
     OUser owner = comment.getActor();
     List<OUser> involvedActors = issueRepository.findToNotifyActors(issue);
     involvedActors.addAll(issueRepository.findToNotifyActorsWatching(issue));
     String[] actors = getActorsEmail(owner, involvedActors);
     if (actors.length > 0) {
-      mailMessage.setTo(actors);
-      mailMessage.setFrom("prjhub@orientechnologies.com");
-      mailMessage.setSubject(issue.getTitle());
-      mailMessage.setText(htmlContent);
-      sender.send(mailMessage);
+      for (String actor : actors) {
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setTo(actor);
+        mailMessage.setFrom("prjhub@orientechnologies.com");
+        mailMessage.setSubject(issue.getTitle());
+        mailMessage.setText(htmlContent);
+        sender.send(mailMessage);
+      }
     }
   }
 

@@ -50,7 +50,7 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
     Context context = new Context();
     fillContextVariable(context, issue);
     String htmlContent = templateEngine.process("newIssue.html", context);
-    SimpleMailMessage mailMessage = new SimpleMailMessage();
+    
     OUser owner = issue.getScope().getOwner();
     OUser user = issue.getUser();
 
@@ -78,11 +78,14 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
       }
     }
     if (dests.size() > 0) {
-      mailMessage.setTo(dests.toArray(new String[dests.size()]));
-      mailMessage.setFrom("prjhub@orientechnologies.com");
-      mailMessage.setSubject(issue.getTitle());
-      mailMessage.setText(htmlContent);
-      sender.send(mailMessage);
+      for (String actor : dests) {
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setTo(actor);
+        mailMessage.setFrom("prjhub@orientechnologies.com");
+        mailMessage.setSubject(issue.getTitle());
+        mailMessage.setText(htmlContent);
+        sender.send(mailMessage);
+      }
     }
   }
 

@@ -27,6 +27,7 @@ public class ContextListener {
 
     try {
       server = OServerMain.create();
+
       server.startup(Thread.currentThread().getContextClassLoader().getResourceAsStream("orientdb-server-config.xml"));
       server.activate();
       ODatabaseDocumentTx tx = Orient.instance().getDatabaseFactory().createDatabase("graph", settings.getUrl());
