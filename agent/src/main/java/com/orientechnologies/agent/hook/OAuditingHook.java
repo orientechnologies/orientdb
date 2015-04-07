@@ -93,24 +93,37 @@ public class OAuditingHook extends ORecordHookAbstract {
     }
   }
 
+  public OAuditingHook(final String iConfiguration) {
+    this(new ODocument().fromJSON(iConfiguration, "noMap"));
+
+  }
+
   public OAuditingHook(final ODocument iConfiguration) {
     if (iConfiguration.containsField("auditClassName"))
       auditClassName = iConfiguration.field("auditClassName");
     else
       auditClassName = "AuditingLog";
 
+    onGlobalCreate = onGlobalRead = onGlobalUpdate = onGlobalDelete = false;
+
     final ODocument classesCfg = iConfiguration.field("classes");
-    if (classesCfg == null) {
+    if (classesCfg != null) {
       for (String c : classesCfg.fieldNames()) {
         final OAuditingClassConfig cfg = new OAuditingClassConfig((ODocument) classesCfg.field(c));
         if (c.equals("*"))
           defaultConfig = cfg;
         else
           classes.put(c, cfg);
-      }
 
-    } else {
-      onGlobalCreate = onGlobalRead = onGlobalUpdate = onGlobalDelete = false;
+        if (cfg.onCreateEnabled)
+          onGlobalCreate = true;
+        if (cfg.onReadEnabled)
+          onGlobalRead = true;
+        if (cfg.onUpdateEnabled)
+          onGlobalUpdate = true;
+        if (cfg.onDeleteEnabled)
+          onGlobalDelete = true;
+      }
     }
 
     if (onGlobalCreate || onGlobalRead || onGlobalUpdate || onGlobalDelete) {
@@ -169,6 +182,9 @@ public class OAuditingHook extends ORecordHookAbstract {
 
   protected void log(final byte iOperation, final ORecord iRecord) {
     final OAuditingClassConfig cfg = getAuditConfiguration(iRecord);
+    if (cfg == null)
+      // SKIP
+      return;
 
     ODocument changes = null;
     String note = null;
@@ -222,9 +238,10 @@ public class OAuditingHook extends ORecordHookAbstract {
     doc.field("record", iRecord.getIdentity());
     if (changes != null)
       doc.field("changes", changes, OType.EMBEDDED);
-    if (note != null) {
+    if (note != null)
       doc.field("note", formatNote(iRecord, note));
-    }
+
+    doc.save();
   }
 
   private String formatNote(final ORecord iRecord, final String iNote) {
@@ -251,10 +268,14 @@ public class OAuditingHook extends ORecordHookAbstract {
     if (iRecord instanceof ODocument) {
       OClass cls = ((ODocument) iRecord).getSchemaClass();
       if (cls != null) {
+        if (cls.getName().equals(auditClassName))
+          // SKIP LOG CLASS
+          return null;
+
         cfg = classes.get(cls.getName());
 
         // BROWSE SUPER CLASSES UP TO ROOT
-        while (cfg == null) {
+        while (cfg == null && cls != null) {
           cls = cls.getSuperClass();
           if (cls != null) {
             cfg = classes.get(cls.getName());
