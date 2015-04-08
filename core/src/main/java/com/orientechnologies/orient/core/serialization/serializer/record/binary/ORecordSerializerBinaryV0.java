@@ -20,15 +20,6 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -61,6 +52,15 @@ import com.orientechnologies.orient.core.serialization.serializer.ONetworkThread
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
@@ -124,7 +124,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         type = readOType(bytes);
       } else {
         // LOAD GLOBAL PROPERTY BY ID
-        OGlobalProperty prop = getGlobalProperty(document, len);
+        final OGlobalProperty prop = getGlobalProperty(document, len);
+        if( prop == null )
+          continue;
+
         fieldName = prop.getName();
         valuePos = readInteger(bytes);
         if (prop.getType() != OType.ANY)
@@ -172,7 +175,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         type = readOType(bytes);
       } else {
         // LOAD GLOBAL PROPERTY BY ID
-        OGlobalProperty prop = getGlobalProperty(document, len);
+        final OGlobalProperty prop = getGlobalProperty(document, len);
+        if( prop == null )
+          continue;
+
         fieldName = prop.getName();
         valuePos = readInteger(bytes);
         if (prop.getType() != OType.ANY)
