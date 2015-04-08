@@ -507,7 +507,7 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
 
   $scope.listTypeIndex = ['DICTIONARY', 'FULLTEXT', 'UNIQUE', 'NOTUNIQUE', 'DICTIONARY_HASH_INDEX', 'FULLTEXT_HASH_INDEX', 'UNIQUE_HASH_INDEX', 'NOTUNIQUE_HASH_INDEX'];
   $scope.newIndex = {"name": "", "type": "", "fields": ""}
-
+  $scope.engine = ["LUCENE", "SBTREE"];
   $scope.prop2add = new Array;
   $scope.nameIndexToShow = $scope.classInject + '.';
   $scope.db.refreshMetadata($routeParams.database);
@@ -565,6 +565,14 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
     var nameInddd = proppps;
     nameInddd.replace(')', '');
     var sql = 'CREATE INDEX ' + $scope.nameIndexToShow + ' ON ' + $scope.classInject + ' ( ' + proppps + ' ) ' + $scope.newIndex['type'];
+
+    if ($scope.newIndex['engine'] == 'LUCENE') {
+      sql += ' ENGINE LUCENE';
+
+      if ($scope.newIndex['metadata']) {
+        sql += ' METADATA ' + $scope.newIndex['metadata'];
+      }
+    }
     $scope.newIndex['name'] = $scope.nameIndexToShow;
     $scope.newIndex['fields'] = proppps.split(",");
     Spinner.startSpinnerPopup();
