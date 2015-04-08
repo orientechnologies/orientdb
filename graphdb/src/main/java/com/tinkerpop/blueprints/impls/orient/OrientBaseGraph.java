@@ -514,7 +514,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Creates a new unconnected vertex with no fields in the Graph.
    *
    * @param id
+<<<<<<< Updated upstream
    *          Optional, can contains the Edge's class name by prefixing with "class:"
+=======
+   *          Optional, can contains the Vertex's class name by prefixing with "class:"
+>>>>>>> Stashed changes
    * @return The new OrientVertex created
    */
   @Override
@@ -1131,10 +1135,17 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Closes the Graph. After closing the Graph cannot be used.
    */
   public void shutdown(boolean closeDb) {
+    shutdown(closeDb, true);
+  }
+
+  /**
+   * Closes the Graph. After closing the Graph cannot be used.
+   */
+  public void shutdown(boolean closeDb, boolean commitTx) {
     makeActive();
 
     try {
-      if (!database.isClosed()) {
+      if (!database.isClosed() && commitTx) {
         final OStorage storage = database.getStorage();
         if (storage instanceof OAbstractPaginatedStorage) {
           if (((OAbstractPaginatedStorage) storage).getWALInstance() != null)
