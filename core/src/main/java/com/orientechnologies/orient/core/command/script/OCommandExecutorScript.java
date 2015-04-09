@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -31,10 +32,10 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 import javax.script.Bindings;
@@ -344,7 +345,11 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         // COMPLETED
         break;
 
-      } catch (OConcurrentModificationException e) {
+      } catch (ORecordDuplicatedException e) {
+        // THIS CASE IS ON UPSERT
+        context.setVariable("retries", retry);
+        getDatabase().getLocalCache().clear();
+      } catch (ONeedRetryException e) {
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
       }
