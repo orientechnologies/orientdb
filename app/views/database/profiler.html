@@ -47,6 +47,7 @@
             <tr>
               <th>Type</th>
               <th>Command</th>
+              <th>Users</th>
               <th st-sort="entries">Entries</th>
               <th st-sort="average">Average</th>
               <th st-sort="total">Total</th>
@@ -55,13 +56,14 @@
               <th st-sort="last">Last</th>
             </tr>
             <!--<tr>-->
-              <!--<th colspan="5"><input st-search=""  class="form-control" placeholder="global search ..." type="text"/></th>-->
+            <!--<th colspan="5"><input st-search=""  class="form-control" placeholder="global search ..." type="text"/></th>-->
             <!--</tr>-->
             </thead>
             <tbody>
             <tr ng-repeat="row in profiles | filter:query">
               <td>{{row.name | ctype}}</td>
               <td>{{row.name | cname}}</td>
+              <td>{{row.users}}</td>
               <td>{{row.entries}}</td>
               <td>{{row.average}}</td>
               <td>{{row.total}}</td>
