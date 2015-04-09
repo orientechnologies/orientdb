@@ -127,7 +127,13 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
   }
 
   private boolean matchesFilters(OIdentifiable value) {
-    return true;// TODO
+    if (this.compiledFilter == null || this.compiledFilter.getRootCondition() == null) {
+      return true;
+    }
+    if (!(value instanceof ODocument)) {
+      value = value.getRecord();
+    }
+    return !(Boolean.FALSE.equals(compiledFilter.evaluate((ODocument) value, (ODocument) value, getContext())));
   }
 
   private boolean matchesTarget(OIdentifiable value) {
