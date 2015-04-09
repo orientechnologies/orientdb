@@ -44,10 +44,9 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
         "Syntax error: query/<database>/sql/<query-text>[/<limit>][/<fetchPlan>].<br>Limit is optional and is set to 20 by default. Set to 0 to have no limits.");
 
     final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4]) : 20;
-
     String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
-
     final String text = urlParts[3];
+    final String accept = iRequest.getHeader("accept");
 
     iRequest.data.commandInfo = "Query";
     iRequest.data.commandDetail = text;
@@ -71,7 +70,7 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
         additionalContent.put("warnings", tips);
       }
 
-      iResponse.writeRecords(response, fetchPlan, null, null, additionalContent);
+      iResponse.writeRecords(response, fetchPlan, null, accept, additionalContent);
 
     } finally {
       if (db != null)
