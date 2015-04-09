@@ -22,8 +22,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
@@ -72,7 +70,7 @@ public class OAtomicOperationsManager {
       operation.incrementCounter();
 
       if (durableComponent != null)
-        lockTillOperationComplete(durableComponent);
+        acquireExclusiveLockTillOperationComplete(durableComponent);
 
       return operation;
     }
@@ -87,7 +85,7 @@ public class OAtomicOperationsManager {
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
 
     if (durableComponent != null)
-      lockTillOperationComplete(durableComponent);
+      acquireExclusiveLockTillOperationComplete(durableComponent);
 
     return operation;
   }
@@ -116,17 +114,17 @@ public class OAtomicOperationsManager {
       if (!operation.isRollback())
         operation.commitChanges(storage.getDiskCache(), writeAheadLog);
 
-      for (Object lockObject : operation.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
-
       writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
       currentOperation.set(null);
+
+      for (Object lockObject : operation.lockedObjects())
+        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
     }
 
     return operation;
   }
 
-  private void lockTillOperationComplete(ODurableComponent durableComponent) {
+  private void acquireExclusiveLockTillOperationComplete(ODurableComponent durableComponent) {
     final OAtomicOperation operation = currentOperation.get();
     if (operation == null)
       return;
@@ -136,5 +134,19 @@ public class OAtomicOperationsManager {
 
     lockManager.acquireLock(this, durableComponent, OLockManager.LOCK.EXCLUSIVE);
     operation.addLockedObject(durableComponent);
+  }
+
+  public void acquireReadLock(ODurableComponent durableComponent) {
+    if (writeAheadLog == null)
+      return;
+
+    lockManager.acquireLock(this, durableComponent, OLockManager.LOCK.SHARED);
+  }
+
+  public void releaseReadLock(ODurableComponent durableComponent) {
+    if (writeAheadLog == null)
+      return;
+
+    lockManager.releaseLock(this, durableComponent, OLockManager.LOCK.SHARED);
   }
 }

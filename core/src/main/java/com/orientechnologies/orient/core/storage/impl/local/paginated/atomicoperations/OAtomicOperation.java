@@ -47,11 +47,11 @@ public class OAtomicOperation {
   private int                      startCounter;
   private boolean                  rollback;
 
-  private Set<Object>              lockedObjects    = new HashSet<Object>();
-  private Map<Long, FileChanges>   fileChanges      = new HashMap<Long, FileChanges>();
-  private Map<String, Long>        newFileNamesId   = new HashMap<String, Long>();
-  private Set<Long>                deletedFiles     = new HashSet<Long>();
-  private Set<String>              deletedFileNames = new HashSet<String>();
+  private Set<Object>              lockedObjects        = new HashSet<Object>();
+  private Map<Long, FileChanges>   fileChanges          = new HashMap<Long, FileChanges>();
+  private Map<String, Long>        newFileNamesId       = new HashMap<String, Long>();
+  private Set<Long>                deletedFiles         = new HashSet<Long>();
+  private Map<String, Long>        deletedFileNameIdMap = new HashMap<String, Long>();
 
   public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId) {
     this.startLSN = startLSN;
@@ -171,7 +171,7 @@ public class OAtomicOperation {
     if (changesContainer == null) {
       changesContainer = new FileChanges();
       fileChanges.put(fileId, changesContainer);
-    } else if (changesContainer.isNew || changesContainer.maxNewPageIndex > -1) {
+    } else if (changesContainer.isNew || changesContainer.maxNewPageIndex > -2) {
       return changesContainer.maxNewPageIndex + 1;
     } else if (changesContainer.truncate)
       return 0;
@@ -179,19 +179,31 @@ public class OAtomicOperation {
     return diskCache.getFilledUpTo(fileId);
   }
 
-  public long addFile(String fileName, ODiskCache diskCache) {
+  public long addFile(String fileName, ODiskCache diskCache) throws IOException {
     if (newFileNamesId.containsKey(fileName))
       throw new OStorageException("File with name " + fileName + " already exists.");
 
-    final long fileId = diskCache.bookFileId();
+    final long fileId;
+    final boolean isNew;
+
+    if (deletedFileNameIdMap.containsKey(fileName)) {
+      fileId = deletedFileNameIdMap.remove(fileName);
+      deletedFiles.remove(fileId);
+
+      isNew = false;
+    } else {
+      fileId = diskCache.bookFileId(fileName);
+      isNew = true;
+    }
+
     newFileNamesId.put(fileName, fileId);
 
     FileChanges fileChanges = new FileChanges();
-    fileChanges.isNew = true;
+    fileChanges.isNew = isNew;
     fileChanges.fileName = fileName;
+    fileChanges.maxNewPageIndex = -1;
 
     this.fileChanges.put(fileId, fileChanges);
-    deletedFileNames.remove(fileName);
 
     return fileId;
   }
@@ -226,7 +238,7 @@ public class OAtomicOperation {
       newFileNamesId.remove(fileChanges.fileName);
     else {
       deletedFiles.add(fileId);
-      deletedFileNames.add(diskCache.fileNameById(fileId));
+      deletedFileNameIdMap.put(diskCache.fileNameById(fileId), fileId);
     }
   }
 
@@ -234,10 +246,20 @@ public class OAtomicOperation {
     if (newFileNamesId.containsKey(fileName))
       return true;
 
-    if (deletedFileNames.contains(fileName))
+    if (deletedFileNameIdMap.containsKey(fileName))
       return false;
 
     return diskCache.exists(fileName);
+  }
+
+  public boolean isFileExists(long fileId, ODiskCache diskCache) {
+    if (fileChanges.containsKey(fileId))
+      return true;
+
+    if (deletedFiles.contains(fileId))
+      return false;
+
+    return diskCache.exists(fileId);
   }
 
   public String fileNameById(long fileId, ODiskCache diskCache) {
@@ -271,7 +293,7 @@ public class OAtomicOperation {
 
   public void commitChanges(ODiskCache diskCache, OWriteAheadLog writeAheadLog) throws IOException {
     for (long deletedFileId : deletedFiles) {
-      diskCache.deleteFile(deletedFileId);
+      writeAheadLog.log(new OFileDeletedWALRecord(operationUnitId, startLSN, deletedFileId));
     }
 
     for (Map.Entry<Long, FileChanges> fileChangesEntry : fileChanges.entrySet()) {
@@ -279,7 +301,9 @@ public class OAtomicOperation {
       final long fileId = fileChangesEntry.getKey();
 
       if (fileChanges.isNew)
-        writeAheadLog.log(new OFileCreatedCreatedWALRecord(operationUnitId, fileChanges.fileName, fileId, startLSN));
+        writeAheadLog.log(new OFileCreatedWALRecord(operationUnitId, fileChanges.fileName, fileId, startLSN));
+      else if (fileChanges.truncate)
+        writeAheadLog.log(new OFileTruncatedWALRecord(operationUnitId, startLSN, fileId));
 
       for (Map.Entry<Long, FilePageChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
         final long pageIndex = filePageChangesEntry.getKey();
@@ -288,6 +312,10 @@ public class OAtomicOperation {
         filePageChanges.lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId,
             filePageChanges.changesTree, startLSN));
       }
+    }
+
+    for (long deletedFileId : deletedFiles) {
+      diskCache.deleteFile(deletedFileId);
     }
 
     for (Map.Entry<Long, FileChanges> fileChangesEntry : fileChanges.entrySet()) {
@@ -382,7 +410,7 @@ public class OAtomicOperation {
 
   private static class FileChanges {
     private Map<Long, FilePageChanges> pageChangesMap  = new HashMap<Long, FilePageChanges>();
-    private long                       maxNewPageIndex = -1;
+    private long                       maxNewPageIndex = -2;
     private boolean                    isNew           = false;
     private boolean                    truncate        = false;
     private String                     fileName        = null;

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
@@ -98,12 +99,14 @@ public class ODefaultIndexFactory implements OIndexFactory {
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
 
     if (SBTREE_ALGORITHM.equals(algorithm))
-      return createSBTreeIndex(indexType, valueContainerAlgorithm, metadata);
+      return createSBTreeIndex(indexType, valueContainerAlgorithm, metadata, (OAbstractPaginatedStorage) database.getStorage()
+          .getUnderlying());
 
     throw new OConfigurationException("Unsupported type : " + indexType);
   }
 
-  private OIndexInternal<?> createSBTreeIndex(String indexType, String valueContainerAlgorithm, ODocument metadata) {
+  private OIndexInternal<?> createSBTreeIndex(String indexType, String valueContainerAlgorithm, ODocument metadata,
+      OAbstractPaginatedStorage storage) {
     Boolean durableInNonTxMode;
 
     Object durable = null;
@@ -118,16 +121,16 @@ public class ODefaultIndexFactory implements OIndexFactory {
       durableInNonTxMode = null;
 
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
-      return new OIndexUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(durableInNonTxMode),
+      return new OIndexUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(durableInNonTxMode, storage),
           valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
-      return new OIndexNotUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(durableInNonTxMode),
-          valueContainerAlgorithm, metadata);
+      return new OIndexNotUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(durableInNonTxMode,
+          storage), valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OIndexFullText(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(durableInNonTxMode),
-          valueContainerAlgorithm, metadata);
+      return new OIndexFullText(indexType, SBTREE_ALGORITHM,
+          new OSBTreeIndexEngine<Set<OIdentifiable>>(durableInNonTxMode, storage), valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
-      return new OIndexDictionary(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(durableInNonTxMode),
+      return new OIndexDictionary(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(durableInNonTxMode, storage),
           valueContainerAlgorithm, metadata);
     }
 

@@ -29,7 +29,6 @@ import java.util.Set;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
@@ -51,23 +50,21 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   protected static final OProfilerMBean              PROFILER             = Orient.instance().getProfiler();
 
-  public OIndexRIDContainerSBTree(long fileId, boolean durableMode) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode);
+  public OIndexRIDContainerSBTree(long fileId, boolean durableMode, OAbstractPaginatedStorage storage) {
+    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode, storage);
 
     tree.create(fileId, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
   }
 
-  public OIndexRIDContainerSBTree(long fileId, OBonsaiBucketPointer rootPointer, boolean durableMode) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode);
-    tree.load(fileId, rootPointer, (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
-        .getUnderlying());
+  public OIndexRIDContainerSBTree(long fileId, OBonsaiBucketPointer rootPointer, boolean durableMode,
+      OAbstractPaginatedStorage storage) {
+    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode, storage);
+    tree.load(fileId, rootPointer);
   }
 
-  public OIndexRIDContainerSBTree(String file, OBonsaiBucketPointer rootPointer, boolean durableMode) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode);
-
-    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
-        .getUnderlying();
+  public OIndexRIDContainerSBTree(String file, OBonsaiBucketPointer rootPointer, boolean durableMode,
+      OAbstractPaginatedStorage storage) {
+    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode, storage);
     final long fileId;
     try {
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
@@ -78,7 +75,7 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
     } catch (IOException e) {
       throw new OSBTreeException("Exception during loading of sbtree " + file, e);
     }
-    tree.load(fileId, rootPointer, storage);
+    tree.load(fileId, rootPointer);
   }
 
   public OBonsaiBucketPointer getRootPointer() {

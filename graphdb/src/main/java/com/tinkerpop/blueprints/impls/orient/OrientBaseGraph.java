@@ -573,7 +573,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     autoStartTransaction();
 
     final OrientVertex vertex = new OrientVertex(this, className, fields);
-    vertex.setProperties(prop);
+    vertex.setPropertiesInternal(prop);
 
     // SAVE IT
     if (clusterName != null)
@@ -621,7 +621,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     autoStartTransaction();
 
     final OrientVertex vertex = new OrientVertex(this, iClassName);
-    vertex.setProperties(prop);
+    vertex.setPropertiesInternal(prop);
     return vertex;
   }
 

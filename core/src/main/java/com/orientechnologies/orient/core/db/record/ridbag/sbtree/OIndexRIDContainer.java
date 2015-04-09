@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
@@ -229,7 +230,9 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   }
 
   private void convertToSbTree() {
-    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, durableNonTxMode);
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, durableNonTxMode,
+        (OAbstractPaginatedStorage) db.getStorage());
 
     tree.addAll(underlying);
 

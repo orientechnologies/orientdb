@@ -72,12 +72,6 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
       fieldValue1 = ((ODocument) iDoc1.getRecord()).field(fieldName);
       fieldValue2 = ((ODocument) iDoc2.getRecord()).field(fieldName);
 
-      /*
-       * OClass clazz = ((ODocument) iDoc1.getRecord()).getImmutableSchemaClass(); if (clazz != null) { OProperty property =
-       * clazz.getProperty(fieldName); if (property != null) { OCollate collate = property.getCollate(); if (collate != null) {
-       * fieldValue1 = collate.transform(fieldValue1); fieldValue2 = collate.transform(fieldValue2); } } }
-       */
-
       if (fieldValue1 == null && fieldValue2 == null) {
         continue;
       }

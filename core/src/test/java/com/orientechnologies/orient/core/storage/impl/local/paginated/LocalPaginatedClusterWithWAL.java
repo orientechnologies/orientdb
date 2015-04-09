@@ -9,7 +9,6 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.orient.core.compression.OCompression;
 import com.orientechnologies.orient.core.config.*;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
@@ -30,6 +29,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
  */
 @Test
 public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
+  {
+    OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(1000000000);
+  }
   private ODiskWriteAheadLog     writeAheadLog;
 
   private OPaginatedCluster      testCluster;
@@ -88,7 +90,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(storageDir);
 
-    paginatedCluster = new OPaginatedCluster();
+    paginatedCluster = new OPaginatedCluster(storage);
     paginatedCluster.configure(storage, 6, "testPaginatedClusterWithWALTest", buildDirectory, -1);
     paginatedCluster.create(-1);
   }
@@ -132,7 +134,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(testStorageDir);
 
-    testCluster = new OPaginatedCluster();
+    testCluster = new OPaginatedCluster(testStorage);
     testCluster.configure(testStorage, 6, "testPaginatedClusterWithWALTest", buildDirectory, -1);
     testCluster.create(-1);
   }
@@ -382,8 +384,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
 
         for (OWALRecord restoreRecord : atomicUnit) {
           if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord
-              || restoreRecord instanceof OFileCreatedCreatedWALRecord
-              || restoreRecord instanceof ONonTxOperationPerformedWALRecord)
+              || restoreRecord instanceof OFileCreatedWALRecord || restoreRecord instanceof ONonTxOperationPerformedWALRecord)
             continue;
 
           final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
@@ -417,7 +418,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
         }
         atomicUnit.clear();
       } else {
-        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedCreatedWALRecord
+        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
             || walRecord instanceof ONonTxOperationPerformedWALRecord);
       }
 

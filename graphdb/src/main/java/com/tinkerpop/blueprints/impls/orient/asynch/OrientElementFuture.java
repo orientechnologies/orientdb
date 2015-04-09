@@ -132,6 +132,15 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
   }
 
   @Override
+  public boolean isLocked() {
+    try {
+      return future.get().isLocked();
+    } catch (Exception e) {
+      throw new OException("Cannot retrieve the requested information", e);
+    }
+  }
+
+  @Override
   public void unlock() {
     try {
       future.get().unlock();

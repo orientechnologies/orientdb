@@ -19,13 +19,7 @@
  */
 package com.orientechnologies.common.comparator;
 
-import java.text.Collator;
 import java.util.Comparator;
-import java.util.Locale;
-
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 
 /**
  * Comparator that calls {@link Comparable#compareTo(Object)} methods for getting results for all {@link Comparable} types.
@@ -49,13 +43,7 @@ public class ODefaultComparator implements Comparator<Object> {
         return -1;
     } else if (objectTwo == null)
       return 1;
-    ODatabaseDocumentInternal internal;
-    if (objectOne instanceof String && objectTwo instanceof String
-        && (internal = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined()) != null) {
-      Collator collator = Collator.getInstance(new Locale(internal.get(ATTRIBUTES.LOCALECOUNTRY) + "_"
-          + internal.get(ATTRIBUTES.LOCALELANGUAGE)));
-      return collator.compare(objectOne, objectTwo);
-    } else if (objectOne instanceof Comparable)
+    if (objectOne instanceof Comparable)
       return ((Comparable<Object>) objectOne).compareTo(objectTwo);
 
     final Comparator<?> comparator = OComparatorFactory.INSTANCE.getComparator(objectOne.getClass());

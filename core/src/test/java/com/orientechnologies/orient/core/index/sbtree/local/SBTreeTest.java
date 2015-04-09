@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -22,7 +23,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
  * @author Andrey Lomakin
@@ -49,9 +49,8 @@ public class SBTreeTest {
 
     databaseDocumentTx.create();
 
-    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", false, ".nbt");
-    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null,
-        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage().getUnderlying(), 1, false);
+    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", false, ".nbt", (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
   }
 
   @AfterMethod
@@ -76,7 +75,6 @@ public class SBTreeTest {
       Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i), i + " key is absent");
       doReset();
     }
-
 
     Assert.assertEquals(0, (int) sbTree.firstKey());
     doReset();
@@ -535,9 +533,9 @@ public class SBTreeTest {
   }
 
   public void testNullKeysInSBTree() {
-    final OSBTree<Integer, OIdentifiable> nullSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", false, ".nbt");
-    nullSBTree.create("nullSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null,
-        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage().getUnderlying(), 1, true);
+    final OSBTree<Integer, OIdentifiable> nullSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", false, ".nbt",
+        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+    nullSBTree.create("nullSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, true);
 
     try {
       for (int i = 0; i < 10; i++)

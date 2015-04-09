@@ -108,9 +108,10 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", murmurHash3HashFunction, true);
+    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", murmurHash3HashFunction, true,
+        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
     localHashTable.create("actualLocalHashTable", OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance()
-        .<String> getObjectSerializer(OType.STRING), null, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage(), true);
+        .<String> getObjectSerializer(OType.STRING), null, true);
   }
 
   @Override
@@ -283,8 +284,8 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
               cacheEntry.releaseExclusiveLock();
               expectedDiskCache.release(cacheEntry);
             }
-          } else if (restoreRecord instanceof OFileCreatedCreatedWALRecord) {
-            final OFileCreatedCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedCreatedWALRecord) restoreRecord;
+          } else if (restoreRecord instanceof OFileCreatedWALRecord) {
+            final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
             String fileName = fileCreatedCreatedRecord.getFileName().replace("actualLocalHashTable", "expectedLocalHashTable");
 
             if (expectedDiskCache.exists(fileName))
@@ -296,7 +297,7 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
 
         atomicUnit.clear();
       } else {
-        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedCreatedWALRecord
+        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
             || walRecord instanceof ONonTxOperationPerformedWALRecord || walRecord instanceof OFullCheckpointStartRecord
             || walRecord instanceof OCheckpointEndRecord);
       }

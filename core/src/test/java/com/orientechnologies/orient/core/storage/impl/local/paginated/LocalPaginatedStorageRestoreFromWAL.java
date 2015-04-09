@@ -53,6 +53,8 @@ public class LocalPaginatedStorageRestoreFromWAL {
   public void beforeClass() {
     OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.setValue(-1);
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("nothing");
+    OGlobalConfiguration.FILE_LOCK.setValue(false);
+    OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(100000000);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageRestoreFromWAL";
@@ -96,7 +98,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
 
     baseDocumentTx.declareIntent(new OIntentMassiveInsert());
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 8; i++)
       futures.add(executorService.submit(new DataPropagationTask()));
 
     for (Future<Void> future : futures)
@@ -119,7 +121,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
             System.out.println(text);
           }
         });
-		databaseCompare.setCompareIndexMetadata(true);
+    databaseCompare.setCompareIndexMetadata(true);
 
     Assert.assertTrue(databaseCompare.compare());
   }
@@ -139,12 +141,55 @@ public class LocalPaginatedStorageRestoreFromWAL {
 
     for (File storageFile : storageFiles) {
       String copyToPath;
-      if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromWAL.wmr"))
+      if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.wmr"))
         copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.wmr";
-      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromWAL.0.wal"))
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.0.wal"))
         copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.0.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.1.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.1.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.2.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.2.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.3.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.3.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.4.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.4.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.5.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.5.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.6.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.6.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.7.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.7.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.8.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.8.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.9.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.9.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.10.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.10.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.11.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.11.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.12.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.12.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.13.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.13.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.14.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.14.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.15.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.15.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.16.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.16.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.17.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.17.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.18.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.18.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.19.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.19.wal";
+      else if (storageFile.getName().equals("baseLocalPaginatedStorageRestoreFromWAL.20.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.20.wal";
       else
         copyToPath = copyToDir.getAbsolutePath() + File.separator + storageFile.getName();
+
+      if (storageFile.getName().equals("dirty.fl"))
+        continue;
 
       copyFile(storageFile.getAbsolutePath(), copyToPath);
     }
@@ -159,7 +204,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
     testOneClass.createProperty("intProp", OType.INTEGER);
     testOneClass.createProperty("stringProp", OType.STRING);
     testOneClass.createProperty("stringSet", OType.EMBEDDEDSET, OType.STRING);
-    testOneClass.createProperty("linkMap", OType.LINKMAP, OType.STRING);
+    testOneClass.createProperty("linkMap", OType.LINKMAP);
 
     OClass testTwoClass = schema.createClass("TestTwo");
 

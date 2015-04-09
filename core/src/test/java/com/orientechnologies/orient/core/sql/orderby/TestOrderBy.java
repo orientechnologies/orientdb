@@ -44,7 +44,7 @@ public class TestOrderBy {
     }
   }
 
-  @Test
+  @Test(enabled = false)
   public void testGermanOrderByIndex() {
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:testGermanOrderBy");
     db.set(ATTRIBUTES.LOCALECOUNTRY, Locale.GERMANY.getCountry());
