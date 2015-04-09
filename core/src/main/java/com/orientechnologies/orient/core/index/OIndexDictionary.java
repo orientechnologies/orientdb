@@ -86,30 +86,4 @@ public class OIndexDictionary extends OIndexOneValue {
   public boolean supportsOrderedIterations() {
     return false;
   }
-
-  @Override
-  protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
-    key = getCollatingValue(key);
-    snapshot.put(key, value.getIdentity());
-  }
-
-  @Override
-  protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
-    key = getCollatingValue(key);
-    snapshot.put(key, RemovedValue.INSTANCE);
-  }
-
-  @Override
-  protected void commitSnapshot(Map<Object, Object> snapshot) {
-    for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
-      Object key = snapshotEntry.getKey();
-      checkForKeyType(key);
-
-      Object snapshotValue = snapshotEntry.getValue();
-      if (snapshotValue.equals(RemovedValue.INSTANCE))
-        indexEngine.remove(key);
-      else
-        indexEngine.put(key, (OIdentifiable) snapshotValue);
-    }
-  }
 }

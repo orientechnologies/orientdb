@@ -206,13 +206,9 @@ public interface OIndexInternal<T> extends OIndex<T> {
 
   public String getAlgorithm();
 
-  public void preCommit();
 
   void addTxOperation(ODocument operationDocument);
 
-  public void commit();
-
-  public void postCommit();
 
   public final class IndexMetadata {
     private final String           name;
