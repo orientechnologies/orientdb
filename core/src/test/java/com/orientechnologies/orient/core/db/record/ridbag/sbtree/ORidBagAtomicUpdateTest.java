@@ -1,19 +1,5 @@
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.DatabaseAbstractTest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -22,11 +8,58 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 @Test
 public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
   private int topThreshold;
   private int bottomThreshold;
+
+  private final class LevelKey {
+    private final ORID rid;
+    private final int  level;
+
+    private LevelKey(ORID rid, int level) {
+      this.rid = rid;
+      this.level = level;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+      LevelKey levelKey = (LevelKey) o;
+
+      if (level != levelKey.level)
+        return false;
+      if (!rid.equals(levelKey.rid))
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = rid.hashCode();
+      result = 31 * result + level;
+      return result;
+    }
+  }
 
   @BeforeClass
   public void setUp() throws Exception {
@@ -89,7 +122,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     rootDoc.save();
     database.commit();
 
-		database.getLocalCache().clear();
+    database.getLocalCache().clear();
     ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
@@ -167,6 +200,67 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertTrue(addedDocs.remove(iterator.next()));
   }
 
+  public void testAddingDocsDontUpdateVersion() {
+    ODocument rootDoc = new ODocument();
+
+    ORidBag ridBag = new ORidBag();
+    rootDoc.field("ridBag", ridBag);
+
+    ODocument docOne = new ODocument();
+
+    ridBag.add(docOne);
+
+    rootDoc.save();
+
+    final int version = rootDoc.getVersion();
+
+    ODocument docTwo = new ODocument();
+    ridBag.add(docTwo);
+
+    rootDoc.save();
+
+    Assert.assertEquals(ridBag.size(), 2);
+    Assert.assertEquals(rootDoc.getVersion(), version);
+
+    rootDoc = (ODocument) rootDoc.reload();
+
+    Assert.assertEquals(ridBag.size(), 2);
+    Assert.assertEquals(rootDoc.getVersion(), version);
+  }
+
+  public void testAddingDocsDontUpdateVersionInTx() {
+    database.begin();
+
+    ODocument rootDoc = new ODocument();
+
+    ORidBag ridBag = new ORidBag();
+    rootDoc.field("ridBag", ridBag);
+
+    ODocument docOne = new ODocument();
+
+    ridBag.add(docOne);
+
+    rootDoc.save();
+
+    database.commit();
+
+    final int version = rootDoc.getVersion();
+
+    ODocument docTwo = new ODocument();
+    ridBag.add(docTwo);
+
+    rootDoc.save();
+    database.commit();
+
+    Assert.assertEquals(ridBag.size(), 2);
+    Assert.assertEquals(rootDoc.getVersion(), version);
+
+    rootDoc = (ODocument) rootDoc.reload();
+
+    Assert.assertEquals(ridBag.size(), 2);
+    Assert.assertEquals(rootDoc.getVersion(), version);
+  }
+
   public void testAddTwoAdditionalNewDocumentsWithCME() {
     final ODocument cmeDoc = new ODocument();
     cmeDoc.save();
@@ -193,7 +287,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
-		database.getLocalCache().clear();
+    database.getLocalCache().clear();
     ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
 
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
@@ -335,7 +429,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
-		database.getLocalCache().clear();
+    database.getLocalCache().clear();
     ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
 
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
@@ -483,7 +577,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
-		database.getLocalCache().clear();
+    database.getLocalCache().clear();
     ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
@@ -663,7 +757,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
       document.save();
 
-			database.getLocalCache().clear();
+      database.getLocalCache().clear();
       ODocument staleDocument = database.load(document.getIdentity());
       ORidBag staleRidBag = staleDocument.field("ridBag");
 
@@ -725,7 +819,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
     ODocument copyOne = database.load(document.getIdentity());
 
-		database.getLocalCache().clear();
+    database.getLocalCache().clear();
     ODocument copyTwo = database.load(document.getIdentity());
 
     Assert.assertNotSame(copyOne, copyTwo);
@@ -798,7 +892,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
       amountOfDeletedDocsPerLevel.add(rnd.nextInt(5) + 5);
     }
 
-		database.getLocalCache().clear();
+    database.getLocalCache().clear();
     ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
@@ -917,7 +1011,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
-		database.getLocalCache().clear();
+    database.getLocalCache().clear();
     ODocument staleDocument = database.load(cmeDocument.getIdentity());
     Assert.assertNotSame(staleDocument, cmeDocument);
 
@@ -980,7 +1074,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
-		database.getLocalCache().clear();
+    database.getLocalCache().clear();
     ODocument cmeDocument = database.load(document.getIdentity());
     Assert.assertNotSame(cmeDocument, document);
     cmeDocument.field("v", "v1");
@@ -1097,7 +1191,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
-		database.getLocalCache().clear();
+    database.getLocalCache().clear();
     ODocument staleDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleDoc, cmeDoc);
 
@@ -1281,39 +1375,5 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     }
 
     Assert.assertTrue(addedDocs.isEmpty());
-  }
-
-  private final class LevelKey {
-    private final ORID rid;
-    private final int  level;
-
-    private LevelKey(ORID rid, int level) {
-      this.rid = rid;
-      this.level = level;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
-
-      LevelKey levelKey = (LevelKey) o;
-
-      if (level != levelKey.level)
-        return false;
-      if (!rid.equals(levelKey.rid))
-        return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = rid.hashCode();
-      result = 31 * result + level;
-      return result;
-    }
   }
 }

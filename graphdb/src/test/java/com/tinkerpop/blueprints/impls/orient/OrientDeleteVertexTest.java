@@ -40,7 +40,10 @@ public class OrientDeleteVertexTest {
     // delete connected vertex v2
     g = createGraph();
 
+    long total = g.countVertices();
     g.getVertex(v2.getId()).remove();
+
+    assertEquals(total-1, g.countVertices());
 
     // the v1 out_edgeType1 property should not contain a reference to
     // deleted node v2

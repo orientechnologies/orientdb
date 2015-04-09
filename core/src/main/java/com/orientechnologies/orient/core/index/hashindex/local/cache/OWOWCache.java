@@ -78,7 +78,7 @@ public class OWOWCache {
 
   private final long                                        diskSizeCheckInterval = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL
                                                                                       .getValueAsInteger() * 1000;
-  private final List<WeakReference<OLowDiskSpaceListener>>   listeners             = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
+  private final List<WeakReference<OLowDiskSpaceListener>>  listeners             = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
 
   private final AtomicLong                                  lastDiskSpaceCheck    = new AtomicLong(System.currentTimeMillis());
   private final String                                      storagePath;
@@ -216,6 +216,22 @@ public class OWOWCache {
     return (int) crc32.getValue();
   }
 
+  public long bookFileId(String fileName) throws IOException {
+    filesLock.acquireWriteLock();
+    try {
+      initNameIdMapping();
+      Long fileId = nameIdMap.get(fileName);
+
+      if (fileId != null && fileId < 0)
+        return -fileId;
+
+      ++fileCounter;
+      return fileCounter;
+    } finally {
+      filesLock.releaseWriteLock();
+    }
+  }
+
   public long openFile(String fileName) throws IOException {
     filesLock.acquireWriteLock();
     try {
@@ -223,22 +239,48 @@ public class OWOWCache {
 
       Long fileId = nameIdMap.get(fileName);
       OFileClassic fileClassic;
-      if (fileId == null)
+
+      if (fileId == null || fileId < 0)
         fileClassic = null;
       else
         fileClassic = files.get(fileId);
 
-      if (fileClassic == null) {
-        fileId = ++fileCounter;
-
-        fileClassic = createFile(fileName);
-
-        files.put(fileId, fileClassic);
-        nameIdMap.put(fileName, fileId);
-        writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
-      }
+      if (fileClassic == null)
+        throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
 
       openFile(fileClassic);
+
+      return fileId;
+
+    } finally {
+      filesLock.releaseWriteLock();
+    }
+  }
+
+  public long addFile(String fileName) throws IOException {
+    filesLock.acquireWriteLock();
+    try {
+      initNameIdMapping();
+
+      Long fileId = nameIdMap.get(fileName);
+      OFileClassic fileClassic;
+
+      if (fileId != null && fileId >= 0)
+        throw new OStorageException("File with name " + fileName + " already exists in storage " + storageLocal.getName());
+
+      if (fileId == null) {
+        ++fileCounter;
+        fileId = fileCounter;
+      } else
+        fileId = -fileId;
+
+      fileClassic = createFile(fileName);
+
+      files.put(fileId, fileClassic);
+      nameIdMap.put(fileName, fileId);
+      writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+
+      addFile(fileClassic);
 
       return fileId;
 
@@ -256,24 +298,55 @@ public class OWOWCache {
 
       Long existingFileId = nameIdMap.get(fileName);
 
-      if (existingFileId != null) {
+      if (existingFileId != null && fileId >= 0) {
         if (existingFileId == fileId)
           fileClassic = files.get(fileId);
         else
           throw new OStorageException("File with given name already exists but has different id " + existingFileId
               + " vs. proposed " + fileId);
       } else {
-        if (fileCounter < fileId)
-          fileCounter = fileId;
-
-        fileClassic = createFile(fileName);
-
-        files.put(fileId, fileClassic);
-        nameIdMap.put(fileName, fileId);
-        writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+        throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
       }
 
       openFile(fileClassic);
+    } finally {
+      filesLock.releaseWriteLock();
+    }
+  }
+
+  public void addFile(String fileName, long fileId) throws IOException {
+    filesLock.acquireWriteLock();
+    try {
+      initNameIdMapping();
+
+      OFileClassic fileClassic;
+
+      Long existingFileId = nameIdMap.get(fileName);
+
+      if (existingFileId != null && existingFileId >= 0) {
+        if (existingFileId == fileId)
+          throw new OStorageException("File with name " + fileName + " already exists in storage " + storageLocal.getName());
+        else
+          throw new OStorageException("File with given name already exists but has different id " + existingFileId
+              + " vs. proposed " + fileId);
+      }
+
+      fileClassic = files.get(fileId);
+
+      if (fileClassic != null)
+        throw new OStorageException("File with given id exists but has different name " + fileClassic.getName() + " vs. proposed "
+            + fileName);
+
+      if (fileCounter < fileId)
+        fileCounter = fileId;
+
+      fileClassic = createFile(fileName);
+
+      files.put(fileId, fileClassic);
+      nameIdMap.put(fileName, fileId);
+      writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+
+      addFile(fileClassic);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -331,8 +404,11 @@ public class OWOWCache {
   public boolean exists(String fileName) {
     filesLock.acquireReadLock();
     try {
-      if (nameIdMap != null && nameIdMap.containsKey(fileName))
-        return true;
+      if (nameIdMap != null) {
+        Long fileId = nameIdMap.get(fileName);
+        if (fileId != null && fileId >= 0)
+          return true;
+      }
 
       final File file = new File(storageLocal.getVariableParser().resolveVariables(
           storageLocal.getStoragePath() + File.separator + fileName));
@@ -400,7 +476,7 @@ public class OWOWCache {
     }
   }
 
-  public OCachePointer load(long fileId, long pageIndex) throws IOException {
+  public OCachePointer load(long fileId, long pageIndex, boolean addNewPages) throws IOException {
     filesLock.acquireReadLock();
     try {
       final GroupKey groupKey = new GroupKey(fileId, pageIndex >>> 4);
@@ -410,9 +486,11 @@ public class OWOWCache {
 
         OCachePointer pagePointer;
         if (writeGroup == null) {
-          pagePointer = cacheFileContent(fileId, pageIndex);
-          pagePointer.incrementReferrer();
+          pagePointer = cacheFileContent(fileId, pageIndex, addNewPages);
+          if (pagePointer == null)
+            return null;
 
+          pagePointer.incrementReferrer();
           return pagePointer;
         }
 
@@ -420,7 +498,10 @@ public class OWOWCache {
         pagePointer = writeGroup.pages[entryIndex];
 
         if (pagePointer == null)
-          pagePointer = cacheFileContent(fileId, pageIndex);
+          pagePointer = cacheFileContent(fileId, pageIndex, addNewPages);
+
+        if (pagePointer == null)
+          return null;
 
         pagePointer.incrementReferrer();
         return pagePointer;
@@ -481,7 +562,7 @@ public class OWOWCache {
       initNameIdMapping();
 
       final Long fileId = nameIdMap.get(fileName);
-      if (fileId == null)
+      if (fileId == null || fileId < 0)
         return -1;
 
       final OFileClassic fileClassic = files.get(fileId);
@@ -533,8 +614,8 @@ public class OWOWCache {
     try {
       final String name = doDeleteFile(fileId);
       if (name != null) {
-        nameIdMap.remove(name);
-        writeNameIdEntry(new NameFileIdEntry(name, -1), true);
+        nameIdMap.put(name, -fileId);
+        writeNameIdEntry(new NameFileIdEntry(name, -fileId), true);
       }
     } finally {
       filesLock.releaseWriteLock();
@@ -767,10 +848,18 @@ public class OWOWCache {
       if (!fileClassic.isOpen())
         fileClassic.open();
     } else {
-      fileClassic.create(-1);
-      fileClassic.synch();
+      throw new OStorageException("File " + fileClassic + " does not exist.");
     }
 
+  }
+
+  private void addFile(OFileClassic fileClassic) throws IOException {
+    if (!fileClassic.exists()) {
+      fileClassic.create(-1);
+      fileClassic.synch();
+    } else {
+      throw new OStorageException("File " + fileClassic + " already exists.");
+    }
   }
 
   private void initNameIdMapping() throws IOException {
@@ -805,17 +894,14 @@ public class OWOWCache {
       if (localFileCounter < nameFileIdEntry.fileId)
         localFileCounter = nameFileIdEntry.fileId;
 
-      if (nameFileIdEntry.fileId >= 0)
-        nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
-      else
-        nameIdMap.remove(nameFileIdEntry.name);
+      nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
     }
 
     if (localFileCounter > 0)
       fileCounter = localFileCounter;
 
     for (Map.Entry<String, Long> nameIdEntry : nameIdMap.entrySet()) {
-      if (!files.containsKey(nameIdEntry.getValue())) {
+      if (nameIdEntry.getValue() >= 0 && !files.containsKey(nameIdEntry.getValue())) {
         OFileClassic fileClassic = createFile(nameIdEntry.getKey());
         files.put(nameIdEntry.getValue(), fileClassic);
       }
@@ -883,7 +969,7 @@ public class OWOWCache {
     }
   }
 
-  private OCachePointer cacheFileContent(long fileId, long pageIndex) throws IOException {
+  private OCachePointer cacheFileContent(long fileId, long pageIndex, boolean addNewPages) throws IOException {
     final long startPosition = pageIndex * pageSize;
     final long endPosition = startPosition + pageSize;
 
@@ -905,7 +991,7 @@ public class OWOWCache {
       final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
 
       dataPointer = new OCachePointer(pointer, lastLsn);
-    } else {
+    } else if (addNewPages) {
       final int space = (int) (endPosition - fileClassic.getFilledUpTo());
       fileClassic.allocateSpace(space);
 
@@ -913,7 +999,8 @@ public class OWOWCache {
 
       final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
       dataPointer = new OCachePointer(pointer, lastLsn);
-    }
+    } else
+      return null;
 
     return dataPointer;
   }
@@ -1171,7 +1258,7 @@ public class OWOWCache {
           WriteGroup group = entry.getValue();
           for (int i = 0; i < 16; i++) {
             final OCachePointer pagePointer = group.pages[i];
-            if (pagePointer != null) {
+            if (pagePointer != null && pagePointer.getLastFlushedLsn() != null) {
               if (minLsn.compareTo(pagePointer.getLastFlushedLsn()) > 0) {
                 minLsn = pagePointer.getLastFlushedLsn();
               }
@@ -1301,7 +1388,7 @@ public class OWOWCache {
     }
   }
 
-	private static class FlushThreadFactory implements ThreadFactory {
+  private static class FlushThreadFactory implements ThreadFactory {
     private final String storageName;
 
     private FlushThreadFactory(String storageName) {

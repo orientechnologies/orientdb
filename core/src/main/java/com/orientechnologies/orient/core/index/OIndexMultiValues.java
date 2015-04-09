@@ -152,39 +152,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   @Override
-  protected void putInSnapshot(Object key, OIdentifiable value, final Map<Object, Object> snapshot) {
-    key = getCollatingValue(key);
-
-    Object snapshotValue = snapshot.get(key);
-
-    Set<OIdentifiable> values;
-    if (snapshotValue == null)
-      values = indexEngine.get(key);
-    else if (snapshotValue.equals(RemovedValue.INSTANCE))
-      values = null;
-    else
-      values = (Set<OIdentifiable>) snapshotValue;
-
-    if (values == null) {
-      if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-        boolean durable = false;
-        if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
-          durable = true;
-
-        values = new OIndexRIDContainer(getName(), durable);
-      } else {
-        values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
-        ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
-      }
-
-      snapshot.put(key, values);
-    }
-
-    values.add(value.getIdentity());
-    snapshot.put(key, values);
-  }
-
-  @Override
   public boolean remove(Object key, final OIdentifiable value) {
     checkForRebuild();
 
@@ -240,45 +207,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         keyLockManager.releaseSharedLock(key);
     }
 
-  }
-
-  @Override
-  protected void removeFromSnapshot(Object key, final OIdentifiable value, final Map<Object, Object> snapshot) {
-    key = getCollatingValue(key);
-
-    final Object snapshotValue = snapshot.get(key);
-
-    Set<OIdentifiable> values;
-    if (snapshotValue == null)
-      values = indexEngine.get(key);
-    else if (snapshotValue.equals(RemovedValue.INSTANCE))
-      values = null;
-    else
-      values = (Set<OIdentifiable>) snapshotValue;
-
-    if (values == null)
-      return;
-
-    if (values.remove(value)) {
-      if (values.isEmpty())
-        snapshot.put(key, RemovedValue.INSTANCE);
-      else
-        snapshot.put(key, values);
-    }
-  }
-
-  @Override
-  protected void commitSnapshot(Map<Object, Object> snapshot) {
-    for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
-      Object key = snapshotEntry.getKey();
-      Object value = snapshotEntry.getValue();
-      checkForKeyType(key);
-
-      if (value.equals(RemovedValue.INSTANCE))
-        indexEngine.remove(key);
-      else
-        indexEngine.put(key, (Set<OIdentifiable>) value);
-    }
   }
 
   public OIndexMultiValues create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,

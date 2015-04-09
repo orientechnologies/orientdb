@@ -130,8 +130,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".sbt", true);
-    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, actualStorage);
+    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".sbt", true, actualStorage);
+    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
   }
 
   private void createExpectedSBTree() {
@@ -170,8 +170,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".sbt", true);
-    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, expectedStorage);
+    expectedSBTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".sbt", true, expectedStorage);
+    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
   }
 
   @Override
@@ -305,10 +305,15 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
           if (!expectedDiskCache.isOpen(fileId))
             expectedDiskCache.openFile(fileId);
 
-          final OCacheEntry cacheEntry = expectedDiskCache.load(fileId, pageIndex, true);
+          OCacheEntry cacheEntry = expectedDiskCache.load(fileId, pageIndex, true);
+          if (cacheEntry == null) {
+            do {
+              cacheEntry = expectedDiskCache.allocateNewPage(fileId);
+            } while (cacheEntry.getPageIndex() != pageIndex);
+          }
           cacheEntry.acquireExclusiveLock();
           try {
-            ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
+            ODurablePage durablePage = new ODurablePage(cacheEntry, null);
             durablePage.restoreChanges(updatePageRecord.getChanges());
             durablePage.setLsn(updatePageRecord.getLsn());
 

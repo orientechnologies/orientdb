@@ -244,7 +244,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection != null) {
       if (!Boolean.TRUE.equals(tokenBased)) {
         if (connection.database != null)
-          if (!connection.database.isClosed())
+          if (!connection.database.isClosed() && connection.database.getLocalCache() != null)
             connection.database.getLocalCache().clear();
       } else {
         if (connection.database != null && !connection.database.isClosed())

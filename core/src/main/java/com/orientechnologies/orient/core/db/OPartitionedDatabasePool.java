@@ -84,12 +84,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   private final String                userName;
   private final String                password;
   private final int                   maxSize;
-  private final ThreadLocal<PoolData> poolData       = new ThreadLocal<PoolData>() {
-                                                       @Override
-                                                       protected PoolData initialValue() {
-                                                         return new PoolData();
-                                                       }
-                                                     };
+  private final ThreadLocal<PoolData> poolData       = new ThreadPoolData();
   private final AtomicBoolean         poolBusy       = new AtomicBoolean();
   private final int                   maxPartitions  = Runtime.getRuntime().availableProcessors() << 3;
   private volatile PoolPartition[]    partitions;
@@ -109,6 +104,13 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     private final AtomicInteger                                   currentSize         = new AtomicInteger();
     private final AtomicInteger                                   acquiredConnections = new AtomicInteger();
     private final ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue               = new ConcurrentLinkedQueue<DatabaseDocumentTxPolled>();
+  }
+
+  private static class ThreadPoolData extends ThreadLocal<PoolData> {
+    @Override
+    protected PoolData initialValue() {
+      return new PoolData();
+    }
   }
 
   private final class DatabaseDocumentTxPolled extends ODatabaseDocumentTx {

@@ -65,7 +65,7 @@ public class OrientEdge extends OrientElement implements Edge {
   protected OrientEdge(final OrientBaseGraph rawGraph, final String iLabel, final Object... fields) {
     super(rawGraph, null);
     rawElement = createDocument(iLabel);
-    setProperties(fields);
+    setPropertiesInternal(fields);
   }
 
   protected OrientEdge(final OrientBaseGraph rawGraph, final OIdentifiable out, final OIdentifiable in) {
@@ -447,10 +447,10 @@ public class OrientEdge extends OrientElement implements Edge {
     if (rawElement == null) {
       // CREATE AT THE FLY
       final ODocument tmp = new ODocument(getClassName(label)).setTrackingChanges(false);
-      tmp.field("in", vIn.getIdentity());
-      tmp.field("out", vOut.getIdentity());
+      tmp.field(OrientBaseGraph.CONNECTION_IN, vIn.getIdentity());
+      tmp.field(OrientBaseGraph.CONNECTION_OUT, vOut.getIdentity());
       if (label != null && settings != null && !settings.isUseClassForEdgeLabel())
-        tmp.field("label", label);
+        tmp.field(OrientEdge.LABEL_FIELD_NAME, label);
       return tmp;
     }
 

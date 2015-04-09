@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
  * @author Andrey Lomakin
@@ -58,7 +57,7 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
 
   private volatile ORID                          identity;
 
-  public OHashTableIndexEngine(Boolean durableInNonTxMode, ODurablePage.TrackMode trackMode) {
+  public OHashTableIndexEngine(Boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
     hashFunction = new OMurmurHash3HashFunction<Object>();
 
     boolean durableInNonTx;
@@ -68,7 +67,7 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
       durableInNonTx = durableInNonTxMode;
 
     hashTable = new OLocalHashTable<Object, V>(METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
-        NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx, trackMode);
+        NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx, storage);
   }
 
   @Override
@@ -102,8 +101,8 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
 
     hashFunction.setValueSerializer(keySerializer);
     hashTable.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer,
-        indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract, indexDefinition != null
-            && !indexDefinition.isNullValuesIgnored());
+        indexDefinition != null ? indexDefinition.getTypes() : null,
+        indexDefinition != null && !indexDefinition.isNullValuesIgnored());
   }
 
   @Override
@@ -125,9 +124,8 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
   public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
       boolean isAutomatic) {
     identity = indexRid;
-    hashTable.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null,
-        (OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying(),
-        indexDefinition != null && !indexDefinition.isNullValuesIgnored());
+    hashTable.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null, indexDefinition != null
+        && !indexDefinition.isNullValuesIgnored());
     hashFunction.setValueSerializer(hashTable.getKeySerializer());
   }
 

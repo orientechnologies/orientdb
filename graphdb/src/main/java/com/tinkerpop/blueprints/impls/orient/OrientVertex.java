@@ -80,7 +80,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       className = checkForClassInSchema(OrientBaseGraph.encodeClassName(className));
 
     rawElement = new ODocument(className == null ? OrientVertexType.CLASS_NAME : className);
-    setProperties(fields);
+    setPropertiesInternal(fields);
   }
 
   public OrientVertex(final OrientBaseGraph graph, final OIdentifiable record) {
@@ -762,6 +762,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       } else {
         // REPLACE WITH NEW VERTEX
         oe.vOut = newIdentity;
+        oe.getRecord().field(OrientBaseGraph.CONNECTION_OUT, newIdentity);
+        oe.save();
       }
     }
 
@@ -778,6 +780,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       } else {
         // REPLACE WITH NEW VERTEX
         oe.vIn = newIdentity;
+        oe.getRecord().field(OrientBaseGraph.CONNECTION_IN, newIdentity);
+        oe.save();
       }
     }
 

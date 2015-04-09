@@ -19,6 +19,24 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
@@ -76,24 +94,6 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.task.*;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -198,7 +198,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public boolean isAssigningClusterIds() {
-    return OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED;
+    return true;
   }
 
   @Override
@@ -478,6 +478,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             this,
             "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName + "' (it's '" + masterNode
                 + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
+
+        clusterName = newClusterName;
       }
 
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
@@ -855,6 +857,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final OTxTask txTask = new OTxTask();
       final Set<String> involvedClusters = new HashSet<String>();
 
+      final Set<String> nodes = dbCfg.getServers(involvedClusters);
+
+      Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(null);
+      if (executionModeSynch == null)
+        executionModeSynch = Boolean.TRUE;
+
       final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
       while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
@@ -873,7 +881,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           switch (op.type) {
           case ORecordOperation.CREATED:
             if (rid.isNew()) {
-              task = new OCreateRecordTask(record.copy());
+              // CREATE THE TASK PASSING THE RECORD OR A COPY BASED ON EXECUTION TYPE: IF ASYNCHRONOUS THE COPY PREVENT TO EARLY
+              // ASSIGN CLUSTER IDS
+              final ORecord rec = executionModeSynch ? record : record.copy();
+              task = new OCreateRecordTask(rec);
               if (record instanceof ODocument)
                 ((ODocument) record).validate();
               break;
@@ -910,12 +921,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       }
 
       OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
-
-      final Set<String> nodes = dbCfg.getServers(involvedClusters);
-
-      Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(null);
-      if (executionModeSynch == null)
-        executionModeSynch = Boolean.TRUE;
 
       // if (executionModeSynch && !iTx.hasRecordCreation()) {
       if (executionModeSynch) {

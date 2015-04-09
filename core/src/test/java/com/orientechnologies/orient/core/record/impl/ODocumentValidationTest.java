@@ -1,9 +1,13 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -70,6 +74,7 @@ public class ODocumentValidationTest {
       d.field("linkList", new ArrayList<ORecordId>());
       d.field("linkSet", new HashSet<ORecordId>());
       d.field("linkMap", new HashMap<String, ORecordId>());
+      d.validate();
 
       checkRequireField(d, "int");
       checkRequireField(d, "long");
@@ -160,6 +165,7 @@ public class ODocumentValidationTest {
       // d.field("linkList", new ArrayList<ORecordId>());
       // d.field("linkSet", new HashSet<ORecordId>());
       // d.field("linkMap", new HashMap<String, ORecordId>());
+      d.validate();
 
       checkField(d, "int", 20);
       checkField(d, "long", 20);
@@ -231,7 +237,7 @@ public class ODocumentValidationTest {
       d.field("decimal", 12);
       d.field("double", 12);
       d.field("short", 12);
-      d.field("string", "yeah");
+      d.field("string", "yeahyeahyeah");
       d.field("link", id);
       // d.field("embedded", new ODocument().field("test", "test"));
       // d.field("embeddedList", new ArrayList<String>());
@@ -240,6 +246,7 @@ public class ODocumentValidationTest {
       // d.field("linkList", new ArrayList<ORecordId>());
       // d.field("linkSet", new HashSet<ORecordId>());
       // d.field("linkMap", new HashMap<String, ORecordId>());
+      d.validate();
 
       checkField(d, "int", 10);
       checkField(d, "long", 10);
@@ -320,6 +327,7 @@ public class ODocumentValidationTest {
       d.field("linkList", new ArrayList<ORecordId>());
       d.field("linkSet", new HashSet<ORecordId>());
       d.field("linkMap", new HashMap<String, ORecordId>());
+      d.validate();
 
       checkField(d, "int", null);
       checkField(d, "long", null);
@@ -348,80 +356,19 @@ public class ODocumentValidationTest {
 
   }
 
-  
   @Test
   public void testRegExpValidation() {
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
     db.create();
     try {
-      ODocument doc = new ODocument();
-      OIdentifiable id = db.save(doc).getIdentity();
       OClass clazz = db.getMetadata().getSchema().createClass("Validation");
-      clazz.createProperty("int", OType.INTEGER).setRegexp("[^Z]");
-      clazz.createProperty("long", OType.LONG).setRegexp("[^Z]");
-      clazz.createProperty("float", OType.FLOAT).setRegexp("[^Z]");
-      clazz.createProperty("boolean", OType.BOOLEAN).setRegexp("[^Z]");
-      clazz.createProperty("binary", OType.BINARY).setRegexp("[^Z]");
-      clazz.createProperty("byte", OType.BYTE).setRegexp("[^Z]");
-      clazz.createProperty("date", OType.DATE).setRegexp("[^Z]");
-      clazz.createProperty("datetime", OType.DATETIME).setRegexp("[^Z]");
-      clazz.createProperty("decimal", OType.DECIMAL).setRegexp("[^Z]");
-      clazz.createProperty("double", OType.DOUBLE).setRegexp("[^Z]");
-      clazz.createProperty("short", OType.SHORT).setRegexp("[^Z]");
-      clazz.createProperty("string", OType.STRING).setRegexp("[^Z]");
-      clazz.createProperty("link", OType.LINK).setRegexp("[^Z]");
-      clazz.createProperty("embedded", OType.EMBEDDED).setRegexp("[^Z]");
-
-      clazz.createProperty("embeddedList", OType.EMBEDDEDLIST).setRegexp("[^Z]");
-      clazz.createProperty("embeddedSet", OType.EMBEDDEDSET).setRegexp("[^Z]");
-      clazz.createProperty("embeddedMap", OType.EMBEDDEDMAP).setRegexp("[^Z]");
-
-      clazz.createProperty("linkList", OType.LINKLIST).setRegexp("[^Z]");
-      clazz.createProperty("linkSet", OType.LINKSET).setRegexp("[^Z]");
-      clazz.createProperty("linkMap", OType.LINKMAP).setRegexp("[^Z]");
+      clazz.createProperty("string", OType.STRING).setRegexp("[^Z]*");
 
       ODocument d = new ODocument(clazz);
-      d.field("int", 12);
-      d.field("long", 12);
-      d.field("float", 12);
-      d.field("boolean", true);
-      d.field("binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 });
-      d.field("byte", 12);
-      d.field("date", new Date());
-      d.field("datetime", new Date());
-      d.field("decimal", 12);
-      d.field("double", 12);
-      d.field("short", 12);
       d.field("string", "yeah");
-      d.field("link", id);
-      d.field("embedded", new ODocument().field("test", "test"));
-      d.field("embeddedList", new ArrayList<String>());
-      d.field("embeddedSet", new HashSet<String>());
-      d.field("embeddedMap", new HashMap<String, String>());
-      d.field("linkList", new ArrayList<ORecordId>());
-      d.field("linkSet", new HashSet<ORecordId>());
-      d.field("linkMap", new HashMap<String, ORecordId>());
+      d.validate();
 
-      checkField(d, "int", null);
-      checkField(d, "long", null);
-      checkField(d, "float", null);
-      checkField(d, "boolean", null);
-      checkField(d, "binary", null);
-      checkField(d, "byte", null);
-      checkField(d, "date", null);
-      checkField(d, "datetime", null);
-      checkField(d, "decimal", null);
-      checkField(d, "double", null);
-      checkField(d, "short", null);
-      checkField(d, "string", null);
-      checkField(d, "link", null);
-      checkField(d, "embedded", null);
-      checkField(d, "embeddedList", null);
-      checkField(d, "embeddedSet", null);
-      checkField(d, "embeddedMap", null);
-      checkField(d, "linkList", null);
-      checkField(d, "linkSet", null);
-      checkField(d, "linkMap", null);
+      checkField(d, "string", "yaZah");
 
     } finally {
       db.drop();
@@ -429,8 +376,81 @@ public class ODocumentValidationTest {
 
   }
 
-  
-  
+  @Test
+  public void testLinkedTypeValidation() {
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    db.create();
+    try {
+      OClass clazz = db.getMetadata().getSchema().createClass("Validation");
+      clazz.createProperty("embeddedList", OType.EMBEDDEDLIST).setLinkedType(OType.INTEGER);
+      clazz.createProperty("embeddedSet", OType.EMBEDDEDSET).setLinkedType(OType.INTEGER);
+      clazz.createProperty("embeddedMap", OType.EMBEDDEDMAP).setLinkedType(OType.INTEGER);
+
+      ODocument d = new ODocument(clazz);
+      List<Integer> list = Arrays.asList(1, 2);
+      d.field("embeddedList", list);
+      Set<Integer> set = new HashSet<Integer>(list);
+      d.field("embeddedSet", set);
+
+      Map<String, Integer> map = new HashMap<String, Integer>();
+      map.put("a", 1);
+      map.put("b", 2);
+      d.field("embeddedMap", map);
+
+      d.validate();
+
+      checkField(d, "embeddedList", Arrays.asList("a", "b"));
+      checkField(d, "embeddedSet", new HashSet<String>(Arrays.asList("a", "b")));
+      Map<String, String> map1 = new HashMap<String, String>();
+      map1.put("a", "a1");
+      map1.put("b", "a2");
+      checkField(d, "embeddedMap", map1);
+
+    } finally {
+      db.drop();
+    }
+  }
+
+  @Test
+  public void testLinkedClassValidation() {
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    db.create();
+    try {
+      OClass clazz = db.getMetadata().getSchema().createClass("Validation");
+      OClass clazz1 = db.getMetadata().getSchema().createClass("Validation1");
+      clazz.createProperty("linkList", OType.LINKLIST).setLinkedClass(clazz1);
+      clazz.createProperty("linkSet", OType.LINKSET).setLinkedClass(clazz1);
+      clazz.createProperty("linkMap", OType.LINKMAP).setLinkedClass(clazz1);
+      ODocument d = new ODocument(clazz);
+      List<ODocument> list = Arrays.asList(new ODocument(clazz1));
+      d.field("linkList", list);
+      Set<ODocument> set = new HashSet<ODocument>(list);
+      d.field("linkSet", set);
+
+      Map<String, ODocument> map = new HashMap<String, ODocument>();
+      map.put("a", new ODocument(clazz1));
+      d.field("linkMap", map);
+
+      d.validate();
+
+      checkField(d, "linkList", Arrays.asList("a", "b"));
+      checkField(d, "linkSet", new HashSet<String>(Arrays.asList("a", "b")));
+      Map<String, String> map1 = new HashMap<String, String>();
+      map1.put("a", "a1");
+      map1.put("b", "a2");
+      checkField(d, "linkMap", map1);
+
+      checkField(d, "linkList", Arrays.asList(new ODocument(clazz)));
+      checkField(d, "linkSet", new HashSet<ODocument>(Arrays.asList(new ODocument(clazz))));
+      Map<String, ODocument> map2 = new HashMap<String, ODocument>();
+      map2.put("a", new ODocument(clazz));
+      checkField(d, "linkMap", map2);
+
+    } finally {
+      db.drop();
+    }
+  }
+
   private void checkField(ODocument toCheck, String field, Object newValue) {
     try {
       ODocument newD = toCheck.copy();
