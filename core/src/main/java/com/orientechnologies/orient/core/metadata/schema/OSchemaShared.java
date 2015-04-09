@@ -107,25 +107,19 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     this.clustersCanNotBeSharedAmongClasses = clustersCanNotBeSharedAmongClasses;
   }
 
-  public static Character checkClassNameIfValid(String iName) {
+  public static boolean checkClassNameIfValid(String iName) {
     if (iName == null)
       throw new IllegalArgumentException("Name is null");
 
     iName = iName.trim();
 
-    final int nameSize = iName.length();
-
-    if (nameSize == 0)
+    if (iName.length() == 0)
       throw new IllegalArgumentException("Name is empty");
-
-    for (int i = 0; i < nameSize; ++i) {
-      final char c = iName.charAt(i);
-      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '%' || c == '@' || c == '=')
-        // INVALID CHARACTER
-        return c;
-    }
-
-    return null;
+    String pattern = "^[_\\p{L}][_\\p{L}\\p{N}]*";
+    if (iName.matches(pattern))
+      return true;
+    else 
+      return false; 
   }
 
   public static Character checkFieldNameIfValid(String iName) {
@@ -358,9 +352,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public OClass createClass(final String className, final OClass superClass, int[] clusterIds) {
-    final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(className);
-    if (wrongCharacter != null)
-      throw new OSchemaException("Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '"
+    if (!OSchemaShared.checkClassNameIfValid(className))
+      throw new OSchemaException("Invalid class name found. Only UNICODE AlphaNumeric characters can be used in class name '"
           + className + "'");
 
     OClass result;
@@ -988,9 +981,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       if (Character.isDigit(className.charAt(0)))
         throw new OSchemaException("Found invalid class name. Cannot start with numbers");
 
-      final Character wrongCharacter = checkClassNameIfValid(className);
-      if (wrongCharacter != null)
-        throw new OSchemaException("Found invalid class name. Character '" + wrongCharacter + "' cannot be used in class name.");
+      if (!checkClassNameIfValid(className))
+        throw new OSchemaException("Invalid class name found. Only UNICODE AlphaNumeric characters can be used in class name.");
 
       final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();

@@ -82,6 +82,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     final String language = request.getLanguage();
     parserText = request.getText();
 
+    parameters = iArgs;
     if (language.equalsIgnoreCase("SQL"))
       // SPECIAL CASE: EXECUTE THE COMMANDS IN SEQUENCE
       return executeSQL();
@@ -117,8 +118,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         request.setCompiledScript(compiledScript);
       }
       final Bindings binding = scriptManager.bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
-                                                   (ODatabaseDocumentTx) db, iContext, iArgs);
-
+          (ODatabaseDocumentTx) db, iContext, iArgs);
 
       try {
         final Object ob = compiledScript.eval(binding);
@@ -337,7 +337,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
               break;
 
             } else if (lastCommand != null && lastCommand.length() > 0)
-              lastResult = db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute();
+              lastResult = db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute(parameters);
           }
         }
 
