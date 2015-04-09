@@ -17,15 +17,8 @@
  */
 package com.orientechnologies.agent;
 
-import java.util.Map;
-
 import com.orientechnologies.agent.hook.OAuditingHook;
-import com.orientechnologies.agent.http.command.OServerCommandConfiguration;
-import com.orientechnologies.agent.http.command.OServerCommandGetDeployDb;
-import com.orientechnologies.agent.http.command.OServerCommandGetDistributed;
-import com.orientechnologies.agent.http.command.OServerCommandGetLog;
-import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
-import com.orientechnologies.agent.http.command.OServerCommandPostBackupDatabase;
+import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
@@ -48,13 +41,16 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
+import java.util.Map;
+
 public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener {
-  public static final String  EE                         = "ee.";
-  private static final String ORIENDB_ENTERPRISE_VERSION = "2.1"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
-  private OServer             server;
-  private String              license;
-  private String              version;
-  private boolean             enabled                    = false;
+  public static final String       EE                         = "ee.";
+  private static final String      ORIENDB_ENTERPRISE_VERSION = "2.1"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
+  private OServer                  server;
+  private String                   license;
+  private String                   version;
+  private boolean                  enabled                    = false;
+  private DatabaseProfilerResource profilerResource;
 
   public OEnterpriseAgent() {
   }
@@ -81,7 +77,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       enabled = true;
       installProfiler();
       installCommands();
-
+      profilerResource = new DatabaseProfilerResource();
       Thread installer = new Thread(new Runnable() {
         @Override
         public void run() {
@@ -184,6 +180,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     listener.registerStatelessCommand(new OServerCommandConfiguration());
     listener.registerStatelessCommand(new OServerCommandPostBackupDatabase());
     listener.registerStatelessCommand(new OServerCommandGetDeployDb());
+    listener.registerStatelessCommand(new OServerCommandGetSQLProfiler());
   }
 
   private void uninstallCommands() {
@@ -227,7 +224,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     System.out.printf("\n*                                                                  *");
     System.out.printf("\n*            " + OConstants.COPYRIGHT + "           *");
     System.out.printf("\n********************************************************************");
-    System.out.printf("\n* Version...: %-52s *", ORIENDB_ENTERPRISE_VERSION);
+//    System.out.printf("\n* Version...: %-52s *", ORIENDB_ENTERPRISE_VERSION);
     // System.out.printf("\n* License...: %-52s *", license);
     // if (dayLeft < 0) {
     // System.out.printf("\n* Licence expired since: %03d days                                  *", Math.abs(dayLeft));
@@ -237,7 +234,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     // System.out.printf("\n* Expires in: %03d days                                             *", dayLeft);
     // }
 
-    System.out.printf("\n********************************************************************\n");
+//    System.out.printf("\n********************************************************************\n");
 
     Orient
         .instance()

@@ -210,8 +210,8 @@ public class OProfilerData {
         firstItem = false;
       else
         buffer.append(',');
-      buffer.append(String.format(Locale.ENGLISH, "\"%s\": { \"time\" : %d , \"count\" : %d } ", OIOUtils.encode(s), tipsTimestamp.get(s),
-          tips.get(s).get()));
+      buffer.append(String.format(Locale.ENGLISH, "\"%s\": { \"time\" : %d , \"count\" : %d } ", OIOUtils.encode(s),
+          tipsTimestamp.get(s), tips.get(s).get()));
     }
 
     buffer.append("}");
@@ -285,8 +285,8 @@ public class OProfilerData {
     return buffer.toString();
   }
 
-  public long stopChrono(final String iName, final long iStartTime, final String iPayload) {
-    return updateEntry(chronos, iName, System.currentTimeMillis() - iStartTime, iPayload);
+  public long stopChrono(final String iName, final long iStartTime, final String iPayload, String user) {
+    return updateEntry(chronos, iName, System.currentTimeMillis() - iStartTime, iPayload, user);
   }
 
   public String dumpChronos() {
@@ -294,7 +294,7 @@ public class OProfilerData {
   }
 
   public long updateStat(final String iName, final long iValue) {
-    return updateEntry(stats, iName, iValue, null);
+    return updateEntry(stats, iName, iValue, null, null);
   }
 
   public String dumpStats() {
@@ -405,7 +405,7 @@ public class OProfilerData {
   }
 
   protected synchronized long updateEntry(final ConcurrentMap<String, OProfilerEntry> iValues, final String iName,
-      final long iValue, final String iPayload) {
+      final long iValue, final String iPayload, String user) {
 
     OProfilerEntry c = iValues.get(iName);
     if (c == null) {
@@ -424,7 +424,8 @@ public class OProfilerData {
     c.last = iValue;
     c.total += c.last;
     c.average = c.total / c.entries;
-
+    if (user != null)
+      c.users.add(user);
     if (c.last < c.min)
       c.min = c.last;
 

@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerMBean {
   protected final static Timer        timer                   = new Timer(true);
   protected final static int          BUFFER_SIZE             = 2048;
-  public static final int KEEP_ALIVE =  60 * 1000;
+  public static final int             KEEP_ALIVE              = 60 * 1000;
   protected final List<OProfilerData> snapshots               = new ArrayList<OProfilerData>();
   protected final int                 metricProcessors        = Runtime.getRuntime().availableProcessors();
   protected Date                      lastReset               = new Date();
@@ -369,6 +369,11 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
 
   public long stopChrono(final String iName, final String iDescription, final long iStartTime, final String iDictionaryName,
       final String iPayload) {
+    return stopChrono(iName, iDescription, iStartTime, iDictionaryName, iPayload, null);
+  }
+
+  public long stopChrono(final String iName, final String iDescription, final long iStartTime, final String iDictionaryName,
+      final String iPayload, String user) {
     // CHECK IF CHRONOS ARE ACTIVED
     if (recordingFrom < 0)
       return -1;
@@ -379,8 +384,8 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
     try {
 
       if (lastSnapshot != null)
-        lastSnapshot.stopChrono(iName, iStartTime, iPayload);
-      return realTime.stopChrono(iName, iStartTime, iPayload);
+        lastSnapshot.stopChrono(iName, iStartTime, iPayload, user);
+      return realTime.stopChrono(iName, iStartTime, iPayload, user);
 
     } finally {
       releaseSharedLock();
@@ -695,6 +700,6 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
         }
       }
     };
-    timer.schedule(autoPause,KEEP_ALIVE, KEEP_ALIVE);
+    timer.schedule(autoPause, KEEP_ALIVE, KEEP_ALIVE);
   }
 }
