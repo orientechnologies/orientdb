@@ -47,8 +47,10 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
   public static final String KEYWORD_LIVE_SELECT = "LIVE SELECT";
   private OLiveResultSet     liveResultSet;
   private ODatabaseDocument  execDb;
-  private int               token;
+  private int                token;
   static Random              random              = new Random();
+
+  protected String           unsubscribeToken;
 
   public OCommandExecutorSQLLiveSelect() {
 
@@ -56,6 +58,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
 
   public Object execute(final Map<Object, Object> iArgs) {
     try {
+
       execDb = ((ODatabaseDocumentTx) getDatabase()).copy();
 
       synchronized (random) {
@@ -79,10 +82,10 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
       ODocument result = new ODocument();
       result.field("token", token);// TODO change this name...?
 
-      ((OResultSet)getResult()).add(result);
+      ((OResultSet) getResult()).add(result);
       return getResult();
     } finally {
-      if (request.getResultListener() != null) {
+      if (request != null && request.getResultListener() != null) {
         request.getResultListener().end();
       }
     }
@@ -175,11 +178,13 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
   public OCommandExecutorSQLSelect parse(OCommandRequest iRequest) {
     OCommandRequestText requestText = (OCommandRequestText) iRequest;
     String originalText = requestText.getText();
-    requestText.setText(requestText.getText().trim().substring(4));
+    String remainingText = requestText.getText().trim().substring(5).trim();
+    requestText.setText(remainingText);
     try {
       return super.parse(iRequest);
     } finally {
       requestText.setText(originalText);
     }
+
   }
 }
