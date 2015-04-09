@@ -42,3 +42,18 @@ filterModule.filter('nocomment', function () {
 });
 
 
+
+filterModule.filter('ctype', function () {
+
+  return function (input, args) {
+    var index = input.indexOf(".");
+    return input.substring(0, index);
+  };
+});
+filterModule.filter('cname', function () {
+
+  return function (input, args) {
+    var index = input.indexOf(".");
+    return input.substring(index + 1, input.length);
+  };
+});

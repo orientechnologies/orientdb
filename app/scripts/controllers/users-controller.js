@@ -23,8 +23,8 @@ schemaModule.controller("UsersController", ['$scope', '$routeParams', '$location
     $scope.links = {
         users: Database.getOWikiFor("Security.html#users")
     }
-    var selectAllUsers = 'select * from oUser fetchPlan *:1 order by name  ';
-    var selectAllRoles = 'select * from oRole fetchPlan *:1 order by name ';
+    var selectAllUsers = 'select * from oUser order by name fetchPlan *:1';
+    var selectAllRoles = 'select * from oRole order by name fetchPlan *:1';
     $scope.getListUsers = function () {
         $scope.functions = new Array;
         CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: selectAllUsers, limit: $scope.limit, shallow: false}, function (data) {
@@ -163,7 +163,7 @@ schemaModule.controller("UsersController", ['$scope', '$routeParams', '$location
 schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'CommandApi', 'Database', 'Notification', 'DocumentApi', '$modal', '$q', function ($scope, $routeParams, $location, DatabaseApi, CommandApi, Database, Notification, DocumentApi, $modal, $q) {
 
     $scope.database = Database;
-    var selectAllUsers = 'select * from oRole fetchPlan *:1 order by name  ';
+    var selectAllUsers = 'select * from oRole order by name fetchPlan *:1 ';
 
 
     $scope.links = {

@@ -586,5 +586,54 @@ dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi',
   }
 }]);
 
+dbModule.controller("ProfilerController", ['$scope', 'Profiler', 'Database', 'Spinner', 'Notification', function ($scope, Profiler, Database, Spinner, Notification) {
+
+
+  var metricName = 'db.' + Database.getName() + '.command.';
+
+  $scope.itemsByPage = 4;
+  $scope.profiles = []
+
+
+  $scope.refresh = function () {
+    Spinner.start();
+    Profiler.profilerData(Database.getName()).then(function (data) {
+      var profiling = $scope.flatten(data.realtime.chronos, metricName);
+      $scope.profiles = profiling;
+      $scope.safeCopy = angular.copy(profiling);
+      Spinner.stopSpinner();
+    }).catch(function (error) {
+      if (error.status == 405) {
+        Notification.push({content: error.data, error: true, autoHide: true});
+      } else {
+        Notification.push({content: error.data, error: true, autoHide: true});
+      }
+
+      Spinner.stopSpinner();
+    })
+  }
+
+
+  $scope.flatten = function (result, metricName) {
+    var commands = new Array;
+
+    Object.keys(result).forEach(function (e, i, a) {
+      var obj = {};
+      obj.name = e.substring(metricName.length, e.length);
+      Object.keys(result[e]).forEach(function (ele, ide, arr) {
+        obj[ele] = result[e][ele];
+      });
+
+      commands.push(obj);
+
+    });
+    return commands;
+  }
+  $scope.$watch('profiles', function (data) {
+
+  })
+  $scope.refresh();
+}]);
+
 
 
