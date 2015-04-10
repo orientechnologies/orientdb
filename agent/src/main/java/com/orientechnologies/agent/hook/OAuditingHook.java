@@ -45,6 +45,7 @@ public class OAuditingHook extends ORecordHookAbstract {
   private boolean                                 onGlobalDelete;
 
   private OAuditingClassConfig                    defaultConfig = new OAuditingClassConfig();
+  private ODocument                               iConfiguration;
 
   private static class OAuditingClassConfig {
     public boolean polymorphic     = true;
@@ -99,6 +100,7 @@ public class OAuditingHook extends ORecordHookAbstract {
   }
 
   public OAuditingHook(final ODocument iConfiguration) {
+    this.iConfiguration = iConfiguration;
     if (iConfiguration.containsField("auditClassName"))
       auditClassName = iConfiguration.field("auditClassName");
     else
@@ -141,6 +143,10 @@ public class OAuditingHook extends ORecordHookAbstract {
         cls.createProperty("note", OType.STRING);
       }
     }
+  }
+
+  public ODocument getiConfiguration() {
+    return iConfiguration;
   }
 
   @Override

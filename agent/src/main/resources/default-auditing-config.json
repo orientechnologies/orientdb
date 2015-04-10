@@ -1,0 +1,16 @@
+{
+  "auditClassName": "AuditingLog",
+  "classes": {
+    "*": {
+      "polymorphic": true,
+      "onCreateEnabled": false,
+      "onCreateMessage": "",
+      "onReadEnabled": false,
+      "onReadMessage": "",
+      "onUpdateEnabled": false,
+      "onUpdateMessage": "",
+      "onDeleteEnabled": false,
+      "onDeleteMessage": ""
+    }
+  }
+}
