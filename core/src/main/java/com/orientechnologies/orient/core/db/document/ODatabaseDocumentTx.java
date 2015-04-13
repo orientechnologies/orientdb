@@ -2087,6 +2087,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@inheritDoc}
    */
   @Override
+  public Iterable<ODatabaseListener> getListeners() {
+    return getListenersCopy();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public ORecordIteratorCluster<ODocument> browseCluster(String iClusterName, long startClusterPosition, long endClusterPosition,
       boolean loadTombstones) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);

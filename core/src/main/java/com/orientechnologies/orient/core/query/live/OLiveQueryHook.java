@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.core.query.live;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
@@ -112,6 +114,16 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
     synchronized (pendingOps) {
       pendingOps.remove(iDatabase);
     }
+  }
+
+  @Override
+  public void onBeforeCommand(OCommandRequestText iCommand, OCommandExecutor executor) {
+
+  }
+
+  @Override
+  public void onAfterCommand(OCommandRequestText iCommand, OCommandExecutor executor, Object result) {
+
   }
 
   @Override
