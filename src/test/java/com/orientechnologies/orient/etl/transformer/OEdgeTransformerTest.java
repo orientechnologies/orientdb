@@ -19,7 +19,13 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.etl.ETLBaseTest;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
 import org.junit.Test;
+
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Tests ETL Field Transformer.
@@ -48,5 +54,51 @@ public class OEdgeTransformerTest extends ETLBaseTest {
     assertEquals(1, graph.countVertices("V1"));
     assertEquals(1, graph.countVertices("V2"));
     assertEquals(1, graph.countEdges("Friend"));
+  }
+
+  @Test
+  public void testEdgeWithProperties() {
+    process("{source: { content: { value: 'id,name,surname,friendSince,friendId,friendName,friendSurname\n0,Jay,Miner,1996,1,Luca,Garulli' } }, extractor : { row: {} },"
+        + " transformers: [{csv: {}}, {vertex: {class:'V1'}}, "
+        + "{edge:{unresolvedLinkAction:'CREATE',class:'Friend',joinFieldName:'friendId',lookup:'V2.fid',targetVertexFields:{name:'${input.friendName}',surname:'${input.friendSurname}'},edgeFields:{since:'${input.friendSince}'}}},"
+        + "{field:{fieldNames:['friendSince','friendId','friendName','friendSurname'],operation:'remove'}}"
+        + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+
+    assertEquals(1, graph.countVertices("V1"));
+    assertEquals(2, graph.countVertices("V2"));
+    assertEquals(1, graph.countEdges("Friend"));
+
+    final Iterator<Vertex> v = graph.getVerticesOfClass("V2").iterator();
+    assertTrue(v.hasNext());
+    assertNotNull(v.next());
+    assertTrue(v.hasNext());
+    final Vertex v1 = v.next();
+    assertNotNull(v1);
+
+    final Set<String> v1Props = v1.getPropertyKeys();
+
+    assertEquals(3, v1Props.size());
+    assertEquals(v1.getProperty("name"), "Luca");
+    assertEquals(v1.getProperty("surname"), "Garulli");
+    assertEquals(v1.getProperty("fid"), 1);
+
+    final Iterator<Edge> edge = v1.getEdges(Direction.IN).iterator();
+    assertTrue(edge.hasNext());
+
+    final Edge e = edge.next();
+    assertNotNull(e);
+    final Set<String> eProps = e.getPropertyKeys();
+    assertEquals(1, eProps.size());
+    assertEquals(e.getProperty("since"), 1996);
+
+    final Vertex v0 = e.getVertex(Direction.OUT);
+    assertNotNull(v0);
+
+    final Set<String> v0Props = v0.getPropertyKeys();
+
+    assertEquals(3, v0Props.size());
+    assertEquals(v0.getProperty("name"), "Jay");
+    assertEquals(v0.getProperty("surname"), "Miner");
+    assertEquals(v0.getProperty("id"), 0);
   }
 }

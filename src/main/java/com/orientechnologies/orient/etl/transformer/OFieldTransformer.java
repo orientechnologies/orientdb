@@ -26,18 +26,22 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
+import java.util.List;
+
 public class OFieldTransformer extends OAbstractTransformer {
-  private String     fieldName;
-  private String     expression;
-  private Object     value;
-  private boolean    setOperation = true;
-  private OSQLFilter sqlFilter;
-  private boolean    save         = false;
+  private String       fieldName;
+  private List<String> fieldNames;
+  private String       expression;
+  private Object       value;
+  private boolean      setOperation = true;
+  private OSQLFilter   sqlFilter;
+  private boolean      save         = false;
 
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{fieldName:{optional:false,description:'field name to apply the result'}},"
+        + "{fieldName:{optional:true,description:'field name to apply the result'}},"
+        + "{fieldNames:{optional:true,description:'field names to apply the result'}},"
         + "{expression:{optional:true,description:'expression to evaluate. Mandatory with operation=set (default)'}}"
         + "{value:{optional:true,description:'value to set'}}"
         + "{operation:{optional:false,description:'operation to execute against the field: set, remove. Default is set'}}"
@@ -49,6 +53,11 @@ public class OFieldTransformer extends OAbstractTransformer {
   public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
     fieldName = (String) resolve(iConfiguration.field("fieldName"));
+    fieldNames = (List<String>) resolve(iConfiguration.field("fieldNames"));
+
+    if (fieldNames == null && fieldName == null)
+      throw new IllegalArgumentException("Field transformer must specify 'fieldName' or 'fieldNames'");
+
     expression = iConfiguration.field("expression");
     value = iConfiguration.field("value");
 
@@ -91,9 +100,15 @@ public class OFieldTransformer extends OAbstractTransformer {
 
           log(OETLProcessor.LOG_LEVELS.DEBUG, "set %s=%s in document=%s", fieldName, newValue, doc);
         } else {
-          final Object prev = doc.removeField(fieldName);
-
-          log(OETLProcessor.LOG_LEVELS.DEBUG, "removed %s (value=%s) from document=%s", fieldName, prev, doc);
+          if (fieldName != null) {
+            final Object prev = doc.removeField(fieldName);
+            log(OETLProcessor.LOG_LEVELS.DEBUG, "removed %s (value=%s) from document=%s", fieldName, prev, doc);
+          } else {
+            for (String f : fieldNames) {
+              final Object prev = doc.removeField(f);
+              log(OETLProcessor.LOG_LEVELS.DEBUG, "removed %s (value=%s) from document=%s", f, prev, doc);
+            }
+          }
         }
 
         if (save) {
