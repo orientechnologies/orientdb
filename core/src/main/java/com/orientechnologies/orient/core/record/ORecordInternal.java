@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 public class ORecordInternal {
@@ -115,6 +116,10 @@ public class ORecordInternal {
   public <RET extends ORecord> RET flatCopy(ORecord record) {
     ORecordAbstract rec = (ORecordAbstract) record;
     return rec.flatCopy();
+  }
+
+  public static void setRecordSerializer(ORecord record, ORecordSerializer serializer) {
+    ((ORecordAbstract) record)._recordFormat = serializer;
   }
 
 }
