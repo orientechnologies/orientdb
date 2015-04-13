@@ -120,7 +120,9 @@ public class OChannelBinaryProtocol {
   public static final int   PROTOCOL_VERSION_25                     = 25;
   public static final int   PROTOCOL_VERSION_26                     = 26;
   public static final int   PROTOCOL_VERSION_27                     = 27;
-  public static final int   CURRENT_PROTOCOL_VERSION                = 28; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
+  public static final int   PROTOCOL_VERSION_28                     = 28; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
+  public static final int   PROTOCOL_VERSION_29                     = 29; // ADDED PUSH SUPPORT FOR LIVE QUERY
+  public static final int   CURRENT_PROTOCOL_VERSION                = PROTOCOL_VERSION_29;
 
   public static OIdentifiable readIdentifiable(final OChannelBinaryAsynchClient network) throws IOException {
     final int classId = network.readShort();
