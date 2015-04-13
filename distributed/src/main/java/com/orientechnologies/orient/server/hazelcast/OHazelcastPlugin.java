@@ -19,9 +19,39 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
-import com.hazelcast.core.*;
+import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.EntryListener;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
+import com.hazelcast.core.IQueue;
+import com.hazelcast.core.MapEvent;
+import com.hazelcast.core.Member;
+import com.hazelcast.core.MemberAttributeEvent;
+import com.hazelcast.core.MembershipEvent;
+import com.hazelcast.core.MembershipListener;
 import com.orientechnologies.common.console.DefaultConsoleReader;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.exception.OException;
@@ -33,6 +63,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -43,6 +74,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -68,26 +100,6 @@ import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTa
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -178,7 +190,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       }
 
       // PUBLISH LOCAL NODE CFG
-      configurationMap.put(CONFIG_NODE_PREFIX + getLocalNodeId(), getLocalNodeConfiguration());
+      // TODO:check also here
+      ODocument cfg = getLocalNodeConfiguration();
+      ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentTx.getDefaultSerializer());
+      configurationMap.put(CONFIG_NODE_PREFIX + getLocalNodeId(), cfg);
 
       messageService = new OHazelcastDistributedMessageService(this);
 
@@ -779,9 +794,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void updateCachedDatabaseConfiguration(String iDatabaseName, ODocument cfg, boolean iSaveToDisk, boolean iDeployToCluster) {
     final boolean updated = super.updateCachedDatabaseConfiguration(iDatabaseName, cfg, iSaveToDisk);
 
-    if (updated && iDeployToCluster)
+    if (updated && iDeployToCluster) {
       // DEPLOY THE CONFIGURATION TO THE CLUSTER
+      ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentTx.getDefaultSerializer());
       getConfigurationMap().put(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + iDatabaseName, cfg);
+    }
   }
 
   public long getLastClusterChangeOn() {
@@ -1201,7 +1218,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
         if (!getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName)) {
           // PUBLISH CFG FIRST TIME
-          getConfigurationMap().put(CONFIG_DATABASE_PREFIX + databaseName, cfg.serialize());
+          ODocument cfgDoc = cfg.serialize();
+          ORecordInternal.setRecordSerializer(cfgDoc, ODatabaseDocumentTx.getDefaultSerializer());
+          getConfigurationMap().put(CONFIG_DATABASE_PREFIX + databaseName, cfgDoc);
         }
 
         final boolean hotAlignment = cfg.isHotAlignment();
@@ -1284,7 +1303,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       if (cfg != null) {
         ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
             "loaded database configuration from active cluster");
-
         updateCachedDatabaseConfiguration(iDatabaseName, cfg, false, false);
         return cfg;
       }
