@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionMode;
 import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionPercentile;
 import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionStandardDeviation;
 import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionVariance;
+import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionConcat;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionFormat;
 
 import java.util.HashMap;
@@ -87,6 +88,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionVariance.NAME, OSQLFunctionVariance.class);
     register(OSQLFunctionStandardDeviation.NAME, OSQLFunctionStandardDeviation.class);
     register(OSQLFunctionUUID.NAME, OSQLFunctionUUID.class);
+    register(OSQLFunctionConcat.NAME, OSQLFunctionConcat.class);
   }
 
   public static void register(final String iName, final Object iImplementation) {
