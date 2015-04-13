@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -293,6 +294,15 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return iDatabase;
   }
 
+  /**
+   * Returns a database instance giving the database name, the database type and storage type.
+   * 
+   * @param dbName
+   * @param dbType
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
+   * @return
+   */
   protected ODatabaseDocumentTx getDatabaseInstance(final String dbName, final String dbType, final String storageType) {
     String path;
 
