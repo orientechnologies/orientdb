@@ -28,7 +28,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -230,7 +229,7 @@ public class OServerAdmin {
    * @return true if exists, otherwise false
    * @throws IOException
    * @param storageType
-   *          The storage type to check between memory, local and plocal.
+   *          Storage type between "plocal" or "memory".
    */
   public synchronized boolean existsDatabase(final String storageType) throws IOException {
 
@@ -263,10 +262,10 @@ public class OServerAdmin {
    * @see #dropDatabase(String)
    * @throws IOException
    * @param storageType
-   *          Type of storage of server database.
+   *          Storage type between "plocal" or "memory".
    */
   @Deprecated
-  public OServerAdmin deleteDatabase(String storageType) throws IOException {
+  public OServerAdmin deleteDatabase(final String storageType) throws IOException {
     return dropDatabase(storageType);
   }
 
@@ -276,8 +275,9 @@ public class OServerAdmin {
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    * @param storageType
+   *          Storage type between "plocal" or "memory".
    */
-  public synchronized OServerAdmin dropDatabase(String storageType) throws IOException {
+  public synchronized OServerAdmin dropDatabase(final String storageType) throws IOException {
 
     boolean retry = true;
 
@@ -313,7 +313,16 @@ public class OServerAdmin {
     return this;
   }
 
-  public synchronized OServerAdmin freezeDatabase(String storageType) throws IOException {
+  /**
+   * Freezes the database by locking it in exclusive mode.
+   * 
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
+   * @return
+   * @throws IOException
+   * @see #releaseDatabase(String)
+   */
+  public synchronized OServerAdmin freezeDatabase(final String storageType) throws IOException {
 
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_FREEZE);
@@ -333,7 +342,16 @@ public class OServerAdmin {
     return this;
   }
 
-  public synchronized OServerAdmin releaseDatabase(String storageType) throws IOException {
+  /**
+   * Releases a frozen database.
+   * 
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
+   * @return
+   * @throws IOException
+   * @see #freezeDatabase(String)
+   */
+  public synchronized OServerAdmin releaseDatabase(final String storageType) throws IOException {
 
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_RELEASE);
@@ -353,7 +371,19 @@ public class OServerAdmin {
     return this;
   }
 
-  public synchronized OServerAdmin freezeCluster(int clusterId, String storageType) throws IOException {
+  /**
+   * Freezes a cluster by locking it in exclusive mode.
+   * 
+   * @param clusterId
+   *          Id of cluster to freeze
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
+   * @return
+   * @throws IOException
+   * @see #releaseCluster(int, String)
+   */
+
+  public synchronized OServerAdmin freezeCluster(final int clusterId, final String storageType) throws IOException {
 
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE);
@@ -376,7 +406,18 @@ public class OServerAdmin {
     return this;
   }
 
-  public synchronized OServerAdmin releaseCluster(int clusterId, String storageType) throws IOException {
+  /**
+   * Releases a frozen cluster.
+   * 
+   * @param clusterId
+   *          Id of cluster to freeze
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
+   * @return
+   * @throws IOException
+   * @see #freezeCluster(int, String)
+   */
+  public synchronized OServerAdmin releaseCluster(final int clusterId, final String storageType) throws IOException {
 
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE);
