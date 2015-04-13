@@ -81,6 +81,11 @@ App.config(function ($routeProvider, $httpProvider, $translateProvider, $transla
       controller: 'ProfilerController',
       resolve: DatabaseResolve
     })
+    .when('/database/:database/auditing', {
+      templateUrl: 'views/database/auditing.html',
+      controller: 'AuditingController',
+      resolve: DatabaseResolve
+    })
     .when('/database/:database/security', {
       templateUrl: 'views/database/security.html',
       controller: 'SecurityController',

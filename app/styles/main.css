@@ -1013,3 +1013,34 @@ span.badge-edge {
   min-width: 250px;
 
 }
+
+.centering {
+  float: none;
+  margin: 0 auto;
+}
+
+.row-centered {
+  text-align: center;
+}
+
+.col-centered {
+  display: inline-block;
+  float: none;
+  /* reset the text-align */
+  text-align: left;
+  /* inline-block space fix */
+  margin-right: -4px;
+}
+
+.center-pills {
+  display: inline-block;
+}
+
+/*.menu-audit {*/
+  /*padding-top: 10px;*/
+  /*padding-bottom: 10px;*/
+/*}*/
+
+.audit-form-controls {
+  margin-bottom: 10px;
+}
