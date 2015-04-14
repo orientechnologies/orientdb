@@ -44,7 +44,7 @@ import java.util.concurrent.TimeoutException;
 public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> implements OCommandRequestAsynch {
   private static final long serialVersionUID = 1L;
 
-  static class NonBlockingQueryFuture implements Future, List<Future> {
+  public static class ONonBlockingQueryFuture implements Future, List<Future> {
 
     protected volatile boolean finished = false;
 
@@ -204,10 +204,6 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
   public OSQLNonBlockingQuery() {
   }
 
-  public OSQLNonBlockingQuery(final String iText) {
-    this(iText, null);
-  }
-
   public OSQLNonBlockingQuery(final String iText, final OCommandResultListener iResultListener) {
     this(iText, -1, iResultListener);
   }
@@ -241,7 +237,7 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
     final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
     final ODatabaseDocumentTx db = ((ODatabaseDocumentTx) database).copy();
 
-    final NonBlockingQueryFuture future = new NonBlockingQueryFuture();
+    final ONonBlockingQueryFuture future = new ONonBlockingQueryFuture();
 
     if (database instanceof ODatabaseDocumentTx) {
       Thread t = new Thread(new Runnable() {

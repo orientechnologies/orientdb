@@ -25,10 +25,7 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -146,6 +143,11 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     if (metadata == null)
       metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata());
     return metadata;
+  }
+
+  @Override
+  public Iterable<ODatabaseListener> getListeners() {
+    return underlying.getListeners();
   }
 
   /**

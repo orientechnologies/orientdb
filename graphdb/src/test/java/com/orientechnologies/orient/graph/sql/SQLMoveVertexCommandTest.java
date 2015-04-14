@@ -229,4 +229,38 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
 
     Assert.assertEquals(tot, 2);
   }
+
+  @Test
+  public void testMoveMultipleRecordToAnotherClassInTxSettingProperties() {
+    new ODocument("Customer").field("name", "Luca").field("city", "Rome").save();
+    new ODocument("Customer").field("name", "Jill").field("city", "Austin").save();
+    new ODocument("Customer").field("name", "Marco").field("city", "Rome").save();
+    new ODocument("Customer").field("name", "XXX").field("city", "Athens").save();
+
+    Iterable<OrientVertex> result = graph.command(
+        new OCommandSQL("MOVE VERTEX (select from Customer where city = 'Rome') TO CLASS:Provider SET a='test3', b=5")).execute();
+
+    // CHECK RESULT
+    int tot = 0;
+    for (OrientVertex v : result) {
+      tot++;
+      ODocument fromTo = v.getRecord();
+      OIdentifiable from = fromTo.field("old");
+      OIdentifiable to = fromTo.field("new");
+
+      // CHECK FROM
+      Assert.assertEquals(from.getIdentity().getClusterId(), customer.getDefaultClusterId());
+
+      // CHECK DESTINATION
+      Assert.assertEquals(to.getIdentity().getClusterId(), provider.getDefaultClusterId());
+      ODocument newDocument = to.getRecord();
+      Assert.assertEquals(newDocument.getClassName(), "Provider");
+
+      Assert.assertEquals(newDocument.field("city"), "Rome");
+      Assert.assertEquals(newDocument.field("a"), "test3");
+      Assert.assertEquals(newDocument.field("b"), 5);
+    }
+
+    Assert.assertEquals(tot, 2);
+  }
 }

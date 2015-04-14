@@ -129,6 +129,16 @@ public class OProfiler extends OAbstractProfiler {
   }
 
   @Override
+  public long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload) {
+    return 0;
+  }
+
+  @Override
+  public long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload, String user) {
+    return 0;
+  }
+
+  @Override
   public String dumpChronos() {
     return null;
   }

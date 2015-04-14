@@ -51,6 +51,10 @@ public interface OProfilerMBean extends OService {
 
   public long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary);
 
+  public long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload);
+
+  public long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload, String user);
+
   public String dumpChronos();
 
   public String[] getCountersAsString();
