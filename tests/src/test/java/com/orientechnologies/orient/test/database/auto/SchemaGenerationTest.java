@@ -18,10 +18,10 @@ import java.io.Serializable;
  * @author Wouter de Vaal
  */
 @Test(groups = "schema")
-public class SchemeGenerationTest  extends DocumentDBBaseTest {
+public class SchemaGenerationTest extends DocumentDBBaseTest {
 
     @Parameters(value = "url")
-    public SchemeGenerationTest(@Optional String url) {
+    public SchemaGenerationTest(@Optional String url) {
       super(url);
     }
 
