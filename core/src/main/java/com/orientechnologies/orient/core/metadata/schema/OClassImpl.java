@@ -111,7 +111,17 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     else
       setPolymorphicClusterIds(iClusterIds);
 
-    clusterSelection = owner.getClusterSelectionFactory().newInstanceOfDefaultClass();
+    clusterSelection = null;
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (db != null) {
+      final String dbClusterSelection = db.getStorage().getConfiguration().getClusterSelection();
+      if (dbClusterSelection != null)
+        // ASSIGN DB'S SETTINGS
+        clusterSelection = owner.getClusterSelectionFactory().newInstance(dbClusterSelection);
+    }
+
+    if (clusterSelection == null)
+      clusterSelection = owner.getClusterSelectionFactory().newInstanceOfDefaultClass();
   }
 
   /**

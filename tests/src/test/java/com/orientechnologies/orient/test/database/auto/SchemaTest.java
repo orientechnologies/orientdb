@@ -525,6 +525,25 @@ public class SchemaTest extends DocumentDBBaseTest {
     } finally {
       // RESTORE DEFAULT
       databaseDocumentTx.command(new OCommandSQL("alter database minimumclusters 1")).execute();
+      databaseDocumentTx.command(new OCommandSQL("alter database clusterselection roundrobin")).execute();
+    }
+  }
+
+  public void testDbClusterSelection() {
+    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(url);
+    databaseDocumentTx.open("admin", "admin");
+
+    databaseDocumentTx.command(new OCommandSQL("alter database clusterselection balanced")).execute();
+
+    try {
+      databaseDocumentTx.command(new OCommandSQL("create class checkclassbalanced")).execute();
+      databaseDocumentTx.getMetadata().getSchema().reload();
+      Assert.assertEquals(databaseDocumentTx.getMetadata().getSchema().getClass("checkclassbalanced").getClusterSelection()
+          .getName().toLowerCase(), "balanced");
+
+    } finally {
+      // RESTORE DEFAULT
+      databaseDocumentTx.command(new OCommandSQL("alter database clusterselection roundrobin")).execute();
     }
   }
 
