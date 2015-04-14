@@ -274,7 +274,7 @@ public class OSchemaProxyObject implements OSchema {
         if (t == OType.CUSTOM){
           OEntityManager entityManager = OEntityManager.getEntityManagerByDatabaseURL(database.getURL());
           //if the target type is registered as entity, it should be linked instead of custom/serialized
-          if (entityManager.getEntityClass(iClass.getName()) != null){
+          if (entityManager.getEntityClass(f.getType().getSimpleName()) != null){
             t = OType.LINK;
           }
         }
