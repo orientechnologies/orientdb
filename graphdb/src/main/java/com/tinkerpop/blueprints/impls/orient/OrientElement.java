@@ -576,6 +576,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   protected void checkClass() {
     // FORCE EARLY UNMARSHALLING
     final ODocument doc = getRecord();
+    if (doc == null)
+      throw new IllegalArgumentException("The record " + getIdentity() + " does not exist");
+
     doc.deserializeFields();
 
     final OClass cls = ODocumentInternal.getImmutableSchemaClass(doc);

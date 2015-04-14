@@ -881,10 +881,12 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     final ODocument outDocument = getRecord();
     if (outDocument == null)
       throw new IllegalArgumentException("source vertex is invalid (rid=" + getIdentity() + ")");
+    checkForClassInSchema(outDocument.getClassName());
 
     final ODocument inDocument = inVertex.getRecord();
     if (inDocument == null)
       throw new IllegalArgumentException("destination vertex is invalid (rid=" + inVertex.getIdentity() + ")");
+    checkForClassInSchema(inDocument.getClassName());
 
     final OrientEdge edge;
     OIdentifiable to;

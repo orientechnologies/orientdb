@@ -5,12 +5,15 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphQuery;
@@ -125,6 +128,28 @@ public class BlueprintsTest {
     try {
       OrientEdge e = graph.addEdge(null, new OrientVertex(graph, new ORecordId("9:9999")), new OrientVertex(graph, new ORecordId(
           "9:99999")), "E");
+      Assert.assertTrue(false);
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(true);
+    }
+  }
+
+  @Test
+  public void testInvalidEdgeBecauseInvalidVClass() {
+    try {
+      final ODocument[] nonV = new ODocument[2];
+
+      graph.executeOutsideTx(new OCallable<Object, OrientBaseGraph>() {
+        @Override
+        public Object call(OrientBaseGraph iArgument) {
+          iArgument.getRawGraph().command(new OCommandSQL("create class NonV"));
+          nonV[0] = new ODocument("NonV");
+          nonV[1] = new ODocument("NonV");
+          return null;
+        }
+      });
+
+      OrientEdge e = graph.addEdge(null, new OrientVertex(graph, nonV[0]), new OrientVertex(graph, nonV[1]), "E");
       Assert.assertTrue(false);
     } catch (IllegalArgumentException e) {
       Assert.assertTrue(true);
