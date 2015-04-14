@@ -18,7 +18,11 @@ package com.orientechnologies.agent.hook;
 
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
@@ -29,23 +33,37 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Hook to audit database access.
- * 
+ *
  * @author Luca Garulli
  */
-public class OAuditingHook extends ORecordHookAbstract {
+public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListener {
   private final String                            auditClassName;
   private final Map<String, OAuditingClassConfig> classes       = new HashMap<String, OAuditingClassConfig>(20);
+  private Set<OAuditingCommandConfig>             commands      = new HashSet<OAuditingCommandConfig>();
   private boolean                                 onGlobalCreate;
   private boolean                                 onGlobalRead;
   private boolean                                 onGlobalUpdate;
   private boolean                                 onGlobalDelete;
 
+  public static final byte                        COMMAND       = 4;
   private OAuditingClassConfig                    defaultConfig = new OAuditingClassConfig();
   private ODocument                               iConfiguration;
+
+  private static class OAuditingCommandConfig {
+    public String regex;
+    public String message;
+
+    public OAuditingCommandConfig(final ODocument cfg) {
+      regex = cfg.field("regex");
+      message = cfg.field("message");
+    }
+  }
 
   private static class OAuditingClassConfig {
     public boolean polymorphic     = true;
@@ -130,18 +148,33 @@ public class OAuditingHook extends ORecordHookAbstract {
 
     if (onGlobalCreate || onGlobalRead || onGlobalUpdate || onGlobalDelete) {
       // ENABLE IT
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-      OClass cls = db.getMetadata().getSchema().getClass(auditClassName);
-      if (cls == null) {
-        // CREATE THE CLASS WITH ALL PROPERTIES (SCHEMA-FULL)
-        cls = db.getMetadata().getSchema().createClass(auditClassName);
-        cls.createProperty("date", OType.DATETIME);
-        cls.createProperty("user", OType.LINK);
-        cls.createProperty("operation", OType.BYTE);
-        cls.createProperty("record", OType.LINK);
-        cls.createProperty("changes", OType.EMBEDDED);
-        cls.createProperty("note", OType.STRING);
+      createClassIfNotExists();
+    }
+    final Iterable<ODocument> commandCfg = iConfiguration.field("commands");
+
+    if (commandCfg != null) {
+
+      for (ODocument cfg : commandCfg) {
+        commands.add(new OAuditingCommandConfig(cfg));
       }
+      if (commands.size() > 0) {
+        createClassIfNotExists();
+      }
+    }
+  }
+
+  private void createClassIfNotExists() {
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    OClass cls = db.getMetadata().getSchema().getClass(auditClassName);
+    if (cls == null) {
+      // CREATE THE CLASS WITH ALL PROPERTIES (SCHEMA-FULL)
+      cls = db.getMetadata().getSchema().createClass(auditClassName);
+      cls.createProperty("date", OType.DATETIME);
+      cls.createProperty("user", OType.LINK);
+      cls.createProperty("operation", OType.BYTE);
+      cls.createProperty("record", OType.LINK);
+      cls.createProperty("changes", OType.EMBEDDED);
+      cls.createProperty("note", OType.STRING);
     }
   }
 
@@ -184,6 +217,37 @@ public class OAuditingHook extends ORecordHookAbstract {
   @Override
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE;
+  }
+
+  protected void logCommand(String command) {
+
+    for (OAuditingCommandConfig cfg : commands) {
+      if (command.matches(cfg.regex)) {
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+        final ODocument doc = new ODocument(auditClassName);
+        doc.field("date", System.currentTimeMillis());
+        final OSecurityUser user = db.getUser();
+        if (user != null)
+          doc.field("user", user.getIdentity());
+        doc.field("operation", COMMAND);
+        doc.field("note", formatCommandNote(command, cfg.message));
+        doc.save();
+      }
+    }
+  }
+
+  private String formatCommandNote(final String command, String message) {
+    if (message == null)
+      return command;
+    return (String) OVariableParser.resolveVariables(message, "${", "}", new OVariableParserListener() {
+      @Override
+      public Object resolve(final String iVariable) {
+        if (iVariable.startsWith("command")) {
+          return command;
+        }
+        return null;
+      }
+    });
   }
 
   protected void log(final byte iOperation, final ORecord iRecord) {
@@ -232,6 +296,7 @@ public class OAuditingHook extends ORecordHookAbstract {
         return;
       note = cfg.onDeleteMessage;
       break;
+
     }
 
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
@@ -301,5 +366,64 @@ public class OAuditingHook extends ORecordHookAbstract {
       cfg = defaultConfig;
 
     return cfg;
+  }
+
+  @Override
+  public void onCreate(ODatabase iDatabase) {
+
+  }
+
+  @Override
+  public void onDelete(ODatabase iDatabase) {
+
+  }
+
+  @Override
+  public void onOpen(ODatabase iDatabase) {
+
+  }
+
+  @Override
+  public void onBeforeTxBegin(ODatabase iDatabase) {
+
+  }
+
+  @Override
+  public void onBeforeTxRollback(ODatabase iDatabase) {
+
+  }
+
+  @Override
+  public void onAfterTxRollback(ODatabase iDatabase) {
+
+  }
+
+  @Override
+  public void onBeforeTxCommit(ODatabase iDatabase) {
+
+  }
+
+  @Override
+  public void onAfterTxCommit(ODatabase iDatabase) {
+
+  }
+
+  @Override
+  public void onClose(ODatabase iDatabase) {
+
+  }
+
+  @Override
+  public void onBeforeCommand(OCommandRequestText iCommand, OCommandExecutor executor) {
+  }
+
+  @Override
+  public void onAfterCommand(OCommandRequestText iCommand, OCommandExecutor executor, Object result) {
+    logCommand(iCommand.getText());
+  }
+
+  @Override
+  public boolean onCorruptionRepairDatabase(ODatabase iDatabase, String iReason, String iWhatWillbeFixed) {
+    return false;
   }
 }

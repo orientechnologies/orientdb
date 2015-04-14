@@ -23,6 +23,7 @@ package com.orientechnologies.agent.hook;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import junit.framework.TestCase;
@@ -170,6 +171,38 @@ public class AuditingTest extends TestCase {
     assertEquals(v.getIdentity(), log.rawField("record"));
     assertEquals("Deleted vertex of class User", log.field("note"));
     assertNull(log.field("changes"));
+  }
+
+  public void testCommandAuditing() {
+    OAuditingHook iHookImpl = new OAuditingHook("{commands : [ { 'regex' : '^select.*' }]} ");
+    graph.getRawGraph().registerHook(iHookImpl);
+    graph.getRawGraph().registerListener(iHookImpl);
+
+    // TEST CREATE
+    OrientVertex v = graph.addVertex("class:User", "name", "Jill");
+
+    graph.command(new OSQLSynchQuery<Object>("select from User")).execute();
+    assertEquals(1, graph.getRawGraph().countClass("AuditingLog"));
+    ODocument log = getLastLog();
+
+    assertEquals("select from User", log.field("note"));
+
+  }
+
+  public void testCommandAuditingFormatted() {
+    OAuditingHook iHookImpl = new OAuditingHook("{commands : [ { 'regex' : '^select.*' , 'message' : 'executed : ${command}' }]} ");
+    graph.getRawGraph().registerHook(iHookImpl);
+    graph.getRawGraph().registerListener(iHookImpl);
+
+    // TEST CREATE
+    OrientVertex v = graph.addVertex("class:User", "name", "Jill");
+
+    graph.command(new OSQLSynchQuery<Object>("select from User")).execute();
+    assertEquals(1, graph.getRawGraph().countClass("AuditingLog"));
+    ODocument log = getLastLog();
+
+    assertEquals("executed : select from User", log.field("note"));
+
   }
 
   @Override
