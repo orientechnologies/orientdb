@@ -139,20 +139,23 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
         final ORID oldVertex = fromVertex.getIdentity().copy();
         final ORID newVertex = fromVertex.moveTo(className, clusterName);
 
-        if (fields != null)
+        final ODocument newVertexDoc = newVertex.getRecord();
+
+        if (fields != null) {
           // EVALUATE FIELDS
           for (Entry<String, Object> f : fields.entrySet()) {
             if (f.getValue() instanceof OSQLFunctionRuntime)
               fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(newVertex.getRecord(), null, context));
           }
 
-        OSQLHelper.bindParameters(fromVertex.getRecord(), fields, new OCommandParameters(iArgs), context);
+          OSQLHelper.bindParameters(newVertexDoc, fields, new OCommandParameters(iArgs), context);
+        }
 
         if (merge != null)
-          fromVertex.getRecord().merge(merge, true, false);
+          newVertexDoc.merge(merge, true, false);
 
         // SAVE CHANGES
-        fromVertex.save();
+        newVertexDoc.save();
 
         // PUT THE MOVE INTO THE RESULT
         result.add(new ODocument().field("old", oldVertex, OType.LINK).field("new", newVertex, OType.LINK));
