@@ -20,6 +20,8 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
+import com.orientechnologies.orient.core.entity.OEntityManager;
 import javassist.util.proxy.Proxy;
 
 import com.orientechnologies.common.exception.OException;
@@ -269,6 +271,13 @@ public class OSchemaProxyObject implements OSchema {
           continue;
         }
         OType t = OObjectEntitySerializer.getTypeByClass(iClass, field, f);
+        if (t == OType.CUSTOM){
+          OEntityManager entityManager = OEntityManager.getEntityManagerByDatabaseURL(database.getURL());
+          //if the target type is registered as entity, it should be linked instead of custom/serialized
+          if (entityManager.getEntityClass(iClass.getName()) != null){
+            t = OType.LINK;
+          }
+        }
         if (t == null) {
           if (f.getType().isEnum())
             t = OType.STRING;
