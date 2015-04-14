@@ -415,7 +415,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       else if (p.getType().equals(OType.DATE)) {
         try {
           if (fieldValue != null
-              && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration().getDateFormatInstance()
+              && !((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration().getDateFormatInstance()
                   .parse(max)))
             throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
                 + " which is after the last acceptable date (" + max + ")");
@@ -424,7 +424,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       } else if (p.getType().equals(OType.DATETIME)) {
         try {
           if (fieldValue != null
-              && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration()
+              && !((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration()
                   .getDateTimeFormatInstance().parse(max)))
             throw new OValidationException("The field '" + p.getFullName() + "' contains the datetime " + fieldValue
                 + " which is after the last acceptable datetime (" + max + ")");

@@ -1,7 +1,12 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import org.testng.annotations.Test;
+import org.testng.AssertJUnit;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -108,7 +113,7 @@ public class ODocumentValidationTest {
       ODocument newD = toCheck.copy();
       newD.removeField(fieldName);
       newD.validate();
-      Assert.fail();
+      AssertJUnit.fail();
     } catch (OValidationException v) {
     }
   }
@@ -127,8 +132,13 @@ public class ODocumentValidationTest {
       // clazz.createProperty("boolean", OType.BOOLEAN).setMax("11");
       clazz.createProperty("binary", OType.BINARY).setMax("11");
       clazz.createProperty("byte", OType.BYTE).setMax("11");
-      // clazz.createProperty("date", OType.DATE).setMandatory(true);
-      // clazz.createProperty("datetime", OType.DATETIME).setMandatory(true);
+      Calendar cal = Calendar.getInstance();
+      cal.add(Calendar.HOUR, 1);
+      SimpleDateFormat format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateFormatInstance();
+      clazz.createProperty("date", OType.DATE).setMax(format.format(cal.getTime()));
+      format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateTimeFormatInstance();
+      clazz.createProperty("datetime", OType.DATETIME).setMax(format.format(cal.getTime()));
+
       clazz.createProperty("decimal", OType.DECIMAL).setMax("11");
       clazz.createProperty("double", OType.DOUBLE).setMax("11");
       clazz.createProperty("short", OType.SHORT).setMax("11");
@@ -136,13 +146,13 @@ public class ODocumentValidationTest {
       // clazz.createProperty("link", OType.LINK).setMandatory(true);
       // clazz.createProperty("embedded", OType.EMBEDDED).setMandatory(true);
 
-      // clazz.createProperty("embeddedList", OType.EMBEDDEDLIST).setMandatory(true);
-      // clazz.createProperty("embeddedSet", OType.EMBEDDEDSET).setMandatory(true);
-      // clazz.createProperty("embeddedMap", OType.EMBEDDEDMAP).setMandatory(true);
+      clazz.createProperty("embeddedList", OType.EMBEDDEDLIST).setMax("2");
+      clazz.createProperty("embeddedSet", OType.EMBEDDEDSET).setMax("2");
+      clazz.createProperty("embeddedMap", OType.EMBEDDEDMAP).setMax("2");
 
-      // clazz.createProperty("linkList", OType.LINKLIST).setMandatory(true);
-      // clazz.createProperty("linkSet", OType.LINKSET).setMandatory(true);
-      // clazz.createProperty("linkMap", OType.LINKMAP).setMandatory(true);
+      clazz.createProperty("linkList", OType.LINKLIST).setMax("2");
+      clazz.createProperty("linkSet", OType.LINKSET).setMax("2");
+      clazz.createProperty("linkMap", OType.LINKMAP).setMax("2");
 
       ODocument d = new ODocument(clazz);
       d.field("int", 10);
@@ -152,19 +162,25 @@ public class ODocumentValidationTest {
       d.field("binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
       d.field("byte", 10);
       // d.field("date", new Date());
-      // d.field("datetime", new Date());
+      d.field("datetime", new Date());
       d.field("decimal", 10);
       d.field("double", 10);
       d.field("short", 10);
       d.field("string", "yeah");
       d.field("link", id);
       // d.field("embedded", new ODocument().field("test", "test"));
-      // d.field("embeddedList", new ArrayList<String>());
-      // d.field("embeddedSet", new HashSet<String>());
-      // d.field("embeddedMap", new HashMap<String, String>());
-      // d.field("linkList", new ArrayList<ORecordId>());
-      // d.field("linkSet", new HashSet<ORecordId>());
-      // d.field("linkMap", new HashMap<String, ORecordId>());
+      d.field("embeddedList", Arrays.asList("a", "b"));
+      d.field("embeddedSet", new HashSet<String>(Arrays.asList("a", "b")));
+      HashMap<String, String> cont = new HashMap<String, String>();
+      cont.put("one", "one");
+      cont.put("two", "one");
+      d.field("embeddedMap", cont);
+      d.field("linkList", Arrays.asList(new ORecordId(40, 30), new ORecordId(40, 34)));
+      d.field("linkSet", new HashSet<ORecordId>(Arrays.asList(new ORecordId(40, 30), new ORecordId(40, 31))));
+      HashMap<String, ORecordId> cont1 = new HashMap<String, ORecordId>();
+      cont1.put("one", new ORecordId(30, 30));
+      cont1.put("two", new ORecordId(30, 30));
+      d.field("linkMap", cont1);
       d.validate();
 
       checkField(d, "int", 20);
@@ -172,21 +188,35 @@ public class ODocumentValidationTest {
       checkField(d, "float", 20);
       // checkMaxField(d, "boolean");
       checkField(d, "binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 });
-      // checkMaxField(d, "byte", 20);
-      // checkMaxField(d, "date");
-      // checkMaxField(d, "datetime");
+
+      // checkField(d, "byte", cal.getTime());
+      cal = Calendar.getInstance();
+      cal.add(Calendar.DAY_OF_MONTH, 1);
+      // checkField(d, "date", cal.getTime());
+      checkField(d, "datetime", cal.getTime());
       // checkMaxField(d, "decimal", 20);
       checkField(d, "double", 20);
       // checkMaxField(d, "short", 20);
       checkField(d, "string", "0123456789101112");
       // checkMaxField(d, "link");
       // checkMaxField(d, "embedded");
-      // checkMaxField(d, "embeddedList");
-      // checkMaxField(d, "embeddedSet");
-      // checkMaxField(d, "embeddedMap");
-      // checkMaxField(d, "linkList");
-      // checkMaxField(d, "linkSet");
-      // checkMaxField(d, "linkMap");
+      checkField(d, "embeddedList", Arrays.asList("a", "b", "d"));
+      checkField(d, "embeddedSet", new HashSet<String>(Arrays.asList("a", "b", "d")));
+      HashMap<String, String> con1 = new HashMap<String, String>();
+      con1.put("one", "one");
+      con1.put("two", "one");
+      con1.put("three", "one");
+
+      // checkField(d, "embeddedMap", con1);
+      checkField(d, "linkList", Arrays.asList(new ORecordId(40, 30), new ORecordId(40, 33), new ORecordId(40, 31)));
+      checkField(d, "linkSet",
+          new HashSet<ORecordId>(Arrays.asList(new ORecordId(40, 30), new ORecordId(40, 33), new ORecordId(40, 31))));
+
+      HashMap<String, ORecordId> cont3 = new HashMap<String, ORecordId>();
+      cont3.put("one", new ORecordId(30, 30));
+      cont3.put("two", new ORecordId(30, 30));
+      cont3.put("three", new ORecordId(30, 30));
+      // checkField(d, "linkMap", cont3);
 
     } finally {
       db.drop();
@@ -208,8 +238,13 @@ public class ODocumentValidationTest {
       // clazz.createProperty("boolean", OType.BOOLEAN).setMax("11");
       clazz.createProperty("binary", OType.BINARY).setMin("11");
       clazz.createProperty("byte", OType.BYTE).setMin("11");
-      // clazz.createProperty("date", OType.DATE).setMandatory(true);
-      // clazz.createProperty("datetime", OType.DATETIME).setMandatory(true);
+      Calendar cal = Calendar.getInstance();
+      cal.add(Calendar.HOUR, 1);
+      SimpleDateFormat format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateFormatInstance();
+      clazz.createProperty("date", OType.DATE).setMin(format.format(cal.getTime()));
+      format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateTimeFormatInstance();
+      clazz.createProperty("datetime", OType.DATETIME).setMin(format.format(cal.getTime()));
+
       clazz.createProperty("decimal", OType.DECIMAL).setMin("11");
       clazz.createProperty("double", OType.DOUBLE).setMin("11");
       clazz.createProperty("short", OType.SHORT).setMin("11");
@@ -217,13 +252,13 @@ public class ODocumentValidationTest {
       // clazz.createProperty("link", OType.LINK).setMandatory(true);
       // clazz.createProperty("embedded", OType.EMBEDDED).setMandatory(true);
 
-      // clazz.createProperty("embeddedList", OType.EMBEDDEDLIST).setMandatory(true);
-      // clazz.createProperty("embeddedSet", OType.EMBEDDEDSET).setMandatory(true);
-      // clazz.createProperty("embeddedMap", OType.EMBEDDEDMAP).setMandatory(true);
+      clazz.createProperty("embeddedList", OType.EMBEDDEDLIST).setMin("1");
+      clazz.createProperty("embeddedSet", OType.EMBEDDEDSET).setMin("1");
+      clazz.createProperty("embeddedMap", OType.EMBEDDEDMAP).setMin("1");
 
-      // clazz.createProperty("linkList", OType.LINKLIST).setMandatory(true);
-      // clazz.createProperty("linkSet", OType.LINKSET).setMandatory(true);
-      // clazz.createProperty("linkMap", OType.LINKMAP).setMandatory(true);
+      clazz.createProperty("linkList", OType.LINKLIST).setMin("1");
+      clazz.createProperty("linkSet", OType.LINKSET).setMin("1");
+      clazz.createProperty("linkMap", OType.LINKMAP).setMin("1");
 
       ODocument d = new ODocument(clazz);
       d.field("int", 12);
@@ -232,20 +267,27 @@ public class ODocumentValidationTest {
       // d.field("boolean", 10);
       d.field("binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 });
       d.field("byte", 12);
-      // d.field("date", new Date());
-      // d.field("datetime", new Date());
+
+      cal = Calendar.getInstance();
+      cal.add(Calendar.DAY_OF_MONTH, 1);
+      // d.field("date", cal.getTime());
+      d.field("datetime", cal.getTime());
       d.field("decimal", 12);
       d.field("double", 12);
       d.field("short", 12);
       d.field("string", "yeahyeahyeah");
       d.field("link", id);
       // d.field("embedded", new ODocument().field("test", "test"));
-      // d.field("embeddedList", new ArrayList<String>());
-      // d.field("embeddedSet", new HashSet<String>());
-      // d.field("embeddedMap", new HashMap<String, String>());
-      // d.field("linkList", new ArrayList<ORecordId>());
-      // d.field("linkSet", new HashSet<ORecordId>());
-      // d.field("linkMap", new HashMap<String, ORecordId>());
+      d.field("embeddedList", Arrays.asList("a"));
+      d.field("embeddedSet", new HashSet<String>(Arrays.asList("a")));
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("some", "value");
+      d.field("embeddedMap", map);
+      d.field("linkList", Arrays.asList(new ORecordId(40, 50)));
+      d.field("linkSet", new HashSet<ORecordId>(Arrays.asList(new ORecordId(40, 50))));
+      HashMap<String, ORecordId> map1 = new HashMap<String, ORecordId>();
+      map1.put("some", new ORecordId(40, 50));
+      d.field("linkMap", map1);
       d.validate();
 
       checkField(d, "int", 10);
@@ -254,20 +296,21 @@ public class ODocumentValidationTest {
       // checkMaxField(d, "boolean");
       checkField(d, "binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 });
       // checkMaxField(d, "byte", 20);
-      // checkMaxField(d, "date");
-      // checkMaxField(d, "datetime");
+
+      // checkField(d, "date", new Date());
+      checkField(d, "datetime", new Date());
       // checkMaxField(d, "decimal", 20);
       checkField(d, "double", 10);
       // checkMaxField(d, "short", 20);
       checkField(d, "string", "01234");
       // checkMaxField(d, "link");
-      // checkMaxField(d, "embedded");
-      // checkMaxField(d, "embeddedList");
-      // checkMaxField(d, "embeddedSet");
-      // checkMaxField(d, "embeddedMap");
-      // checkMaxField(d, "linkList");
-      // checkMaxField(d, "linkSet");
-      // checkMaxField(d, "linkMap");
+      // checkField(d, "embedded");
+      checkField(d, "embeddedList", new ArrayList<String>());
+      checkField(d, "embeddedSet", new HashSet<String>());
+      // checkField(d, "embeddedMap", new HashMap<String, String>());
+      checkField(d, "linkList", new ArrayList<ORecordId>());
+      checkField(d, "linkSet", new HashSet<ORecordId>());
+      // checkField(d, "linkMap", new HashMap<String, ORecordId>());
 
     } finally {
       db.drop();
@@ -456,7 +499,7 @@ public class ODocumentValidationTest {
       ODocument newD = toCheck.copy();
       newD.field(field, newValue);
       newD.validate();
-      Assert.fail();
+      AssertJUnit.fail();
     } catch (OValidationException v) {
     }
   }
