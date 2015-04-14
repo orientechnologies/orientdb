@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.ref.WeakReference;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -269,7 +270,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
       if (fieldValue != null && p.getRegexp() != null) {
         // REGEXP
-        if (!fieldValue.toString().matches(p.getRegexp()))
+        if (!((String) fieldValue).matches(p.getRegexp()))
           throw new OValidationException("The field '" + p.getFullName() + "' does not match the regular expression '"
               + p.getRegexp() + "'. Field value is: " + fieldValue + ", record: " + iRecord);
       }
@@ -372,6 +373,14 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
       else if (p.getType().equals(OType.DOUBLE) && (fieldValue != null && type.asDouble(fieldValue) < Double.parseDouble(min)))
         throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
+      else if (p.getType().equals(OType.SHORT) && (fieldValue != null && ((Short) fieldValue).byteValue() < Short.parseShort(min)))
+        throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
+      else if (p.getType().equals(OType.BYTE) && (fieldValue != null && ((Byte) fieldValue).byteValue() < Byte.parseByte(min)))
+        throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
+      else if (p.getType().equals(OType.DECIMAL)
+          && (fieldValue != null && ((BigDecimal) fieldValue).compareTo(new BigDecimal(min)) < 0))
+        throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
+
       else if (p.getType().equals(OType.DATE)) {
         try {
           if (fieldValue != null
@@ -412,6 +421,14 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
       else if (p.getType().equals(OType.DOUBLE) && (fieldValue != null && type.asDouble(fieldValue) > Double.parseDouble(max)))
         throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
+      else if (p.getType().equals(OType.SHORT) && (fieldValue != null && ((Short) fieldValue).byteValue() > Short.parseShort(max)))
+        throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
+      else if (p.getType().equals(OType.BYTE) && (fieldValue != null && ((Byte) fieldValue).byteValue() > Byte.parseByte(max)))
+        throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
+      else if (p.getType().equals(OType.DECIMAL)
+          && (fieldValue != null && ((BigDecimal) fieldValue).compareTo(new BigDecimal(max)) > 0))
+        throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
+
       else if (p.getType().equals(OType.DATE)) {
         try {
           if (fieldValue != null
@@ -475,31 +492,25 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     final ORecord linkedRecord;
-    if (fieldValue instanceof OIdentifiable)
-      linkedRecord = ((OIdentifiable) fieldValue).getRecord();
-    else if (fieldValue instanceof String) {
-      try {
-        linkedRecord = new ORecordId((String) fieldValue).getRecord();
-      } catch (Exception e) {
-        throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
-            + " but the value is not a record or a record-id", e);
-      }
-    } else
+    if (!(fieldValue instanceof OIdentifiable))
       throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
           + " but the value is not a record or a record-id");
+    final OClass schemaClass = p.getLinkedClass();
+    if (schemaClass != null) {
+      linkedRecord = ((OIdentifiable) fieldValue).getRecord();
+      if (linkedRecord != null) {
+        if (!(linkedRecord instanceof ODocument))
+          throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
+              + schemaClass + "' but the value is the record " + linkedRecord.getIdentity() + " that is not a document");
 
-    if (linkedRecord != null && p.getLinkedClass() != null) {
-      if (!(linkedRecord instanceof ODocument))
-        throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
-            + p.getLinkedClass() + "' but the value is the record " + linkedRecord.getIdentity() + " that is not a document");
+        final ODocument doc = (ODocument) linkedRecord;
 
-      final ODocument doc = (ODocument) linkedRecord;
-
-      // AT THIS POINT CHECK THE CLASS ONLY IF != NULL BECAUSE IN CASE OF GRAPHS THE RECORD COULD BE PARTIAL
-      if (doc.getImmutableSchemaClass() != null && !p.getLinkedClass().isSuperClassOf(doc.getImmutableSchemaClass()))
-        throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
-            + p.getLinkedClass().getName() + "' but the value is the document " + linkedRecord.getIdentity() + " of class '"
-            + doc.getImmutableSchemaClass() + "'");
+        // AT THIS POINT CHECK THE CLASS ONLY IF != NULL BECAUSE IN CASE OF GRAPHS THE RECORD COULD BE PARTIAL
+        if (doc.getImmutableSchemaClass() != null && !schemaClass.isSuperClassOf(doc.getImmutableSchemaClass()))
+          throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
+              + schemaClass.getName() + "' but the value is the document " + linkedRecord.getIdentity() + " of class '"
+              + doc.getImmutableSchemaClass() + "'");
+      }
     }
   }
 
