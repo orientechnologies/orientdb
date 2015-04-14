@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.server.OServer;
@@ -135,6 +136,8 @@ public class OTxTask extends OAbstractReplicatedTask {
     } catch (ONeedRetryException e) {
       return e;
     } catch (OTransactionException e) {
+      return e;
+    } catch (ORecordDuplicatedException e) {
       return e;
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on distributed transaction commit", e);
