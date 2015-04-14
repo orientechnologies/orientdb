@@ -41,6 +41,10 @@ import java.util.List;
 public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstract {
   public static final String NAME = "traversedElement";
 
+  public OSQLFunctionTraversedElement() {
+    super(NAME, 1, 2);
+  }
+
   public OSQLFunctionTraversedElement(final String name) {
     super(name, 1, 2);
   }

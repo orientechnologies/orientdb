@@ -93,6 +93,63 @@ public class SchemaTest extends DocumentDBBaseTest {
   }
 
   @Test(dependsOnMethods = "checkSchema")
+  public void checkInvalidNames() {
+
+    database = new ODatabaseDocumentTx(url);
+    database.open("admin", "admin");
+
+    OSchema schema = database.getMetadata().getSchema();
+
+    try {
+      schema.createClass("TestInvalidName:");
+      Assert.assertTrue(false);
+    } catch (OSchemaException e) {
+    }
+
+    try {
+      schema.createClass("TestInvalidName,");
+      Assert.assertTrue(false);
+    } catch (OSchemaException e) {
+    }
+
+    try {
+      schema.createClass("TestInvalidName;");
+      Assert.assertTrue(false);
+    } catch (OSchemaException e) {
+    }
+
+    try {
+      schema.createClass("TestInvalid Name");
+      Assert.assertTrue(false);
+    } catch (OSchemaException e) {
+    }
+
+    try {
+      schema.createClass("TestInvalid%Name:");
+      Assert.assertTrue(false);
+    } catch (OSchemaException e) {
+    }
+
+    try {
+      schema.createClass("TestInvalid@Name:");
+      Assert.assertTrue(false);
+    } catch (OSchemaException e) {
+    }
+
+    try {
+      schema.createClass("TestInvalid=Name:");
+      Assert.assertTrue(false);
+    } catch (OSchemaException e) {
+    }
+
+    try {
+      schema.createClass("TestInvalid.Name");
+      Assert.assertTrue(false);
+    } catch (OSchemaException e) {
+    }
+  }
+
+  @Test(dependsOnMethods = "checkSchema")
   public void checkSchemaApi() {
     database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
@@ -607,7 +664,6 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }
-
 
   public void testWrongClassNameWithPercent() {
     try {

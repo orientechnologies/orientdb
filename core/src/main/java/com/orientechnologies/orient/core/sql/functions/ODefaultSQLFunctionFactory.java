@@ -59,6 +59,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionDate.NAME, OSQLFunctionDate.class);
     register(OSQLFunctionDecode.NAME, new OSQLFunctionDecode());
     register(OSQLFunctionDifference.NAME, OSQLFunctionDifference.class);
+    register(OSQLFunctionSymmetricDifference.NAME, OSQLFunctionSymmetricDifference.class);
     register(OSQLFunctionDistance.NAME, new OSQLFunctionDistance());
     register(OSQLFunctionDistinct.NAME, OSQLFunctionDistinct.class);
     register(OSQLFunctionDocument.NAME, OSQLFunctionDocument.class);

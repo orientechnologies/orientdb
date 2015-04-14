@@ -1177,11 +1177,18 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @Override
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
+    int clusterId = getClusterIdByName(iClusterName);
+    OClass clazz = metadata.getSchema().getClassByClusterId(clusterId);
+    if (clazz != null)
+      clazz.removeClusterId(clusterId);
     return storage.dropCluster(iClusterName, iTruncate);
   }
 
   @Override
   public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
+    OClass clazz = metadata.getSchema().getClassByClusterId(iClusterId);
+    if (clazz != null)
+      clazz.removeClusterId(iClusterId);
     return storage.dropCluster(iClusterId, iTruncate);
   }
 
@@ -2339,6 +2346,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     long totalOnDb = cls.count(iPolymorphic);
 
     long deletedInTx = 0;
+    long addedInTx = 0;
     if (getTransaction().isActive())
       for (ORecordOperation op : getTransaction().getCurrentRecordEntries()) {
         if (op.type == ORecordOperation.DELETED) {
@@ -2348,9 +2356,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
               deletedInTx++;
           }
         }
+        if (op.type == ORecordOperation.CREATED){
+          final ORecord rec = op.getRecord();
+          if (rec != null && rec instanceof ODocument) {
+            if (((ODocument) rec).getSchemaClass().isSubClassOf(iClassName))
+              addedInTx++;
+          }
+        }
       }
 
-    return totalOnDb - deletedInTx;
+    return (totalOnDb + addedInTx) - deletedInTx;
   }
 
   /**

@@ -19,17 +19,6 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.text.ParseException;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -67,6 +56,17 @@ import com.orientechnologies.orient.core.serialization.serializer.ONetworkThread
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.text.ParseException;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -1059,6 +1059,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     final boolean knownProperty = _fieldValues.containsKey(iFieldName);
     final Object oldValue = _fieldValues.get(iFieldName);
     final OType oldType = fieldType(iFieldName);
+    OType fieldType = deriveFieldType(iFieldName, iFieldType);
+    if (iPropertyValue != null && fieldType != null) {
+      iPropertyValue = ODocumentHelper.convertField(this, iFieldName, fieldType.getDefaultJavaType(), iPropertyValue);
+    } else if (iPropertyValue instanceof Enum)
+      iPropertyValue = iPropertyValue.toString();
 
     if (knownProperty)
       // CHECK IF IS REALLY CHANGED
@@ -1067,6 +1072,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
           // BOTH NULL: UNCHANGED
           return this;
       } else {
+
         try {
           if (iPropertyValue.equals(oldValue)) {
             if (iFieldType == null || iFieldType.length == 0 || iFieldType[0] == oldType) {
@@ -1078,14 +1084,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
               return this;
             }
           }
-
         } catch (Exception e) {
           OLogManager.instance().warn(this, "Error on checking the value of property %s against the record %s", e, iFieldName,
               getIdentity());
         }
       }
-
-    OType fieldType = deriveFieldType(iFieldName, iFieldType);
 
     if (oldValue instanceof ORidBag) {
       final ORidBag ridBag = (ORidBag) oldValue;
@@ -1095,16 +1098,10 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     if (iPropertyValue != null) {
-      // CHECK FOR CONVERSION
-      if (fieldType != null) {
-        iPropertyValue = ODocumentHelper.convertField(this, iFieldName, fieldType.getDefaultJavaType(), iPropertyValue);
-        if (fieldType.equals(OType.EMBEDDED) && iPropertyValue instanceof ODocument) {
-          final ODocument embeddedDocument = (ODocument) iPropertyValue;
-          ODocumentInternal.addOwner(embeddedDocument, this);
-        }
-      } else if (iPropertyValue instanceof Enum)
-        iPropertyValue = iPropertyValue.toString();
-
+      if (OType.EMBEDDED.equals(fieldType) && iPropertyValue instanceof ODocument) {
+        final ODocument embeddedDocument = (ODocument) iPropertyValue;
+        ODocumentInternal.addOwner(embeddedDocument, this);
+      }
       if (iPropertyValue instanceof ORidBag) {
         final ORidBag ridBag = (ORidBag) iPropertyValue;
         ridBag.setOwner(null); // in order to avoid IllegalStateException when ridBag changes the owner (ODocument.merge)
@@ -1934,6 +1931,10 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   protected OGlobalProperty getGlobalPropertyById(int id) {
+    if (!ODatabaseRecordThreadLocal.INSTANCE.isDefined())
+      // DATABASE IS ACTIVE
+      return null;
+
     if (_schema == null) {
       OMetadataInternal metadata = (OMetadataInternal) getDatabase().getMetadata();
       _schema = metadata.getImmutableSchemaSnapshot();

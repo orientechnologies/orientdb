@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
@@ -34,15 +43,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -289,11 +289,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
         cachedDatabaseConfiguration.put(iDatabaseName, cfg);
       }
 
-      final ODistributedConfiguration dCfg = new ODistributedConfiguration(cfg);
-      if (dCfg.upgrade())
-        // UPGRADED, SAVE IT AGAIN
-        updateCachedDatabaseConfiguration(iDatabaseName, dCfg.serialize(), true);
-      return dCfg;
+      return new ODistributedConfiguration(cfg);
     }
   }
 
