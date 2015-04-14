@@ -237,7 +237,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
   }
 
   private String formatCommandNote(final String command, String message) {
-    if (message == null)
+    if (message == null || message.isEmpty())
       return command;
     return (String) OVariableParser.resolveVariables(message, "${", "}", new OVariableParserListener() {
       @Override
