@@ -684,6 +684,8 @@ dbModule.controller("AuditingController", ['$scope', 'Auditing', 'Database', 'Sp
         }
       });
       Spinner.stopSpinner();
+    }).catch(function (error) {
+      Spinner.stopSpinner();
     })
   })
 
@@ -711,6 +713,8 @@ dbModule.controller("AuditingController", ['$scope', 'Auditing', 'Database', 'Sp
       $scope.tableParams.total($scope.logs.length);
       $scope.tableParams.reload();
       Spinner.stopSpinner();
+    }).catch(function (error) {
+      Spinner.stopSpinner();
     })
   }
   $scope.$watch("active", function (val) {
@@ -727,6 +731,9 @@ dbModule.controller("AuditingController", ['$scope', 'Auditing', 'Database', 'Sp
     delete $scope.config.classes[k];
   }
   $scope.addCommand = function () {
+    if (!$scope.config.commands) {
+      $scope.config.commands = new Array;
+    }
     $scope.config.commands.push({
       regex: "",
       message: ""
