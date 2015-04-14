@@ -45,7 +45,7 @@
                           ng-options="a.name as a.name for a in assignees"></select>
                 </div>
                 <div class="col-md-3" ng-class="{'has-error' : issue.type == 'bug' && issue.version == null}">
-                  <label>Verified in Version</label>
+                  <label>Affected Version</label>
                   <select class="form-control"   ng-required="issue.type == 'bug'" ng-model="issue.version"
                           ng-options="m.number as m.title for m in milestones"></select>
                 </div>
