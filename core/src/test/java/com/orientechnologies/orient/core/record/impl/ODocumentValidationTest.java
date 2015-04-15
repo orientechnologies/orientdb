@@ -150,11 +150,11 @@ public class ODocumentValidationTest {
       clazz.createProperty("linkMap", OType.LINKMAP).setMax("2");
 
       ODocument d = new ODocument(clazz);
-      d.field("int", 10);
-      d.field("long", 10);
-      d.field("float", 10);
-      d.field("binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
-      d.field("byte", 10);
+      d.field("int", 11);
+      d.field("long", 11);
+      d.field("float", 11);
+      d.field("binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 });
+      d.field("byte", 11);
       d.field("date", new Date());
       d.field("datetime", new Date());
       d.field("decimal", 10);
@@ -175,8 +175,8 @@ public class ODocumentValidationTest {
       d.field("linkMap", cont1);
       d.validate();
 
-      checkField(d, "int", 20);
-      checkField(d, "long", 20);
+      checkField(d, "int", 12);
+      checkField(d, "long", 12);
       checkField(d, "float", 20);
       checkField(d, "binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 });
 
@@ -250,11 +250,11 @@ public class ODocumentValidationTest {
       clazz.createProperty("linkMap", OType.LINKMAP).setMin("1");
 
       ODocument d = new ODocument(clazz);
-      d.field("int", 12);
-      d.field("long", 12);
-      d.field("float", 12);
-      d.field("binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 });
-      d.field("byte", 12);
+      d.field("int", 11);
+      d.field("long", 11);
+      d.field("float", 11);
+      d.field("binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 });
+      d.field("byte", 11);
 
       cal = Calendar.getInstance();
       cal.add(Calendar.DAY_OF_MONTH, 1);

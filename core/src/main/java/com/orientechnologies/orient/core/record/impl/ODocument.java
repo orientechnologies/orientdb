@@ -27,7 +27,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -75,6 +74,7 @@ import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableProperty;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -256,7 +256,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     field(iFieldName, iFieldValue);
   }
 
-  protected static void validateField(ODocument iRecord, OProperty p) throws OValidationException {
+  protected static void validateField(ODocument iRecord, OImmutableProperty p) throws OValidationException {
     final Object fieldValue;
     ODocumentEntry entry = iRecord._fields.get(p.getName());
     if (entry != null && entry.exist()) {
@@ -267,7 +267,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         // NULLITY
         throw new OValidationException("The field '" + p.getFullName() + "' cannot be null, record: " + iRecord);
 
-      if (fieldValue != null && p.getRegexp() != null) {
+      if (fieldValue != null && p.getRegexp() != null && p.getType().equals(OType.STRING)) {
         // REGEXP
         if (!((String) fieldValue).matches(p.getRegexp()))
           throw new OValidationException("The field '" + p.getFullName() + "' does not match the regular expression '"
@@ -360,60 +360,52 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     if (p.getMin() != null && fieldValue != null) {
       // MIN
       final String min = p.getMin();
-      if (p.getType().equals(OType.STRING)) {
-        if (((String) fieldValue).length() < Integer.parseInt(min))
+      if (p.getMinComparable().compareTo(fieldValue) > 0) {
+        switch (p.getType()) {
+        case STRING:
           throw new OValidationException("The field '" + p.getFullName() + "' contains fewer characters than " + min + " requested");
-      } else if (p.getType().equals(OType.DATE)) {
-        Date dateOnly = ODocumentHelper.convertField(iRecord, p.getName(), Date.class, min);
-        if (((Date) fieldValue).before(dateOnly))
+        case DATE:
+        case DATETIME:
           throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
               + " which precedes the first acceptable date (" + min + ")");
-      } else if (fieldValue instanceof Comparable<?>) {
-        Object value = ODocumentHelper.convertField(iRecord, p.getName(), p.getType().getDefaultJavaType(), min);
-        if (((Comparable<Object>) entry.value).compareTo(value) < 0) {
+        case BINARY:
+          throw new OValidationException("The field '" + p.getFullName() + "' contains fewer bytes than " + min + " requested");
+        case EMBEDDEDLIST:
+        case EMBEDDEDSET:
+        case LINKLIST:
+        case LINKSET:
+        case EMBEDDEDMAP:
+        case LINKMAP:
+          throw new OValidationException("The field '" + p.getFullName() + "' contains fewer items than " + min + " requested");
+        default:
           throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
         }
-      } else if (p.getType().equals(OType.BINARY) && ((byte[]) fieldValue).length < Integer.parseInt(min))
-        throw new OValidationException("The field '" + p.getFullName() + "' contains fewer bytes than " + min + " requested");
-      else if ((p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
-          || p.getType().equals(OType.LINKLIST) || p.getType().equals(OType.LINKSET))
-          && ((Collection<?>) fieldValue).size() < Integer.parseInt(min))
-        throw new OValidationException("The field '" + p.getFullName() + "' contains fewer items than " + min + " requested");
-      else if ((p.getType().equals(OType.EMBEDDEDMAP) || p.getType().equals(OType.LINKMAP))
-          && (((Map<?, ?>) fieldValue).size() < Integer.parseInt(min)))
-        throw new OValidationException("The field '" + p.getFullName() + "' contains more items than " + min + " requested");
+      }
     }
 
-    if (p.getMax() != null && fieldValue != null) {
-      // MAX
+    if (p.getMaxComparable() != null && fieldValue != null) {
       final String max = p.getMax();
-      if (p.getType().equals(OType.STRING)) {
-        if (((String) fieldValue).length() > Integer.parseInt(max))
+      if (p.getMaxComparable().compareTo(fieldValue) < 0) {
+        switch (p.getType()) {
+        case STRING:
           throw new OValidationException("The field '" + p.getFullName() + "' contains more characters than " + max + " requested");
-      } else if (p.getType().equals(OType.DATE)) {
-        Date dateOnly = ODocumentHelper.convertField(iRecord, p.getName(), Date.class, max);
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(dateOnly);
-        cal.add(Calendar.DAY_OF_MONTH, 1);
-        dateOnly = cal.getTime();
-        if (((Date) fieldValue).after(dateOnly))
+        case DATE:
+        case DATETIME:
           throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
               + " which is after the last acceptable date (" + max + ")");
-      } else if (fieldValue instanceof Comparable<?>) {
-        Object value = ODocumentHelper.convertField(iRecord, p.getName(), p.getType().getDefaultJavaType(), max);
-        if (((Comparable<Object>) entry.value).compareTo(value) > 0) {
+        case BINARY:
+          throw new OValidationException("The field '" + p.getFullName() + "' contains more bytes than " + max + " requested");
+        case EMBEDDEDLIST:
+        case EMBEDDEDSET:
+        case LINKLIST:
+        case LINKSET:
+        case EMBEDDEDMAP:
+        case LINKMAP:
+          throw new OValidationException("The field '" + p.getFullName() + "' contains more items than " + max + " requested");
+        default:
           throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
         }
-      } else if (p.getType().equals(OType.BINARY) && ((byte[]) fieldValue).length > Integer.parseInt(max))
-        throw new OValidationException("The field '" + p.getFullName() + "' contains more bytes than " + max + " requested");
-
-      else if ((p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
-          || p.getType().equals(OType.LINKLIST) || p.getType().equals(OType.LINKSET))
-          && ((Collection<?>) fieldValue).size() > Integer.parseInt(max))
-        throw new OValidationException("The field '" + p.getFullName() + "' contains more items than " + max + " requested");
-      else if ((p.getType().equals(OType.EMBEDDEDMAP) || p.getType().equals(OType.LINKMAP))
-          && (((Map<?, ?>) fieldValue).size() > Integer.parseInt(max)))
-        throw new OValidationException("The field '" + p.getFullName() + "' contains more items than " + max + " requested");
+      }
     }
 
     if (p.isReadonly() && iRecord instanceof ODocument && !iRecord.getRecordVersion().isTombstone()) {
@@ -1885,7 +1877,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     autoConvertValues();
 
-    final OClass immutableSchemaClass = getImmutableSchemaClass();
+    final OImmutableClass immutableSchemaClass = getImmutableSchemaClass();
     if (immutableSchemaClass != null) {
       if (immutableSchemaClass.isStrictMode()) {
         // CHECK IF ALL FIELDS ARE DEFINED
@@ -1897,7 +1889,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       }
 
       for (OProperty p : immutableSchemaClass.properties()) {
-        validateField(this, p);
+        validateField(this, (OImmutableProperty) p);
       }
     }
   }
