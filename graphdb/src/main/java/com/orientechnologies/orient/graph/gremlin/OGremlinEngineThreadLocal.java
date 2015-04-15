@@ -20,8 +20,6 @@
 package com.orientechnologies.orient.graph.gremlin;
 
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine;
@@ -52,9 +50,11 @@ public class OGremlinEngineThreadLocal extends ThreadLocal<ScriptEngine> {
     ScriptEngine engine = super.get();
     if (engine != null) {
       final OrientBaseGraph currGraph = (OrientBaseGraph) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("g");
-      if (currGraph == iGraph || (currGraph != null && currGraph.getRawGraph().getURL().equals(iGraph.getRawGraph().getURL())))
+      if (currGraph == iGraph || (currGraph != null && currGraph.getRawGraph().getURL().equals(iGraph.getRawGraph().getURL()))) {
         // REUSE IT
+        engine.getBindings(ScriptContext.ENGINE_SCOPE).put("g", iGraph);
         return engine;
+      }
     }
 
     // CREATE A NEW ONE
