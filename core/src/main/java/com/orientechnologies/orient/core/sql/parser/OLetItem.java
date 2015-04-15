@@ -8,6 +8,7 @@ public class OLetItem extends SimpleNode {
 
   OIdentifier varName;
   OExpression expression;
+  OStatement  query;
 
   public OLetItem(int id) {
     super(id);
@@ -24,11 +25,26 @@ public class OLetItem extends SimpleNode {
 
   @Override
   public String toString() {
-    return varName.toString() + " = " + expression.toString();
+    StringBuilder result = new StringBuilder();
+    result.append(varName.toString());
+    result.append(" = ");
+    if (expression != null) {
+      result.append(expression.toString());
+    } else if (query != null) {
+      result.append("(");
+      result.append(query.toString());
+      result.append(")");
+    }
+    return result.toString();
   }
 
   public void replaceParameters(Map<Object, Object> params) {
-    expression.replaceParameters(params);
+    if (expression != null) {
+      expression.replaceParameters(params);
+    }
+    if (query != null) {
+      query.replaceParameters(params);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=bb3cd298d79f50d72f6842e6d6ea4fb2 (do not edit this line) */

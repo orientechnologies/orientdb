@@ -1721,10 +1721,28 @@ OLetClause LetClause():
 }
 
 OLetItem LetItem():
-{}
+{ }
 {
     (
-    	jjtThis.varName = Identifier() <EQ> jjtThis.expression = Expression()
+    	jjtThis.varName = Identifier() <EQ>
+    	(
+    	    LOOKAHEAD( Expression() )
+    	    jjtThis.expression = Expression()
+    	    |
+    	    (
+    	        <LPAREN>
+    	        (
+    	            LOOKAHEAD( SelectStatement() )
+    	            jjtThis.query = SelectStatement()
+    	            |
+    	            LOOKAHEAD( SelectWithoutTargetStatement() )
+    	            jjtThis.query = SelectWithoutTargetStatement()
+    	            |
+    	            jjtThis.query = TraverseStatement()
+    	        )
+    	        <RPAREN>
+    	    )
+    	)
     )
     { return jjtThis; }
 }
