@@ -277,8 +277,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     } else {
       String defValue = p.getDefaultValue();
       if (defValue != null && defValue.length() > 0) {
-        fieldValue = OSQLHelper.parseDefaultValue(iRecord, defValue);
-        iRecord.rawField(p.getName(), fieldValue, null);
+        Object curFieldValue = OSQLHelper.parseDefaultValue(iRecord, defValue);
+        fieldValue = ODocumentHelper.convertField(iRecord, p.getName(), p.getType().getDefaultJavaType(), curFieldValue);
+        iRecord.rawField(p.getName(), fieldValue, p.getType());
       } else {
         if (p.isMandatory()) {
           throw new OValidationException("The field '" + p.getFullName() + "' is mandatory, but not found on record: " + iRecord);
