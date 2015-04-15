@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.io.Closeable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -38,7 +32,6 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -47,6 +40,12 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.Closeable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
@@ -827,6 +826,14 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
    * @see com.orientechnologies.orient.core.db.document.ODatabaseDocument#setMVCC(boolean)
    */
   public boolean isMVCC();
+
+  /**
+   * Retrieves all the registered listeners.
+   *
+   * @return An iterable of ODatabaseListener instances.
+   */
+
+  public Iterable<ODatabaseListener> getListeners();
 
   /**
    * Enables or disables the Multi-Version Concurrency Control. If enabled the version of the record is checked before each update

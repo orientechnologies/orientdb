@@ -37,16 +37,12 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OLowDiskSpaceException;
-import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
@@ -56,18 +52,13 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OPageDataVe
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorageAbstract;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
@@ -84,12 +75,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -1185,7 +1171,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     try {
 
-      return executor.execute(iCommand.getParameters());
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+
+      // CALL BEFORE COMMAND
+      Iterable<ODatabaseListener> listeners = db.getListeners();
+      for (ODatabaseListener oDatabaseListener : listeners) {
+        oDatabaseListener.onBeforeCommand(iCommand, executor);
+      }
+
+      Object result = executor.execute(iCommand.getParameters());
+
+      // CALL AFTER COMMAND
+      for (ODatabaseListener oDatabaseListener : listeners) {
+        oDatabaseListener.onAfterCommand(iCommand, executor, result);
+      }
+
+      return result;
 
     } catch (OException e) {
       // PASS THROUGH
@@ -1194,12 +1195,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
 
     } finally {
-      if (Orient.instance().getProfiler().isRecording())
+      if (Orient.instance().getProfiler().isRecording()) {
+        OSecurityUser user = ODatabaseRecordThreadLocal.INSTANCE.get().getUser();
+        String userString = user != null ? user.toString() : null;
         Orient
             .instance()
             .getProfiler()
             .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
-                "Command executed against the database", beginTime, "db.*.command.*");
+                "Command executed against the database", beginTime, "db.*.command.*", null, userString);
+      }
     }
   }
 
@@ -1447,7 +1451,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
     }
   }
-
 
   private void endStorageTx() throws IOException {
     atomicOperationsManager.endAtomicOperation(false);

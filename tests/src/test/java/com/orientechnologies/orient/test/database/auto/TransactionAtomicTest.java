@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -120,6 +122,16 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
       @Override
       public void onClose(ODatabase iDatabase) {
+      }
+
+      @Override
+      public void onBeforeCommand(OCommandRequestText iCommand, OCommandExecutor executor) {
+
+      }
+
+      @Override
+      public void onAfterCommand(OCommandRequestText iCommand, OCommandExecutor executor, Object result) {
+
       }
 
       @Override
