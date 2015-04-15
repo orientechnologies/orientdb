@@ -29,8 +29,13 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -292,10 +297,10 @@ public class OSchemaProxyObject implements OSchema {
           continue;
         }
         OType t = OObjectEntitySerializer.getTypeByClass(iClass, field, f);
-        if (t == OType.CUSTOM){
+        if (t == OType.CUSTOM) {
           OEntityManager entityManager = OEntityManager.getEntityManagerByDatabaseURL(database.getURL());
-          //if the target type is registered as entity, it should be linked instead of custom/serialized
-          if (entityManager.getEntityClass(f.getType().getSimpleName()) != null){
+          // if the target type is registered as entity, it should be linked instead of custom/serialized
+          if (entityManager.getEntityClass(f.getType().getSimpleName()) != null) {
             t = OType.LINK;
           }
         }
