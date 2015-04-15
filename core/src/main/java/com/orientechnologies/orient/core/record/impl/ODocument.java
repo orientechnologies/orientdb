@@ -26,9 +26,8 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.ref.WeakReference;
-import java.math.BigDecimal;
-import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -89,9 +88,9 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.sql.OSQLHelper;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -357,99 +356,62 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       }
     }
 
-    if (p.getMin() != null) {
+    if (p.getMin() != null && fieldValue != null) {
       // MIN
       final String min = p.getMin();
-
-      if (p.getType().equals(OType.STRING) && (fieldValue != null && ((String) fieldValue).length() < Integer.parseInt(min)))
-        throw new OValidationException("The field '" + p.getFullName() + "' contains fewer characters than " + min + " requested");
-      else if (p.getType().equals(OType.BINARY) && (fieldValue != null && ((byte[]) fieldValue).length < Integer.parseInt(min)))
+      if (p.getType().equals(OType.STRING)) {
+        if (((String) fieldValue).length() < Integer.parseInt(min))
+          throw new OValidationException("The field '" + p.getFullName() + "' contains fewer characters than " + min + " requested");
+      } else if (p.getType().equals(OType.DATE)) {
+        Date dateOnly = ODocumentHelper.convertField(iRecord, p.getName(), Date.class, min);
+        if (((Date) fieldValue).before(dateOnly))
+          throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
+              + " which precedes the first acceptable date (" + min + ")");
+      } else if (fieldValue instanceof Comparable<?>) {
+        Object value = ODocumentHelper.convertField(iRecord, p.getName(), p.getType().getDefaultJavaType(), min);
+        if (((Comparable<Object>) entry.value).compareTo(value) < 0) {
+          throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
+        }
+      } else if (p.getType().equals(OType.BINARY) && ((byte[]) fieldValue).length < Integer.parseInt(min))
         throw new OValidationException("The field '" + p.getFullName() + "' contains fewer bytes than " + min + " requested");
-      else if (p.getType().equals(OType.INTEGER) && (fieldValue != null && type.asInt(fieldValue) < Integer.parseInt(min)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
-      else if (p.getType().equals(OType.LONG) && (fieldValue != null && type.asLong(fieldValue) < Long.parseLong(min)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
-      else if (p.getType().equals(OType.FLOAT) && (fieldValue != null && type.asFloat(fieldValue) < Float.parseFloat(min)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
-      else if (p.getType().equals(OType.DOUBLE) && (fieldValue != null && type.asDouble(fieldValue) < Double.parseDouble(min)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
-      else if (p.getType().equals(OType.SHORT) && (fieldValue != null && ((Short) fieldValue).byteValue() < Short.parseShort(min)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
-      else if (p.getType().equals(OType.BYTE) && (fieldValue != null && ((Byte) fieldValue).byteValue() < Byte.parseByte(min)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
-      else if (p.getType().equals(OType.DECIMAL)
-          && (fieldValue != null && ((BigDecimal) fieldValue).compareTo(new BigDecimal(min)) < 0))
-        throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
-
-      else if (p.getType().equals(OType.DATE)) {
-        try {
-          if (fieldValue != null
-              && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration().getDateFormatInstance()
-                  .parse(min)))
-            throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
-                + " which precedes the first acceptable date (" + min + ")");
-        } catch (ParseException e) {
-        }
-      } else if (p.getType().equals(OType.DATETIME)) {
-        try {
-          if (fieldValue != null
-              && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration()
-                  .getDateTimeFormatInstance().parse(min)))
-            throw new OValidationException("The field '" + p.getFullName() + "' contains the datetime " + fieldValue
-                + " which precedes the first acceptable datetime (" + min + ")");
-        } catch (ParseException e) {
-        }
-      } else if ((p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
+      else if ((p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
           || p.getType().equals(OType.LINKLIST) || p.getType().equals(OType.LINKSET))
-          && (fieldValue != null && ((Collection<?>) fieldValue).size() < Integer.parseInt(min)))
+          && ((Collection<?>) fieldValue).size() < Integer.parseInt(min))
         throw new OValidationException("The field '" + p.getFullName() + "' contains fewer items than " + min + " requested");
+      else if ((p.getType().equals(OType.EMBEDDEDMAP) || p.getType().equals(OType.LINKMAP))
+          && (((Map<?, ?>) fieldValue).size() < Integer.parseInt(min)))
+        throw new OValidationException("The field '" + p.getFullName() + "' contains more items than " + min + " requested");
     }
 
-    if (p.getMax() != null) {
+    if (p.getMax() != null && fieldValue != null) {
       // MAX
       final String max = p.getMax();
-
-      if (p.getType().equals(OType.STRING) && (fieldValue != null && ((String) fieldValue).length() > Integer.parseInt(max)))
-        throw new OValidationException("The field '" + p.getFullName() + "' contains more characters than " + max + " requested");
-      else if (p.getType().equals(OType.BINARY) && (fieldValue != null && ((byte[]) fieldValue).length > Integer.parseInt(max)))
+      if (p.getType().equals(OType.STRING)) {
+        if (((String) fieldValue).length() > Integer.parseInt(max))
+          throw new OValidationException("The field '" + p.getFullName() + "' contains more characters than " + max + " requested");
+      } else if (p.getType().equals(OType.DATE)) {
+        Date dateOnly = ODocumentHelper.convertField(iRecord, p.getName(), Date.class, max);
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(dateOnly);
+        cal.add(Calendar.DAY_OF_MONTH, 1);
+        dateOnly = cal.getTime();
+        if (((Date) fieldValue).after(dateOnly))
+          throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
+              + " which is after the last acceptable date (" + max + ")");
+      } else if (fieldValue instanceof Comparable<?>) {
+        Object value = ODocumentHelper.convertField(iRecord, p.getName(), p.getType().getDefaultJavaType(), max);
+        if (((Comparable<Object>) entry.value).compareTo(value) > 0) {
+          throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
+        }
+      } else if (p.getType().equals(OType.BINARY) && ((byte[]) fieldValue).length > Integer.parseInt(max))
         throw new OValidationException("The field '" + p.getFullName() + "' contains more bytes than " + max + " requested");
-      else if (p.getType().equals(OType.INTEGER) && (fieldValue != null && type.asInt(fieldValue) > Integer.parseInt(max)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
-      else if (p.getType().equals(OType.LONG) && (fieldValue != null && type.asLong(fieldValue) > Long.parseLong(max)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
-      else if (p.getType().equals(OType.FLOAT) && (fieldValue != null && type.asFloat(fieldValue) > Float.parseFloat(max)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
-      else if (p.getType().equals(OType.DOUBLE) && (fieldValue != null && type.asDouble(fieldValue) > Double.parseDouble(max)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
-      else if (p.getType().equals(OType.SHORT) && (fieldValue != null && ((Short) fieldValue).byteValue() > Short.parseShort(max)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
-      else if (p.getType().equals(OType.BYTE) && (fieldValue != null && ((Byte) fieldValue).byteValue() > Byte.parseByte(max)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
-      else if (p.getType().equals(OType.DECIMAL)
-          && (fieldValue != null && ((BigDecimal) fieldValue).compareTo(new BigDecimal(max)) > 0))
-        throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
 
-      else if (p.getType().equals(OType.DATE)) {
-        try {
-          if (fieldValue != null
-              && !((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration().getDateFormatInstance()
-                  .parse(max)))
-            throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
-                + " which is after the last acceptable date (" + max + ")");
-        } catch (ParseException e) {
-        }
-      } else if (p.getType().equals(OType.DATETIME)) {
-        try {
-          if (fieldValue != null
-              && !((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration()
-                  .getDateTimeFormatInstance().parse(max)))
-            throw new OValidationException("The field '" + p.getFullName() + "' contains the datetime " + fieldValue
-                + " which is after the last acceptable datetime (" + max + ")");
-        } catch (ParseException e) {
-        }
-      } else if ((p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
+      else if ((p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
           || p.getType().equals(OType.LINKLIST) || p.getType().equals(OType.LINKSET))
-          && (fieldValue != null && ((Collection<?>) fieldValue).size() > Integer.parseInt(max)))
+          && ((Collection<?>) fieldValue).size() > Integer.parseInt(max))
+        throw new OValidationException("The field '" + p.getFullName() + "' contains more items than " + max + " requested");
+      else if ((p.getType().equals(OType.EMBEDDEDMAP) || p.getType().equals(OType.LINKMAP))
+          && (((Map<?, ?>) fieldValue).size() > Integer.parseInt(max)))
         throw new OValidationException("The field '" + p.getFullName() + "' contains more items than " + max + " requested");
     }
 

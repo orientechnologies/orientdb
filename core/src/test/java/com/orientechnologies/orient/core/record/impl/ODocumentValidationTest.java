@@ -155,7 +155,7 @@ public class ODocumentValidationTest {
       d.field("float", 10);
       d.field("binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
       d.field("byte", 10);
-      // d.field("date", new Date());
+      d.field("date", new Date());
       d.field("datetime", new Date());
       d.field("decimal", 10);
       d.field("double", 10);
@@ -183,7 +183,7 @@ public class ODocumentValidationTest {
       checkField(d, "byte", 20);
       cal = Calendar.getInstance();
       cal.add(Calendar.DAY_OF_MONTH, 1);
-      // checkField(d, "date", cal.getTime());
+      checkField(d, "date", cal.getTime());
       checkField(d, "datetime", cal.getTime());
       checkField(d, "decimal", 20);
       checkField(d, "double", 20);
@@ -196,7 +196,7 @@ public class ODocumentValidationTest {
       con1.put("two", "one");
       con1.put("three", "one");
 
-      // checkField(d, "embeddedMap", con1);
+      checkField(d, "embeddedMap", con1);
       checkField(d, "linkList", Arrays.asList(new ORecordId(40, 30), new ORecordId(40, 33), new ORecordId(40, 31)));
       checkField(d, "linkSet",
           new HashSet<ORecordId>(Arrays.asList(new ORecordId(40, 30), new ORecordId(40, 33), new ORecordId(40, 31))));
@@ -205,7 +205,7 @@ public class ODocumentValidationTest {
       cont3.put("one", new ORecordId(30, 30));
       cont3.put("two", new ORecordId(30, 30));
       cont3.put("three", new ORecordId(30, 30));
-      // checkField(d, "linkMap", cont3);
+      checkField(d, "linkMap", cont3);
 
     } finally {
       db.drop();
@@ -258,7 +258,7 @@ public class ODocumentValidationTest {
 
       cal = Calendar.getInstance();
       cal.add(Calendar.DAY_OF_MONTH, 1);
-      // d.field("date", cal.getTime());
+      d.field("date", new Date());
       d.field("datetime", cal.getTime());
       d.field("decimal", 12);
       d.field("double", 12);
@@ -284,7 +284,9 @@ public class ODocumentValidationTest {
       checkField(d, "binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 });
       checkField(d, "byte", 10);
 
-      // checkField(d, "date", new Date());
+      cal = Calendar.getInstance();
+      cal.add(Calendar.DAY_OF_MONTH, -1);
+      checkField(d, "date", cal.getTime());
       checkField(d, "datetime", new Date());
       checkField(d, "decimal", 10);
       checkField(d, "double", 10);
@@ -292,10 +294,10 @@ public class ODocumentValidationTest {
       checkField(d, "string", "01234");
       checkField(d, "embeddedList", new ArrayList<String>());
       checkField(d, "embeddedSet", new HashSet<String>());
-      // checkField(d, "embeddedMap", new HashMap<String, String>());
+      checkField(d, "embeddedMap", new HashMap<String, String>());
       checkField(d, "linkList", new ArrayList<ORecordId>());
       checkField(d, "linkSet", new HashSet<ORecordId>());
-      // checkField(d, "linkMap", new HashMap<String, ORecordId>());
+      checkField(d, "linkMap", new HashMap<String, ORecordId>());
 
     } finally {
       db.drop();
