@@ -87,6 +87,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
         json.writeAttribute("notNull", prop.isNotNull());
         json.writeAttribute("min", prop.getMin());
         json.writeAttribute("max", prop.getMax());
+        json.writeAttribute("regexp", prop.getRegexp());
         json.writeAttribute("collate", prop.getCollate() != null ? prop.getCollate().getName() : "default");
 
         if (prop instanceof OPropertyImpl) {
