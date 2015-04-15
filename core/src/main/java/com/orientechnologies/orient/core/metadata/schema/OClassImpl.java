@@ -442,9 +442,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public OClass setSuperClassesByNames(List<String> classNames) {
 	  List<OClass> classes = new ArrayList<OClass>(classNames.size());
 	  OSchema schema = getDatabase().getMetadata().getSchema();
-	  for(String className:classNames)
+	  if(classNames!=null)
 	  {
-		  classes.add(schema.getClass(className));
+		  for(String className:classNames)
+		  {
+			  classes.add(schema.getClass(className));
+		  }
 	  }
 	  return setSuperClasses(classes);
   }
@@ -1556,7 +1559,7 @@ public OClass setName(final String name) {
       }
       break;
     case SUPERCLASSES:
-    	setSuperClassesByNames(Arrays.asList(stringValue.split(",\\s*")));
+    	setSuperClassesByNames(stringValue!=null?Arrays.asList(stringValue.split(",\\s*")):null);
     	break;
     case OVERSIZE:
       setOverSize(Float.parseFloat(stringValue));

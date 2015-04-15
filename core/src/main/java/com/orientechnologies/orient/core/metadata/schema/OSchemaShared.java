@@ -967,14 +967,14 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       
       List<OClass> superClassesList = new ArrayList<OClass>();
       if (superClasses != null && superClasses.length>0) {
-        cmd.append(" extends ");
         boolean first=true;
         for(OClass superClass: superClasses)
         {
         	//Filtering for null
         	if(superClass!=null)
         	{
-        		if(!first)cmd.append(", ");
+        		if(first) cmd.append(" extends ");
+        		else cmd.append(", ");
         		cmd.append(superClass.getName());
         		first = false;
         		superClassesList.add(superClass);
