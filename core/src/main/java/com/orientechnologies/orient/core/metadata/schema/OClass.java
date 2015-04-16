@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,7 +38,7 @@ import java.util.Set;
  */
 public interface OClass extends Comparable<OClass> {
   public static enum ATTRIBUTES {
-    NAME, SHORTNAME, SUPERCLASS, OVERSIZE, STRICTMODE, ADDCLUSTER, REMOVECLUSTER, CUSTOM, ABSTRACT, CLUSTERSELECTION
+    NAME, SHORTNAME, @Deprecated SUPERCLASS, SUPERCLASSES, OVERSIZE, STRICTMODE, ADDCLUSTER, REMOVECLUSTER, CUSTOM, ABSTRACT, CLUSTERSELECTION
   }
 
   public static enum INDEX_TYPE {
@@ -65,9 +66,23 @@ public interface OClass extends Comparable<OClass> {
 
   public OClass setStrictMode(boolean iMode);
 
+  @Deprecated
   public OClass getSuperClass();
 
+  @Deprecated
   public OClass setSuperClass(OClass iSuperClass);
+  
+  public boolean hasSuperClasses();
+  
+  public List<String> getSuperClassesNames();
+  
+  public List<OClass> getSuperClasses();
+  
+  public OClass setSuperClasses(List<? extends OClass> classes);
+  
+  public OClass addSuperClass(OClass superClass);
+  
+  public OClass removeSuperClass(OClass superClass);
 
   public String getName();
 
@@ -397,6 +412,13 @@ public interface OClass extends Comparable<OClass> {
    * @return Copy all the indexes for given class, not the inherited ones, in the collection received as argument.
    */
   void getClassIndexes(Collection<OIndex<?>> indexes);
+  
+  /**
+   * Internal.
+   * 
+   * @return All indexes for given class and its super classes.
+   */
+  void getIndexes(Collection<OIndex<?>> indexes);
 
   /**
    * @return All indexes for given class and its super classes.

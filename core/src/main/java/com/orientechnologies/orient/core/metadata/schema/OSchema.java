@@ -38,18 +38,24 @@ public interface OSchema {
   public OClass createClass(final String iClassName);
 
   public OClass createClass(final String iClassName, final OClass iSuperClass);
+  
+  public OClass createClass(final String iClassName, final OClass... superClasses);
 
   public OClass createClass(final String iClassName, final int iDefaultClusterId);
 
   public OClass createClass(final String iClassName, final OClass iSuperClass, final int iDefaultClusterId);
 
   public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds);
+  
+  public OClass createClass(final String className, int[] clusterIds, OClass... superClasses);
 
   public OClass createAbstractClass(final Class<?> iClass);
 
   public OClass createAbstractClass(final String iClassName);
 
   public OClass createAbstractClass(final String iClassName, final OClass iSuperClass);
+  
+  public OClass createAbstractClass(final String iClassName, final OClass... superClasses);
 
   public void dropClass(final String iClassName);
 
@@ -76,6 +82,8 @@ public interface OSchema {
   public OClass getOrCreateClass(final String iClassName);
 
   public OClass getOrCreateClass(final String iClassName, final OClass iSuperClass);
+  
+  public OClass getOrCreateClass(final String iClassName, final OClass... superClasses);
 
   public Collection<OClass> getClasses();
 

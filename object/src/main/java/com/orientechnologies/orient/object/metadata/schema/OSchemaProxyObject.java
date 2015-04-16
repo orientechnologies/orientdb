@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.object.metadata.schema;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -83,6 +84,11 @@ public class OSchemaProxyObject implements OSchema {
   public OClass createClass(String iClassName, OClass iSuperClass) {
     return underlying.createClass(iClassName, iSuperClass);
   }
+  
+  @Override
+  public OClass createClass(String iClassName, OClass... superClasses) {
+	return underlying.createClass(iClassName, superClasses);
+  }
 
   @Override
   public OClass createClass(String iClassName, int iDefaultClusterId) {
@@ -98,6 +104,12 @@ public class OSchemaProxyObject implements OSchema {
   public OClass createClass(String iClassName, OClass iSuperClass, int[] iClusterIds) {
     return underlying.createClass(iClassName, iSuperClass, iClusterIds);
   }
+  
+  @Override
+	public OClass createClass(String className, int[] clusterIds,
+			OClass... superClasses) {
+		return underlying.createClass(className, clusterIds, superClasses);
+	}
 
   @Override
   public OClass createAbstractClass(Class<?> iClass) {
@@ -113,6 +125,11 @@ public class OSchemaProxyObject implements OSchema {
   public OClass createAbstractClass(String iClassName, OClass iSuperClass) {
     return underlying.createAbstractClass(iClassName, iSuperClass);
   }
+  
+  @Override
+	public OClass createAbstractClass(String iClassName, OClass... superClasses) {
+		return underlying.createAbstractClass(iClassName, superClasses);
+	}
 
   @Override
   public void dropClass(String iClassName) {
@@ -148,6 +165,11 @@ public class OSchemaProxyObject implements OSchema {
   public OClass getOrCreateClass(String iClassName, OClass iSuperClass) {
     return underlying.getOrCreateClass(iClassName, iSuperClass);
   }
+  
+  @Override
+	public OClass getOrCreateClass(String iClassName, OClass... superClasses) {
+	  return underlying.getOrCreateClass(iClassName, superClasses);
+	}
 
   @Override
   public OGlobalProperty getGlobalPropertyById(int id) {
@@ -384,8 +406,8 @@ public class OSchemaProxyObject implements OSchema {
             reloadSchema = true;
           }
 
-          if (currentOClass.getSuperClass() == null || !currentOClass.getSuperClass().equals(oSuperClass)) {
-            currentOClass.setSuperClass(oSuperClass);
+          if (!currentOClass.getSuperClasses().contains(oSuperClass)) {
+            currentOClass.setSuperClasses(Arrays.asList(oSuperClass));
             reloadSchema = true;
           }
 
@@ -421,8 +443,8 @@ public class OSchemaProxyObject implements OSchema {
           reloadSchema = true;
         }
 
-        if (currentOClass.getSuperClass() == null || !currentOClass.getSuperClass().equals(oSuperClass)) {
-          currentOClass.setSuperClass(oSuperClass);
+        if (!currentOClass.getSuperClasses().contains(oSuperClass)) {
+          currentOClass.setSuperClasses(Arrays.asList(oSuperClass));
           reloadSchema = true;
         }
 
