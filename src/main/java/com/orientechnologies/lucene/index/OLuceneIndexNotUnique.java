@@ -146,6 +146,12 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
     }
 
     @Override
+    protected void clearSnapshot(IndexTxSnapshot indexTxSnapshot) {
+        indexTxSnapshot.clear = true;
+        indexTxSnapshot.indexSnapshot.clear();
+    }
+
+    @Override
     public boolean remove(Object key, OIdentifiable value) {
         checkForRebuild();
 

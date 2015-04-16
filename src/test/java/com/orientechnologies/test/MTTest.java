@@ -34,7 +34,7 @@ import java.util.concurrent.Executors;
 /**
  * Created by Enrico Risa on 18/12/14.
  */
-@Test
+@Test(enabled = false)
 public class MTTest {
 
   public static final int    OP_NUMBER     = 10000;

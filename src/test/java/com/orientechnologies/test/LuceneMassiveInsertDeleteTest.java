@@ -74,7 +74,7 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
       city.reset();
       city.setClassName("City");
     }
-    String query = "select * from City where [name] LUCENE \"(name:Rome)\")";
+    String query = "select * from City where [name] LUCENE \"(name:Rome)\"";
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(docs.size(), size);
 

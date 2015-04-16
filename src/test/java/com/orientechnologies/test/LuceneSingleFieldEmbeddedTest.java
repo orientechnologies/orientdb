@@ -67,7 +67,7 @@ public class LuceneSingleFieldEmbeddedTest extends BaseLuceneTest {
 
     // not WORK BECAUSE IT USES only the first index
     // String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and [author] LUCENE \"(author:Fabbio)\""
-    String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and author = 'Fabbio')";
+    String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and author = 'Fabbio'";
     docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(docs.size(), 1);
