@@ -23,7 +23,14 @@
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-jdbc</artifactId>
     <packaging>jar</packaging>
-    <version>2.0.7</version>
+
+    <version>2.1-rc1</version>
+
+    <properties>
+        <orient.version>2.1-rc1</orient.version>
+    </properties>
+
+
     <description>JDBC Driver for OrientDB NoSQL document graph dbms</description>
     <url>http://www.orientechnologies.com</url>
     <inceptionYear>2012</inceptionYear>
@@ -75,9 +82,6 @@
         </mailingList>
     </mailingLists>
 
-    <properties>
-        <orient.version>2.0.7</orient.version>
-    </properties>
     <distributionManagement>
         <repository>
             <id>oss.sonatype.org</id>
