@@ -20,20 +20,9 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -91,7 +80,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private String                             name;
   private Class<?>                           javaClass;
   private int[]                              clusterIds;
-  private List<OClassImpl>					 superClasses			 = new ArrayList<OClassImpl>();
+  private List<OClassImpl>                   superClasses            = new ArrayList<OClassImpl>();
   private int[]                              polymorphicClusterIds;
   private List<OClass>                       subclasses;
   private float                              overSize                = 0f;
@@ -323,77 +312,53 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public OClass getSuperClass() {
     acquireSchemaReadLock();
     try {
-      return superClasses.isEmpty()?null:superClasses.get(0);
+      return superClasses.isEmpty() ? null : superClasses.get(0);
     } finally {
       releaseSchemaReadLock();
     }
   }
-  
-  
 
   @Override
   public OClass setSuperClass(OClass iSuperClass) {
-	setSuperClasses(iSuperClass!=null?Arrays.asList(iSuperClass):Collections.EMPTY_LIST);
-	return this;
+    setSuperClasses(iSuperClass != null ? Arrays.asList(iSuperClass) : Collections.EMPTY_LIST);
+    return this;
   }
 
-/**
+  /**
    * Set the super class.
    *
    * @param superClass
    *          Super class as OClass instance
    * @return the object itself.
    */
-  /*public OClass setSuperClass(final OClass superClass) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-    acquireSchemaWriteLock();
-    try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
+  /*
+   * public OClass setSuperClass(final OClass superClass) { getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA,
+   * ORole.PERMISSION_UPDATE); acquireSchemaWriteLock(); try { final ODatabaseDocumentInternal database = getDatabase(); final
+   * OStorage storage = database.getStorage();
+   * 
+   * if (storage instanceof OStorageProxy) { final String cmd = String.format("alter class %s superclass %s", name, superClass !=
+   * null ? superClass.getName() : null); database.command(new OCommandSQL(cmd)).execute(); } else if (isDistributedCommand()) {
+   * final String cmd = String.format("alter class %s superclass %s", name, superClass != null ? superClass.getName() : null); final
+   * OCommandSQL commandSQL = new OCommandSQL(cmd); commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+   * 
+   * database.command(commandSQL).execute();
+   * 
+   * setSuperClassInternal(superClass); } else setSuperClassInternal(superClass);
+   * 
+   * } finally { releaseSchemaWriteLock(); } return this; }
+   */
 
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class %s superclass %s", name, superClass != null ? superClass.getName() : null);
-        database.command(new OCommandSQL(cmd)).execute();
-      } else if (isDistributedCommand()) {
-        final String cmd = String.format("alter class %s superclass %s", name, superClass != null ? superClass.getName() : null);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setSuperClassInternal(superClass);
-      } else
-        setSuperClassInternal(superClass);
-
-    } finally {
-      releaseSchemaWriteLock();
-    }
-    return this;
-  }*/
-
-  /*void setSuperClassInternal(final OClass superClass) {
-    acquireSchemaWriteLock();
-    try {
-      final OClassImpl cls;
-
-      if (superClass instanceof OClassAbstractDelegate)
-        cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
-      else
-        cls = (OClassImpl) superClass;
-
-      if (cls != null)
-        cls.addBaseClasses(this);
-      else if (this.superClass != null)
-        // REMOVE THE PREVIOUS ONE
-        this.superClass.removeBaseClassInternal(this);
-
-      this.superClass = cls;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }*/
-  
-  
+  /*
+   * void setSuperClassInternal(final OClass superClass) { acquireSchemaWriteLock(); try { final OClassImpl cls;
+   * 
+   * if (superClass instanceof OClassAbstractDelegate) cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate; else cls =
+   * (OClassImpl) superClass;
+   * 
+   * if (cls != null) cls.addBaseClasses(this); else if (this.superClass != null) // REMOVE THE PREVIOUS ONE
+   * this.superClass.removeBaseClassInternal(this);
+   * 
+   * this.superClass = cls; } finally { releaseSchemaWriteLock(); } }
+   */
 
   public String getName() {
     acquireSchemaReadLock();
@@ -406,223 +371,217 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   @Override
   public List<OClass> getSuperClasses() {
-	  acquireSchemaReadLock();
-      try {
-    	  return Collections.unmodifiableList((List<? extends OClass>)superClasses);
-      } finally {
-         releaseSchemaReadLock();
-      }
+    acquireSchemaReadLock();
+    try {
+      return Collections.unmodifiableList((List<? extends OClass>) superClasses);
+    } finally {
+      releaseSchemaReadLock();
+    }
   }
-  
+
   @Override
-	public boolean hasSuperClasses() {
-	  acquireSchemaReadLock();
-      try {
-    	  return !superClasses.isEmpty();
-      } finally {
-         releaseSchemaReadLock();
-      }
-	}
-  
+  public boolean hasSuperClasses() {
+    acquireSchemaReadLock();
+    try {
+      return !superClasses.isEmpty();
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
   @Override
-	public List<String> getSuperClassesNames() {
-	  acquireSchemaReadLock();
-      try {
-    	  List<String> superClassesNames = new ArrayList<String>(superClasses.size());
-    	  for(OClassImpl superClass:superClasses)
-    	  {
-    		  superClassesNames.add(superClass.getName());
-    	  }
-         return superClassesNames;
-      } finally {
-         releaseSchemaReadLock();
+  public List<String> getSuperClassesNames() {
+    acquireSchemaReadLock();
+    try {
+      List<String> superClassesNames = new ArrayList<String>(superClasses.size());
+      for (OClassImpl superClass : superClasses) {
+        superClassesNames.add(superClass.getName());
       }
-	}
-  
+      return superClassesNames;
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
   public OClass setSuperClassesByNames(List<String> classNames) {
-	  List<OClass> classes = new ArrayList<OClass>(classNames.size());
-	  OSchema schema = getDatabase().getMetadata().getSchema();
-	  if(classNames!=null)
-	  {
-		  for(String className:classNames)
-		  {
-			  classes.add(schema.getClass(className));
-		  }
-	  }
-	  return setSuperClasses(classes);
+    if (classNames == null)
+      classNames = Collections.EMPTY_LIST;
+
+    final List<OClass> classes = new ArrayList<OClass>(classNames.size());
+    final OSchema schema = getDatabase().getMetadata().getSchema();
+    if (classNames != null) {
+      for (String className : classNames) {
+        classes.add(schema.getClass(className));
+      }
+    }
+    return setSuperClasses(classes);
   }
 
   @Override
-  public OClass setSuperClasses(List<? extends OClass> classes) {
-	  getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-	    acquireSchemaWriteLock();
-	    try {
-	      final ODatabaseDocumentInternal database = getDatabase();
-	      final OStorage storage = database.getStorage();
+  public OClass setSuperClasses(final List<? extends OClass> classes) {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    acquireSchemaWriteLock();
+    try {
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OStorage storage = database.getStorage();
 
-	      String superClasses = null;
-	      if(classes!=null && classes.size()>0)
-	      {
-	    	  StringBuilder sb = new StringBuilder();
-	    	  for(OClass superClass:classes)
-	    	  {
-	    		  sb.append(superClass.getName()).append(',');
-	    	  }
-	    	  sb.deleteCharAt(sb.length()-1);
-	      }
-	      
-	      final String cmd = String.format("alter class %s superclasses %s", name, superClasses);
-	      if (storage instanceof OStorageProxy) {
-	        database.command(new OCommandSQL(cmd)).execute();
-	      } else if (isDistributedCommand()) {
-	        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-	        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+      final StringBuilder sb = new StringBuilder();
+      if (classes != null && classes.size() > 0) {
+        for (OClass superClass : classes) {
+          sb.append(superClass.getName()).append(',');
+        }
+        sb.deleteCharAt(sb.length() - 1);
+      } else
+        sb.append("null");
 
-	        database.command(commandSQL).execute();
+      final String cmd = String.format("alter class %s superclasses %s", name, sb);
+      if (storage instanceof OStorageProxy) {
+        database.command(new OCommandSQL(cmd)).execute();
+      } else if (isDistributedCommand()) {
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
-	        setSuperClassesInternal(classes);
-	      } else
-	    	setSuperClassesInternal(classes);
+        database.command(commandSQL).execute();
 
-	    } finally {
-	      releaseSchemaWriteLock();
-	    }
-	    return this;
+        setSuperClassesInternal(classes);
+      } else
+        setSuperClassesInternal(classes);
+
+    } finally {
+      releaseSchemaWriteLock();
+    }
+    return this;
   }
-  
-  void setSuperClassesInternal(List<? extends OClass> classes) {
-	    acquireSchemaWriteLock();
-	    try {
-	    	List<OClassImpl> newSuperClasses = new ArrayList<OClassImpl>();
-	    	OClassImpl cls;
-	    	for(OClass superClass:classes)
-	    	{
-	    		if (superClass instanceof OClassAbstractDelegate)
-	    			cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
-	    		else
-	    			cls = (OClassImpl) superClass;
-	    		newSuperClasses.add(cls);
-	    	}
-	    	checkParametersConflict(newSuperClasses);
-	    	List<OClassImpl> toAddList = new ArrayList<OClassImpl>(newSuperClasses);
-	    	toAddList.removeAll(superClasses);
-	    	List<OClassImpl> toRemoveList = new ArrayList<OClassImpl>(superClasses);
-	    	toRemoveList.removeAll(newSuperClasses);
-	    	
-	    	for(OClassImpl addTo: toAddList)
-	    	{
-	    		addTo.addBaseClass(this);
-	    	}
-	    	for(OClassImpl toRemove: toRemoveList)
-	    	{
-	    		toRemove.removeBaseClassInternal(this);
-	    	}
-	    	superClasses.clear();
-	    	superClasses.addAll(newSuperClasses);
-	    } finally {
-	      releaseSchemaWriteLock();
-	    }
-	  }
+
+  void setSuperClassesInternal(final List<? extends OClass> classes) {
+    acquireSchemaWriteLock();
+    try {
+      List<OClassImpl> newSuperClasses = new ArrayList<OClassImpl>();
+      OClassImpl cls;
+      for (OClass superClass : classes) {
+        if (superClass instanceof OClassAbstractDelegate)
+          cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
+        else
+          cls = (OClassImpl) superClass;
+        newSuperClasses.add(cls);
+      }
+      checkParametersConflict(newSuperClasses);
+      List<OClassImpl> toAddList = new ArrayList<OClassImpl>(newSuperClasses);
+      toAddList.removeAll(superClasses);
+      List<OClassImpl> toRemoveList = new ArrayList<OClassImpl>(superClasses);
+      toRemoveList.removeAll(newSuperClasses);
+
+      for (OClassImpl addTo : toAddList) {
+        addTo.addBaseClass(this);
+      }
+      for (OClassImpl toRemove : toRemoveList) {
+        toRemove.removeBaseClassInternal(this);
+      }
+      superClasses.clear();
+      superClasses.addAll(newSuperClasses);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
 
   @Override
-  public OClass addSuperClass(OClass superClass) {
-	  getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-	    acquireSchemaWriteLock();
-	    try {
-	      final ODatabaseDocumentInternal database = getDatabase();
-	      final OStorage storage = database.getStorage();
+  public OClass addSuperClass(final OClass superClass) {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    acquireSchemaWriteLock();
+    try {
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OStorage storage = database.getStorage();
 
-	      if (storage instanceof OStorageProxy) {
-	        final String cmd = String.format("alter class %s superclass +%s", name, superClass != null ? superClass.getName() : null);
-	        database.command(new OCommandSQL(cmd)).execute();
-	      } else if (isDistributedCommand()) {
-	        final String cmd = String.format("alter class %s superclass +%s", name, superClass != null ? superClass.getName() : null);
-	        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-	        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+      if (storage instanceof OStorageProxy) {
+        final String cmd = String.format("alter class %s superclass +%s", name, superClass != null ? superClass.getName() : null);
+        database.command(new OCommandSQL(cmd)).execute();
+      } else if (isDistributedCommand()) {
+        final String cmd = String.format("alter class %s superclass +%s", name, superClass != null ? superClass.getName() : null);
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
-	        database.command(commandSQL).execute();
+        database.command(commandSQL).execute();
 
-	        addSuperClassInternal(superClass);
-	      } else
-	        addSuperClassInternal(superClass);
+        addSuperClassInternal(superClass);
+      } else
+        addSuperClassInternal(superClass);
 
-	    } finally {
-	      releaseSchemaWriteLock();
-	    }
-	    return this;
+    } finally {
+      releaseSchemaWriteLock();
+    }
+    return this;
   }
-  
+
   void addSuperClassInternal(final OClass superClass) {
-	    acquireSchemaWriteLock();
-	    try {
-	      final OClassImpl cls;
+    acquireSchemaWriteLock();
+    try {
+      final OClassImpl cls;
 
-	      if (superClass instanceof OClassAbstractDelegate)
-	        cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
-	      else
-	        cls = (OClassImpl) superClass;
-	      
-	      if (cls != null)
-	      {
-	    	cls.checkParametersConflict(this);
-	        cls.addBaseClass(this);
-	        superClasses.add(cls);
-	      }
-	    } finally {
-	      releaseSchemaWriteLock();
-	    }
-	  }
-  
+      if (superClass instanceof OClassAbstractDelegate)
+        cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
+      else
+        cls = (OClassImpl) superClass;
+
+      if (cls != null) {
+        cls.checkParametersConflict(this);
+        cls.addBaseClass(this);
+        superClasses.add(cls);
+      }
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
   @Override
   public OClass removeSuperClass(OClass superClass) {
-	  getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-	    acquireSchemaWriteLock();
-	    try {
-	      final ODatabaseDocumentInternal database = getDatabase();
-	      final OStorage storage = database.getStorage();
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    acquireSchemaWriteLock();
+    try {
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OStorage storage = database.getStorage();
 
-	      if (storage instanceof OStorageProxy) {
-	        final String cmd = String.format("alter class %s superclass -%s", name, superClass != null ? superClass.getName() : null);
-	        database.command(new OCommandSQL(cmd)).execute();
-	      } else if (isDistributedCommand()) {
-	        final String cmd = String.format("alter class %s superclass -%s", name, superClass != null ? superClass.getName() : null);
-	        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-	        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+      if (storage instanceof OStorageProxy) {
+        final String cmd = String.format("alter class %s superclass -%s", name, superClass != null ? superClass.getName() : null);
+        database.command(new OCommandSQL(cmd)).execute();
+      } else if (isDistributedCommand()) {
+        final String cmd = String.format("alter class %s superclass -%s", name, superClass != null ? superClass.getName() : null);
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
-	        database.command(commandSQL).execute();
+        database.command(commandSQL).execute();
 
-	        removeSuperClassInternal(superClass);
-	      } else
-	    	  removeSuperClassInternal(superClass);
+        removeSuperClassInternal(superClass);
+      } else
+        removeSuperClassInternal(superClass);
 
-	    } finally {
-	      releaseSchemaWriteLock();
-	    }
-	    return this;
+    } finally {
+      releaseSchemaWriteLock();
+    }
+    return this;
   }
-  
+
   void removeSuperClassInternal(final OClass superClass) {
-	    acquireSchemaWriteLock();
-	    try {
-	      final OClassImpl cls;
+    acquireSchemaWriteLock();
+    try {
+      final OClassImpl cls;
 
-	      if (superClass instanceof OClassAbstractDelegate)
-	        cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
-	      else
-	        cls = (OClassImpl) superClass;
-	      
-	      if(superClasses.contains(cls))
-	      {
-		      if (cls != null) cls.removeBaseClassInternal(this);
-		      
-		      superClasses.remove(superClass);
-	      }
-	    } finally {
-	      releaseSchemaWriteLock();
-	    }
-	  }
+      if (superClass instanceof OClassAbstractDelegate)
+        cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
+      else
+        cls = (OClassImpl) superClass;
 
-public OClass setName(final String name) {
+      if (superClasses.contains(cls)) {
+        if (cls != null)
+          cls.removeBaseClassInternal(this);
+
+        superClasses.remove(superClass);
+      }
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  public OClass setName(final String name) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     acquireSchemaWriteLock();
     try {
@@ -736,19 +695,18 @@ public OClass setName(final String name) {
       releaseSchemaReadLock();
     }
   }
-  
-  private void propertiesMap(Map<String, OProperty> propertiesMap, boolean keepCase)
-  {
-	  for (OProperty p : properties.values()) {
-          String propName = p.getName();
-          if(!keepCase) propName = propName.toLowerCase();
-          if (!propertiesMap.containsKey(propName))
-        	  propertiesMap.put(propName, p);
-        }
-	  for(OClassImpl superClass: superClasses)
-	  {
-		  superClass.propertiesMap(propertiesMap, keepCase);
-	  }
+
+  private void propertiesMap(Map<String, OProperty> propertiesMap, boolean keepCase) {
+    for (OProperty p : properties.values()) {
+      String propName = p.getName();
+      if (!keepCase)
+        propName = propName.toLowerCase();
+      if (!propertiesMap.containsKey(propName))
+        propertiesMap.put(propName, p);
+    }
+    for (OClassImpl superClass : superClasses) {
+      superClass.propertiesMap(propertiesMap, keepCase);
+    }
   }
 
   public Collection<OProperty> properties() {
@@ -763,34 +721,32 @@ public OClass setName(final String name) {
       releaseSchemaReadLock();
     }
   }
-  
-  private void properties(Collection<OProperty> properties)
-  {
-	  properties.addAll(this.properties.values());
-	  for(OClassImpl superClass: superClasses)
-	  {
-		  superClass.properties(properties);
-	  }
+
+  private void properties(Collection<OProperty> properties) {
+    properties.addAll(this.properties.values());
+    for (OClassImpl superClass : superClasses) {
+      superClass.properties(properties);
+    }
   }
-  
+
   public void getIndexedProperties(Collection<OProperty> indexedProperties) {
-	  for (OProperty p : properties.values())
-	        if (areIndexed(p.getName())) indexedProperties.add(p);
-	  for(OClassImpl superClass: superClasses)
-	  {
-		  superClass.getIndexedProperties(indexedProperties);
-	  }
+    for (OProperty p : properties.values())
+      if (areIndexed(p.getName()))
+        indexedProperties.add(p);
+    for (OClassImpl superClass : superClasses) {
+      superClass.getIndexedProperties(indexedProperties);
+    }
   }
-  
+
   @Override
   public Collection<OProperty> getIndexedProperties() {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
 
     acquireSchemaReadLock();
     try {
-    	Collection<OProperty> indexedProps = new HashSet<OProperty>();
-    	getIndexedProperties(indexedProps);
-    	return indexedProps;
+      Collection<OProperty> indexedProps = new HashSet<OProperty>();
+      getIndexedProperties(indexedProps);
+      return indexedProps;
     } finally {
       releaseSchemaReadLock();
     }
@@ -800,12 +756,12 @@ public OClass setName(final String name) {
     acquireSchemaReadLock();
     try {
       propertyName = propertyName.toLowerCase();
-      
+
       OProperty p = properties.get(propertyName);
-      if(p!=null) return p;
-      for(int i=0;i<superClasses.size() && p==null;i++)
-      {
-      	p = superClasses.get(i).getProperty(propertyName);
+      if (p != null)
+        return p;
+      for (int i = 0; i < superClasses.size() && p == null; i++) {
+        p = superClasses.get(i).getProperty(propertyName);
       }
       return p;
     } finally {
@@ -834,11 +790,12 @@ public OClass setName(final String name) {
     try {
       propertyName = propertyName.toLowerCase();
       boolean result = properties.containsKey(propertyName);
-      if(result) return true;
-      for(OClassImpl superClass: superClasses)
-      {
-    	  result = superClass.existsProperty(propertyName);
-    	  if(result) return true;
+      if (result)
+        return true;
+      for (OClassImpl superClass : superClasses) {
+        result = superClass.existsProperty(propertyName);
+        if (result)
+          return true;
       }
       return false;
     } finally {
@@ -966,24 +923,20 @@ public OClass setName(final String name) {
       }
       document.field("properties", props, OType.EMBEDDEDSET);
 
-      if(superClasses.isEmpty())
-      {
-    	  //Single super class is deprecated!
-    	  document.field("superClass", null, OType.STRING);
-    	  document.field("superClasses", null, OType.EMBEDDEDLIST);
+      if (superClasses.isEmpty()) {
+        // Single super class is deprecated!
+        document.field("superClass", null, OType.STRING);
+        document.field("superClasses", null, OType.EMBEDDEDLIST);
+      } else {
+        // Single super class is deprecated!
+        document.field("superClass", superClasses.get(0).getName(), OType.STRING);
+        List<String> superClassesNames = new ArrayList<String>();
+        for (OClassImpl superClass : superClasses) {
+          superClassesNames.add(superClass.getName());
+        }
+        document.field("superClasses", superClassesNames, OType.EMBEDDEDLIST);
       }
-      else
-      {
-    	//Single super class is deprecated!
-    	  document.field("superClass", superClasses.get(0).getName(), OType.STRING);
-    	  List<String> superClassesNames = new ArrayList<String>();
-    	  for(OClassImpl superClass:superClasses)
-    	  {
-    		  superClassesNames.add(superClass.getName());
-    	  }
-    	  document.field("superClasses", superClassesNames, OType.EMBEDDEDLIST);
-      }
-      
+
       document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
 
     } finally {
@@ -1211,14 +1164,14 @@ public OClass setName(final String name) {
       if (overSize > 0)
         // CUSTOM OVERSIZE SET
         return overSize;
-      
+
       // NO OVERSIZE by default
       float maxOverSize = 0;
       float thisOverSize;
-      for(OClassImpl superClass:superClasses)
-      {
-    	  thisOverSize = superClass.getOverSize();
-    	  if(thisOverSize>maxOverSize) maxOverSize = thisOverSize;
+      for (OClassImpl superClass : superClasses) {
+        thisOverSize = superClass.getOverSize();
+        if (thisOverSize > maxOverSize)
+          maxOverSize = thisOverSize;
       }
       return maxOverSize;
     } finally {
@@ -1454,14 +1407,16 @@ public OClass setName(final String name) {
   public boolean isSubClassOf(final String iClassName) {
     acquireSchemaReadLock();
     try {
-    	if (iClassName == null) return false;
-        
-        if(iClassName.equalsIgnoreCase(getName()) || iClassName.equalsIgnoreCase(getShortName())) return true;
-        for(OClassImpl superClass: superClasses)
-        {
-        	if(superClass.isSubClassOf(iClassName)) return true;
-        }
+      if (iClassName == null)
         return false;
+
+      if (iClassName.equalsIgnoreCase(getName()) || iClassName.equalsIgnoreCase(getShortName()))
+        return true;
+      for (OClassImpl superClass : superClasses) {
+        if (superClass.isSubClassOf(iClassName))
+          return true;
+      }
+      return false;
     } finally {
       releaseSchemaReadLock();
     }
@@ -1478,18 +1433,20 @@ public OClass setName(final String name) {
   public boolean isSubClassOf(final OClass clazz) {
     acquireSchemaReadLock();
     try {
-    	if (clazz == null) return false;
-        if(equals(clazz)) return true;
-        for(OClassImpl superClass: superClasses)
-        {
-        	if(superClass.isSubClassOf(clazz)) return true;
-        }
+      if (clazz == null)
         return false;
+      if (equals(clazz))
+        return true;
+      for (OClassImpl superClass : superClasses) {
+        if (superClass.isSubClassOf(clazz))
+          return true;
+      }
+      return false;
     } finally {
       releaseSchemaReadLock();
     }
   }
-  
+
   /**
    * Returns true if the passed schema class (iClass) extends the current instance.
    *
@@ -1545,22 +1502,17 @@ public OClass setName(final String name) {
       setShortName(stringValue);
       break;
     case SUPERCLASS:
-      if(stringValue.startsWith("+"))
-      {
-    	  addSuperClass(getDatabase().getMetadata().getSchema().getClass(stringValue.substring(1)));
-      }
-      else if(stringValue.startsWith("-"))
-      {
-    	  removeSuperClass(getDatabase().getMetadata().getSchema().getClass(stringValue.substring(1)));
-      }
-      else
-      {
-    	  setSuperClass(getDatabase().getMetadata().getSchema().getClass(stringValue));
+      if (stringValue.startsWith("+")) {
+        addSuperClass(getDatabase().getMetadata().getSchema().getClass(stringValue.substring(1)));
+      } else if (stringValue.startsWith("-")) {
+        removeSuperClass(getDatabase().getMetadata().getSchema().getClass(stringValue.substring(1)));
+      } else {
+        setSuperClass(getDatabase().getMetadata().getSchema().getClass(stringValue));
       }
       break;
     case SUPERCLASSES:
-    	setSuperClassesByNames(stringValue!=null?Arrays.asList(stringValue.split(",\\s*")):null);
-    	break;
+      setSuperClassesByNames(stringValue != null ? Arrays.asList(stringValue.split(",\\s*")) : null);
+      break;
     case OVERSIZE:
       setOverSize(Float.parseFloat(stringValue));
       break;
@@ -1706,10 +1658,11 @@ public OClass setName(final String name) {
     try {
       final boolean currentClassResult = indexManager.areIndexed(name, fields);
 
-      if(currentClassResult) return true;
-      for(OClassImpl superClass: superClasses)
-      {
-    	  if(superClass.areIndexed(fields)) return true;
+      if (currentClassResult)
+        return true;
+      for (OClassImpl superClass : superClasses) {
+        if (superClass.areIndexed(fields))
+          return true;
       }
       return false;
     } finally {
@@ -1726,9 +1679,8 @@ public OClass setName(final String name) {
     try {
       final Set<OIndex<?>> result = new HashSet<OIndex<?>>(getClassInvolvedIndexes(fields));
 
-      for(OClassImpl superClass: superClasses)
-      {
-    	  result.addAll(superClass.getInvolvedIndexes(fields));
+      for (OClassImpl superClass : superClasses) {
+        result.addAll(superClass.getInvolvedIndexes(fields));
       }
 
       return result;
@@ -1788,25 +1740,24 @@ public OClass setName(final String name) {
       releaseSchemaReadLock();
     }
   }
-  
+
   @Override
   public void getIndexes(Collection<OIndex<?>> indexes) {
-	  acquireSchemaReadLock();
-	  try {
-		  getClassIndexes(indexes);
-		  for(OClass superClass: superClasses)
-		  {
-			  superClass.getIndexes(indexes);
-		  }
-	  } finally {
-	      releaseSchemaReadLock();
-	  }
+    acquireSchemaReadLock();
+    try {
+      getClassIndexes(indexes);
+      for (OClass superClass : superClasses) {
+        superClass.getIndexes(indexes);
+      }
+    } finally {
+      releaseSchemaReadLock();
+    }
   }
 
   public Set<OIndex<?>> getIndexes() {
-	  Set<OIndex<?>> indexes = new HashSet<OIndex<?>>();
-	  getIndexes(indexes);
-	  return indexes;
+    Set<OIndex<?>> indexes = new HashSet<OIndex<?>>();
+    getIndexes(indexes);
+    return indexes;
   }
 
   public void acquireSchemaReadLock() {
@@ -2135,9 +2086,8 @@ public OClass setName(final String name) {
 
     addClusterIdToIndexes(clusterId);
 
-    for(OClassImpl superClass:superClasses)
-    {
-    	superClass.addPolymorphicClusterId(clusterId);
+    for (OClassImpl superClass : superClasses) {
+      superClass.addPolymorphicClusterId(clusterId);
     }
   }
 
@@ -2334,9 +2284,9 @@ public OClass setName(final String name) {
    *          The base class to add.
    */
   private OClass addBaseClass(final OClassImpl iBaseClass) {
-	checkRecursion(iBaseClass);
-	checkParametersConflict(iBaseClass);
-	            
+    checkRecursion(iBaseClass);
+    checkParametersConflict(iBaseClass);
+
     if (subclasses == null)
       subclasses = new ArrayList<OClass>();
 
@@ -2347,65 +2297,57 @@ public OClass setName(final String name) {
     addPolymorphicClusterIdsWithInheritance(iBaseClass);
     return this;
   }
-  
-  private void checkParametersConflict(OClass baseClass)
-  {
-	  Collection<OProperty> baseClassProperties = baseClass.properties();
-	  for(OProperty property:baseClassProperties)
-	  {
-		  OProperty thisProperty = getProperty(property.getName());
-		  if(thisProperty!=null && thisProperty.getType().equals(property.getType()))
-		  {
-			  throw new OSchemaException("Can't add base class '"+baseClass.getName()+"', because of paramaters conflict: "+thisProperty+" vs "+property);
-		  }
-	  }
+
+  private void checkParametersConflict(OClass baseClass) {
+    Collection<OProperty> baseClassProperties = baseClass.properties();
+    for (OProperty property : baseClassProperties) {
+      OProperty thisProperty = getProperty(property.getName());
+      if (thisProperty != null && thisProperty.getType().equals(property.getType())) {
+        throw new OSchemaException("Can't add base class '" + baseClass.getName() + "', because of paramaters conflict: "
+            + thisProperty + " vs " + property);
+      }
+    }
   }
-  
-  private void checkParametersConflict(List<OClassImpl> classes)
-  {
-	  Map<String, OProperty> commulative = new HashMap<String, OProperty>();
-	  Map<String, OProperty> properties  = new HashMap<String, OProperty>();;
-	  for(OClassImpl superClass:classes)
-	  {
-		  superClass.propertiesMap(properties, false);
-		  for(Map.Entry<String, OProperty> entry: properties.entrySet())
-		  {
-			  if(commulative.containsKey(entry.getKey()))
-			  {
-				  String property = entry.getKey();
-				  OProperty existingProperty = commulative.get(property);
-				  if(!existingProperty.getType().equals(entry.getValue().getType()))
-				  {
-					  throw new OSchemaException("Properties conflict detected: ["+existingProperty+"] vs ["+entry.getValue()+"]");
-				  }
-			  }
-		  }
-		  
-		  commulative.putAll(properties);
-		  properties.clear();
-	  }
+
+  private void checkParametersConflict(List<OClassImpl> classes) {
+    Map<String, OProperty> commulative = new HashMap<String, OProperty>();
+    Map<String, OProperty> properties = new HashMap<String, OProperty>();
+    ;
+    for (OClassImpl superClass : classes) {
+      superClass.propertiesMap(properties, false);
+      for (Map.Entry<String, OProperty> entry : properties.entrySet()) {
+        if (commulative.containsKey(entry.getKey())) {
+          String property = entry.getKey();
+          OProperty existingProperty = commulative.get(property);
+          if (!existingProperty.getType().equals(entry.getValue().getType())) {
+            throw new OSchemaException("Properties conflict detected: [" + existingProperty + "] vs [" + entry.getValue() + "]");
+          }
+        }
+      }
+
+      commulative.putAll(properties);
+      properties.clear();
+    }
   }
-  
-  private void checkRecursion(OClass baseClass)
-  {
-	  Set<String> browsed = new HashSet<String>();
-	  browsed.add(baseClass.getName());
-	  if(checkRecursion(browsed))
-	  {
-		  throw new OSchemaException("Can't add base class '"+baseClass.getName()+"', because of recursion");
-	  }
+
+  private void checkRecursion(OClass baseClass) {
+    Set<String> browsed = new HashSet<String>();
+    browsed.add(baseClass.getName());
+    if (checkRecursion(browsed)) {
+      throw new OSchemaException("Can't add base class '" + baseClass.getName() + "', because of recursion");
+    }
   }
-  
-  private boolean checkRecursion(Set<String> browsedClasses)
-  {
-	  String className = getName();
-	  if(browsedClasses.contains(className)) return true;
-	  for(OClassImpl superClass:superClasses)
-	  {
-		  if(superClass.checkRecursion(browsedClasses)) return true;
-	  }
-	  browsedClasses.add(className);
-	  return false;
+
+  private boolean checkRecursion(Set<String> browsedClasses) {
+    String className = getName();
+    if (browsedClasses.contains(className))
+      return true;
+    for (OClassImpl superClass : superClasses) {
+      if (superClass.checkRecursion(browsedClasses))
+        return true;
+    }
+    browsedClasses.add(className);
+    return false;
   }
 
   private void removePolymorphicClusterIds(final OClassImpl iBaseClass) {
@@ -2424,9 +2366,8 @@ public OClass setName(final String name) {
     polymorphicClusterIds = Arrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length - 1);
 
     removeClusterFromIndexes(clusterId);
-    for(OClassImpl superClass:superClasses)
-    {
-    	superClass.removePolymorphicClusterId(clusterId);
+    for (OClassImpl superClass : superClasses) {
+      superClass.removePolymorphicClusterId(clusterId);
     }
   }
 
@@ -2478,13 +2419,12 @@ public OClass setName(final String name) {
       }
     }
   }
-  
+
   private void addPolymorphicClusterIdsWithInheritance(final OClassImpl iBaseClass) {
-	  addPolymorphicClusterIds(iBaseClass);
-	  for(OClassImpl superClass: superClasses)
-	  {
-		  superClass.addPolymorphicClusterIdsWithInheritance(iBaseClass);
-	  }
+    addPolymorphicClusterIds(iBaseClass);
+    for (OClassImpl superClass : superClasses) {
+      superClass.addPolymorphicClusterIdsWithInheritance(iBaseClass);
+    }
   }
 
   public List<OType> extractFieldTypes(String[] fieldNames) {
