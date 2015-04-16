@@ -1293,10 +1293,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         if (!rid.equals(record.getIdentity()))
           // SAVE IT ONLY IF DIFFERENT
           exportImportHashTable.put(rid, record.getIdentity());
-
-        if (record.getIdentity().equals(new ORecordId(37, 8))) {
-          record = ORecordSerializerJSON.INSTANCE.fromString(value, record, null);
-        }
       }
 
     } catch (Exception t) {
