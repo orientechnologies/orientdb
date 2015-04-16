@@ -19,14 +19,14 @@
  */
 package com.orientechnologies.common.collection;
 
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
+
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Handles Multi-value types such as Arrays, Collections and Maps. It recognizes special Orient collections.
@@ -492,7 +492,7 @@ public class OMultiValue {
             if (isMultiValue(o))
               remove(coll, o, iAllOccurrences);
             else
-              coll.remove(o);
+              removeFromOCollection(iObject, coll, o, iAllOccurrences);
           }
         }
 
@@ -503,7 +503,7 @@ public class OMultiValue {
             if (isMultiValue(o))
               remove(coll, o, iAllOccurrences);
             else
-              coll.remove(o);
+              removeFromOCollection(iObject, coll, o, iAllOccurrences);
           }
 
         } else if (iToRemove instanceof Map<?, ?>) {
@@ -530,7 +530,7 @@ public class OMultiValue {
             }
           }
         } else
-          coll.remove(iToRemove);
+          removeFromOCollection(iObject, coll, iToRemove, iAllOccurrences);
 
       } else if (iObject.getClass().isArray()) {
         // ARRAY - ?
@@ -573,6 +573,21 @@ public class OMultiValue {
     }
 
     return iObject;
+  }
+
+  protected static void removeFromOCollection(final Object iObject, final OCollection<Object> coll, final Object iToRemove,
+      final boolean iAllOccurrences) {
+    if (iAllOccurrences && !(iObject instanceof Set)) {
+      // BROWSE THE COLLECTION ONE BY ONE TO REMOVE ALL THE OCCURRENCES
+      final Iterator<Object> it = coll.iterator();
+      while (it.hasNext()) {
+        final Object o = it.next();
+        if (iToRemove.equals(o))
+          it.remove();
+      }
+    } else
+      coll.remove(iToRemove);
+
   }
 
   private static void batchRemove(Collection<Object> coll, Iterator<?> it) {
