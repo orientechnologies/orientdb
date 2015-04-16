@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.common.io;
 
+import com.orientechnologies.common.util.OPatternConst;
+
 import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -26,12 +28,13 @@ import java.util.Date;
 import java.util.Locale;
 
 public class OIOUtils {
-  public static final long SECOND = 1000;
-  public static final long MINUTE = SECOND * 60;
-  public static final long HOUR   = MINUTE * 60;
-  public static final long DAY    = HOUR * 24;
-  public static final long YEAR   = DAY * 365;
-  public static final long WEEK   = DAY * 7;
+  public static final long   SECOND   = 1000;
+  public static final long   MINUTE   = SECOND * 60;
+  public static final long   HOUR     = MINUTE * 60;
+  public static final long   DAY      = HOUR * 24;
+  public static final long   YEAR     = DAY * 365;
+  public static final long   WEEK     = DAY * 7;
+  public static final String UTF8_BOM = "\uFEFF";
 
   public static byte[] toStream(Externalizable iSource) throws IOException {
     final ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -136,8 +139,14 @@ public class OIOUtils {
     try {
       final char[] buf = new char[1024];
       int numRead = 0;
+
       while ((numRead = reader.read(buf)) != -1) {
         String readData = String.valueOf(buf, 0, numRead);
+
+        if (fileData.length() == 0 && readData.startsWith(UTF8_BOM))
+          // SKIP UTF-8 BOM IF ANY
+          readData = readData.substring(1);
+
         fileData.append(readData);
       }
     } finally {
