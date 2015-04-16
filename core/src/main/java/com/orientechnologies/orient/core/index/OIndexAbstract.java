@@ -132,6 +132,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     } else {
       // @COMPATIBILITY 1.0rc6 new index model was implemented
       final Boolean isAutomatic = config.field(OIndexInternal.CONFIG_AUTOMATIC);
+      OIndexFactory factory = OIndexes.getFactory(type, algorithm);
       if (Boolean.TRUE.equals(isAutomatic)) {
         final int pos = indexName.lastIndexOf('.');
         if (pos < 0)
@@ -144,7 +145,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         if (keyTypeStr == null)
           throw new OIndexException("Can not convert from old index model to new one. " + "Index key type is absent.");
         final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
-        loadedIndexDefinition = new OPropertyIndexDefinition(className, propertyName, keyType);
+
+        loadedIndexDefinition = new OPropertyIndexDefinition(className, propertyName, keyType, factory.getLastVersion());
 
         config.removeField(OIndexInternal.CONFIG_AUTOMATIC);
         config.removeField(OIndexInternal.CONFIG_KEYTYPE);
@@ -152,7 +154,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         final String keyTypeStr = config.field(OIndexInternal.CONFIG_KEYTYPE);
         final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
 
-        loadedIndexDefinition = new OSimpleKeyIndexDefinition(keyType);
+        loadedIndexDefinition = new OSimpleKeyIndexDefinition(factory.getLastVersion(), keyType);
 
         config.removeField(OIndexInternal.CONFIG_KEYTYPE);
       }
@@ -839,7 +841,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       if (type == null)
         return;
 
-      indexDefinition = new OSimpleKeyIndexDefinition(type);
+      indexDefinition = new OSimpleKeyIndexDefinition(indexEngine.getVersion(), type);
       updateConfiguration();
     }
   }

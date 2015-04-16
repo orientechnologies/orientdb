@@ -56,7 +56,9 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
    * @param iClassName
    *          - name of class which is owner of this index
    */
-  public OCompositeIndexDefinition(final String iClassName) {
+  public OCompositeIndexDefinition(final String iClassName, int version) {
+    super(version);
+
     indexDefinitions = new ArrayList<OIndexDefinition>(5);
     className = iClassName;
   }
@@ -69,7 +71,9 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
    * @param iIndexes
    *          List of indexDefinitions to add in given index.
    */
-  public OCompositeIndexDefinition(final String iClassName, final List<? extends OIndexDefinition> iIndexes) {
+  public OCompositeIndexDefinition(final String iClassName, final List<? extends OIndexDefinition> iIndexes, int version) {
+    super(version);
+
     indexDefinitions = new ArrayList<OIndexDefinition>(5);
     for (OIndexDefinition indexDefinition : iIndexes) {
       indexDefinitions.add(indexDefinition);
@@ -355,25 +359,32 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
   @Override
   public ODocument toStream() {
     document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    final List<ODocument> inds = new ArrayList<ODocument>(indexDefinitions.size());
-    final List<String> indClasses = new ArrayList<String>(indexDefinitions.size());
-
     try {
-      document.field("className", className);
-      for (final OIndexDefinition indexDefinition : indexDefinitions) {
-        final ODocument indexDocument = indexDefinition.toStream();
-        inds.add(indexDocument);
-
-        indClasses.add(indexDefinition.getClass().getName());
-      }
-      document.field("indexDefinitions", inds, OType.EMBEDDEDLIST);
-      document.field("indClasses", indClasses, OType.EMBEDDEDLIST);
-      document.field("nullValuesIgnored", isNullValuesIgnored());
+      serializeToStream();
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
     }
 
     return document;
+  }
+
+  @Override
+  protected void serializeToStream() {
+    super.serializeToStream();
+
+    final List<ODocument> inds = new ArrayList<ODocument>(indexDefinitions.size());
+    final List<String> indClasses = new ArrayList<String>(indexDefinitions.size());
+
+    document.field("className", className);
+    for (final OIndexDefinition indexDefinition : indexDefinitions) {
+      final ODocument indexDocument = indexDefinition.toStream();
+      inds.add(indexDocument);
+
+      indClasses.add(indexDefinition.getClass().getName());
+    }
+    document.field("indexDefinitions", inds, OType.EMBEDDEDLIST);
+    document.field("indClasses", indClasses, OType.EMBEDDEDLIST);
+    document.field("nullValuesIgnored", isNullValuesIgnored());
   }
 
   /**
@@ -412,6 +423,13 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
    */
   @Override
   protected void fromStream() {
+    serializeFromStream();
+  }
+
+  @Override
+  protected void serializeFromStream() {
+    super.serializeFromStream();
+
     try {
       className = document.field("className");
 

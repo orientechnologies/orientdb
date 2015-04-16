@@ -63,8 +63,7 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
     this.valueSerializer = valueSerializer;
     this.keyTypes = keyTypes;
 
-    setByteValue(DEPTH_OFFSET, (byte) depth);
-    setIntValue(FREE_POINTER_OFFSET, MAX_BUCKET_SIZE_BYTES);
+    init(depth);
   }
 
   public OHashIndexBucket(OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
@@ -74,6 +73,12 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
     this.keyTypes = keyTypes;
+  }
+
+  public void init(int depth) throws IOException {
+    setByteValue(DEPTH_OFFSET, (byte) depth);
+    setIntValue(FREE_POINTER_OFFSET, MAX_BUCKET_SIZE_BYTES);
+    setIntValue(SIZE_OFFSET, 0);
   }
 
   public Entry<K, V> find(final K key, final long hashCode) {

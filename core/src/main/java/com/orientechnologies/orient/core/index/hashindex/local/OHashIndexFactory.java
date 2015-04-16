@@ -100,10 +100,12 @@ public class OHashIndexFactory implements OIndexFactory {
 
     final String storageType = storage.getType();
     if (storageType.equals("memory") || storageType.equals("plocal"))
-      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage());
+      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage(),
+          getLastVersion());
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage());
+      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage(),
+          getLastVersion());
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine();
     else
@@ -119,5 +121,10 @@ public class OHashIndexFactory implements OIndexFactory {
       return new OIndexDictionary(indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
 
     throw new OConfigurationException("Unsupported type : " + indexType);
+  }
+
+  @Override
+  public int getLastVersion() {
+    return OHashTableIndexEngine.VERSION;
   }
 }

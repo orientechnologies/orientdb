@@ -27,6 +27,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface OIndexFactory {
 
+  int getLastVersion();
+
   /**
    * @return List of supported indexes of this factory
    */

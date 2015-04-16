@@ -1447,7 +1447,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       }
 
       final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
-          extractFieldTypes(fields), null);
+          extractFieldTypes(fields), null, type, algorithm);
 
       return getDatabase().getMetadata().getIndexManager()
           .createIndex(name, type, indexDefinition, polymorphicClusterIds, progressListener, metadata, algorithm);

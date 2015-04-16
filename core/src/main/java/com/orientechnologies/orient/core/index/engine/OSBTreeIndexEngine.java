@@ -45,13 +45,16 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
  * @since 8/30/13
  */
 public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
+  public static final int          VERSION                    = 1;
+
   public static final String       DATA_FILE_EXTENSION        = ".sbt";
   public static final String       NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private ORID                     identity;
   private final OSBTree<Object, V> sbTree;
+  private int                      version;
 
-  public OSBTreeIndexEngine(Boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
+  public OSBTreeIndexEngine(Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
 
@@ -61,6 +64,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       durableInNonTx = OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean();
     else
       durableInNonTx = durableInNonTxMode;
+
+    this.version = version;
 
     sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, durableInNonTx, NULL_BUCKET_FILE_EXTENSION, storage);
   }
@@ -143,9 +148,6 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   public void deleteWithoutLoad(String indexName) {
     acquireExclusiveLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
-
       sbTree.deleteWithoutLoad(indexName);
     } finally {
       releaseExclusiveLock();
@@ -196,6 +198,11 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     } finally {
       releaseSharedLock();
     }
+  }
+
+  @Override
+  public int getVersion() {
+    return version;
   }
 
   @Override

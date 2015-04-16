@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.index;
 
@@ -50,16 +50,19 @@ public class OIndexDefinitionFactory {
    * @param types
    *          types of indexed properties
    * @param collates
+   * @param indexKind
+   * @param algorithm
    * @return index definition instance
    */
   public static OIndexDefinition createIndexDefinition(final OClass oClass, final List<String> fieldNames, final List<OType> types,
-      List<OCollate> collates) {
+      List<OCollate> collates, String indexKind, String algorithm) {
     checkTypes(oClass, fieldNames, types);
 
     if (fieldNames.size() == 1)
-      return createSingleFieldIndexDefinition(oClass, fieldNames.get(0), types.get(0), collates == null ? null : collates.get(0));
+      return createSingleFieldIndexDefinition(oClass, fieldNames.get(0), types.get(0), collates == null ? null : collates.get(0),
+          indexKind, algorithm);
     else
-      return createMultipleFieldIndexDefinition(oClass, fieldNames, types, collates);
+      return createMultipleFieldIndexDefinition(oClass, fieldNames, types, collates, indexKind, algorithm);
   }
 
   /**
@@ -81,16 +84,18 @@ public class OIndexDefinitionFactory {
   }
 
   private static OIndexDefinition createMultipleFieldIndexDefinition(final OClass oClass, final List<String> fieldsToIndex,
-      final List<OType> types, List<OCollate> collates) {
+      final List<OType> types, List<OCollate> collates, String indexKind, String algorithm) {
+    final OIndexFactory factory = OIndexes.getFactory(indexKind, algorithm);
     final String className = oClass.getName();
-    final OCompositeIndexDefinition compositeIndex = new OCompositeIndexDefinition(className);
+    final OCompositeIndexDefinition compositeIndex = new OCompositeIndexDefinition(className, factory.getLastVersion());
 
     for (int i = 0, fieldsToIndexSize = fieldsToIndex.size(); i < fieldsToIndexSize; i++) {
       OCollate collate = null;
       if (collates != null)
         collate = collates.get(i);
 
-      compositeIndex.addIndex(createSingleFieldIndexDefinition(oClass, fieldsToIndex.get(i), types.get(i), collate));
+      compositeIndex.addIndex(createSingleFieldIndexDefinition(oClass, fieldsToIndex.get(i), types.get(i), collate, indexKind,
+          algorithm));
     }
 
     return compositeIndex;
@@ -113,7 +118,9 @@ public class OIndexDefinitionFactory {
   }
 
   private static OIndexDefinition createSingleFieldIndexDefinition(OClass oClass, final String field, final OType type,
-      OCollate collate) {
+      OCollate collate, String indexKind, String algorithm) {
+
+    final OIndexFactory factory = OIndexes.getFactory(indexKind, algorithm);
     final String fieldName = adjustFieldName(oClass, extractFieldName(field));
     final OIndexDefinition indexDefinition;
 
@@ -136,7 +143,7 @@ public class OIndexDefinitionFactory {
 
       }
 
-      indexDefinition = new OPropertyMapIndexDefinition(oClass.getName(), fieldName, indexType, indexBy);
+      indexDefinition = new OPropertyMapIndexDefinition(oClass.getName(), fieldName, indexType, indexBy, factory.getLastVersion());
     } else if (type.equals(OType.EMBEDDEDLIST) || type.equals(OType.EMBEDDEDSET) || type.equals(OType.LINKLIST)
         || type.equals(OType.LINKSET)) {
       if (type.equals(OType.LINKSET))
@@ -150,11 +157,11 @@ public class OIndexDefinitionFactory {
               + " You should provide linked type for embedded collections that are going to be indexed.");
       }
 
-      indexDefinition = new OPropertyListIndexDefinition(oClass.getName(), fieldName, indexType);
+      indexDefinition = new OPropertyListIndexDefinition(oClass.getName(), fieldName, indexType, factory.getLastVersion());
     } else if (type.equals(OType.LINKBAG)) {
-      indexDefinition = new OPropertyRidBagIndexDefinition(oClass.getName(), fieldName);
+      indexDefinition = new OPropertyRidBagIndexDefinition(oClass.getName(), fieldName, factory.getLastVersion());
     } else
-      indexDefinition = new OPropertyIndexDefinition(oClass.getName(), fieldName, type);
+      indexDefinition = new OPropertyIndexDefinition(oClass.getName(), fieldName, type, factory.getLastVersion());
 
     if (collate == null && propertyToIndex != null)
       collate = propertyToIndex.getCollate();

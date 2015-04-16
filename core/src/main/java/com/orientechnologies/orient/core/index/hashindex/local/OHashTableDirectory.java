@@ -28,12 +28,9 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePoint
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -42,7 +39,7 @@ import java.util.List;
 public class OHashTableDirectory extends ODurableComponent {
   public static final int                 ITEM_SIZE         = OLongSerializer.LONG_SIZE;
 
-  public static final int                 LEVEL_SIZE        = OLocalHashTable.MAX_LEVEL_SIZE;
+  public static final int                 LEVEL_SIZE        = OLocalHashTable20.MAX_LEVEL_SIZE;
 
   public static final int                 BINARY_LEVEL_SIZE = LEVEL_SIZE * ITEM_SIZE + 3 * OByteSerializer.BYTE_SIZE;
 

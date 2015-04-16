@@ -3,6 +3,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.Arrays;
 import java.util.Collection;
 
+import com.orientechnologies.orient.core.index.OIndexFactory;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
@@ -22,14 +23,14 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 
 @Test
 public class ByteArrayKeyTest extends DocumentDBBaseTest {
-  private OIndex<?>           manualIndex;
+  private OIndex<?> manualIndex;
 
-	@Parameters(value = "url")
-	public ByteArrayKeyTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public ByteArrayKeyTest(@Optional String url) {
+    super(url);
+  }
 
-	protected OIndex<?> getManualIndex() {
+  protected OIndex<?> getManualIndex() {
     return database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex");
   }
 
@@ -51,18 +52,19 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     database
         .getMetadata()
         .getIndexManager()
-        .createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null, null);
+        .createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE", new OSimpleKeyIndexDefinition(-1, OType.BINARY), null, null,
+            null);
   }
 
   @BeforeMethod
   public void beforeMethod() throws Exception {
-		super.beforeMethod();
+    super.beforeMethod();
 
     OIndex<?> index = getManualIndex();
 
     if (index == null) {
       index = database.getMetadata().getIndexManager()
-          .createIndex("byte-array-manualIndex", "UNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null, null);
+          .createIndex("byte-array-manualIndex", "UNIQUE", new OSimpleKeyIndexDefinition(-1, OType.BINARY), null, null, null);
       this.manualIndex = index;
     } else {
       index = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex");
@@ -70,7 +72,7 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     }
   }
 
-	public void testUsage() {
+  public void testUsage() {
     OIndex<?> index = getManualIndex();
     byte[] key1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1 };
     ODocument doc1 = new ODocument().field("k", "key1");
