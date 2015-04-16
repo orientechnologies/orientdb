@@ -86,6 +86,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           indexesToCommit.put(index.getName(), index.getInternal());
         }
 
+        for (OIndexInternal<?> indexInternal : indexesToCommit.values())
+          indexInternal.preCommit();
+
         for (Entry<String, Object> indexEntry : indexEntries) {
           final OIndexInternal<?> index = indexesToCommit.get(indexEntry.getKey()).getInternal();
 
@@ -94,6 +97,14 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             throw new OIndexException("Index with name " + indexEntry.getKey() + " was not found.");
           } else
             index.addTxOperation((ODocument) indexEntry.getValue());
+        }
+
+        try {
+          for (OIndexInternal<?> indexInternal : indexesToCommit.values())
+            indexInternal.commit();
+        } finally {
+          for (OIndexInternal<?> indexInternal : indexesToCommit.values())
+            indexInternal.postCommit();
         }
       }
     }
