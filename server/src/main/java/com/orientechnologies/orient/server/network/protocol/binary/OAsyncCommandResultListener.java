@@ -20,17 +20,17 @@
 
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Asynchronous command result manager. As soon as a record is returned by the command is sent over the wire.
@@ -81,7 +81,7 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
       alreadySent.add(((OIdentifiable) iRecord).getIdentity());
       protocol.channel.writeByte((byte) 1); // ONE MORE RECORD
       protocol.writeIdentifiable(((OIdentifiable) iRecord).getRecord());
-
+      protocol.channel.flush();// TODO review this flush... it's for non blocking...
     } catch (IOException e) {
       return false;
     }
@@ -99,4 +99,5 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
   public boolean isEmpty() {
     return empty.get();
   }
+
 }

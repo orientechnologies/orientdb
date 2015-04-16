@@ -601,8 +601,8 @@ public class OObjectEntitySerializer {
           reloadSchema = true;
         }
 
-        if (currentOClass.getSuperClass() == null || !currentOClass.getSuperClass().equals(oSuperClass)) {
-          currentOClass.setSuperClass(oSuperClass);
+        if (!currentOClass.getSuperClasses().contains(oSuperClass)) {
+          currentOClass.setSuperClasses(Arrays.asList(oSuperClass));
           reloadSchema = true;
         }
 

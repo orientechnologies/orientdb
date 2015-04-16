@@ -20,6 +20,20 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.configuration.Configuration;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -36,7 +50,6 @@ import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.*;
@@ -61,19 +74,6 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
-import org.apache.commons.configuration.Configuration;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
@@ -1128,10 +1128,17 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Closes the Graph. After closing the Graph cannot be used.
    */
   public void shutdown(boolean closeDb) {
+    shutdown(closeDb, true);
+  }
+
+  /**
+   * Closes the Graph. After closing the Graph cannot be used.
+   */
+  public void shutdown(boolean closeDb, boolean commitTx) {
     makeActive();
 
     try {
-      if (!database.isClosed()) {
+      if (!database.isClosed() && commitTx) {
         final OStorage storage = database.getStorage();
         if (storage instanceof OAbstractPaginatedStorage) {
           if (((OAbstractPaginatedStorage) storage).getWALInstance() != null)

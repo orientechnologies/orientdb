@@ -55,14 +55,9 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorageAbstract;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.sql.query.OLiveQuery;
+import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -81,11 +76,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
+import java.util.concurrent.*;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -963,6 +954,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       throw new OCommandExecutionException("Cannot serialize the command to be executed to the server side.");
 
     Object result = null;
+    final boolean live = iCommand instanceof OLiveQuery;
 
     final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
     try {
@@ -971,12 +963,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting = true;
         try {
+
           final boolean asynch = iCommand instanceof OCommandRequestAsynch && ((OCommandRequestAsynch) iCommand).isAsynchronous();
 
           try {
             network = beginRequest(OChannelBinaryProtocol.REQUEST_COMMAND);
 
-            network.writeByte((byte) (asynch ? 'a' : 's')); // ASYNC / SYNC
+            if (live) {
+              network.writeByte((byte) 'l');
+            } else {
+              network.writeByte((byte) (asynch ? 'a' : 's')); // ASYNC / SYNC
+            }
             network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(iCommand));
 
           } finally {
@@ -987,6 +984,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             beginResponse(network);
 
             boolean addNextRecord = true;
+
             if (asynch) {
               byte status;
 
@@ -1055,6 +1053,22 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                     database.getLocalCache().updateRecord(record);
                 }
               }
+              if (live) {
+                ODocument doc = ((List<ODocument>) result).get(0);
+                Integer token = doc.field("token");
+                Boolean unsubscribe = doc.field("unsubscribe");
+                if (token != null) {
+                  if (Boolean.TRUE.equals(unsubscribe)) {
+                    this.asynchEventListener.unregisterLiveListener(token);
+                  } else {
+                    OLiveResultListener listener = (OLiveResultListener) iCommand.getResultListener();
+                    // TODO pass db copy!!!
+                    this.asynchEventListener.registerLiveListener(token, listener);
+                  }
+                } else {
+                  throw new OStorageException("Cannot execute live query, returned null token");
+                }
+              }
             }
             break;
           } finally {
@@ -1070,7 +1084,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         }
       } while (true);
     } finally {
-      if (iCommand.getResultListener() != null)
+      if (iCommand.getResultListener() != null && !live)
         iCommand.getResultListener().end();
     }
 

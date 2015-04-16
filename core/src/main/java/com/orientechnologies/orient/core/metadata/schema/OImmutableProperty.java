@@ -1,10 +1,22 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-
-import java.util.*;
+import com.orientechnologies.orient.core.metadata.schema.validation.ValidationBinaryComparable;
+import com.orientechnologies.orient.core.metadata.schema.validation.ValidationCollectionComparable;
+import com.orientechnologies.orient.core.metadata.schema.validation.ValidationMapComparable;
+import com.orientechnologies.orient.core.metadata.schema.validation.ValidationStringComparable;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -32,6 +44,8 @@ public class OImmutableProperty implements OProperty {
   private final OClass              owner;
   private final Integer             id;
   private final boolean             readOnly;
+  private final Comparable<Object>  minComparable;
+  private final Comparable<Object>  maxComparable;
 
   public OImmutableProperty(OProperty property, OImmutableClass owner) {
     name = property.getName();
@@ -59,6 +73,52 @@ public class OImmutableProperty implements OProperty {
     this.owner = owner;
     id = property.getId();
     readOnly = property.isReadonly();
+
+    if (min != null) {
+      if (type.equals(OType.STRING))
+        minComparable = new ValidationStringComparable((Integer) OType.convert(min, Integer.class));
+      else if (type.equals(OType.BINARY))
+        minComparable = new ValidationBinaryComparable((Integer) OType.convert(min, Integer.class));
+      else if (type.equals(OType.DATE) || type.equals(OType.BYTE) || type.equals(OType.SHORT) || type.equals(OType.INTEGER)
+          || type.equals(OType.LONG) || type.equals(OType.FLOAT) || type.equals(OType.DOUBLE) || type.equals(OType.DECIMAL)
+          || type.equals(OType.DATETIME))
+        minComparable = (Comparable<Object>) OType.convert(min, type.getDefaultJavaType());
+      else if (type.equals(OType.EMBEDDEDLIST) || type.equals(OType.EMBEDDEDSET) || type.equals(OType.LINKLIST)
+          || type.equals(OType.LINKSET))
+        minComparable = new ValidationCollectionComparable((Integer) OType.convert(min, Integer.class));
+      else if (type.equals(OType.EMBEDDEDMAP) || type.equals(OType.LINKMAP))
+        minComparable = new ValidationMapComparable((Integer) OType.convert(min, Integer.class));
+      else
+        minComparable = null;
+    } else
+      minComparable = null;
+
+    if (max != null) {
+      if (type.equals(OType.STRING))
+        maxComparable = new ValidationStringComparable((Integer) OType.convert(max, Integer.class));
+      else if (type.equals(OType.BINARY))
+        maxComparable = new ValidationBinaryComparable((Integer) OType.convert(max, Integer.class));
+      else if (type.equals(OType.DATE)) {
+        // This is needed because a date is valid in any time range of the day.
+        Date maxDate = (Date) OType.convert(max, OType.DATE.getDefaultJavaType());
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(maxDate);
+        cal.add(Calendar.DAY_OF_MONTH, 1);
+        maxDate = new Date(cal.getTime().getTime() - 1);
+        maxComparable = (Comparable) maxDate;
+      } else if (type.equals(OType.BYTE) || type.equals(OType.SHORT) || type.equals(OType.INTEGER) || type.equals(OType.LONG)
+          || type.equals(OType.FLOAT) || type.equals(OType.DOUBLE) || type.equals(OType.DECIMAL) || type.equals(OType.DATETIME))
+        maxComparable = (Comparable<Object>) OType.convert(max, type.getDefaultJavaType());
+      else if (type.equals(OType.EMBEDDEDLIST) || type.equals(OType.EMBEDDEDSET) || type.equals(OType.LINKLIST)
+          || type.equals(OType.LINKSET))
+        maxComparable = new ValidationCollectionComparable((Integer) OType.convert(max, Integer.class));
+      else if (type.equals(OType.EMBEDDEDMAP) || type.equals(OType.LINKMAP))
+        maxComparable = new ValidationMapComparable((Integer) OType.convert(max, Integer.class));
+      else
+        maxComparable = null;
+    } else {
+      maxComparable = null;
+    }
   }
 
   @Override
@@ -355,5 +415,13 @@ public class OImmutableProperty implements OProperty {
   @Override
   public String toString() {
     return getName() + " (type=" + getType() + ")";
+  }
+
+  public Comparable<Object> getMaxComparable() {
+    return maxComparable;
+  }
+
+  public Comparable<Object> getMinComparable() {
+    return minComparable;
   }
 }

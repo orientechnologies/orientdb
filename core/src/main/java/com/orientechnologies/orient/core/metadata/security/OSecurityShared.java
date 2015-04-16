@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -356,9 +357,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
     OClass roleClass = database.getMetadata().getSchema().getClass("ORole");
     if (roleClass == null)
       roleClass = database.getMetadata().getSchema().createClass("ORole", identityClass);
-    else if (roleClass.getSuperClass() == null)
+    else if (!roleClass.getSuperClasses().contains(identityClass))
       // MIGRATE AUTOMATICALLY TO 1.2.0
-      roleClass.setSuperClass(identityClass);
+      roleClass.setSuperClasses(Arrays.asList(identityClass));
 
     if (!roleClass.existsProperty("name")) {
       roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setCollate("ci");
@@ -380,9 +381,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
     OClass userClass = database.getMetadata().getSchema().getClass("OUser");
     if (userClass == null)
       userClass = database.getMetadata().getSchema().createClass("OUser", identityClass);
-    else if (userClass.getSuperClass() == null)
+    else if (!userClass.getSuperClasses().contains(identityClass))
       // MIGRATE AUTOMATICALLY TO 1.2.0
-      userClass.setSuperClass(identityClass);
+      userClass.setSuperClasses(Arrays.asList(identityClass));
 
     if (!userClass.existsProperty("name")) {
       userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setCollate("ci");

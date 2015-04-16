@@ -51,33 +51,6 @@ public class ODistributedConfiguration {
     configuration = iConfiguration;
   }
 
-  public boolean upgrade() {
-    boolean modified = false;
-
-    for (String c : getClusterNames()) {
-      if (getOriginalServers(c) == null) {
-        final ODocument clusterConfig = getClusterConfiguration(c);
-
-        final ODocument partitioning = (ODocument) clusterConfig.removeField("partitioning");
-        if (partitioning != null) {
-          final Collection partitions = partitioning.field("partitions");
-          if (partitions != null) {
-            OLogManager.instance().warn(this, "Migrating distributed configuration to the new format for cluster '%s'...", c);
-            final List<String> servers = new ArrayList<String>();
-            for (Object p : partitions) {
-              for (String node : (Collection<String>) p) {
-                servers.add(node);
-              }
-            }
-            clusterConfig.field("servers", servers, OType.EMBEDDEDLIST);
-          }
-          modified = true;
-        }
-      }
-    }
-    return modified;
-  }
-
   /**
    * Returns true if the replication is active, otherwise false.
    * 
