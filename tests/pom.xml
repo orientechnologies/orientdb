@@ -125,13 +125,14 @@
                         <storage.configuration.syncOnUpdate>false</storage.configuration.syncOnUpdate>
                         <index.flushAfterCreate>false</index.flushAfterCreate>
                         <buildDirectory>.</buildDirectory>
-                        <url>memory:/home/tglman/projects/orient/releases/orientdb-community-2.0-SNAPSHOT/databases/demo</url>
+                        <url>memory:demo</url>
                         <storageType>memory</storageType>
                         <testPath>.</testPath>
+                        <orientdb.config.file>target/test-classes/orientdb-server-config.xml</orientdb.config.file>
                     </systemPropertyVariables>
                     <suiteXmlFiles>
                         <suiteXmlFile>src/test/java/com/orientechnologies/orient/test/database/auto/embedded-test-db-from-scratch.xml</suiteXmlFile>
-                        <!-- <suiteXmlFile>/orientdb-tests/src/test/java/com/orientechnologies/orient/test/database/auto/remote-test-db-from-scratch.xml</suiteXmlFile> -->
+<!--                         <suiteXmlFile>src/test/java/com/orientechnologies/orient/test/database/auto/remote-test-db-from-scratch.xml</suiteXmlFile> -->
                     </suiteXmlFiles>
 
                 </configuration>

@@ -3,8 +3,9 @@
     <parameter name="url" value="remote:localhost/demo"/>
     <test name="DbCreation">
         <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.DbListenerTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.RunServerTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DbCreationTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.DbListenerTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ServerTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DBMethodsTest"/>
         </classes>
@@ -23,15 +24,15 @@
     </test>
     <test name="Population">
         <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.ComplexTypesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectInheritanceTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentPhysicalTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.ComplexTypesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentValidationTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.RecordMetadataTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectEnhancingTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DocumentTrackingTest"/>
@@ -94,9 +95,8 @@
     </test>
     <test name="Query">
         <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.FetchPlanComplexNestedLevelsTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.FetchPlanComplexNestedLevelsTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.WrongQueryTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.FetchPlanComplexNestedLevelsTest"/>
         </classes>
     </test>
     <test name="Graph">
@@ -122,7 +122,7 @@
     </test>
     <test name="sql-commands">
         <classes>
-            <!-- class name="com.orientechnologies.orient.test.database.auto.SQLCommandsTest" / -->
+            <!--  <class name="com.orientechnologies.orient.test.database.auto.SQLCommandsTest" />-->
             <class name="com.orientechnologies.orient.test.database.auto.SQLInsertTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLSelectTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLMetadataTest"/>
