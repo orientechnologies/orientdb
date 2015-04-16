@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.common.io;
 
-import com.orientechnologies.common.util.OPatternConst;
-
 import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
