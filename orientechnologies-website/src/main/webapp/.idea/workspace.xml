@@ -24,6 +24,26 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
+      <file leaf-file-name="custom.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/scripts/directive/custom.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0" vertical-offset="1692" max-vertical-offset="3330">
+              <caret line="120" column="37" selection-start-line="120" selection-start-column="37" selection-end-line="120" selection-end-column="37" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="milestones.html" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/views/issues/popover/milestones.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="-13.125" vertical-offset="0" max-vertical-offset="690">
+              <caret line="21" column="74" selection-start-line="21" selection-start-column="74" selection-end-line="21" selection-end-column="74" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="editIssue.html" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/views/issues/editIssue.html">
           <provider selected="true" editor-type-id="text-editor">
@@ -54,12 +74,14 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="app.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="app.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/scripts/app.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.57345974" vertical-offset="1467" max-vertical-offset="2100">
-              <caret line="122" column="23" selection-start-line="122" selection-start-column="23" selection-end-line="122" selection-end-column="23" />
-              <folding />
+            <state vertical-scroll-proportion="0.0" vertical-offset="1467" max-vertical-offset="2100">
+              <caret line="119" column="23" selection-start-line="119" selection-start-column="23" selection-end-line="119" selection-end-column="23" />
+              <folding>
+                <marker date="1429272009000" expanded="true" signature="2845:2962" placeholder="//..." />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -74,44 +96,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="editIssue.html" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/dist/views/issues/editIssue.html">
+      <file leaf-file-name="vueditor.html" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/views/vueditor.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="90">
-              <caret line="0" column="8599" selection-start-line="0" selection-start-column="8599" selection-end-line="0" selection-end-column="8599" />
-              <folding>
-                <element signature="n#style#0;n#span#0;n#div#1;n#div#2;n#div#1;n#div#3;n#div#0;n#!!top" expanded="true" />
-                <element signature="n#style#0;n#span#0;n#div#0;n#div#0;n#div#1;n#div#5;n#div#1;n#div#3;n#div#0;n#!!top" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="newIssue.html" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/views/issues/newIssue.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-5.4583335" vertical-offset="574" max-vertical-offset="1275">
-              <caret line="47" column="33" selection-start-line="47" selection-start-column="33" selection-end-line="47" selection-end-column="33" />
+            <state vertical-scroll-proportion="-3.125" vertical-offset="0" max-vertical-offset="180">
+              <caret line="5" column="0" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="chat.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="chat.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/scripts/controllers/chat.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="134" max-vertical-offset="4140">
-              <caret line="29" column="20" selection-start-line="29" selection-start-column="20" selection-end-line="29" selection-end-column="20" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="profile.html" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/views/users/profile.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-22.25" vertical-offset="531" max-vertical-offset="1260">
-              <caret line="71" column="101" selection-start-line="71" selection-start-column="101" selection-end-line="71" selection-end-column="101" />
+            <state vertical-scroll-proportion="0.50236964" vertical-offset="3147" max-vertical-offset="4155">
+              <caret line="231" column="10" selection-start-line="231" selection-start-column="10" selection-end-line="231" selection-end-column="10" />
               <folding />
             </state>
           </provider>
@@ -120,8 +119,8 @@
       <file leaf-file-name="room.html" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/views/room.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-3.75" vertical-offset="0" max-vertical-offset="915">
-              <caret line="6" column="7" selection-start-line="6" selection-start-column="7" selection-end-line="6" selection-end-column="7" />
+            <state vertical-scroll-proportion="-16.625" vertical-offset="306" max-vertical-offset="915">
+              <caret line="47" column="44" selection-start-line="47" selection-start-column="44" selection-end-line="47" selection-end-column="44" />
               <folding />
             </state>
           </provider>
@@ -586,13 +585,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/views/issues/popover/milestones.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="29" max-vertical-offset="690">
-          <caret line="5" column="35" selection-start-line="5" selection-start-column="10" selection-end-line="5" selection-end-column="35" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/views/issues/popover/labels.html">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="210" max-vertical-offset="585">
@@ -619,22 +611,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-3.732171" vertical-offset="2385" max-vertical-offset="7575">
           <caret line="2" column="46" selection-start-line="2" selection-start-column="3" selection-end-line="2" selection-end-column="46" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/views/vueditor.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="60" max-vertical-offset="180">
-          <caret line="4" column="0" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/directive/custom.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="1154" max-vertical-offset="3345">
-          <caret line="93" column="40" selection-start-line="93" selection-start-column="40" selection-end-line="93" selection-end-column="40" />
           <folding />
         </state>
       </provider>
@@ -676,8 +652,8 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="417">
           <caret line="0" column="8599" selection-start-line="0" selection-start-column="8599" selection-end-line="0" selection-end-column="8599" />
           <folding>
-            <element signature="n#style#0;n#span#0;n#div#1;n#div#2;n#div#1;n#div#3;n#div#0;n#!!top" expanded="true" />
-            <element signature="n#style#0;n#span#0;n#div#0;n#div#0;n#div#1;n#div#5;n#div#1;n#div#3;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#0;n#div#1;n#div#2;n#div#1;n#div#3;n#div#0;n#!!top" expanded="false" />
+            <element signature="n#style#0;n#span#0;n#div#0;n#div#0;n#div#1;n#div#5;n#div#1;n#div#3;n#div#0;n#!!top" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -690,26 +666,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/views/room.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-3.75" vertical-offset="0" max-vertical-offset="915">
-          <caret line="6" column="7" selection-start-line="6" selection-start-column="7" selection-end-line="6" selection-end-column="7" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/views/users/profile.html">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-22.25" vertical-offset="531" max-vertical-offset="1260">
           <caret line="71" column="101" selection-start-line="71" selection-start-column="101" selection-end-line="71" selection-end-column="101" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/controllers/chat.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="134" max-vertical-offset="4140">
-          <caret line="29" column="20" selection-start-line="29" selection-start-column="20" selection-end-line="29" selection-end-column="20" />
           <folding />
         </state>
       </provider>
@@ -748,8 +708,50 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/scripts/app.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.57345974" vertical-offset="1467" max-vertical-offset="2100">
-          <caret line="122" column="23" selection-start-line="122" selection-start-column="23" selection-end-line="122" selection-end-column="23" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="1467" max-vertical-offset="2100">
+          <caret line="119" column="23" selection-start-line="119" selection-start-column="23" selection-end-line="119" selection-end-column="23" />
+          <folding>
+            <marker date="1429272009000" expanded="true" signature="2845:2962" placeholder="//..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/views/vueditor.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-3.125" vertical-offset="0" max-vertical-offset="180">
+          <caret line="5" column="0" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/views/room.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-16.625" vertical-offset="306" max-vertical-offset="915">
+          <caret line="47" column="44" selection-start-line="47" selection-start-column="44" selection-end-line="47" selection-end-column="44" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/directive/custom.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="1692" max-vertical-offset="3330">
+          <caret line="120" column="37" selection-start-line="120" selection-start-column="37" selection-end-line="120" selection-end-column="37" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/views/issues/popover/milestones.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-13.125" vertical-offset="0" max-vertical-offset="690">
+          <caret line="21" column="74" selection-start-line="21" selection-start-column="74" selection-end-line="21" selection-end-column="74" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/controllers/chat.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.50236964" vertical-offset="3147" max-vertical-offset="4155">
+          <caret line="231" column="10" selection-start-line="231" selection-start-column="10" selection-end-line="231" selection-end-column="10" />
           <folding />
         </state>
       </provider>

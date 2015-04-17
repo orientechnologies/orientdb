@@ -67,10 +67,7 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
 
       function initialize(value) {
 
-        if (value) {
-          ngModel.$setViewValue(value);
-        }
-
+        ngModel.$setViewValue(value);
 
         if (!editor) {
           var showing = false;
@@ -121,6 +118,7 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
               send: function (e) {
 
                 if ((e.keyCode == 13) && (!e.ctrlKey) && !showing) {
+                  e.preventDefault();
                   if (scope.onSend && editor.$data.input && editor.$data.input.length > 0) {
                     scope.onSend();
                   }
@@ -136,6 +134,7 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
 
           })
           editor.$watch('$data.input', function (newVal, oldval) {
+
             ngModel.$setViewValue(newVal);
 
           });

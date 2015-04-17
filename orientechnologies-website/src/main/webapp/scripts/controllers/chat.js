@@ -8,7 +8,7 @@
  * Controller of the webappApp
  */
 angular.module('webappApp')
-  .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb, $location, ChatService, $rootScope,$filter) {
+  .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb, $location, ChatService, $rootScope, $filter) {
 
     $scope.isNew = false;
     $scope.placeholder = "Click here to type a message. Enter to send.";
@@ -217,11 +217,12 @@ angular.module('webappApp')
     $scope.sendMessage = function () {
       $scope.sending = true;
 
-      var last = $scope.current;
+      var last = angular.copy($scope.current);
       $scope.current = null;
+      $scope.$apply();
       if (last != null) {
         Organization.all("clients").one($scope.clientId).all("room").patch({body: last}).then(function (data) {
-          $scope.current = null;
+          //$scope.current = null;
           addNewMessage(data);
           $scope.sending = false;
           visit();
