@@ -1,6 +1,7 @@
 package com.orientechnologies.website.controllers;
 
 import com.orientechnologies.website.configuration.ApiVersion;
+import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
 import com.orientechnologies.website.repository.OrganizationRepository;
@@ -8,6 +9,7 @@ import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.RepositoryService;
+import com.orientechnologies.website.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.http.HttpStatus;
@@ -35,6 +37,8 @@ public class RepositoryController {
     private RepositoryRepository repoRepository;
 
     @Autowired
+    UserService userService;
+    @Autowired
     protected IssueService issueService;
 
     @RequestMapping(value = "{owner}/{repo}/issues/{number}", method = RequestMethod.GET)
@@ -42,6 +46,8 @@ public class RepositoryController {
                                                 @PathVariable("number") Long number) {
 
         Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
+
+
         return issue != null ? new ResponseEntity<Issue>(issue, HttpStatus.OK) : new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
     }
 
@@ -66,6 +72,10 @@ public class RepositoryController {
     public ResponseEntity<List<Event>> getSingleIssueEvents(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
                                                             @PathVariable("number") Long number) {
         List<Event> events = organizationRepository.findEventsByOwnerRepoAndIssueNumber(owner, repo, number);
+
+        for (Event event : events) {
+            userService.profileEvent( SecurityHelper.currentUser(),event,owner);
+        }
         return events != null ? new ResponseEntity<List<Event>>(events, HttpStatus.OK) : new ResponseEntity<List<Event>>(
                 HttpStatus.NOT_FOUND);
     }
@@ -134,7 +144,11 @@ public class RepositoryController {
 
         Issue i = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
 
-        return i != null ? new ResponseEntity<List<OUser>>(issueService.findInvolvedActors(i), HttpStatus.OK)
+        List<OUser> involvedActors = issueService.findInvolvedActors(i);
+        for (OUser involvedActor : involvedActors) {
+            userService.profileUser(SecurityHelper.currentUser(),involvedActor,owner);
+        }
+        return i != null ? new ResponseEntity<List<OUser>>(involvedActors, HttpStatus.OK)
                 : new ResponseEntity<List<OUser>>(HttpStatus.NOT_FOUND);
     }
 

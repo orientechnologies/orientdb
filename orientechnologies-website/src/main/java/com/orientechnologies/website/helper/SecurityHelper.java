@@ -21,4 +21,5 @@ public class SecurityHelper {
     DeveloperAuthentication developerAuthentication = (DeveloperAuthentication) auth;
     return developerAuthentication.getGithubToken();
   }
+
 }

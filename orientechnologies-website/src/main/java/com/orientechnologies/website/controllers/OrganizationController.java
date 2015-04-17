@@ -87,9 +87,8 @@ public class OrganizationController extends ExceptionController {
 
     Issue issue = orgRepository.findSingleOrganizationIssueByNumber(organization, number);
 
+    OUser user = SecurityHelper.currentUser();
     if (Boolean.TRUE.equals(issue.getConfidential())) {
-
-      OUser user = SecurityHelper.currentUser();
 
       if (!userService.isMember(user, organization)) {
 
@@ -101,6 +100,7 @@ public class OrganizationController extends ExceptionController {
       }
 
     }
+    userService.profileIssue(user, issue, organization);
     return issue != null ? new ResponseEntity<Issue>(issue, HttpStatus.OK) : new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
 
   }
@@ -261,20 +261,38 @@ public class OrganizationController extends ExceptionController {
 
   @RequestMapping(value = "{name}/clients/{id}", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
-  public Client findClient(@PathVariable("name") String name, @PathVariable("id") Integer id) {
-    return orgRepository.findClient(name, id);
+  public ResponseEntity<Client> findClient(@PathVariable("name") String name, @PathVariable("id") Integer id) {
+    OUser user = SecurityHelper.currentUser();
+    if (userService.isMember(user, name)) {
+      return new ResponseEntity<Client>(orgRepository.findClient(name, id), HttpStatus.OK);
+    } else {
+      return new ResponseEntity<Client>(HttpStatus.NOT_FOUND);
+    }
+
   }
 
   @RequestMapping(value = "{name}/clients/{id}/members", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
-  public List<OUser> findClientMembers(@PathVariable("name") String name, @PathVariable("id") Integer id) {
-    return orgRepository.findClientMembers(name, id);
+  public ResponseEntity<List<OUser>> findClientMembers(@PathVariable("name") String name, @PathVariable("id") Integer id) {
+
+    OUser user = SecurityHelper.currentUser();
+    if (userService.isMember(user, name)) {
+      return new ResponseEntity<List<OUser>>(orgRepository.findClientMembers(name, id), HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<OUser>>(HttpStatus.NOT_FOUND);
+    }
+
   }
 
   @RequestMapping(value = "{name}/clients/{id}/environments", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
-  public List<Environment> findClientEnvironments(@PathVariable("name") String name, @PathVariable("id") Integer id) {
-    return orgRepository.findClientEnvironments(name, id);
+  public ResponseEntity<List<Environment>> findClientEnvironments(@PathVariable("name") String name, @PathVariable("id") Integer id) {
+    OUser user = SecurityHelper.currentUser();
+    if (userService.isMember(user, name)) {
+      return new ResponseEntity<List<Environment>>(orgRepository.findClientEnvironments(name, id), HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<Environment>>(HttpStatus.NOT_FOUND);
+    }
   }
 
   @RequestMapping(value = "{name}", method = RequestMethod.POST)

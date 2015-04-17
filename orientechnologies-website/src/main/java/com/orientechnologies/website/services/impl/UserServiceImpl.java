@@ -86,6 +86,7 @@ public class UserServiceImpl implements UserService {
     userDTO.setConfirmed(user.getConfirmed());
     userDTO.setNotification(user.getNotification());
     userDTO.setWatching(user.getWatching());
+    userDTO.setChatNotification(user.getChatNotification());
     return userDTO;
   }
 
@@ -185,6 +186,65 @@ public class UserServiceImpl implements UserService {
       return userRepository.save(user);
     }
     throw ServiceException.create(401);
+  }
+
+  @Override
+  public void profileIssue(OUser current, Issue issue, String organization) {
+
+    if (!isMember(current, organization)) {
+      blankInfo(issue.getUser());
+    } else {
+      Client client = getClient(issue.getUser(), organization);
+      if (client != null) {
+        issue.getUser().setIsClient(true);
+        issue.getUser().setClientName(client.getName());
+        issue.getUser().setClientId(client.getClientId());
+      }
+    }
+  }
+
+  @Override
+  public void profileEvent(OUser current, Event event, String organization) {
+    if (!isMember(current, organization)) {
+      if (event instanceof Comment) {
+        blankInfo(((Comment) event).getUser());
+      } else if (event instanceof IssueEvent) {
+        blankInfo(((IssueEvent) event).getActor());
+      }
+    } else {
+      if (event instanceof Comment) {
+
+        Comment comment = (Comment) event;
+        Client client = getClient(comment.getUser(), organization);
+        if (client != null) {
+          comment.getUser().setIsClient(true);
+          comment.getUser().setClientName(client.getName());
+          comment.getUser().setClientId(client.getClientId());
+        }
+      }
+
+    }
+  }
+
+  @Override
+  public void profileUser(OUser current, OUser toProfile, String organization) {
+
+    if (!isMember(current, organization)) {
+      blankInfo(toProfile);
+    } else {
+      Client client = getClient(toProfile, organization);
+      if (client != null) {
+        toProfile.setIsClient(true);
+        toProfile.setClientName(client.getName());
+        toProfile.setClientId(client.getClientId());
+      }
+    }
+  }
+
+  protected void blankInfo(OUser user) {
+    user.setCompany("");
+    user.setEmail("");
+    user.setWorkingEmail("");
   }
 
   private void createUserEnvironmentRelationship(OUser client, Environment environment) {

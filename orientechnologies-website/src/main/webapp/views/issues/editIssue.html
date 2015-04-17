@@ -52,7 +52,7 @@
     </div>
     <div class="row">
       <div class="col-md-12">
-        <b>{{issue.user.name}}</b> opened this issue {{ issue.createdAt | fromNow}}
+        <b>{{issue.user.name}}</b>  opened this issue {{ issue.createdAt | fromNow}} <a href="#/clients/{{issue.user.clientId}}"><span class="label label-primary" ng-show="issue.user.isClient">{{issue.user.clientName}}</span></a>
       </div>
     </div>
   </div>
@@ -75,7 +75,7 @@
         <div class="panel-heading">
           <div class="row">
             <div class="col-md-10">
-              <b>{{issue.user.name}}</b> commented {{ issue.createdAt | fromNow}}
+              <b>{{issue.user.name}}</b> commented {{ issue.createdAt | fromNow}} <a href="#/clients/{{issue.user.clientId}}"><span class="label label-primary" ng-show="issue.user.isClient">{{issue.user.clientName}}</span></a>
             </div>
             <div class="col-md-2">
               <div class="pull-right">

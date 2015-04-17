@@ -6,12 +6,17 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.website.model.schema.OMessage;
 import com.orientechnologies.website.model.schema.OTypeHolder;
+import com.orientechnologies.website.model.schema.dto.Client;
 import com.orientechnologies.website.model.schema.dto.Message;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.MessageRepository;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
@@ -54,5 +59,39 @@ public class MessageRepositoryImpl extends OrientBaseRepository<Message> impleme
 
     ODocument msg = db.getRawGraph().load(new ORecordId(id));
     return OMessage.UUID.fromDoc(msg, db);
+  }
+
+  @Override
+  public Date findLastActivity(final OUser user, final Client room) {
+
+    ODocument activity = findActivityForUserAndRoom(user, room);
+    return activity != null ? (Date) activity.field("timestamp") : null;
+  }
+
+  private ODocument findActivityForUserAndRoom(final OUser user, final Client room) {
+    OrientGraph db = dbFactory.getGraph();
+    Map<String, Object> params = new HashMap<String, Object>() {
+      {
+        put("user", user.getRid());
+        put("room", room.getId());
+
+      }
+    };
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL("select from ChatLog WHERE user=:user and room =:room")).execute(
+        params);
+
+    try {
+      ODocument doc = vertices.iterator().next().getRecord();
+      doc = doc.reload(null, true);
+      return doc;
+    } catch (NoSuchElementException e) {
+      return null;
+    }
+  }
+
+  @Override
+  public Date findLastActivityIfNotNotified(OUser user, Client room) {
+    ODocument activity = findActivityForUserAndRoom(user, room);
+    return activity != null ? (!Boolean.TRUE.equals(activity.field("notified")) ? (Date) activity.field("timestamp") : null) : null;
   }
 }

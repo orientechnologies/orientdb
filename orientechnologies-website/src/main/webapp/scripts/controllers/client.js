@@ -26,11 +26,15 @@ angular.module('webappApp')
   });
 
 angular.module('webappApp')
-  .controller('ClientEditCtrl', function ($scope, Organization, $routeParams) {
+  .controller('ClientEditCtrl', function ($scope, Organization, $routeParams,$location) {
 
 
     Organization.all("clients").one($routeParams.id).get().then(function (data) {
       $scope.client = data.plain();
+    }).catch(function (error, status) {
+      if(error.status == 404){
+        $location.path("/");
+      }
     })
     Organization.all("clients").one($routeParams.id).all("members").getList().then(function (data) {
       $scope.members = data.plain();

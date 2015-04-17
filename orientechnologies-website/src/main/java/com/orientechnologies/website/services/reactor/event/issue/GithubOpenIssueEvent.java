@@ -1,6 +1,8 @@
 package com.orientechnologies.website.services.reactor.event.issue;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.website.events.EventManager;
+import com.orientechnologies.website.events.IssueCreatedEvent;
 import com.orientechnologies.website.github.GIssue;
 import com.orientechnologies.website.github.GMilestone;
 import com.orientechnologies.website.model.schema.ORepository;
@@ -43,6 +45,9 @@ public class GithubOpenIssueEvent implements GithubIssueEvent {
 
   @Autowired
   private OrganizationRepository orgRepository;
+
+  @Autowired
+  protected EventManager         eventManager;
 
   @Override
   public void handle(String evt, ODocument payload) {
@@ -94,6 +99,9 @@ public class GithubOpenIssueEvent implements GithubIssueEvent {
     if (milestone != null)
       issueService.changeMilestone(i, milestone, user, true);
 
+    i.setUser(user);
+    eventManager.pushInternalEvent(IssueCreatedEvent.EVENT, i);
+
   }
 
   @Override
@@ -102,7 +110,7 @@ public class GithubOpenIssueEvent implements GithubIssueEvent {
   }
 
   protected OUser findUser(ODocument payload, String field) {
-      ODocument sender = payload.field(field);
+    ODocument sender = payload.field(field);
     String login = sender.field("login");
     Integer id = sender.field("id");
     return userRepository.findUserOrCreateByLogin(login, id.longValue());

@@ -27,7 +27,7 @@ angular.module('webappApp')
 
           if ($scope.clientId == msg.clientId) {
             replaceMsg(msg);
-
+            visit();
           }
         } else {
           if ($scope.clientId == msg.clientId) {
@@ -224,6 +224,7 @@ angular.module('webappApp')
           $scope.current = null;
           addNewMessage(data);
           $scope.sending = false;
+          visit();
         }).catch(function () {
           $scope.current = last;
           $scope.sending = false;

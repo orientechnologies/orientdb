@@ -3,6 +3,7 @@
     <div class="row">
       <div class="col-md-10">
         <b>{{comment.user.name}}</b> commented {{ comment.createdAt | fromNow}}
+        <a href="#/clients/{{comment.user.clientId}}"><span class="label label-primary" ng-show="comment.user.isClient">{{comment.user.clientName}}</span></a>
       </div>
       <div class="col-md-2">
         <div class="pull-right">

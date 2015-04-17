@@ -1,5 +1,6 @@
 package com.orientechnologies.website.repository.impl;
 
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.model.schema.OTypeHolder;
@@ -8,7 +9,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Created by Enrico Risa on 17/10/14.
@@ -61,6 +64,17 @@ public abstract class OrientBaseRepository<T> implements BaseRepository<T> {
     ODocument doc = toDoc(entity);
     OrientVertex vertex = new OrientVertex(graph, doc);
     vertex.remove();
+  }
+
+  @Override
+  public Iterable<T> findAll() {
+    OrientGraph graph = dbFactory.getGraph();
+    List<T> entities = new ArrayList<T>();
+    ORecordIteratorClass<ODocument> oDocuments = graph.getRawGraph().browseClass(getEntityClass().getSimpleName());
+    for (ODocument oDocument : oDocuments) {
+      entities.add(fromDoc(oDocument));
+    }
+    return entities;
   }
 
   public abstract OTypeHolder<T> getHolder();

@@ -224,6 +224,7 @@ public class IssueServiceImpl implements IssueService {
       }
       e = (IssueEvent) eventRepository.save(e);
       fireEvent(issue, e);
+
     }
   }
 

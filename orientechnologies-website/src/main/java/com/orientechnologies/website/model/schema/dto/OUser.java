@@ -27,6 +27,13 @@ public class OUser implements UserDetails {
 
   private Boolean notification;
   private Boolean watching;
+  private Boolean chatNotification;
+
+  private Boolean isClient;
+
+  private String  clientName;
+
+  private Integer clientId;
 
   public Boolean getNotification() {
     return notification;
@@ -176,5 +183,38 @@ public class OUser implements UserDetails {
 
   public void setWatching(Boolean watching) {
     this.watching = watching;
+  }
+
+  public Boolean getChatNotification() {
+    return chatNotification;
+
+  }
+
+  public Boolean getIsClient() {
+    return isClient;
+  }
+
+  public void setIsClient(Boolean isClient) {
+    this.isClient = isClient;
+  }
+
+  public void setClientName(String clientName) {
+    this.clientName = clientName;
+  }
+
+  public String getClientName() {
+    return clientName;
+  }
+
+  public Integer getClientId() {
+    return clientId;
+  }
+
+  public void setClientId(Integer clientId) {
+    this.clientId = clientId;
+  }
+
+  public void setChatNotification(Boolean chatNotification) {
+    this.chatNotification = chatNotification;
   }
 }

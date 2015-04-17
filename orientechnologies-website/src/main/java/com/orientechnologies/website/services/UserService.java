@@ -1,10 +1,7 @@
 package com.orientechnologies.website.services;
 
 import com.orientechnologies.website.exception.ServiceException;
-import com.orientechnologies.website.model.schema.dto.Client;
-import com.orientechnologies.website.model.schema.dto.Environment;
-import com.orientechnologies.website.model.schema.dto.OUser;
-import com.orientechnologies.website.model.schema.dto.Repository;
+import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.UserDTO;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,4 +33,10 @@ public interface UserService {
     public List<Environment> getUserEnvironments(OUser user);
 
     public OUser patchUser(OUser current, UserDTO user);
+
+    public void profileIssue(OUser current, Issue issue, String organization);
+
+    public void profileEvent(OUser user, Event event, String organization);
+
+    public void profileUser(OUser current, OUser toProfile, String organization);
 }

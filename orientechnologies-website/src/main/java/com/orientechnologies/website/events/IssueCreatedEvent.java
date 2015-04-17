@@ -13,6 +13,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring4.SpringTemplateEngine;
 import reactor.event.Event;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -50,12 +51,12 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
     Context context = new Context();
     fillContextVariable(context, issue);
     String htmlContent = templateEngine.process("newIssue.html", context);
-    
-    OUser owner = issue.getScope().getOwner();
+
+    OUser owner = issue.getScope() != null ? issue.getScope().getOwner() : null;
     OUser user = issue.getUser();
 
     Set<String> dests = new HashSet<String>();
-    List<OUser> members = issue.getScope().getMembers();
+    List<OUser> members = issue.getScope() != null ? issue.getScope().getMembers() : new ArrayList<OUser>();
     if (owner != null) {
       boolean found = false;
       for (OUser member : members) {
@@ -91,12 +92,12 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
 
   private void fillContextVariable(Context context, Issue issue) {
     context.setVariable("link", config.endpoint + "/#issues/" + issue.getIid());
-    String body = null;
+    String body = "";
     if (issue.getBody() != null) {
       body = issue.getBody();
-    } else {
-      body = "@" + issue.getUser().getName() + " opened issue #" + issue.getIid();
     }
+    String user = "@" + issue.getUser().getName() + " opened issue #" + issue.getIid();
     context.setVariable("body", body);
+    context.setVariable("user", user);
   }
 }

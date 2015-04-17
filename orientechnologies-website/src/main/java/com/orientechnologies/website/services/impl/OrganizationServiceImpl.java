@@ -338,7 +338,7 @@ public class OrganizationServiceImpl implements OrganizationService {
       }
     };
     graph.command(
-        new OCommandSQL("update ChatLog SET user=:user, room=:room, timestamp=:timestamp UPSERT WHERE user=:user and room =:room"))
+        new OCommandSQL("update ChatLog SET user=:user, room=:room, timestamp=:timestamp , notified=false UPSERT WHERE user=:user and room =:room"))
         .execute(params);
 
   }
