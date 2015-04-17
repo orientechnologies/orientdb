@@ -128,7 +128,7 @@ public class ODocumentValidationTest {
       clazz.createProperty("binary", OType.BINARY).setMax("11");
       clazz.createProperty("byte", OType.BYTE).setMax("11");
       Calendar cal = Calendar.getInstance();
-      cal.add(Calendar.HOUR, 1);
+      cal.add(Calendar.HOUR, cal.get(Calendar.HOUR) == 11 ? 0 : 1);
       SimpleDateFormat format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateFormatInstance();
       clazz.createProperty("date", OType.DATE).setMax(format.format(cal.getTime()));
       format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateTimeFormatInstance();
@@ -228,7 +228,7 @@ public class ODocumentValidationTest {
       clazz.createProperty("binary", OType.BINARY).setMin("11");
       clazz.createProperty("byte", OType.BYTE).setMin("11");
       Calendar cal = Calendar.getInstance();
-      cal.add(Calendar.HOUR, 1);
+      cal.add(Calendar.HOUR, cal.get(Calendar.HOUR) == 11 ? 0 : 1);
       SimpleDateFormat format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateFormatInstance();
       clazz.createProperty("date", OType.DATE).setMin(format.format(cal.getTime()));
       format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateTimeFormatInstance();

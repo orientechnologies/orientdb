@@ -292,6 +292,20 @@ public class Orient extends OListenerManger<OOrientListener> {
       // NOTE: DON'T REMOVE PROFILER TO AVOID NPE AROUND THE CODE IF ANY THREADS IS STILL WORKING
       profiler.shutdown();
 
+      purgeWeakShutdownListeners();
+      for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners)
+        try {
+          if (wl != null) {
+            final OOrientShutdownListener l = wl.get();
+            if (l != null) {
+              l.onShutdown();
+            }
+          }
+
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error during orient shutdown.", e);
+        }
+      
       // CALL THE SHUTDOWN ON ALL THE LISTENERS
       for (OOrientListener l : browseListeners()) {
         if (l != null)
@@ -302,19 +316,6 @@ public class Orient extends OListenerManger<OOrientListener> {
           }
 
       }
-
-      purgeWeakShutdownListeners();
-      for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners)
-        try {
-          if (wl != null) {
-            final OOrientShutdownListener l = wl.get();
-            if (l != null)
-              l.onShutdown();
-          }
-
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during orient shutdown.", e);
-        }
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
