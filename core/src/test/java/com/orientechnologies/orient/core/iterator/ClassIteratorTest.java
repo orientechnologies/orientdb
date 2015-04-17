@@ -7,7 +7,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.ODefaultClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
@@ -83,6 +85,42 @@ public class ClassIteratorTest {
       Assert.assertTrue(names.contains(personDoc.field("First")));
       Assert.assertTrue(names.remove(personDoc.field("First")));
 
+      System.out.printf("Doc %d: %s\n", docNum++, personDoc.toString());
+    }
+
+    Assert.assertTrue(names.isEmpty());
+  }
+
+  @Test
+  public void testDescendentOrderIteratorWithMultipleClusters() throws Exception {
+    final OClass personClass = db.getMetadata().getSchema().getClass("Person");
+
+    // empty old cluster but keep it attached
+    personClass.truncate();
+
+    // reload the data in a new 'test' cluster
+    int testClusterId = db.addCluster("test");
+    personClass.addClusterId(testClusterId);
+    personClass.setClusterSelection(new ODefaultClusterSelectionStrategy());
+    personClass.setDefaultClusterId(testClusterId);
+
+    for (String name : names) {
+      createPerson(name);
+    }
+
+    // Use descending class iterator.
+    final ORecordIteratorClass<ODocument> personIter =
+        new ORecordIteratorClassDescendentOrder<ODocument>(
+            db, db, "Person", true, true, false, LOCKING_STRATEGY.DEFAULT);
+
+    personIter.setRange(null, null); // open range
+
+    int docNum = 0;
+    // Explicit iterator loop.
+    while (personIter.hasNext()) {
+      final ODocument personDoc = personIter.next();
+      Assert.assertTrue(names.contains(personDoc.field("First")));
+      Assert.assertTrue(names.remove(personDoc.field("First")));
       System.out.printf("Doc %d: %s\n", docNum++, personDoc.toString());
     }
 
