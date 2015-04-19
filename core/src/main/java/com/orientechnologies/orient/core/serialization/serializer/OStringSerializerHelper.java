@@ -78,7 +78,7 @@ public abstract class OStringSerializerHelper {
     case STRING:
       if (iValue instanceof String) {
         final String s = (String) iValue;
-        return decode(s.substring(1, s.length() - 1));
+        return decode(getStringContent(s));
       }
       return iValue.toString();
 
