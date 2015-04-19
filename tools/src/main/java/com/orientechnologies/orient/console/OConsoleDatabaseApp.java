@@ -92,6 +92,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected ORecord             currentRecord;
   protected int                 currentRecordIdx;
   protected List<OIdentifiable> currentResultSet;
+  protected Object              currentResult;
   protected OServerAdmin        serverAdmin;
   private int                   windowSize         = DEFAULT_WIDTH;
   private int                   lastPercentStep;
@@ -816,28 +817,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     cmd.parse(new OCommandScript("Javascript", iText));
 
     long start = System.currentTimeMillis();
-
-    final Object result = cmd.execute(null);
-
+    currentResult = cmd.execute(null);
     float elapsedSeconds = getElapsedSecs(start);
 
-    if (OMultiValue.isMultiValue(result)) {
-      if (result instanceof List<?>)
-        currentResultSet = (List<OIdentifiable>) result;
-      else if (result instanceof Collection<?>) {
-        currentResultSet = new ArrayList<OIdentifiable>();
-        currentResultSet.addAll((Collection<? extends OIdentifiable>) result);
-      } else if (result.getClass().isArray()) {
-        currentResultSet = new ArrayList<OIdentifiable>();
-        Collections.addAll(currentResultSet, (OIdentifiable[]) result);
-      }
+    parseResult();
 
-      setResultset(currentResultSet);
-
+    if (currentResultSet != null) {
       dumpResultSet(-1);
       message("\nClient side script executed in %f sec(s). Returned %d records", elapsedSeconds, currentResultSet.size());
     } else
-      message("\nClient side script executed in %f sec(s). Value returned is: %s", elapsedSeconds, result);
+      message("\nClient side script executed in %f sec(s). Value returned is: %s", elapsedSeconds, currentResult);
   }
 
   @SuppressWarnings("unchecked")
@@ -990,7 +979,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "number", description = "The number of the record in the most recent result set") final String iRecordNumber) {
     checkForDatabase();
 
-    if (iRecordNumber == null)
+    if (iRecordNumber == null || currentResultSet == null)
       checkCurrentObject();
     else {
       int recNumber = Integer.parseInt(iRecordNumber);
@@ -2102,14 +2091,37 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return String.format("orientdb%s> ", getContext());
   }
 
+  protected void parseResult() {
+    setResultset(null);
+
+    if (currentResult instanceof Map<?, ?>)
+      return;
+
+    final Object first = OMultiValue.getFirstValue(currentResult);
+
+    if (first instanceof OIdentifiable) {
+      if (currentResult instanceof List<?>)
+        currentResultSet = (List<OIdentifiable>) currentResult;
+      else if (currentResult instanceof Collection<?>) {
+        currentResultSet = new ArrayList<OIdentifiable>();
+        currentResultSet.addAll((Collection<? extends OIdentifiable>) currentResult);
+      } else if (currentResult.getClass().isArray()) {
+        currentResultSet = new ArrayList<OIdentifiable>();
+        Collections.addAll(currentResultSet, (OIdentifiable[]) currentResult);
+      }
+
+      setResultset(currentResultSet);
+    }
+  }
+
   protected void setResultset(final List<OIdentifiable> iResultset) {
     currentResultSet = iResultset;
     currentRecordIdx = 0;
-    currentRecord = currentResultSet.isEmpty() ? null : (ORecord) currentResultSet.get(0).getRecord();
+    currentRecord = iResultset == null || iResultset.isEmpty() ? null : (ORecord) iResultset.get(0).getRecord();
   }
 
   protected void resetResultSet() {
-    currentResultSet.clear();
+    currentResultSet = null;
     currentRecord = null;
   }
 
@@ -2120,27 +2132,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     resetResultSet();
 
     long start = System.currentTimeMillis();
-    Object result = currentDatabase.command(new OCommandScript(iLanguage, iText)).execute();
+    currentResult = currentDatabase.command(new OCommandScript(iLanguage, iText)).execute();
     float elapsedSeconds = getElapsedSecs(start);
 
-    if (OMultiValue.isMultiValue(result) && !(result instanceof Map<?, ?>)) {
-      if (result instanceof List<?>)
-        currentResultSet = (List<OIdentifiable>) result;
-      else if (result instanceof Collection<?>) {
-        currentResultSet = new ArrayList<OIdentifiable>();
-        currentResultSet.addAll((Collection<? extends OIdentifiable>) result);
-      } else if (result.getClass().isArray()) {
-        currentResultSet = new ArrayList<OIdentifiable>();
-        Collections.addAll(currentResultSet, (OIdentifiable[]) result);
-      }
-
-      setResultset(currentResultSet);
-
+    parseResult();
+    if (currentResultSet != null) {
       dumpResultSet(-1);
       message("\nServer side script executed in %f sec(s). Returned %d records", elapsedSeconds, currentResultSet.size());
     } else {
-      String lineFeed = result instanceof Map<?, ?> ? "\n" : "";
-      message("\nServer side script executed in %f sec(s). Value returned is: %s%s", elapsedSeconds, lineFeed, result);
+      String lineFeed = currentResult instanceof Map<?, ?> ? "\n" : "";
+      message("\nServer side script executed in %f sec(s). Value returned is: %s%s", elapsedSeconds, lineFeed, currentResult);
     }
   }
 
