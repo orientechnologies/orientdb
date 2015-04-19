@@ -22,14 +22,17 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.tinkerpop.blueprints.CloseableIterable;
 import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.util.io.graphson.IGraphSONIterable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Marko A. Rodriguez (http://markorodriguez.com)
  */
-public class OrientElementIterable<T extends Element> implements CloseableIterable<T> {
+public class OrientElementIterable<T extends Element> implements CloseableIterable<T>, IGraphSONIterable {
 
   private final Iterable<?>     iterable;
   private final OrientBaseGraph graph;
@@ -51,4 +54,13 @@ public class OrientElementIterable<T extends Element> implements CloseableIterab
 
   }
 
+	@Override
+	public List<? extends Element> getList() {
+		List<T> result = new ArrayList<T>();
+		for (Iterator<T> iterator = iterator(); iterator.hasNext();) {
+			T e = (T) iterator.next();
+			result.add(e);
+		}
+		return result;
+	}
 }
