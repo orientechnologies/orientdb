@@ -351,9 +351,6 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         else
           value = stringValue;
 
-        if (OMultiValue.isMultiValue(value) && OMultiValue.getSize(value) == 1)
-          value = OMultiValue.getFirstValue(value);
-
         result.put(key, value);
       }
       lastResult = result;
