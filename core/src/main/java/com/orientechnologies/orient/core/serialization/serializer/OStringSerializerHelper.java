@@ -679,7 +679,10 @@ public abstract class OStringSerializerHelper {
       if (item != null && !item.isEmpty()) {
         entry = OStringSerializerHelper.split(item, OStringSerializerHelper.ENTRY_SEPARATOR);
 
-        map.put((String) fieldTypeFromStream(null, OType.STRING, entry.get(0)), entry.get(1));
+        final String key = entry.get(0).trim();
+        final String value = entry.get(1).trim();
+
+        map.put((String) fieldTypeFromStream(null, OType.STRING, key), value);
       }
     }
 
