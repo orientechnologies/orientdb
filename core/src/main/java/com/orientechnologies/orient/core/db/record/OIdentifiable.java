@@ -23,6 +23,7 @@ import java.util.Comparator;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Base interface for identifiable objects. This abstraction is required to use ORID and ORecord in many points.
@@ -48,6 +49,8 @@ public interface OIdentifiable extends Comparable<OIdentifiable>, Comparator<OId
   public void lock(boolean iExclusive);
   
   public boolean isLocked();
+
+  OStorage.LOCKING_STRATEGY lockingStrategy();
 
   public void unlock();
 }

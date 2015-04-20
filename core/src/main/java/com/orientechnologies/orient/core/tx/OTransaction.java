@@ -149,6 +149,8 @@ public interface OTransaction {
   
   public boolean isLockedRecord(OIdentifiable iRecord);
 
+  OStorage.LOCKING_STRATEGY lockingStrategy(OIdentifiable iRecord);
+
   public OTransaction lockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY iLockingStrategy);
 
   public OTransaction unlockRecord(OIdentifiable iRecord);

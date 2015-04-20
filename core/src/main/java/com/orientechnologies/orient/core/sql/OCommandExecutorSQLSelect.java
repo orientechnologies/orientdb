@@ -487,11 +487,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         // LOCK THE RECORD IF NEEDED
         if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
-          record.lock(true);
-        } else if (localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
-          record.lock(false);
-        }
+          LOCKING_STRATEGY strategy = record.lockingStrategy();
 
+          if (strategy == null)
+            record.lock(true);
+          else if (strategy != LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
+            throw new OCommandExecutionException("Record is locked but different locking strategy is used : " + strategy);
+
+        } else if (localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+          LOCKING_STRATEGY strategy = record.lockingStrategy();
+
+          if (strategy == null)
+            record.lock(false);
+          else if (strategy != LOCKING_STRATEGY.KEEP_SHARED_LOCK)
+            throw new OCommandExecutionException("Record is locked but different locking strategy is used : " + strategy);
+        }
       } else {
         boolean useNoCache = noCache;
 

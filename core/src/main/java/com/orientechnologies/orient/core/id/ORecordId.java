@@ -289,6 +289,11 @@ public class ORecordId implements ORID {
   }
 
   @Override
+  public OStorage.LOCKING_STRATEGY lockingStrategy() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockingStrategy(this);
+  }
+
+  @Override
   public void unlock() {
     ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().unlockRecord(this);
   }

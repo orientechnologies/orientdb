@@ -345,6 +345,11 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().isLockedRecord(this);
   }
 
+  @Override
+  public OStorage.LOCKING_STRATEGY lockingStrategy() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockingStrategy(this);
+  }
+
   /**
    * (Blueprints Extension) Unlocks previous acquired @lock against the Element.
    * 
