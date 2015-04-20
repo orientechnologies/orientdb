@@ -78,6 +78,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private final Map<String, OProperty>       properties              = new HashMap<String, OProperty>();
   private int                                defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
   private String                             name;
+  private String                             description;
   private Class<?>                           javaClass;
   private int[]                              clusterIds;
   private List<OClassImpl>                   superClasses            = new ArrayList<OClassImpl>();
@@ -630,6 +631,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       releaseSchemaReadLock();
     }
   }
+  
 
   public OClass setShortName(String shortName) {
     if (shortName != null) {
@@ -658,6 +660,48 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         setShortNameInternal(shortName);
       } else
         setShortNameInternal(shortName);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
+  }
+
+  public String getDescription() {
+    acquireSchemaReadLock();
+    try {
+      return description;
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+  
+  public OClass setDescription(String iDescription) {
+    if (iDescription != null) {
+      iDescription = iDescription.trim();
+      if (iDescription.isEmpty())
+        iDescription = null;
+    }
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock();
+    try {
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OStorage storage = database.getStorage();
+
+      if (storage instanceof OStorageProxy) {
+        final String cmd = String.format("alter class %s description %s", name, shortName);
+        database.command(new OCommandSQL(cmd)).execute();
+      } else if (isDistributedCommand()) {
+
+        final String cmd = String.format("alter class %s description %s", name, shortName);
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+        setDescriptionInternal(iDescription);
+      } else
+        setDescriptionInternal(iDescription);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -845,6 +889,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       shortName = document.field("shortName");
     else
       shortName = null;
+    if (document.containsField("description"))
+      description = document.field("description");
+    else
+      description = null;
     defaultClusterId = document.field("defaultClusterId");
     if (document.containsField("strictMode"))
       strictMode = document.field("strictMode");
@@ -910,6 +958,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     try {
       document.field("name", name);
       document.field("shortName", shortName);
+      document.field("description", description);
       document.field("defaultClusterId", defaultClusterId);
       document.field("clusterIds", clusterIds);
       document.field("clusterSelection", clusterSelection.getName());
@@ -1482,6 +1531,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       return getClusterSelection();
     case CUSTOM:
       return getCustomInternal();
+    case DESCRIPTION:
+      return getDescription();
     }
 
     throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");
@@ -1550,6 +1601,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         else
           setCustom(customName, customValue);
       }
+      break;
+    case DESCRIPTION:
+      setDescription(stringValue);
       break;
     }
     return this;
@@ -2009,6 +2063,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       this.shortName = iShortName;
 
       owner.changeClassName(oldName, shortName, this);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+  
+  private void setDescriptionInternal(final String iDescription) {
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+      this.description = iDescription;
     } finally {
       releaseSchemaWriteLock();
     }
