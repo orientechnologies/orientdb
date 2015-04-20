@@ -15,18 +15,11 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.List;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -34,6 +27,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+import java.util.List;
 
 @RunWith(JUnit4.class)
 public class SQLCreateVertexAndEdgeTest {
@@ -173,6 +173,25 @@ public class SQLCreateVertexAndEdgeTest {
 
     database.command(new OCommandSQL("create edge E from " + vid + " to " + vid + " set bar = 'foo'")).execute();
 
-
   }
+
+  @Test
+  public void testCannotAlterEClassname() {
+    database.command(new OCommandSQL("create class ETest extends E")).execute();
+
+    try {
+      database.command(new OCommandSQL("alter class ETest name ETest2")).execute();
+      Assert.assertTrue(false);
+    } catch (OCommandExecutionException e) {
+      Assert.assertTrue(true);
+    }
+
+    try {
+      database.command(new OCommandSQL("alter class ETest name ETest2 unsafe")).execute();
+      Assert.assertTrue(true);
+    } catch (OCommandExecutionException e) {
+      Assert.assertTrue(false);
+    }
+  }
+
 }

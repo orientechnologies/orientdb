@@ -46,6 +46,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
   private String             className;
   private ATTRIBUTES         attribute;
   private String             value;
+  private boolean            unsafe        = false;
 
   public OCommandExecutorSQLAlterClass parse(final OCommandRequest iRequest) {
     final ODatabaseDocument database = getDatabase();
@@ -94,6 +95,9 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
     if (value.equalsIgnoreCase("null"))
       value = null;
 
+    if (parserTextUpperCase.endsWith("UNSAFE"))
+      unsafe = true;
+
     return this;
   }
 
@@ -110,13 +114,17 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
     if (cls == null)
       throw new OCommandExecutionException("Cannot alter class '" + className + "' because not found");
 
+    if (!unsafe && cls.isSubClassOf("E"))
+      throw new OCommandExecutionException("Cannot alter class '" + className
+          + "' because is an Edge class and could break vertices. Use UNSAFE if you want to force it");
+
     cls.set(attribute, value);
 
     return null;
   }
 
   public String getSyntax() {
-    return "ALTER CLASS <class> <attribute-name> <attribute-value>";
+    return "ALTER CLASS <class> <attribute-name> <attribute-value> [UNSAFE]";
   }
 
   @Override
