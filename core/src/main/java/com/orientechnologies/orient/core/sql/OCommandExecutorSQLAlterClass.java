@@ -114,7 +114,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
     if (cls == null)
       throw new OCommandExecutionException("Cannot alter class '" + className + "' because not found");
 
-    if (!unsafe && cls.isSubClassOf("E"))
+    if (!unsafe && attribute == ATTRIBUTES.NAME && cls.isSubClassOf("E"))
       throw new OCommandExecutionException("Cannot alter class '" + className
           + "' because is an Edge class and could break vertices. Use UNSAFE if you want to force it");
 
