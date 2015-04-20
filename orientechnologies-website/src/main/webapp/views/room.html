@@ -1,4 +1,4 @@
-<nav class="sidebar-right">
+<nav  class="sidebar-right sidebar-rooms">
   <ul class="nav nav-pills nav-stacked">
     <li ng-class="{ 'active' : client.clientId == clientId}" ng-repeat="client in clients | orderBy:'timestamp':true">
       <a href="#/rooms/{{client.clientId}}">
@@ -6,7 +6,21 @@
     </li>
   </ul>
 </nav>
+
+
+<nav  id="roomsMobile" class="navmenu navmenu-default navmenu-fixed-right offcanvas" role="navigation">
+  <ul class="nav navmenu-nav">
+    <li ng-class="{ 'active' : client.clientId == clientId}" ng-repeat="client in clients | orderBy:'timestamp':true">
+      <a href="#/rooms/{{client.clientId}}" ng-click="closeMe()">
+        <i class="fa fa-weixin" ng-class="{'fa-green' : client.timestamp > client.lastVisit}"></i> {{client.name}}</a>
+    </li>
+  </ul>
+</nav>
+
+
 <div class="container-fluid chat-container">
+
+
   <div class="row">
 
     <div class="chat-messages">
@@ -19,10 +33,13 @@
       </div>
       <div scroll-glue when-scrolled="loadMore()" class="chat-timeline container-fluid" ng-show="!isNew">
         <div class="chat-group row" ng-class-odd="'odd'" ng-repeat="group in messages">
-          <div class="col-md-1">
-            <avatar dim="40" user="group.sender"></avatar>
+          <div class="col-md-1 col-xs-12">
+            <avatar dim="40" class="img-big" user="group.sender"></avatar>
+            <avatar dim="20" class="img-small" user="group.sender"></avatar>
+            <span class="chat-sender-mobile">
+                {{group.sender.name}} - {{ group.date | formatDate}}</span>
           </div>
-          <div class="col-md-11">
+          <div class="col-md-11 col-xs-12">
             <span class="chat-sender">
               <div class="pull-right">
                 {{group.sender.name}}
@@ -31,7 +48,7 @@
               {{ group.date | formatDate}}</span>
 
             <div class="row" ng-repeat="message in group.messages">
-              <div class="col-md-9">
+              <div class="col-md-9 col-xs-11 col-xs-offset-1 col-md-offset-0">
                 <ng-include src="'views/room/message.html'"></ng-include>
               </div>
             </div>
@@ -51,5 +68,6 @@
         </div>
       </div>
     </div>
+
   </div>
 </div>

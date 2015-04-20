@@ -1,46 +1,69 @@
 <header ng-controller="HeaderCtrl" class="main-header">
-  <nav class="navbar  navbar-default navbar-fixed-top ">
+  <nav id="myNavmenu" class="navmenu navmenu-default navmenu-fixed-left offcanvas" role="navigation">
 
+    <ul class="nav navmenu-nav">
+      <li>
+        <a href="#/" ng-click="closeMe()">
+          <i class="fa fa-2x fa-home"> Home</i>
+        </a>
+      </li>
+      <li>
+        <a href="#/issues" ng-click="closeMe()">
+          <i class="fa fa-2x fa-bug"> Issues</i>
+        </a>
+      </li>
+      <li ng-show="member">
+        <a href="#/clients" ng-click="closeMe()">
+          <i class="fa fa-2x fa-money"> Clients</i>
+        </a>
+      </li>
+      <li>
+        <a href="#/users/{{user.name}}" ng-click="closeMe()">
+          <i class="fa fa-2x fa-gear"> Settings</i>
+        </a>
+      </li>
+      <li ng-show="member || isClient">
+        <a href="#/rooms" ng-click="closeMe()">
+          <i class="fa fa-2x fa-users"> Rooms </i>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <nav class="navbar navbar-default navbar-fixed-top navbar-desktop">
+
+
+    <button type="button" class="navbar-toggle" data-toggle="offcanvas" data-target="#myNavmenu" data-canvas="body">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </button>
+
+    <a href="javascript:void(0)" class="settings-button-mobile" ng-class="{ 'hide' : isChat }" ng-click="toggleMenu()">
+      <avatar dim="20" user="user">
+      </avatar>
+      <!--<i class="fa fa-fw fa-2x fa-cog"></i>-->
+    </a>
+
+    <button type="button" class="navbar-toggle-chat" ng-class="{ 'navbar-toggle-chat-show' : isChat }"
+            data-toggle="offcanvas" data-target="#roomsMobile" data-canvas="body">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </button>
     <div class="container-fluid">
       <div class="row vertical-align">
         <div class="col-md-10 col-md-offset-1">
           <h3>{{breadCrumb.title}}</h3>
         </div>
       </div>
-      <!--<div class="navbar-collapse collapse">-->
-      <!--<ul class="nav navbar-nav navbar-right">-->
-
-      <!--<li>-->
-
-      <!--</li>-->
-      <!--</ul>-->
-      <!--</div>-->
     </div>
   </nav>
   <a href="javascript:void(0)" class="settings-button" ng-click="toggleMenu()">
     <avatar name="true" dim="20" user="user">
     </avatar>
-    <i class="fa fa-fw fa-2x fa-cog"></i>
+    <!--<i class="fa fa-fw fa-2x fa-cog"></i>-->
   </a>
-
-  <!--<div ng-class="menuClass">-->
-    <!--<div class="menu-wrap">-->
-      <!--<nav class="menu">-->
-
-        <!--<div class="link-list">-->
-          <!--<a href="#"><span>Latest stories</span></a>-->
-          <!--<a href="#"><span>Your friends</span></a>-->
-          <!--<a href="#"><span>Personal Settings</span></a>-->
-          <!--<a href="#"><span>Security &amp; Privacy</span></a>-->
-        <!--</div>-->
-        <!--<div class="icon-list">-->
-          <!--<a href="#"><i class="fa fa-fw fa-home"></i></a>-->
-          <!--<a href="#"><i class="fa fa-fw fa-question-circle"></i></a>-->
-          <!--<a href="#"><i class="fa fa-fw fa-power-off"></i></a>-->
-        <!--</div>-->
-      <!--</nav>-->
-    <!--</div>-->
-  <!--</div>-->
   <nav class="sidebar">
     <ul class="nav nav-pills nav-stacked">
       <li>

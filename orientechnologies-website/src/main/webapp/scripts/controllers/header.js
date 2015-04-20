@@ -11,12 +11,22 @@ angular.module('webappApp')
 
 
     })
+
+    $scope.closeMe = function () {
+      $('#myNavmenu').offcanvas('toggle');
+    }
     $scope.toggleMenu = function () {
       $scope.menuClass = $scope.menuClass == "" ? "show-menu" : "";
     }
 
     $rootScope.$on('$routeChangeSuccess', function (scope, next, current) {
 
+
+      if (next.$$route.originalPath.indexOf('/rooms') != -1) {
+        $scope.isChat = true;
+      } else {
+        $scope.isChat = false;
+      }
       if (!$scope.user) {
         $scope.$watch('user', function (user) {
           if (user && !user.confirmed) {

@@ -116,8 +116,7 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
             },
             methods: {
               send: function (e) {
-
-                if ((e.keyCode == 13) && (!e.ctrlKey) && !showing) {
+                if ((e.keyCode == 13) && (!e.ctrlKey && !e.shiftKey) && !showing) {
                   e.preventDefault();
                   if (scope.onSend && editor.$data.input && editor.$data.input.length > 0) {
                     scope.onSend();
