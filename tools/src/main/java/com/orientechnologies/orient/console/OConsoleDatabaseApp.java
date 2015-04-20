@@ -19,6 +19,21 @@
  */
 package com.orientechnologies.orient.console;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
+
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -49,6 +64,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -74,20 +90,6 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected static final int    DEFAULT_WIDTH      = 150;
@@ -1454,8 +1456,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
                       fixedLinks++;
                       changed = true;
                       if (verbose)
-                        message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as " + i
-                            + " item in collection in field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
+                        message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as item " + i
+                            + " in collection of field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
                     }
                   }
                 }
@@ -1974,11 +1976,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   protected boolean fixLink(final Object fieldValue) {
     if (fieldValue instanceof OIdentifiable) {
-      if (((OIdentifiable) fieldValue).getIdentity().isValid()) {
-        final ORecord connected = ((OIdentifiable) fieldValue).getRecord();
-        if (connected == null)
+      final ORID id = ((OIdentifiable) fieldValue).getIdentity();
+
+      if (id.isValid())
+        if (id.isPersistent()) {
+          final ORecord connected = ((OIdentifiable) fieldValue).getRecord();
+          if (connected == null)
+            return true;
+        } else
           return true;
-      }
     }
     return false;
   }
