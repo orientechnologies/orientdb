@@ -910,7 +910,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         edge = new OrientEdge(graph, from, to, label);
     } else {
       // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
-      edge = new OrientEdge(graph, label, fields);
+      edge = new OrientEdge(graph, iClassName, label, fields);
 
       if (settings.isKeepInMemoryReferences())
         edge.getRecord().fields(OrientBaseGraph.CONNECTION_OUT, rawElement.getIdentity(), OrientBaseGraph.CONNECTION_IN,
