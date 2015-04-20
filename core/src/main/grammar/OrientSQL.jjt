@@ -613,8 +613,8 @@ ODeleteStatement DeleteStatement():
 	<DELETE>
 	<FROM>
 	jjtThis.fromClause = FromClause()
-	[ <WHERE> jjtThis.whereClause = WhereClause() ]
 	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
+	[ <WHERE> jjtThis.whereClause = WhereClause() ]
 	[ <LIMIT> jjtThis.limit = Integer() ]
 	[ <UNSAFE> { jjtThis.unsafe = true; }]
 ) {return jjtThis;}
@@ -627,8 +627,8 @@ ODeleteVertexStatement DeleteVertexStatement():
 	<DELETE>
 	<VERTEX>
 	jjtThis.fromClause = FromClause()
-	[ <WHERE> jjtThis.whereClause = WhereClause() ]
 	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
+	[ <WHERE> jjtThis.whereClause = WhereClause() ]
     [ <LIMIT> jjtThis.limit = Integer() ]
 ) {return jjtThis;}
 }

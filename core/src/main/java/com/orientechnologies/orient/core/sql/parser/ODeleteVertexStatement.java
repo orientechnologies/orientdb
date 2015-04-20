@@ -24,12 +24,12 @@ public class ODeleteVertexStatement extends OStatement {
     StringBuilder result = new StringBuilder();
     result.append("DELETE VERTEX ");
     result.append(fromClause.toString());
+    if (returnBefore) {
+      result.append(" RETURN BEFORE");
+    }
     if (whereClause != null) {
       result.append(" WHERE ");
       result.append(whereClause.toString());
-    }
-    if (returnBefore) {
-      result.append(" RETURN BEFORE");
     }
     if (limit != null) {
       result.append(" LIMIT ");

@@ -922,8 +922,8 @@ try {
 	<DELETE>
 	<FROM>
 	jjtn000.fromClause = FromClause()
-	[ <WHERE> jjtn000.whereClause = WhereClause() ]
 	[ <RETURN> <BEFORE> { jjtn000.returnBefore = true; } ]
+	[ <WHERE> jjtn000.whereClause = WhereClause() ]
 	[ <LIMIT> jjtn000.limit = Integer() ]
 	[ <UNSAFE> { jjtn000.unsafe = true; }]
 )/*@bgen(jjtree)*/
@@ -970,8 +970,8 @@ try {
 	<DELETE>
 	<VERTEX>
 	jjtn000.fromClause = FromClause()
-	[ <WHERE> jjtn000.whereClause = WhereClause() ]
 	[ <RETURN> <BEFORE> { jjtn000.returnBefore = true; } ]
+	[ <WHERE> jjtn000.whereClause = WhereClause() ]
     [ <LIMIT> jjtn000.limit = Integer() ]
 )/*@bgen(jjtree)*/
   {
