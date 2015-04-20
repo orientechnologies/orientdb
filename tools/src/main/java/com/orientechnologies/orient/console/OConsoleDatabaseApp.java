@@ -43,8 +43,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.tool.*;
+import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
+import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
+import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -1291,7 +1296,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           count = currentDatabase.countClass(cls.getName(), false);
           totalElements += count;
 
-          final String superClasses = cls.hasSuperClasses()? Arrays.toString(cls.getSuperClassesNames().toArray()) : "";
+          final String superClasses = cls.hasSuperClasses() ? Arrays.toString(cls.getSuperClassesNames().toArray()) : "";
 
           message("\n %-45s| %-35s| %-11s|%15d |", format(cls.getName(), 45), format(superClasses, 35), clusters.toString(), count);
         } catch (Exception ignored) {
@@ -1968,13 +1973,23 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message(iSucceed ? "] Done." : " Error!");
   }
 
+  /**
+   * Checks if the link must be fixed.
+   * 
+   * @param fieldValue
+   *          Field containing the OIdentifiable (RID or Record)
+   * @return true to fix it, otherwise false
+   */
   protected boolean fixLink(final Object fieldValue) {
     if (fieldValue instanceof OIdentifiable) {
-      if (((OIdentifiable) fieldValue).getIdentity().isValid()) {
+      final ORID id = ((OIdentifiable) fieldValue).getIdentity();
+
+      if (id.isPersistent()) {
         final ORecord connected = ((OIdentifiable) fieldValue).getRecord();
         if (connected == null)
           return true;
-      }
+      } else
+        return true;
     }
     return false;
   }
