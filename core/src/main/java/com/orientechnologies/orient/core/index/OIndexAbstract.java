@@ -40,7 +40,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
@@ -62,30 +63,37 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
  * 
  */
 public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
-  protected static final String           CONFIG_MAP_RID   = "mapRid";
-  protected static final String           CONFIG_CLUSTERS  = "clusters";
-  protected final OModificationLock       modificationLock = new OModificationLock();
-  protected final OIndexEngine<T>         indexEngine;
-  private final String                    databaseName;
-  protected String                        type;
-  protected String                        valueContainerAlgorithm;
-  protected final ONewLockManager<Object> keyLockManager   = new ONewLockManager<Object>();
+  protected static final String              CONFIG_MAP_RID   = "mapRid";
+  protected static final String              CONFIG_CLUSTERS  = "clusters";
+  protected final OModificationLock          modificationLock = new OModificationLock();
+  protected final OIndexEngine<T>            indexEngine;
+  private final String                       databaseName;
+  protected String                           type;
+  protected String                           valueContainerAlgorithm;
+  protected final ONewLockManager<Object>    keyLockManager   = new ONewLockManager<Object>();
+
   @ODocumentInstance
-  protected ODocument                     configuration;
-  protected ODocument                     metadata;
-  private String                          name;
-  private String                          algorithm;
-  private Set<String>                     clustersToIndex  = new HashSet<String>();
+  protected ODocument                        configuration;
+  protected ODocument                        metadata;
+  private String                             name;
+  private String                             algorithm;
+  private Set<String>                        clustersToIndex  = new HashSet<String>();
 
-  private volatile OIndexDefinition       indexDefinition;
-  private volatile boolean                rebuilding       = false;
+  private volatile OIndexDefinition          indexDefinition;
+  private volatile boolean                   rebuilding       = false;
 
-  private Thread                          rebuildThread    = null;
+  private Thread                             rebuildThread    = null;
 
-  private final ReadWriteLock             rwLock           = new ReentrantReadWriteLock();
+  private final ThreadLocal<IndexTxSnapshot> txSnapshot       = new IndexTxSnapshotThreadLocal();
+  private final ReadWriteLock                rwLock           = new ReentrantReadWriteLock();
 
   protected static final class RemovedValue {
     public static final RemovedValue INSTANCE = new RemovedValue();
+  }
+
+  protected static final class IndexTxSnapshot {
+    public Map<Object, Object> indexSnapshot = new HashMap<Object, Object>();
+    public boolean             clear         = false;
   }
 
   public OIndexAbstract(final String type, String algorithm, final OIndexEngine<T> indexEngine, String valueContainerAlgorithm,
@@ -662,20 +670,43 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
     acquireExclusiveLock();
     try {
+      final IndexTxSnapshot indexTxSnapshot = txSnapshot.get();
+
       final Boolean clearAll = operationDocument.field("clear");
-      if (clearAll != null && clearAll) {
-        clear();
-      }
+      if (clearAll != null && clearAll)
+        clearSnapshot(indexTxSnapshot);
 
       final Collection<ODocument> entries = operationDocument.field("entries");
+      final Map<Object, Object> snapshot = indexTxSnapshot.indexSnapshot;
       for (final ODocument entry : entries)
-        applyIndexTxEntry(entry);
+        applyIndexTxEntry(snapshot, entry);
 
       final ODocument nullIndexEntry = operationDocument.field("nullEntries");
-      applyIndexTxEntry(nullIndexEntry);
+      applyIndexTxEntry(snapshot, nullIndexEntry);
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  public void commit() {
+    acquireExclusiveLock();
+    try {
+      final IndexTxSnapshot indexTxSnapshot = txSnapshot.get();
+      if (indexTxSnapshot.clear)
+        clear();
+
+      commitSnapshot(indexTxSnapshot.indexSnapshot);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public void preCommit() {
+    txSnapshot.set(new IndexTxSnapshot());
+  }
+
+  public void postCommit() {
+    txSnapshot.set(new IndexTxSnapshot());
   }
 
   public ODocument getConfiguration() {
@@ -827,6 +858,31 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     return key;
   }
 
+  protected void commitSnapshot(Map<Object, Object> snapshot) {
+    // do nothing by default
+    // storage will delay real operations till the end of tx
+  }
+
+  protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    // storage will delay real operations till the end of tx
+    put(key, value);
+  }
+
+  protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    // storage will delay real operations till the end of tx
+    remove(key, value);
+  }
+
+  protected void removeFromSnapshot(Object key, Map<Object, Object> snapshot) {
+    // storage will delay real operations till the end of tx
+    remove(key);
+  }
+
+  protected void clearSnapshot(IndexTxSnapshot indexTxSnapshot) {
+    // storage will delay real operations till the end of tx
+    clear();
+  }
+
   @Override
   public int compareTo(OIndex<T> index) {
     final String name = index.getName();
@@ -924,13 +980,15 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         final OAtomicOperation atomicOperation = ((OAbstractPaginatedStorage) storage).getAtomicOperationsManager()
             .getCurrentOperation();
 
-        final ODiskCache diskCache = ((OAbstractPaginatedStorage) storage).getDiskCache();
+        final OReadCache readCache = ((OAbstractPaginatedStorage) storage).getReadCache();
+        final OWriteCache writeCache = ((OAbstractPaginatedStorage) storage).getWriteCache();
+
         if (atomicOperation == null) {
           try {
             final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
-            if (diskCache.exists(fileName)) {
-              final long fileId = diskCache.openFile(fileName);
-              diskCache.deleteFile(fileId);
+            if (writeCache.exists(fileName)) {
+              final long fileId = readCache.openFile(fileName, writeCache);
+              writeCache.deleteFile(fileId);
             }
           } catch (IOException e) {
             OLogManager.instance().error(this, "Can't delete file for value containers", e);
@@ -938,9 +996,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         } else {
           try {
             final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
-            if (atomicOperation.isFileExists(fileName, diskCache)) {
-              final long fileId = atomicOperation.openFile(fileName, diskCache);
-              atomicOperation.deleteFile(fileId, diskCache);
+            if (atomicOperation.isFileExists(fileName)) {
+              final long fileId = atomicOperation.openFile(fileName);
+              atomicOperation.deleteFile(fileId);
             }
           } catch (IOException e) {
             OLogManager.instance().error(this, "Can't delete file for value containers", e);
@@ -950,7 +1008,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     }
   }
 
-  private void applyIndexTxEntry(ODocument entry) {
+  private void applyIndexTxEntry(Map<Object, Object> snapshot, ODocument entry) {
     final Object key;
     if (entry.field("k") != null) {
       Object serKey = entry.field("k");
@@ -987,16 +1045,22 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         final OIdentifiable value = op.field("v");
 
         if (operation == OPERATION.PUT.ordinal())
-          put(key, value);
+          putInSnapshot(key, value, snapshot);
         else if (operation == OPERATION.REMOVE.ordinal()) {
           if (value == null)
-            remove(key);
+            removeFromSnapshot(key, snapshot);
           else {
-            remove(key, value);
+            removeFromSnapshot(key, value, snapshot);
           }
-
         }
       }
+    }
+  }
+
+  private static class IndexTxSnapshotThreadLocal extends ThreadLocal<IndexTxSnapshot> {
+    @Override
+    protected IndexTxSnapshot initialValue() {
+      return new IndexTxSnapshot();
     }
   }
 }
