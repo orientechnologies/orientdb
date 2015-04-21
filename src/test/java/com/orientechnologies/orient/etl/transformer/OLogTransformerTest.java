@@ -19,8 +19,7 @@ public class OLogTransformerTest extends ETLBaseTest {
 
     @Test
     public void testPrefix() throws Exception {
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(output, true));
+        ByteArrayOutputStream output = getByteArrayOutputStream();
         String cfgJson = "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, extractor : { row : {} }, transformers : [{ csv : {} },{ log : {prefix:'-> '}}], loader : { test: {} } }";
         process(cfgJson);
         List<ODocument> res = getResult();
@@ -31,8 +30,7 @@ public class OLogTransformerTest extends ETLBaseTest {
     }
     @Test
     public void testPostfix() throws Exception {
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(output, true));
+        ByteArrayOutputStream output = getByteArrayOutputStream();
         String cfgJson = "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, extractor : { row : {} }, transformers : [{ csv : {} },{ log : {postfix:'-> '}}], loader : { test: {} } }";
         process(cfgJson);
         List<ODocument> res = getResult();
@@ -40,6 +38,12 @@ public class OLogTransformerTest extends ETLBaseTest {
         String[] stringList = output.toString().split("\n");
         assertEquals("[1:log] INFO {id:1,text:Hello}-> ", stringList[1]);
         assertEquals("[2:log] INFO {id:2,text:Bye}-> ", stringList[2]);
+    }
+
+    private ByteArrayOutputStream getByteArrayOutputStream() {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(output, true));
+        return output;
     }
 
 }
