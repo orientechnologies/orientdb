@@ -169,20 +169,35 @@
 
     <profiles>
         <profile>
-            <id>dev</id>
-
+            <id>test-embedded</id>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.13</version>
-                        <configuration>
-                            <suiteXmlFiles>
-                                <suiteXmlFile>/orientdb-tests/src/test/java/com/orientechnologies/orient/test/database/auto/embedded-test-db-from-scratch.xml</suiteXmlFile>
-                                <suiteXmlFile>/orientdb-tests/src/test/java/com/orientechnologies/orient/test/database/auto/remote-test-db-from-scratch.xml</suiteXmlFile>
-                            </suiteXmlFiles>
-                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>test-remote</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>test-remote</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>test-embedded</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
