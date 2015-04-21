@@ -23,13 +23,8 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -1196,6 +1191,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         if (result == null) {
           // NULL VALUE
           channel.writeByte((byte) 'n');
+        } else if (result instanceof Map) {
+          ODocument doc = new ODocument();
+          for (Map.Entry<?, ?> entry : ((Map<?, ?>) result).entrySet()) {
+            String key = keyFromMapObject(entry.getKey());
+            doc.field(key, entry.getValue());
+          }
+          channel.writeByte((byte) 'r');
+          listener.result(doc);
+          writeIdentifiable(doc);
         } else if (result instanceof OIdentifiable) {
           // RECORD
           channel.writeByte((byte) 'r');
@@ -2138,4 +2142,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     return true;
   }
 
+  private String keyFromMapObject(Object key) {
+    if (key instanceof String) {
+      return (String) key;
+    }
+    return "" + key;
+  }
 }
