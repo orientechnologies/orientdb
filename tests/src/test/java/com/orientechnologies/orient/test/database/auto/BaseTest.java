@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -27,7 +28,11 @@ public abstract class BaseTest<T extends ODatabase> {
 
   @Parameters(value = "url")
   public BaseTest(@Optional String url) {
-    storageType = System.getProperty("storageType");
+    String config = System.getProperty("orientdb.test.env");
+    if ("ci".equals(config))
+      storageType = "plocal";
+    else
+      storageType = System.getProperty("storageType");
 
     if (storageType == null)
       storageType = "memory";

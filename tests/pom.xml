@@ -126,16 +126,42 @@
                         <index.flushAfterCreate>false</index.flushAfterCreate>
                         <buildDirectory>.</buildDirectory>
                         <url>memory:demo</url>
-                        <storageType>memory</storageType>
                         <testPath>.</testPath>
-                        <orientdb.config.file>target/test-classes/orientdb-server-config.xml</orientdb.config.file>
                     </systemPropertyVariables>
-                    <suiteXmlFiles>
-                        <suiteXmlFile>src/test/java/com/orientechnologies/orient/test/database/auto/embedded-test-db-from-scratch.xml</suiteXmlFile>
-<!--                         <suiteXmlFile>src/test/java/com/orientechnologies/orient/test/database/auto/remote-test-db-from-scratch.xml</suiteXmlFile> -->
-                    </suiteXmlFiles>
-
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>default-test</id>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>test-embedded</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <suiteXmlFiles>
+                                <suiteXmlFile>src/test/java/com/orientechnologies/orient/test/database/auto/embedded-test-db-from-scratch.xml</suiteXmlFile>
+                            </suiteXmlFiles>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>test-remote</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <orientdb.config.file>target/test-classes/orientdb-server-config.xml</orientdb.config.file>
+                            </systemPropertyVariables>
+                            <suiteXmlFiles>
+                                <suiteXmlFile>src/test/java/com/orientechnologies/orient/test/database/auto/remote-test-db-from-scratch.xml</suiteXmlFile>
+                            </suiteXmlFiles>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
