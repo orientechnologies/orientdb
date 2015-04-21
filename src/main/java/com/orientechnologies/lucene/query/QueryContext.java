@@ -19,6 +19,7 @@
 package com.orientechnologies.lucene.query;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import org.apache.lucene.facet.FacetsConfig;
 import org.apache.lucene.facet.taxonomy.TaxonomyReader;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
@@ -38,6 +39,8 @@ public class QueryContext {
   public QueryContextCFG       cfg;
   public boolean            facet = false;
   public TaxonomyReader     reader;
+  private FacetsConfig facetConfig;
+  private String facefField;
 
   public QueryContext(OCommandContext context, IndexSearcher searcher, Query query) {
     this(context, searcher, query, null, null);
@@ -76,6 +79,22 @@ public class QueryContext {
   public QueryContext setReader(TaxonomyReader reader) {
     this.reader = reader;
     return this;
+  }
+
+  public void setFacetConfig(FacetsConfig facetConfig) {
+    this.facetConfig = facetConfig;
+  }
+
+  public FacetsConfig getFacetConfig() {
+    return facetConfig;
+  }
+
+  public void setFacefField(String facefField) {
+    this.facefField = facefField;
+  }
+
+  public String getFacefField() {
+    return facefField;
   }
 
   public enum QueryContextCFG {

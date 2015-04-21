@@ -61,6 +61,8 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   protected FacetsConfig        config       = new FacetsConfig();
   protected static final String FACET        = "_facet";
 
+  protected String              facetField;
+
   public OLuceneFullTextIndexManager() {
   }
 
@@ -68,7 +70,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   public IndexWriter createIndexWriter(Directory directory, ODocument metadata) throws IOException {
 
     Analyzer analyzer = getAnalyzer(metadata);
-    Version version = getVersion(metadata);
+    Version version = getLuceneVersion(metadata);
     IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
@@ -82,8 +84,16 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     if (metadata != null && metadata.containsField(FACET_FIELDS)) {
       ODatabaseDocumentInternal database = getDatabase();
 
-      Directory dir = getTaxDirectory(database);
-      taxonomyWriter = new DirectoryTaxonomyWriter(dir, IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+      Iterable<String> iterable = metadata.field(FACET_FIELDS);
+      if (iterable != null) {
+        Directory dir = getTaxDirectory(database);
+        taxonomyWriter = new DirectoryTaxonomyWriter(dir, IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+        for (String s : iterable) {
+          facetField = "facet_" + s;
+          config.setIndexFieldName(s, "facet_" + s);
+          config.setHierarchical(s, true);
+        }
+      }
 
     }
   }
@@ -103,7 +113,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   @Override
   public IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException {
     Analyzer analyzer = getAnalyzer(metadata);
-    Version version = getVersion(metadata);
+    Version version = getLuceneVersion(metadata);
     IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.APPEND);
     return new IndexWriter(directory, iwc);
@@ -139,7 +149,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     Query q = null;
 
     try {
-      q = OLuceneIndexType.createFullQuery(index, key, mgrWriter.getIndexWriter().getAnalyzer(), getVersion(metadata));
+      q = OLuceneIndexType.createFullQuery(index, key, mgrWriter.getIndexWriter().getAnalyzer(), getLuceneVersion(metadata));
       OCommandContext context = null;
       if (key instanceof OFullTextCompositeKey) {
         context = ((OFullTextCompositeKey) key).getContext();
@@ -191,7 +201,8 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
       }
 
       try {
-        taxonomyWriter.commit();
+        if (taxonomyWriter != null)
+          taxonomyWriter.commit();
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -202,8 +213,9 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     String[] path = null;
     if (val instanceof String) {
 
-      path = new String[1];
-      path[0] = (String) val;
+      path = ((String) val).split("/");
+      // path = new String[1];
+      // path[0] = (String) val;
     } else if (val instanceof Iterable) {
       Iterable iterable = (Iterable) val;
       List<String> values = new ArrayList<String>();
@@ -240,6 +252,8 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
       QueryContext queryContext = new QueryContext(context, searcher, query);
       if (supportsFacets()) {
         queryContext.setFacet(true);
+        queryContext.setFacefField(facetField);
+        queryContext.setFacetConfig(config);
         queryContext.setReader(new DirectoryTaxonomyReader(getTaxDirectory(getDatabase())));
       }
       return new LuceneResultSet(this, queryContext);
@@ -306,6 +320,11 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   @Override
   public boolean hasRangeQuerySupport() {
     return false;
+  }
+
+  @Override
+  public int getVersion() {
+    return 0;
   }
 
   @Override
