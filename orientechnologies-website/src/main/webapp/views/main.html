@@ -4,6 +4,7 @@
       <h3>Board</h3>
     </div>
     <div class="col-md-4 board-member">
+
       <div class="btn-group pull-right">
         <button class="btn btn-transparent " data-placement="bottom-right" data-auto-close="1"
                 data-animation="none"
@@ -18,6 +19,9 @@
                 data-content="{{popover.content}}" data-trigger="click" bs-popover>Member <i
           class="fa fa-caret-square-o-down"></i>
         </button>
+      </div>
+      <div ng-if="issue.assignee" class="pull-right selected-member">
+        <avatar dim="20" name="true" user="issue.assignee"></avatar>
       </div>
     </div>
   </div>
@@ -34,25 +38,22 @@
         <div class="list-group">
           <div class="list-group-item" ng-repeat="issue in backlogs">
             <div class="row">
-              <div class="col-md-1">
-                <div class="col-md-6">
-                  <i class="fa fa-check-circle-o" ng-class="'issue-' + issue.state.toLowerCase()"></i>
-                </div>
-              </div>
-              <div class="col-md-7">
+              <div class="col-md-8">
                 <h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">
-                  {{issue.title}}</a>
+                  {{issue.title}} </a>
                   <span class="label" style="background-color: #{{issue.priority.color}}">{{issue.priority.name}}</span>
-                  <span class="label label-default">{{issue.scope.name}}</span>
                 </h5>
+
+                <p class="issue-info">#{{issue.iid}}
+                  opened {{issue.createdAt | fromNow}} by {{issue.user.name}} <span class="label label-success"
+                                                                                    ng-if="issue.client">{{issue.client.name}}</span>
+                </p>
 
               </div>
               <div class="col-md-4">
-                <div class="col-md-12">
-                  <div ng-if="issue.assignee">
-                    <avatar dim="20" name="true" user="issue.assignee"></avatar>
-                  </div>
-                </div>
+                 <span class="label" ng-class="{ 'label-dark' : label.color =='ffffff' }"
+                       ng-repeat="label in issue.labels"
+                       style="background-color: #{{label.color}}">{{label.name}}</span>
               </div>
             </div>
           </div>
@@ -69,26 +70,23 @@
             <div class="list-group">
               <div class="list-group-item" ng-repeat="issue in inProgress">
                 <div class="row">
-                  <div class="col-md-1">
-                    <div class="col-md-6">
-                      <i class="fa fa-check-circle-o" ng-class="'issue-' + issue.state.toLowerCase()"></i>
-                    </div>
-                  </div>
-                  <div class="col-md-7">
+                  <div class="col-md-8">
                     <h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">
-                      {{issue.title}}</a>
+                      {{issue.title}} </a>
                       <span class="label"
                             style="background-color: #{{issue.priority.color}}">{{issue.priority.name}}</span>
-                      <span class="label label-default">{{issue.scope.name}}</span>
                     </h5>
+
+                    <p class="issue-info">#{{issue.iid}}
+                      opened {{issue.createdAt | fromNow}} by {{issue.user.name}} <span class="label label-success"
+                                                                                        ng-if="issue.client">{{issue.client.name}}</span>
+                    </p>
 
                   </div>
                   <div class="col-md-4">
-                    <div class="col-md-12">
-                      <div ng-if="issue.assignee">
-                        <avatar dim="20" name="true" user="issue.assignee"></avatar>
-                      </div>
-                    </div>
+                 <span class="label" ng-class="{ 'label-dark' : label.color =='ffffff' }"
+                       ng-repeat="label in issue.labels"
+                       style="background-color: #{{label.color}}">{{label.name}}</span>
                   </div>
                 </div>
               </div>
@@ -103,27 +101,23 @@
             <div class="list-group">
               <div class="list-group-item" ng-repeat="issue in zombies">
                 <div class="row">
-                  <div class="col-md-1">
-                    <div class="col-md-6">
-                      <i class="fa fa-check-circle-o" ng-class="'issue-' + issue.state.toLowerCase()"></i>
-                    </div>
-                  </div>
-                  <div class="col-md-7">
+                  <div class="col-md-8">
                     <h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">
-                      {{issue.title}}</a>
+                      {{issue.title}} </a>
                       <span class="label"
                             style="background-color: #{{issue.priority.color}}">{{issue.priority.name}}</span>
-                      <span class="label label-default">{{issue.scope.name}}</span>
                     </h5>
+
+                    <p class="issue-info">#{{issue.iid}}
+                      opened {{issue.createdAt | fromNow}} by {{issue.user.name}} <span class="label label-success"
+                                                                                        ng-if="issue.client">{{issue.client.name}}</span>
+                    </p>
 
                   </div>
                   <div class="col-md-4">
-                    <div class="col-md-12">
-                      {{ issue.createdAt | fromNow}}
-                      <div ng-if="issue.assignee">
-                        <avatar dim="20" name="true" user="issue.assignee"></avatar>
-                      </div>
-                    </div>
+                 <span class="label" ng-class="{ 'label-dark' : label.color =='ffffff' }"
+                       ng-repeat="label in issue.labels"
+                       style="background-color: #{{label.color}}">{{label.name}}</span>
                   </div>
                 </div>
               </div>

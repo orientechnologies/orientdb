@@ -127,6 +127,9 @@ body {
   .board-member {
     margin-top: 20px;
   }
+  .board-member .selected-member .avatar-container{
+    padding: 7px;
+  }
   .panel-milestone {
     max-height: 200px;
     overflow: auto;
@@ -451,3 +454,5 @@ span.label-dark {
   background-color: #6cc644 !important;
   color: white !important;
 }
+
+
