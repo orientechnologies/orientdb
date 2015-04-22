@@ -267,6 +267,7 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     assertEquals(indexDefinition.getParamCount(), 2);
   }
 
+  @Test(dependsOnMethods = "testGetIndexes")
   public void testCreateCompositeLinkSetIndex() {
     final OIndex result = oClass.createIndex("ClassIndexTestCompositeLinkSet", OClass.INDEX_TYPE.UNIQUE, "fTwelve", "fLinkSet");
 
@@ -1247,7 +1248,7 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     }
   }
 
-  @Test
+  @Test(dependsOnMethods = "testAreIndexedDoesNotContainProperty")
   public void testCreateFullTextIndexTwoProperties() {
     try {
       oClass.createIndex("ClassIndexTestFulltextIndex", OClass.INDEX_TYPE.FULLTEXT, "fSix", "fSeven");
@@ -1259,7 +1260,7 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     }
   }
 
-  @Test
+  @Test(dependsOnMethods = "testAreIndexedDoesNotContainProperty")
   public void testCreateFullTextIndexOneProperty() {
     final OIndex<?> result = oClass.createIndex("ClassIndexTestFulltextIndex", OClass.INDEX_TYPE.FULLTEXT, "fSix");
 
@@ -1268,7 +1269,7 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     assertEquals(result.getType(), OClass.INDEX_TYPE.FULLTEXT.toString());
   }
 
-  @Test
+  @Test(dependsOnMethods = "testGetInvolvedIndexesOnePropertyArrayParams")
   public void testCreateDictionaryIndex() {
     final OIndex<?> result = oClass.createIndex("ClassIndexTestDictionaryIndex", OClass.INDEX_TYPE.DICTIONARY, "fOne");
 
@@ -1277,7 +1278,7 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     assertEquals(result.getType(), OClass.INDEX_TYPE.DICTIONARY.toString());
   }
 
-  @Test
+  @Test(dependsOnMethods = "testGetInvolvedIndexesOnePropertyArrayParams")
   public void testCreateNotUniqueIndex() {
     final OIndex<?> result = oClass.createIndex("ClassIndexTestNotUniqueIndex", OClass.INDEX_TYPE.NOTUNIQUE, "fOne");
 

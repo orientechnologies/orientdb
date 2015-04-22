@@ -987,12 +987,12 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
     if (oldIndexUsage == -1) {
       oldIndexUsage = 0;
     }
-    if (oldcompositeIndexUsed == -1) {
-      oldcompositeIndexUsed = 0;
-    }
-    if (oldcompositeIndexUsed2 == -1) {
-      oldcompositeIndexUsed2 = 0;
-    }
+//    if (oldcompositeIndexUsed == -1) {
+//      oldcompositeIndexUsed = 0;
+//    }
+//    if (oldcompositeIndexUsed2 == -1) {
+//      oldcompositeIndexUsed2 = 0;
+//    }
 
     final List<ODocument> result = database.command(
         new OSQLSynchQuery<ODocument>("select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop2 >= 2")).execute();

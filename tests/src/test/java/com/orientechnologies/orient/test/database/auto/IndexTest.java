@@ -1637,7 +1637,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     List<ODocument> resultOne = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(queryOne));
     Assert.assertEquals(resultOne.size(), 1);
-    Assert.assertEquals(resultOne.get(0), docOne);
+    Assert.assertEquals((Object) resultOne.get(0), (Object) docOne);
 
     ODocument explain = databaseDocumentTx.command(new OCommandSQL("explain " + queryOne)).execute();
     Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
@@ -1646,7 +1646,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     List<ODocument> resultTwo = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(queryTwo));
     Assert.assertEquals(resultTwo.size(), 1);
-    Assert.assertEquals(resultTwo.get(0), docTwo);
+    Assert.assertEquals((Object) resultTwo.get(0), (Object) docTwo);
 
     explain = databaseDocumentTx.command(new OCommandSQL("explain " + queryTwo)).execute();
     Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
