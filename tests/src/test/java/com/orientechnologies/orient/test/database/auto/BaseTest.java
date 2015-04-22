@@ -29,7 +29,7 @@ public abstract class BaseTest<T extends ODatabase> {
   @Parameters(value = "url")
   public BaseTest(@Optional String url) {
     String config = System.getProperty("orientdb.test.env");
-    if ("ci".equals(config))
+    if ("ci".equals(config) || "release".equals(config))
       storageType = "plocal";
     else
       storageType = System.getProperty("storageType");
