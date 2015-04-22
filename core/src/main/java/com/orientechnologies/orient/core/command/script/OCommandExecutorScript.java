@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -270,6 +271,11 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         getDatabase().getLocalCache().clear();
 
       } catch (ORecordDuplicatedException e) {
+        // THIS CASE IS ON UPSERT
+        context.setVariable("retries", retry);
+        getDatabase().getLocalCache().clear();
+
+      } catch (ORecordNotFoundException e) {
         // THIS CASE IS ON UPSERT
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
