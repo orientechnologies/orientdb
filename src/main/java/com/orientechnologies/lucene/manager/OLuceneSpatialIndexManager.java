@@ -77,7 +77,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     @Override
     public IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException {
         Analyzer analyzer = getAnalyzer(metadata);
-        Version version = getLuceneVersion(metadata);
+        Version version = getVersion(metadata);
         IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
         iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         return new IndexWriter(directory, iwc);
@@ -86,7 +86,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     @Override
     public IndexWriter createIndexWriter(Directory directory, ODocument metadata) throws IOException {
         Analyzer analyzer = getAnalyzer(metadata);
-        Version version = getLuceneVersion(metadata);
+        Version version = getVersion(metadata);
         IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
         iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         return new IndexWriter(directory, iwc);

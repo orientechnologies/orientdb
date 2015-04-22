@@ -177,11 +177,6 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     return lucene.hasRangeQuerySupport();
   }
 
-  @Override
-  public int getVersion() {
-    return 0;
-  }
-
   public void setManagedIndex(OIndex index) {
     this.indexManaged = index;
   }

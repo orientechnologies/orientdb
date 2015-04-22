@@ -56,11 +56,6 @@ public class OLuceneIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public int getLastVersion() {
-    return 0;
-  }
-
-  @Override
   public Set<String> getTypes() {
     return TYPES;
   }

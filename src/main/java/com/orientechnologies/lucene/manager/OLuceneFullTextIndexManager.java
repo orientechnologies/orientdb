@@ -51,7 +51,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     public IndexWriter createIndexWriter(Directory directory, ODocument metadata) throws IOException {
 
         Analyzer analyzer = getAnalyzer(metadata);
-        Version version = getLuceneVersion(metadata);
+        Version version = getVersion(metadata);
         IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
         iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         return new IndexWriter(directory, iwc);
@@ -60,7 +60,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     @Override
     public IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException {
         Analyzer analyzer = getAnalyzer(metadata);
-        Version version = getLuceneVersion(metadata);
+        Version version = getVersion(metadata);
         IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
         iwc.setOpenMode(IndexWriterConfig.OpenMode.APPEND);
         return new IndexWriter(directory, iwc);
@@ -96,7 +96,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
         Query q = null;
 
         try {
-            q = OLuceneIndexType.createFullQuery(index, key, mgrWriter.getIndexWriter().getAnalyzer(), getLuceneVersion(metadata));
+            q = OLuceneIndexType.createFullQuery(index, key, mgrWriter.getIndexWriter().getAnalyzer(), getVersion(metadata));
             OCommandContext context = null;
             if (key instanceof OFullTextCompositeKey) {
                 context = ((OFullTextCompositeKey) key).getContext();

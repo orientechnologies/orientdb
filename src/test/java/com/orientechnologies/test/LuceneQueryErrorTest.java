@@ -71,7 +71,7 @@ public class LuceneQueryErrorTest extends BaseLuceneTest {
   @Test(expectedExceptions = OIndexEngineException.class)
   public void testQueryError() {
 
-    String query = "select * from Song where [title] LUCENE \"\" ";
+    String query = "select * from Song where [title] LUCENE \"\" )";
     databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
   }
 }

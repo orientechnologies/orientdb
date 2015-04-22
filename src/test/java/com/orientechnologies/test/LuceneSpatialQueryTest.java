@@ -45,7 +45,7 @@ import java.util.zip.ZipFile;
 /**
  * Created by enricorisa on 02/10/14.
  */
-@Test(groups = "embedded",enabled = false)
+@Test(groups = "embedded")
 public class LuceneSpatialQueryTest extends BaseLuceneTest {
 
   public LuceneSpatialQueryTest() {
@@ -146,7 +146,7 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
     deInitDB();
   }
 
-  @Test(enabled = false)
+  @Test
   public void testNearQuery() {
 
     String query = "select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 0.5}]";
@@ -158,8 +158,7 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
 
   }
 
-
-  @Test(enabled = false)
+  @Test
   public void testWithinQuery() {
     String query = "select * from Place where [latitude,longitude] WITHIN [[51.507222,-0.1275],[55.507222,-0.1275]]";
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));

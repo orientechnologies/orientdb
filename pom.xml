@@ -22,17 +22,7 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-lucene</artifactId>
-
-    <version>2.1-rc1</version>
-
-    <properties>
-        <surefire.version>2.17</surefire.version>
-        <javac.src.version>1.6</javac.src.version>
-        <javac.target.version>1.6</javac.target.version>
-        <orientdb.version>2.1-rc1</orientdb.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
+    <version>2.0.7</version>
     <packaging>jar</packaging>
 
     <name>lucene</name>
@@ -102,6 +92,14 @@
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
+
+    <properties>
+        <surefire.version>2.17</surefire.version>
+        <javac.src.version>1.6</javac.src.version>
+        <javac.target.version>1.6</javac.target.version>
+        <orientdb.version>2.0.7</orientdb.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
     <repositories>
         <repository>
