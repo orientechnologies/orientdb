@@ -312,17 +312,16 @@ public class OCSVTransformerTest extends ETLBaseTest {
     assertEquals(new Integer(1), (Integer) doc.field("num "));
   }
 
-  // @Test
-  // Temporary disabled on April 13th 2015 by Luca
-//  public void testCRLFIWithinQuotes() {
-//    String cfgJson = "{source: { content: { value: 'id ,text ,num \r\n1,\"my test\r\n text\",1\r\n'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
-//    process(cfgJson);
-//    List<ODocument> res = getResult();
-//    ODocument doc = res.get(0);
-//    assertEquals(new Integer(1), (Integer) doc.field("id "));
-//    assertEquals("my test\r\n text", (String) doc.field("text "));
-//    assertEquals(new Integer(1), (Integer) doc.field("num "));
-//  }
+    @Test
+    public void testCRLFIWithinQuotes() {
+        String cfgJson = "{source: { content: { value: 'id ,text ,num \r\n1,\"my test\r\n text\",1\r\n'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
+        process(cfgJson);
+        List<ODocument> res = getResult();
+        ODocument doc = res.get(0);
+        assertEquals(new Integer(1), (Integer) doc.field("id "));
+        assertEquals("my test\r\n text", (String) doc.field("text "));
+        assertEquals(new Integer(1), (Integer) doc.field("num "));
+    }
 
   @Test
   public void testEscapingDoubleQuotes() {
