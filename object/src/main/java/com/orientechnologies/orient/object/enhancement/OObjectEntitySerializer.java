@@ -1097,7 +1097,7 @@ public class OObjectEntitySerializer {
 
         fieldName = p.getName();
 
-        List<String> classTransientFields = transientFields.get(pojoClass);
+        List<String> classTransientFields = transientFields.get(currentClass);
 
         if ((idField != null && fieldName.equals(idField.getName()) || (vField != null && fieldName.equals(vField.getName())) || (classTransientFields != null && classTransientFields
             .contains(fieldName))))
