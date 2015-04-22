@@ -99,17 +99,19 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
     sb.append("'");
 
     // role=(select from ORole where name = <input_role || 'writer'>)
-    if (this.role != null) {
-      sb.append(',');
-      sb.append(USER_FIELD_ROLES);
-      sb.append("=(SELECT FROM ");
-      sb.append(ROLE_CLASS);
-      sb.append(" WHERE ");
-      sb.append(ROLE_FIELD_NAME);
-      sb.append("='");
-      sb.append(this.role);
-      sb.append("')");
+    if (this.role == null) {
+      this.role = DEFAULT_ROLE;
     }
+
+    sb.append(',');
+    sb.append(USER_FIELD_ROLES);
+    sb.append("=(SELECT FROM ");
+    sb.append(ROLE_CLASS);
+    sb.append(" WHERE ");
+    sb.append(ROLE_FIELD_NAME);
+    sb.append("='");
+    sb.append(this.role);
+    sb.append("')");
 
     return getDatabase().command(new OCommandSQL(sb.toString())).execute();
   }
