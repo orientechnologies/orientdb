@@ -106,7 +106,7 @@ public enum OGlobalConfiguration {
       "Should we perform force sync of storage configuration for each update", Boolean.class, true),
 
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
-      + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "nothing"),
+      + " Possible values : gzip, nothing, snappy, encrypted, snappy-native. Default is nothing.", String.class, "nothing"),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
@@ -472,6 +472,15 @@ public enum OGlobalConfiguration {
 
   DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
       ORecordSerializerBinary.NAME),
+
+  //ENCRYPTION AT REST @see OAbstractEncryptedCompression https://github.com/orientechnologies/orientdb/issues/89
+  STORAGE_ENCRYPTION_PASSWORD("encryption.password", "The password to use to encrypt data at rest (See STORAGE_COMPRESSION_METHOD). Default is empty string", String.class, ""),
+  STORAGE_ENCRYPTION_SALT("encryption.salt", "The salt to use to encrypt data at rest. Default is \"ORIENTDB_IS_COOL\"", String.class, "ORIENTDB_IS_COOL"),
+  STORAGE_ENCRYPTION_KEYSIZE("encryption.keysize", "The keysize in bit. Default is 128", Integer.class, 128),
+  STORAGE_ENCRYPTION_ITERATIONS("encryption.iteration", "The number of times that the password is hashed during the derivation of the symmetric key. Default is 65536", Integer.class, 65536),
+  STORAGE_ENCRYPTION_SECRET_KEY_ALGORITHM("encryption.iteration", "SecretKeyFactory algorithm name. Default is PBKDF2WithHmacSHA1", String.class, "PBKDF2WithHmacSHA1"),
+  STORAGE_ENCRYPTION_ALGORITHM("encryption.algorithm", "The algorithm used to encript data. Default is AES", String.class, "AES"),
+  STORAGE_ENCRYPTION_TRANSFORMATION("encryption.transformation", "Transformation parameter as defined in https://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html#ciphertrans. Default is AES/CBC/PKCS5Padding", String.class, "AES/CBC/PKCS5Padding"),
 
   @Deprecated
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Deprecated, now BINARY serialization is used in place of CSV", Boolean.class,

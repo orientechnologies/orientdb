@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.compression;
 
+import com.orientechnologies.orient.core.compression.impl.OEncryptedCompression;
 import com.orientechnologies.orient.core.compression.impl.OGZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.OHighZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.OLowZIPCompression;
@@ -45,6 +46,7 @@ public class OCompressionFactory {
     register(OGZIPCompression.INSTANCE);
     register(OSnappyCompression.INSTANCE);
     register(ONothingCompression.INSTANCE);
+    register(OEncryptedCompression.INSTANCE);
   }
 
   public OCompression getCompression(String name) {
