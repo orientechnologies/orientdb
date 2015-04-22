@@ -66,7 +66,7 @@ public class OLogTransformer extends OAbstractTransformer {
     if (postfix != null && !postfix.isEmpty())
       buffer.append(resolve(postfix));
 
-    out.println(buffer.toString()); //TODO    log(OETLProcessor.LOG_LEVELS.INFO, buffer.toString());
+      log(OETLProcessor.LOG_LEVELS.INFO, buffer.toString());
 
     return input;
   }
