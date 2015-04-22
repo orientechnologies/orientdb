@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -245,6 +246,12 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       try {
         result(doc);
       } catch (ORecordDuplicatedException e) {
+        if (upsertMode)
+          // UPDATE THE NEW RECORD
+          getDatabase().query(query, queryArgs);
+        else
+          throw e;
+      } catch (ORecordNotFoundException e) {
         if (upsertMode)
           // UPDATE THE NEW RECORD
           getDatabase().query(query, queryArgs);
