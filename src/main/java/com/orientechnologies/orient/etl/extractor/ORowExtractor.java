@@ -18,6 +18,9 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLProcessor;
 import com.orientechnologies.orient.etl.OExtractedItem;
 
 import java.io.BufferedReader;
@@ -28,10 +31,23 @@ import java.util.NoSuchElementException;
 public class ORowExtractor extends OAbstractSourceExtractor {
   protected BufferedReader bReader;
   protected OExtractedItem next;
+  protected boolean        multiLine = true;
+  protected String         lineFeed  = "\r\n";
 
   @Override
   public String getName() {
     return "row";
+  }
+
+  @Override
+  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
+    super.configure(iProcessor, iConfiguration, iContext);
+
+    if (iConfiguration.containsField("multiLine"))
+      multiLine = (Boolean) iConfiguration.field("multiLine");
+
+    if (iConfiguration.containsField("lineFeed"))
+      lineFeed = (String) iConfiguration.field("lineFeed");
   }
 
   @Override
@@ -94,24 +110,40 @@ public class ORowExtractor extends OAbstractSourceExtractor {
     if (!bReader.ready())
       return null;
 
-      final String line = getCheckedString();
+    final String line = readLine();
 
-    if( line == null || line.isEmpty())
+    if (line == null || line.isEmpty())
       return null;
 
     return new OExtractedItem(current++, line);
   }
 
-    protected String getCheckedString() throws IOException {
-        StringBuilder sbLine = new StringBuilder();
-        boolean isOpenQuote = false;
-        do {
-            if (isOpenQuote) sbLine.append("\r\n");
-            isOpenQuote = false;
-            sbLine.append(bReader.readLine());
-            if ("null".equals(sbLine.toString())) return null;
-            for (char c : sbLine.toString().toCharArray()) if ('"' == c) isOpenQuote = !isOpenQuote;
-        } while (isOpenQuote);
-        return sbLine.toString();
+  protected String readLine() throws IOException {
+    if (multiLine) {
+      // CONSIDER MULTIPLE LINES
+      final StringBuilder sbLine = new StringBuilder();
+      boolean isOpenQuote = false;
+      do {
+        if (isOpenQuote) {
+          sbLine.append(lineFeed);
+        }
+
+        final String l = bReader.readLine();
+        if (l == null)
+          break;
+
+        sbLine.append(l);
+
+        // CHECK FOR OPEN QUOTE
+        for (char c : l.toCharArray())
+          if ('"' == c)
+            isOpenQuote = !isOpenQuote;
+
+      } while (isOpenQuote);
+
+      return sbLine.toString();
     }
+
+    return bReader.readLine();
+  }
 }

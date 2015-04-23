@@ -94,16 +94,18 @@ public class OCSVTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-      if (skipTransform()) return null;
+    if (skipTransform())
+      return null;
 
-      log(OETLProcessor.LOG_LEVELS.DEBUG, "parsing=%s", input);
+    log(OETLProcessor.LOG_LEVELS.DEBUG, "parsing=%s", input);
 
     final List<String> fields = OStringSerializerHelper.smartSplit(input.toString(), new char[] { separator }, 0, -1, false, false,
         false, false);
 
-      if (!isColumnNamesCorrect(fields)) return null;
+    if (!isColumnNamesCorrect(fields))
+      return null;
 
-      final ODocument doc = new ODocument();
+    final ODocument doc = new ODocument();
     for (int i = 0; i < columnNames.size() && i < fields.size(); ++i) {
       final String fieldName = columnNames.get(i);
       Object fieldValue = null;
@@ -111,15 +113,17 @@ public class OCSVTransformer extends OAbstractTransformer {
         final String fieldStringValue = getCellContent(fields.get(i));
         final OType fieldType = columnTypes != null ? columnTypes.get(i) : null;
 
-          if (fieldType != null && fieldType != OType.ANY) {
-              // DEFINED TYPE
-              fieldValue = processKnownType(doc, i, fieldName, fieldStringValue, fieldType);
-          } else {
-              // DETERMINE THE TYPE
-              if (fieldStringValue == null) fieldValue = null;
-              else fieldValue = determineTheType(fieldStringValue);
-          }
-          doc.field(fieldName, fieldValue);
+        if (fieldType != null && fieldType != OType.ANY) {
+          // DEFINED TYPE
+          fieldValue = processKnownType(doc, i, fieldName, fieldStringValue, fieldType);
+        } else {
+          // DETERMINE THE TYPE
+          if (fieldStringValue == null)
+            fieldValue = null;
+          else
+            fieldValue = determineTheType(fieldStringValue);
+        }
+        doc.field(fieldName, fieldValue);
 
       } catch (Exception e) {
         processor.getStats().incrementErrors();
@@ -131,92 +135,105 @@ public class OCSVTransformer extends OAbstractTransformer {
     return doc;
   }
 
-    private Object processKnownType(ODocument doc, int i, String fieldName, String fieldStringValue, OType fieldType) {
-        Object fieldValue;
-        fieldValue = getCellContent(fieldStringValue);
+  private Object processKnownType(ODocument doc, int i, String fieldName, String fieldStringValue, OType fieldType) {
+    Object fieldValue;
+    fieldValue = getCellContent(fieldStringValue);
+    try {
+      fieldValue = OType.convert(fieldValue, fieldType.getDefaultJavaType());
+      doc.field(fieldName, fieldValue);
+    } catch (Exception e) {
+      processor.getStats().incrementErrors();
+      log(OETLProcessor.LOG_LEVELS.ERROR, "Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s",
+          processor.getExtractor().getProgress(), fieldName, i, fieldValue, fieldValue.getClass().getName(), fieldType);
+    }
+    return fieldValue;
+  }
+
+  private Object determineTheType(String fieldStringValue) {
+    Object fieldValue;
+    if ((fieldValue = transformToDate(fieldStringValue)) == null)// try maybe Date type
+      if ((fieldValue = transformToNumeric(fieldStringValue)) == null)// try maybe Numeric type
+        fieldValue = fieldStringValue; // type String
+    return fieldValue;
+  }
+
+  private Object transformToDate(String fieldStringValue) {
+    // DATE
+    DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+    df.setLenient(true);
+    Object fieldValue;
+    try {
+      fieldValue = df.parse(fieldStringValue);
+    } catch (ParseException pe) {
+      fieldValue = null;
+    }
+    return fieldValue;
+  }
+
+  private Object transformToNumeric(final String fieldStringValue) {
+    if (fieldStringValue.isEmpty())
+      return fieldStringValue;
+
+    final char c = fieldStringValue.charAt(0);
+    if (c != '-' && !Character.isDigit(c))
+      // NOT A NUMBER FOR SURE
+      return fieldStringValue;
+
+    Object fieldValue;
+    try {
+      if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
+        String numberAsString = fieldStringValue.replaceAll(",", ".");
+        fieldValue = new Float(numberAsString);
+        if (!isFinite((Float) fieldValue)) {
+          fieldValue = new Double(numberAsString);
+        }
+      } else
         try {
-            fieldValue = OType.convert(fieldValue, fieldType.getDefaultJavaType());
-            doc.field(fieldName, fieldValue);
+          fieldValue = new Integer(fieldStringValue);
         } catch (Exception e) {
-            processor.getStats().incrementErrors();
-            log(OETLProcessor.LOG_LEVELS.ERROR, "Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s",
-                    processor.getExtractor().getProgress(), fieldName, i, fieldValue, fieldValue.getClass().getName(), fieldType);
+          fieldValue = new Long(fieldStringValue);
         }
-        return fieldValue;
+    } catch (NumberFormatException nf) {
+      fieldValue = fieldStringValue;
+    }
+    return fieldValue;
+  }
+
+  private boolean isColumnNamesCorrect(List<String> fields) {
+    if (columnNames == null) {
+      if (!columnsOnFirstLine)
+        throw new OTransformException(getName() + ": columnsOnFirstLine=false and no columns declared");
+      columnNames = fields;
+
+      // REMOVE ANY STRING CHARACTERS IF ANY
+      for (int i = 0; i < columnNames.size(); ++i)
+        columnNames.set(i, getCellContent(columnNames.get(i)));
+
+      return false;
     }
 
-    private Object determineTheType(String fieldStringValue) {
-        Object fieldValue;
-        if ((fieldValue = transformToDate(fieldStringValue)) == null)// try maybe Date type
-            if ((fieldValue = transformToNumeric(fieldStringValue)) == null)// try maybe Numeric type
-                fieldValue = fieldStringValue; // type String
-        return fieldValue;
-    }
+    if (columnsOnFirstLine && line == 0)
+      // JUST SKIP FIRST LINE
+      return false;
 
-    private Object transformToDate(String fieldStringValue) {
-        // DATE
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        df.setLenient(true);
-        Object fieldValue;
-        try {
-            fieldValue = df.parse(fieldStringValue);
-        } catch (ParseException pe) {
-            fieldValue = null;
-        }
-        return fieldValue;
-    }
+    return true;
+  }
 
-    private Object transformToNumeric(String fieldStringValue) {
-        Object fieldValue;
-        try {
-            if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
-                String numberAsString = fieldStringValue.replaceAll(",", ".");
-                fieldValue = new Float(numberAsString);
-                if (!isFinite((Float) fieldValue)) {
-                    fieldValue = new Double(numberAsString);
-                }
-            } else
-                try {
-                    fieldValue = new Integer(fieldStringValue);
-                } catch (Exception e) {
-                    fieldValue = new Long(fieldStringValue);
-                }
-        } catch (NumberFormatException nf) {
-            fieldValue = fieldStringValue;
-        }
-        return fieldValue;
-    }
+  private boolean skipTransform() {
+    line++;
 
-    private boolean isColumnNamesCorrect(List<String> fields) {
-        if (columnNames == null) {
-            if (!columnsOnFirstLine)
-                throw new OTransformException(getName() + ": columnsOnFirstLine=false and no columns declared");
-            columnNames = fields;
-
-            // REMOVE ANY STRING CHARACTERS IF ANY
-            for (int i = 0; i < columnNames.size(); ++i)
-                columnNames.set(i, getCellContent(columnNames.get(i)));
-
-            return false;
-        }
+    if (skipFrom > -1) {
+      if (skipTo > -1) {
+        if (line >= skipFrom && line <= skipTo)
+          return true;
+      } else if (line >= skipFrom)
+        // SKIP IT
         return true;
     }
+    return false;
+  }
 
-    private boolean skipTransform() {
-        line++;
-
-        if (skipFrom > -1) {
-            if (skipTo > -1) {
-                if (line >= skipFrom && line <= skipTo)
-                    return true;
-            } else if (line >= skipFrom)
-                // SKIP IT
-                return true;
-        }
-        return false;
-    }
-
-    /**
+  /**
    * Backport copy of Float.isFinite() method that was introduced since Java 1.8 but we must support 1.6. TODO replace after
    * choosing Java 1.8 as minimal supported
    **/
@@ -226,7 +243,7 @@ public class OCSVTransformer extends OAbstractTransformer {
 
   // TODO Test, and double doubleqoutes case
   public String getCellContent(String iValue) {
-      if (iValue == null || iValue.isEmpty() || "NULL".equals(iValue))
+    if (iValue == null || iValue.isEmpty() || "NULL".equals(iValue))
       return null;
 
     if (iValue.length() > 1 && (iValue.charAt(0) == stringCharacter && iValue.charAt(iValue.length() - 1) == stringCharacter))
