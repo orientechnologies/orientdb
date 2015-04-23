@@ -1,10 +1,18 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -987,12 +995,12 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
     if (oldIndexUsage == -1) {
       oldIndexUsage = 0;
     }
-//    if (oldcompositeIndexUsed == -1) {
-//      oldcompositeIndexUsed = 0;
-//    }
-//    if (oldcompositeIndexUsed2 == -1) {
-//      oldcompositeIndexUsed2 = 0;
-//    }
+    // if (oldcompositeIndexUsed == -1) {
+    // oldcompositeIndexUsed = 0;
+    // }
+    // if (oldcompositeIndexUsed2 == -1) {
+    // oldcompositeIndexUsed2 = 0;
+    // }
 
     final List<ODocument> result = database.command(
         new OSQLSynchQuery<ODocument>("select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop2 >= 2")).execute();
@@ -1804,8 +1812,17 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
       Assert.assertEquals(containsDocument(result, document), 1);
     }
 
-    Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage);
-    Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed);
+    long newIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
+    if (oldIndexUsage == -1) {
+      Assert.assertTrue(newIndexUsage == -1 || newIndexUsage == 0);
+    } else
+      Assert.assertEquals(newIndexUsage, oldIndexUsage);
+
+    long newCompositeIndexUsage = profiler.getCounter("db.demo.query.compositeIndexUsed");
+    if (oldcompositeIndexUsed == -1) {
+      Assert.assertTrue(newCompositeIndexUsage == -1 || newCompositeIndexUsage == 0);
+    } else
+      Assert.assertEquals(newCompositeIndexUsage, oldcompositeIndexUsed);
   }
 
   @Test
@@ -2151,16 +2168,6 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
     long oldcompositeIndexUsed = profiler.getCounter("db.demo.query.compositeIndexUsed");
     long oldcompositeIndexUsed2 = profiler.getCounter("db.demo.query.compositeIndexUsed.2");
 
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
-    if (oldcompositeIndexUsed == -1) {
-      oldcompositeIndexUsed = 0;
-    }
-    if (oldcompositeIndexUsed2 == -1) {
-      oldcompositeIndexUsed2 = 0;
-    }
-
     final List<ODocument> result = database.command(
         new OSQLSynchQuery<ODocument>("select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop4 >= 1")).execute();
 
@@ -2175,9 +2182,24 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
       Assert.assertEquals(containsDocument(result, document), 1);
     }
 
-    Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage);
-    Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed);
-    Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed.2"), oldcompositeIndexUsed2);
+    long newIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
+    if (oldIndexUsage == -1) {
+      Assert.assertTrue(newIndexUsage == -1 || newIndexUsage == 0);
+    } else
+      Assert.assertEquals(newIndexUsage, oldIndexUsage);
+
+    long newcompositeIndexUsed = profiler.getCounter("db.demo.query.compositeIndexUsed");
+    if (oldcompositeIndexUsed == -1) {
+      Assert.assertTrue(newIndexUsage == -1 || newIndexUsage == 0);
+    } else
+      Assert.assertEquals(newcompositeIndexUsed, oldcompositeIndexUsed);
+
+    long newcompositeIndexUsed2 = profiler.getCounter("db.demo.query.compositeIndexUsed.2");
+    if (oldcompositeIndexUsed2 == -1) {
+      Assert.assertTrue(newcompositeIndexUsed2 == -1 || newcompositeIndexUsed2 == 0);
+    } else
+      Assert.assertEquals(newcompositeIndexUsed2, oldcompositeIndexUsed2);
+
   }
 
   @Test
@@ -2210,9 +2232,24 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
       Assert.assertEquals(containsDocument(result, document), 1);
     }
 
-    Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage);
-    Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed);
-    Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed.3"), oldcompositeIndexUsed3);
+    long newIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
+    if (oldIndexUsage == -1) {
+      Assert.assertTrue(newIndexUsage == -1 || newIndexUsage == 0);
+    } else
+      Assert.assertEquals(newIndexUsage, oldIndexUsage);
+
+    long newcompositeIndexUsed = profiler.getCounter("db.demo.query.compositeIndexUsed");
+    if (oldcompositeIndexUsed == -1) {
+      Assert.assertTrue(newIndexUsage == -1 || newIndexUsage == 0);
+    } else
+      Assert.assertEquals(newcompositeIndexUsed, oldcompositeIndexUsed);
+
+    long newcompositeIndexUsed3 = profiler.getCounter("db.demo.query.compositeIndexUsed.3");
+    if (oldcompositeIndexUsed3 == -1) {
+      Assert.assertTrue(newcompositeIndexUsed3 == -1 || newcompositeIndexUsed3 == 0);
+    } else
+      Assert.assertEquals(newcompositeIndexUsed3, oldcompositeIndexUsed3);
+
   }
 
   @Test
