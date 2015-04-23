@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -136,11 +137,13 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
     final OClass clazz = database.getMetadata().getSchema().getClass(tableNamePattern);
     if (clazz != null) {
-      final OProperty prop = clazz.getProperty(columnNamePattern);
-      if (prop != null) {
-        records.add((ODocument) new ODocument().field("TABLE_CAT", database.getName()).field("TABLE_NAME", clazz.getName())
-            .field("COLUMN_NAME", prop.getName()).field("DATA_TYPE", OrientJdbcResultSetMetaData.getSqlType(prop.getType()))
-            .field("COLUMN_SIZE", 1).field("NULLABLE", !prop.isNotNull()).field("IS_NULLABLE", prop.isNotNull() ? "NO" : "YES"));
+      final Map<String, OProperty> propertiesMap = clazz.propertiesMap();
+      for (OProperty prop : propertiesMap.values()) {
+        if (columnNamePattern == null || columnNamePattern.equals("%") || columnNamePattern.equalsIgnoreCase(prop.getName())) {
+          records.add((ODocument) new ODocument().field("TABLE_CAT", database.getName()).field("TABLE_NAME", clazz.getName())
+              .field("COLUMN_NAME", prop.getName()).field("DATA_TYPE", OrientJdbcResultSetMetaData.getSqlType(prop.getType()))
+              .field("COLUMN_SIZE", 1).field("NULLABLE", !prop.isNotNull()).field("IS_NULLABLE", prop.isNotNull() ? "NO" : "YES"));
+        }
       }
     }
 
