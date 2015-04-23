@@ -94,11 +94,24 @@ public class ORowExtractor extends OAbstractSourceExtractor {
     if (!bReader.ready())
       return null;
 
-    final String line = bReader.readLine();
+      final String line = getCheckedString();
 
     if( line == null || line.isEmpty())
       return null;
 
     return new OExtractedItem(current++, line);
   }
+
+    protected String getCheckedString() throws IOException {
+        StringBuilder sbLine = new StringBuilder();
+        boolean isOpenQuote = false;
+        do {
+            if (isOpenQuote) sbLine.append("\r\n");
+            isOpenQuote = false;
+            sbLine.append(bReader.readLine());
+            if ("null".equals(sbLine.toString())) return null;
+            for (char c : sbLine.toString().toCharArray()) if ('"' == c) isOpenQuote = !isOpenQuote;
+        } while (isOpenQuote);
+        return sbLine.toString();
+    }
 }
