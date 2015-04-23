@@ -37,10 +37,12 @@ public class QueryContext {
   public final Filter          filter;
   public final Sort            sort;
   public QueryContextCFG       cfg;
-  public boolean            facet = false;
-  public TaxonomyReader     reader;
-  private FacetsConfig facetConfig;
-  private String facefField;
+  public boolean               facet     = false;
+  public boolean               drillDown = false;
+  public TaxonomyReader        reader;
+  private FacetsConfig         facetConfig;
+  private String               facetField;
+  private String               drillDownQuery;
 
   public QueryContext(OCommandContext context, IndexSearcher searcher, Query query) {
     this(context, searcher, query, null, null);
@@ -89,12 +91,25 @@ public class QueryContext {
     return facetConfig;
   }
 
-  public void setFacefField(String facefField) {
-    this.facefField = facefField;
+  public void setFacetField(String facetField) {
+    this.facetField = facetField;
   }
 
-  public String getFacefField() {
-    return facefField;
+  public String getFacetField() {
+    return facetField;
+  }
+
+  public void setDrillDownQuery(String drillDownQuery) {
+    this.drillDownQuery = drillDownQuery;
+    drillDown = drillDownQuery != null;
+  }
+
+  public boolean isDrillDown() {
+    return drillDown;
+  }
+
+  public String getDrillDownQuery() {
+    return drillDownQuery;
   }
 
   public enum QueryContextCFG {

@@ -37,110 +37,107 @@ import java.util.Map;
 
 public class OLuceneNearOperator extends OQueryTargetOperator {
 
-    public OLuceneNearOperator() {
-        super("NEAR", 5, false);
+  public OLuceneNearOperator() {
+    super("NEAR", 5, false);
+  }
+
+  @Override
+  public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
+      Object iRight, OCommandContext iContext) {
+
+    if (iContext.getVariable("$luceneIndex") != null) {
+      return true;
+    } else {
+      return false;
     }
+  }
 
-    @Override
-    public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
-                                 Object iRight, OCommandContext iContext) {
+  private Object[] parseParams(OIdentifiable iRecord, OSQLFilterCondition iCondition) {
 
+    ODocument oDocument = (ODocument) iRecord;
+    Collection left = (Collection) iCondition.getLeft();
+    Collection right = (Collection) iCondition.getRight();
+    Object[] params = new Object[(left.size() * 2) - 2];
+    int i = 0;
+    for (Object obj : left) {
+      if (obj instanceof OSQLFilterItemField) {
+        String fName = ((OSQLFilterItemField) obj).getFieldChain().getItemName(0);
+        params[i] = oDocument.field(fName);
+        i++;
+      }
+    }
+    for (Object obj : right) {
+      if (obj instanceof Number) {
+        params[i] = ((Double) OType.convert(obj, Double.class)).doubleValue();
+        ;
+        i++;
+      }
+    }
+    return params;
+  }
 
-        if (iContext.getVariable("$luceneIndex") != null) {
-            return true;
-        } else {
-            return false;
+  @Override
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+
+    OIndexCursor cursor;
+    OIndexDefinition definition = index.getDefinition();
+    int idxSize = definition.getFields().size();
+    int paramsSize = keyParams.size();
+
+    double distance = 0;
+    Object spatial = iContext.getVariable("spatial");
+    if (spatial != null) {
+      if (spatial instanceof Number) {
+        distance = ((Double) OType.convert(spatial, Double.class)).doubleValue();
+      } else if (spatial instanceof Map) {
+        Map<String, Object> params = (Map<String, Object>) spatial;
+
+        Object dst = params.get("maxDistance");
+        if (dst != null && dst instanceof Number) {
+          distance = ((Double) OType.convert(dst, Double.class)).doubleValue();
         }
+      }
     }
+    Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setMaxDistance(distance).setContext(iContext));
+    if (indexResult == null || indexResult instanceof OIdentifiable)
+      cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
+    else
+      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), new OSpatialCompositeKey(
+          keyParams));
 
-    private Object[] parseParams(OIdentifiable iRecord, OSQLFilterCondition iCondition) {
+    iContext.setVariable("$luceneIndex", true);
+    return cursor;
+  }
 
-        ODocument oDocument = (ODocument) iRecord;
-        Collection left = (Collection) iCondition.getLeft();
-        Collection right = (Collection) iCondition.getRight();
-        Object[] params = new Object[(left.size() * 2) - 2];
-        int i = 0;
-        for (Object obj : left) {
-            if (obj instanceof OSQLFilterItemField) {
-                String fName = ((OSQLFilterItemField) obj).getFieldChain().getItemName(0);
-                params[i] = oDocument.field(fName);
-                i++;
-            }
-        }
-        for (Object obj : right) {
-            if (obj instanceof Number) {
-                params[i] = ((Double) OType.convert(obj, Double.class)).doubleValue();
-                ;
-                i++;
-            }
-        }
-        return params;
-    }
+  @Override
+  public OIndexReuseType getIndexReuseType(Object iLeft, Object iRight) {
+    return OIndexReuseType.INDEX_OPERATOR;
+  }
 
-    @Override
-    public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  @Override
+  public ORID getBeginRidRange(Object iLeft, Object iRight) {
+    return null;
+  }
 
-        OIndexCursor cursor;
-        OIndexDefinition definition = index.getDefinition();
-        int idxSize = definition.getFields().size();
-        int paramsSize = keyParams.size();
+  @Override
+  public ORID getEndRidRange(Object iLeft, Object iRight) {
+    return null;
+  }
 
-        double distance = 0;
-        Object spatial = iContext.getVariable("spatial");
-        Integer limit = (Integer) iContext.getVariable("fetchLimit");
-        if (spatial != null) {
+  @Override
+  public String getSyntax() {
+    return "<left> NEAR[(<begin-deep-level> [,<maximum-deep-level> [,<fields>]] )] ( <conditions> )";
+  }
 
-            if (spatial instanceof Number) {
-                distance = ((Double) OType.convert(spatial, Double.class)).doubleValue();
-            } else if (spatial instanceof Map) {
-                Map<String, Object> params = (Map<String, Object>) spatial;
+  @Override
+  public OIndexSearchResult getOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
+      List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
+    return OLuceneOperatorUtil.buildOIndexSearchResult(iSchemaClass, iCondition, iIndexSearchResults, context);
+  }
 
-                Object dst = params.get("maxDistance");
-                if (dst != null && dst instanceof Number) {
-                    distance = ((Double) OType.convert(dst, Double.class)).doubleValue();
-                }
-            }
-        }
-        Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setMaxDistance(distance).setContext(iContext));
-        if (indexResult == null || indexResult instanceof OIdentifiable)
-            cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
-        else
-            cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), new OSpatialCompositeKey(
-                    keyParams));
-
-        iContext.setVariable("$luceneIndex", true);
-        return cursor;
-    }
-
-    @Override
-    public OIndexReuseType getIndexReuseType(Object iLeft, Object iRight) {
-        return OIndexReuseType.INDEX_OPERATOR;
-    }
-
-    @Override
-    public ORID getBeginRidRange(Object iLeft, Object iRight) {
-        return null;
-    }
-
-    @Override
-    public ORID getEndRidRange(Object iLeft, Object iRight) {
-        return null;
-    }
-
-    @Override
-    public String getSyntax() {
-        return "<left> NEAR[(<begin-deep-level> [,<maximum-deep-level> [,<fields>]] )] ( <conditions> )";
-    }
-
-    @Override
-    public OIndexSearchResult getOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
-                                                    List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
-        return OLuceneOperatorUtil.buildOIndexSearchResult(iSchemaClass, iCondition, iIndexSearchResults, context);
-    }
-
-    @Override
-    public Collection<OIdentifiable> filterRecords(ODatabase<?> iRecord, List<String> iTargetClasses, OSQLFilterCondition iCondition,
-                                                   Object iLeft, Object iRight) {
-        return null;
-    }
+  @Override
+  public Collection<OIdentifiable> filterRecords(ODatabase<?> iRecord, List<String> iTargetClasses, OSQLFilterCondition iCondition,
+      Object iLeft, Object iRight) {
+    return null;
+  }
 }

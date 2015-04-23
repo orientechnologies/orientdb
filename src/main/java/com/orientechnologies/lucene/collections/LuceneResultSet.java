@@ -58,14 +58,30 @@ public class LuceneResultSet implements Set<OIdentifiable> {
       FacetsCollector facetsCollector = new FacetsCollector(true);
 
       try {
-        FacetsCollector.search(queryContext.searcher, query, PAGE_SIZE, facetsCollector);
 
-        Facets facets = new FastTaxonomyFacetCounts(queryContext.getFacefField(), queryContext.reader,
-            queryContext.getFacetConfig(), facetsCollector);
-        List<FacetResult> res = facets.getAllDims(PAGE_SIZE);
+        String[] pathFacet = null;
+        if (queryContext.isDrillDown()) {
+          DrillDownQuery drillDownQuery = new DrillDownQuery(queryContext.getFacetConfig(), query);
+          String[] path = queryContext.getDrillDownQuery().split(":");
+          pathFacet = path[1].split("/");
+          drillDownQuery.add(path[0], pathFacet);
+          FacetsCollector.search(queryContext.searcher, drillDownQuery, PAGE_SIZE, facetsCollector);
+        } else {
+          FacetsCollector.search(queryContext.searcher, query, PAGE_SIZE, facetsCollector);
+        }
 
-        List<ODocument> documents = new ArrayList<ODocument>();
-        for (FacetResult facetResult : res) {
+        Facets facets = new FastTaxonomyFacetCounts(queryContext.reader, queryContext.getFacetConfig(), facetsCollector);
+
+        FacetResult facetResult = null;
+        if (pathFacet != null) {
+          facetResult = facets.getTopChildren(PAGE_SIZE, queryContext.getFacetField(), pathFacet);
+        } else {
+          facetResult = facets.getTopChildren(PAGE_SIZE, queryContext.getFacetField());
+        }
+
+        if (facetResult != null) {
+          List<ODocument> documents = new ArrayList<ODocument>();
+          // for (FacetResult facetResult : res) {
 
           ODocument doc = new ODocument();
 
@@ -82,8 +98,10 @@ public class LuceneResultSet implements Set<OIdentifiable> {
           }
           doc.field("labelsValue", labelsAndValue);
           documents.add(doc);
+          queryContext.context.setVariable("$facet", documents);
         }
-        queryContext.context.setVariable("$facet", documents);
+        // }
+
       } catch (IOException e) {
         e.printStackTrace();
       }

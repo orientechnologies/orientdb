@@ -16,12 +16,10 @@
 
 package com.orientechnologies.lucene;
 
-import java.util.Date;
-
+import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.distance.DistanceUtils;
-import com.spatial4j.core.shape.Point;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.Term;
@@ -29,14 +27,10 @@ import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
-import org.apache.lucene.spatial.SpatialStrategy;
-import org.apache.lucene.spatial.query.SpatialArgs;
-import org.apache.lucene.spatial.query.SpatialOperation;
 import org.apache.lucene.util.Version;
 
-import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
+import java.util.Date;
+import java.util.Map;
 
 /**
  * Created by enricorisa on 21/03/14.
@@ -104,7 +98,15 @@ public class OLuceneIndexType {
 
     String query = "";
     if (key instanceof OCompositeKey) {
-      query = ((OCompositeKey) key).getKeys().get(0).toString();
+      Object params = ((OCompositeKey) key).getKeys().get(0);
+      if (params instanceof Map) {
+        Object q = ((Map) params).get("q");
+        if (q != null) {
+          query = q.toString();
+        }
+      } else {
+        query = params.toString();
+      }
     } else {
       query = key.toString();
     }
