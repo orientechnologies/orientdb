@@ -466,7 +466,7 @@ OInteger Integer():
 }
 {
 (
-    [ <MINUS> {sign = -1;} ] tokenVal = <INTEGER_LITERAL> {jjtThis.value = sign * Integer.parseInt(tokenVal.image);}
+    [ <MINUS> {sign = -1;} ] tokenVal = <INTEGER_LITERAL> {jjtThis.value = sign * Long.parseLong(tokenVal.image);}
 ) { return jjtThis; }
 }
 
@@ -2338,7 +2338,7 @@ OUnwind Unwind():
 }
 
 
-java.lang.Integer Limit():
+java.lang.Number Limit():
 { OInteger value = null; }
 {
     (
@@ -2347,7 +2347,7 @@ java.lang.Integer Limit():
     { return value.getValue(); }
 }
 
-java.lang.Integer Skip():
+java.lang.Number Skip():
 { OInteger value = null;}
 {
     (
@@ -2358,7 +2358,7 @@ java.lang.Integer Skip():
 }
 
 
-java.lang.Integer Timeout():
+java.lang.Number Timeout():
 { OInteger val; }
 {
     (
@@ -2368,7 +2368,7 @@ java.lang.Integer Timeout():
 }
 
 
-java.lang.Integer Wait():
+java.lang.Number Wait():
 { OInteger val; }
 {
     (
@@ -2378,7 +2378,7 @@ java.lang.Integer Wait():
 }
 
 
-java.lang.Integer Retry():
+java.lang.Number Retry():
 { OInteger val; }
 {
     (

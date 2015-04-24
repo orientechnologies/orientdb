@@ -29,9 +29,9 @@ public class OSelectStatement extends OStatement {
 
   protected OUnwind      unwind;
 
-  protected Integer      skip;
+  protected Number       skip;
 
-  protected Integer      limit;
+  protected Number       limit;
 
   protected Boolean      lockRecord;
 
@@ -39,7 +39,7 @@ public class OSelectStatement extends OStatement {
 
   protected OLetClause   letClause;
 
-  protected Integer      timeout;
+  protected Number       timeout;
 
   protected Boolean      parallel;
 
@@ -139,19 +139,19 @@ public class OSelectStatement extends OStatement {
     this.orderBy = orderBy;
   }
 
-  public Integer getSkip() {
+  public Number getSkip() {
     return skip;
   }
 
-  public void setSkip(Integer skip) {
+  public void setSkip(Number skip) {
     this.skip = skip;
   }
 
-  public Integer getLimit() {
+  public Number getLimit() {
     return limit;
   }
 
-  public void setLimit(Integer limit) {
+  public void setLimit(Number limit) {
     this.limit = limit;
   }
 

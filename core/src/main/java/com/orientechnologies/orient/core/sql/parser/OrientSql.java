@@ -205,7 +205,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         ;
       }
       tokenVal = jj_consume_token(INTEGER_LITERAL);
-                                                           jjtn000.value = sign * Integer.parseInt(tokenVal.image);
+                                                           jjtn000.value = sign * Long.parseLong(tokenVal.image);
     jjtree.closeNodeScope(jjtn000, true);
     jjtc000 = false;
     jjtn000.jjtSetLastToken(getToken(0));
@@ -6425,7 +6425,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     throw new Error("Missing return statement in function");
   }
 
-  final public java.lang.Integer Limit() throws ParseException {
+  final public java.lang.Number Limit() throws ParseException {
  /*@bgen(jjtree) Limit */
   OLimit jjtn000 = new OLimit(JJTLIMIT);
   boolean jjtc000 = true;
@@ -6461,7 +6461,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     throw new Error("Missing return statement in function");
   }
 
-  final public java.lang.Integer Skip() throws ParseException {
+  final public java.lang.Number Skip() throws ParseException {
  /*@bgen(jjtree) Skip */
   OSkip jjtn000 = new OSkip(JJTSKIP);
   boolean jjtc000 = true;
@@ -6509,7 +6509,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     throw new Error("Missing return statement in function");
   }
 
-  final public java.lang.Integer Timeout() throws ParseException {
+  final public java.lang.Number Timeout() throws ParseException {
  /*@bgen(jjtree) Timeout */
   OTimeout jjtn000 = new OTimeout(JJTTIMEOUT);
   boolean jjtc000 = true;
@@ -6545,7 +6545,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     throw new Error("Missing return statement in function");
   }
 
-  final public java.lang.Integer Wait() throws ParseException {
+  final public java.lang.Number Wait() throws ParseException {
  /*@bgen(jjtree) Wait */
   OWait jjtn000 = new OWait(JJTWAIT);
   boolean jjtc000 = true;
@@ -6581,7 +6581,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     throw new Error("Missing return statement in function");
   }
 
-  final public java.lang.Integer Retry() throws ParseException {
+  final public java.lang.Number Retry() throws ParseException {
  /*@bgen(jjtree) Retry */
   ORetry jjtn000 = new ORetry(JJTRETRY);
   boolean jjtc000 = true;
