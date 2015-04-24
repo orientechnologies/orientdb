@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -43,6 +35,8 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
+import java.util.*;
+
 /**
  * Shortest path algorithm to find the shortest path from one node to another node in a directed graph.
  * 
@@ -55,10 +49,10 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
   protected static final float DISTANCE = 1f;
 
   public OSQLFunctionShortestPath() {
-    super(NAME, 2, 3);
+    super(NAME, 2, 4);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+  public List<ORID> execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       final OCommandContext iContext) {
     final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
     ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
@@ -89,8 +83,13 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
       }
 
       Direction direction = Direction.BOTH;
-      if (iParams.length > 2)
+      if (iParams.length > 2 && iParams[2] != null) {
         direction = Direction.valueOf(iParams[2].toString().toUpperCase());
+      }
+      Object edgeType = null;
+      if (iParams.length > 3) {
+        edgeType = iParams[3];
+      }
 
       final ArrayDeque<OrientVertex> queue = new ArrayDeque<OrientVertex>();
       final Set<ORID> visited = new HashSet<ORID>();
@@ -103,7 +102,12 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
       while (!queue.isEmpty()) {
         current = queue.poll();
 
-        final Iterable<Vertex> neighbors = current.getVertices(direction);
+        Iterable<Vertex> neighbors;
+        if (edgeType == null) {
+          neighbors = current.getVertices(direction);
+        } else {
+          neighbors = current.getVertices(direction, new String[] { "" + edgeType });
+        }
         for (Vertex neighbor : neighbors) {
           final OrientVertex v = (OrientVertex) neighbor;
           final ORID neighborIdentity = v.getIdentity();
@@ -131,10 +135,10 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
   }
 
   public String getSyntax() {
-    return "shortestPath(<sourceVertex>, <destinationVertex>, [<direction>])";
+    return "shortestPath(<sourceVertex>, <destinationVertex>, [<direction>, [ <edgeTypeAsString> ]])";
   }
 
-  private Object computePath(final Map<ORID, ORID> distances, final ORID neighbor) {
+  private List<ORID> computePath(final Map<ORID, ORID> distances, final ORID neighbor) {
     final List<ORID> result = new ArrayList<ORID>();
 
     ORID current = neighbor;
