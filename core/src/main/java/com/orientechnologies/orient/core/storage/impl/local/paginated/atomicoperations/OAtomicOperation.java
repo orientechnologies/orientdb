@@ -321,7 +321,7 @@ public class OAtomicOperation {
     }
 
     for (long deletedFileId : deletedFiles) {
-      writeCache.deleteFile(deletedFileId);
+      readCache.deleteFile(deletedFileId, writeCache);
     }
 
     for (Map.Entry<Long, FileChanges> fileChangesEntry : fileChanges.entrySet()) {
@@ -331,7 +331,7 @@ public class OAtomicOperation {
       if (fileChanges.isNew)
         readCache.addFile(fileChanges.fileName, newFileNamesId.get(fileChanges.fileName), writeCache);
       else if (fileChanges.truncate)
-        writeCache.truncateFile(fileId);
+        readCache.truncateFile(fileId, writeCache);
 
       for (Map.Entry<Long, FilePageChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
         final long pageIndex = filePageChangesEntry.getKey();

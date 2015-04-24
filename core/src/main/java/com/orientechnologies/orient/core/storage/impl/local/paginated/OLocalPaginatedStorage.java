@@ -24,6 +24,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.annotation.OId;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -37,6 +38,8 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
+import com.orientechnologies.orient.core.storage.cache.OWriteCacheIdGen;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
@@ -60,7 +63,8 @@ import java.util.concurrent.TimeUnit;
  * @author Andrey Lomakin
  * @since 28.03.13
  */
-public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage, OBackupable {
+public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage, OBackupable,
+    OIdentifiableStorage {
   private static String[]                  ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
       ".oem", ".oet", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
@@ -76,12 +80,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   private final OStorageVariableParser     variableParser;
   private final OPaginatedStorageDirtyFlag dirtyFlag;
-  private final int                        id;
 
   private String                           storagePath;
   private ExecutorService                  checkpointExecutor;
+  private final int                        id;
 
-  public OLocalPaginatedStorage(final String name, final String filePath, final String mode, int id, OReadCache readCache)
+  public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id, OReadCache readCache)
       throws IOException {
     super(name, filePath, mode);
 
@@ -174,6 +178,11 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       close(true, false);
 
     OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   @Override

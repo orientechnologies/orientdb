@@ -363,10 +363,11 @@ public class OSBTree<K, V> extends ODurableComponent {
   public void close(boolean flush) {
     acquireExclusiveLock();
     try {
-      writeCache.close(fileId, flush);
+      readCache.closeFile(fileId, flush, writeCache);
 
       if (nullPointerSupport)
-        writeCache.close(nullBucketFileId, flush);
+        readCache.closeFile(nullBucketFileId, flush, writeCache);
+
     } catch (IOException e) {
       throw new OSBTreeException("Error during close of index " + name, e);
     } finally {

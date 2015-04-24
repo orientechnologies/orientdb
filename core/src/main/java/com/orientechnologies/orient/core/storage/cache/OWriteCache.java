@@ -39,9 +39,11 @@ public interface OWriteCache {
 
   long openFile(String fileName) throws IOException;
 
-  long addFile(String fileName) throws IOException;
+  void openFile(long fileId) throws IOException;
 
   void openFile(String fileName, long fileId) throws IOException;
+
+  long addFile(String fileName) throws IOException;
 
   void addFile(String fileName, long fileId) throws IOException;
 
@@ -52,8 +54,6 @@ public interface OWriteCache {
   void lock() throws IOException;
 
   void unlock() throws IOException;
-
-  void openFile(long fileId) throws IOException;
 
   boolean exists(String fileName);
 
@@ -73,7 +73,7 @@ public interface OWriteCache {
 
   boolean isOpen(long fileId);
 
-  long isOpen(String fileName) throws IOException;
+  Long isOpen(String fileName) throws IOException;
 
   void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException;
 
@@ -87,13 +87,13 @@ public interface OWriteCache {
 
   void renameFile(long fileId, String oldFileName, String newFileName) throws IOException;
 
-  void close() throws IOException;
+  long[] close() throws IOException;
 
   void close(long fileId, boolean flush) throws IOException;
 
   OPageDataVerificationError[] checkStoredPages(OCommandOutputListener commandOutputListener);
 
-  void delete() throws IOException;
+  long[] delete() throws IOException;
 
   String fileNameById(long fileId);
 

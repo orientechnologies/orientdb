@@ -76,7 +76,9 @@ public class ReadWriteCacheConcurrentTest {
 
   @BeforeMethod
   public void beforeMethod() throws IOException {
-    if (writeBuffer != null)
+    if (writeBuffer != null && readBuffer != null)
+      readBuffer.closeStorage(writeBuffer);
+    else if (writeBuffer != null)
       writeBuffer.close();
 
     if (readBuffer != null) {
@@ -99,7 +101,7 @@ public class ReadWriteCacheConcurrentTest {
 
   @AfterClass
   public void afterClass() throws IOException {
-    writeBuffer.close();
+    readBuffer.closeStorage(writeBuffer);
     readBuffer.clear();
 
     deleteUsedFiles(FILE_COUNT);

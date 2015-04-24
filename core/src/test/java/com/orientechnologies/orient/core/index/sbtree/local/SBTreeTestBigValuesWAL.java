@@ -98,8 +98,8 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
     sbTree.delete();
     expectedSBTree.delete();
 
-    actualWriteCache.delete();
-    expectedWriteCache.delete();
+    actualReadCache.deleteStorage(actualWriteCache);
+    expectedReadCache.deleteStorage(expectedWriteCache);
 
     writeAheadLog.delete();
 

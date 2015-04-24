@@ -42,10 +42,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -234,10 +231,12 @@ public class OWOWCache implements OWriteCache {
       initNameIdMapping();
       Integer fileId = nameIdMap.get(fileName);
 
-      if (fileId != null && fileId < 0)
-        return -fileId;
+      if (fileId != null && fileId < 0) {
+        return composeFileId(id, -fileId);
+      }
 
       ++fileCounter;
+
       return composeFileId(id, fileCounter);
     } finally {
       filesLock.releaseWriteLock();
@@ -582,18 +581,18 @@ public class OWOWCache implements OWriteCache {
     }
   }
 
-  public long isOpen(String fileName) throws IOException {
+  public Long isOpen(String fileName) throws IOException {
     filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
 
       final Integer fileId = nameIdMap.get(fileName);
       if (fileId == null || fileId < 0)
-        return -1;
+        return null;
 
       final OFileClassic fileClassic = files.get(fileId);
       if (fileClassic == null || !fileClassic.isOpen())
-        return -1;
+        return null;
 
       return composeFileId(id, fileId);
     } finally {
@@ -660,6 +659,9 @@ public class OWOWCache implements OWriteCache {
 
     filesLock.acquireWriteLock();
     try {
+      if (!isOpen(fileId))
+        return;
+
       removeCachedPages(intId);
       files.get(intId).shrink(0);
     } finally {
@@ -696,7 +698,7 @@ public class OWOWCache implements OWriteCache {
     }
   }
 
-  public void close() throws IOException {
+  public long[] close() throws IOException {
     flush();
 
     if (!commitExecutor.isShutdown()) {
@@ -714,9 +716,15 @@ public class OWOWCache implements OWriteCache {
 
     filesLock.acquireWriteLock();
     try {
-      for (OFileClassic fileClassic : files.values()) {
+
+      long[] result = new long[files.size()];
+      int counter = 0;
+      for (Map.Entry<Integer, OFileClassic> fileEntry : files.entrySet()) {
+        OFileClassic fileClassic = fileEntry.getValue();
         if (fileClassic.isOpen())
           fileClassic.close();
+
+        result[counter++] = composeFileId(id, fileEntry.getKey());
       }
 
       if (nameIdMapHolder != null) {
@@ -728,6 +736,8 @@ public class OWOWCache implements OWriteCache {
         nameIdMapHolder.getFD().sync();
         nameIdMapHolder.close();
       }
+
+      return result;
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -839,11 +849,17 @@ public class OWOWCache implements OWriteCache {
     }
   }
 
-  public void delete() throws IOException {
+  public long[] delete() throws IOException {
+    long[] result = null;
     filesLock.acquireWriteLock();
     try {
-      for (int fileId : files.keySet())
+      result = new long[files.size()];
+
+      int counter = 0;
+      for (int fileId : files.keySet()) {
         doDeleteFile(fileId);
+        result[counter++] = composeFileId(id, fileId);
+      }
 
       if (nameIdMapHolderFile != null) {
         if (nameIdMapHolderFile.exists()) {
@@ -872,6 +888,8 @@ public class OWOWCache implements OWriteCache {
         throw new OException("Data flush thread was interrupted", e);
       }
     }
+
+    return result;
   }
 
   public String fileNameById(long fileId) {
@@ -1079,7 +1097,7 @@ public class OWOWCache implements OWriteCache {
   }
 
   private static long composeFileId(int id, int fileId) {
-    return (((long) id) << 16) | fileId;
+    return (((long) id) << 32) | fileId;
   }
 
   private static int extractFileId(long fileId) {

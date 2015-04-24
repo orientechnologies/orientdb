@@ -1293,14 +1293,14 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
           OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry, getChangesTree(
               atomicOperation, hashStateEntry), false);
           if (!metadataPage.isRemoved(i)) {
-            writeCache.close(metadataPage.getFileId(i), true);
+            readCache.closeFile(metadataPage.getFileId(i), true, writeCache);
           }
         }
       } finally {
         releasePage(atomicOperation, hashStateEntry);
       }
 
-      writeCache.close(fileStateId, tryAcquireExclusiveLock());
+      readCache.closeFile(fileStateId, true, writeCache);
     } catch (IOException e) {
       throw new OIndexException("Error during hash table close", e);
     } finally {

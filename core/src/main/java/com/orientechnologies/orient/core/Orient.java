@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
+import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public class Orient extends OListenerManger<OOrientListener> {
@@ -64,6 +65,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   private final ConcurrentMap<String, OEngine>                                       engines                       = new ConcurrentHashMap<String, OEngine>();
   private final ConcurrentMap<String, OStorage>                                      storages                      = new ConcurrentHashMap<String, OStorage>();
+  private final ConcurrentHashMap<Integer, Boolean>                                  storageIds                    = new ConcurrentHashMap<Integer, Boolean>();
 
   private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners          = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
   private final ODatabaseFactory                                                     databaseFactory               = new ODatabaseFactory();
@@ -465,7 +467,11 @@ public class Orient extends OListenerManger<OOrientListener> {
         storage = storages.get(dbName);
         if (storage == null) {
           // NOT FOUND: CREATE IT
-          storage = engine.createStorage(dbPath, parameters);
+
+          do {
+            storage = engine.createStorage(dbPath, parameters);
+          } while ((storage instanceof OIdentifiableStorage)
+              && storageIds.putIfAbsent(((OIdentifiableStorage) storage).getId(), Boolean.TRUE) != null);
 
           final OStorage oldStorage = storages.putIfAbsent(dbName, storage);
           if (oldStorage != null)

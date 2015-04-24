@@ -322,7 +322,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   public void close(boolean flush) {
     acquireExclusiveLock();
     try {
-      writeCache.close(fileId, flush);
+      readCache.closeFile(fileId, flush, writeCache);
     } catch (IOException e) {
       throw new OSBTreeException("Error during close of index " + name, e);
     } finally {

@@ -92,6 +92,8 @@ public class LocalPaginatedClusterTest {
     atomicOperationsManager = new OAtomicOperationsManager(storage);
 
     when(storage.getReadCache()).thenReturn(readCache);
+    when(storage.getWriteCache()).thenReturn(writeCache);
+
     when(storage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
 
     when(storage.getConfiguration()).thenReturn(storageConfiguration);
@@ -108,7 +110,7 @@ public class LocalPaginatedClusterTest {
   public void afterClass() throws IOException {
     paginatedCluster.delete();
 
-    writeCache.delete();
+    readCache.deleteStorage(writeCache);
 
     File file = new File(buildDirectory);
     Assert.assertTrue(file.delete());

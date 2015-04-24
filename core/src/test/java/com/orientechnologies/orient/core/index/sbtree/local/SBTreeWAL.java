@@ -102,11 +102,11 @@ public class SBTreeWAL extends SBTreeTest {
     sbTree.delete();
     expectedSBTree.delete();
 
+    actualReadCache.deleteStorage(actualWriteCache);
     actualReadCache.clear();
-    actualWriteCache.delete();
 
+    expectedReadCache.deleteStorage(expectedWriteCache);
     expectedReadCache.clear();
-    expectedWriteCache.delete();
 
     writeAheadLog.delete();
 

@@ -109,7 +109,7 @@ public class OClusterPositionMap extends ODurableComponent {
   public void close(boolean flush) throws IOException {
     acquireExclusiveLock();
     try {
-      writeCache.close(fileId, flush);
+      readCache.closeFile(fileId, flush, writeCache);
     } finally {
       releaseExclusiveLock();
     }

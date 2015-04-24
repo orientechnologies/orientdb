@@ -138,7 +138,7 @@ public class OHashTableDirectory extends ODurableComponent {
   public void close() throws IOException {
     acquireExclusiveLock();
     try {
-      writeCache.close(fileId, true);
+      readCache.closeFile(fileId, true, writeCache);
     } finally {
       releaseExclusiveLock();
     }

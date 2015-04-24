@@ -326,8 +326,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (writeAheadLog != null)
         writeAheadLog.delete();
 
-      if (readCache != null)
-        writeCache.delete();
+      if (writeCache != null) {
+        if (readCache != null)
+          readCache.deleteStorage(writeCache);
+        else
+          writeCache.delete();
+      }
 
       postDeleteSteps();
 
@@ -1902,9 +1906,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         writeAheadLog.removeFullCheckpointListener(this);
 
       if (!onDelete)
-        writeCache.close();
+        readCache.closeStorage(writeCache);
       else
-        writeCache.delete();
+        readCache.deleteStorage(writeCache);
 
       if (writeAheadLog != null) {
         writeAheadLog.close();
@@ -2328,7 +2332,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (walRecord instanceof OFileDeletedWALRecord) {
         OFileDeletedWALRecord fileDeletedWALRecord = (OFileDeletedWALRecord) walRecord;
         if (writeCache.exists(fileDeletedWALRecord.getFileId()))
-          writeCache.deleteFile(fileDeletedWALRecord.getFileId());
+          readCache.deleteFile(fileDeletedWALRecord.getFileId(), writeCache);
       } else if (walRecord instanceof OFileCreatedWALRecord) {
         OFileCreatedWALRecord fileCreatedCreatedWALRecord = (OFileCreatedWALRecord) walRecord;
         if (writeCache.exists(fileCreatedCreatedWALRecord.getFileName())) {

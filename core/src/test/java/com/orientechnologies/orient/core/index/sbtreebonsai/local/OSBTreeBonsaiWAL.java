@@ -89,8 +89,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
     sbTree.delete();
     expectedSBTree.delete();
 
-    actualWriteCache.delete();
-    expectedWriteCache.delete();
+    actualReadCache.deleteStorage(actualWriteCache);
+    expectedReadCache.deleteStorage(expectedWriteCache);
 
     writeAheadLog.delete();
 

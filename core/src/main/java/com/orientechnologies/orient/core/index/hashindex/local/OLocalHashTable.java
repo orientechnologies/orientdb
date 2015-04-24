@@ -1217,9 +1217,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       flush();
 
       directory.close();
-      writeCache.close(fileStateId, true);
-      writeCache.close(fileId, true);
-
+      readCache.closeFile(fileStateId, true, writeCache);
+      readCache.closeFile(fileId, true, writeCache);
     } catch (IOException e) {
       throw new OIndexException("Error during hash table close", e);
     } finally {

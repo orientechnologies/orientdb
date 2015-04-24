@@ -266,7 +266,8 @@ public class ODirectMemoryOnlyDiskCache implements OReadCache, OWriteCache {
   }
 
   @Override
-  public void close() {
+  public long[] close() {
+    return null;
   }
 
   @Override
@@ -275,7 +276,7 @@ public class ODirectMemoryOnlyDiskCache implements OReadCache, OWriteCache {
   }
 
   @Override
-  public void delete() {
+  public long[] delete() {
     metadataLock.lock();
     try {
       for (MemoryFile file : files.values())
@@ -287,6 +288,18 @@ public class ODirectMemoryOnlyDiskCache implements OReadCache, OWriteCache {
     } finally {
       metadataLock.unlock();
     }
+
+    return null;
+  }
+
+  @Override
+  public void deleteStorage(OWriteCache writeCache) throws IOException {
+    delete();
+  }
+
+  @Override
+  public void closeStorage(OWriteCache writeCache) throws IOException {
+    close();
   }
 
   @Override
@@ -514,13 +527,13 @@ public class ODirectMemoryOnlyDiskCache implements OReadCache, OWriteCache {
   }
 
   @Override
-  public long isOpen(String fileName) {
+  public Long isOpen(String fileName) {
     metadataLock.lock();
     try {
       Long result = fileNameIdMap.get(fileName);
 
       if (result == null)
-        return -1;
+        return null;
 
       return result;
     } finally {
@@ -529,7 +542,22 @@ public class ODirectMemoryOnlyDiskCache implements OReadCache, OWriteCache {
   }
 
   @Override
+  public void truncateFile(long fileId, OWriteCache writeCache) throws IOException {
+    truncateFile(fileId);
+  }
+
+  @Override
   public int getId() {
     return id;
+  }
+
+  @Override
+  public void closeFile(long fileId, boolean flush, OWriteCache writeCache) throws IOException {
+    close(fileId, flush);
+  }
+
+  @Override
+  public void deleteFile(long fileId, OWriteCache writeCache) throws IOException {
+    deleteFile(fileId);
   }
 }

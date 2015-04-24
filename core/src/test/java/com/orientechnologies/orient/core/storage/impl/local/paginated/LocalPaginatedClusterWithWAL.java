@@ -154,10 +154,10 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
 
     writeAheadLog.delete();
     paginatedCluster.delete();
-    writeCache.delete();
+    readCache.deleteStorage(writeCache);
 
     testCluster.delete();
-    testWriteCache.delete();
+    testReadCache.deleteStorage(testWriteCache);
 
     File file = new File(storageDir);
     Assert.assertTrue(file.delete());

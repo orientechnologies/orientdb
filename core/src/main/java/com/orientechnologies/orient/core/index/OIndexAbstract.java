@@ -988,7 +988,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
             final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
             if (writeCache.exists(fileName)) {
               final long fileId = readCache.openFile(fileName, writeCache);
-              writeCache.deleteFile(fileId);
+              readCache.deleteFile(fileId, writeCache);
             }
           } catch (IOException e) {
             OLogManager.instance().error(this, "Can't delete file for value containers", e);

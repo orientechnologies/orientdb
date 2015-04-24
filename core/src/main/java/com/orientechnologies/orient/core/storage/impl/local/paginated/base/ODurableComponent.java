@@ -151,7 +151,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected void deleteFile(OAtomicOperation atomicOperation, long fileId) throws IOException {
     if (atomicOperation == null)
-      writeCache.deleteFile(fileId);
+      readCache.deleteFile(fileId, writeCache);
     else
       atomicOperation.deleteFile(fileId);
   }
@@ -179,7 +179,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected void truncateFile(OAtomicOperation atomicOperation, long filedId) throws IOException {
     if (atomicOperation == null)
-      writeCache.truncateFile(filedId);
+      readCache.truncateFile(filedId, writeCache);
     else
       atomicOperation.truncateFile(filedId);
   }

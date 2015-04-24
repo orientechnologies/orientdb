@@ -66,7 +66,10 @@ public class ReadWriteDiskCacheTest {
 
   private void closeBufferAndDeleteFile() throws IOException {
     if (writeBuffer != null) {
-      writeBuffer.close();
+      if (readBuffer != null)
+        readBuffer.closeStorage(writeBuffer);
+      else
+        writeBuffer.close();
       writeBuffer = null;
     }
 
@@ -94,7 +97,10 @@ public class ReadWriteDiskCacheTest {
   @AfterClass
   public void afterClass() throws IOException {
     if (writeBuffer != null) {
-      writeBuffer.delete();
+      if (readBuffer != null)
+        readBuffer.deleteStorage(writeBuffer);
+      else
+        writeBuffer.delete();
       writeBuffer = null;
     }
 
@@ -120,9 +126,9 @@ public class ReadWriteDiskCacheTest {
 
   private void initBuffer() throws IOException {
     writeBuffer = new OWOWCache(false, 8 + systemOffset, -1, writeAheadLog, -1,
-        15000 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), storageLocal, true, 1);
+        15000 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), storageLocal, false, 1);
 
-    readBuffer = new O2QCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, true);
+    readBuffer = new O2QCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, false);
   }
 
   public void testAddFourItems() throws IOException {
@@ -192,6 +198,7 @@ public class ReadWriteDiskCacheTest {
       readBuffer.release(entries[i], writeBuffer);
     }
 
+    writeBuffer.flush();
     readBuffer.clear();
 
     for (int i = 0; i < 10; i++)
@@ -342,6 +349,7 @@ public class ReadWriteDiskCacheTest {
     }
 
     readBuffer.clear();
+    writeBuffer.flush();
 
     for (int i = 0; i < 4; i++) {
       assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(1, i));
@@ -427,55 +435,11 @@ public class ReadWriteDiskCacheTest {
     }
 
     Assert.assertEquals(writeBuffer.getFilledUpTo(fileId), 4);
-    writeBuffer.close(fileId, true);
+    readBuffer.closeFile(fileId, true, writeBuffer);
 
     for (int i = 0; i < 4; i++) {
       assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(0, 0));
     }
-  }
-
-  public void testCloseFileShouldRemoveFilePagesFromBuffer() throws Exception {
-    long fileId = readBuffer.addFile(fileName, writeBuffer);
-
-    OCacheEntry[] entries = new OCacheEntry[4];
-
-    for (int i = 0; i < 4; i++) {
-      entries[i] = readBuffer.load(fileId, i, false, writeBuffer);
-      if (entries[i] == null) {
-        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer);
-        Assert.assertEquals(entries[i].getPageIndex(), i);
-      }
-
-      entries[i].getCachePointer().acquireExclusiveLock();
-
-      entries[i].markDirty();
-
-      entries[i].getCachePointer().getDataPointer()
-          .set(systemOffset + OWOWCache.PAGE_PADDING, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
-
-      entries[i].getCachePointer().releaseExclusiveLock();
-      readBuffer.release(entries[i], writeBuffer);
-    }
-
-    LRUList am = readBuffer.getAm();
-    LRUList a1in = readBuffer.getA1in();
-    LRUList a1out = readBuffer.getA1out();
-
-    Assert.assertEquals(am.size(), 0);
-    Assert.assertEquals(a1out.size(), 0);
-
-    for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, entries[i].getCachePointer().getDataPointer(), false, new OLogSequenceNumber(0,
-          0));
-      Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
-    }
-
-    Assert.assertEquals(writeBuffer.getFilledUpTo(fileId), 4);
-    writeBuffer.close(fileId, true);
-
-    Assert.assertEquals(readBuffer.getA1out().size(), 0);
-    Assert.assertEquals(readBuffer.getA1in().size(), 0);
-    Assert.assertEquals(readBuffer.getAm().size(), 0);
   }
 
   public void testDeleteFileShouldDeleteFileFromHardDrive() throws Exception {
@@ -500,7 +464,7 @@ public class ReadWriteDiskCacheTest {
       readBuffer.release(entries[i], writeBuffer);
     }
 
-    writeBuffer.deleteFile(fileId);
+    readBuffer.deleteFile(fileId, writeBuffer);
     writeBuffer.flush();
 
     for (int i = 0; i < 4; i++) {
@@ -852,8 +816,8 @@ public class ReadWriteDiskCacheTest {
     segmentConfiguration.fileType = OFileClassic.NAME;
 
     writeBuffer = new OWOWCache(false, 8 + systemOffset, 10000, writeAheadLog, -1,
-        2 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), storageLocal, true, 2);
-    readBuffer = new O2QCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, true);
+        2 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), storageLocal, false, 10);
+    readBuffer = new O2QCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, false);
 
     long fileId = readBuffer.addFile(fileName, writeBuffer);
     OLogSequenceNumber lsnToFlush = null;
