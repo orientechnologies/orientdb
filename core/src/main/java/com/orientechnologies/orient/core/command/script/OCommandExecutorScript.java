@@ -19,6 +19,21 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
@@ -39,20 +54,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
-
-import javax.script.Bindings;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Executes Script Commands.
@@ -161,7 +162,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
     context.setVariable("transactionRetries", 0);
 
-    for (int retry = 0; retry < maxRetry; retry++) {
+    for (int retry = 1; retry <= maxRetry; retry++) {
       try {
         int txBegunAtLine = -1;
         int txBegunAtPart = -1;
@@ -233,12 +234,12 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
               if (txBegunAtLine < 0)
                 throw new OCommandSQLParsingException("Transaction not begun");
 
-              if (retry == 0 && lastCommand.length() > "commit ".length()) {
+              if (retry == 1 && lastCommand.length() > "commit ".length()) {
                 // FIRST CYCLE: PARSE RETRY TIMES OVERWRITING DEFAULT = 1
                 String next = lastCommand.substring("commit ".length()).trim();
                 if (OStringSerializerHelper.startsWithIgnoreCase(next, "retry ")) {
                   next = next.substring("retry ".length()).trim();
-                  maxRetry = Integer.parseInt(next) + 1;
+                  maxRetry = Integer.parseInt(next);
                 }
               }
 
@@ -269,20 +270,28 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         // THIS CASE IS ON UPSERT
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
+        if (retry >= maxRetry)
+          throw e;
 
       } catch (ORecordDuplicatedException e) {
         // THIS CASE IS ON UPSERT
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
+        if (retry >= maxRetry)
+          throw e;
 
       } catch (ORecordNotFoundException e) {
         // THIS CASE IS ON UPSERT
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
+        if (retry >= maxRetry)
+          throw e;
 
       } catch (ONeedRetryException e) {
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
+        if (retry >= maxRetry)
+          throw e;
       }
     }
 
