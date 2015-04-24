@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -112,7 +114,14 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
 
     OCommandResultListener listener = request.getResultListener();
     if (listener instanceof OLiveResultListener) {
+      ODatabaseDocumentInternal prevDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      ((ODatabaseDocumentTx) execDb).setCurrentDatabaseInThreadLocal();
       ((OLiveResultListener) listener).onLiveResult(token, iOp);
+      if (prevDb != null) {
+        ODatabaseRecordThreadLocal.INSTANCE.set(prevDb);
+      } else {
+        ODatabaseRecordThreadLocal.INSTANCE.remove();
+      }
     }
   }
 

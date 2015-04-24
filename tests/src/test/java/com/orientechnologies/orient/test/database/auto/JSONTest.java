@@ -69,9 +69,7 @@ public class JSONTest extends DocumentDBBaseTest {
   public void testNullity() {
     ODocument newDoc = new ODocument();
 
-    newDoc.fromJSON("{\"gender\":{\"name\":\"Male\"},\"firstName\":\"Jack\",\"lastName\":\"Williams\","
-        + "\"phone\":\"561-401-3348\",\"email\":\"0586548571@example.com\",\"address\":{\"street1\":\"Smith Ave\","
-        + "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"}," + "\"dob\":\"2011-11-17 03:17:04\"}");
+    newDoc.fromJSON("{\"gender\":{\"name\":\"Male\"},\"firstName\":\"Jack\",\"lastName\":\"Williams\"," + "\"phone\":\"561-401-3348\",\"email\":\"0586548571@example.com\",\"address\":{\"street1\":\"Smith Ave\"," + "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"}," + "\"dob\":\"2011-11-17 03:17:04\"}");
 
     String json = newDoc.toJSON();
     ODocument loadedDoc = new ODocument().fromJSON(json);
@@ -563,10 +561,10 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertTrue(result.size() > 0);
 
     result = database.query(new OSQLSynchQuery<Object>("select from device where domainset[domain = 'abc'] is not null"));
-    Assert.assertTrue(result.size() > 0);
+    Assert.assertTrue(result.size()>0);
 
     result = database.query(new OSQLSynchQuery<Object>("select from device where domainset.domain contains 'pqr'"));
-    Assert.assertTrue(result.size() > 0);
+    Assert.assertTrue(result.size()>0);
   }
 
   public void testNestedEmbeddedJson() {
@@ -634,7 +632,7 @@ public class JSONTest extends DocumentDBBaseTest {
     Collection c = doc.field("foo.bar.P357");
     Assert.assertEquals(c.size(), 1);
     Map doc2 = (Map) c.iterator().next();
-    Assert.assertEquals(((Map)doc2.get("datavalue")).get("value"), "\"\"");
+    Assert.assertEquals(((Map) doc2.get("datavalue")).get("value"), "\"\"");
   }
 
   public void testEscapingDoubleQuotes2(){
@@ -670,21 +668,7 @@ public class JSONTest extends DocumentDBBaseTest {
     ODocument doc = new ODocument();
     StringBuilder builder = new StringBuilder();
 
-    builder.append(" {\n"
-        + "    \"foo\":{\n"
-        + "            \"bar\":{\n"
-        + "                \"P357\":[\n"
-        + "                            {\n"
-        + "\n"
-        + "                                \"datavalue\":{\n"
-        + "                                    \"value\":\"\\\"\",\n"
-        + "\n"
-        + "                                }\n"
-        + "                        }\n"
-        + "                ]   \n"
-        + "            }\n"
-        + "        }\n"
-        + "} ");
+    builder.append(" {\n" + "    \"foo\":{\n" + "            \"bar\":{\n" + "                \"P357\":[\n" + "                            {\n" + "\n" + "                                \"datavalue\":{\n" + "                                    \"value\":\"\\\"\",\n" + "\n" + "                                }\n" + "                        }\n" + "                ]   \n" + "            }\n" + "        }\n" + "} ");
 
     doc.fromJSON(builder.toString());
     Collection c = doc.field("foo.bar.P357");
@@ -1157,5 +1141,9 @@ public class JSONTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(pos > -1);
     Assert.assertEquals(json.charAt(pos + "\"ref\":".length()), 'n');
+  }
+
+  public void testOtherJson(){
+    new ODocument().fromJSON("{\"Salary\":1500.0,\"Type\":\"Person\",\"Address\":[{\"Zip\":\"JX2 MSX\",\"Type\":\"Home\",\"Street1\":\"13 Marge Street\",\"Country\":\"Holland\",\"Id\":\"Address-28813211\",\"City\":\"Amsterdam\",\"From\":\"1996-02-01\",\"To\":\"1998-01-01\"},{\"Zip\":\"90210\",\"Type\":\"Work\",\"Street1\":\"100 Hollywood Drive\",\"Country\":\"USA\",\"Id\":\"Address-11595040\",\"City\":\"Los Angeles\",\"From\":\"2009-09-01\"}],\"Id\":\"Person-7464251\",\"Name\":\"Stan\"}");
   }
 }

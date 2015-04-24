@@ -43,8 +43,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.tool.*;
+import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
+import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
+import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -73,7 +78,14 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.Map.Entry;
@@ -85,6 +97,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected ORecord             currentRecord;
   protected int                 currentRecordIdx;
   protected List<OIdentifiable> currentResultSet;
+  protected Object              currentResult;
   protected OServerAdmin        serverAdmin;
   private int                   windowSize         = DEFAULT_WIDTH;
   private int                   lastPercentStep;
@@ -730,7 +743,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
 
     final long start = System.currentTimeMillis();
-    setResultset((List<OIdentifiable>) currentDatabase.query(new OSQLSynchQuery<ODocument>(iQueryText, limit).setFetchPlan("*:1")));
+    setResultset((List<OIdentifiable>) currentDatabase.query(new OSQLSynchQuery<ODocument>(iQueryText, limit).setFetchPlan("*:0")));
 
     float elapsedSeconds = getElapsedSecs(start);
 
@@ -809,28 +822,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     cmd.parse(new OCommandScript("Javascript", iText));
 
     long start = System.currentTimeMillis();
-
-    final Object result = cmd.execute(null);
-
+    currentResult = cmd.execute(null);
     float elapsedSeconds = getElapsedSecs(start);
 
-    if (OMultiValue.isMultiValue(result)) {
-      if (result instanceof List<?>)
-        currentResultSet = (List<OIdentifiable>) result;
-      else if (result instanceof Collection<?>) {
-        currentResultSet = new ArrayList<OIdentifiable>();
-        currentResultSet.addAll((Collection<? extends OIdentifiable>) result);
-      } else if (result.getClass().isArray()) {
-        currentResultSet = new ArrayList<OIdentifiable>();
-        Collections.addAll(currentResultSet, (OIdentifiable[]) result);
-      }
+    parseResult();
 
-      setResultset(currentResultSet);
-
+    if (currentResultSet != null) {
       dumpResultSet(-1);
       message("\nClient side script executed in %f sec(s). Returned %d records", elapsedSeconds, currentResultSet.size());
     } else
-      message("\nClient side script executed in %f sec(s). Value returned is: %s", elapsedSeconds, result);
+      message("\nClient side script executed in %f sec(s). Value returned is: %s", elapsedSeconds, currentResult);
   }
 
   @SuppressWarnings("unchecked")
@@ -983,7 +984,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "number", description = "The number of the record in the most recent result set") final String iRecordNumber) {
     checkForDatabase();
 
-    if (iRecordNumber == null)
+    if (iRecordNumber == null || currentResultSet == null)
       checkCurrentObject();
     else {
       int recNumber = Integer.parseInt(iRecordNumber);
@@ -1295,7 +1296,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           count = currentDatabase.countClass(cls.getName(), false);
           totalElements += count;
 
-          final String superClasses = cls.hasSuperClasses()? Arrays.toString(cls.getSuperClassesNames().toArray()) : "";
+          final String superClasses = cls.hasSuperClasses() ? Arrays.toString(cls.getSuperClassesNames().toArray()) : "";
 
           message("\n %-45s| %-35s| %-11s|%15d |", format(cls.getName(), 45), format(superClasses, 35), clusters.toString(), count);
         } catch (Exception ignored) {
@@ -1454,8 +1455,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
                       fixedLinks++;
                       changed = true;
                       if (verbose)
-                        message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as " + i
-                            + " item in collection in field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
+                        message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as item " + i
+                            + " in collection of field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
                     }
                   }
                 }
@@ -1972,13 +1973,24 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message(iSucceed ? "] Done." : " Error!");
   }
 
+  /**
+   * Checks if the link must be fixed.
+   * 
+   * @param fieldValue
+   *          Field containing the OIdentifiable (RID or Record)
+   * @return true to fix it, otherwise false
+   */
   protected boolean fixLink(final Object fieldValue) {
     if (fieldValue instanceof OIdentifiable) {
-      if (((OIdentifiable) fieldValue).getIdentity().isValid()) {
-        final ORecord connected = ((OIdentifiable) fieldValue).getRecord();
-        if (connected == null)
+      final ORID id = ((OIdentifiable) fieldValue).getIdentity();
+
+      if (id.isValid())
+        if (id.isPersistent()) {
+          final ORecord connected = ((OIdentifiable) fieldValue).getRecord();
+          if (connected == null)
+            return true;
+        } else
           return true;
-      }
     }
     return false;
   }
@@ -2095,14 +2107,37 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return String.format("orientdb%s> ", getContext());
   }
 
+  protected void parseResult() {
+    setResultset(null);
+
+    if (currentResult instanceof Map<?, ?>)
+      return;
+
+    final Object first = OMultiValue.getFirstValue(currentResult);
+
+    if (first instanceof OIdentifiable) {
+      if (currentResult instanceof List<?>)
+        currentResultSet = (List<OIdentifiable>) currentResult;
+      else if (currentResult instanceof Collection<?>) {
+        currentResultSet = new ArrayList<OIdentifiable>();
+        currentResultSet.addAll((Collection<? extends OIdentifiable>) currentResult);
+      } else if (currentResult.getClass().isArray()) {
+        currentResultSet = new ArrayList<OIdentifiable>();
+        Collections.addAll(currentResultSet, (OIdentifiable[]) currentResult);
+      }
+
+      setResultset(currentResultSet);
+    }
+  }
+
   protected void setResultset(final List<OIdentifiable> iResultset) {
     currentResultSet = iResultset;
     currentRecordIdx = 0;
-    currentRecord = currentResultSet.isEmpty() ? null : (ORecord) currentResultSet.get(0).getRecord();
+    currentRecord = iResultset == null || iResultset.isEmpty() ? null : (ORecord) iResultset.get(0).getRecord();
   }
 
   protected void resetResultSet() {
-    currentResultSet.clear();
+    currentResultSet = null;
     currentRecord = null;
   }
 
@@ -2113,27 +2148,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     resetResultSet();
 
     long start = System.currentTimeMillis();
-    Object result = currentDatabase.command(new OCommandScript(iLanguage, iText)).execute();
+    currentResult = currentDatabase.command(new OCommandScript(iLanguage, iText)).execute();
     float elapsedSeconds = getElapsedSecs(start);
 
-    if (OMultiValue.isMultiValue(result) && !(result instanceof Map<?, ?>)) {
-      if (result instanceof List<?>)
-        currentResultSet = (List<OIdentifiable>) result;
-      else if (result instanceof Collection<?>) {
-        currentResultSet = new ArrayList<OIdentifiable>();
-        currentResultSet.addAll((Collection<? extends OIdentifiable>) result);
-      } else if (result.getClass().isArray()) {
-        currentResultSet = new ArrayList<OIdentifiable>();
-        Collections.addAll(currentResultSet, (OIdentifiable[]) result);
-      }
-
-      setResultset(currentResultSet);
-
+    parseResult();
+    if (currentResultSet != null) {
       dumpResultSet(-1);
       message("\nServer side script executed in %f sec(s). Returned %d records", elapsedSeconds, currentResultSet.size());
     } else {
-      String lineFeed = result instanceof Map<?, ?> ? "\n" : "";
-      message("\nServer side script executed in %f sec(s). Value returned is: %s%s", elapsedSeconds, lineFeed, result);
+      String lineFeed = currentResult instanceof Map<?, ?> ? "\n" : "";
+      message("\nServer side script executed in %f sec(s). Value returned is: %s%s", elapsedSeconds, lineFeed, currentResult);
     }
   }
 

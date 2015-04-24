@@ -27,6 +27,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 
@@ -135,6 +136,15 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
   public boolean isLocked() {
     try {
       return future.get().isLocked();
+    } catch (Exception e) {
+      throw new OException("Cannot retrieve the requested information", e);
+    }
+  }
+
+  @Override
+  public OStorage.LOCKING_STRATEGY lockingStrategy() {
+    try {
+      return future.get().lockingStrategy();
     } catch (Exception e) {
       throw new OException("Cannot retrieve the requested information", e);
     }

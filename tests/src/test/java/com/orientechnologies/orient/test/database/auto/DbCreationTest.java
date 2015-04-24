@@ -39,7 +39,7 @@ import java.util.Locale;
 @Test(groups = "db")
 public class DbCreationTest extends ObjectDBBaseTest {
 
-	private OPartitionedDatabasePool pool;
+  private OPartitionedDatabasePool pool;
 
   @Parameters(value = "url")
   public DbCreationTest(@Optional String url) {
@@ -48,28 +48,28 @@ public class DbCreationTest extends ObjectDBBaseTest {
     Orient.instance().getProfiler().startRecording();
   }
 
-	@BeforeClass
-	@Override
-	public void beforeClass() throws Exception {
-		pool = new OPartitionedDatabasePool(url, "admin", "admin");
-	}
+  @BeforeClass
+  @Override
+  public void beforeClass() throws Exception {
+    pool = new OPartitionedDatabasePool(url, "admin", "admin");
+  }
 
-	@AfterClass
-	@Override
-	public void afterClass() throws Exception {
-	}
+  @AfterClass
+  @Override
+  public void afterClass() throws Exception {
+  }
 
-	@BeforeMethod
-	@Override
-	public void beforeMethod() throws Exception {
-	}
+  @BeforeMethod
+  @Override
+  public void beforeMethod() throws Exception {
+  }
 
-	@AfterMethod
-	@Override
-	public void afterMethod() throws Exception {
-	}
+  @AfterMethod
+  @Override
+  public void afterMethod() throws Exception {
+  }
 
-	public void testDbCreationNoSecurity() throws IOException {
+  public void testDbCreationNoSecurity() throws IOException {
     if (!url.startsWith(OEngineRemote.NAME)) {
       ODatabaseDocument db = new ODatabaseDocumentTx(url);
       db.setProperty("security", Boolean.FALSE);
@@ -192,7 +192,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
     ODatabaseHelper.dropDatabase(db, getStorageType());
   }
 
-  @Test
+  @Test(dependsOnMethods = "testSubFolderDbCreateConnPool")
   public void testCreateAndConnectionPool() throws IOException {
     ODatabaseDocument db = new ODatabaseDocumentTx(url);
 
@@ -201,7 +201,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
     ODatabaseHelper.createDatabase(db, url, getStorageType());
     db.close();
 
-		pool = new OPartitionedDatabasePool(url, "admin", "admin");
+    pool = new OPartitionedDatabasePool(url, "admin", "admin");
 
     // Get connection from pool
     db = pool.acquire();
@@ -217,7 +217,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
     db.close();
   }
 
-  @Test
+  @Test(dependsOnMethods = { "testCreateAndConnectionPool" })
   public void testOpenCloseConnectionPool() throws IOException {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
     if (!ODatabaseHelper.existsDatabase(db, null)) {
@@ -225,7 +225,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
       db.close();
     }
 
-		pool = new OPartitionedDatabasePool(url, "admin", "admin");
+    pool = new OPartitionedDatabasePool(url, "admin", "admin");
 
     for (int i = 0; i < 500; i++) {
       pool.acquire().close();

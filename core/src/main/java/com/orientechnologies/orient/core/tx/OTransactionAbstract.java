@@ -134,6 +134,12 @@ public abstract class OTransactionAbstract implements OTransaction {
   }
 
   @Override
+  public OStorage.LOCKING_STRATEGY lockingStrategy(OIdentifiable record) {
+    final ORID rid = record.getIdentity();
+    return locks.get(rid);
+  }
+
+  @Override
   public OTransaction unlockRecord(final OIdentifiable iRecord) {
     final OStorage stg = database.getStorage();
     if (!(stg.getUnderlying() instanceof OAbstractPaginatedStorage))

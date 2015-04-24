@@ -1,17 +1,16 @@
 package com.orientechnologies.orient.core.sql;
 
-import static org.testng.Assert.*;
-
-import java.util.List;
-
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.List;
+
+import static org.testng.Assert.*;
 
 @Test
 public class OCommandExecutorSQLSelectTest {
@@ -76,6 +75,10 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into ridsorttest (name) values (8)")).execute();
     db.command(new OCommandSQL("insert into ridsorttest (name) values (6)")).execute();
 
+    db.command(new OCommandSQL("CREATE class unwindtest")).execute();
+    db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('foo', ['foo1', 'foo2'])")).execute();
+    db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('bar', ['bar1', 'bar2'])")).execute();
+
   }
 
   @AfterClass
@@ -92,7 +95,8 @@ public class OCommandExecutorSQLSelectTest {
   public void testUseIndexWithOrderBy2() throws Exception {
     long idxUsagesBefore = indexUsages(db);
 
-    List<ODocument> qResult = db.command(new OCommandSQL("select * from foo where address.city = 'NY' order by name ASC")).execute();
+    List<ODocument> qResult = db.command(new OCommandSQL("select * from foo where address.city = 'NY' order by name ASC"))
+        .execute();
     assertEquals(qResult.size(), 1);
   }
 
@@ -315,6 +319,18 @@ public class OCommandExecutorSQLSelectTest {
     for (int i = 1; i < qResult.size(); i++) {
       assertTrue(prev.getIdentity().compareTo(qResult.get(i).getIdentity()) >= 0);
       prev = qResult.get(i);
+    }
+  }
+
+  @Test
+  public void testUnwind() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll")).execute();
+
+    assertEquals(qResult.size(), 4);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
     }
   }
 

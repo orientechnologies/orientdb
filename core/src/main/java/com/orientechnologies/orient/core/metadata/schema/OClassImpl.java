@@ -2298,27 +2298,27 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
-  private void checkParametersConflict(OClass baseClass) {
-    Collection<OProperty> baseClassProperties = baseClass.properties();
+  private void checkParametersConflict(final OClass baseClass) {
+    final Collection<OProperty> baseClassProperties = baseClass.properties();
     for (OProperty property : baseClassProperties) {
       OProperty thisProperty = getProperty(property.getName());
       if (thisProperty != null && thisProperty.getType().equals(property.getType())) {
-        throw new OSchemaException("Can't add base class '" + baseClass.getName() + "', because of paramaters conflict: "
+        throw new OSchemaException("Cannot add base class '" + baseClass.getName() + "', because of parameter conflict: "
             + thisProperty + " vs " + property);
       }
     }
   }
 
   private void checkParametersConflict(List<OClassImpl> classes) {
-    Map<String, OProperty> commulative = new HashMap<String, OProperty>();
-    Map<String, OProperty> properties = new HashMap<String, OProperty>();
-    ;
+    final Map<String, OProperty> commulative = new HashMap<String, OProperty>();
+    final Map<String, OProperty> properties = new HashMap<String, OProperty>();
+
     for (OClassImpl superClass : classes) {
       superClass.propertiesMap(properties, false);
       for (Map.Entry<String, OProperty> entry : properties.entrySet()) {
         if (commulative.containsKey(entry.getKey())) {
-          String property = entry.getKey();
-          OProperty existingProperty = commulative.get(property);
+          final String property = entry.getKey();
+          final OProperty existingProperty = commulative.get(property);
           if (!existingProperty.getType().equals(entry.getValue().getType())) {
             throw new OSchemaException("Properties conflict detected: [" + existingProperty + "] vs [" + entry.getValue() + "]");
           }
@@ -2331,7 +2331,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void checkRecursion(OClass baseClass) {
-    Set<String> browsed = new HashSet<String>();
+    final Set<String> browsed = new HashSet<String>();
     browsed.add(baseClass.getName());
     if (checkRecursion(browsed)) {
       throw new OSchemaException("Can't add base class '" + baseClass.getName() + "', because of recursion");
