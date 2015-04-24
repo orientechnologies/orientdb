@@ -142,7 +142,9 @@ public class O2QCache implements OReadCache {
   }
 
   @Override
-  public void openFile(final long fileId, OWriteCache writeCache) throws IOException {
+  public void openFile(long fileId, OWriteCache writeCache) throws IOException {
+    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
+
     cacheLock.acquireReadLock();
     Lock fileLock;
     try {
@@ -165,6 +167,8 @@ public class O2QCache implements OReadCache {
 
   @Override
   public void openFile(String fileName, long fileId, OWriteCache writeCache) throws IOException {
+    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
+
     cacheLock.acquireWriteLock();
     try {
       Long existingFileId = writeCache.isOpen(fileName);
@@ -187,6 +191,8 @@ public class O2QCache implements OReadCache {
 
   @Override
   public void addFile(String fileName, long fileId, OWriteCache writeCache) throws IOException {
+    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
+
     cacheLock.acquireWriteLock();
     try {
       writeCache.addFile(fileName, fileId);
@@ -222,8 +228,10 @@ public class O2QCache implements OReadCache {
   }
 
   @Override
-  public OCacheEntry load(final long fileId, final long pageIndex, final boolean checkPinnedPages, OWriteCache writeCache)
+  public OCacheEntry load(long fileId, final long pageIndex, final boolean checkPinnedPages, OWriteCache writeCache)
       throws IOException {
+    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
+
     final UpdateCacheResult cacheResult = doLoad(fileId, pageIndex, checkPinnedPages, false, writeCache);
     if (cacheResult == null)
       return null;
@@ -282,7 +290,9 @@ public class O2QCache implements OReadCache {
   }
 
   @Override
-  public OCacheEntry allocateNewPage(final long fileId, OWriteCache writeCache) throws IOException {
+  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache) throws IOException {
+    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
+
     UpdateCacheResult cacheResult;
 
     Lock fileLock;
@@ -368,6 +378,7 @@ public class O2QCache implements OReadCache {
   @Override
   public void truncateFile(long fileId, OWriteCache writeCache) throws IOException {
     Lock fileLock;
+    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
 
     cacheLock.acquireReadLock();
     try {
@@ -422,6 +433,8 @@ public class O2QCache implements OReadCache {
 
   @Override
   public void closeFile(long fileId, boolean flush, OWriteCache writeCache) throws IOException {
+    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
+
     Lock fileLock;
     cacheLock.acquireReadLock();
     try {
@@ -442,6 +455,8 @@ public class O2QCache implements OReadCache {
 
   @Override
   public void deleteFile(long fileId, OWriteCache writeCache) throws IOException {
+    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
+
     Lock fileLock;
 
     cacheLock.acquireReadLock();
@@ -933,5 +948,21 @@ public class O2QCache implements OReadCache {
       this.removeColdPages = removeColdPages;
       this.cacheEntry = cacheEntry;
     }
+  }
+
+  private int storageId(long fileId) {
+    return (int) (fileId >>> 32);
+  }
+
+  private long composeFileId(long fileId, int storageId) {
+    return (((long) storageId) << 32) | fileId;
+  }
+
+  private long checkFileIdCompatibilty(long fileId, int storageId) {
+    if (storageId(fileId) == 0) {
+      return composeFileId(fileId, storageId);
+    }
+
+    return fileId;
   }
 }

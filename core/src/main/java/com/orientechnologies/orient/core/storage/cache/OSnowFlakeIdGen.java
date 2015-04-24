@@ -25,8 +25,8 @@ import java.security.SecureRandom;
 public class OSnowFlakeIdGen implements OWriteCacheIdGen {
   private long               lastTs;
   private final SecureRandom rnd;
-  private int                sequenceCounter;
-  private byte[]             rndBytes = new byte[2];
+  private int                sequenceCounter = 1;
+  private byte[]             rndBytes        = new byte[2];
 
   public OSnowFlakeIdGen() {
     rnd = new SecureRandom();
@@ -34,14 +34,13 @@ public class OSnowFlakeIdGen implements OWriteCacheIdGen {
 
   @Override
   public synchronized int nextId() {
-    if (sequenceCounter < 16)
+    if (sequenceCounter < 15)
       sequenceCounter++;
     else
-      sequenceCounter = 0;
+      sequenceCounter = 1;
 
     lastTs = System.currentTimeMillis();
     rnd.nextBytes(rndBytes);
-
 
     return composeId();
   }
