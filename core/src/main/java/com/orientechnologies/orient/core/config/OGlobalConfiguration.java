@@ -474,13 +474,15 @@ public enum OGlobalConfiguration {
       ORecordSerializerBinary.NAME),
 
   //ENCRYPTION AT REST @see OAbstractEncryptedCompression https://github.com/orientechnologies/orientdb/issues/89
-  STORAGE_ENCRYPTION_PASSWORD("encryption.password", "The password to use to encrypt data at rest (See STORAGE_COMPRESSION_METHOD). Default is empty string", String.class, ""),
-  STORAGE_ENCRYPTION_SALT("encryption.salt", "The salt to use to encrypt data at rest. Default is \"ORIENTDB_IS_COOL\"", String.class, "ORIENTDB_IS_COOL"),
-  STORAGE_ENCRYPTION_KEYSIZE("encryption.keysize", "The keysize in bit. Default is 128", Integer.class, 128),
-  STORAGE_ENCRYPTION_ITERATIONS("encryption.iteration", "The number of times that the password is hashed during the derivation of the symmetric key. Default is 65536", Integer.class, 65536),
-  STORAGE_ENCRYPTION_SECRET_KEY_ALGORITHM("encryption.iteration", "SecretKeyFactory algorithm name. Default is PBKDF2WithHmacSHA1", String.class, "PBKDF2WithHmacSHA1"),
-  STORAGE_ENCRYPTION_ALGORITHM("encryption.algorithm", "The algorithm used to encript data. Default is AES", String.class, "AES"),
-  STORAGE_ENCRYPTION_TRANSFORMATION("encryption.transformation", "Transformation parameter as defined in https://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html#ciphertrans. Default is AES/CBC/PKCS5Padding", String.class, "AES/CBC/PKCS5Padding"),
+  STORAGE_ENCRYPTION_ALGORITHM("encryption.algorithm", "The algorithm used to encript data. Default is AES", String.class, "DES"),
+  STORAGE_ENCRYPTION_TRANSFORMATION("encryption.transformation", "Transformation parameter as defined in https://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html#ciphertrans. Default is AES/CBC/PKCS5Padding", String.class, "DES/ECB/PKCS5Padding"),
+  STORAGE_ENCRYPTION_SECRET_KEY_FACTORY_ALGORITHM("encryption.secret_key_factory_algorithm", "The algorithm used to encript data. Default is \"PBEWithHmacSHA1AndAES_128\". See https://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#SecretKeyFactory", String.class, "PBKDF2WithHmacSHA1"),
+  STORAGE_ENCRYPTION_KEY("encryption.key","The simmetric key to use to encrypt/descript data at rest. Since by default the AES algorithm is used, the key can be 128 or 256 bits long. Default is \"ORIENTDB_IS_COOL\".",String.class,"ORIENTDB"),
+  
+  STORAGE_ENCRYPTION_KEY_CHARSET("encryption.key_charser","The charset to use to convert the key string in an array of bytes. If the charset is not supported by the platform, an error is raised and data encryption will be not available. Default is \"US-ASCII\".",String.class,"US-ASCII"),
+  
+  STORAGE_ENCRYPTION_DES_KEY("encryption.des_key","The simmetric key to use to encrypt/descript data at rest using the DES alghorithm, stored in BASE64. The key must be 64 bits long. Default is \"T1JJRU5UREI=\" (ORIENTDB).",String.class,"T1JJRU5UREI="),
+  STORAGE_ENCRYPTION_AES_KEY("encryption.aes_key","The simmetric key to use to encrypt/descript data at rest using the AES alghorithm, stored in BASE64. The key must be 128 or 256 bits. Default is \"T1JJRU5UREJfSVNfQ09PTA==\" (ORIENTDB_IS_COOL).",String.class,"T1JJRU5UREJfSVNfQ09PTA=="),
 
   @Deprecated
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Deprecated, now BINARY serialization is used in place of CSV", Boolean.class,
