@@ -7,8 +7,8 @@ import org.testng.annotations.Test;
  * @since 22.04.2015
  */
 @Test
-public class OEncryptedCompressionTest extends AbstractCompressionTest {
-  public void testAESEncryptedCompression() {
-    testCompression(OEncryptedCompression.NAME);
+public class ODESCompressionTest extends AbstractCompressionTest {
+  public void testODESEncryptedCompression() {
+    testCompression(ODESCompression.NAME);
   }
 }

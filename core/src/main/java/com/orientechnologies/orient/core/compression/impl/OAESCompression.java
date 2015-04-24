@@ -1,8 +1,10 @@
 package com.orientechnologies.orient.core.compression.impl;
 
-import java.util.Arrays;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -17,15 +19,15 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
  * @author giastfader
  *
  */
-public class OAESCompression extends OAbstractCompression {
-	
+public class OAESCompression extends OAbstractEncryptedCompression {
+	private byte[] key;
 	
 	//@see https://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html#SunJCEProvider
-	protected  String  transformation="AES/ECB/PKCS5Padding";
-	protected  String  algorithmName="AES";
-	byte[] key = OBase64Utils.decode(OGlobalConfiguration.STORAGE_ENCRYPTION_AES_KEY.getValueAsString());
+	private final String  transformation="AES/ECB/PKCS5Padding"; //we use ECB because we cannot store the Initialization Vector 
+	private final String  algorithmName="AES";
 	
-    private  boolean isInitialized=false;
+
+	private boolean initialized;
 
     
     public static final OAESCompression INSTANCE = new OAESCompression();
@@ -36,63 +38,32 @@ public class OAESCompression extends OAbstractCompression {
 		return NAME;
 	}
 	
-    protected boolean isInitialized() {
-		return isInitialized;
-	}
-
-	protected void setInitialized(boolean isInitialized) {
-		this.isInitialized = isInitialized;
-	}
-	
 	protected OAESCompression(){
-		this.init();
+		super();
 	}
 	
 	protected void init()  {
-
+		initialized=false;
+		key = OBase64Utils.decode(OGlobalConfiguration.STORAGE_ENCRYPTION_AES_KEY.getValueAsString());
+		SecretKeySpec ks = new SecretKeySpec(key, algorithmName); //AES
+		try {
+			Cipher cipher = Cipher.getInstance(transformation);
+			cipher.init(Cipher.ENCRYPT_MODE, ks);
+		} catch (NoSuchAlgorithmException e) {
+			throw new OSecurityException("The AES alghorithm is not available on this platform",e);
+		} catch (NoSuchPaddingException e) {
+			throw new OSecurityException(e.getMessage(),e);
+		} catch (InvalidKeyException e) {
+			throw new OSecurityException("Invalid AES key.",e);
+		}
+		this.initialized=true;
 	}
 
-	
-	
-	@Override
-	public  byte[] compress(byte[] content, int offset, int length){
-        try {
-	        
-	        System.out.println("** ENCRYPTION **");
-	        System.out.println("** content: " + Arrays.toString(content));
-	        System.out.println("** offset: " + offset);
-	        System.out.println("** length: " + length);
-	        
-	        byte[] encriptedContent = encryptOrDecrypt(Cipher.ENCRYPT_MODE,content, offset,  length);
-	        System.out.println("** encriptedContent: " + Arrays.toString(encriptedContent));
-	        
-	        return encriptedContent;
-        } catch (Throwable e) {
-			throw new OSecurityException(e.getMessage(),e);
-		} 
-	};
-
-	@Override
-	public  byte[] uncompress(byte[] content, int offset, int length){
-        try {
-	        System.out.println("** DECRYPTION **");
-	        System.out.println("** content: " + Arrays.toString(content));
-	        System.out.println("** offset: " + offset);
-	        System.out.println("** length: " + length);
-	        
-	        byte[] decriptedContent = encryptOrDecrypt(Cipher.DECRYPT_MODE,content, offset,  length);
-	        System.out.println("** decriptedContent: " + Arrays.toString(decriptedContent));
-
-	        return decriptedContent;
-        } catch (Throwable e) {
-			throw new OSecurityException(e.getMessage(),e);
-		} 
-	};
-
 	public   byte[] encryptOrDecrypt(int mode, byte[] input, int offset, int length) throws Throwable {
-		SecretKeySpec ks = new SecretKeySpec(key, algorithmName); //AES
-		//SecretKey desKey = skf.generateSecret(ks.getEncoded()); 
-		Cipher cipher = Cipher.getInstance(transformation); // AES/CBC/PKCS5Padding for SunJCE
+		if (!initialized) throw new OSecurityException("aes-encrypted compression is not available");
+		
+		SecretKeySpec ks = new SecretKeySpec(key, algorithmName); 
+		Cipher cipher = Cipher.getInstance(transformation); 
 		cipher.init(mode, ks);
 		
 		byte[] content;
@@ -101,7 +72,6 @@ public class OAESCompression extends OAbstractCompression {
         }else{
         	content = new byte[length];
 	        System.arraycopy(input,offset,content,0,length);
-	        System.out.println("** content: " + Arrays.toString(content));
         }
 		byte[] output=cipher.doFinal(content);
 		return output;

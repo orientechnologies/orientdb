@@ -22,17 +22,16 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
  * @author giastfader
  *
  */
-public class ODESCompression extends OAbstractCompression {
-
+public class ODESCompression extends OAbstractEncryptedCompression {
+	private byte[] key;
 	
 	//@see https://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html#SunJCEProvider
-	protected  String  transformation="DES/ECB/PKCS5Padding"; 										 
-	private String secretKeyFactoryAlgorithmName="DES";
-	byte[] key = OBase64Utils.decode(OGlobalConfiguration.STORAGE_ENCRYPTION_DES_KEY.getValueAsString());
+	private final String  transformation="DES/ECB/PKCS5Padding"; ////we use ECB because we cannot store the Initialization Vector 							 
+	private final String secretKeyFactoryAlgorithmName="DES";
 	private DESKeySpec desKeySpec;
 	private SecretKeyFactory keyFactory;
 	private SecretKey theKey;
-	private boolean initialized = false;
+	private boolean initialized;
 	
 	public static final ODESCompression INSTANCE = new ODESCompression();
 	public static final String  NAME  = "des-encrypted";
@@ -43,11 +42,13 @@ public class ODESCompression extends OAbstractCompression {
 	}
 	
 	protected ODESCompression(){
-		this.init();
+		super();
 	}
 	
 	protected void init(){
+		initialized = false;
 		try {
+			key = OBase64Utils.decode(OGlobalConfiguration.STORAGE_ENCRYPTION_DES_KEY.getValueAsString());
 			this.desKeySpec = new DESKeySpec(key);
 			this.keyFactory = SecretKeyFactory.getInstance(secretKeyFactoryAlgorithmName);
 			this.theKey = keyFactory.generateSecret(desKeySpec);
@@ -61,45 +62,10 @@ public class ODESCompression extends OAbstractCompression {
 		this.initialized=true;
 	}
 
-	
-	@Override
-	public  byte[] compress(byte[] content, int offset, int length){
-        try {
-	        if (!initialized) throw new OSecurityException("des-encrypted compression is not available");
-	        System.out.println("** ENCRYPTION **");
-	        System.out.println("** content: " + Arrays.toString(content));
-	        System.out.println("** offset: " + offset);
-	        System.out.println("** length: " + length);
-	        
-	        byte[] encriptedContent = encryptOrDecrypt(Cipher.ENCRYPT_MODE,content, offset,  length);
-	        System.out.println("** encriptedContent: " + Arrays.toString(encriptedContent));
-	        
-	        return encriptedContent;
-        } catch (Throwable e) {
-			throw new OSecurityException(e.getMessage(),e);
-		} 
-	};
-
-	@Override
-	public  byte[] uncompress(byte[] content, int offset, int length){
-        try {
-	        System.out.println("** DECRYPTION **");
-	        System.out.println("** content: " + Arrays.toString(content));
-	        System.out.println("** offset: " + offset);
-	        System.out.println("** length: " + length);
-	        
-	        byte[] decriptedContent = encryptOrDecrypt(Cipher.DECRYPT_MODE,content, offset,  length);
-	        System.out.println("** decriptedContent: " + Arrays.toString(decriptedContent));
-
-	        return decriptedContent;
-        } catch (Throwable e) {
-			throw new OSecurityException(e.getMessage(),e);
-		} 
-	};
-
 	public   byte[] encryptOrDecrypt(int mode, byte[] input, int offset, int length) throws Throwable {
 		if (!initialized) throw new OSecurityException("des-encrypted compression is not available");
-		Cipher cipher = Cipher.getInstance(transformation); // DES/ECB/PKCS5Padding for SunJCE
+		
+		Cipher cipher = Cipher.getInstance(transformation); 
 		cipher.init(mode,theKey);
 		
 		byte[] content;
@@ -108,7 +74,6 @@ public class ODESCompression extends OAbstractCompression {
         }else{
         	content = new byte[length];
 	        System.arraycopy(input,offset,content,0,length);
-	        System.out.println("** content: " + Arrays.toString(content));
         }
 		byte[] output=cipher.doFinal(content);
 		return output;
