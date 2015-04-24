@@ -217,4 +217,10 @@ public class OUser implements UserDetails {
   public void setChatNotification(Boolean chatNotification) {
     this.chatNotification = chatNotification;
   }
+
+
+  @Override
+  public String toString() {
+    return getName();
+  }
 }

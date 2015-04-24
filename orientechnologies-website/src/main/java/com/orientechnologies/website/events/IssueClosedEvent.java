@@ -15,6 +15,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring4.SpringTemplateEngine;
 import reactor.event.Event;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,61 +24,67 @@ import java.util.List;
 @Component
 public class IssueClosedEvent extends EventInternal<IssueEvent> {
 
-    @Autowired
-    @Lazy
-    protected JavaMailSenderImpl sender;
+  @Autowired
+  @Lazy
+  protected JavaMailSenderImpl sender;
 
-    @Autowired
-    protected AppConfig config;
+  @Autowired
+  protected AppConfig          config;
 
-    @Autowired
-    private IssueRepository issueRepository;
+  @Autowired
+  private IssueRepository      issueRepository;
 
-    @Autowired
-    protected EventRepository eventRepository;
-    @Autowired
-    private SpringTemplateEngine templateEngine;
+  @Autowired
+  protected EventRepository    eventRepository;
+  @Autowired
+  private SpringTemplateEngine templateEngine;
 
-    public static String EVENT = "issue_closed";
+  public static String         EVENT = "issue_closed";
 
-    @Override
-    public String event() {
-        return EVENT;
+  @Override
+  public String event() {
+    return EVENT;
+  }
+
+  @Override
+  public void accept(Event<IssueEvent> issueEvent) {
+
+    IssueEvent comment = issueEvent.getData();
+    IssueEvent committed = eventRepository.reload(comment);
+    Issue issue = eventRepository.findIssueByEvent(committed);
+    Context context = new Context();
+    fillContextVariable(context, issue, comment);
+    String htmlContent = templateEngine.process("newClosed.html", context);
+
+    OUser owner = comment.getActor();
+    List<OUser> involvedActors = new ArrayList<OUser>();
+    List<OUser> actorsInIssue = null;
+    if (!Boolean.TRUE.equals(issue.getConfidential())) {
+      actorsInIssue = issueRepository.findToNotifyActors(issue);
+      involvedActors.addAll(actorsInIssue);
+      involvedActors.addAll(issueRepository.findToNotifyActorsWatching(issue));
+    } else {
+      actorsInIssue = issueRepository.findToNotifyPrivateActors(issue);
+      involvedActors.addAll(actorsInIssue);
+    }
+    String[] actors = getActorsEmail(owner, involvedActors,actorsInIssue);
+    if (actors.length > 0) {
+
+      for (String actor : actors) {
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setTo(actor);
+        mailMessage.setFrom("prjhub@orientechnologies.com");
+        mailMessage.setSubject(issue.getTitle());
+        mailMessage.setText(htmlContent);
+        sender.send(mailMessage);
+      }
+
     }
 
-    @Override
-    public void accept(Event<IssueEvent> issueEvent) {
+  }
 
-        IssueEvent comment = issueEvent.getData();
-        IssueEvent committed = eventRepository.reload(comment);
-        Issue issue = eventRepository.findIssueByEvent(committed);
-        Context context = new Context();
-        fillContextVariable(context, issue, comment);
-        String htmlContent = templateEngine.process("newClosed.html", context);
-
-
-        OUser owner = comment.getActor();
-        List<OUser> involvedActors = issueRepository.findToNotifyActors(issue);
-        involvedActors.addAll(issueRepository.findToNotifyActorsWatching(issue));
-        String[] actors = getActorsEmail(owner, involvedActors);
-        if (actors.length > 0) {
-
-
-            for (String actor : actors) {
-                SimpleMailMessage mailMessage = new SimpleMailMessage();
-                mailMessage.setTo(actor);
-                mailMessage.setFrom("prjhub@orientechnologies.com");
-                mailMessage.setSubject(issue.getTitle());
-                mailMessage.setText(htmlContent);
-                sender.send(mailMessage);
-            }
-
-        }
-
-    }
-
-    private void fillContextVariable(Context context, Issue issue, IssueEvent comment) {
-        context.setVariable("link", config.endpoint + "/#issues/" + issue.getIid());
-        context.setVariable("body", "@" + comment.getActor().getName() + " closed #" + issue.getIid());
-    }
+  private void fillContextVariable(Context context, Issue issue, IssueEvent comment) {
+    context.setVariable("link", config.endpoint + "/#issues/" + issue.getIid());
+    context.setVariable("body", "@" + comment.getActor().getName() + " closed #" + issue.getIid());
+  }
 }

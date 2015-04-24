@@ -66,6 +66,23 @@ public class IssueRepositoryImpl extends OrientBaseRepository<Issue> implements 
   }
 
   @Override
+  public List<OUser> findToNotifyPrivateActors(Issue issue) {
+    String rid = issue.getId();
+    OrientGraph graph = dbFactory.getGraph();
+    String query = String
+        .format(
+            "select  expand(set(user)) from (select unionAll( in('HasOpened'),in('HasClient').out('HasMember'),out('IsAssigned'),in('HasIssue').in('HasRepo').out('HasRepo').out('HasMember'),out('HasEvent')[@class = 'Comment'].user) as user from %s )",
+            rid);
+    List<OIdentifiable> vertexes = graph.getRawGraph().query(new OSQLSynchQuery<Object>(query));
+    List<OUser> users = new ArrayList<OUser>();
+    for (OIdentifiable vertex : vertexes) {
+      ODocument doc = vertex.getRecord();
+      users.add(com.orientechnologies.website.model.schema.OUser.ID.fromDoc(doc, graph));
+    }
+    return users;
+  }
+
+  @Override
   public List<OUser> findToNotifyActorsWatching(Issue issue) {
 
     OrientGraph graph = dbFactory.getGraph();

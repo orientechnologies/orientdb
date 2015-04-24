@@ -39,7 +39,7 @@ angular.module('webappApp')
         var assignee = $scope.issue.assignee ? $scope.issue.assignee.name : "";
         var assigneeFilter = assignee == "" ? "" : 'assignee:' + assignee;
         var milestone = $scope.issue.milestone ? "milestone:\"" + $scope.issue.milestone.title + "\"" : "milestone:_current";
-        $scope.queryBacklog = 'is:open ' + assigneeFilter + " !label:\"In Progress\" " + milestone + " sort:priority-desc sort:createdAt-desc";
+        $scope.queryBacklog = 'is:open ' + assigneeFilter + " !label:\"in progress\" " + milestone + " sort:priority-desc sort:createdAt-desc";
         Organization.all('board').all("issues").customGET("", {
           q: $scope.queryBacklog,
           page: $scope.page
@@ -47,7 +47,7 @@ angular.module('webappApp')
           $scope.backlogs = data.content;
         });
         milestone = $scope.issue.milestone ? "milestone:\"" + $scope.issue.milestone.title + "\"" : "";
-        $scope.queryProgress = 'is:open ' + assigneeFilter + " label:\"In Progress\" " + milestone + " sort:priority-desc sort:createdAt-desc";
+        $scope.queryProgress = 'is:open ' + assigneeFilter + " label:\"in progress\" " + milestone + " sort:priority-desc sort:createdAt-desc";
         Organization.all('board').all("issues").customGET("", {
           q: $scope.queryProgress,
           page: $scope.page

@@ -17,6 +17,7 @@ import com.orientechnologies.website.configuration.AppConfig;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.OUser;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -60,9 +61,19 @@ public class IssueReopenEvent extends EventInternal<IssueEvent> {
     String htmlContent = templateEngine.process("newReopen.html", context);
 
     OUser owner = comment.getActor();
-    List<OUser> involvedActors = issueRepository.findToNotifyActors(issue);
-    involvedActors.addAll(issueRepository.findToNotifyActorsWatching(issue));
-    String[] actors = getActorsEmail(owner, involvedActors);
+
+    List<OUser> involvedActors = new ArrayList<OUser>();
+    List<OUser> actorsInIssue = null;
+    if (!Boolean.TRUE.equals(issue.getConfidential())) {
+      actorsInIssue = issueRepository.findToNotifyActors(issue);
+      involvedActors.addAll(actorsInIssue);
+      involvedActors.addAll(issueRepository.findToNotifyActorsWatching(issue));
+    } else {
+      actorsInIssue = issueRepository.findToNotifyPrivateActors(issue);
+      involvedActors.addAll(actorsInIssue);
+    }
+
+    String[] actors = getActorsEmail(owner, involvedActors, actorsInIssue);
     if (actors.length > 0) {
       for (String actor : actors) {
         SimpleMailMessage mailMessage = new SimpleMailMessage();

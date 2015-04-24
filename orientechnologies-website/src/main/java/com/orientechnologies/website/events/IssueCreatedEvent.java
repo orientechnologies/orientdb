@@ -13,10 +13,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring4.SpringTemplateEngine;
 import reactor.event.Event;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Enrico Risa on 30/12/14.
@@ -68,16 +65,19 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
         members.add(owner);
       }
     }
-    members.addAll(issueRepository.findToNotifyActorsWatching(issue));
-    for (OUser member : members) {
-      if (Boolean.TRUE.equals(member.getNotification())) {
-        if (member.getEmail() != null && !member.getEmail().isEmpty())
-          dests.add(member.getEmail());
-        else if (member.getWorkingEmail() != null && !member.getWorkingEmail().isEmpty())
-          dests.add(member.getWorkingEmail());
 
-      }
+    List<OUser> issueActors = null;
+    if (!Boolean.TRUE.equals(issue.getConfidential())) {
+      issueActors = issueRepository.findToNotifyActors(issue);
+      members.addAll(issueActors);
+      members.addAll(issueRepository.findToNotifyActorsWatching(issue));
+
+    } else {
+      issueActors = issueRepository.findToNotifyPrivateActors(issue);
+      members.addAll(issueActors);
     }
+    String[] actorsEmail = getActorsEmail(owner, members, issueActors);
+    dests.addAll(Arrays.asList(actorsEmail));
     if (dests.size() > 0) {
       for (String actor : dests) {
         SimpleMailMessage mailMessage = new SimpleMailMessage();

@@ -17,6 +17,7 @@ import reactor.event.Event;
 import com.orientechnologies.website.configuration.AppConfig;
 import com.orientechnologies.website.model.schema.dto.Issue;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -58,9 +59,19 @@ public class IssueCommentedEvent extends EventInternal<Comment> {
     String htmlContent = templateEngine.process("newComment.html", context);
 
     OUser owner = comment.getUser();
-    List<OUser> involvedActors = issueRepository.findToNotifyActors(issue);
-    involvedActors.addAll(issueRepository.findToNotifyActorsWatching(issue));
-    String[] actors = getActorsEmail(owner, involvedActors);
+
+    List<OUser> involvedActors = new ArrayList<OUser>();
+    List<OUser> actorsInIssue = null;
+    if (!Boolean.TRUE.equals(issue.getConfidential())) {
+      actorsInIssue = issueRepository.findToNotifyActors(issue);
+      involvedActors.addAll(actorsInIssue);
+      involvedActors.addAll(issueRepository.findToNotifyActorsWatching(issue));
+    } else {
+      actorsInIssue = issueRepository.findToNotifyPrivateActors(issue);
+      involvedActors.addAll(actorsInIssue);
+    }
+    issueRepository.findInvolvedActors(issue);
+    String[] actors = getActorsEmail(owner, involvedActors,actorsInIssue);
     if (actors.length > 0) {
       for (String actor : actors) {
         SimpleMailMessage mailMessage = new SimpleMailMessage();
