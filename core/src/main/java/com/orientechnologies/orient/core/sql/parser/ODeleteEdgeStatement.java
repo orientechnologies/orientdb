@@ -30,7 +30,7 @@ public class ODeleteEdgeStatement extends OStatement {
 
   protected OWhereClause      whereClause;
 
-  protected Integer           limit;
+  protected Number            limit;
 
   public ODeleteEdgeStatement(int id) {
     super(id);

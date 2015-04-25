@@ -101,17 +101,18 @@ public interface OrientSqlTreeConstants
   public int JJTMATCHESCONDITION = 95;
   public int JJTORDERBY = 96;
   public int JJTGROUPBY = 97;
-  public int JJTLIMIT = 98;
-  public int JJTSKIP = 99;
-  public int JJTTIMEOUT = 100;
-  public int JJTWAIT = 101;
-  public int JJTRETRY = 102;
-  public int JJTCOLLECTION = 103;
-  public int JJTFETCHPLAN = 104;
-  public int JJTFETCHPLANITEM = 105;
-  public int JJTTRAVERSEPROJECTIONITEM = 106;
-  public int JJTARRAY = 107;
-  public int JJTJSON = 108;
+  public int JJTUNWIND = 98;
+  public int JJTLIMIT = 99;
+  public int JJTSKIP = 100;
+  public int JJTTIMEOUT = 101;
+  public int JJTWAIT = 102;
+  public int JJTRETRY = 103;
+  public int JJTCOLLECTION = 104;
+  public int JJTFETCHPLAN = 105;
+  public int JJTFETCHPLANITEM = 106;
+  public int JJTTRAVERSEPROJECTIONITEM = 107;
+  public int JJTARRAY = 108;
+  public int JJTJSON = 109;
 
 
   public String[] jjtNodeName = {
@@ -213,6 +214,7 @@ public interface OrientSqlTreeConstants
     "MatchesCondition",
     "OrderBy",
     "GroupBy",
+    "Unwind",
     "Limit",
     "Skip",
     "Timeout",
@@ -226,4 +228,4 @@ public interface OrientSqlTreeConstants
     "Json",
   };
 }
-/* JavaCC - OriginalChecksum=a1c6a6e18f10f96f691bbcd72537b5e7 (do not edit this line) */
+/* JavaCC - OriginalChecksum=d396a4070bcb3f2f96a03797c7dc5ce1 (do not edit this line) */

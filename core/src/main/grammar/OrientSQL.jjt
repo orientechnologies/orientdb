@@ -182,6 +182,8 @@ TOKEN:
 	|
 	< LUCENE: ( "l" | "L" ) ( "u" | "U" ) ( "c" | "C" ) ( "e" | "E" ) ( "n" | "N" ) ( "e" | "E" ) >
 	|
+	< UNWIND: ( "u" | "U" ) ( "n" | "N" ) ( "w" | "W" ) ( "i" | "I" ) ( "n" | "N" ) ( "d" | "D" ) >
+	|
 	< THIS: "@this" >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> >
@@ -464,7 +466,7 @@ OInteger Integer():
 }
 {
 (
-    [ <MINUS> {sign = -1;} ] tokenVal = <INTEGER_LITERAL> {jjtThis.value = sign * Integer.parseInt(tokenVal.image);}
+    [ <MINUS> {sign = -1;} ] tokenVal = <INTEGER_LITERAL> {jjtThis.value = sign * Long.parseLong(tokenVal.image);}
 ) { return jjtThis; }
 }
 
@@ -545,6 +547,7 @@ OSelectWithoutTargetStatement SelectWithoutTargetStatement():
     	<SELECT>
         jjtThis.projection = Projection()
     	[ jjtThis.letClause = LetClause() ]
+    	[ jjtThis.unwind = Unwind() ]
     	[ jjtThis.fetchPlan = FetchPlan() ]
     	[ jjtThis.timeout = Timeout() ]
         [ <LOCK>  <RECORD> {jjtThis.lockRecord = true;} ]
@@ -565,6 +568,7 @@ OSelectStatement SelectStatement():
         [ <WHERE> jjtThis.whereClause = WhereClause() ]
         [ jjtThis.groupBy = GroupBy() ]
         [ jjtThis.orderBy = OrderBy() ]
+        [ jjtThis.unwind = Unwind() ]
         (
             [
                 jjtThis.skip = Skip() [ jjtThis.limit = Limit() ]
@@ -2321,8 +2325,20 @@ OGroupBy GroupBy():
 ) {return jjtThis;}
 }
 
+OUnwind Unwind():
+{ OIdentifier lastIdentifier; }
+{
+(
+	<UNWIND> lastIdentifier = Identifier() { jjtThis.items.add(lastIdentifier); }
+	(
+	    ","
+	    lastIdentifier = Identifier() { jjtThis.items.add(lastIdentifier); }
+	)*
+) {return jjtThis;}
+}
 
-java.lang.Integer Limit():
+
+java.lang.Number Limit():
 { OInteger value = null; }
 {
     (
@@ -2331,7 +2347,7 @@ java.lang.Integer Limit():
     { return value.getValue(); }
 }
 
-java.lang.Integer Skip():
+java.lang.Number Skip():
 { OInteger value = null;}
 {
     (
@@ -2342,7 +2358,7 @@ java.lang.Integer Skip():
 }
 
 
-java.lang.Integer Timeout():
+java.lang.Number Timeout():
 { OInteger val; }
 {
     (
@@ -2352,7 +2368,7 @@ java.lang.Integer Timeout():
 }
 
 
-java.lang.Integer Wait():
+java.lang.Number Wait():
 { OInteger val; }
 {
     (
@@ -2362,7 +2378,7 @@ java.lang.Integer Wait():
 }
 
 
-java.lang.Integer Retry():
+java.lang.Number Retry():
 { OInteger val; }
 {
     (

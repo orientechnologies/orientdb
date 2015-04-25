@@ -24,8 +24,8 @@ public class OUpdateStatement extends OStatement {
 
   protected boolean                 lockRecord   = false;
 
-  protected Integer                 limit;
-  protected Integer                 timeout;
+  protected Number                  limit;
+  protected Number                  timeout;
 
   public OUpdateStatement(int id) {
     super(id);

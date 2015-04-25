@@ -27,8 +27,8 @@ public class OCreateEdgeStatement extends OStatement {
   protected OIdentifier       rightIdentifier;
 
   protected OInsertBody       body;
-  protected Integer           retry;
-  protected Integer           wait;
+  protected Number            retry;
+  protected Number            wait;
 
   public OCreateEdgeStatement(int id) {
     super(id);

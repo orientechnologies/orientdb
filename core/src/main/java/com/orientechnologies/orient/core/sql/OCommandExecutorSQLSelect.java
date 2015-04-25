@@ -42,13 +42,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngineException;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -61,23 +55,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.OFilterOptimizer;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+import com.orientechnologies.orient.core.sql.filter.*;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
+import com.orientechnologies.orient.core.sql.operator.*;
 import com.orientechnologies.orient.core.sql.parser.OOrderBy;
 import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
@@ -105,6 +87,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public static final String          KEYWORD_ORDER        = "ORDER";
   public static final String          KEYWORD_BY           = "BY";
   public static final String          KEYWORD_GROUP        = "GROUP";
+  public static final String          KEYWORD_UNWIND       = "UNWIND";
   public static final String          KEYWORD_FETCHPLAN    = "FETCHPLAN";
   public static final String          KEYWORD_NOCACHE      = "NOCACHE";
   private static final String         KEYWORD_AS           = "AS";
@@ -119,6 +102,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private List<OPair<String, String>> orderedFields        = new ArrayList<OPair<String, String>>();
   private List<String>                groupByFields;
   private Map<Object, ORuntimeResult> groupedResult;
+  private List<String>                unwindFields;
   private Object                      expandTarget;
   private int                         fetchLimit           = -1;
   private OIdentifiable               lastRecord;
@@ -260,6 +244,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               parseGroupBy();
             } else if (w.equals(KEYWORD_ORDER)) {
               parseOrderBy();
+            } else if (w.equals(KEYWORD_UNWIND)) {
+              parseUnwind();
             } else if (w.equals(KEYWORD_LIMIT)) {
               parseLimit(w);
             } else if (w.equals(KEYWORD_SKIP) || w.equals(KEYWORD_OFFSET)) {
@@ -647,21 +633,58 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       tipLimitThreshold = 0;
     }
 
+    List<OIdentifiable> allResults = new ArrayList<OIdentifiable>();
+    if (unwindFields != null) {
+      allResults.addAll(unwind(iRecord, this.unwindFields));
+    } else {
+      allResults.add(iRecord);
+    }
     boolean result = true;
     if ((fullySortedByIndex || orderedFields.isEmpty()) && expandTarget == null) {
       // SEND THE RESULT INLINE
       if (request.getResultListener() != null)
-        result = request.getResultListener().result(iRecord);
-
+        for (OIdentifiable iRes : allResults) {
+          result = request.getResultListener().result(iRes);
+        }
     } else {
 
       // COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
       if (tempResult == null)
         tempResult = new ArrayList<OIdentifiable>();
 
-      ((Collection<OIdentifiable>) tempResult).add(iRecord);
+      for (OIdentifiable iRes : allResults) {
+        ((Collection<OIdentifiable>) tempResult).add(iRes);
+      }
     }
 
+    return result;
+  }
+
+  private Collection<OIdentifiable> unwind(OIdentifiable iRecord, List<String> unwindFields) {
+    List<OIdentifiable> result = new ArrayList<OIdentifiable>();
+    if (unwindFields.size() == 0) {
+      result.add(iRecord);
+    } else {
+      String firstField = unwindFields.get(0);
+      List<String> nextFields = unwindFields.subList(1, unwindFields.size());
+      ODocument doc;
+      if (iRecord instanceof ODocument) {
+        doc = (ODocument) iRecord;
+      } else {
+        doc = iRecord.getRecord();
+      }
+      Object fieldValue = doc.field(firstField);
+      if (fieldValue == null || !(fieldValue instanceof Iterable)) {
+        result.addAll(unwind(doc, nextFields));
+      } else {
+        for (Object o : (Iterable) fieldValue) {
+          ODocument unwindedDoc = new ODocument();
+          doc.copyTo(unwindedDoc);
+          unwindedDoc.field(firstField, o);
+          result.addAll(unwind(unwindedDoc, nextFields));
+        }
+      }
+    }
     return result;
   }
 
@@ -742,6 +765,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     // AGGREGATE IT
     getProjectionGroup(null);
+  }
+
+  protected void parseUnwind() {
+    unwindFields = new ArrayList<String>();
+    while (!parserIsEnded() && (unwindFields.size() == 0 || parserGetLastSeparator() == ',' || parserGetCurrentChar() == ',')) {
+      final String fieldName = parserRequiredWord(false, "Field name expected");
+      unwindFields.add(fieldName);
+      parserSkipWhiteSpaces();
+    }
+
+    if (unwindFields.size() == 0) {
+      throwParsingException("unwind field set was missed. Example: UNWIND name, salary");
+    }
   }
 
   protected void parseOrderBy() {

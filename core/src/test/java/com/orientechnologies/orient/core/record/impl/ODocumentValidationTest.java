@@ -131,6 +131,8 @@ public class ODocumentValidationTest {
       cal.add(Calendar.HOUR, cal.get(Calendar.HOUR) == 11 ? 0 : 1);
       SimpleDateFormat format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateFormatInstance();
       clazz.createProperty("date", OType.DATE).setMax(format.format(cal.getTime()));
+      cal = Calendar.getInstance();
+      cal.add(Calendar.HOUR, 1);
       format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateTimeFormatInstance();
       clazz.createProperty("datetime", OType.DATETIME).setMax(format.format(cal.getTime()));
 
@@ -231,6 +233,8 @@ public class ODocumentValidationTest {
       cal.add(Calendar.HOUR, cal.get(Calendar.HOUR) == 11 ? 0 : 1);
       SimpleDateFormat format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateFormatInstance();
       clazz.createProperty("date", OType.DATE).setMin(format.format(cal.getTime()));
+      cal = Calendar.getInstance();
+      cal.add(Calendar.HOUR, 1);
       format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateTimeFormatInstance();
       clazz.createProperty("datetime", OType.DATETIME).setMin(format.format(cal.getTime()));
 

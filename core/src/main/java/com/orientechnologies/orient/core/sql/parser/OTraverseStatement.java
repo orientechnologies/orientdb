@@ -18,7 +18,7 @@ public class OTraverseStatement extends OStatement {
 
   protected OWhereClause                  whereClause;
 
-  protected Integer                       limit;
+  protected Number                        limit;
 
   protected Strategy                      strategy;
 
@@ -80,7 +80,7 @@ public class OTraverseStatement extends OStatement {
     }
 
     if (projections != null) {
-      for(OTraverseProjectionItem item:projections) {
+      for (OTraverseProjectionItem item : projections) {
         item.replaceParameters(params);
       }
     }

@@ -72,6 +72,14 @@ public class OSelectStatementTest {
 
   }
 
+  public void testUnwind() {
+    checkRightSyntax("select from Foo unwind foo");
+    checkRightSyntax("select from Foo unwind foo, bar");
+    checkRightSyntax("select from Foo where foo = 1 unwind foo, bar");
+    checkRightSyntax("select from Foo where foo = 1 order by foo unwind foo, bar");
+    checkRightSyntax("select from Foo where foo = 1 group by bar order by foo unwind foo, bar");
+  }
+
   public void testSubSelect() {
     checkRightSyntax("select from (select from Foo)");
 
