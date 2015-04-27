@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedExcept
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
@@ -41,10 +42,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -61,7 +59,7 @@ import java.util.zip.CRC32;
  * @author Andrey Lomakin
  * @since 7/23/13
  */
-public class OWOWCache {
+public class OWOWCache implements OWriteCache {
   // we add 8 bytes before and after cache pages to prevent word tearing in mt case.
   public static final int                                   PAGE_PADDING          = 8;
 
@@ -85,7 +83,7 @@ public class OWOWCache {
 
   private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups           = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
   private final OBinarySerializer<String>                   stringSerializer;
-  private final Map<Long, OFileClassic>                     files;
+  private final Map<Integer, OFileClassic>                  files;
   private final boolean                                     syncOnPageFlush;
   private final int                                         pageSize;
   private final long                                        groupTTL;
@@ -98,26 +96,28 @@ public class OWOWCache {
 
   private final ExecutorService                             lowSpaceEventsPublisher;
 
-  private Map<String, Long>                                 nameIdMap;
+  private Map<String, Integer>                              nameIdMap;
   private RandomAccessFile                                  nameIdMapHolder;
   private volatile int                                      cacheMaxSize;
-  private long                                              fileCounter           = 0;
+  private int                                               fileCounter           = 0;
   private GroupKey                                          lastGroupKey          = new GroupKey(0, -1);
   private File                                              nameIdMapHolderFile;
 
   private final AtomicLong                                  allocatedSpace        = new AtomicLong();
+  private final int                                         id;
 
   public OWOWCache(boolean syncOnPageFlush, int pageSize, long groupTTL, OWriteAheadLog writeAheadLog, long pageFlushInterval,
-      int cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize) {
+      long cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize, int id) {
     filesLock.acquireWriteLock();
     try {
-      this.files = new ConcurrentHashMap<Long, OFileClassic>();
+      this.id = id;
+      this.files = new ConcurrentHashMap<Integer, OFileClassic>();
 
       this.syncOnPageFlush = syncOnPageFlush;
       this.pageSize = pageSize;
       this.groupTTL = groupTTL;
       this.writeAheadLog = writeAheadLog;
-      this.cacheMaxSize = cacheMaxSize;
+      this.cacheMaxSize = normalizeMemory(cacheMaxSize, pageSize);
       this.storageLocal = storageLocal;
 
       this.storagePath = storageLocal.getVariableParser().resolveVariables(storageLocal.getStoragePath());
@@ -136,6 +136,15 @@ public class OWOWCache {
 
     } finally {
       filesLock.releaseWriteLock();
+    }
+  }
+
+  private int normalizeMemory(long maxSize, int pageSize) {
+    long tmpMaxSize = maxSize / (pageSize + 2 * OWOWCache.PAGE_PADDING);
+    if (tmpMaxSize >= Integer.MAX_VALUE) {
+      return Integer.MAX_VALUE;
+    } else {
+      return (int) tmpMaxSize;
     }
   }
 
@@ -220,13 +229,15 @@ public class OWOWCache {
     filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
-      Long fileId = nameIdMap.get(fileName);
+      Integer fileId = nameIdMap.get(fileName);
 
-      if (fileId != null && fileId < 0)
-        return -fileId;
+      if (fileId != null && fileId < 0) {
+        return composeFileId(id, -fileId);
+      }
 
       ++fileCounter;
-      return fileCounter;
+
+      return composeFileId(id, fileCounter);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -237,7 +248,7 @@ public class OWOWCache {
     try {
       initNameIdMapping();
 
-      Long fileId = nameIdMap.get(fileName);
+      Integer fileId = nameIdMap.get(fileName);
       OFileClassic fileClassic;
 
       if (fileId == null || fileId < 0)
@@ -250,8 +261,7 @@ public class OWOWCache {
 
       openFile(fileClassic);
 
-      return fileId;
-
+      return composeFileId(id, fileId);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -262,7 +272,7 @@ public class OWOWCache {
     try {
       initNameIdMapping();
 
-      Long fileId = nameIdMap.get(fileName);
+      Integer fileId = nameIdMap.get(fileName);
       OFileClassic fileClassic;
 
       if (fileId != null && fileId >= 0)
@@ -282,8 +292,7 @@ public class OWOWCache {
 
       addFile(fileClassic);
 
-      return fileId;
-
+      return composeFileId(id, fileId);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -296,11 +305,11 @@ public class OWOWCache {
 
       OFileClassic fileClassic;
 
-      Long existingFileId = nameIdMap.get(fileName);
+      Integer existingFileId = nameIdMap.get(fileName);
 
       if (existingFileId != null && fileId >= 0) {
-        if (existingFileId == fileId)
-          fileClassic = files.get(fileId);
+        if (existingFileId == extractFileId(fileId))
+          fileClassic = files.get(existingFileId);
         else
           throw new OStorageException("File with given name already exists but has different id " + existingFileId
               + " vs. proposed " + fileId);
@@ -321,30 +330,32 @@ public class OWOWCache {
 
       OFileClassic fileClassic;
 
-      Long existingFileId = nameIdMap.get(fileName);
+      Integer existingFileId = nameIdMap.get(fileName);
+
+      final int intId = extractFileId(fileId);
 
       if (existingFileId != null && existingFileId >= 0) {
-        if (existingFileId == fileId)
+        if (existingFileId == intId)
           throw new OStorageException("File with name " + fileName + " already exists in storage " + storageLocal.getName());
         else
           throw new OStorageException("File with given name already exists but has different id " + existingFileId
               + " vs. proposed " + fileId);
       }
 
-      fileClassic = files.get(fileId);
+      fileClassic = files.get(intId);
 
       if (fileClassic != null)
         throw new OStorageException("File with given id exists but has different name " + fileClassic.getName() + " vs. proposed "
             + fileName);
 
-      if (fileCounter < fileId)
-        fileCounter = fileId;
+      if (fileCounter < intId)
+        fileCounter = intId;
 
       fileClassic = createFile(fileName);
 
-      files.put(fileId, fileClassic);
-      nameIdMap.put(fileName, fileId);
-      writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+      files.put(intId, fileClassic);
+      nameIdMap.put(fileName, intId);
+      writeNameIdEntry(new NameFileIdEntry(fileName, intId), true);
 
       addFile(fileClassic);
     } finally {
@@ -390,7 +401,9 @@ public class OWOWCache {
     try {
       initNameIdMapping();
 
-      final OFileClassic fileClassic = files.get(fileId);
+      final int intId = extractFileId(fileId);
+
+      final OFileClassic fileClassic = files.get(intId);
       if (fileClassic == null)
         throw new OStorageException("File with id " + fileId + " does not exist.");
 
@@ -405,7 +418,8 @@ public class OWOWCache {
     filesLock.acquireReadLock();
     try {
       if (nameIdMap != null) {
-        Long fileId = nameIdMap.get(fileName);
+        Integer fileId = nameIdMap.get(fileName);
+
         if (fileId != null && fileId >= 0)
           return true;
       }
@@ -421,7 +435,10 @@ public class OWOWCache {
   public boolean exists(long fileId) {
     filesLock.acquireReadLock();
     try {
-      final OFileClassic file = files.get(fileId);
+      final int intId = extractFileId(fileId);
+
+      final OFileClassic file = files.get(intId);
+
       if (file == null)
         return false;
 
@@ -434,9 +451,11 @@ public class OWOWCache {
   public Future store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
     Future future = null;
 
+    final int intId = extractFileId(fileId);
+
     filesLock.acquireReadLock();
     try {
-      final GroupKey groupKey = new GroupKey(fileId, pageIndex >>> 4);
+      final GroupKey groupKey = new GroupKey(intId, pageIndex >>> 4);
       Lock groupLock = lockManager.acquireExclusiveLock(groupKey);
       try {
         WriteGroup writeGroup = writeGroups.get(groupKey);
@@ -477,16 +496,18 @@ public class OWOWCache {
   }
 
   public OCachePointer load(long fileId, long pageIndex, boolean addNewPages) throws IOException {
+    final int intId = extractFileId(fileId);
+
     filesLock.acquireReadLock();
     try {
-      final GroupKey groupKey = new GroupKey(fileId, pageIndex >>> 4);
+      final GroupKey groupKey = new GroupKey(intId, pageIndex >>> 4);
       Lock groupLock = lockManager.acquireSharedLock(groupKey);
       try {
         final WriteGroup writeGroup = writeGroups.get(groupKey);
 
         OCachePointer pagePointer;
         if (writeGroup == null) {
-          pagePointer = cacheFileContent(fileId, pageIndex, addNewPages);
+          pagePointer = cacheFileContent(intId, pageIndex, addNewPages);
           if (pagePointer == null)
             return null;
 
@@ -498,7 +519,7 @@ public class OWOWCache {
         pagePointer = writeGroup.pages[entryIndex];
 
         if (pagePointer == null)
-          pagePointer = cacheFileContent(fileId, pageIndex, addNewPages);
+          pagePointer = cacheFileContent(intId, pageIndex, addNewPages);
 
         if (pagePointer == null)
           return null;
@@ -514,7 +535,7 @@ public class OWOWCache {
   }
 
   public void flush(long fileId) {
-    final Future<Void> future = commitExecutor.submit(new FileFlushTask(fileId));
+    final Future<Void> future = commitExecutor.submit(new FileFlushTask(extractFileId(fileId)));
     try {
       future.get();
     } catch (InterruptedException e) {
@@ -531,9 +552,11 @@ public class OWOWCache {
   }
 
   public long getFilledUpTo(long fileId) throws IOException {
+    final int intId = extractFileId(fileId);
+
     filesLock.acquireReadLock();
     try {
-      return files.get(fileId).getFilledUpTo() / pageSize;
+      return files.get(intId).getFilledUpTo() / pageSize;
     } finally {
       filesLock.releaseReadLock();
     }
@@ -544,9 +567,11 @@ public class OWOWCache {
   }
 
   public boolean isOpen(long fileId) {
+    final int intId = extractFileId(fileId);
+
     filesLock.acquireReadLock();
     try {
-      OFileClassic fileClassic = files.get(fileId);
+      OFileClassic fileClassic = files.get(intId);
       if (fileClassic != null)
         return fileClassic.isOpen();
 
@@ -556,29 +581,31 @@ public class OWOWCache {
     }
   }
 
-  public long isOpen(String fileName) throws IOException {
+  public Long isOpen(String fileName) throws IOException {
     filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
 
-      final Long fileId = nameIdMap.get(fileName);
+      final Integer fileId = nameIdMap.get(fileName);
       if (fileId == null || fileId < 0)
-        return -1;
+        return null;
 
       final OFileClassic fileClassic = files.get(fileId);
       if (fileClassic == null || !fileClassic.isOpen())
-        return -1;
+        return null;
 
-      return fileId;
+      return composeFileId(id, fileId);
     } finally {
       filesLock.releaseWriteLock();
     }
   }
 
   public void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException {
+    final int intId = extractFileId(fileId);
+
     filesLock.acquireWriteLock();
     try {
-      OFileClassic fileClassic = files.get(fileId);
+      OFileClassic fileClassic = files.get(intId);
       if (fileClassic != null && fileClassic.isOpen())
         fileClassic.setSoftlyClosed(softlyClosed);
     } finally {
@@ -597,9 +624,11 @@ public class OWOWCache {
   }
 
   public boolean wasSoftlyClosed(long fileId) throws IOException {
+    final int intId = extractFileId(fileId);
+
     filesLock.acquireReadLock();
     try {
-      OFileClassic fileClassic = files.get(fileId);
+      OFileClassic fileClassic = files.get(intId);
       if (fileClassic == null)
         return false;
 
@@ -610,12 +639,15 @@ public class OWOWCache {
   }
 
   public void deleteFile(long fileId) throws IOException {
+    final int intId = extractFileId(fileId);
+
     filesLock.acquireWriteLock();
     try {
-      final String name = doDeleteFile(fileId);
+      final String name = doDeleteFile(intId);
+
       if (name != null) {
-        nameIdMap.put(name, -fileId);
-        writeNameIdEntry(new NameFileIdEntry(name, -fileId), true);
+        nameIdMap.put(name, -intId);
+        writeNameIdEntry(new NameFileIdEntry(name, -intId), true);
       }
     } finally {
       filesLock.releaseWriteLock();
@@ -623,22 +655,29 @@ public class OWOWCache {
   }
 
   public void truncateFile(long fileId) throws IOException {
+    final int intId = extractFileId(fileId);
+
     filesLock.acquireWriteLock();
     try {
-      removeCachedPages(fileId);
-      files.get(fileId).shrink(0);
+      if (!isOpen(fileId))
+        return;
+
+      removeCachedPages(intId);
+      files.get(intId).shrink(0);
     } finally {
       filesLock.releaseWriteLock();
     }
   }
 
   public void renameFile(long fileId, String oldFileName, String newFileName) throws IOException {
+    final int intId = extractFileId(fileId);
+
     filesLock.acquireWriteLock();
     try {
-      if (!files.containsKey(fileId))
+      if (!files.containsKey(intId))
         return;
 
-      final OFileClassic file = files.get(fileId);
+      final OFileClassic file = files.get(intId);
       final String osFileName = file.getName();
       if (osFileName.startsWith(oldFileName)) {
         final File newFile = new File(storageLocal.getStoragePath() + File.separator + newFileName
@@ -650,16 +689,16 @@ public class OWOWCache {
       }
 
       nameIdMap.remove(oldFileName);
-      nameIdMap.put(newFileName, fileId);
+      nameIdMap.put(newFileName, intId);
 
       writeNameIdEntry(new NameFileIdEntry(oldFileName, -1), false);
-      writeNameIdEntry(new NameFileIdEntry(newFileName, fileId), true);
+      writeNameIdEntry(new NameFileIdEntry(newFileName, intId), true);
     } finally {
       filesLock.releaseWriteLock();
     }
   }
 
-  public void close() throws IOException {
+  public long[] close() throws IOException {
     flush();
 
     if (!commitExecutor.isShutdown()) {
@@ -677,36 +716,47 @@ public class OWOWCache {
 
     filesLock.acquireWriteLock();
     try {
-      for (OFileClassic fileClassic : files.values()) {
+
+      long[] result = new long[files.size()];
+      int counter = 0;
+      for (Map.Entry<Integer, OFileClassic> fileEntry : files.entrySet()) {
+        OFileClassic fileClassic = fileEntry.getValue();
         if (fileClassic.isOpen())
           fileClassic.close();
+
+        result[counter++] = composeFileId(id, fileEntry.getKey());
       }
 
       if (nameIdMapHolder != null) {
         nameIdMapHolder.setLength(0);
-        for (Map.Entry<String, Long> entry : nameIdMap.entrySet()) {
+
+        for (Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
           writeNameIdEntry(new NameFileIdEntry(entry.getKey(), entry.getValue()), false);
         }
         nameIdMapHolder.getFD().sync();
         nameIdMapHolder.close();
       }
+
+      return result;
     } finally {
       filesLock.releaseWriteLock();
     }
   }
 
   public void close(long fileId, boolean flush) throws IOException {
+    final int intId = extractFileId(fileId);
+
     filesLock.acquireWriteLock();
     try {
-      if (!isOpen(fileId))
+      if (!isOpen(intId))
         return;
 
       if (flush)
-        flush(fileId);
+        flush(intId);
       else
-        removeCachedPages(fileId);
+        removeCachedPages(intId);
 
-      files.get(fileId).close();
+      files.get(intId).close();
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -718,7 +768,7 @@ public class OWOWCache {
 
     filesLock.acquireWriteLock();
     try {
-      for (long fileId : files.keySet()) {
+      for (int fileId : files.keySet()) {
 
         OFileClassic fileClassic = files.get(fileId);
 
@@ -799,11 +849,17 @@ public class OWOWCache {
     }
   }
 
-  public void delete() throws IOException {
+  public long[] delete() throws IOException {
+    long[] result = null;
     filesLock.acquireWriteLock();
     try {
-      for (long fileId : files.keySet())
+      result = new long[files.size()];
+
+      int counter = 0;
+      for (int fileId : files.keySet()) {
         doDeleteFile(fileId);
+        result[counter++] = composeFileId(id, fileId);
+      }
 
       if (nameIdMapHolderFile != null) {
         if (nameIdMapHolderFile.exists()) {
@@ -832,15 +888,24 @@ public class OWOWCache {
         throw new OException("Data flush thread was interrupted", e);
       }
     }
+
+    return result;
   }
 
   public String fileNameById(long fileId) {
+    final int intId = extractFileId(fileId);
+
     filesLock.acquireReadLock();
     try {
-      return files.get(fileId).getName();
+      return files.get(intId).getName();
     } finally {
       filesLock.releaseReadLock();
     }
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   private void openFile(OFileClassic fileClassic) throws IOException {
@@ -884,7 +949,7 @@ public class OWOWCache {
   }
 
   private void readNameIdMap() throws IOException {
-    nameIdMap = new ConcurrentHashMap<String, Long>();
+    nameIdMap = new ConcurrentHashMap<String, Integer>();
     long localFileCounter = -1;
 
     nameIdMapHolder.seek(0);
@@ -898,9 +963,9 @@ public class OWOWCache {
     }
 
     if (localFileCounter > 0)
-      fileCounter = localFileCounter;
+      fileCounter = (int) localFileCounter;
 
-    for (Map.Entry<String, Long> nameIdEntry : nameIdMap.entrySet()) {
+    for (Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
       if (nameIdEntry.getValue() >= 0 && !files.containsKey(nameIdEntry.getValue())) {
         OFileClassic fileClassic = createFile(nameIdEntry.getKey());
         files.put(nameIdEntry.getValue(), fileClassic);
@@ -916,7 +981,7 @@ public class OWOWCache {
       nameIdMapHolder.readFully(serializedName);
 
       final String name = stringSerializer.deserialize(serializedName, 0);
-      final long fileId = nameIdMapHolder.readLong();
+      final int fileId = (int) nameIdMapHolder.readLong();
 
       return new NameFileIdEntry(name, fileId);
     } catch (EOFException eof) {
@@ -940,7 +1005,7 @@ public class OWOWCache {
       nameIdMapHolder.getFD().sync();
   }
 
-  private String doDeleteFile(long fileId) throws IOException {
+  private String doDeleteFile(int fileId) throws IOException {
     if (isOpen(fileId))
       truncateFile(fileId);
 
@@ -957,7 +1022,7 @@ public class OWOWCache {
     return name;
   }
 
-  private void removeCachedPages(long fileId) {
+  private void removeCachedPages(int fileId) {
     Future<Void> future = commitExecutor.submit(new RemoveFilePagesTask(fileId));
     try {
       future.get();
@@ -969,7 +1034,7 @@ public class OWOWCache {
     }
   }
 
-  private OCachePointer cacheFileContent(long fileId, long pageIndex, boolean addNewPages) throws IOException {
+  private OCachePointer cacheFileContent(int fileId, long pageIndex, boolean addNewPages) throws IOException {
     final long startPosition = pageIndex * pageSize;
     final long endPosition = startPosition + pageSize;
 
@@ -1005,7 +1070,7 @@ public class OWOWCache {
     return dataPointer;
   }
 
-  private void flushPage(long fileId, long pageIndex, ODirectMemoryPointer dataPointer) throws IOException {
+  private void flushPage(int fileId, long pageIndex, ODirectMemoryPointer dataPointer) throws IOException {
     if (writeAheadLog != null) {
       OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(dataPointer);
       OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLSN();
@@ -1031,11 +1096,19 @@ public class OWOWCache {
       fileClassic.synch();
   }
 
+  private static long composeFileId(int id, int fileId) {
+    return (((long) id) << 32) | fileId;
+  }
+
+  private static int extractFileId(long fileId) {
+    return (int) (fileId & 0xFFFFFFFFL);
+  }
+
   private static final class NameFileIdEntry {
     private final String name;
-    private final long   fileId;
+    private final int    fileId;
 
-    private NameFileIdEntry(String name, long fileId) {
+    private NameFileIdEntry(String name, int fileId) {
       this.name = name;
       this.fileId = fileId;
     }
@@ -1060,16 +1133,16 @@ public class OWOWCache {
     @Override
     public int hashCode() {
       int result = name.hashCode();
-      result = 31 * result + (int) (fileId ^ (fileId >>> 32));
+      result = 31 * result + fileId;
       return result;
     }
   }
 
   private static final class GroupKey implements Comparable<GroupKey> {
-    private final long fileId;
+    private final int  fileId;
     private final long groupIndex;
 
-    private GroupKey(long fileId, long groupIndex) {
+    private GroupKey(int fileId, long groupIndex) {
       this.fileId = fileId;
       this.groupIndex = groupIndex;
     }
@@ -1108,7 +1181,7 @@ public class OWOWCache {
 
     @Override
     public int hashCode() {
-      int result = (int) (fileId ^ (fileId >>> 32));
+      int result = fileId;
       result = 31 * result + (int) (groupIndex ^ (groupIndex >>> 32));
       return result;
     }
@@ -1289,9 +1362,9 @@ public class OWOWCache {
   }
 
   private final class FileFlushTask implements Callable<Void> {
-    private final long fileId;
+    private final int fileId;
 
-    private FileFlushTask(long fileId) {
+    private FileFlushTask(int fileId) {
       this.fileId = fileId;
     }
 
@@ -1345,9 +1418,9 @@ public class OWOWCache {
   }
 
   private final class RemoveFilePagesTask implements Callable<Void> {
-    private final long fileId;
+    private final int fileId;
 
-    private RemoveFilePagesTask(long fileId) {
+    private RemoveFilePagesTask(int fileId) {
       this.fileId = fileId;
     }
 

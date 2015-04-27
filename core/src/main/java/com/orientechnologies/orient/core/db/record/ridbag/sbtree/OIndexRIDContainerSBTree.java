@@ -69,9 +69,9 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
     try {
       OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
       if (atomicOperation == null)
-        fileId = storage.getDiskCache().openFile(file + INDEX_FILE_EXTENSION);
+        fileId = storage.getReadCache().openFile(file + INDEX_FILE_EXTENSION, storage.getWriteCache());
       else
-        fileId = atomicOperation.openFile(file + INDEX_FILE_EXTENSION, storage.getDiskCache());
+        fileId = atomicOperation.openFile(file + INDEX_FILE_EXTENSION);
     } catch (IOException e) {
       throw new OSBTreeException("Exception during loading of sbtree " + file, e);
     }

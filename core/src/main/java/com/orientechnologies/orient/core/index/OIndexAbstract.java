@@ -43,7 +43,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
@@ -982,13 +983,15 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         final OAtomicOperation atomicOperation = ((OAbstractPaginatedStorage) storage).getAtomicOperationsManager()
             .getCurrentOperation();
 
-        final ODiskCache diskCache = ((OAbstractPaginatedStorage) storage).getDiskCache();
+        final OReadCache readCache = ((OAbstractPaginatedStorage) storage).getReadCache();
+        final OWriteCache writeCache = ((OAbstractPaginatedStorage) storage).getWriteCache();
+
         if (atomicOperation == null) {
           try {
             final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
-            if (diskCache.exists(fileName)) {
-              final long fileId = diskCache.openFile(fileName);
-              diskCache.deleteFile(fileId);
+            if (writeCache.exists(fileName)) {
+              final long fileId = readCache.openFile(fileName, writeCache);
+              readCache.deleteFile(fileId, writeCache);
             }
           } catch (IOException e) {
             OLogManager.instance().error(this, "Can't delete file for value containers", e);
@@ -996,9 +999,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         } else {
           try {
             final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
-            if (atomicOperation.isFileExists(fileName, diskCache)) {
-              final long fileId = atomicOperation.openFile(fileName, diskCache);
-              atomicOperation.deleteFile(fileId, diskCache);
+            if (atomicOperation.isFileExists(fileName)) {
+              final long fileId = atomicOperation.openFile(fileName);
+              atomicOperation.deleteFile(fileId);
             }
           } catch (IOException e) {
             OLogManager.instance().error(this, "Can't delete file for value containers", e);
