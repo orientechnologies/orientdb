@@ -48,6 +48,9 @@ OrientDB is free for any use (Apache 2 license). If you are in production don't 
 
 [![](http://www.softpedia.com/_img/softpedia_100_free.png)](http://mac.softpedia.com/get/Developer-Tools/Orient.shtml)
 
+|![](https://www.yourkit.com/images/yklogo.png)|YourKit supports open source projects with its full-featured Java Profiler. YourKit, LLC is the creator of <a href="https://www.yourkit.com/java/profiler/index.jsp">YourKit Java Profiler</a> and <a href="https://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>, innovative and intelligent tools for profiling Java and .NET applications.|
+|---|---|
+
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
