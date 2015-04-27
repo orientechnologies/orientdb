@@ -924,7 +924,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       }
     }
     // NO INDEX: EXECUTE A QUERY
-    GraphQuery query = query();
+    OrientGraphQuery query = (OrientGraphQuery) query();
+    query.labels(label);
     for (int i = 0; i < iKey.length; i++) {
       query.has(iKey[i], iValue[i]);
     }
