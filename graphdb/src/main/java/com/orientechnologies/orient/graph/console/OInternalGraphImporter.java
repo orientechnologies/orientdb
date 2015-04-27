@@ -21,7 +21,6 @@ public class OInternalGraphImporter {
 
     new OInternalGraphImporter().runImport(inputFile, dbURL);
     Orient.instance().shutdown();
-    System.exit(0);
   }
 
   public void runImport(String inputFile, String dbURL) throws IOException, FileNotFoundException {

@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.exception.OException;
@@ -90,39 +91,40 @@ import java.util.concurrent.locks.Lock;
  */
 public abstract class OAbstractPaginatedStorage extends OStorageAbstract implements OLowDiskSpaceListener,
     OFullCheckpointRequestListener {
-  private static final int                       RECORD_LOCK_TIMEOUT                        = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
-                                                                                                .getValueAsInteger();
+  private static final int                                    RECORD_LOCK_TIMEOUT                        = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
+                                                                                                             .getValueAsInteger();
 
-  private final ONewLockManager<ORID>            lockManager;
-  private final String                           PROFILER_CREATE_RECORD;
-  private final String                           PROFILER_READ_RECORD;
-  private final String                           PROFILER_UPDATE_RECORD;
-  private final String                           PROFILER_DELETE_RECORD;
-  private final ConcurrentMap<String, OCluster>  clusterMap                                 = new ConcurrentHashMap<String, OCluster>();
-  private final ThreadLocal<OStorageTransaction> transaction                                = new ThreadLocal<OStorageTransaction>();
-  private final OModificationLock                modificationLock                           = new OModificationLock();
-  private final AtomicBoolean                    checkpointInProgress                       = new AtomicBoolean();
-  protected volatile OWriteAheadLog              writeAheadLog;
+  private final OLockManager<ORID, OAbstractPaginatedStorage> lockManager;
+  private final String                                        PROFILER_CREATE_RECORD;
+  private final String                                        PROFILER_READ_RECORD;
+  private final String                                        PROFILER_UPDATE_RECORD;
+  private final String                                        PROFILER_DELETE_RECORD;
+  private final ConcurrentMap<String, OCluster>               clusterMap                                 = new ConcurrentHashMap<String, OCluster>();
+  private final ThreadLocal<OStorageTransaction>              transaction                                = new ThreadLocal<OStorageTransaction>();
+  private final OModificationLock                             modificationLock                           = new OModificationLock();
+  private final AtomicBoolean                                 checkpointInProgress                       = new AtomicBoolean();
+  protected volatile OWriteAheadLog                           writeAheadLog;
 
-  protected volatile OReadCache                  readCache;
-  protected volatile OWriteCache                 writeCache;
+  protected volatile OReadCache                               readCache;
+  protected volatile OWriteCache                              writeCache;
 
-  private ORecordConflictStrategy                recordConflictStrategy                     = Orient.instance()
-                                                                                                .getRecordConflictStrategy()
-                                                                                                .newInstanceOfDefaultClass();
-  private CopyOnWriteArrayList<OCluster>         clusters                                   = new CopyOnWriteArrayList<OCluster>();
-  private volatile int                           defaultClusterId                           = -1;
-  private volatile OAtomicOperationsManager      atomicOperationsManager;
-  private volatile boolean                       wereDataRestoredAfterOpen                  = false;
-  private volatile boolean                       wereNonTxOperationsPerformedInPreviousOpen = false;
-  private boolean                                makeFullCheckPointAfterClusterCreate       = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
-                                                                                                .getValueAsBoolean();
-  private volatile OLowDiskSpaceInformation      lowDiskSpace                               = null;
-  private volatile boolean                       checkpointRequest                          = false;
+  private ORecordConflictStrategy                             recordConflictStrategy                     = Orient
+                                                                                                             .instance()
+                                                                                                             .getRecordConflictStrategy()
+                                                                                                             .newInstanceOfDefaultClass();
+  private CopyOnWriteArrayList<OCluster>                      clusters                                   = new CopyOnWriteArrayList<OCluster>();
+  private volatile int                                        defaultClusterId                           = -1;
+  private volatile OAtomicOperationsManager                   atomicOperationsManager;
+  private volatile boolean                                    wereDataRestoredAfterOpen                  = false;
+  private volatile boolean                                    wereNonTxOperationsPerformedInPreviousOpen = false;
+  private boolean                                             makeFullCheckPointAfterClusterCreate       = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
+                                                                                                             .getValueAsBoolean();
+  private volatile OLowDiskSpaceInformation                   lowDiskSpace                               = null;
+  private volatile boolean                                    checkpointRequest                          = false;
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode) {
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
-    lockManager = new ONewLockManager<ORID>();
+    lockManager = new OLockManager<ORID, OAbstractPaginatedStorage>(true, -1);
 
     PROFILER_CREATE_RECORD = "db." + this.name + ".createRecord";
     PROFILER_READ_RECORD = "db." + this.name + ".readRecord";
@@ -664,7 +666,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     checkOpeness();
 
     final OCluster cluster = getClusterById(rid.getClusterId());
-    Lock recordLock = lockManager.acquireSharedLock(rid);
+    lockManager.acquireLock(this, rid, OLockManager.LOCK.SHARED);
     try {
       lock.acquireSharedLock();
       try {
@@ -679,7 +681,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
     } finally {
-      lockManager.releaseLock(recordLock);
+      lockManager.releaseLock(this, rid, OLockManager.LOCK.SHARED);
     }
 
     return null;
@@ -716,7 +718,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       modificationLock.requestModificationLock();
       try {
         // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
-        Lock recordLock = lockManager.acquireExclusiveLock(rid);
+        lockManager.acquireLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
         try {
           lock.acquireSharedLock();
           try {
@@ -726,7 +728,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             lock.releaseSharedLock();
           }
         } finally {
-          lockManager.releaseLock(recordLock);
+          lockManager.releaseLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
         }
       } finally {
         modificationLock.releaseModificationLock();
@@ -772,7 +774,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       modificationLock.requestModificationLock();
       try {
-        Lock recordLock = lockManager.acquireExclusiveLock(rid);
+        lockManager.acquireLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
         try {
           lock.acquireSharedLock();
           try {
@@ -781,7 +783,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             lock.releaseSharedLock();
           }
         } finally {
-          lockManager.releaseLock(recordLock);
+          lockManager.releaseLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
         }
       } finally {
         modificationLock.releaseModificationLock();
@@ -815,7 +817,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       modificationLock.requestModificationLock();
       try {
-        final Lock recordLock = lockManager.acquireExclusiveLock(rid);
+        lockManager.acquireLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
         try {
           lock.acquireSharedLock();
           try {
@@ -824,7 +826,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             lock.releaseSharedLock();
           }
         } finally {
-          lockManager.releaseLock(recordLock);
+          lockManager.releaseLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
         }
       } finally {
         modificationLock.releaseModificationLock();
@@ -1296,43 +1298,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   public void acquireWriteLock(final ORID rid) {
     assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be taken inside a storage lock";
-
-    boolean result;
-    try {
-      result = lockManager.tryAcquireExclusiveLock(rid, RECORD_LOCK_TIMEOUT);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new OTimeoutException("Thread was interrupted during record lock", e);
-    }
-
-    if (!result)
-      throw new OTimeoutException("Can not lock record for " + RECORD_LOCK_TIMEOUT
-          + " ms. seems record is deadlocked by other record");
+    lockManager.acquireLock(this, rid, OLockManager.LOCK.EXCLUSIVE, RECORD_LOCK_TIMEOUT);
   }
 
   public void releaseWriteLock(final ORID rid) {
     assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be released inside a storage lock";
-    lockManager.releaseExclusiveLock(rid);
+    lockManager.releaseLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
   }
 
   public void acquireReadLock(final ORID rid) {
-    assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be taken inside a storage lock";
-    boolean result;
-    try {
-      result = lockManager.tryAcquireSharedLock(rid, RECORD_LOCK_TIMEOUT);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new OTimeoutException("Thread was interrupted during record lock", e);
-    }
-
-    if (!result)
-      throw new OTimeoutException("Can not lock record for " + RECORD_LOCK_TIMEOUT
-          + " ms. seems record is deadlocked by other record");
+    lockManager.acquireLock(this, rid, OLockManager.LOCK.SHARED, RECORD_LOCK_TIMEOUT);
   }
 
-  public void releaseReadLock(final ORID iRid) {
+  public void releaseReadLock(final ORID rid) {
     assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be released inside a storage lock";
-    lockManager.releaseSharedLock(iRid);
+    lockManager.releaseLock(this, rid, OLockManager.LOCK.SHARED);
   }
 
   public ORecordConflictStrategy getConflictStrategy() {
