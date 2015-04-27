@@ -77,7 +77,7 @@ public class GraphGetVertices {
       resultsAmount++;
     }
 
-    assertEquals(resultsAmount, 1);
+    assertEquals(1, resultsAmount);
 
     iterator = graph.getVertices("Person", singleKey, singleValue).iterator();
 
@@ -105,7 +105,7 @@ public class GraphGetVertices {
       resultsAmount++;
     }
 
-    assertEquals(resultsAmount, 1);
+    assertEquals(1, resultsAmount);
 
     iterator = graph.getVertices("Person", singleKey, singleValue).iterator();
 
@@ -136,13 +136,24 @@ public class GraphGetVertices {
       resultsAmount++;
     }
 
-    assertEquals(resultsAmount, 1);
+    assertEquals(1, resultsAmount);
 
     iterator = graph.getVertices("Person", keys, values).iterator();
 
     firstVertex = iterator.next();
     assertEquals(firstVertex.getProperty("person_id"), "03");
     assertEquals(firstVertex.getProperty("name"), "Emanuel");
+
+    graph.createVertexType("PersonDummy");
+
+    Iterator<Vertex> personDummy = graph.getVertices("PersonDummy", singleKey, singleValue).iterator();
+
+    resultsAmount = 0;
+    while (personDummy.hasNext()) {
+      personDummy.next();
+      resultsAmount++;
+    }
+    assertEquals(0, resultsAmount);
 
   }
 
