@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.zip.CRC32;
 
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -36,7 +37,7 @@ public class WOWCacheTest {
 
   private ODiskWriteAheadLog     writeAheadLog;
 
-  private OWOWCache              wowCache;
+  private OWriteCache            wowCache;
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -93,7 +94,7 @@ public class WOWCacheTest {
   }
 
   private void initBuffer() throws IOException {
-    wowCache = new OWOWCache(true, pageSize, 10000, writeAheadLog, 10, 100, storageLocal, false);
+    wowCache = new OWOWCache(true, pageSize, 10000, writeAheadLog, 10, 100, storageLocal, false, 1);
   }
 
   public void testLoadStore() throws IOException {

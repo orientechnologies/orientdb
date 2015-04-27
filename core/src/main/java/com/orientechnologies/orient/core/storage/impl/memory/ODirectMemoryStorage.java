@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.storage.impl.memory;
 
@@ -53,28 +53,35 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void initWalAndDiskCache() throws IOException {
-    if( configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL) ){
+    if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
       if (writeAheadLog == null)
         writeAheadLog = new OMemoryWriteAheadLog();
     } else
       writeAheadLog = null;
 
-    if (diskCache == null) {
-			diskCache = new ODirectMemoryOnlyDiskCache(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB);
-		}
+    final ODirectMemoryOnlyDiskCache diskCache = new ODirectMemoryOnlyDiskCache(
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB, 1);
+
+    if (readCache == null) {
+      readCache = diskCache;
+    }
+
+    if (writeCache == null) {
+      writeCache = diskCache;
+    }
   }
 
   @Override
   protected void postCreateSteps() {
-		ORecordId recordId = new ORecordId();
-		recordId.clusterId = 0;
+    ORecordId recordId = new ORecordId();
+    recordId.clusterId = 0;
     createRecord(recordId, OCommonConst.EMPTY_BYTE_ARRAY, new OSimpleVersion(), ORecordBytes.RECORD_TYPE,
         ODatabase.OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
   }
 
   @Override
   public boolean exists() {
-    return diskCache != null && diskCache.exists("default" + OPaginatedCluster.DEF_EXTENSION);
+    return readCache != null && writeCache.exists("default" + OPaginatedCluster.DEF_EXTENSION);
   }
 
   @Override
@@ -89,7 +96,6 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   @Override
   public void makeFullCheckpoint() throws IOException {
   }
-
 
   @Override
   public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener,

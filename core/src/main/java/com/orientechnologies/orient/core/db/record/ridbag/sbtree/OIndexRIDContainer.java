@@ -30,8 +30,9 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
@@ -80,18 +81,19 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
         .getUnderlying();
     try {
       final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-      final ODiskCache diskCache = storage.getDiskCache();
+      final OReadCache readCache = storage.getReadCache();
+      final OWriteCache writeCache = storage.getWriteCache();
 
       if (atomicOperation == null) {
-        if (diskCache.exists(fileName))
-          return diskCache.openFile(fileName);
+        if (writeCache.exists(fileName))
+          return readCache.openFile(fileName, writeCache);
 
-        return diskCache.addFile(fileName);
+        return readCache.addFile(fileName, writeCache);
       } else {
-        if (atomicOperation.isFileExists(fileName, diskCache))
-          return atomicOperation.openFile(fileName, diskCache);
+        if (atomicOperation.isFileExists(fileName))
+          return atomicOperation.openFile(fileName);
 
-        return atomicOperation.addFile(fileName, diskCache);
+        return atomicOperation.addFile(fileName);
       }
     } catch (IOException e) {
       throw new OSBTreeException("Error creation of sbtree with name " + fileName, e);

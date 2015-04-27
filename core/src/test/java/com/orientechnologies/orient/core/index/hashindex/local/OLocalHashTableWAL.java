@@ -4,9 +4,10 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
@@ -238,14 +239,16 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     Assert.assertTrue(atomicUnit.isEmpty());
     log.close();
 
-    final ODiskCache expectedDiskCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getDiskCache();
-    expectedDiskCache.flushBuffer();
+    OWriteCache writeCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getWriteCache();
+    writeCache.flush();
   }
 
   private boolean restoreDataFromBatch(boolean atomicChangeIsProcessed, List<OWALRecord> atomicUnit, List<OWALRecord> records)
       throws IOException {
 
-    final ODiskCache expectedDiskCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getDiskCache();
+    final OReadCache expectedReadCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getReadCache();
+    final OWriteCache expectedWriteCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getWriteCache();
+
     for (OWALRecord walRecord : records) {
       atomicUnit.add(walRecord);
 
@@ -266,13 +269,13 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
 
-            if (!expectedDiskCache.isOpen(fileId))
-              expectedDiskCache.openFile(fileId);
+            if (!expectedWriteCache.isOpen(fileId))
+              expectedReadCache.openFile(fileId, expectedWriteCache);
 
-            OCacheEntry cacheEntry = expectedDiskCache.load(fileId, pageIndex, true);
+            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache);
             if (cacheEntry == null)
               do {
-                cacheEntry = expectedDiskCache.allocateNewPage(fileId);
+                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
               } while (cacheEntry.getPageIndex() != pageIndex);
 
             cacheEntry.acquireExclusiveLock();
@@ -282,16 +285,16 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
               durablePage.setLsn(updatePageRecord.getLsn());
             } finally {
               cacheEntry.releaseExclusiveLock();
-              expectedDiskCache.release(cacheEntry);
+              expectedReadCache.release(cacheEntry, expectedWriteCache);
             }
           } else if (restoreRecord instanceof OFileCreatedWALRecord) {
             final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
             String fileName = fileCreatedCreatedRecord.getFileName().replace("actualLocalHashTable", "expectedLocalHashTable");
 
-            if (expectedDiskCache.exists(fileName))
-              expectedDiskCache.openFile(fileName, fileCreatedCreatedRecord.getFileId());
+            if (expectedWriteCache.exists(fileName))
+              expectedReadCache.openFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
             else
-              expectedDiskCache.addFile(fileName);
+              expectedReadCache.addFile(fileName, expectedWriteCache);
           }
         }
 

@@ -23,6 +23,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
@@ -55,10 +57,14 @@ public class OAtomicOperationsManager {
   private final OWriteAheadLog                                 writeAheadLog;
   private final OLockManager<Object, OAtomicOperationsManager> lockManager      = new OLockManager<Object, OAtomicOperationsManager>(
                                                                                     true, -1);
+  private final OReadCache                                     readCache;
+  private final OWriteCache                                    writeCache;
 
   public OAtomicOperationsManager(OAbstractPaginatedStorage storage) {
     this.storage = storage;
     this.writeAheadLog = storage.getWALInstance();
+    this.readCache = storage.getReadCache();
+    this.writeCache = storage.getWriteCache();
   }
 
   public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent) throws IOException {
@@ -78,7 +84,7 @@ public class OAtomicOperationsManager {
     final OOperationUnitId unitId = OOperationUnitId.generateId();
     final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
-    operation = new OAtomicOperation(lsn, unitId);
+    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache);
     currentOperation.set(operation);
 
     if (storage.getStorageTransaction() == null)
@@ -112,7 +118,7 @@ public class OAtomicOperationsManager {
 
     if (counter == 0) {
       if (!operation.isRollback())
-        operation.commitChanges(storage.getDiskCache(), writeAheadLog);
+        operation.commitChanges(writeAheadLog);
 
       writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
       currentOperation.set(null);
