@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -162,7 +163,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
     context.setVariable("transactionRetries", 0);
 
-    for (int retry = 0; retry < maxRetry; retry++) {
+    for (int retry = 1; retry <= maxRetry; retry++) {
       try {
         int txBegunAtLine = -1;
         int txBegunAtPart = -1;
@@ -234,12 +235,12 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
               if (txBegunAtLine < 0)
                 throw new OCommandSQLParsingException("Transaction not begun");
 
-              if (retry == 0 && lastCommand.length() > "commit ".length()) {
+              if (retry == 1 && lastCommand.length() > "commit ".length()) {
                 // FIRST CYCLE: PARSE RETRY TIMES OVERWRITING DEFAULT = 1
                 String next = lastCommand.substring("commit ".length()).trim();
                 if (OStringSerializerHelper.startsWithIgnoreCase(next, "retry ")) {
                   next = next.substring("retry ".length()).trim();
-                  maxRetry = Integer.parseInt(next) + 1;
+                  maxRetry = Integer.parseInt(next);
                 }
               }
 
@@ -266,19 +267,32 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         // COMPLETED
         break;
 
+      } catch (OTransactionException e) {
+        // THIS CASE IS ON UPSERT
+        context.setVariable("retries", retry);
+        getDatabase().getLocalCache().clear();
+        if (retry >= maxRetry)
+          throw e;
+
       } catch (ORecordDuplicatedException e) {
         // THIS CASE IS ON UPSERT
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
+        if (retry >= maxRetry)
+          throw e;
 
       } catch (ORecordNotFoundException e) {
         // THIS CASE IS ON UPSERT
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
+        if (retry >= maxRetry)
+          throw e;
 
       } catch (ONeedRetryException e) {
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
+        if (retry >= maxRetry)
+          throw e;
       }
     }
 
