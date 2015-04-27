@@ -6,6 +6,7 @@ import java.io.IOException;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -19,6 +20,8 @@ public class OInternalGraphImporter {
     String dbURL = args.length > 1 ? args[1] : null;
 
     new OInternalGraphImporter().runImport(inputFile, dbURL);
+    Orient.instance().shutdown();
+    System.exit(0);
   }
 
   public void runImport(String inputFile, String dbURL) throws IOException, FileNotFoundException {
