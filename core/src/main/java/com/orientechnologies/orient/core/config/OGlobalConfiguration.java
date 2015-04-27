@@ -335,6 +335,8 @@ public enum OGlobalConfiguration {
 
   NETWORK_HTTP_CONTENT_CHARSET("network.http.charset", "Http response charset", String.class, "utf-8"),
 
+  NETWORK_HTTP_JSON_RESPONSE_ERROR("network.http.jsonResponseError", "Http response error in json", Boolean.class, true),
+
   OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, "utf-8"), NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT(
       "network.http.sessionExpireTimeout", "Timeout after which an http session is considered tp have expired (seconds)",
       Integer.class, 300),
