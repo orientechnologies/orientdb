@@ -33,11 +33,11 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.*;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Hi-level function to move inside a graph. Return the incoming connections. If the current element is a vertex, then will be
@@ -130,9 +130,15 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
         // EDGE
         final OrientEdge edge = graph.getEdge(rec);
         if (edge != null) {
-          final OrientVertex out = (OrientVertex) edge.getVertex(iDirection);
-
-          return out;
+          if (Direction.BOTH.equals(iDirection)) {
+            Set<Vertex> result = new HashSet<Vertex>();
+            result.add(edge.getVertex(Direction.OUT));
+            result.add(edge.getVertex(Direction.IN));
+            return result;
+          } else {
+            final OrientVertex out = (OrientVertex) edge.getVertex(iDirection);
+            return out;
+          }
         }
       }
 
