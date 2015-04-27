@@ -29,9 +29,9 @@ public class OSelectStatement extends OStatement {
 
   protected OUnwind      unwind;
 
-  protected Number       skip;
+  protected OSkip       skip;
 
-  protected Number       limit;
+  protected OLimit       limit;
 
   protected Boolean      lockRecord;
 
@@ -139,19 +139,19 @@ public class OSelectStatement extends OStatement {
     this.orderBy = orderBy;
   }
 
-  public Number getSkip() {
+  public OSkip getSkip() {
     return skip;
   }
 
-  public void setSkip(Number skip) {
+  public void setSkip(OSkip skip) {
     this.skip = skip;
   }
 
-  public Number getLimit() {
+  public OLimit getLimit() {
     return limit;
   }
 
-  public void setLimit(Number limit) {
+  public void setLimit(OLimit limit) {
     this.limit = limit;
   }
 
@@ -218,12 +218,10 @@ public class OSelectStatement extends OStatement {
     }
 
     if (skip != null) {
-      builder.append(" SKIP ");
       builder.append(skip);
     }
 
     if (limit != null) {
-      builder.append(" LIMIT ");
       builder.append(limit);
     }
 
@@ -262,12 +260,22 @@ public class OSelectStatement extends OStatement {
       projection.replaceParameters(params);
     }
 
-    if (whereClause != null) {
-      whereClause.replaceParameters(params);
-    }
     if (letClause != null) {
       letClause.replaceParameters(params);
     }
+
+    if (whereClause != null) {
+      whereClause.replaceParameters(params);
+    }
+
+    if(skip!=null){
+      skip.replaceParameters(params);
+    }
+
+    if(limit!=null){
+      limit.replaceParameters(params);
+    }
+
   }
 }
 /* JavaCC - OriginalChecksum=b26959b9726a8cf35d6283eca931da6b (do not edit this line) */

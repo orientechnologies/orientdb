@@ -8,7 +8,9 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.testng.Assert.*;
 
@@ -290,6 +292,26 @@ public class OCommandExecutorSQLSelectTest {
 
     assertEquals(qResult.size(), 1);
     assertEquals(qResult.get(0).field("city"), "NY");
+  }
+
+  @Test
+  public void testLimit() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit 3")).execute();
+    assertEquals(qResult.size(), 3);
+  }
+
+  @Test
+  public void testLimitWithUnnamedParam() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit ?")).execute(3);
+    assertEquals(qResult.size(), 3);
+  }
+
+  @Test
+  public void testLimitWithNamedParam() {
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("lim", 2);
+    List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit :lim")).execute(params);
+    assertEquals(qResult.size(), 2);
   }
 
   @Test
