@@ -192,13 +192,15 @@ public class DbListenerTest extends DocumentDBBaseTest {
       ODatabaseHelper.deleteDatabase(database, getStorageType());
 
     database.registerListener(new DbListener());
+    int curOnclose = onClose;
+    int curCreate = onCreate;
 
     ODatabaseHelper.createDatabase(database, url, getStorageType());
 
-    Assert.assertEquals(onCreate, 1);
+    Assert.assertEquals(onCreate, curCreate + 1);
 
     database.close();
-    Assert.assertEquals(onClose, 1);
+    Assert.assertEquals(onClose, curOnclose + 1);
 
     database.open("admin", "admin");
     Assert.assertEquals(onOpen, 1);
@@ -220,7 +222,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
     Assert.assertEquals(onAfterTxRollback, 1);
 
     ODatabaseHelper.deleteDatabase(database, getStorageType());
-    Assert.assertEquals(onClose, 2);
+    Assert.assertEquals(onClose, curOnclose + 2);
     Assert.assertEquals(onDelete, 1);
 
     ODatabaseHelper.createDatabase(database, url, getStorageType());
