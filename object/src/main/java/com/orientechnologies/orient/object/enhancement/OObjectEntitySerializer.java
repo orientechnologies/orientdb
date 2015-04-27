@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.record.ORecord;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -1075,8 +1076,15 @@ public class OObjectEntitySerializer {
           OLogManager.instance().warn(OObjectSerializerHelper.class,
               "@Id field has been declared as %s while the supported are: ORID, Number, String, Object", id.getClass());
       }
-      if (iRecord.getIdentity().isValid() && iRecord.getIdentity().isPersistent())
-        iRecord.reload();
+      if (iRecord.getIdentity().isValid() && iRecord.getIdentity().isPersistent()){
+        ORecord txRecord = db.getTransaction().getRecord(iRecord.getIdentity());
+        if (txRecord != null){
+          ((OObjectProxyMethodHandler) ((ProxyObject) iProxiedPojo).getHandler()).setDoc((ODocument) txRecord);
+          return (T) iProxiedPojo;
+        } else {
+          iRecord.reload();
+        }
+      }
     }
 
     // CHECK FOR VERSION BINDING
