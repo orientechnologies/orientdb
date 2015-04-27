@@ -72,9 +72,9 @@ public class ORecordSerializerBinary implements ORecordSerializer {
         serializerByVersion[iSource[0]].deserializePartial((ODocument) iRecord, container, iFields);
       else
         serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container);
-    } catch (IndexOutOfBoundsException e) {
-      OLogManager.instance().warn(this, "Error deserializing record %s send this data for debugging",
-          OBase64Utils.encodeBytes(iSource));
+    } catch (RuntimeException e) {
+      OLogManager.instance().warn(this, "Error deserializing record with id %s send this data for debugging: %s ",
+          iRecord.getIdentity().toString(), OBase64Utils.encodeBytes(iSource));
       throw e;
     }
     return iRecord;
