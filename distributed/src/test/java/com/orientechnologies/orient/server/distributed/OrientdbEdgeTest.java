@@ -168,7 +168,7 @@ public class OrientdbEdgeTest {
 
       if (!admin.existsDatabase()) {
         System.err.println("creating database " + url);
-        admin.createDatabase("graph", "plocal");
+        admin.createDatabase("graph", "memory");
       }
 
       try {
