@@ -62,9 +62,9 @@ public class OrientEdge extends OrientElement implements Edge {
     super(rawGraph, rawEdge);
   }
 
-  protected OrientEdge(final OrientBaseGraph rawGraph, final String iLabel, final Object... fields) {
+  protected OrientEdge(final OrientBaseGraph rawGraph, final String iClassName, final String iLabel, final Object... fields) {
     super(rawGraph, null);
-    rawElement = createDocument(iLabel);
+    rawElement = createDocument(iClassName, iLabel);
     setPropertiesInternal(fields);
   }
 
@@ -446,7 +446,7 @@ public class OrientEdge extends OrientElement implements Edge {
   public ODocument getRecord() {
     if (rawElement == null) {
       // CREATE AT THE FLY
-      final ODocument tmp = new ODocument(getClassName(label)).setTrackingChanges(false);
+      final ODocument tmp = new ODocument(getClassName(null, label)).setTrackingChanges(false);
       tmp.field(OrientBaseGraph.CONNECTION_IN, vIn.getIdentity());
       tmp.field(OrientBaseGraph.CONNECTION_OUT, vOut.getIdentity());
       if (label != null && settings != null && !settings.isUseClassForEdgeLabel())
@@ -473,7 +473,7 @@ public class OrientEdge extends OrientElement implements Edge {
     final ODocument vOutRecord = vOut.getRecord();
     final ODocument vInRecord = vIn.getRecord();
 
-    final ODocument doc = createDocument(label);
+    final ODocument doc = createDocument(null, label);
 
     doc.field(OrientBaseGraph.CONNECTION_OUT, settings.isKeepInMemoryReferences() ? vOutRecord.getIdentity() : vOutRecord);
     doc.field(OrientBaseGraph.CONNECTION_IN, settings.isKeepInMemoryReferences() ? vInRecord.getIdentity() : vInRecord);
@@ -503,8 +503,10 @@ public class OrientEdge extends OrientElement implements Edge {
   /**
    * (Blueprints Extension) Returns the class name based on graph settings.
    */
-  public String getClassName(final String iLabel) {
-    if (iLabel != null && (settings == null || settings.isUseClassForEdgeLabel()))
+  public String getClassName(final String iClassName, final String iLabel) {
+    if (iClassName != null) {
+      return checkForClassInSchema(iClassName);
+    } else if (iLabel != null && (settings == null || settings.isUseClassForEdgeLabel()))
       // USE THE LABEL AS DOCUMENT CLASS
       return checkForClassInSchema(iLabel);
 
@@ -542,8 +544,8 @@ public class OrientEdge extends OrientElement implements Edge {
     return isLabeled(getLabel(), iLabels);
   }
 
-  protected ODocument createDocument(final String iLabel) {
-    final String className = getClassName(iLabel);
+  protected ODocument createDocument(final String iClassName, final String iLabel) {
+    final String className = getClassName(iClassName, iLabel);
 
     final ODocument doc = new ODocument(className);
 

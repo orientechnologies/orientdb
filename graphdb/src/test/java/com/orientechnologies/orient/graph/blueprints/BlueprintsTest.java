@@ -9,10 +9,12 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
@@ -148,5 +150,16 @@ public class BlueprintsTest {
     graph.commit();
     // System.out.println(v.getId());
     Assert.assertTrue(((ORID) v.getId()).isPersistent());
+  }
+
+  @Test
+  public void testEdgeWithClassAndLabel() {
+    Vertex vIn = graph.addVertex(null);
+    Vertex vOut = graph.addVertex(null);
+    OrientEdge edge = graph.addEdge("class:MyEdge", vOut, vIn, "my_label");
+    
+    Assert.assertEquals(edge.getRecord().getClassName(), "MyEdge");
+    Assert.assertNotNull(edge.getVertex(Direction.IN).getProperty("in_my_label"));
+    Assert.assertNotNull(edge.getVertex(Direction.OUT).getProperty("out_my_label"));
   }
 }
