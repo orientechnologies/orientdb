@@ -409,7 +409,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     if (p.isReadonly() && iRecord instanceof ODocument && !iRecord.getRecordVersion().isTombstone()) {
-      if ((entry.changed || entry.timeLine != null) && !entry.created) {
+      if (entry != null && (entry.changed || entry.timeLine != null) && !entry.created) {
         // check if the field is actually changed by equal.
         // this is due to a limitation in the merge algorithm used server side marking all non simple fields as dirty
         Object orgVal = entry.original;
@@ -1024,7 +1024,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
         try {
           if (iPropertyValue.equals(oldValue)) {
-            if (iFieldType == null || iFieldType.length == 0 || iFieldType[0] == oldType) {
+            if (fieldType == oldType) {
               if (!(iPropertyValue instanceof ORecordElement))
                 // SAME BUT NOT TRACKABLE: SET THE RECORD AS DIRTY TO BE SURE IT'S SAVED
                 setDirty();

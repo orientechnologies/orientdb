@@ -8,7 +8,9 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.testng.Assert.*;
 
@@ -293,6 +295,26 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
+  public void testLimit() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit 3")).execute();
+    assertEquals(qResult.size(), 3);
+  }
+
+  @Test
+  public void testLimitWithUnnamedParam() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit ?")).execute(3);
+    assertEquals(qResult.size(), 3);
+  }
+
+  @Test
+  public void testLimitWithNamedParam() {
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("lim", 2);
+    List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit :lim")).execute(params);
+    assertEquals(qResult.size(), 2);
+  }
+
+  @Test
   public void testOrderByRid() {
     List<ODocument> qResult = db.command(new OCommandSQL("select from ridsorttest order by @rid ASC")).execute();
     assertTrue(qResult.size() > 0);
@@ -327,6 +349,66 @@ public class OCommandExecutorSQLSelectTest {
     List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll")).execute();
 
     assertEquals(qResult.size(), 4);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+    }
+  }
+
+  @Test
+  public void testUnwindSkip() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll skip 1")).execute();
+
+    assertEquals(qResult.size(), 3);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+    }
+  }
+
+  @Test
+  public void testUnwindLimit() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll limit 1")).execute();
+
+    assertEquals(qResult.size(), 1);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+    }
+  }
+
+  @Test
+  public void testUnwindLimit3() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll limit 3")).execute();
+
+    assertEquals(qResult.size(), 3);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+    }
+  }
+
+  @Test
+  public void testUnwindSkipAndLimit() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll skip 1 limit 1")).execute();
+
+    assertEquals(qResult.size(), 1);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+    }
+  }
+
+  @Test
+  public void testUnwindSkipAndLimit2() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll skip 1 limit 2")).execute();
+
+    assertEquals(qResult.size(), 2);
     for (ODocument doc : qResult) {
       String name = doc.field("name");
       String coll = doc.field("coll");

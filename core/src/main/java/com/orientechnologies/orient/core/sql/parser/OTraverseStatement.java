@@ -18,9 +18,11 @@ public class OTraverseStatement extends OStatement {
 
   protected OWhereClause                  whereClause;
 
-  protected Number                        limit;
+  protected OLimit                        limit;
 
   protected Strategy                      strategy;
+
+  protected OInteger                      maxDepth;
 
   public OTraverseStatement(int id) {
     super(id);
@@ -48,13 +50,18 @@ public class OTraverseStatement extends OStatement {
       builder.append(target.toString());
     }
 
+    if (maxDepth != null) {
+      builder.append(" MAXDEPTH ");
+      builder.append(maxDepth.toString());
+    }
+
     if (whereClause != null) {
       builder.append(" WHILE ");
       builder.append(whereClause.toString());
     }
 
     if (limit != null) {
-      builder.append(" LIMIT ");
+      builder.append(" ");
       builder.append(limit);
     }
 
@@ -87,6 +94,10 @@ public class OTraverseStatement extends OStatement {
 
     if (whereClause != null) {
       whereClause.replaceParameters(params);
+    }
+
+    if (limit != null) {
+      limit.replaceParameters(params);
     }
   }
 }
