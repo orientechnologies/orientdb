@@ -63,7 +63,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr ng-repeat="result in $data">
+                <tr ng-repeat="result in $data track by $index">
                     <td ng-repeat="header in item.headers" ridrender>{{result[header]}}</td>
                 </tr>
                 </tbody>
