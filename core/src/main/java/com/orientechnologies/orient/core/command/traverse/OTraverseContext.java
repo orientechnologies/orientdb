@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.command.traverse;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
@@ -25,17 +25,17 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
 public class OTraverseContext extends OBasicCommandContext {
-  private Set<ORID> history = new HashSet<ORID>();
-  private Memory    memory  = new StackMemory();
+  public static final int             BUCKET_SIZE = 6;
+  private Map<ORID, int[]>            history     = new HashMap<ORID, int[]>();
+  private Memory                      memory      = new StackMemory();
 
   private OTraverseAbstractProcess<?> currentProcess;
 
@@ -90,12 +90,41 @@ public class OTraverseContext extends OBasicCommandContext {
     memory.clear();
   }
 
-  public boolean isAlreadyTraversed(final OIdentifiable identity) {
-    return history.contains(identity.getIdentity());
+  public boolean isAlreadyTraversed(final OIdentifiable identity, final int iLevel) {
+    final int[] l = history.get(identity.getIdentity());
+    if (l == null)
+      return false;
+
+    for (int i = 0; i < l.length && l[i] > -1; ++i)
+      if (l[i] == iLevel)
+        return true;
+
+    return false;
   }
 
-  public void addTraversed(final OIdentifiable identity) {
-    history.add(identity.getIdentity());
+  public void addTraversed(final OIdentifiable identity, final int iLevel) {
+    final int[] l = history.get(identity.getIdentity());
+    if (l == null) {
+      final int[] array = new int[BUCKET_SIZE];
+      array[0] = iLevel;
+      Arrays.fill(array, 1, BUCKET_SIZE, -1);
+      history.put(identity.getIdentity(), array);
+    } else {
+      if (l[l.length - 1] > -1) {
+        // ARRAY FULL, ENLARGE IT
+        final int[] array = Arrays.copyOf(l, l.length + BUCKET_SIZE);
+        array[l.length] = iLevel;
+        Arrays.fill(array, l.length + 1, array.length, -1);
+        history.put(identity.getIdentity(), array);
+      } else {
+        for (int i = l.length - 2; i >= 0; --i) {
+          if (l[i] > -1) {
+            l[i + 1] = iLevel;
+            break;
+          }
+        }
+      }
+    }
   }
 
   public String getPath() {

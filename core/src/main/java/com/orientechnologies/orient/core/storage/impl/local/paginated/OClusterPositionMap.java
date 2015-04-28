@@ -47,7 +47,7 @@ public class OClusterPositionMap extends ODurableComponent {
   private long               fileId;
   private boolean            useWal;
 
-  public OClusterPositionMap(OAbstractPaginatedStorage storage, ODiskCache diskCache, String name, boolean useWal) {
+  public OClusterPositionMap(OAbstractPaginatedStorage storage, String name, boolean useWal) {
     super(storage);
 
     acquireExclusiveLock();
