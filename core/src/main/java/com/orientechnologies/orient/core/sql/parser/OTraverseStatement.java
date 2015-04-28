@@ -22,6 +22,8 @@ public class OTraverseStatement extends OStatement {
 
   protected Strategy                      strategy;
 
+  protected OInteger                      maxDepth;
+
   public OTraverseStatement(int id) {
     super(id);
   }
@@ -46,6 +48,11 @@ public class OTraverseStatement extends OStatement {
     if (target != null) {
       builder.append(" FROM ");
       builder.append(target.toString());
+    }
+
+    if (maxDepth != null) {
+      builder.append(" MAXDEPTH ");
+      builder.append(maxDepth.toString());
     }
 
     if (whereClause != null) {
@@ -89,7 +96,7 @@ public class OTraverseStatement extends OStatement {
       whereClause.replaceParameters(params);
     }
 
-    if(limit!=null){
+    if (limit != null) {
       limit.replaceParameters(params);
     }
   }
