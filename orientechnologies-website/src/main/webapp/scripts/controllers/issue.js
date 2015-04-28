@@ -333,7 +333,7 @@ angular.module('webappApp')
       $scope.isClient = User.isClient(ORGANIZATION);
       $scope.client = User.getClient(ORGANIZATION);
       User.environments().then(function (data) {
-        $scope.environments = data;
+        $scope.environments = data.plain();
       });
       if ($scope.client)
         $scope.issue.client = $scope.client.clientId;
