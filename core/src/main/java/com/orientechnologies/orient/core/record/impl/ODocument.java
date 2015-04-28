@@ -1024,7 +1024,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
         try {
           if (iPropertyValue.equals(oldValue)) {
-            if (iFieldType == null || iFieldType.length == 0 || iFieldType[0] == oldType) {
+            if (fieldType == oldType) {
               if (!(iPropertyValue instanceof ORecordElement))
                 // SAME BUT NOT TRACKABLE: SET THE RECORD AS DIRTY TO BE SURE IT'S SAVED
                 setDirty();
