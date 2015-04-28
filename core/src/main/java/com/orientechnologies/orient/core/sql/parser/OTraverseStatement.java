@@ -18,7 +18,7 @@ public class OTraverseStatement extends OStatement {
 
   protected OWhereClause                  whereClause;
 
-  protected Number                        limit;
+  protected OLimit                        limit;
 
   protected Strategy                      strategy;
 
@@ -54,7 +54,7 @@ public class OTraverseStatement extends OStatement {
     }
 
     if (limit != null) {
-      builder.append(" LIMIT ");
+      builder.append(" ");
       builder.append(limit);
     }
 
@@ -87,6 +87,10 @@ public class OTraverseStatement extends OStatement {
 
     if (whereClause != null) {
       whereClause.replaceParameters(params);
+    }
+
+    if(limit!=null){
+      limit.replaceParameters(params);
     }
   }
 }

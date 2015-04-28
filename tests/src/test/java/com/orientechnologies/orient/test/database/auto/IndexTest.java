@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
@@ -46,7 +47,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -1675,13 +1676,11 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage();
-    final ODiskCache diskCache = storageLocalAbstract.getDiskCache();
 
-    Assert.assertTrue(diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
-
+    final OWriteCache writeCache = storageLocalAbstract.getWriteCache();
+    Assert.assertTrue(writeCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
     database.command(new OCommandSQL("drop index ValuesContainerIsRemovedIfIndexIsRemovedIndex")).execute();
-
-    Assert.assertTrue(!diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
+    Assert.assertTrue(!writeCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
   }
 
   public void testPreservingIdentityInIndexTx() {

@@ -176,7 +176,7 @@ TOKEN:
     |
     < STRATEGY: ( "s" | "S" ) ( "t" | "T" ) ( "r" | "R" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) ( "g" | "G" ) ( "y" | "Y" )  >
     |
-    < DEPTH_FIRST: ( "d" | "d" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) ( "_" )  ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
+    < DEPTH_FIRST: ( "d" | "D" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) ( "_" )  ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
     |
     < BREADTH_FIRST: ( "b" | "B" ) ( "r" | "R" ) ( "e" | "E" ) ( "a" | "A" ) ( "d" | "D" ) ( "t" | "T" )  ( "h" | "H" ) ( "_" ) ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
 	|
@@ -619,7 +619,7 @@ ODeleteStatement DeleteStatement():
 	jjtThis.fromClause = FromClause()
 	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
 	[ <WHERE> jjtThis.whereClause = WhereClause() ]
-	[ <LIMIT> jjtThis.limit = Integer() ]
+	[ jjtThis.limit = Limit() ]
 	[ <UNSAFE> { jjtThis.unsafe = true; }]
 ) {return jjtThis;}
 }
@@ -633,7 +633,7 @@ ODeleteVertexStatement DeleteVertexStatement():
 	jjtThis.fromClause = FromClause()
 	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
 	[ <WHERE> jjtThis.whereClause = WhereClause() ]
-    [ <LIMIT> jjtThis.limit = Integer() ]
+    [ jjtThis.limit = Limit() ]
 ) {return jjtThis;}
 }
 
@@ -2338,23 +2338,42 @@ OUnwind Unwind():
 }
 
 
-java.lang.Number Limit():
-{ OInteger value = null; }
+OLimit Limit():
+{}
 {
     (
-    	<LIMIT> value = Integer()
+    	<LIMIT>
+    	(
+            jjtThis.num  = Integer()
+            |
+            jjtThis.inputParam = InputParameter()
+        )
     )
-    { return value.getValue(); }
+    { return jjtThis; }
 }
 
-java.lang.Number Skip():
-{ OInteger value = null;}
+OSkip Skip():
+{ }
 {
     (
-    	<SKIP2> value = Integer()
+        (
+            <SKIP2>
+            (
+                jjtThis.num  = Integer()
+                |
+                jjtThis.inputParam = InputParameter()
+            )
+        )
     	|
-    	<OFFSET> value = Integer()
-    ) {return value.getValue();}
+    	(
+    	    <OFFSET>
+    	    (
+                jjtThis.num  = Integer()
+                |
+                jjtThis.inputParam = InputParameter()
+            )
+        )
+    ) {return jjtThis;}
 }
 
 
