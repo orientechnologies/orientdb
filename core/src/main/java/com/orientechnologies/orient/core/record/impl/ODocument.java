@@ -1655,7 +1655,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         _fields = _ordered ? new LinkedHashMap<String, ODocumentEntry>() : new HashMap<String, ODocumentEntry>();
       // SET THE FORCED TYPE
       ODocumentEntry entry = getOrCreate(iFieldName);
-      entry.type = iFieldType;
+      if (entry.type != iFieldType)
+        field(iFieldName, field(iFieldName), iFieldType);
     } else if (_fields != null) {
       // REMOVE THE FIELD TYPE
       ODocumentEntry entry = _fields.get(iFieldName);

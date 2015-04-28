@@ -471,5 +471,8 @@ public class OClassImplTest {
         throw (AssertionError) e.getCause();
       }
     }
+
+    executor.shutdown();
+
   }
 }
