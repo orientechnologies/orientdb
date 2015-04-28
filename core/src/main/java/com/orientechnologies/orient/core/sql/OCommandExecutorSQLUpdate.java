@@ -418,8 +418,6 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         }
       }
 
-      record.clear();
-
       record.merge(restrictedFields, false, false);
       record.merge(content, true, false);
       updated = true;
