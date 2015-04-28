@@ -191,7 +191,8 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
 
     $scope.values = Database.getMetadata()['config']['values'];
     $scope.properties = Database.getMetadata()['config']['properties'];
-
+    console.log(Database.getMetadata());
+    console.log($scope.properties);
     $scope.links = {
         useLightweightEdges: Database.getOWikiFor("Tutorial-Working-with-graphs.html#lightweight-edges"),
         clusterSelection: Database.getOWikiFor("SQL-Alter-Database.html"),
@@ -201,20 +202,29 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
 
 
     var found = false;
+    var foundStrictSql = false;
     $scope.properties.forEach(function (val) {
         if (val.name == 'useLightweightEdges') {
             found = true;
         }
+        if (val.name == 'strictSql') {
+            foundStrictSql = true;
+        }
+        console.log(val.name);
     });
     if (!found) {
         $scope.properties.push({name: 'useLightweightEdges', value: 'false' });
     }
+    if (!foundStrictSql) {
+        $scope.properties.push({name: 'strictSql', value: 'false' });
+    }
 
-    $scope.canChange = ["clusterSelection", "minimumClusters", "localeCountry", "useLightweightEdges", "conflictStrategy"];
-    $scope.changeTemplate = { clusterSelection: "views/database/config/clusterSelection.html", useLightweightEdges: "views/database/config/boolenaCustom.html", conflictStrategy: "views/database/config/conflictStrategy.html"}
+
+    $scope.canChange = ["clusterSelection", "minimumClusters", "localeCountry", "useLightweightEdges","strictSql", "conflictStrategy"];
+    $scope.changeTemplate = { clusterSelection: "views/database/config/clusterSelection.html", strictSql: "views/database/config/boolenaCustom.html",useLightweightEdges: "views/database/config/boolenaCustom.html", conflictStrategy: "views/database/config/conflictStrategy.html"}
     $scope.dirty = [];
     $scope.customDirty = [];
-    $scope.clusterStrategies = ['round-robin', "default", "balanced","local"];
+    $scope.clusterStrategies = ['round-robin', "default", "balanced", "local"];
 
     $scope.conflictStrategies = ['version', 'content', 'automerge']
     $scope.isDisabledVal = function (val) {
