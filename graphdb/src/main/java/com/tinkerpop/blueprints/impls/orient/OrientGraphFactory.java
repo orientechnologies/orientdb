@@ -1,11 +1,11 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OrientGraphFactory extends OrientConfigurableGraph {
   protected final String                      url;
@@ -66,6 +66,8 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * @return transactional graph
    */
   public OrientGraph getTx() {
+    System.err.println("USE LOG" + settings.isUseLog());
+
     final OrientGraph g;
     if (pool == null) {
       g = new OrientGraph(getDatabase(), user, password, settings);
@@ -198,9 +200,11 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
 
       g.checkForGraphSchema(db);
 
-      if (txActive)
+      if (txActive) {
         // REOPEN IT AGAIN
         db.begin();
+        db.getTransaction().setUsingLog( settings.isUseLog() );
+      }
 
     }
 
