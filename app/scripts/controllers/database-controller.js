@@ -442,7 +442,6 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
 
         $scope.cm.setValue($scope.queryText);
         $scope.cm.setCursor($scope.cm.lineCount());
-        console.log($scope.config);
 
     }
 
@@ -453,7 +452,6 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
 
         $scope.cm.setValue($scope.queryText);
         $scope.cm.setCursor($scope.cm.lineCount());
-       // $scope.config.hideSettings = false;
 
     }
 
