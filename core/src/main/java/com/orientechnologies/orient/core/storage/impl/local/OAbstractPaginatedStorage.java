@@ -124,7 +124,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode) {
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
-    lockManager = new OLockManager<ORID, OAbstractPaginatedStorage>(true, -1);
+    lockManager = new OLockManager<ORID, OAbstractPaginatedStorage>(true, -1) {
+      @Override
+      protected ORID getImmutableResourceId(ORID iResourceId) {
+        return new ORecordId(iResourceId);
+      }
+    };
 
     PROFILER_CREATE_RECORD = "db." + this.name + ".createRecord";
     PROFILER_READ_RECORD = "db." + this.name + ".readRecord";
@@ -2048,37 +2053,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private void checkClusterSegmentIndexRange(final int iClusterId) {
     if (iClusterId < 0 || iClusterId > clusters.size() - 1)
       throw new IllegalArgumentException("Cluster segment #" + iClusterId + " does not exist in database '" + name + "'");
-  }
-
-  private List<OLogSequenceNumber> readOperationUnit(OLogSequenceNumber startLSN, OOperationUnitId unitId) throws IOException {
-    final OLogSequenceNumber beginSequence = writeAheadLog.begin();
-
-    if (startLSN == null)
-      startLSN = beginSequence;
-
-    if (startLSN.compareTo(beginSequence) < 0)
-      startLSN = beginSequence;
-
-    List<OLogSequenceNumber> operationUnit = new ArrayList<OLogSequenceNumber>();
-
-    OLogSequenceNumber lsn = startLSN;
-    while (lsn != null) {
-      OWALRecord record = writeAheadLog.read(lsn);
-      if (!(record instanceof OOperationUnitRecord)) {
-        lsn = writeAheadLog.next(lsn);
-        continue;
-      }
-
-      OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) record;
-      if (operationUnitRecord.getOperationUnitId().equals(unitId)) {
-        operationUnit.add(lsn);
-        if (record instanceof OAtomicUnitEndRecord)
-          break;
-      }
-      lsn = writeAheadLog.next(lsn);
-    }
-
-    return operationUnit;
   }
 
   private boolean restoreFromWAL() throws IOException {
