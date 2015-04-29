@@ -418,8 +418,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     if (iURL.endsWith("/"))
       iURL = iURL.substring(0, iURL.length() - 1);
 
-	 // Commented out for issue http://www.prjhub.com/#/issues/3948
-    // iURL = iURL.replace("//", "/");
+    iURL = iURL.replace("//", "/");
 
     // SEARCH FOR ENGINE
     int pos = iURL.indexOf(':');
