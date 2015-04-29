@@ -81,7 +81,8 @@
     <div class="query-info">
         <div class="row vertical-align">
             <div class="col-md-9">
-                {{item.notification}}
+                {{item.notification}}. Limit: {{limit}} <a class="btn btn-trasparent btn-sm queryConfigStyle"
+                                                           href="javascript:void(0)" ng-click="changeLimit()" onclick="document.getElementById('configQueryButton').click()"> (change it)</a>
 
             </div>
             <div class="col-md-3">
