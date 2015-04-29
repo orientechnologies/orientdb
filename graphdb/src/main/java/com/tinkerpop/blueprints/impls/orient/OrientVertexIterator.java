@@ -20,8 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Iterator;
-
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
@@ -30,6 +28,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
+
+import java.util.Iterator;
 
 public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
   private final OrientVertex             vertex;
@@ -45,7 +45,7 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
   }
 
   @Override
-  public Vertex createWrapper(final Object iObject) {
+  public Vertex createGraphElement(final Object iObject) {
     if (iObject instanceof OrientVertex)
       return (OrientVertex) iObject;
 
@@ -64,6 +64,31 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
       // EDGE
       if (vertex.settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
         v = new OrientVertex(vertex.getGraph(), OrientEdge.getConnection(value, connection.getKey().opposite()));
+      else
+        v = null;
+    } else
+      throw new IllegalStateException("Invalid content found between connections:" + value);
+
+    return v;
+  }
+
+  @Override
+  public OIdentifiable getGraphElementRecord(final Object iObject) {
+    final ORecord rec = ((OIdentifiable) iObject).getRecord();
+
+    if (rec == null || !(rec instanceof ODocument))
+      return null;
+
+    final ODocument value = (ODocument) rec;
+
+    final OIdentifiable v;
+    if (ODocumentInternal.getImmutableSchemaClass(value).isSubClassOf(OrientVertexType.CLASS_NAME)) {
+      // DIRECT VERTEX
+      v = value;
+    } else if (ODocumentInternal.getImmutableSchemaClass(value).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+      // EDGE
+      if (vertex.settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
+        v = OrientEdge.getConnection(value, connection.getKey().opposite());
       else
         v = null;
     } else

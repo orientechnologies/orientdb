@@ -269,10 +269,6 @@ public class OSQLEngine {
       return null;
 
     if (OMultiValue.isMultiValue(iCurrent) || iCurrent instanceof Iterator) {
-      if (iCurrent instanceof OAutoConvertToRecord)
-        // FORCE AUTO CONVERTING TO RECORD TO TRANSFORM TO VERTEX LIGHT-WEIGHT
-        ((OAutoConvertToRecord) iCurrent).setAutoConvertToRecord(true);
-
       final OMultiCollectionIterator<Object> result = new OMultiCollectionIterator<Object>();
       for (Object o : OMultiValue.getMultiValueIterable(iCurrent)) {
         if (iContext != null && !iContext.checkTimeout())

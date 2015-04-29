@@ -51,7 +51,11 @@ public abstract class OLazyWrapperIterator<T> implements OAutoConvertToRecord, I
 
   public abstract boolean filter(T iObject);
 
-  public abstract T createWrapper(Object iObject);
+  public abstract T createGraphElement(Object iObject);
+
+  public OIdentifiable getGraphElementRecord(final Object iObject) {
+    return (OIdentifiable) iObject;
+  }
 
   @Override
   public Iterator<T> iterator() {
@@ -82,7 +86,7 @@ public abstract class OLazyWrapperIterator<T> implements OAutoConvertToRecord, I
     if (autoConvertToRecord) {
       // ACT ON WRAPPER
       while (nextElement == null && iterator.hasNext()) {
-        nextElement = createWrapper(iterator.next());
+        nextElement = createGraphElement(iterator.next());
         if (nextElement != null && !filter(nextElement))
           nextElement = null;
       }
@@ -92,7 +96,7 @@ public abstract class OLazyWrapperIterator<T> implements OAutoConvertToRecord, I
 
     // ACT ON RECORDS (FASTER & LIGHTER)
     while (nextRecord == null && iterator.hasNext()) {
-      nextRecord = (OIdentifiable) iterator.next();
+      nextRecord = getGraphElementRecord(iterator.next());
     }
 
     return nextRecord != null;

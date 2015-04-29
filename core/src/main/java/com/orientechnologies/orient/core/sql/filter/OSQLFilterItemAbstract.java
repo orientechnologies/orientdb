@@ -24,7 +24,6 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -138,10 +137,6 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
         // DON'T PASS THE CURRENT RECORD TO FORCE EVALUATING TEMPORARY RESULT
         method.setParameters(op.getValue(), true);
-
-        if (ioResult instanceof OAutoConvertToRecord)
-          // FORCE AVOIDING TO CONVERT IN RECORD
-          ((OAutoConvertToRecord) ioResult).setAutoConvertToRecord(true);
 
         ioResult = method.execute(ioResult, iRecord, ioResult, iContext);
       }
