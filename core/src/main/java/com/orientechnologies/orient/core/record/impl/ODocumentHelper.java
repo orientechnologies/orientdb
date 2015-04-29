@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -221,6 +220,10 @@ public class ODocumentHelper {
     final int fieldNameLength = iFieldName.length();
     if (fieldNameLength == 0)
       return (RET) value;
+
+    if (value instanceof OAutoConvertToRecord)
+      // FORCE CONVERSION BEFORE EVALUATION
+      ((OAutoConvertToRecord) value).setAutoConvertToRecord(true);
 
     OIdentifiable currentRecord = value instanceof OIdentifiable ? (OIdentifiable) value : null;
 
@@ -540,7 +543,7 @@ public class ODocumentHelper {
 
   protected static Object getIndexPart(final OCommandContext iContext, final String indexPart) {
     Object index = indexPart;
-    if (indexPart.indexOf(',') == -1 && ( indexPart.charAt(0) == '"' || indexPart.charAt(0) == '\'') )
+    if (indexPart.indexOf(',') == -1 && (indexPart.charAt(0) == '"' || indexPart.charAt(0) == '\''))
       index = OStringSerializerHelper.getStringContent(indexPart);
     else if (indexPart.charAt(0) == '$') {
       final Object ctxValue = iContext.getVariable(indexPart);

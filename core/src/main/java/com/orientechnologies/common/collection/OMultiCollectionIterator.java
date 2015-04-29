@@ -112,7 +112,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
       if (sourcesIterator != null)
         throw new IllegalStateException("MultiCollection iterator is in use and new collections cannot be added");
 
-      if (!autoConvert2Record && iValue instanceof OAutoConvertToRecord)
+      if (iValue instanceof OAutoConvertToRecord)
         ((OAutoConvertToRecord) iValue).setAutoConvertToRecord(autoConvert2Record);
 
       sources.add(iValue);
@@ -176,7 +176,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
           if (next instanceof Iterable<?>)
             next = ((Iterable) next).iterator();
 
-          if (!autoConvert2Record && next instanceof OAutoConvertToRecord)
+          if (next instanceof OAutoConvertToRecord)
             ((OAutoConvertToRecord) next).setAutoConvertToRecord(autoConvert2Record);
 
           if (next instanceof Iterator<?>) {

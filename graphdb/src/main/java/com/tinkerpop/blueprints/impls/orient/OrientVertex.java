@@ -25,6 +25,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
+import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
@@ -532,7 +533,12 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    *          Predicate to evaluate. Use OSQLPredicate to use SQL
    */
   public Object execute(final OCommandPredicate iPredicate) {
-    return iPredicate.evaluate(rawElement.getRecord(), null, null);
+    final Object result = iPredicate.evaluate(rawElement.getRecord(), null, null);
+
+    if (result instanceof OAutoConvertToRecord)
+      ((OAutoConvertToRecord) result).setAutoConvertToRecord(true);
+
+    return result;
   }
 
   /**

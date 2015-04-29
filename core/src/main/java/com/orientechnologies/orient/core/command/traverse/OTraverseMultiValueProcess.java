@@ -19,10 +19,10 @@
  */
 package com.orientechnologies.orient.core.command.traverse;
 
-import com.orientechnologies.common.collection.OMultiCollectionIterator;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
 import java.util.Iterator;
+
+import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 public class OTraverseMultiValueProcess extends OTraverseAbstractProcess<Iterator<Object>> {
   private final OTraversePath parentPath;
@@ -33,9 +33,9 @@ public class OTraverseMultiValueProcess extends OTraverseAbstractProcess<Iterato
     super(iCommand, iTarget);
     this.parentPath = parentPath;
 
-    if (target instanceof OMultiCollectionIterator)
+    if (target instanceof OAutoConvertToRecord)
       // FORCE AVOIDING TO CONVERT IN RECORD
-      ((OMultiCollectionIterator) target).setAutoConvertToRecord(false);
+      ((OAutoConvertToRecord) target).setAutoConvertToRecord(false);
   }
 
   public OIdentifiable process() {
@@ -52,7 +52,7 @@ public class OTraverseMultiValueProcess extends OTraverseAbstractProcess<Iterato
       }
     }
 
-    return drop();
+    return pop();
   }
 
   @Override

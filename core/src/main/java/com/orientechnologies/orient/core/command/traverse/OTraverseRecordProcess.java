@@ -45,7 +45,7 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
 
   public OIdentifiable process() {
     if (target == null)
-      return drop();
+      return pop();
 
     final int depth = path.getDepth();
 
@@ -56,7 +56,7 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
     if (command.getPredicate() != null) {
       final Object conditionResult = command.getPredicate().evaluate(target, null, command.getContext());
       if (conditionResult != Boolean.TRUE)
-        return drop();
+        return pop();
     }
 
     // UPDATE ALL TRAVERSED RECORD TO AVOID RECURSION
@@ -65,14 +65,12 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
     final int maxDepth = command.getMaxDepth();
     if (maxDepth > -1 && depth == maxDepth) {
       // SKIP IT
-      command.getContext().pop();
+      pop();
     } else {
       final ORecord targetRec = target.getRecord();
-      if (!(targetRec instanceof ODocument)) {
+      if (!(targetRec instanceof ODocument))
         // SKIP IT
-        command.getContext().pop();
-        return null;
-      }
+        return pop();
 
       final ODocument targetDoc = (ODocument) targetRec;
 
@@ -168,5 +166,16 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
   @Override
   public OTraversePath getPath() {
     return path;
+  }
+
+  public OIdentifiable drop() {
+    command.getContext().pop(null);
+    return null;
+  }
+
+  @Override
+  public OIdentifiable pop() {
+    command.getContext().pop(target);
+    return null;
   }
 }

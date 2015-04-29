@@ -64,7 +64,7 @@ public class OTraverseRecordSetProcess extends OTraverseAbstractProcess<Iterator
       }
     }
 
-    return drop();
+    return pop();
   }
 
   @Override
