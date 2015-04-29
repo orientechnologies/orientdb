@@ -356,6 +356,66 @@ public class OCommandExecutorSQLSelectTest {
     }
   }
 
+  @Test
+  public void testUnwindSkip() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll skip 1")).execute();
+
+    assertEquals(qResult.size(), 3);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+    }
+  }
+
+  @Test
+  public void testUnwindLimit() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll limit 1")).execute();
+
+    assertEquals(qResult.size(), 1);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+    }
+  }
+
+  @Test
+  public void testUnwindLimit3() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll limit 3")).execute();
+
+    assertEquals(qResult.size(), 3);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+    }
+  }
+
+  @Test
+  public void testUnwindSkipAndLimit() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll skip 1 limit 1")).execute();
+
+    assertEquals(qResult.size(), 1);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+    }
+  }
+
+  @Test
+  public void testUnwindSkipAndLimit2() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll skip 1 limit 2")).execute();
+
+    assertEquals(qResult.size(), 2);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+    }
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

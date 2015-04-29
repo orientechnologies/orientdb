@@ -184,6 +184,8 @@ TOKEN:
 	|
 	< UNWIND: ( "u" | "U" ) ( "n" | "N" ) ( "w" | "W" ) ( "i" | "I" ) ( "n" | "N" ) ( "d" | "D" ) >
 	|
+	< MAXDEPTH: ( "m" | "M" ) ( "a" | "A" ) ( "x" | "X" ) ( "d" | "D" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) >
+	|
 	< THIS: "@this" >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> >
@@ -596,6 +598,7 @@ OTraverseStatement TraverseStatement():
     	]
     	<FROM>
     	jjtThis.target = FromClause()
+    	[ <MAXDEPTH> jjtThis.maxDepth = Integer() ]
     	[ <WHILE> jjtThis.whereClause = WhereClause() ]
         [ jjtThis.limit = Limit() ]
         [ <STRATEGY>

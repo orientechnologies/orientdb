@@ -1,22 +1,20 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import java.io.IOException;
-import java.util.Map;
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * Created by emrul on 14/09/14.
@@ -139,7 +137,14 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
     if (iRequest.authentication == null || iRequest.authentication.equalsIgnoreCase("basic")) {
       header = "WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + "\"";
     }
-    iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-        "401 Unauthorized.", header);
+
+    if (isJsonResponse(iResponse)) {
+      sendJsonError(iResponse, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+          "401 Unauthorized.", header);
+    } else {
+      iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+          "401 Unauthorized.", header);
+    }
+
   }
 }

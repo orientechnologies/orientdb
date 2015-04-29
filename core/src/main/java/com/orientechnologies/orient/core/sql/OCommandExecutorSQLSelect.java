@@ -549,7 +549,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       parallelLock.lock();
 
     try {
-      if ((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && skip > 0) {
+      if ((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && skip > 0 && this.unwindFields == null) {
         lastRecord = null;
         skip--;
         return true;
@@ -635,12 +635,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     List<OIdentifiable> allResults = new ArrayList<OIdentifiable>();
     if (unwindFields != null) {
-      allResults.addAll(unwind(iRecord, this.unwindFields));
+      Collection<OIdentifiable> partial = unwind(iRecord, this.unwindFields);
+
+      for (OIdentifiable item : partial) {
+        allResults.add(item);
+      }
     } else {
       allResults.add(iRecord);
     }
     boolean result = true;
-    if ((fullySortedByIndex || orderedFields.isEmpty()) && expandTarget == null) {
+    if ((fullySortedByIndex || orderedFields.isEmpty()) && expandTarget == null && unwindFields == null) {
       // SEND THE RESULT INLINE
       if (request.getResultListener() != null)
         for (OIdentifiable iRes : allResults) {

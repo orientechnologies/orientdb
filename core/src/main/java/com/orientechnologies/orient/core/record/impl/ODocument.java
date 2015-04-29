@@ -409,7 +409,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     if (p.isReadonly() && iRecord instanceof ODocument && !iRecord.getRecordVersion().isTombstone()) {
-      if ((entry.changed || entry.timeLine != null) && !entry.created) {
+      if (entry != null && (entry.changed || entry.timeLine != null) && !entry.created) {
         // check if the field is actually changed by equal.
         // this is due to a limitation in the merge algorithm used server side marking all non simple fields as dirty
         Object orgVal = entry.original;
@@ -1024,7 +1024,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
         try {
           if (iPropertyValue.equals(oldValue)) {
-            if (iFieldType == null || iFieldType.length == 0 || iFieldType[0] == oldType) {
+            if (fieldType == oldType) {
               if (!(iPropertyValue instanceof ORecordElement))
                 // SAME BUT NOT TRACKABLE: SET THE RECORD AS DIRTY TO BE SURE IT'S SAVED
                 setDirty();
@@ -1655,7 +1655,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         _fields = _ordered ? new LinkedHashMap<String, ODocumentEntry>() : new HashMap<String, ODocumentEntry>();
       // SET THE FORCED TYPE
       ODocumentEntry entry = getOrCreate(iFieldName);
-      entry.type = iFieldType;
+      if (entry.type != iFieldType)
+        field(iFieldName, field(iFieldName), iFieldType);
     } else if (_fields != null) {
       // REMOVE THE FIELD TYPE
       ODocumentEntry entry = _fields.get(iFieldName);
