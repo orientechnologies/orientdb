@@ -71,6 +71,7 @@
                 </commands>
                 <parameters>
                     <parameter value="utf-8" name="network.http.charset"/>
+                    <parameter value="true" name="network.http.jsonResponseError"/>
                 </parameters>
             </listener>
         </listeners>

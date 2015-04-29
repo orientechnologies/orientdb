@@ -58,6 +58,12 @@ public class LuceneFacetTest extends BaseLuceneTest {
 
     databaseDocumentTx.save(doc);
 
+    doc = new ODocument("Item");
+    doc.field("name", "HP");
+    doc.field("category", "Electronic/Computer");
+
+    databaseDocumentTx.save(doc);
+
     List<ODocument> result = databaseDocumentTx.command(
         new OSQLSynchQuery<ODocument>("select *,$facet from Item where name lucene '(name:P*)' limit 1 ")).execute();
 
@@ -80,6 +86,37 @@ public class LuceneFacetTest extends BaseLuceneTest {
 
     Assert.assertEquals(labelValues.field("value"), 2);
     Assert.assertEquals(labelValues.field("label"), "Electronic");
+
+    result = databaseDocumentTx.command(
+        new OSQLSynchQuery<ODocument>(
+            "select *,$facet from Item where name lucene { 'q' : 'H*', 'drillDown' : 'category:Electronic' }  limit 1 ")).execute();
+
+    Assert.assertEquals(result.size(), 1);
+
+    facets = result.get(0).field("$facet");
+
+    Assert.assertEquals(facets.size(), 1);
+
+    facet = facets.get(0);
+
+    Assert.assertEquals(facet.field("childCount"), 2);
+    Assert.assertEquals(facet.field("value"), 2);
+    Assert.assertEquals(facet.field("dim"), "category");
+
+    labelsValues = facet.field("labelsValue");
+
+    Assert.assertEquals(labelsValues.size(), 2);
+
+    labelValues = labelsValues.get(0);
+
+    Assert.assertEquals(labelValues.field("value"), 1);
+    Assert.assertEquals(labelValues.field("label"), "HiFi");
+
+    labelValues = labelsValues.get(1);
+
+    Assert.assertEquals(labelValues.field("value"), 1);
+    Assert.assertEquals(labelValues.field("label"), "Computer");
+
   }
 
   @BeforeClass

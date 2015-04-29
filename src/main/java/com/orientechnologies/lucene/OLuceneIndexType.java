@@ -55,7 +55,7 @@ public class OLuceneIndexType {
     } else if (value instanceof Date) {
       field = new LongField(fieldName, ((Date) value).getTime(), store);
 
-    } else if (value instanceof String) {
+    } else {
       field = new Field(fieldName, value.toString(), store, analyzed);
 
     }
