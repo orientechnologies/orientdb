@@ -24,6 +24,9 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import org.apache.lucene.search.IndexSearcher;
+
+import java.io.IOException;
 
 public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
 
@@ -196,5 +199,9 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
   public void setRebuilding(boolean rebuilding) {
     lucene.setRebuilding(rebuilding);
+  }
+
+  public IndexSearcher searcher() throws IOException {
+    return lucene.getSearcher();
   }
 }

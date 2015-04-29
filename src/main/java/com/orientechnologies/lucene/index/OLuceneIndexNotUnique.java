@@ -20,7 +20,6 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.lucene.LuceneTxOperations;
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.OLuceneIndexEngine;
-import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexMultiValues;
@@ -198,6 +197,6 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
 
   @Override
   public IndexSearcher searcher() throws IOException {
-    return ((OLuceneIndexManagerAbstract) indexEngine).getSearcher();
+    return ((OLuceneIndexEngine) indexEngine).searcher();
   }
 }

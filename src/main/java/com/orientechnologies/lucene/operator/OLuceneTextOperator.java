@@ -96,4 +96,6 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     }
 
   }
+
+
 }
