@@ -88,11 +88,8 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
       Iterator<Object> iter = res.iterator();
       while(iter.hasNext()){
         Object item = iter.next();
-//        System.out.println("adding result "+item);
         result.add((T)item);
       }
-//      for (Object r : res)
-//        result.add((T) r);
     }
 
     ((OResultSet) result).setCompleted();
