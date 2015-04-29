@@ -2,6 +2,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
@@ -47,6 +48,9 @@ public abstract class BaseTest<T extends ODatabase> {
         dropDb = true;
       }
     }
+
+    if( storageType.equals("memory"))
+      new ODatabaseDocumentTx(url).create().close();
 
     this.url = url;
   }
