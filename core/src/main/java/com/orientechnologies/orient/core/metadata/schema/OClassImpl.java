@@ -1814,8 +1814,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       @Override
       public boolean result(Object iRecord) {
         final ODocument record = ((OIdentifiable) iRecord).getRecord();
-        record.setFieldType(propertyName, type);
-        record.field(propertyName, OType.convert(record.field(propertyName), type.getDefaultJavaType()), type);
+        record.field(propertyName, record.field(propertyName), type);
         database.save(record);
         return true;
       }

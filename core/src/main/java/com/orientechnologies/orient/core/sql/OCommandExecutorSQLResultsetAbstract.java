@@ -499,7 +499,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       if (tempResult instanceof List<?>) {
         final List<OIdentifiable> t = (List<OIdentifiable>) tempResult;
         final int start = Math.min(skip, t.size());
-        final int tot = Math.min(limit + start, t.size());
+
+        int tot = t.size();
+        if (limit > -1) {
+          tot = Math.min(limit + start, tot);
+        }
         for (int i = start; i < tot; ++i)
           newList.add(t.get(i));
 

@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -118,9 +119,28 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       throw new OCommandExecutionException("Cannot alter class '" + className
           + "' because is an Edge class and could break vertices. Use UNSAFE if you want to force it");
 
+    if (value != null && attribute == ATTRIBUTES.SUPERCLASS) {
+      checkClassExists(database, className, value);
+    }
+    if (value != null && attribute == ATTRIBUTES.SUPERCLASSES) {
+      List<String> classes = Arrays.asList(value.split(",\\s*"));
+      for (String cName : classes) {
+        checkClassExists(database, className, cName);
+      }
+    }
     cls.set(attribute, value);
 
     return null;
+  }
+
+  protected void checkClassExists(ODatabaseDocument database, String targetClass, String superClass) {
+    if (superClass.startsWith("+") || superClass.startsWith("-")) {
+      superClass = superClass.substring(1);
+    }
+    if (database.getMetadata().getSchema().getClass(superClass) == null) {
+      throw new OCommandExecutionException("Cannot alter superClass of '" + targetClass + "' because  " + superClass
+          + " class not found");
+    }
   }
 
   public String getSyntax() {
