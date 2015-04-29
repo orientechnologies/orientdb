@@ -81,7 +81,13 @@
     <div class="query-info">
         <div class="row vertical-align">
             <div class="col-md-9">
-                {{item.notification}}
+                {{item.notification}} <a class="btn btn-trasparent btn-sm"
+                                         data-placement="bottom"
+                                         data-title="Query configuration"
+                                         data-template="views/database/browseConfig.html"
+                                         bs-popover
+                                         data-toggle="dropdown"
+                                         href="javascript:void(0)">(change it)</a>
 
             </div>
             <div class="col-md-3">
