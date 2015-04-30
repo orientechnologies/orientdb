@@ -19,6 +19,11 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.traverse.OTraverseRecordProcess;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -26,11 +31,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Returns a traversed element from the stack. Use it with SQL traverse only.
@@ -87,9 +87,10 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
       for (Iterator it = stack.iterator(); it.hasNext();) {
         final Object o = it.next();
         if (o instanceof OTraverseRecordProcess) {
-          final ODocument record = ((OTraverseRecordProcess) o).getTarget();
+          final OIdentifiable record = ((OTraverseRecordProcess) o).getTarget();
 
-          if (iClassName == null || ODocumentInternal.getImmutableSchemaClass(record).isSubClassOf(iClassName)) {
+          if (iClassName == null
+              || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord()).isSubClassOf(iClassName)) {
             if (i <= beginIndex) {
               if (items == 1)
                 return record;
@@ -108,9 +109,10 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
       for (Iterator it = stack.descendingIterator(); it.hasNext();) {
         final Object o = it.next();
         if (o instanceof OTraverseRecordProcess) {
-          final ODocument record = ((OTraverseRecordProcess) o).getTarget();
+          final OIdentifiable record = ((OTraverseRecordProcess) o).getTarget();
 
-          if (iClassName == null || ODocumentInternal.getImmutableSchemaClass(record).isSubClassOf(iClassName)) {
+          if (iClassName == null
+              || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord()).isSubClassOf(iClassName)) {
             if (i >= beginIndex) {
               if (items == 1)
                 return record;

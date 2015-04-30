@@ -35,7 +35,6 @@ import com.tinkerpop.blueprints.TransactionalGraph;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public abstract class OrientTransactionalGraph extends OrientBaseGraph implements TransactionalGraph {
-  protected boolean useLog = true;
 
   /**
    * Constructs a new object using an existent database instance.
@@ -119,13 +118,13 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public boolean isUseLog() {
     makeActive();
 
-    return useLog;
+    return settings.isUseLog();
   }
 
   public OrientTransactionalGraph setUseLog(final boolean useLog) {
     makeActive();
 
-    this.useLog = useLog;
+    settings.setUseLog( useLog );
     return this;
   }
 
@@ -184,7 +183,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     final boolean txBegun = database.getTransaction().isActive();
     if (!txBegun) {
       database.begin();
-      database.getTransaction().setUsingLog(useLog);
+      database.getTransaction().setUsingLog(settings.isUseLog());
     }
   }
 

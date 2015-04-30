@@ -17,10 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.List;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -30,29 +27,28 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 @Test
 @SuppressWarnings("unused")
 public class TraverseTest extends DocumentDBBaseTest {
-  private int            totalElements = 0;
-  private ODocument      tomCruise;
-  private ODocument      megRyan;
-  private ODocument      nicoleKidman;
+  private int       totalElements = 0;
+  private ODocument tomCruise;
+  private ODocument megRyan;
+  private ODocument nicoleKidman;
 
-	@Parameters(value = "url")
-	public TraverseTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public TraverseTest(@Optional String url) {
+    super(url);
+  }
 
   @BeforeClass
   public void init() {
-		OrientGraph graph = new OrientGraph(database);
-		graph.setUseLightweightEdges(false);
-
+    OrientGraph graph = new OrientGraph(database);
+    graph.setUseLightweightEdges(false);
 
     graph.createVertexType("Movie");
     graph.createVertexType("Actor");
@@ -68,10 +64,10 @@ public class TraverseTest extends DocumentDBBaseTest {
     totalElements++;
     ODocument missionImpossible = graph.addVertex("class:Movie", "name", "Mission: Impossible", "year", 1996).getRecord();
     totalElements++;
-    ODocument youHaveGotMail = graph.addVertex("class:Movie", "name", "You've Got Mail","year", 1998).getRecord();
+    ODocument youHaveGotMail = graph.addVertex("class:Movie", "name", "You've Got Mail", "year", 1998).getRecord();
     totalElements++;
 
-    graph.addEdge(null,graph.getVertex(tomCruise), graph.getVertex(topGun), "actorIn");
+    graph.addEdge(null, graph.getVertex(tomCruise), graph.getVertex(topGun), "actorIn");
     totalElements++;
     graph.addEdge(null, graph.getVertex(megRyan), graph.getVertex(topGun), "actorIn");
     totalElements++;
@@ -80,33 +76,32 @@ public class TraverseTest extends DocumentDBBaseTest {
     graph.addEdge(null, graph.getVertex(megRyan), graph.getVertex(youHaveGotMail), "actorIn");
     totalElements++;
 
-    graph.addEdge(null, graph.getVertex(tomCruise), graph.getVertex(megRyan),"friend");
+    graph.addEdge(null, graph.getVertex(tomCruise), graph.getVertex(megRyan), "friend");
     totalElements++;
     graph.addEdge(null, graph.getVertex(tomCruise), graph.getVertex(nicoleKidman), "married").setProperty("year", 1990);
     totalElements++;
 
-		graph.commit();
+    graph.commit();
   }
 
   public void traverseSQLAllFromActorNoWhere() {
-		List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse * from " + tomCruise.getIdentity()))
+    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse * from " + tomCruise.getIdentity()))
         .execute();
     Assert.assertEquals(result1.size(), totalElements);
   }
 
   public void traverseAPIAllFromActorNoWhere() {
-		List<OIdentifiable> result1 = new OTraverse().fields("*").target(tomCruise.getIdentity()).execute();
+    List<OIdentifiable> result1 = new OTraverse().fields("*").target(tomCruise.getIdentity()).execute();
     Assert.assertEquals(result1.size(), totalElements);
   }
 
   @Test
   public void traverseSQLOutFromActor1Depth() {
-		List<ODocument> result1 = database.command(
+    List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("traverse out_ from " + tomCruise.getIdentity() + " while $depth <= 1")).execute();
 
     Assert.assertTrue(result1.size() != 0);
   }
-
 
   @Test
   public void traverseSQLMoviesOnly() {
@@ -120,9 +115,9 @@ public class TraverseTest extends DocumentDBBaseTest {
 
   @Test
   public void traverseSQLPerClassFields() {
-		List<ODocument> result1 = database.command(
-        new OSQLSynchQuery<ODocument>("select from ( traverse out() from " + tomCruise.getIdentity()
-            + ") where @class = 'Movie'")).execute();
+    List<ODocument> result1 = database.command(
+        new OSQLSynchQuery<ODocument>("select from ( traverse out() from " + tomCruise.getIdentity() + ") where @class = 'Movie'"))
+        .execute();
     Assert.assertTrue(result1.size() > 0);
     for (ODocument d : result1) {
       Assert.assertEquals(d.getClassName(), "Movie");
@@ -131,7 +126,7 @@ public class TraverseTest extends DocumentDBBaseTest {
 
   @Test
   public void traverseSQLMoviesOnlyDepth() {
-		List<ODocument> result1 = database.command(
+    List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("select from ( traverse * from " + tomCruise.getIdentity()
             + " while $depth <= 1 ) where @class = 'Movie'")).execute();
     Assert.assertTrue(result1.isEmpty());
@@ -156,13 +151,13 @@ public class TraverseTest extends DocumentDBBaseTest {
 
   @Test
   public void traverseSelect() {
-		List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse * from ( select from Movie )")).execute();
+    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse * from ( select from Movie )")).execute();
     Assert.assertEquals(result1.size(), totalElements);
   }
 
   @Test
   public void traverseSQLSelectAndTraverseNested() {
-		List<ODocument> result1 = database.command(
+    List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
             + " while $depth <= 2 ) where @class = 'Movie' )")).execute();
     Assert.assertEquals(result1.size(), totalElements);
@@ -170,7 +165,7 @@ public class TraverseTest extends DocumentDBBaseTest {
 
   @Test
   public void traverseAPISelectAndTraverseNested() {
-		List<ODocument> result1 = database.command(
+    List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
             + " while $depth <= 2 ) where @class = 'Movie' )")).execute();
     Assert.assertEquals(result1.size(), totalElements);
@@ -178,7 +173,7 @@ public class TraverseTest extends DocumentDBBaseTest {
 
   @Test
   public void traverseAPISelectAndTraverseNestedDepthFirst() {
-		List<ODocument> result1 = database.command(
+    List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
             + " while $depth <= 2 strategy depth_first ) where @class = 'Movie' )")).execute();
     Assert.assertEquals(result1.size(), totalElements);
@@ -186,7 +181,7 @@ public class TraverseTest extends DocumentDBBaseTest {
 
   @Test
   public void traverseAPISelectAndTraverseNestedBreadthFirst() {
-		List<ODocument> result1 = database.command(
+    List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
             + " while $depth <= 2 strategy breadth_first ) where @class = 'Movie' )")).execute();
     Assert.assertEquals(result1.size(), totalElements);
@@ -206,7 +201,7 @@ public class TraverseTest extends DocumentDBBaseTest {
     int cycles = 0;
     for (OIdentifiable id : new OTraverse().target(database.browseClass("Movie").iterator()).predicate(new OCommandPredicate() {
       @Override
-      public Object evaluate(ORecord iRecord, ODocument iCurrentResult, OCommandContext iContext) {
+      public Object evaluate(OIdentifiable iRecord, ODocument iCurrentResult, OCommandContext iContext) {
         return ((Integer) iContext.getVariable("depth")) <= 2;
       }
     })) {
@@ -217,7 +212,7 @@ public class TraverseTest extends DocumentDBBaseTest {
 
   @Test
   public void traverseAPIandSQLIterating() {
-		int cycles = 0;
+    int cycles = 0;
     for (OIdentifiable id : new OTraverse().target(database.browseClass("Movie").iterator()).predicate(
         new OSQLPredicate("$depth <= 2"))) {
       cycles++;
@@ -227,7 +222,7 @@ public class TraverseTest extends DocumentDBBaseTest {
 
   @Test
   public void traverseSelectIterable() {
-		int cycles = 0;
+    int cycles = 0;
     for (OIdentifiable id : new OSQLSynchQuery<ODocument>("select from ( traverse * from Movie while $depth < 2 )")) {
       cycles++;
     }
@@ -236,7 +231,7 @@ public class TraverseTest extends DocumentDBBaseTest {
 
   @Test
   public void traverseSelectNoInfluence() {
-		List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse any() from Movie while $depth < 2"))
+    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse any() from Movie while $depth < 2"))
         .execute();
     List<ODocument> result2 = database.command(
         new OSQLSynchQuery<ODocument>("select from ( traverse any() from Movie while $depth < 2 )")).execute();

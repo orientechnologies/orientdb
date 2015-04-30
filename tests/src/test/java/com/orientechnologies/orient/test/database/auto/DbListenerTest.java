@@ -194,6 +194,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.registerListener(new DbListener());
     int curOnclose = onClose;
     int curCreate = onCreate;
+    int curDelete = onDelete;
 
     ODatabaseHelper.createDatabase(database, url, getStorageType());
 
@@ -223,7 +224,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
     ODatabaseHelper.deleteDatabase(database, getStorageType());
     Assert.assertEquals(onClose, curOnclose + 2);
-    Assert.assertEquals(onDelete, 1);
+    Assert.assertEquals(onDelete, curDelete + 1);
 
     ODatabaseHelper.createDatabase(database, url, getStorageType());
   }
