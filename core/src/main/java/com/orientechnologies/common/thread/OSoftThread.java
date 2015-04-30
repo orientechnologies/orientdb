@@ -25,6 +25,8 @@ import com.orientechnologies.common.util.OService;
 public abstract class OSoftThread extends Thread implements OService {
   private volatile boolean shutdownFlag;
 
+  private boolean          dumpExceptions = true;
+
   public OSoftThread() {
   }
 
@@ -69,7 +71,8 @@ public abstract class OSoftThread extends Thread implements OService {
         execute();
         afterExecution();
       } catch (Throwable t) {
-        t.printStackTrace();
+        if (dumpExceptions)
+          t.printStackTrace();
       }
     }
 
@@ -78,7 +81,7 @@ public abstract class OSoftThread extends Thread implements OService {
 
   /**
    * Pauses current thread until iTime timeout or a wake up by another thread.
-   * 
+   *
    * @param iTime
    * @return true if timeout has reached, otherwise false. False is the case of wake-up by another thread.
    */
@@ -93,6 +96,14 @@ public abstract class OSoftThread extends Thread implements OService {
       Thread.currentThread().interrupt();
       return false;
     }
+  }
+
+  public boolean isDumpExceptions() {
+    return dumpExceptions;
+  }
+
+  public void setDumpExceptions(final boolean dumpExceptions) {
+    this.dumpExceptions = dumpExceptions;
   }
 
   protected void beforeExecution() throws InterruptedException {
