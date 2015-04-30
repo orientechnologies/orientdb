@@ -20,6 +20,8 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.util.Iterator;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -30,8 +32,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Direction;
-
-import java.util.Iterator;
 
 /**
  * Lazy iterator of edges.
@@ -54,7 +54,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
   }
 
   @Override
-  public OrientEdge createWrapper(final Object iObject) {
+  public OrientEdge createGraphElement(final Object iObject) {
     if (iObject instanceof OrientEdge)
       return (OrientEdge) iObject;
 

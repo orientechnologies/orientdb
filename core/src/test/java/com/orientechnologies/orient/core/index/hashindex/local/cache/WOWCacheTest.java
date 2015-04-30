@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.zip.CRC32;
 
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -34,9 +35,9 @@ public class WOWCacheTest {
   private OLocalPaginatedStorage storageLocal;
   private String                 fileName;
 
-  private ODiskWriteAheadLog writeAheadLog;
+  private ODiskWriteAheadLog     writeAheadLog;
 
-  private OWOWCache              wowCache;
+  private OWriteCache            wowCache;
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -46,7 +47,7 @@ public class WOWCacheTest {
       buildDirectory = ".";
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/WOWCacheTest");
-		storageLocal.create(null);
+    storageLocal.create(null);
 
     fileName = "wowCacheTest.tst";
 
@@ -71,7 +72,7 @@ public class WOWCacheTest {
       writeAheadLog = null;
     }
 
-		storageLocal.delete();
+    storageLocal.delete();
 
     File testFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + fileName);
     if (testFile.exists()) {
@@ -93,14 +94,14 @@ public class WOWCacheTest {
   }
 
   private void initBuffer() throws IOException {
-    wowCache = new OWOWCache(true, pageSize, 10000, writeAheadLog, 10, 100, storageLocal, false);
+    wowCache = new OWOWCache(true, pageSize, 10000, writeAheadLog, 10, 100, storageLocal, false, 1);
   }
 
   public void testLoadStore() throws IOException {
     Random random = new Random();
 
     byte[][] pageData = new byte[200][];
-    long fileId = wowCache.openFile(fileName);
+    long fileId = wowCache.addFile(fileName);
 
     for (int i = 0; i < pageData.length; i++) {
       byte[] data = new byte[8];
@@ -108,7 +109,7 @@ public class WOWCacheTest {
 
       pageData[i] = data;
 
-      final OCachePointer cachePointer = wowCache.load(fileId, i);
+      final OCachePointer cachePointer = wowCache.load(fileId, i, true);
       cachePointer.acquireExclusiveLock();
       cachePointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING, data, 0, data.length);
       cachePointer.releaseExclusiveLock();
@@ -120,7 +121,7 @@ public class WOWCacheTest {
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataOne = pageData[i];
 
-      OCachePointer cachePointer = wowCache.load(fileId, i);
+      OCachePointer cachePointer = wowCache.load(fileId, i, false);
       byte[] dataTwo = cachePointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);
       cachePointer.decrementReferrer();
 
@@ -137,7 +138,7 @@ public class WOWCacheTest {
 
   public void testDataUpdate() throws Exception {
     final NavigableMap<Long, byte[]> pageIndexDataMap = new TreeMap<Long, byte[]>();
-    long fileId = wowCache.openFile(fileName);
+    long fileId = wowCache.addFile(fileName);
 
     Random random = new Random();
 
@@ -149,7 +150,7 @@ public class WOWCacheTest {
 
       pageIndexDataMap.put(pageIndex, data);
 
-      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex);
+      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, true);
       cachePointer.acquireExclusiveLock();
       cachePointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING, data, 0, data.length);
       cachePointer.releaseExclusiveLock();
@@ -162,7 +163,7 @@ public class WOWCacheTest {
       long pageIndex = entry.getKey();
       byte[] dataOne = entry.getValue();
 
-      OCachePointer cachePointer = wowCache.load(fileId, pageIndex);
+      OCachePointer cachePointer = wowCache.load(fileId, pageIndex, false);
       byte[] dataTwo = cachePointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);
 
       cachePointer.decrementReferrer();
@@ -180,7 +181,7 @@ public class WOWCacheTest {
       random.nextBytes(data);
       pageIndexDataMap.put(pageIndex, data);
 
-      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex);
+      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, true);
 
       cachePointer.acquireExclusiveLock();
       cachePointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING, data, 0, data.length);
@@ -193,7 +194,7 @@ public class WOWCacheTest {
     for (Map.Entry<Long, byte[]> entry : pageIndexDataMap.entrySet()) {
       long pageIndex = entry.getKey();
       byte[] dataOne = entry.getValue();
-      OCachePointer cachePointer = wowCache.load(fileId, pageIndex);
+      OCachePointer cachePointer = wowCache.load(fileId, pageIndex, false);
       byte[] dataTwo = cachePointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);
       cachePointer.decrementReferrer();
 
@@ -212,7 +213,7 @@ public class WOWCacheTest {
     Random random = new Random();
 
     byte[][] pageData = new byte[200][];
-    long fileId = wowCache.openFile(fileName);
+    long fileId = wowCache.addFile(fileName);
 
     for (int i = 0; i < pageData.length; i++) {
       byte[] data = new byte[8];
@@ -220,7 +221,7 @@ public class WOWCacheTest {
 
       pageData[i] = data;
 
-      final OCachePointer cachePointer = wowCache.load(fileId, i);
+      final OCachePointer cachePointer = wowCache.load(fileId, i, true);
       cachePointer.acquireExclusiveLock();
       cachePointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING, data, 0, data.length);
       cachePointer.releaseExclusiveLock();
@@ -232,7 +233,7 @@ public class WOWCacheTest {
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataOne = pageData[i];
 
-      OCachePointer cachePointer = wowCache.load(fileId, i);
+      OCachePointer cachePointer = wowCache.load(fileId, i, false);
       byte[] dataTwo = cachePointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);
       cachePointer.decrementReferrer();
 

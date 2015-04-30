@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -44,6 +45,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.*;
@@ -236,12 +238,33 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       }
     }
 
-    // IF UPDATE DOES NOT PRODUCE RESULTS AND UPSERT MODE IS ENABLED, CREATE DOCUMENT AND APPLY SET/ADD/PUT/MERGE and so on
     if (upsertMode && !updated) {
+      // IF UPDATE DOES NOT PRODUCE RESULTS AND UPSERT MODE IS ENABLED, CREATE DOCUMENT AND APPLY SET/ADD/PUT/MERGE and so on
       final ODocument doc = subjectName != null ? new ODocument(subjectName) : new ODocument();
       final String suspendedLockStrategy = lockStrategy;
       lockStrategy = "NONE";// New record hasn't been created under exclusive lock - just to avoid releasing locks by result(doc)
-      result(doc);
+      try {
+        result(doc);
+      } catch (ORecordDuplicatedException e) {
+        if (upsertMode)
+          // UPDATE THE NEW RECORD
+          getDatabase().query(query, queryArgs);
+        else
+          throw e;
+      } catch (ORecordNotFoundException e) {
+        if (upsertMode)
+          // UPDATE THE NEW RECORD
+          getDatabase().query(query, queryArgs);
+        else
+          throw e;
+      } catch (OConcurrentModificationException e) {
+        if (upsertMode)
+          // UPDATE THE NEW RECORD
+          getDatabase().query(query, queryArgs);
+        else
+          throw e;
+      }
+
       lockStrategy = suspendedLockStrategy;
     }
 
@@ -394,8 +417,6 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
           }
         }
       }
-
-      record.clear();
 
       record.merge(restrictedFields, false, false);
       record.merge(content, true, false);

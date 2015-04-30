@@ -46,10 +46,11 @@ public class OLocalHashTableTest {
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", murmurHash3HashFunction, false, null);
+    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", murmurHash3HashFunction, false,
+        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
     localHashTable.create("localHashTableTest", OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance()
-        .<String> getObjectSerializer(OType.STRING), null, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage(), true);
+        .<String> getObjectSerializer(OType.STRING), null, true);
   }
 
   @AfterClass

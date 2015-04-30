@@ -146,6 +146,10 @@ public interface OTransaction {
   public void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid);
 
   public int amountOfNestedTxs();
+  
+  public boolean isLockedRecord(OIdentifiable iRecord);
+
+  OStorage.LOCKING_STRATEGY lockingStrategy(OIdentifiable iRecord);
 
   public OTransaction lockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY iLockingStrategy);
 

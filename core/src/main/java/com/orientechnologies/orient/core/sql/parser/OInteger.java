@@ -4,7 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 public class OInteger extends ONumber {
 
-  protected Integer value;
+  protected Number value;
 
   public OInteger(int id) {
     super(id);
@@ -14,11 +14,11 @@ public class OInteger extends ONumber {
     super(p, id);
   }
 
-  public Integer getValue() {
+  public Number getValue() {
     return value;
   }
 
-  public void setValue(Integer value) {
+  public void setValue(Number value) {
     this.value = value;
   }
 

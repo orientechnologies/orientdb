@@ -19,19 +19,14 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.all;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestWrapper;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpResponseWrapper;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+import com.orientechnologies.orient.server.network.protocol.http.*;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+
+import java.io.IOException;
 
 public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenticatedDbAbstract {
   @Override
@@ -75,8 +70,13 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
         msg.append(currentException.getMessage());
       }
 
-      iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          msg.toString(), null);
+      if (isJsonResponse(iResponse)) {
+        sendJsonError(iResponse, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION,
+            OHttpUtils.CONTENT_TEXT_PLAIN, msg.toString(), null);
+      } else {
+        iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+            msg.toString(), null);
+      }
 
     } finally {
       if (db != null)

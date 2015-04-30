@@ -15,24 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.Orient;
@@ -46,7 +28,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -58,12 +39,30 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Test(groups = { "index" })
 public class IndexTest extends ObjectDBBaseTest {
@@ -1071,7 +1070,7 @@ public class IndexTest extends ObjectDBBaseTest {
     database.getMetadata().getSchema().createClass("ManualIndexTxClass");
 
     OIndexManager idxManager = db.getMetadata().getIndexManager();
-    idxManager.createIndex("manualTxIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
+    idxManager.createIndex("manualTxIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(-1, OType.INTEGER), null, null, null);
     OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("manualTxIndexTest");
 
     ODocument v0 = new ODocument("ManualIndexTxClass");
@@ -1111,8 +1110,8 @@ public class IndexTest extends ObjectDBBaseTest {
     database.getMetadata().getSchema().createClass("ManualIndexTxRecursiveStoreClass");
 
     OIndexManager idxManager = db.getMetadata().getIndexManager();
-    idxManager.createIndex("manualTxIndexRecursiveStoreTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null,
-        null);
+    idxManager.createIndex("manualTxIndexRecursiveStoreTest", "UNIQUE", new OSimpleKeyIndexDefinition(-1, OType.INTEGER), null,
+        null, null);
 
     OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("manualTxIndexRecursiveStoreTest");
 
@@ -1156,7 +1155,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
   public void testIndexCountPlusCondition() {
     OIndexManager idxManager = database.getMetadata().getIndexManager();
-    idxManager.createIndex("IndexCountPlusCondition", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
+    idxManager.createIndex("IndexCountPlusCondition", "NOTUNIQUE", new OSimpleKeyIndexDefinition(-1, OType.INTEGER), null, null,
+        null);
 
     final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexCountPlusCondition");
 
@@ -1184,7 +1184,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   public void testNotUniqueIndexKeySize() {
     OIndexManager idxManager = database.getMetadata().getIndexManager();
-    idxManager.createIndex("IndexNotUniqueIndexKeySize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null,
+    idxManager.createIndex("IndexNotUniqueIndexKeySize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(-1, OType.INTEGER), null, null,
         null);
 
     final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexKeySize");
@@ -1206,7 +1206,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
   public void testNotUniqueIndexSize() {
     OIndexManager idxManager = database.getMetadata().getIndexManager();
-    idxManager.createIndex("IndexNotUniqueIndexSize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
+    idxManager.createIndex("IndexNotUniqueIndexSize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(-1, OType.INTEGER), null, null,
+        null);
 
     final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexSize");
 
@@ -1635,7 +1636,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     List<ODocument> resultOne = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(queryOne));
     Assert.assertEquals(resultOne.size(), 1);
-    Assert.assertEquals(resultOne.get(0), docOne);
+    Assert.assertEquals((Object) resultOne.get(0), (Object) docOne);
 
     ODocument explain = databaseDocumentTx.command(new OCommandSQL("explain " + queryOne)).execute();
     Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
@@ -1644,7 +1645,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     List<ODocument> resultTwo = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(queryTwo));
     Assert.assertEquals(resultTwo.size(), 1);
-    Assert.assertEquals(resultTwo.get(0), docTwo);
+    Assert.assertEquals((Object) resultTwo.get(0), (Object) docTwo);
 
     explain = databaseDocumentTx.command(new OCommandSQL("explain " + queryTwo)).execute();
     Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
@@ -1673,13 +1674,11 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage();
-    final ODiskCache diskCache = storageLocalAbstract.getDiskCache();
 
-    Assert.assertTrue(diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
-
+    final OWriteCache writeCache = storageLocalAbstract.getWriteCache();
+    Assert.assertTrue(writeCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
     database.command(new OCommandSQL("drop index ValuesContainerIsRemovedIfIndexIsRemovedIndex")).execute();
-
-    Assert.assertTrue(!diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
+    Assert.assertTrue(!writeCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
   }
 
   public void testPreservingIdentityInIndexTx() {
@@ -1740,7 +1739,8 @@ public class IndexTest extends ObjectDBBaseTest {
     OClass emptyNotUniqueIndexClazz = database.getMetadata().getSchema().createClass("EmptyNotUniqueIndexTest");
     emptyNotUniqueIndexClazz.createProperty("prop", OType.STRING);
 
-    final OIndex notUniqueIndex = emptyNotUniqueIndexClazz.createIndex("EmptyNotUniqueIndexTestIndex", INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "prop");
+    final OIndex notUniqueIndex = emptyNotUniqueIndexClazz.createIndex("EmptyNotUniqueIndexTestIndex",
+        INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "prop");
     ODocument document = new ODocument("EmptyNotUniqueIndexTest");
     document.field("prop", "keyOne");
     document.save();

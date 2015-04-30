@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.hook;
 
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Hook abstract class that calls separate methods for each hook defined.
@@ -39,27 +38,27 @@ public abstract class ORecordHookAbstract implements ORecordHook {
   /**
    * It's called just before to create the new iRecord.
    * 
-   * @param iiRecord
+   * @param iRecord
    *          The iRecord to create
    * @return True if the iRecord has been modified and a new marshalling is required, otherwise false
    */
-  public RESULT onRecordBeforeCreate(final ORecord iiRecord) {
+  public RESULT onRecordBeforeCreate(final ORecord iRecord) {
     return RESULT.RECORD_NOT_CHANGED;
   }
 
   /**
    * It's called just after the iRecord is created.
    * 
-   * @param iiRecord
+   * @param iRecord
    *          The iRecord just created
    */
-  public void onRecordAfterCreate(final ORecord iiRecord) {
+  public void onRecordAfterCreate(final ORecord iRecord) {
   }
 
-  public void onRecordCreateFailed(final ORecord iiRecord) {
+  public void onRecordCreateFailed(final ORecord iRecord) {
   }
 
-  public void onRecordCreateReplicated(final ORecord iiRecord) {
+  public void onRecordCreateReplicated(final ORecord iRecord) {
   }
 
   /**
@@ -76,68 +75,68 @@ public abstract class ORecordHookAbstract implements ORecordHook {
   /**
    * It's called just after the iRecord is read.
    * 
-   * @param iiRecord
+   * @param iRecord
    *          The iRecord just read
    */
-  public void onRecordAfterRead(final ORecord iiRecord) {
+  public void onRecordAfterRead(final ORecord iRecord) {
   }
 
-  public void onRecordReadFailed(final ORecord iiRecord) {
+  public void onRecordReadFailed(final ORecord iRecord) {
   }
 
-  public void onRecordReadReplicated(final ORecord iiRecord) {
+  public void onRecordReadReplicated(final ORecord iRecord) {
   }
 
   /**
    * It's called just before to update the iRecord.
    * 
-   * @param iiRecord
+   * @param iRecord
    *          The iRecord to update
    * @return True if the iRecord has been modified and a new marshalling is required, otherwise false
    */
-  public RESULT onRecordBeforeUpdate(final ORecord iiRecord) {
+  public RESULT onRecordBeforeUpdate(final ORecord iRecord) {
     return RESULT.RECORD_NOT_CHANGED;
   }
 
   /**
    * It's called just after the iRecord is updated.
    * 
-   * @param iiRecord
+   * @param iRecord
    *          The iRecord just updated
    */
-  public void onRecordAfterUpdate(final ORecord iiRecord) {
+  public void onRecordAfterUpdate(final ORecord iRecord) {
   }
 
-  public void onRecordUpdateFailed(final ORecord iiRecord) {
+  public void onRecordUpdateFailed(final ORecord iRecord) {
   }
 
-  public void onRecordUpdateReplicated(final ORecord iiRecord) {
+  public void onRecordUpdateReplicated(final ORecord iRecord) {
   }
 
   /**
    * It's called just before to delete the iRecord.
    * 
-   * @param iiRecord
+   * @param iRecord
    *          The iRecord to delete
    * @return True if the iRecord has been modified and a new marshalling is required, otherwise false
    */
-  public RESULT onRecordBeforeDelete(final ORecord iiRecord) {
+  public RESULT onRecordBeforeDelete(final ORecord iRecord) {
     return RESULT.RECORD_NOT_CHANGED;
   }
 
   /**
    * It's called just after the iRecord is deleted.
    * 
-   * @param iiRecord
+   * @param iRecord
    *          The iRecord just deleted
    */
-  public void onRecordAfterDelete(final ORecord iiRecord) {
+  public void onRecordAfterDelete(final ORecord iRecord) {
   }
 
-  public void onRecordDeleteFailed(final ORecord iiRecord) {
+  public void onRecordDeleteFailed(final ORecord iRecord) {
   }
 
-  public void onRecordDeleteReplicated(final ORecord iiRecord) {
+  public void onRecordDeleteReplicated(final ORecord iRecord) {
   }
 
   public RESULT onRecordBeforeReplicaAdd(final ORecord record) {

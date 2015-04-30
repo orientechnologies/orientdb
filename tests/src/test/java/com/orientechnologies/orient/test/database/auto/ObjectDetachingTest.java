@@ -213,7 +213,7 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(database.countClass(Country.class), initCount);
     Assert.assertTrue(country.getId() == null || ((ORID) country.getId()).isNew(), "id=" + country.getId());
-//    Assert.assertNull(country.getVersion());
+    // Assert.assertNull(country.getVersion());
   }
 
   @Test(dependsOnMethods = "testInsertRollback")
@@ -238,7 +238,8 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     database.commit();
 
     loaded = (Country) database.load((ORecordId) country.getId());
-    Assert.assertEquals(database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
+    Assert.assertEquals((Object) database.getRecordByUserObject(loaded, false),
+        (Object) database.getRecordByUserObject(country, false));
     Assert.assertEquals(loaded.getId(), country.getId());
     Assert.assertEquals(((ORecordVersion) loaded.getVersion()).getCounter(), initVersion.getCounter() + 1);
     Assert.assertEquals(loaded.getName(), newName);

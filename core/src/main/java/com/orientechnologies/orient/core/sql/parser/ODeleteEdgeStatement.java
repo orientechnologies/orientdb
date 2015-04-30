@@ -30,7 +30,7 @@ public class ODeleteEdgeStatement extends OStatement {
 
   protected OWhereClause      whereClause;
 
-  protected Integer           limit;
+  protected OLimit            limit;
 
   public ODeleteEdgeStatement(int id) {
     super(id);
@@ -150,7 +150,6 @@ public class ODeleteEdgeStatement extends OStatement {
     }
 
     if (limit != null) {
-      result.append(" LIMIT ");
       result.append(limit);
     }
 
@@ -180,6 +179,10 @@ public class ODeleteEdgeStatement extends OStatement {
 
     if (whereClause != null) {
       whereClause.replaceParameters(params);
+    }
+
+    if (limit != null) {
+      limit.replaceParameters(params);
     }
   }
 

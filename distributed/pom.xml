@@ -101,8 +101,8 @@
         </dependency>
         <dependency>
             <groupId>com.hazelcast</groupId>
-            <artifactId>hazelcast</artifactId>
-            <version>3.3</version>
+            <artifactId>hazelcast-all</artifactId>
+            <version>3.3.5</version>
         </dependency>
     </dependencies>
 

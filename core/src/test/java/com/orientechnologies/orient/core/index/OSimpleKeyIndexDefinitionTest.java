@@ -20,7 +20,7 @@ public class OSimpleKeyIndexDefinitionTest {
 
   @BeforeMethod
   public void beforeMethod() {
-    simpleKeyIndexDefinition = new OSimpleKeyIndexDefinition(OType.INTEGER, OType.STRING);
+    simpleKeyIndexDefinition = new OSimpleKeyIndexDefinition(-1, OType.INTEGER, OType.STRING);
   }
 
   @Test
@@ -35,7 +35,7 @@ public class OSimpleKeyIndexDefinitionTest {
 
   @Test
   public void testCreateValueSimpleKey() {
-    final OSimpleKeyIndexDefinition keyIndexDefinition = new OSimpleKeyIndexDefinition(OType.INTEGER);
+    final OSimpleKeyIndexDefinition keyIndexDefinition = new OSimpleKeyIndexDefinition(-1, OType.INTEGER);
     final Object result = keyIndexDefinition.createValue("2");
     Assert.assertEquals(result, 2);
   }
@@ -115,7 +115,7 @@ public class OSimpleKeyIndexDefinitionTest {
 
   @Test
   public void testParamCountOneItem() {
-    final OSimpleKeyIndexDefinition keyIndexDefinition = new OSimpleKeyIndexDefinition(OType.INTEGER);
+    final OSimpleKeyIndexDefinition keyIndexDefinition = new OSimpleKeyIndexDefinition(-1, OType.INTEGER);
 
     Assert.assertEquals(keyIndexDefinition.getParamCount(), 1);
   }
@@ -127,7 +127,7 @@ public class OSimpleKeyIndexDefinitionTest {
 
   @Test
   public void testGetKeyTypesOneType() {
-    final OSimpleKeyIndexDefinition keyIndexDefinition = new OSimpleKeyIndexDefinition(OType.BOOLEAN);
+    final OSimpleKeyIndexDefinition keyIndexDefinition = new OSimpleKeyIndexDefinition(-1, OType.BOOLEAN);
 
     Assert.assertEquals(keyIndexDefinition.getTypes(), new OType[] { OType.BOOLEAN });
   }

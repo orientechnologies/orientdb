@@ -25,6 +25,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
@@ -179,7 +180,34 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
   }
 
   @Override
+  public OPhysicalPosition deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
+    final OPhysicalPosition physicalPosition = new OPhysicalPosition();
+
+    long currentPointer = offset;
+    physicalPosition.clusterPosition = OLongSerializer.INSTANCE.deserializeFromDirectMemoryObject(wrapper, currentPointer);
+    currentPointer += OLongSerializer.INSTANCE.getFixedLength();
+
+    final ORecordVersion version = OVersionFactory.instance().createVersion();
+    byte[] serializedVersion = wrapper.get(currentPointer, OVersionFactory.instance().getVersionSize());
+    version.getSerializer().fastReadFrom(serializedVersion, 0, version);
+    physicalPosition.recordVersion = version;
+    currentPointer += OVersionFactory.instance().getVersionSize();
+
+    OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(wrapper, currentPointer);
+    currentPointer += OIntegerSerializer.INT_SIZE;
+
+    physicalPosition.recordType = OByteSerializer.INSTANCE.deserializeFromDirectMemory(wrapper, currentPointer);
+
+    return physicalPosition;
+  }
+
+  @Override
   public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    return getFixedLength();
+  }
+
+  @Override
+  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
     return getFixedLength();
   }
 

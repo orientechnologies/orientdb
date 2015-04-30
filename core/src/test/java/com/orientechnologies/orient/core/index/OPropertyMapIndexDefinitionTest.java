@@ -38,11 +38,11 @@ public class OPropertyMapIndexDefinitionTest {
   @BeforeMethod
   public void beforeMethod() {
     propertyIndexByKey = new OPropertyMapIndexDefinition("testClass", "fOne", OType.STRING,
-        OPropertyMapIndexDefinition.INDEX_BY.KEY);
+        OPropertyMapIndexDefinition.INDEX_BY.KEY, -1);
     propertyIndexByIntegerKey = new OPropertyMapIndexDefinition("testClass", "fTwo", OType.INTEGER,
-        OPropertyMapIndexDefinition.INDEX_BY.KEY);
+        OPropertyMapIndexDefinition.INDEX_BY.KEY, -1);
     propertyIndexByValue = new OPropertyMapIndexDefinition("testClass", "fOne", OType.INTEGER,
-        OPropertyMapIndexDefinition.INDEX_BY.VALUE);
+        OPropertyMapIndexDefinition.INDEX_BY.VALUE, -1);
   }
 
   public void testCreateValueByKeySingleParameter() {
@@ -195,7 +195,8 @@ public class OPropertyMapIndexDefinitionTest {
     final ODatabaseDocumentTx database = new ODatabaseDocumentTx("memory:propertytest");
     database.create();
 
-    propertyIndexByKey = new OPropertyMapIndexDefinition("tesClass", "fOne", OType.STRING, OPropertyMapIndexDefinition.INDEX_BY.KEY);
+    propertyIndexByKey = new OPropertyMapIndexDefinition("tesClass", "fOne", OType.STRING,
+        OPropertyMapIndexDefinition.INDEX_BY.KEY, -1);
 
     final ODocument docToStore = propertyIndexByKey.toStream();
     database.save(docToStore);
@@ -214,7 +215,7 @@ public class OPropertyMapIndexDefinitionTest {
     database.create();
 
     propertyIndexByValue = new OPropertyMapIndexDefinition("tesClass", "fOne", OType.INTEGER,
-        OPropertyMapIndexDefinition.INDEX_BY.VALUE);
+        OPropertyMapIndexDefinition.INDEX_BY.VALUE, -1);
 
     final ODocument docToStore = propertyIndexByValue.toStream();
     database.save(docToStore);
@@ -245,7 +246,7 @@ public class OPropertyMapIndexDefinitionTest {
 
   @Test(expectedExceptions = NullPointerException.class)
   public void testIndexByIsRequired() {
-    new OPropertyMapIndexDefinition("testClass", "testField", OType.STRING, null);
+    new OPropertyMapIndexDefinition("testClass", "testField", OType.STRING, null, -1);
   }
 
   public void testCreateDDLByKey() {

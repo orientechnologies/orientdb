@@ -278,16 +278,15 @@ public class LocalPaginatedStorageMixCrashRestore {
     System.out.println("Start data changes.");
 
     List<Future> futures = new ArrayList<Future>();
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 8; i++) {
       futures.add(executorService.submit(new DataChangeTask(baseDocumentTx, testDocumentTx)));
     }
 
-    Thread.sleep(600000);
+    Thread.sleep(300000);
 
     long lastTs = System.currentTimeMillis();
     System.out.println("Wait for process to destroy");
-    Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
-    p.waitFor();
+    // process.destroyForcibly();
 
     process.waitFor();
     System.out.println("Process was destroyed");

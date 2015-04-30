@@ -69,6 +69,8 @@
      <echo>       ``        `.                                        COMMUNITY  EDITION</echo>
      <echo>                 ``                                         www.orientdb.org</echo>
      <echo>                 `                                    </echo>
+     <echo> THIS BUILD SYSTEM IS DEPRECATED AND WILL BE REMOVED IN 3.0</echo>
+     <echo> RELY ON MAVEN </echo>
 
         <mkdir dir="${community.release}"/>
         <mkdir dir="${community.release}/log"/>
@@ -184,12 +186,13 @@
             </and>
         </condition>
 
-        <java fork="true" dir="graphdb" classname="com.orientechnologies.orient.graph.blueprints.TestLoadGraph">
+        <java fork="true" dir="graphdb" classname="com.orientechnologies.orient.graph.console.OInternalGraphImporter">
 	    <jvmarg value="-Djava.awt.headless=true"/>
             <classpath>
                 <fileset dir="${community.release}/lib" includes="*.jar"/>
             </classpath>
-            <jvmarg value="-DstorageType=${test.storageType}"/>
+	    <arg value="./src/test/resources/graph-example-2.xml"/>
+	    <arg value="${test.storageType}:./target/databases/GratefulDeadConcerts"/>
         </java>
 
         <copy todir="${community.release}/databases/GratefulDeadConcerts" failonerror="false">
@@ -219,29 +222,17 @@
     </target>
 
     <target name="test" depends="install">
-        <subant target="test">
-            <property name="global.lib" value="../${community.release}/lib"/>
-            <property name="orient.path" value="../${community.release}"/>
-            <fileset dir="tests" includes="build.xml"/>
-        </subant>
+	    <echo>THE TARGET test IS DEPRECATED USE MAVEN INSTEAD</echo>
     </target>
 
 
     <target name="test-embedded" depends="install">
-        <subant target="test-embedded">
-            <property name="global.lib" value="../${community.release}/lib"/>
-            <property name="orient.path" value="../${community.release}"/>
-            <fileset dir="tests" includes="build.xml"/>
-        </subant>
+	    <echo>THE TARGET test-embedded IS DEPRECATED USE MAVEN INSTEAD</echo>
     </target>
 
 
     <target name="test-remote" depends="install">
-        <subant target="test-remote">
-            <property name="global.lib" value="../${community.release}/lib"/>
-            <property name="orient.path" value="../${community.release}"/>
-            <fileset dir="tests" includes="build.xml"/>
-        </subant>
+	    <echo>THE TARGET test-remote IS DEPRECATED USE MAVEN INSTEAD</echo>
     </target>
 
     <target name="release" depends="install">

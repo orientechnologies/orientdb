@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql.functions;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 
 import java.util.List;
@@ -97,7 +98,7 @@ public abstract class OSQLFunctionAbstract implements OSQLFunction {
   }
 
   protected boolean returnDistributedResult() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OAutoshardedStorage;
+    return OScenarioThreadLocal.INSTANCE.get() == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
   }
 
   protected String getDistributedStorageId() {

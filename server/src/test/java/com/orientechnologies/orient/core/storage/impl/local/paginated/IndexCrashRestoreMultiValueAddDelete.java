@@ -115,15 +115,14 @@ public class IndexCrashRestoreMultiValueAddDelete {
     System.out.println("Start data propagation");
 
     List<Future> futures = new ArrayList<Future>();
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 8; i++) {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
-		Thread.sleep(1800000);
+    Thread.sleep(300000);
 
     System.out.println("Wait for process to destroy");
-    Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
-    p.waitFor();
+    // process.destroyForcibly();
 
     process.waitFor();
     System.out.println("Process was destroyed");

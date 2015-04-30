@@ -16,6 +16,12 @@ public interface OrientSqlVisitor
   public Object visit(OTraverseStatement node, Object data);
   public Object visit(ODeleteStatement node, Object data);
   public Object visit(ODeleteVertexStatement node, Object data);
+  public Object visit(ODeleteEdgeStatement node, Object data);
+  public Object visit(ODeleteEdgeByRidStatement node, Object data);
+  public Object visit(ODeleteEdgeFromToStatement node, Object data);
+  public Object visit(ODeleteEdgeToStatement node, Object data);
+  public Object visit(ODeleteEdgeVToStatement node, Object data);
+  public Object visit(ODeleteEdgeWhereStatement node, Object data);
   public Object visit(OUpdateStatement node, Object data);
   public Object visit(OUpdateOperations node, Object data);
   public Object visit(OUpdateItem node, Object data);
@@ -74,6 +80,7 @@ public interface OrientSqlVisitor
   public Object visit(OGeOperator node, Object data);
   public Object visit(OLeOperator node, Object data);
   public Object visit(OLikeOperator node, Object data);
+  public Object visit(OLuceneOperator node, Object data);
   public Object visit(OContainsKeyOperator node, Object data);
   public Object visit(OContainsValueOperator node, Object data);
   public Object visit(OEqualsCompareOperator node, Object data);
@@ -107,4 +114,4 @@ public interface OrientSqlVisitor
   public Object visit(OArray node, Object data);
   public Object visit(OJson node, Object data);
 }
-/* JavaCC - OriginalChecksum=900313f618d8b7cf29fd126e7e1dd2da (do not edit this line) */
+/* JavaCC - OriginalChecksum=8d3793a570f491a71e55822e64ecdcef (do not edit this line) */

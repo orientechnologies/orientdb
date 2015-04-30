@@ -13,6 +13,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -34,24 +35,24 @@ import com.orientechnologies.orient.server.OServerMain;
 
 @Test
 public class LocalPaginatedStorageLinkBagCrashRestore {
-  private static String                      URL_BASE;
-  private static String                      URL_TEST;
-  private final OLockManager<ORID, Callable> lockManager     = new OLockManager<ORID, Callable>(true, 30000);
-  private final AtomicInteger                positionCounter = new AtomicInteger();
-  private File                               buildDir;
+  private static String                         URL_BASE;
+  private static String                         URL_TEST;
+  private final OLockManager<ORID, Callable>    lockManager     = new OLockManager<ORID, Callable>(true, 30000);
+  private final AtomicInteger                   positionCounter = new AtomicInteger();
+  private File                                  buildDir;
 
-  private ExecutorService                    executorService = Executors.newCachedThreadPool();
-  private Process                            process;
+  private ExecutorService                       executorService = Executors.newCachedThreadPool();
+  private Process                               process;
 
-  private int                                defaultClusterId;
+  private int                                   defaultClusterId;
 
-  private volatile long                      lastClusterPosition;
+  private volatile long                         lastClusterPosition;
 
-	private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
+  private final OPartitionedDatabasePoolFactory poolFactory     = new OPartitionedDatabasePoolFactory();
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
-			OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+      OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(30);
       OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(20);
 
@@ -72,14 +73,18 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
 
         try {
           ODatabaseDocumentTx base_db = poolFactory.get(URL_BASE, "admin", "admin").acquire();
+          ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
+
           ODocument base_document = addDocument(ts);
-          base_db.close();
 
           ODatabaseDocumentTx test_db = poolFactory.get(URL_TEST, "admin", "admin").acquire();
+          ODatabaseRecordThreadLocal.INSTANCE.set(test_db);
           ODocument test_document = addDocument(ts);
-          test_db.close();
 
-          Assert.assertEquals(base_document, test_document);
+          Assert.assertTrue(ODocumentHelper.hasSameContentOf(base_document, base_db, test_document, test_db, null));
+
+          base_db.close();
+          test_db.close();
 
           lastClusterPosition = base_document.getIdentity().getClusterPosition();
         } catch (RuntimeException e) {
@@ -155,6 +160,9 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
       final Random random = new Random();
       try {
         while (true) {
+          if (lastClusterPosition <= 0)
+            continue;
+
           final long ts = System.currentTimeMillis();
           final long position = random.nextInt((int) lastClusterPosition);
           final ORID orid = new ORecordId(defaultClusterId, position);
@@ -211,7 +219,7 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
   public void beforeClass() throws Exception {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(10);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(5);
-		OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+    OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageLinkBagCrashRestore";
@@ -259,12 +267,15 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
     for (int i = 0; i < 5; i++)
       futures.add(executorService.submit(new RidDeleter()));
 
-		Thread.sleep(1800000);
+    Thread.sleep(300000);
     long lastTs = System.currentTimeMillis();
 
+    ODatabaseDocumentTx test_db = poolFactory.get(URL_TEST, "admin", "admin").acquire();
+    System.out.println(test_db.countClusterElements(test_db.getDefaultClusterId()));
+    test_db.close();
+
     System.out.println("Wait for process to destroy");
-    Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
-    p.waitFor();
+    // process.destroyForcibly();
 
     process.waitFor();
     System.out.println("Process was destroyed");
@@ -324,13 +335,12 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
 
         ODatabaseRecordThreadLocal.INSTANCE.set(test_db);
         ODocument testDocument = test_db.load(rid);
-        testDocument.setLazyLoad(false);
-
         if (testDocument == null) {
           ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
           if (((Long) baseDocument.field("ts")) < minTs)
             minTs = baseDocument.field("ts");
         } else {
+          testDocument.setLazyLoad(false);
           long baseTs;
           long testTs;
 
@@ -360,11 +370,11 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
             equals = baseRids.equals(testRids);
           }
 
-          if (!equals)
+          if (!equals) {
             if (((Long) baseDocument.field("ts")) < minTs)
               minTs = baseDocument.field("ts");
-            else
-              recordsRestored++;
+          } else
+            recordsRestored++;
         }
 
         recordsTested++;

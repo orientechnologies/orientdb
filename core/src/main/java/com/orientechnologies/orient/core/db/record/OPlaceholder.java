@@ -120,6 +120,16 @@ public class OPlaceholder implements OIdentifiable, Externalizable {
   }
 
   @Override
+  public boolean isLocked() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().isLockedRecord(this);
+  }
+
+  @Override
+  public OStorage.LOCKING_STRATEGY lockingStrategy() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockingStrategy(this);
+  }
+
+  @Override
   public void unlock() {
     ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().unlockRecord(this);
   }

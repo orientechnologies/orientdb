@@ -176,11 +176,15 @@ TOKEN:
     |
     < STRATEGY: ( "s" | "S" ) ( "t" | "T" ) ( "r" | "R" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) ( "g" | "G" ) ( "y" | "Y" )  >
     |
-    < DEPTH_FIRST: ( "d" | "d" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) ( "_" )  ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
+    < DEPTH_FIRST: ( "d" | "D" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) ( "_" )  ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
     |
     < BREADTH_FIRST: ( "b" | "B" ) ( "r" | "R" ) ( "e" | "E" ) ( "a" | "A" ) ( "d" | "D" ) ( "t" | "T" )  ( "h" | "H" ) ( "_" ) ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
 	|
 	< LUCENE: ( "l" | "L" ) ( "u" | "U" ) ( "c" | "C" ) ( "e" | "E" ) ( "n" | "N" ) ( "e" | "E" ) >
+	|
+	< UNWIND: ( "u" | "U" ) ( "n" | "N" ) ( "w" | "W" ) ( "i" | "I" ) ( "n" | "N" ) ( "d" | "D" ) >
+	|
+	< MAXDEPTH: ( "m" | "M" ) ( "a" | "A" ) ( "x" | "X" ) ( "d" | "D" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) >
 	|
 	< THIS: "@this" >
 	|
@@ -464,7 +468,7 @@ OInteger Integer():
 }
 {
 (
-    [ <MINUS> {sign = -1;} ] tokenVal = <INTEGER_LITERAL> {jjtThis.value = sign * Integer.parseInt(tokenVal.image);}
+    [ <MINUS> {sign = -1;} ] tokenVal = <INTEGER_LITERAL> {jjtThis.value = sign * Long.parseLong(tokenVal.image);}
 ) { return jjtThis; }
 }
 
@@ -545,6 +549,7 @@ OSelectWithoutTargetStatement SelectWithoutTargetStatement():
     	<SELECT>
         jjtThis.projection = Projection()
     	[ jjtThis.letClause = LetClause() ]
+    	[ jjtThis.unwind = Unwind() ]
     	[ jjtThis.fetchPlan = FetchPlan() ]
     	[ jjtThis.timeout = Timeout() ]
         [ <LOCK>  <RECORD> {jjtThis.lockRecord = true;} ]
@@ -565,6 +570,7 @@ OSelectStatement SelectStatement():
         [ <WHERE> jjtThis.whereClause = WhereClause() ]
         [ jjtThis.groupBy = GroupBy() ]
         [ jjtThis.orderBy = OrderBy() ]
+        [ jjtThis.unwind = Unwind() ]
         (
             [
                 jjtThis.skip = Skip() [ jjtThis.limit = Limit() ]
@@ -592,6 +598,7 @@ OTraverseStatement TraverseStatement():
     	]
     	<FROM>
     	jjtThis.target = FromClause()
+    	[ <MAXDEPTH> jjtThis.maxDepth = Integer() ]
     	[ <WHILE> jjtThis.whereClause = WhereClause() ]
         [ jjtThis.limit = Limit() ]
         [ <STRATEGY>
@@ -613,9 +620,9 @@ ODeleteStatement DeleteStatement():
 	<DELETE>
 	<FROM>
 	jjtThis.fromClause = FromClause()
-	[ <WHERE> jjtThis.whereClause = WhereClause() ]
 	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
-	[ <LIMIT> jjtThis.limit = Integer() ]
+	[ <WHERE> jjtThis.whereClause = WhereClause() ]
+	[ jjtThis.limit = Limit() ]
 	[ <UNSAFE> { jjtThis.unsafe = true; }]
 ) {return jjtThis;}
 }
@@ -627,9 +634,9 @@ ODeleteVertexStatement DeleteVertexStatement():
 	<DELETE>
 	<VERTEX>
 	jjtThis.fromClause = FromClause()
-	[ <WHERE> jjtThis.whereClause = WhereClause() ]
 	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
-    [ <LIMIT> jjtThis.limit = Integer() ]
+	[ <WHERE> jjtThis.whereClause = WhereClause() ]
+    [ jjtThis.limit = Limit() ]
 ) {return jjtThis;}
 }
 
@@ -1721,10 +1728,28 @@ OLetClause LetClause():
 }
 
 OLetItem LetItem():
-{}
+{ }
 {
     (
-    	jjtThis.varName = Identifier() <EQ> jjtThis.expression = Expression()
+    	jjtThis.varName = Identifier() <EQ>
+    	(
+    	    LOOKAHEAD( Expression() )
+    	    jjtThis.expression = Expression()
+    	    |
+    	    (
+    	        <LPAREN>
+    	        (
+    	            LOOKAHEAD( SelectStatement() )
+    	            jjtThis.query = SelectStatement()
+    	            |
+    	            LOOKAHEAD( SelectWithoutTargetStatement() )
+    	            jjtThis.query = SelectWithoutTargetStatement()
+    	            |
+    	            jjtThis.query = TraverseStatement()
+    	        )
+    	        <RPAREN>
+    	    )
+    	)
     )
     { return jjtThis; }
 }
@@ -2303,28 +2328,59 @@ OGroupBy GroupBy():
 ) {return jjtThis;}
 }
 
+OUnwind Unwind():
+{ OIdentifier lastIdentifier; }
+{
+(
+	<UNWIND> lastIdentifier = Identifier() { jjtThis.items.add(lastIdentifier); }
+	(
+	    ","
+	    lastIdentifier = Identifier() { jjtThis.items.add(lastIdentifier); }
+	)*
+) {return jjtThis;}
+}
 
-java.lang.Integer Limit():
-{ OInteger value = null; }
+
+OLimit Limit():
+{}
 {
     (
-    	<LIMIT> value = Integer()
+    	<LIMIT>
+    	(
+            jjtThis.num  = Integer()
+            |
+            jjtThis.inputParam = InputParameter()
+        )
     )
-    { return value.getValue(); }
+    { return jjtThis; }
 }
 
-java.lang.Integer Skip():
-{ OInteger value = null;}
+OSkip Skip():
+{ }
 {
     (
-    	<SKIP2> value = Integer()
+        (
+            <SKIP2>
+            (
+                jjtThis.num  = Integer()
+                |
+                jjtThis.inputParam = InputParameter()
+            )
+        )
     	|
-    	<OFFSET> value = Integer()
-    ) {return value.getValue();}
+    	(
+    	    <OFFSET>
+    	    (
+                jjtThis.num  = Integer()
+                |
+                jjtThis.inputParam = InputParameter()
+            )
+        )
+    ) {return jjtThis;}
 }
 
 
-java.lang.Integer Timeout():
+java.lang.Number Timeout():
 { OInteger val; }
 {
     (
@@ -2334,7 +2390,7 @@ java.lang.Integer Timeout():
 }
 
 
-java.lang.Integer Wait():
+java.lang.Number Wait():
 { OInteger val; }
 {
     (
@@ -2344,7 +2400,7 @@ java.lang.Integer Wait():
 }
 
 
-java.lang.Integer Retry():
+java.lang.Number Retry():
 { OInteger val; }
 {
     (

@@ -26,9 +26,18 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.ref.WeakReference;
-import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
@@ -39,7 +48,19 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.ODetachable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -53,6 +74,7 @@ import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableProperty;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -66,9 +88,9 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.sql.OSQLHelper;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -234,7 +256,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     field(iFieldName, iFieldValue);
   }
 
-  protected static void validateField(ODocument iRecord, OProperty p) throws OValidationException {
+  protected static void validateField(ODocument iRecord, OImmutableProperty p) throws OValidationException {
     final Object fieldValue;
     ODocumentEntry entry = iRecord._fields.get(p.getName());
     if (entry != null && entry.exist()) {
@@ -245,9 +267,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         // NULLITY
         throw new OValidationException("The field '" + p.getFullName() + "' cannot be null, record: " + iRecord);
 
-      if (fieldValue != null && p.getRegexp() != null) {
+      if (fieldValue != null && p.getRegexp() != null && p.getType().equals(OType.STRING)) {
         // REGEXP
-        if (!fieldValue.toString().matches(p.getRegexp()))
+        if (!((String) fieldValue).matches(p.getRegexp()))
           throw new OValidationException("The field '" + p.getFullName() + "' does not match the regular expression '"
               + p.getRegexp() + "'. Field value is: " + fieldValue + ", record: " + iRecord);
       }
@@ -255,8 +277,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     } else {
       String defValue = p.getDefaultValue();
       if (defValue != null && defValue.length() > 0) {
-        fieldValue = OSQLHelper.parseDefaultValue(iRecord, defValue);
-        iRecord.rawField(p.getName(), fieldValue, null);
+        Object curFieldValue = OSQLHelper.parseDefaultValue(iRecord, defValue);
+        fieldValue = ODocumentHelper.convertField(iRecord, p.getName(), p.getType().getDefaultJavaType(), curFieldValue);
+        iRecord.rawField(p.getName(), fieldValue, p.getType());
       } else {
         if (p.isMandatory()) {
           throw new OValidationException("The field '" + p.getFullName() + "' is mandatory, but not found on record: " + iRecord);
@@ -334,88 +357,59 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       }
     }
 
-    if (p.getMin() != null) {
+    if (p.getMin() != null && fieldValue != null) {
       // MIN
       final String min = p.getMin();
-
-      if (p.getType().equals(OType.STRING) && (fieldValue != null && ((String) fieldValue).length() < Integer.parseInt(min)))
-        throw new OValidationException("The field '" + p.getFullName() + "' contains fewer characters than " + min + " requested");
-      else if (p.getType().equals(OType.BINARY) && (fieldValue != null && ((byte[]) fieldValue).length < Integer.parseInt(min)))
-        throw new OValidationException("The field '" + p.getFullName() + "' contains fewer bytes than " + min + " requested");
-      else if (p.getType().equals(OType.INTEGER) && (fieldValue != null && type.asInt(fieldValue) < Integer.parseInt(min)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
-      else if (p.getType().equals(OType.LONG) && (fieldValue != null && type.asLong(fieldValue) < Long.parseLong(min)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
-      else if (p.getType().equals(OType.FLOAT) && (fieldValue != null && type.asFloat(fieldValue) < Float.parseFloat(min)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
-      else if (p.getType().equals(OType.DOUBLE) && (fieldValue != null && type.asDouble(fieldValue) < Double.parseDouble(min)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
-      else if (p.getType().equals(OType.DATE)) {
-        try {
-          if (fieldValue != null
-              && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration().getDateFormatInstance()
-                  .parse(min)))
-            throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
-                + " which precedes the first acceptable date (" + min + ")");
-        } catch (ParseException e) {
+      if (p.getMinComparable().compareTo(fieldValue) > 0) {
+        switch (p.getType()) {
+        case STRING:
+          throw new OValidationException("The field '" + p.getFullName() + "' contains fewer characters than " + min + " requested");
+        case DATE:
+        case DATETIME:
+          throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
+              + " which precedes the first acceptable date (" + min + ")");
+        case BINARY:
+          throw new OValidationException("The field '" + p.getFullName() + "' contains fewer bytes than " + min + " requested");
+        case EMBEDDEDLIST:
+        case EMBEDDEDSET:
+        case LINKLIST:
+        case LINKSET:
+        case EMBEDDEDMAP:
+        case LINKMAP:
+          throw new OValidationException("The field '" + p.getFullName() + "' contains fewer items than " + min + " requested");
+        default:
+          throw new OValidationException("The field '" + p.getFullName() + "' is less than " + min);
         }
-      } else if (p.getType().equals(OType.DATETIME)) {
-        try {
-          if (fieldValue != null
-              && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration()
-                  .getDateTimeFormatInstance().parse(min)))
-            throw new OValidationException("The field '" + p.getFullName() + "' contains the datetime " + fieldValue
-                + " which precedes the first acceptable datetime (" + min + ")");
-        } catch (ParseException e) {
-        }
-      } else if ((p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
-          || p.getType().equals(OType.LINKLIST) || p.getType().equals(OType.LINKSET))
-          && (fieldValue != null && ((Collection<?>) fieldValue).size() < Integer.parseInt(min)))
-        throw new OValidationException("The field '" + p.getFullName() + "' contains fewer items than " + min + " requested");
+      }
     }
 
-    if (p.getMax() != null) {
-      // MAX
+    if (p.getMaxComparable() != null && fieldValue != null) {
       final String max = p.getMax();
-
-      if (p.getType().equals(OType.STRING) && (fieldValue != null && ((String) fieldValue).length() > Integer.parseInt(max)))
-        throw new OValidationException("The field '" + p.getFullName() + "' contains more characters than " + max + " requested");
-      else if (p.getType().equals(OType.BINARY) && (fieldValue != null && ((byte[]) fieldValue).length > Integer.parseInt(max)))
-        throw new OValidationException("The field '" + p.getFullName() + "' contains more bytes than " + max + " requested");
-      else if (p.getType().equals(OType.INTEGER) && (fieldValue != null && type.asInt(fieldValue) > Integer.parseInt(max)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
-      else if (p.getType().equals(OType.LONG) && (fieldValue != null && type.asLong(fieldValue) > Long.parseLong(max)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
-      else if (p.getType().equals(OType.FLOAT) && (fieldValue != null && type.asFloat(fieldValue) > Float.parseFloat(max)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
-      else if (p.getType().equals(OType.DOUBLE) && (fieldValue != null && type.asDouble(fieldValue) > Double.parseDouble(max)))
-        throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
-      else if (p.getType().equals(OType.DATE)) {
-        try {
-          if (fieldValue != null
-              && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration().getDateFormatInstance()
-                  .parse(max)))
-            throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
-                + " which is after the last acceptable date (" + max + ")");
-        } catch (ParseException e) {
+      if (p.getMaxComparable().compareTo(fieldValue) < 0) {
+        switch (p.getType()) {
+        case STRING:
+          throw new OValidationException("The field '" + p.getFullName() + "' contains more characters than " + max + " requested");
+        case DATE:
+        case DATETIME:
+          throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
+              + " which is after the last acceptable date (" + max + ")");
+        case BINARY:
+          throw new OValidationException("The field '" + p.getFullName() + "' contains more bytes than " + max + " requested");
+        case EMBEDDEDLIST:
+        case EMBEDDEDSET:
+        case LINKLIST:
+        case LINKSET:
+        case EMBEDDEDMAP:
+        case LINKMAP:
+          throw new OValidationException("The field '" + p.getFullName() + "' contains more items than " + max + " requested");
+        default:
+          throw new OValidationException("The field '" + p.getFullName() + "' is greater than " + max);
         }
-      } else if (p.getType().equals(OType.DATETIME)) {
-        try {
-          if (fieldValue != null
-              && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration()
-                  .getDateTimeFormatInstance().parse(max)))
-            throw new OValidationException("The field '" + p.getFullName() + "' contains the datetime " + fieldValue
-                + " which is after the last acceptable datetime (" + max + ")");
-        } catch (ParseException e) {
-        }
-      } else if ((p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
-          || p.getType().equals(OType.LINKLIST) || p.getType().equals(OType.LINKSET))
-          && (fieldValue != null && ((Collection<?>) fieldValue).size() > Integer.parseInt(max)))
-        throw new OValidationException("The field '" + p.getFullName() + "' contains more items than " + max + " requested");
+      }
     }
 
     if (p.isReadonly() && iRecord instanceof ODocument && !iRecord.getRecordVersion().isTombstone()) {
-      if ((entry.changed || entry.timeLine != null) && !entry.created) {
+      if (entry != null && (entry.changed || entry.timeLine != null) && !entry.created) {
         // check if the field is actually changed by equal.
         // this is due to a limitation in the merge algorithm used server side marking all non simple fields as dirty
         Object orgVal = entry.original;
@@ -453,26 +447,25 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     final ORecord linkedRecord;
-    if (fieldValue instanceof OIdentifiable)
-      linkedRecord = ((OIdentifiable) fieldValue).getRecord();
-    else if (fieldValue instanceof String)
-      linkedRecord = new ORecordId((String) fieldValue).getRecord();
-    else
+    if (!(fieldValue instanceof OIdentifiable))
       throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
           + " but the value is not a record or a record-id");
+    final OClass schemaClass = p.getLinkedClass();
+    if (schemaClass != null) {
+      linkedRecord = ((OIdentifiable) fieldValue).getRecord();
+      if (linkedRecord != null) {
+        if (!(linkedRecord instanceof ODocument))
+          throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
+              + schemaClass + "' but the value is the record " + linkedRecord.getIdentity() + " that is not a document");
 
-    if (linkedRecord != null && p.getLinkedClass() != null) {
-      if (!(linkedRecord instanceof ODocument))
-        throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
-            + p.getLinkedClass() + "' but the value is the record " + linkedRecord.getIdentity() + " that is not a document");
+        final ODocument doc = (ODocument) linkedRecord;
 
-      final ODocument doc = (ODocument) linkedRecord;
-
-      // AT THIS POINT CHECK THE CLASS ONLY IF != NULL BECAUSE IN CASE OF GRAPHS THE RECORD COULD BE PARTIAL
-      if (doc.getImmutableSchemaClass() != null && !p.getLinkedClass().isSuperClassOf(doc.getImmutableSchemaClass()))
-        throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
-            + p.getLinkedClass().getName() + "' but the value is the document " + linkedRecord.getIdentity() + " of class '"
-            + doc.getImmutableSchemaClass() + "'");
+        // AT THIS POINT CHECK THE CLASS ONLY IF != NULL BECAUSE IN CASE OF GRAPHS THE RECORD COULD BE PARTIAL
+        if (doc.getImmutableSchemaClass() != null && !schemaClass.isSuperClassOf(doc.getImmutableSchemaClass()))
+          throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
+              + schemaClass.getName() + "' but the value is the document " + linkedRecord.getIdentity() + " of class '"
+              + doc.getImmutableSchemaClass() + "'");
+      }
     }
   }
 
@@ -861,13 +854,10 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       else if (iFieldType == OType.DATE && value instanceof Long)
         newValue = new Date((Long) value);
       else if ((iFieldType == OType.EMBEDDEDSET || iFieldType == OType.LINKSET) && value instanceof List)
-        // CONVERT LIST TO SET
         newValue = Collections.unmodifiableSet((Set<?>) ODocumentHelper.convertField(this, iFieldName, Set.class, value));
       else if ((iFieldType == OType.EMBEDDEDLIST || iFieldType == OType.LINKLIST) && value instanceof Set)
-        // CONVERT SET TO LIST
         newValue = Collections.unmodifiableList((List<?>) ODocumentHelper.convertField(this, iFieldName, List.class, value));
       else if ((iFieldType == OType.EMBEDDEDMAP || iFieldType == OType.LINKMAP) && value instanceof Map)
-        // CONVERT SET TO LIST
         newValue = Collections.unmodifiableMap((Map<?, ?>) ODocumentHelper.convertField(this, iFieldName, Map.class, value));
       else
         newValue = OType.convert(value, iFieldType.getDefaultJavaType());
@@ -1018,6 +1008,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       oldValue = entry.value;
       oldType = entry.type;
     }
+    OType fieldType = deriveFieldType(iFieldName, entry, iFieldType);
+    if (iPropertyValue != null && fieldType != null) {
+      iPropertyValue = ODocumentHelper.convertField(this, iFieldName, fieldType.getDefaultJavaType(), iPropertyValue);
+    } else if (iPropertyValue instanceof Enum)
+      iPropertyValue = iPropertyValue.toString();
 
     if (knownProperty)
       // CHECK IF IS REALLY CHANGED
@@ -1026,9 +1021,10 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
           // BOTH NULL: UNCHANGED
           return this;
       } else {
+
         try {
           if (iPropertyValue.equals(oldValue)) {
-            if (iFieldType == null || iFieldType.length == 0 || iFieldType[0] == oldType) {
+            if (fieldType == oldType) {
               if (!(iPropertyValue instanceof ORecordElement))
                 // SAME BUT NOT TRACKABLE: SET THE RECORD AS DIRTY TO BE SURE IT'S SAVED
                 setDirty();
@@ -1037,14 +1033,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
               return this;
             }
           }
-
         } catch (Exception e) {
           OLogManager.instance().warn(this, "Error on checking the value of property %s against the record %s", e, iFieldName,
               getIdentity());
         }
       }
-
-    OType fieldType = deriveFieldType(iFieldName, entry, iFieldType);
 
     if (oldValue instanceof ORidBag) {
       final ORidBag ridBag = (ORidBag) oldValue;
@@ -1054,16 +1047,10 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     if (iPropertyValue != null) {
-      // CHECK FOR CONVERSION
-      if (fieldType != null) {
-        iPropertyValue = ODocumentHelper.convertField(this, iFieldName, fieldType.getDefaultJavaType(), iPropertyValue);
-        if (fieldType.equals(OType.EMBEDDED) && iPropertyValue instanceof ODocument) {
-          final ODocument embeddedDocument = (ODocument) iPropertyValue;
-          ODocumentInternal.addOwner(embeddedDocument, this);
-        }
-      } else if (iPropertyValue instanceof Enum)
-        iPropertyValue = iPropertyValue.toString();
-
+      if (OType.EMBEDDED.equals(fieldType) && iPropertyValue instanceof ODocument) {
+        final ODocument embeddedDocument = (ODocument) iPropertyValue;
+        ODocumentInternal.addOwner(embeddedDocument, this);
+      }
       if (iPropertyValue instanceof ORidBag) {
         final ORidBag ridBag = (ORidBag) iPropertyValue;
         ridBag.setOwner(null); // in order to avoid IllegalStateException when ridBag changes the owner (ODocument.merge)
@@ -1668,7 +1655,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         _fields = _ordered ? new LinkedHashMap<String, ODocumentEntry>() : new HashMap<String, ODocumentEntry>();
       // SET THE FORCED TYPE
       ODocumentEntry entry = getOrCreate(iFieldName);
-      entry.type = iFieldType;
+      if (entry.type != iFieldType)
+        field(iFieldName, field(iFieldName), iFieldType);
     } else if (_fields != null) {
       // REMOVE THE FIELD TYPE
       ODocumentEntry entry = _fields.get(iFieldName);
@@ -1890,7 +1878,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     autoConvertValues();
 
-    final OClass immutableSchemaClass = getImmutableSchemaClass();
+    final OImmutableClass immutableSchemaClass = getImmutableSchemaClass();
     if (immutableSchemaClass != null) {
       if (immutableSchemaClass.isStrictMode()) {
         // CHECK IF ALL FIELDS ARE DEFINED
@@ -1902,7 +1890,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       }
 
       for (OProperty p : immutableSchemaClass.properties()) {
-        validateField(this, p);
+        validateField(this, (OImmutableProperty) p);
       }
     }
   }
@@ -2132,27 +2120,31 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         Object value = field(prop.getName());
         if (value == null)
           continue;
-        if (type == OType.EMBEDDEDLIST) {
-          List<Object> list = new OTrackedList<Object>(this);
-          Collection<Object> values = (Collection<Object>) value;
-          for (Object object : values) {
-            list.add(OType.convert(object, linkedType.getDefaultJavaType()));
+        try {
+          if (type == OType.EMBEDDEDLIST) {
+            List<Object> list = new OTrackedList<Object>(this);
+            Collection<Object> values = (Collection<Object>) value;
+            for (Object object : values) {
+              list.add(OType.convert(object, linkedType.getDefaultJavaType()));
+            }
+            field(prop.getName(), list);
+          } else if (type == OType.EMBEDDEDMAP) {
+            Map<Object, Object> map = new OTrackedMap<Object>(this);
+            Map<Object, Object> values = (Map<Object, Object>) value;
+            for (Entry<Object, Object> object : values.entrySet()) {
+              map.put(object.getKey(), OType.convert(object.getValue(), linkedType.getDefaultJavaType()));
+            }
+            field(prop.getName(), map);
+          } else if (type == OType.EMBEDDEDSET && linkedType != null) {
+            Set<Object> list = new OTrackedSet<Object>(this);
+            Collection<Object> values = (Collection<Object>) value;
+            for (Object object : values) {
+              list.add(OType.convert(object, linkedType.getDefaultJavaType()));
+            }
+            field(prop.getName(), list);
           }
-          field(prop.getName(), list);
-        } else if (type == OType.EMBEDDEDMAP) {
-          Map<Object, Object> map = new OTrackedMap<Object>(this);
-          Map<Object, Object> values = (Map<Object, Object>) value;
-          for (Entry<Object, Object> object : values.entrySet()) {
-            map.put(object.getKey(), OType.convert(object.getValue(), linkedType.getDefaultJavaType()));
-          }
-          field(prop.getName(), map);
-        } else if (type == OType.EMBEDDEDSET && linkedType != null) {
-          Set<Object> list = new OTrackedSet<Object>(this);
-          Collection<Object> values = (Collection<Object>) value;
-          for (Object object : values) {
-            list.add(OType.convert(object, linkedType.getDefaultJavaType()));
-          }
-          field(prop.getName(), list);
+        } catch (Exception e) {
+          throw new OValidationException("impossible to convert value of field \"" + prop.getName() + "\"", e);
         }
       }
     }

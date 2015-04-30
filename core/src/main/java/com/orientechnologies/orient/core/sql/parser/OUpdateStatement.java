@@ -24,8 +24,8 @@ public class OUpdateStatement extends OStatement {
 
   protected boolean                 lockRecord   = false;
 
-  protected Integer                 limit;
-  protected Integer                 timeout;
+  protected OLimit                  limit;
+  protected Number                  timeout;
 
   public OUpdateStatement(int id) {
     super(id);
@@ -79,7 +79,6 @@ public class OUpdateStatement extends OStatement {
       result.append(" LOCK RECORD");
     }
     if (limit != null) {
-      result.append(" LIMIT ");
       result.append(limit);
     }
     if (timeout != null) {
@@ -98,8 +97,13 @@ public class OUpdateStatement extends OStatement {
     if (returnProjection != null) {
       returnProjection.replaceParameters(params);
     }
+
     if (whereClause != null) {
       whereClause.replaceParameters(params);
+    }
+
+    if (limit != null) {
+      limit.replaceParameters(params);
     }
   }
 }

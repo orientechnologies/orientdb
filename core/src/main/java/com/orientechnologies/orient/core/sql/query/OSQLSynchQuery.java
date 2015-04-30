@@ -84,9 +84,12 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
 
     final List<Object> res = (List<Object>) super.run(iArgs);
 
-    if (res != result) {
-      for (Object r : res)
-        result.add((T) r);
+    if (res != result && res!=null) {
+      Iterator<Object> iter = res.iterator();
+      while(iter.hasNext()){
+        Object item = iter.next();
+        result.add((T)item);
+      }
     }
 
     ((OResultSet) result).setCompleted();

@@ -42,6 +42,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -106,6 +107,9 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
           query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
           break;
 
+        } else if (word.equals(KEYWORD_RETURN)) {
+          returning = parseReturn();
+
         } else if (word.length() > 0) {
           // GET/CHECK CLASS NAME
           clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(word);
@@ -144,6 +148,9 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     if (rid == null && query == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
+    if (!returning.equalsIgnoreCase("COUNT"))
+      allDeletedRecords = new ArrayList<ORecord>();
+
     if (rid != null) {
       // REMOVE PUNCTUAL RID
       OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
@@ -171,7 +178,12 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     } else
       throw new OCommandExecutionException("Invalid target");
 
-    return removed;
+    if (returning.equalsIgnoreCase("COUNT"))
+      // RETURNS ONLY THE COUNT
+      return removed;
+    else
+      // RETURNS ALL THE DELETED RECORDS
+      return allDeletedRecords;
   }
 
   /**
@@ -180,10 +192,16 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   public boolean result(final Object iRecord) {
     final OIdentifiable id = (OIdentifiable) iRecord;
     if (id.getIdentity().isValid()) {
-      final OrientVertex v = graph.getVertex(id);
+      final ODocument record = id.getRecord();
+
+      final OrientVertex v = graph.getVertex(record);
       if (v != null) {
         v.remove();
-        removed++;
+
+        if (returning.equalsIgnoreCase("BEFORE"))
+          allDeletedRecords.add(record);
+        else
+          removed++;
       }
     }
 
@@ -192,7 +210,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
   @Override
   public String getSyntax() {
-    return "DELETE VERTEX <rid>|<class>|FROM <query> [WHERE <conditions>] [LIMIT <max-records>]>";
+    return "DELETE VERTEX <rid>|<class>|FROM <query> [WHERE <conditions>] [LIMIT <max-records>] [RETURN <COUNT|BEFORE>]>";
   }
 
   @Override
@@ -204,6 +222,20 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   @Override
   public int getSecurityOperationType() {
     return ORole.PERMISSION_DELETE;
+  }
+
+  /**
+   * Parses the returning keyword if found.
+   */
+  protected String parseReturn() throws OCommandSQLParsingException {
+    parserNextWord(true);
+    final String returning = parserGetLastWord();
+
+    if (!returning.equalsIgnoreCase("COUNT") && !returning.equalsIgnoreCase("BEFORE"))
+      throwParsingException("Invalid " + KEYWORD_RETURN + " value set to '" + returning
+          + "' but it should be COUNT (default), BEFORE. Example: " + KEYWORD_RETURN + " BEFORE");
+
+    return returning;
   }
 
 }

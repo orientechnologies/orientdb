@@ -38,9 +38,9 @@ public abstract class AbstractIndexReuseTest extends DocumentDBBaseTest {
 
   @AfterClass
   public void closeJMXConnector() throws Exception {
-    if (isRemoteStorage()) {
-      jmxConnector.close();
-    }
+//    if (isRemoteStorage()) {
+//      jmxConnector.close();
+//    }
   }
 
   private boolean isRemoteStorage() {
@@ -48,14 +48,14 @@ public abstract class AbstractIndexReuseTest extends DocumentDBBaseTest {
   }
 
   private OProfilerMBean getProfilerInstance() throws Exception {
-    if (isRemoteStorage()) {
-      final JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://:10005/jmxrmi");
-      jmxConnector = JMXConnectorFactory.connect(url, null);
-      final MBeanServerConnection mbsc = jmxConnector.getMBeanServerConnection();
-      final ObjectName onProfiler = new ObjectName("OrientDB:type=Profiler");
-      return JMX.newMBeanProxy(mbsc, onProfiler, OProfilerMBean.class, false);
-    } else {
+//    if (isRemoteStorage()) {
+//      final JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://:10005/jmxrmi");
+//      jmxConnector = JMXConnectorFactory.connect(url, null);
+//      final MBeanServerConnection mbsc = jmxConnector.getMBeanServerConnection();
+//      final ObjectName onProfiler = new ObjectName("OrientDB:type=Profiler");
+//      return JMX.newMBeanProxy(mbsc, onProfiler, OProfilerMBean.class, false);
+//    } else {
       return Orient.instance().getProfiler();
-    }
+//    }
   }
 }

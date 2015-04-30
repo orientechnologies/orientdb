@@ -117,7 +117,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     }
 
     if (timeoutMs < 0)
-      throwParsingException("Invalid " + KEYWORD_TIMEOUT + ": value set minor than ZERO. Example: " + timeoutMs + " 10000");
+      throwParsingException("Invalid " + KEYWORD_TIMEOUT + ": value set minor than ZERO. Example: " + KEYWORD_TIMEOUT + " 10000");
 
     parserNextWord(true);
     word = parserGetLastWord();

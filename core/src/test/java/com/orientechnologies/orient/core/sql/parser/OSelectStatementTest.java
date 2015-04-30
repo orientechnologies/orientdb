@@ -72,6 +72,14 @@ public class OSelectStatementTest {
 
   }
 
+  public void testUnwind() {
+    checkRightSyntax("select from Foo unwind foo");
+    checkRightSyntax("select from Foo unwind foo, bar");
+    checkRightSyntax("select from Foo where foo = 1 unwind foo, bar");
+    checkRightSyntax("select from Foo where foo = 1 order by foo unwind foo, bar");
+    checkRightSyntax("select from Foo where foo = 1 group by bar order by foo unwind foo, bar");
+  }
+
   public void testSubSelect() {
     checkRightSyntax("select from (select from Foo)");
 
@@ -233,9 +241,16 @@ public class OSelectStatementTest {
   }
 
   // issue #3718
-  public void testComplexTarget1(){
+  public void testComplexTarget1() {
     checkRightSyntax("SELECT $e FROM [#1:1,#1:2] LET $e = (SELECT FROM $current.prop1)");
     checkRightSyntax("SELECT $e FROM [#1:1,#1:2] let $e = (SELECT FROM (SELECT FROM $parent.$current))");
+  }
+
+  @Test(enabled = false)
+  public void testSlashInQuery() {
+    checkRightSyntax("insert into test content {\"node_id\": \"MFmqvmht//sYYWB8=\"}");
+    checkRightSyntax("insert into test content { \"node_id\": \"MFmqvmht\\/\\/GYsYYWB8=\"}");
+
   }
 
   private void printTree(String s) {

@@ -87,6 +87,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public static final String          KEYWORD_ORDER        = "ORDER";
   public static final String          KEYWORD_BY           = "BY";
   public static final String          KEYWORD_GROUP        = "GROUP";
+  public static final String          KEYWORD_UNWIND       = "UNWIND";
   public static final String          KEYWORD_FETCHPLAN    = "FETCHPLAN";
   public static final String          KEYWORD_NOCACHE      = "NOCACHE";
   private static final String         KEYWORD_AS           = "AS";
@@ -101,6 +102,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private List<OPair<String, String>> orderedFields        = new ArrayList<OPair<String, String>>();
   private List<String>                groupByFields;
   private Map<Object, ORuntimeResult> groupedResult;
+  private List<String>                unwindFields;
   private Object                      expandTarget;
   private int                         fetchLimit           = -1;
   private OIdentifiable               lastRecord;
@@ -242,6 +244,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               parseGroupBy();
             } else if (w.equals(KEYWORD_ORDER)) {
               parseOrderBy();
+            } else if (w.equals(KEYWORD_UNWIND)) {
+              parseUnwind();
             } else if (w.equals(KEYWORD_LIMIT)) {
               parseLimit(w);
             } else if (w.equals(KEYWORD_SKIP) || w.equals(KEYWORD_OFFSET)) {
@@ -469,11 +473,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         // LOCK THE RECORD IF NEEDED
         if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
-          record.lock(true);
-        } else if (localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
-          record.lock(false);
-        }
+          LOCKING_STRATEGY strategy = record.lockingStrategy();
 
+          if (strategy == null)
+            record.lock(true);
+          else if (strategy != LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
+            throw new OCommandExecutionException("Record is locked but different locking strategy is used : " + strategy);
+
+        } else if (localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+          LOCKING_STRATEGY strategy = record.lockingStrategy();
+
+          if (strategy == null)
+            record.lock(false);
+          else if (strategy != LOCKING_STRATEGY.KEEP_SHARED_LOCK)
+            throw new OCommandExecutionException("Record is locked but different locking strategy is used : " + strategy);
+        }
       } else {
         boolean useNoCache = noCache;
 
@@ -511,14 +525,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
     } finally {
-      if (record != null) {
-        if (localLockingStrategy != null)
+      if (record != null && localLockingStrategy != null && record.isLocked()) {
         // CONTEXT LOCK: lock must be released (no matter if filtered or not)
-        {
-          if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
-              || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
-            record.unlock();
-          }
+        if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
+            || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+          record.unlock();
         }
       }
     }
@@ -538,7 +549,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       parallelLock.lock();
 
     try {
-      if ((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && skip > 0) {
+      if ((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && skip > 0 && this.unwindFields == null) {
         lastRecord = null;
         skip--;
         return true;
@@ -548,8 +559,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       resultCount++;
 
-      if (!addResult(lastRecord))
+      if (!addResult(lastRecord)) {
         return false;
+      }
 
       return !((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && !isAnyFunctionAggregates()
           && (groupByFields == null || groupByFields.isEmpty()) && fetchLimit > -1 && resultCount >= fetchLimit);
@@ -621,21 +633,62 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       tipLimitThreshold = 0;
     }
 
+    List<OIdentifiable> allResults = new ArrayList<OIdentifiable>();
+    if (unwindFields != null) {
+      Collection<OIdentifiable> partial = unwind(iRecord, this.unwindFields);
+
+      for (OIdentifiable item : partial) {
+        allResults.add(item);
+      }
+    } else {
+      allResults.add(iRecord);
+    }
     boolean result = true;
-    if ((fullySortedByIndex || orderedFields.isEmpty()) && expandTarget == null) {
+    if ((fullySortedByIndex || orderedFields.isEmpty()) && expandTarget == null && unwindFields == null) {
       // SEND THE RESULT INLINE
       if (request.getResultListener() != null)
-        result = request.getResultListener().result(iRecord);
-
+        for (OIdentifiable iRes : allResults) {
+          result = request.getResultListener().result(iRes);
+        }
     } else {
 
       // COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
       if (tempResult == null)
         tempResult = new ArrayList<OIdentifiable>();
 
-      ((Collection<OIdentifiable>) tempResult).add(iRecord);
+      for (OIdentifiable iRes : allResults) {
+        ((Collection<OIdentifiable>) tempResult).add(iRes);
+      }
     }
 
+    return result;
+  }
+
+  private Collection<OIdentifiable> unwind(OIdentifiable iRecord, List<String> unwindFields) {
+    List<OIdentifiable> result = new ArrayList<OIdentifiable>();
+    if (unwindFields.size() == 0) {
+      result.add(iRecord);
+    } else {
+      String firstField = unwindFields.get(0);
+      List<String> nextFields = unwindFields.subList(1, unwindFields.size());
+      ODocument doc;
+      if (iRecord instanceof ODocument) {
+        doc = (ODocument) iRecord;
+      } else {
+        doc = iRecord.getRecord();
+      }
+      Object fieldValue = doc.field(firstField);
+      if (fieldValue == null || !(fieldValue instanceof Iterable)) {
+        result.addAll(unwind(doc, nextFields));
+      } else {
+        for (Object o : (Iterable) fieldValue) {
+          ODocument unwindedDoc = new ODocument();
+          doc.copyTo(unwindedDoc);
+          unwindedDoc.field(firstField, o);
+          result.addAll(unwind(unwindedDoc, nextFields));
+        }
+      }
+    }
     return result;
   }
 
@@ -716,6 +769,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     // AGGREGATE IT
     getProjectionGroup(null);
+  }
+
+  protected void parseUnwind() {
+    unwindFields = new ArrayList<String>();
+    while (!parserIsEnded() && (unwindFields.size() == 0 || parserGetLastSeparator() == ',' || parserGetCurrentChar() == ',')) {
+      final String fieldName = parserRequiredWord(false, "Field name expected");
+      unwindFields.add(fieldName);
+      parserSkipWhiteSpaces();
+    }
+
+    if (unwindFields.size() == 0) {
+      throwParsingException("unwind field set was missed. Example: UNWIND name, salary");
+    }
   }
 
   protected void parseOrderBy() {
@@ -1294,7 +1360,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     metricRecorder.setContext(context);
   }
 
-  private void fetchFromTarget(final Iterator<? extends OIdentifiable> iTarget) {
+  private boolean fetchFromTarget(final Iterator<? extends OIdentifiable> iTarget) {
     fetchLimit = getQueryFetchLimit();
 
     final long startFetching = System.currentTimeMillis();
@@ -1322,7 +1388,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
 
           if (!executeSearchRecord(next))
-            break;
+            return false;
 
           if (queryScanThresholdWarning > 0 && browsed > queryScanThresholdWarning && compiledFilter != null) {
             reportTip(String
@@ -1333,6 +1399,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
         }
       }
+      return true;
 
     } finally {
       context.setVariable("fetchingFromTargetElapsed", (System.currentTimeMillis() - startFetching));
@@ -1815,7 +1882,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       uniqueResult = new HashSet<ORID>();
       for (OIndexCursor cursor : cursors) {
-        fetchValuesFromIndexCursor(cursor);
+        if (!fetchValuesFromIndexCursor(cursor)) {
+          break;
+        }
       }
       uniqueResult.clear();
       uniqueResult = null;
@@ -1913,7 +1982,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return null;
   }
 
-  private void fetchValuesFromIndexCursor(final OIndexCursor cursor) {
+  private boolean fetchValuesFromIndexCursor(final OIndexCursor cursor) {
     int needsToFetch;
     if (fetchLimit > 0) {
       needsToFetch = fetchLimit + skip;
@@ -1922,7 +1991,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     cursor.setPrefetchSize(needsToFetch);
-    fetchFromTarget(cursor);
+    return fetchFromTarget(cursor);
   }
 
   private void fetchEntriesFromIndexCursor(final OIndexCursor cursor) {

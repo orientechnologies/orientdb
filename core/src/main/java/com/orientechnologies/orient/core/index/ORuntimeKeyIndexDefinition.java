@@ -42,7 +42,9 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
   private OBinarySerializer<T> serializer;
 
   @SuppressWarnings("unchecked")
-  public ORuntimeKeyIndexDefinition(final byte iId) {
+  public ORuntimeKeyIndexDefinition(final byte iId, int version) {
+    super(version);
+
     serializer = (OBinarySerializer<T>) OBinarySerializerFactory.getInstance().getObjectSerializer(iId);
     if (serializer == null)
       throw new OConfigurationException("Runtime index definition cannot find binary serializer with id=" + iId
@@ -84,18 +86,32 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
   public ODocument toStream() {
     document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
     try {
-      document.field("keySerializerId", serializer.getId());
-      document.field("collate", collate.getName());
-      document.field("nullValuesIgnored", isNullValuesIgnored());
+      serializeToStream();
       return document;
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
     }
   }
 
+  @Override
+  protected void serializeToStream() {
+    super.serializeToStream();
+
+    document.field("keySerializerId", serializer.getId());
+    document.field("collate", collate.getName());
+    document.field("nullValuesIgnored", isNullValuesIgnored());
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   protected void fromStream() {
+    serializeFromStream();
+  }
+
+  @Override
+  protected void serializeFromStream() {
+    super.serializeFromStream();
+
     final byte keySerializerId = ((Number) document.field("keySerializerId")).byteValue();
     serializer = (OBinarySerializer<T>) OBinarySerializerFactory.getInstance().getObjectSerializer(keySerializerId);
     if (serializer == null)

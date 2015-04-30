@@ -45,8 +45,8 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * Closes all pooled databases and clear the pool.
    */
   public void close() {
-		if (pool != null)
-			pool.close();
+    if (pool != null)
+      pool.close();
 
     pool = null;
   }
@@ -198,9 +198,11 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
 
       g.checkForGraphSchema(db);
 
-      if (txActive)
+      if (txActive) {
         // REOPEN IT AGAIN
         db.begin();
+        db.getTransaction().setUsingLog(settings.isUseLog());
+      }
 
     }
 

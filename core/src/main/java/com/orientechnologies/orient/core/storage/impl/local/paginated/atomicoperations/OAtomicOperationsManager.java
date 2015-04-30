@@ -22,10 +22,11 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 import java.io.IOException;
@@ -56,30 +57,41 @@ public class OAtomicOperationsManager {
   private final OWriteAheadLog                                 writeAheadLog;
   private final OLockManager<Object, OAtomicOperationsManager> lockManager      = new OLockManager<Object, OAtomicOperationsManager>(
                                                                                     true, -1);
+  private final OReadCache                                     readCache;
+  private final OWriteCache                                    writeCache;
 
   public OAtomicOperationsManager(OAbstractPaginatedStorage storage) {
     this.storage = storage;
     this.writeAheadLog = storage.getWALInstance();
+    this.readCache = storage.getReadCache();
+    this.writeCache = storage.getWriteCache();
   }
 
-  public OAtomicOperation startAtomicOperation() throws IOException {
+  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent) throws IOException {
     if (writeAheadLog == null)
       return null;
 
     OAtomicOperation operation = currentOperation.get();
     if (operation != null) {
       operation.incrementCounter();
+
+      if (durableComponent != null)
+        acquireExclusiveLockTillOperationComplete(durableComponent);
+
       return operation;
     }
 
     final OOperationUnitId unitId = OOperationUnitId.generateId();
     final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
-    operation = new OAtomicOperation(lsn, unitId);
+    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache);
     currentOperation.set(operation);
 
     if (storage.getStorageTransaction() == null)
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
+
+    if (durableComponent != null)
+      acquireExclusiveLockTillOperationComplete(durableComponent);
 
     return operation;
   }
@@ -105,25 +117,42 @@ public class OAtomicOperationsManager {
     assert counter >= 0;
 
     if (counter == 0) {
-      for (Object lockObject : operation.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
+      if (!operation.isRollback())
+        operation.commitChanges(writeAheadLog);
 
       writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
       currentOperation.set(null);
+
+      for (Object lockObject : operation.lockedObjects())
+        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
     }
 
     return operation;
   }
 
-  public void lockTillOperationComplete(Object lockObject) {
+  private void acquireExclusiveLockTillOperationComplete(ODurableComponent durableComponent) {
     final OAtomicOperation operation = currentOperation.get();
     if (operation == null)
       return;
 
-    if (operation.containsInLockedObjects(lockObject))
+    if (operation.containsInLockedObjects(durableComponent))
       return;
 
-    lockManager.acquireLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
-    operation.addLockedObject(lockObject);
+    lockManager.acquireLock(this, durableComponent, OLockManager.LOCK.EXCLUSIVE);
+    operation.addLockedObject(durableComponent);
+  }
+
+  public void acquireReadLock(ODurableComponent durableComponent) {
+    if (writeAheadLog == null)
+      return;
+
+    lockManager.acquireLock(this, durableComponent, OLockManager.LOCK.SHARED);
+  }
+
+  public void releaseReadLock(ODurableComponent durableComponent) {
+    if (writeAheadLog == null)
+      return;
+
+    lockManager.releaseLock(this, durableComponent, OLockManager.LOCK.SHARED);
   }
 }

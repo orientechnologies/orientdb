@@ -27,15 +27,18 @@ import java.util.List;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.server.OServer;
@@ -92,14 +95,15 @@ public class OTxTask extends OAbstractReplicatedTask {
         if (task instanceof OAbstractRecordReplicatedTask) {
           final ORecord record = ((OAbstractRecordReplicatedTask) task).getRecord();
 
-          for (String f : ((ODocument) record).fieldNames()) {
-            final Object fValue = ((ODocument) record).field(f);
-            if (fValue instanceof ORecordLazyMultiValue)
-              // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
-              ((ORecordLazyMultiValue) fValue).convertLinks2Records();
-            else if (fValue instanceof ORecordId)
-              ((ODocument) record).field(f, ((ORecordId) fValue).getRecord());
-          }
+          if (record != null)
+            for (String f : ((ODocument) record).fieldNames()) {
+              final Object fValue = ((ODocument) record).field(f);
+              if (fValue instanceof ORecordLazyMultiValue)
+                // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
+                ((ORecordLazyMultiValue) fValue).convertLinks2Records();
+              else if (fValue instanceof ORecordId)
+                ((ODocument) record).field(f, ((ORecordId) fValue).getRecord());
+            }
         }
       }
 
@@ -133,6 +137,10 @@ public class OTxTask extends OAbstractReplicatedTask {
     } catch (ONeedRetryException e) {
       return e;
     } catch (OTransactionException e) {
+      return e;
+    } catch (ORecordDuplicatedException e) {
+      return e;
+    } catch (ORecordNotFoundException e) {
       return e;
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on distributed transaction commit", e);
@@ -207,6 +215,17 @@ public class OTxTask extends OAbstractReplicatedTask {
     final int size = in.readInt();
     for (int i = 0; i < size; ++i)
       tasks.add((OAbstractRecordReplicatedTask) in.readObject());
+  }
+
+  /**
+   * Computes the timeout according to the transaction size.
+   * 
+   * @return
+   */
+  @Override
+  public long getTimeout() {
+    final long to = OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    return to + ((to / 2) * tasks.size());
   }
 
   @Override

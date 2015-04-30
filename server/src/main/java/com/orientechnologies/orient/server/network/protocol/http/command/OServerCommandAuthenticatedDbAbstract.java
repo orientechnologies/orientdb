@@ -32,14 +32,10 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.OTokenHandler;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+import com.orientechnologies.orient.server.network.protocol.http.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -202,8 +198,13 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     if (iRequest.authentication == null || iRequest.authentication.equalsIgnoreCase("basic")) {
       header = "WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + "\"";
     }
-    iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-        "401 Unauthorized.", header);
+    if (isJsonResponse(iResponse)) {
+      sendJsonError(iResponse, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+          "401 Unauthorized.", header);
+    } else {
+      iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+          "401 Unauthorized.", header);
+    }
   }
 
   protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {

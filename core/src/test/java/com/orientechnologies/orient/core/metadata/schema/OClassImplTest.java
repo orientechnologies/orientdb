@@ -11,6 +11,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -419,4 +424,55 @@ public class OClassImplTest {
     assertTrue(doc1.field("test6a") instanceof Integer);
   }
 
+  @Test
+  public void testCreatePropertyCastableColectionNoCache() {
+    final OSchema oSchema = db.getMetadata().getSchema();
+    OClass oClass = oSchema.createClass("Test11bis");
+
+    final ODocument document = new ODocument("Test11bis");
+    document.field("test1", new ArrayList<ODocument>(), OType.EMBEDDEDLIST);
+    document.field("test2", new ArrayList<ODocument>(), OType.LINKLIST);
+
+    document.field("test3", new HashSet<ODocument>(), OType.EMBEDDEDSET);
+    document.field("test4", new HashSet<ODocument>(), OType.LINKSET);
+    document.field("test5", new HashMap<String, ODocument>(), OType.EMBEDDEDMAP);
+    document.field("test6", new HashMap<String, ODocument>(), OType.LINKMAP);
+    db.save(document);
+    db.commit();
+    oClass.createProperty("test1", OType.LINKLIST);
+    oClass.createProperty("test2", OType.EMBEDDEDLIST);
+    oClass.createProperty("test3", OType.LINKSET);
+    oClass.createProperty("test4", OType.EMBEDDEDSET);
+    oClass.createProperty("test5", OType.LINKMAP);
+    oClass.createProperty("test6", OType.EMBEDDEDMAP);
+
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    Future<ODocument> future = executor.submit(new Callable<ODocument>() {
+      @Override
+      public ODocument call() throws Exception {
+        ODocument doc1 = db.copy().load(document.getIdentity());
+        assertEquals(doc1.fieldType("test1"), OType.LINKLIST);
+        assertEquals(doc1.fieldType("test2"), OType.EMBEDDEDLIST);
+        assertEquals(doc1.fieldType("test3"), OType.LINKSET);
+        assertEquals(doc1.fieldType("test4"), OType.EMBEDDEDSET);
+        assertEquals(doc1.fieldType("test5"), OType.LINKMAP);
+        assertEquals(doc1.fieldType("test6"), OType.EMBEDDEDMAP);
+        return doc1;
+      }
+    });
+
+    try {
+      future.get();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    } catch (ExecutionException e) {
+      if (e.getCause() instanceof AssertionError) {
+        throw (AssertionError) e.getCause();
+      }
+    }
+
+    executor.shutdown();
+
+  }
 }
