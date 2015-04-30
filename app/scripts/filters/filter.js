@@ -70,6 +70,16 @@ filterModule.filter('formatError', function () {
 
   }
 })
+filterModule.filter('classRender', function () {
+  return function (input, args) {
+    if (args == '@class') {
+      return input;
+    } else {
+      return input;
+    }
+
+  }
+})
 filterModule.filter('formatArray', function () {
   return function (input) {
     if (input instanceof  Array) {

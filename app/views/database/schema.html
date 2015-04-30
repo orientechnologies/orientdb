@@ -76,6 +76,7 @@
                     <i class="fa fa-question-circle"></i>
                   </a>
                 </th>
+                <th>Color</th>
                 <th>SuperClasses
                   <a href="javascript:void(0)" tabindex="1"
                      data-trigger="focus" data-placement="bottom"
@@ -113,6 +114,12 @@
               <tbody>
               <tr ng-repeat="result in listClassesTotal | filter: queryy ">
                 <td ng-click="openClass(result)">{{result['name']}}</td>
+                <td>
+
+                  <spectrum-colorpicker
+                    ng-model="config.config['classes'][result['name']].fill" ng-change="changeColor(result)"
+                    options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
+                </td>
                 <td ng-click="openClass(result)">{{result['superClasses'] | formatArray}}</td>
                 <td ng-click="openClass(result)">{{result['alias']}}</td>
                 <td ng-click="openClass(result)">

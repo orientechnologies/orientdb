@@ -1,5 +1,5 @@
 var schemaModule = angular.module('schema.controller', ['database.services']);
-schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'ClassAlterApi', '$modal', '$q', '$route', '$window', 'Spinner', 'Notification', '$popover', function ($scope, $routeParams, $location, Database, CommandApi, ClassAlterApi, $modal, $q, $route, $window, Spinner, Notification, $popover) {
+schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'ClassAlterApi', '$modal', '$q', '$route', '$window', 'Spinner', 'Notification', '$popover', 'GraphConfig', function ($scope, $routeParams, $location, Database, CommandApi, ClassAlterApi, $modal, $q, $route, $window, Spinner, Notification, $popover, GraphConfig) {
 
   //for pagination
   $scope.countPage = 10;
@@ -21,6 +21,20 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
   $scope.numberOfPage = new Array(Math.ceil($scope.listClassesTotal.length / $scope.countPage));
   $scope.listClasses = $scope.listClassesTotal.slice(0, $scope.countPage);
 
+
+  GraphConfig.get().then(function (data) {
+    $scope.config = data;
+    if ($scope.config) {
+      $scope.listClassesTotal.forEach(function (c) {
+        if (!$scope.config.config.classes[c.name]) {
+          $scope.config.config.classes[c.name] = {}
+          $scope.config.config.classes[c.name].fill = "#000000";
+          $scope.config.config.classes[c.name].stroke = "#000000";
+        }
+      })
+
+    }
+  })
   $scope.headers = ['name', 'superClass', 'alias', 'abstract', 'clusters', 'defaultCluster', 'clusterSelection', 'records'];
   $scope.refreshPage = function () {
     $scope.database.refreshMetadata($routeParams.database);
@@ -44,6 +58,21 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
       $scope.numberOfPage = new Array(Math.ceil($scope.listClassesTotal.length / $scope.countPage));
     }
   });
+  $scope.changeColor = function (changeColor) {
+    if ($scope.config) {
+
+      GraphConfig.set($scope.config).then(function () {
+        $('.sp-light .sp-choose').click();
+
+        var noti = S("The color of class {{name}} has been changed in {{newName}}").template({
+          name: changeColor.name,
+          newName: $scope.config.config.classes[changeColor.name].fill
+        }).s;
+        Notification.push({content: noti});
+      })
+      //console.log($scope.config.config.classes[changeColor.name].fill);
+    }
+  }
   $scope.canDrop = function (clazz) {
     return clazz != "V" && clazz != "E";
   }
@@ -783,7 +812,7 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
       }
     }, function (error) {
       $scope.testMsgClass = 'alert alert-danger'
-      
+
       $scope.testMsg = $filter('formatError')(error);
     });
   }
