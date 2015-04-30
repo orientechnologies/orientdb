@@ -253,6 +253,23 @@ public class OSelectStatementTest {
 
   }
 
+  @Test
+  public void checkOrderBySyntax() {
+    checkRightSyntax("select from test order by something ");
+    checkRightSyntax("select from test order by something, somethingElse ");
+    checkRightSyntax("select from test order by something asc, somethingElse desc");
+    checkRightSyntax("select from test order by something asc, somethingElse ");
+    checkRightSyntax("select from test order by something, somethingElse asc");
+    checkRightSyntax("select from test order by something asc");
+    checkRightSyntax("select from test order by something desc");
+    checkRightSyntax("select from test order by (something desc)");
+    checkRightSyntax("select from test order by (something asc)");
+    checkRightSyntax("select from test order by (something asc),somethingElse");
+    checkRightSyntax("select from test order by (something),(somethingElse)");
+    checkRightSyntax("select from test order by something,(somethingElse)");
+    checkRightSyntax("select from test order by (something asc),(somethingElse desc)");
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {
