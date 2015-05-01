@@ -2345,9 +2345,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void checkRecursion(OClass baseClass) {
-    
-    Collection<OClass> allSuperClasses = getAllSuperClasses();
-    if (allSuperClasses.contains(baseClass)) {
+    if (isSubClassOf(baseClass)) {
       throw new OSchemaException("Can't add base class '" + baseClass.getName() + "', because of recursion");
     }
   }
