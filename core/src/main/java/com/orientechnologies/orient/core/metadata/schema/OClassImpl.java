@@ -1140,6 +1140,21 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public Collection<OClass> getAllBaseClasses() {
     return getAllSubclasses();
   }
+  
+  @Override
+  public Collection<OClass> getAllSuperClasses() {
+    Set<OClass> ret = new HashSet<OClass>();
+    getAllSuperClasses(ret);
+    return ret;
+  }
+  
+  private void getAllSuperClasses(Set<OClass> set) {
+    set.addAll(superClasses);
+    for(OClassImpl superClass: superClasses)
+    {
+      superClass.getAllSuperClasses(set);
+    }
+  }
 
   OClass removeBaseClassInternal(final OClass baseClass) {
     acquireSchemaWriteLock();
@@ -2330,23 +2345,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void checkRecursion(OClass baseClass) {
-    final Set<String> browsed = new HashSet<String>();
-    browsed.add(baseClass.getName());
-    if (checkRecursion(browsed)) {
+    if (isSubClassOf(baseClass)) {
       throw new OSchemaException("Can't add base class '" + baseClass.getName() + "', because of recursion");
     }
-  }
-
-  private boolean checkRecursion(Set<String> browsedClasses) {
-    String className = getName();
-    if (browsedClasses.contains(className))
-      return true;
-    for (OClassImpl superClass : superClasses) {
-      if (superClass.checkRecursion(browsedClasses))
-        return true;
-    }
-    browsedClasses.add(className);
-    return false;
   }
 
   private void removePolymorphicClusterIds(final OClassImpl iBaseClass) {

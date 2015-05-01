@@ -151,6 +151,11 @@ public interface OClass extends Comparable<OClass> {
    * @return all the subclass hierarchy
    */
   public Collection<OClass> getAllSubclasses();
+  
+  /**
+   * @return all recursively collected super classes
+   */
+  public Collection<OClass> getAllSuperClasses();
 
   public long getSize();
 
