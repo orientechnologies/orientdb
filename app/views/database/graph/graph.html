@@ -75,7 +75,7 @@
                                 <a href="javascript:void(0)">
                                     <i class="fa fa-search"> Hide Query</i>
                                     <input type="checkbox" bs-checkbox
-                                           ng-model="queryClass" >
+                                           ng-model="queryClass">
                                 </a></li>
                             <li><a href="javascript:void(0)"><i
                                     class="fa fa-book"> Hide Legend</i>
@@ -95,9 +95,11 @@
 
             <div class="row animationQuery " ng-show="!queryClass">
                 <div class="col-md-12 box" ng-class="{ 'open' :  !queryClass }">
-                    <div ui-codemirror="editorOptions" ng-model="queryText">
+                    <form ng-submit="query()" class="form-inline">
+                        <div ui-codemirror="editorOptions" ng-model="queryText">
 
-                    </div>
+                        </div>
+                    </form>
                     <div class="run-container">
                         <div class="btn-group run-action ">
                             <button type="button" ng-click="query()" ng-disabled="!queryText"
