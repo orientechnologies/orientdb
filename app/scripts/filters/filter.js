@@ -58,6 +58,32 @@ filterModule.filter('cname', function () {
 });
 
 
+filterModule.filter('formatError', function () {
+  return function (input) {
+    if (typeof input == 'string') {
+      return input;
+    } else if (typeof  input == 'object') {
+      return input.errors[0].content;
+    } else {
+      return input;
+    }
+
+  }
+})
+filterModule.filter('formatArray', function () {
+  return function (input) {
+    if (input instanceof  Array) {
+      var output = "";
+      input.forEach(function (e, idx, arr) {
+        output += (idx > 0 ? ", " : " ") + e;
+      })
+      return output;
+    } else {
+      return input;
+    }
+  }
+})
+
 filterModule.filter('operation', function () {
 
   return function (input, args) {

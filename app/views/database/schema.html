@@ -76,7 +76,7 @@
                                         <i class="fa fa-question-circle"></i>
                                     </a>
                                 </th>
-                                <th>SuperClass
+                                <th>SuperClasses
                                     <a href="javascript:void(0)" tabindex="1"
                                        data-trigger="focus" data-placement="bottom"
                                        data-container="body"
@@ -113,7 +113,7 @@
                             <tbody>
                             <tr ng-repeat="result in listClassesTotal | filter: queryy ">
                                 <td ng-click="openClass(result)">{{result['name']}}</td>
-                                <td ng-click="openClass(result)">{{result['superClass']}}</td>
+                                <td ng-click="openClass(result)">{{result['superClasses'] | formatArray}}</td>
                                 <td ng-click="openClass(result)">{{result['alias']}}</td>
                                 <td ng-click="openClass(result)">
                                     <input type="checkbox" ng-model="result['abstract']" ng-disabled="true">

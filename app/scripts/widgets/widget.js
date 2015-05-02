@@ -632,7 +632,7 @@ Widget.directive('fontpicker', function ($timeout) {
 
     }
 });
-// Common directive for "focus"  
+// Common directive for "focus"
 Widget.directive('focus',
     function($timeout) {
         return {

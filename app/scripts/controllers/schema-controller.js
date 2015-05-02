@@ -588,7 +588,7 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
       Spinner.stopSpinnerPopup();
       Notification.push({content: "Index '" + $scope.newIndex['name'] + "' created."})
     }, function (error) {
-      $scope.testMsgClass = 'alert alert-error';
+      $scope.testMsgClass = 'alert alert-danger';
       $scope.testMsg = error;
       Spinner.stopSpinnerPopup();
     });
@@ -723,12 +723,18 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
     return true;
   }
 }]);
-schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', 'Notification', '$translate', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, Notification, $translate) {
+schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', 'Notification', '$translate', '$filter', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, Notification, $translate, $filter) {
 
   $scope.property = {"name": "", "alias": null, "superclass": null, "abstract": false}
   $scope.database = Database;
   $scope.listClasses = $scope.database.listNameOfClasses();
 
+
+  $scope.select2Options = {
+    'multiple': true,
+    'simple_tags': true,
+    'tags': $scope.listClasses
+  };
   $scope.links = {
     linkClusters: Database.getOWikiFor("Tutorial-Clusters.html")
   }
@@ -743,7 +749,8 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
     var alias = $scope.property['alias'] == null || $scope.property['alias'] == '' ? null : $scope.property['alias'];
     sql = sql + abstract;
     var supercl = $scope.property['superclass'] != null ? ' extends ' + $scope.property['superclass'] : '';
-    sql = sql + supercl;
+    var superClasses = $scope.property['superClasses'] != null ? ' extends ' + $filter('formatArray')($scope.property['superClasses']) : ''
+    sql = sql + superClasses;
 
     CommandApi.queryText({
       database: $routeParams.database,
@@ -765,7 +772,7 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
           $scope.parentScope.refreshPage();
         }, function (error) {
           $scope.testMsg = error;
-          $scope.testMsgClass = 'alert alert-error'
+          $scope.testMsgClass = 'alert alert-danger'
         });
       }
       else {
@@ -775,8 +782,9 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
 
       }
     }, function (error) {
-      $scope.testMsgClass = 'alert alert-error'
-      $scope.testMsg = error;
+      $scope.testMsgClass = 'alert alert-danger'
+      
+      $scope.testMsg = $filter('formatError')(error);
     });
   }
 }]);

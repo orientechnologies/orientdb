@@ -18,14 +18,23 @@
                                            ng-model="property['name']" focus="true"/>
                                 </div>
                             </div>
+                            <!--<div class="form-group">-->
+                            <!--<label class="control-label col-md-2">Super Class</label>-->
+
+                            <!--<div class="col-md-10">-->
+                            <!--<select ng-model="property['superclass']" class="form-control"-->
+                            <!--ng-options="p.toString() for p in listClasses">-->
+                            <!--<option value="">-- Choose Super Class --</option>-->
+                            <!--</select>-->
+                            <!--</div>-->
+                            <!--</div>-->
                             <div class="form-group">
-                                <label class="control-label col-md-2">Super Class</label>
+                                <label class="control-label col-md-2">SuperClasses</label>
 
                                 <div class="col-md-10">
-                                    <select ng-model="property['superclass']" class="form-control"
-                                            ng-options="p.toString() for p in listClasses">
-                                        <option value="">-- Choose Super Class --</option>
-                                    </select>
+                                    <input type="hidden" ng-model="property['superClasses']" ui-select2="select2Options"
+                                           data-placeholder="Pick SuperClasses">
+                                    </input>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -48,16 +57,17 @@
                         </form>
                     </div>
                 </div>
-              <div class="alert alert-warning" ng-bind-html="hint">
+                <div class="alert alert-warning" ng-bind-html="hint">
 
-              </div>
+                </div>
+                <div ng-class="testMsgClass" ng-show="testMsg">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    {{ testMsg }}
+                </div>
             </div>
-            <div ng-class="testMsgClass" ng-show="testMsg">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-                {{ testMsg }}
-            </div>
+
             <div class="modal-footer">
-                <button type="button" class="btn btn-sm btn-default" ng-click="$hide()">Close</button>
+                <!--<button type="button" class="btn btn-sm btn-default" ng-click="$hide()">Close</button>-->
                 <button type="submit" class="btn btn-sm btn-primary" ng-disabled="classForm.$invalid"
                         ng-click="saveNewClass()">
                     Save
