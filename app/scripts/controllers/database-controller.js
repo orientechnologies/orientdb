@@ -448,14 +448,11 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     $scope.changeLimit = function(){
         $scope.queryText = $scope.item.query;
         scroller.scrollTo(0, 0, 2000);
-        $scope.cm.focus();
-
         $scope.cm.setValue($scope.queryText);
         $scope.cm.setCursor($scope.cm.lineCount());
 
     }
-
-
+    $scope.cm.focus();
 }]);
 dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localStorageService', 'BrowseConfig', function ($scope, $routeParams, localStorageService, BrowseConfig) {
 
@@ -469,7 +466,7 @@ dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localSt
     $scope.hideSettings = config.hideSettings;
     $scope.showw = false;
 
-
+    ;
     $scope.$watch("limit", function (data) {
         config.set('limit', data);
     });
