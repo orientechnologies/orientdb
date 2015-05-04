@@ -37,12 +37,12 @@ import java.util.Map;
  * 
  */
 public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_TRUNCATE = "TRUNCATE";
-  public static final String KEYWORD_CLASS    = "CLASS";
-  public static final String KEYWORD_DEEP     = "DEEP";
+  public static final String KEYWORD_TRUNCATE    = "TRUNCATE";
+  public static final String KEYWORD_CLASS       = "CLASS";
+  public static final String KEYWORD_POLYMORPHIC = "POLYMORPHIC";
   private OClass             schemaClass;
-  private boolean            unsafe           = false;
-  private boolean            deep             = false;
+  private boolean            unsafe              = false;
+  private boolean            deep                = false;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLTruncateClass parse(final OCommandRequest iRequest) {
@@ -80,7 +80,7 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
       String nextWord = word.toString();
       if (nextWord.toUpperCase().equals(KEYWORD_UNSAFE)) {
         unsafe = true;
-      } else if (nextWord.toUpperCase().equals(KEYWORD_DEEP)) {
+      } else if (nextWord.toUpperCase().equals(KEYWORD_POLYMORPHIC)) {
         deep = true;
       }
       oldPos = pos;
