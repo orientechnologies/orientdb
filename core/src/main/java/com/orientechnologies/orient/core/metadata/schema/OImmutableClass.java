@@ -373,6 +373,21 @@ public class OImmutableClass implements OClass {
   public Collection<OClass> getAllBaseClasses() {
     return getAllSubclasses();
   }
+  
+  @Override
+  public Collection<OClass> getAllSuperClasses() {
+    Set<OClass> ret = new HashSet<OClass>();
+    getAllSuperClasses(ret);
+    return ret;
+  }
+  
+  private void getAllSuperClasses(Set<OClass> set) {
+    set.addAll(superClasses);
+    for(OImmutableClass superClass: superClasses)
+    {
+      superClass.getAllSuperClasses(set);
+    }
+  }
 
   @Override
   public long getSize() {

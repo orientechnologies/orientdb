@@ -107,7 +107,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
             connection.getValue());
     } else if (ODocumentInternal.getImmutableSchemaClass(value).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE
-      edge = new OrientEdge(this.sourceVertex.getGraph(), rec.getIdentity());
+      edge = new OrientEdge(this.sourceVertex.getGraph(), rec.getIdentity(), connection.getValue());
     } else
       throw new IllegalStateException("Invalid content found while iterating edges, value '" + value + "' is not an edge");
 

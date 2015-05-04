@@ -262,6 +262,11 @@ public abstract class OClassAbstractDelegate implements OClass {
   public Collection<OClass> getAllSubclasses() {
     return delegate.getAllSubclasses();
   }
+  
+  @Override
+  public Collection<OClass> getAllSuperClasses() {
+    return delegate.getAllSuperClasses();
+  }
 
   @Override
   public Collection<OClass> getAllBaseClasses() {
