@@ -1,5 +1,5 @@
 var schemaModule = angular.module('schema.controller', ['database.services']);
-schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'ClassAlterApi', '$modal', '$q', '$route', '$window', 'Spinner', 'Notification', '$popover', function ($scope, $routeParams, $location, Database, CommandApi, ClassAlterApi, $modal, $q, $route, $window, Spinner, Notification, $popover) {
+schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'ClassAlterApi', '$modal', '$q', '$route', '$window', 'Spinner', 'Notification', '$popover', 'GraphConfig', 'DocumentApi', function ($scope, $routeParams, $location, Database, CommandApi, ClassAlterApi, $modal, $q, $route, $window, Spinner, Notification, $popover, GraphConfig, DocumentApi) {
 
   //for pagination
   $scope.countPage = 10;
@@ -21,6 +21,30 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
   $scope.numberOfPage = new Array(Math.ceil($scope.listClassesTotal.length / $scope.countPage));
   $scope.listClasses = $scope.listClassesTotal.slice(0, $scope.countPage);
 
+  $scope.colors = d3.scale.category20();
+
+
+  GraphConfig.get().then(function (data) {
+    $scope.config = data;
+    if (!$scope.config) {
+      $scope.config = DocumentApi.createNewDoc(GraphConfig.CLAZZ);
+      $scope.config.config = {
+        classes: {}
+      }
+    }
+    if (!$scope.config.config) {
+      $scope.config.config = {
+        classes: {}
+      }
+    }
+    $scope.listClassesTotal.forEach(function (c) {
+      if (!$scope.config.config.classes[c.name]) {
+        $scope.config.config.classes[c.name] = {}
+        $scope.config.config.classes[c.name].fill = d3.rgb($scope.colors(c.name.toString(2))).toString();
+        $scope.config.config.classes[c.name].stroke = d3.rgb($scope.colors(c.name.toString(2))).darker().toString();
+      }
+    })
+  })
   $scope.headers = ['name', 'superClass', 'alias', 'abstract', 'clusters', 'defaultCluster', 'clusterSelection', 'records'];
   $scope.refreshPage = function () {
     $scope.database.refreshMetadata($routeParams.database);
@@ -44,6 +68,14 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
       $scope.numberOfPage = new Array(Math.ceil($scope.listClassesTotal.length / $scope.countPage));
     }
   });
+  $scope.saveColorConfig = function () {
+
+    GraphConfig.set($scope.config).then(function () {
+
+      var noti = "Colors Configuration saved correctly.";
+      Notification.push({content: noti});
+    })
+  }
   $scope.canDrop = function (clazz) {
     return clazz != "V" && clazz != "E";
   }
@@ -783,7 +815,7 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
       }
     }, function (error) {
       $scope.testMsgClass = 'alert alert-danger'
-      
+
       $scope.testMsg = $filter('formatError')(error);
     });
   }

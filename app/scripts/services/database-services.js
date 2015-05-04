@@ -507,7 +507,19 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
     },
     getOWikiFor: function (page) {
       return current.oWiki + page;
+    },
+    isStrictSql: function () {
+
+      var strictSql = false;
+      var properties = current.metadata['config']['properties'];
+      properties.forEach(function (p) {
+        if (p.name == 'strictSql') {
+          strictSql = p.value == "true";
+        }
+      })
+      return strictSql;
     }
+
 
   };
 });
@@ -714,8 +726,48 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
     return deferred.promise;
   }
   return resource;
-})
-;
+});
+
+database.factory('BatchApi', function ($http, $resource, Notification, Spinner, $q) {
+
+
+  var resource = $resource(API + 'command/:database');
+
+  resource.executeBatch = function (database, script, language) {
+
+    var deferred = $q.defer();
+
+    var url = API + 'batch/' + database;
+
+    var cmd = {
+      type: "script",
+      language: language,
+      script: script
+
+    }
+
+    var operations = {
+      operations: [cmd]
+    }
+    var startTime = new Date().getTime();
+    $http.post(url, operations).success(function (data) {
+
+      if (data && data.result) {
+
+        var time = ((new Date().getTime() - startTime) / 1000);
+        var records = data.result ? data.result.length : "";
+        var noti = "Query executed  in " + time + " sec. Returned " + records + " record(s)";
+        data.notification = noti;
+      }
+
+      deferred.resolve(data);
+    }).error(function (data) {
+      deferred.reject(data);
+    })
+    return deferred.promise;
+  }
+  return resource;
+});
 database.factory('DocumentApi', function ($http, $resource, Database, $q) {
 
   var resource = $resource(API + 'document/:database/:document');

@@ -191,8 +191,7 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
 
     $scope.values = Database.getMetadata()['config']['values'];
     $scope.properties = Database.getMetadata()['config']['properties'];
-    console.log(Database.getMetadata());
-    console.log($scope.properties);
+
     $scope.links = {
         useLightweightEdges: Database.getOWikiFor("Tutorial-Working-with-graphs.html#lightweight-edges"),
         clusterSelection: Database.getOWikiFor("SQL-Alter-Database.html"),
@@ -210,7 +209,6 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
         if (val.name == 'strictSql') {
             foundStrictSql = true;
         }
-        console.log(val.name);
     });
     if (!found) {
         $scope.properties.push({name: 'useLightweightEdges', value: 'false' });

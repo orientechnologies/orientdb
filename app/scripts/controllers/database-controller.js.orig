@@ -1,5 +1,5 @@
 var dbModule = angular.module('database.controller', ['database.services', 'bookmarks.services']);
-dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', 'BrowseConfig', '$timeout', 'GraphConfig', 'BatchApi', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside, BrowseConfig, $timeout, GraphConfig, BatchApi) {
+dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', 'BrowseConfig', '$timeout', 'GraphConfig', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside, BrowseConfig, $timeout, GraphConfig) {
 
   $scope.database = Database;
   $scope.limit = 20;
@@ -93,12 +93,6 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
   $scope.table = true;
   $scope.contentType = ['JSON', 'CSV'];
-
-  $scope.requestTypes = ['COMMAND', 'BATCH']
-
-  $scope.requestLanguage = ['SQL', 'JAVASCRIPT']
-
-  $scope.selectedRequestType = $scope.requestTypes[0];
   $scope.selectedContentType = $scope.contentType[0];
   $scope.editorOptions = {
     lineWrapping: true,
@@ -150,12 +144,9 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     }
 
     queryBuffer = queryBuffer.trim();
-
-    if ($scope.config.selectedRequestType == 'COMMAND') {
-      queryBuffer = queryBuffer.replace(/\n/g, " ");
-      queryBuffer = queryBuffer.replace(/\t/g, " ");
-      queryBuffer = queryBuffer.replace(/(\/\*([\s\S]*?)\*\/)|(\/\/(.*)$)/gm, '');
-    }
+    queryBuffer = queryBuffer.replace(/\n/g, " ");
+    queryBuffer = queryBuffer.replace(/\t/g, " ");
+    queryBuffer = queryBuffer.replace(/(\/\*([\s\S]*?)\*\/)|(\/\/(.*)$)/gm, '');
     if (queryBuffer.length != 0) {
       Spinner.start(function () {
         CommandApi.interrupt(Database.getName(), queryBuffer).then(function () {
@@ -179,14 +170,20 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     if ($scope.selectedContentType == 'CSV')
       conttype = 'text/csv';
 
-    if (explain && $scope.config.selectedRequestType == 'COMMAND') {
+    if (explain) {
       queryBuffer = "explain " + queryBuffer;
     }
     if ($scope.search)
       delete $scope.search.query;
-
-
-    var handleResult = function (data) {
+    CommandApi.queryText({
+      database: $routeParams.database,
+      contentType: conttype,
+      language: $scope.language,
+      text: queryBuffer,
+      limit: $scope.limit,
+      shallow: $scope.shallow,
+      verbose: false
+    }, function (data) {
 
       if (data.result) {
 
@@ -199,8 +196,6 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         }
 
         item.language = $scope.language;
-        item.selectedRequestType = $scope.config.selectedRequestType;
-        item.selectedRequestLanguage = $scope.config.selectedRequestLanguage;
         $scope.headers = Database.getPropertyTableFromResults(data.result);
         if ($scope.headers.length == 0) {
           $scope.alerts = new Array;
@@ -267,39 +262,19 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         Spinner.stopSpinner();
         Notification.push({content: "The command has been executed", autoHide: true});
       }
-    }
-    if ($scope.config.selectedRequestType == 'COMMAND') {
-      CommandApi.queryText({
-        database: $routeParams.database,
-        contentType: conttype,
-        language: $scope.language,
-        text: queryBuffer,
-        limit: $scope.limit,
-        shallow: $scope.shallow,
-        verbose: false
-      }, handleResult, function (data) {
-        Spinner.stopSpinner();
-        $scope.headers = undefined;
-        $scope.resultTotal = undefined;
-        $scope.results = undefined;
-        if (!data) {
-          data = "The command has not been executed"
-        }
-        Notification.push({content: data, error: true, autoHide: true});
-      });
-    } else {
+    }, function (data) {
+      Spinner.stopSpinner();
+      $scope.headers = undefined;
+      $scope.resultTotal = undefined;
+      $scope.results = undefined;
+      if (!data) {
+        data = "The command has not been executed"
+      }
+      Notification.push({content: data, error: true, autoHide: true});
+    });
 
-
-      BatchApi.executeBatch(Database.getName(), queryBuffer, $scope.config.selectedRequestLanguage).then(handleResult).catch(function (data) {
-        Notification.push({content: data, error: true, autoHide: true});
-        Spinner.stopSpinner();
-      })
-
-
-    }
 
   }
-
 
   $scope.clear = function () {
 
@@ -349,7 +324,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
 
 }]);
-dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'ngTableParams', 'scroller', '$ojson', 'Graph', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, scroller, $ojson, Graph) {
+dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'ngTableParams', 'scroller', '$ojson', 'Graph', 'GraphConfig', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, scroller, $ojson, Graph, GraphConfig) {
 
 
   var data = $scope.item.resultTotal;
@@ -419,6 +394,70 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     total: data.length, // length of data
     getData: function ($defer, params) {
 //            use build-in angular filter
+<<<<<<< HEAD
+            var emtpy = !params.orderBy() || params.orderBy().length == 0;
+            var orderedData = (params.sorting() && !emtpy) ?
+                $filter('orderBy')(data, params.orderBy()) :
+                data;
+            $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
+        }
+    });
+
+    $scope.tableParams.settings().counts = [10, 25, 50, 100, 1000, 5000];
+    $scope.switchPage = function (index) {
+        if (index != $scope.item.currentPage) {
+            $scope.item.currentPage = index;
+            $scope.item.results = $scope.item.resultTotal.slice(
+                (index - 1) * $scope.item.countPage,
+                index * $scope.item.countPage
+            );
+        }
+    }
+    $scope.isDivider = function (index, header) {
+
+        var sort = $scope.tableParams.isSortBy(header, 'asc') ? 'sort-asc' : ($scope.tableParams.isSortBy(header, 'desc') ? 'sort-desc' : '');
+        return $scope.indexes.indexOf(index) != -1 ? 'header-divider ' + sort : sort;
+    }
+    $scope.previous = function () {
+        if ($scope.item.currentPage > 1) {
+            $scope.switchPage($scope.item.currentPage - 1);
+        }
+    }
+    $scope.next = function () {
+
+        if ($scope.item.currentPage < $scope.item.numberOfPage.length) {
+            $scope.switchPage($scope.item.currentPage + 1);
+        }
+    }
+    $scope.$watch("item.countPage", function (data) {
+        if ($scope.item.resultTotal) {
+            $scope.item.results = $scope.item.resultTotal.slice(0, $scope.item.countPage);
+            $scope.item.currentPage = 1;
+            $scope.item.numberOfPage = new Array(Math.ceil($scope.item.resultTotal.length / $scope.item.countPage));
+        }
+    });
+    $scope.openRecord = function (doc) {
+        $location.path("/database/" + $scope.database.getName() + "/browse/edit/" + doc["@rid"].replace('#', ''));
+    }
+    $scope.changeQuery = function () {
+        $scope.queryText = $scope.item.query;
+        scroller.scrollTo(0, 0, 2000);
+        $scope.cm.focus();
+
+        $scope.cm.setValue($scope.queryText);
+        $scope.cm.setCursor($scope.cm.lineCount());
+
+    }
+
+    $scope.changeLimit = function(){
+        $scope.queryText = $scope.item.query;
+        scroller.scrollTo(0, 0, 2000);
+        $scope.cm.setValue($scope.queryText);
+        $scope.cm.setCursor($scope.cm.lineCount());
+
+    }
+    $scope.cm.focus();
+=======
       var emtpy = !params.orderBy() || params.orderBy().length == 0;
       var orderedData = (params.sorting() && !emtpy) ?
         $filter('orderBy')(data, params.orderBy()) :
@@ -464,15 +503,7 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     $location.path("/database/" + $scope.database.getName() + "/browse/edit/" + doc["@rid"].replace('#', ''));
   }
   $scope.changeQuery = function () {
-
     $scope.queryText = $scope.item.query;
-    if ($scope.item.selectedRequestType) {
-      $scope.config.selectedRequestType = $scope.item.selectedRequestType;
-    }
-    if ($scope.item.selectedRequestLanguage) {
-      $scope.config.selectedRequestLanguage = $scope.item.selectedRequestLanguage;
-    }
-
     scroller.scrollTo(0, 0, 2000);
     $scope.cm.focus();
 
@@ -484,11 +515,15 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
   $scope.changeLimit = function () {
     $scope.queryText = $scope.item.query;
     scroller.scrollTo(0, 0, 2000);
+    $scope.cm.focus();
+
     $scope.cm.setValue($scope.queryText);
     $scope.cm.setCursor($scope.cm.lineCount());
 
   }
-  $scope.cm.focus();
+
+
+>>>>>>> develop-color
 }]);
 dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localStorageService', 'BrowseConfig', function ($scope, $routeParams, localStorageService, BrowseConfig) {
 
@@ -496,26 +531,39 @@ dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localSt
 
 
   $scope.limit = config.limit;
-  $scope.selectedRequestType = config.selectedRequestType;
   $scope.selectedContentType = config.selectedContentType;
-  $scope.selectedRequestLanguage = config.selectedRequestLanguage;
   $scope.shallow = config.shallowCollection;
   $scope.keepLimit = config.keepLimit;
   $scope.hideSettings = config.hideSettings;
   $scope.showw = false;
 
-  ;
+<<<<<<< HEAD
+    ;
+    $scope.$watch("limit", function (data) {
+        config.set('limit', data);
+    });
+    $scope.$watch("selectedContentType", function (data) {
+        config.set('selectedContentType', data);
+    });
+    $scope.$watch("shallow", function (data) {
+        config.set('shallowCollection', data);
+    });
+    $scope.$watch("keepLimit", function (data) {
+        config.set('keepLimit', data);
+    });
+    $scope.$watch("hideSettings", function (data) {
+        config.set('hideSettings', data);
+        if (!data) {
+            $scope.$parent.$hide();
+        }
+    });
+=======
+
   $scope.$watch("limit", function (data) {
     config.set('limit', data);
   });
   $scope.$watch("selectedContentType", function (data) {
     config.set('selectedContentType', data);
-  });
-  $scope.$watch("selectedRequestType", function (data) {
-    config.set('selectedRequestType', data);
-  });
-  $scope.$watch("selectedRequestLanguage", function (data) {
-    config.set('selectedRequestLanguage', data);
   });
   $scope.$watch("shallow", function (data) {
     config.set('shallowCollection', data);
@@ -529,6 +577,7 @@ dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localSt
       $scope.$parent.$hide();
     }
   });
+>>>>>>> develop-color
 
 }]);
 dbModule.controller("BookmarkNewController", ['$scope', '$rootScope', 'Bookmarks', 'DocumentApi', 'Database', function ($scope, $rootScope, Bookmarks, DocumentApi, Database) {
@@ -539,8 +588,6 @@ dbModule.controller("BookmarkNewController", ['$scope', '$rootScope', 'Bookmarks
   $scope.bookmark.name = $scope.item.query;
   $scope.bookmark.query = $scope.item.query;
 
-  $scope.bookmark.selectedRequestType = $scope.item.selectedRequestType;
-  $scope.bookmark.selectedRequestLanguage = $scope.item.selectedRequestLanguage;
   Bookmarks.getTags(Database.getName()).then(function (data) {
     $scope.tags = data;
     $scope.select2Options = {
@@ -609,12 +656,6 @@ dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi',
   }
   $scope.run = function (r) {
     $scope.queryText = r.query;
-    if (r.selectedRequestType) {
-      $scope.config.selectedRequestType = r.selectedRequestType;
-    }
-    if (r.selectedRequestLanguage) {
-      $scope.config.selectedRequestLanguage = r.selectedRequestLanguage;
-    }
     scroller.scrollTo(0, 0, 2000);
     $scope.cm.focus();
 

@@ -413,7 +413,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     })
 
 
-    config = {
+    var config = {
         height: 500,
         width: 1200,
         classes: {},

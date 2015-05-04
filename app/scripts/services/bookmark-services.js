@@ -97,6 +97,7 @@ breadcrumb.factory('GraphConfig', function ($resource, localStorageService, Docu
     resource.init = function () {
         var database = Database.getName();
 
+
         var deferred = $q.defer();
         var text = API + 'command/' + database + '/sql/-/20?format=rid,type,version,class,graph';
         var query = "CREATE CLASS {{clazz}}";

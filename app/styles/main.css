@@ -156,6 +156,14 @@ div.edge form.bs-docs-example:after {
   margin: 5px 0;
 }
 
+.query-header > span {
+  position: absolute;
+  top: -13px;
+  z-index: -1;
+}
+.search-query {
+  margin-bottom: 10px;
+}
 .query-header {
   background-color: #F5F5F5;
   border: 1px solid #DDDDDD;
@@ -1037,13 +1045,14 @@ span.badge-edge {
 }
 
 /*.menu-audit {*/
-  /*padding-top: 10px;*/
-  /*padding-bottom: 10px;*/
+/*padding-top: 10px;*/
+/*padding-bottom: 10px;*/
 /*}*/
 
 .audit-form-controls {
   margin-bottom: 10px;
 }
-.queryConfigStyle{
-    margin-bottom: 3px;
+
+.queryConfigStyle {
+  margin-bottom: 3px;
 }
