@@ -2282,36 +2282,82 @@ OOrderBy OrderBy():
 {
 (
 	<ORDER> <BY>
-	(
-	    {
-	        lastItem = new OOrderByItem();
-	        jjtThis.items.add(lastItem);
-	    }
-	    (
-	        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
-	        |
-	        lastItem.rid = Rid()
-	        |
-	        lastToken = <RECORD_ATTRIBUTE> { lastItem.recordAttr = lastToken.image; }
-	    )
+    (
+        (
+            (
+                {
+                    lastItem = new OOrderByItem();
+                    jjtThis.items.add(lastItem);
+                }
+                (
+                    lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                    |
+                    lastItem.rid = Rid()
+                    |
+                    lastToken = <RECORD_ATTRIBUTE> { lastItem.recordAttr = lastToken.image; }
+                )
+            )
+            [ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+        )
+        |
+        (
+            <LPAREN>
+            (
+                {
+                    lastItem = new OOrderByItem();
+                    jjtThis.items.add(lastItem);
+                }
+                (
+                    lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                    |
+                    lastItem.rid = Rid()
+                    |
+                    lastToken = <RECORD_ATTRIBUTE> { lastItem.recordAttr = lastToken.image; }
+                )
+            )
+            [ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+            <RPAREN>
+        )
 	)
-	[ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
 	(
 	    ","
 	    (
-            {
-                lastItem = new OOrderByItem();
-                jjtThis.items.add(lastItem);
-            }
-        	(
-        	    lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
-        	    |
-        	    lastItem.rid = Rid()
-        	    |
-        	    lastToken = <RECORD_ATTRIBUTE> { lastItem.recordAttr = lastToken.image; }
-        	)
+	        (
+                (
+                    {
+                        lastItem = new OOrderByItem();
+                        jjtThis.items.add(lastItem);
+                    }
+                    (
+                        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                        |
+                        lastItem.rid = Rid()
+                        |
+                        lastToken = <RECORD_ATTRIBUTE> { lastItem.recordAttr = lastToken.image; }
+                    )
+                )
+                [ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+            )
+            |
+            (
+                <LPAREN>
+                (
+                    {
+                        lastItem = new OOrderByItem();
+                        jjtThis.items.add(lastItem);
+                    }
+                    (
+                        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                        |
+                        lastItem.rid = Rid()
+                        |
+                        lastToken = <RECORD_ATTRIBUTE> { lastItem.recordAttr = lastToken.image; }
+                    )
+                )
+                [ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+                <RPAREN>
+            )
         )
-        [ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
 	)*
 ) {return jjtThis;}
 }
