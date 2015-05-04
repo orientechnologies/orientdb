@@ -15,35 +15,29 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.*;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.*;
 
 @Test
 public class TruncateTest extends DocumentDBBaseTest {
 
-	@Parameters(value = "url")
-	public TruncateTest(@Optional String url) {
-		super(url);
-	}
-
+  @Parameters(value = "url")
+  public TruncateTest(@Optional String url) {
+    super(url);
+  }
 
   @SuppressWarnings("unchecked")
   @Test
@@ -83,6 +77,26 @@ public class TruncateTest extends DocumentDBBaseTest {
     }
 
     schema.dropClass("test_class");
+  }
+
+  @Test
+  public void testTruncateVertexClass() {
+
+    database.command(new OCommandSQL("create class TestTruncateVertexClass extends V")).execute();
+    database.command(new OCommandSQL("create vertex TestTruncateVertexClass set name = 'foo'")).execute();
+
+    try {
+      database.command(new OCommandSQL("truncate class TestTruncateVertexClass ")).execute();
+      Assert.fail();
+    } catch (Exception e) {
+    }
+    List<?> result = database.query(new OSQLSynchQuery("select from TestTruncateVertexClass"));
+    Assert.assertEquals(result.size(), 1);
+
+    database.command(new OCommandSQL("truncate class TestTruncateVertexClass unsafe")).execute();
+    result = database.query(new OSQLSynchQuery("select from TestTruncateVertexClass"));
+    Assert.assertEquals(result.size(), 0);
+
   }
 
   private OIndex<?> getOrCreateIndex(OClass testClass) {
