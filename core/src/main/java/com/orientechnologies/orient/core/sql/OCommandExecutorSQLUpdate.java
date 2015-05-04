@@ -48,7 +48,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -82,6 +88,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   private boolean                            upsertMode        = false;
   private boolean                            isUpsertAllowed   = false;
   private boolean                            updated           = false;
+  private OClass                             clazz             = null;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLUpdate parse(final OCommandRequest iRequest) {
@@ -90,9 +97,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     String queryText = textRequest.getText();
     String originalQuery = queryText;
     try {
-//      System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-//      System.out.println("NEW PARSER   TO: " + queryText);
       textRequest.setText(queryText);
 
       final ODatabaseDocument database = getDatabase();
@@ -115,6 +120,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       if (subjectName == null)
         throwSyntaxErrorException("Invalid subject name. Expected cluster, class, index or sub-query");
 
+      clazz = extractClassFromTarget(subjectName);
+
       parserNextWord(true);
       String word = parserGetLastWord();
 
@@ -135,7 +142,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         else if (word.equals(KEYWORD_MERGE))
           parseMerge();
         else if (word.equals(KEYWORD_SET))
-          parseSetFields(null, setEntries);
+          parseSetFields(clazz, setEntries);
         else if (word.equals(KEYWORD_ADD))
           parseAddFields();
         else if (word.equals(KEYWORD_PUT))
@@ -175,6 +182,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
           || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET) || additionalStatement.equals(KEYWORD_LOCK)) {
         query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
             + parserText.substring(parserGetCurrentPosition()), this);
+
         isUpsertAllowed = (((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName) != null);
       } else if (!additionalStatement.isEmpty())
         throwSyntaxErrorException("Invalid keyword " + additionalStatement);
@@ -659,8 +667,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       parserRequiredKeyword("=");
       fieldValue = parserRequiredWord(false, "Value expected", " =><,\r\n");
 
+      final Object v = convertValue(clazz, fieldName, getFieldValueCountingParameters(fieldValue));
+
       // INSERT TRANSFORMED FIELD VALUE
-      addEntries.add(new OPair<String, Object>(fieldName, getFieldValueCountingParameters(fieldValue)));
+      addEntries.add(new OPair<String, Object>(fieldName, v));
       parserSkipWhiteSpaces();
     }
 
