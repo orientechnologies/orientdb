@@ -644,7 +644,7 @@ Widget.directive('focus',
                     if (value === "true") {
                         $timeout(function() {
                             element[0].focus();
-                        });
+                        },100);
                     }
                 });
             }
