@@ -29,7 +29,12 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Test
 public class TruncateTest extends DocumentDBBaseTest {
@@ -82,6 +87,11 @@ public class TruncateTest extends DocumentDBBaseTest {
   @Test
   public void testTruncateVertexClass() {
 
+    if (!database.getMetadata().getSchema().existsClass("V"))
+      database.getMetadata().getSchema().createClass("V");
+    if (!database.getMetadata().getSchema().existsClass("E"))
+      database.getMetadata().getSchema().createClass("E");
+
     database.command(new OCommandSQL("create class TestTruncateVertexClass extends V")).execute();
     database.command(new OCommandSQL("create vertex TestTruncateVertexClass set name = 'foo'")).execute();
 
@@ -99,12 +109,12 @@ public class TruncateTest extends DocumentDBBaseTest {
 
   }
 
-
   @Test
   public void testTruncateVertexClassSubclasses() {
 
     database.command(new OCommandSQL("create class TestTruncateVertexClassSuperclass")).execute();
-    database.command(new OCommandSQL("create class TestTruncateVertexClassSubclass extends TestTruncateVertexClassSuperclass")).execute();
+    database.command(new OCommandSQL("create class TestTruncateVertexClassSubclass extends TestTruncateVertexClassSuperclass"))
+        .execute();
 
     database.command(new OCommandSQL("insert into TestTruncateVertexClassSuperclass set name = 'foo'")).execute();
     database.command(new OCommandSQL("insert into TestTruncateVertexClassSubclass set name = 'bar'")).execute();
@@ -127,16 +137,23 @@ public class TruncateTest extends DocumentDBBaseTest {
 
     database.command(new OCommandSQL("create class TestTruncateVertexClassSuperclassWithIndex")).execute();
     database.command(new OCommandSQL("create property TestTruncateVertexClassSuperclassWithIndex.name STRING")).execute();
-    database.command(new OCommandSQL("create index TestTruncateVertexClassSuperclassWithIndex_index on TestTruncateVertexClassSuperclassWithIndex (name) NOTUNIQUE")).execute();
+    database
+        .command(
+            new OCommandSQL(
+                "create index TestTruncateVertexClassSuperclassWithIndex_index on TestTruncateVertexClassSuperclassWithIndex (name) NOTUNIQUE"))
+        .execute();
 
-    database.command(new OCommandSQL("create class TestTruncateVertexClassSubclassWithIndex extends TestTruncateVertexClassSuperclassWithIndex")).execute();
+    database
+        .command(
+            new OCommandSQL(
+                "create class TestTruncateVertexClassSubclassWithIndex extends TestTruncateVertexClassSuperclassWithIndex"))
+        .execute();
 
     database.command(new OCommandSQL("insert into TestTruncateVertexClassSuperclassWithIndex set name = 'foo'")).execute();
     database.command(new OCommandSQL("insert into TestTruncateVertexClassSubclassWithIndex set name = 'bar'")).execute();
 
     List<?> result = database.query(new OSQLSynchQuery("select from index:TestTruncateVertexClassSuperclassWithIndex_index"));
     Assert.assertEquals(result.size(), 2);
-
 
     database.command(new OCommandSQL("truncate class TestTruncateVertexClassSubclassWithIndex")).execute();
     result = database.query(new OSQLSynchQuery("select from index:TestTruncateVertexClassSuperclassWithIndex_index"));
@@ -147,7 +164,6 @@ public class TruncateTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 0);
 
   }
-
 
   private OIndex<?> getOrCreateIndex(OClass testClass) {
     OIndex<?> index = database.getMetadata().getIndexManager().getIndex("test_class_by_data");
