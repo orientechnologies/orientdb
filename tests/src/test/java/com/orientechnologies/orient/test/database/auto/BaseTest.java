@@ -2,10 +2,10 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -46,6 +46,12 @@ public abstract class BaseTest<T extends ODatabase> {
         url = getStorageType() + ":" + buildDirectory + "/test-db/demo";
         dropDb = true;
       }
+    }
+
+    if (storageType.equals("memory")) {
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+      if (!db.exists())
+        db.create().close();
     }
 
     this.url = url;
