@@ -24,10 +24,10 @@
     <artifactId>orientdb-jdbc</artifactId>
     <packaging>jar</packaging>
 
-    <version>2.1-rc1</version>
+    <version>2.1-rc2</version>
 
     <properties>
-        <orient.version>2.1-rc1</orient.version>
+        <orient.version>2.1-rc2</orient.version>
     </properties>
 
 
