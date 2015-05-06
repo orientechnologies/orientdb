@@ -274,8 +274,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     boolean stop = false;
     while (!stop) {
       // PARSE THE KEY
-      parserNextWord(false);
-      final String letName = parserGetLastWord();
+      final String letName = parserNextWord(false);
 
       parserOptionalKeyword("=");
 
@@ -312,8 +311,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     if (!w.equals(KEYWORD_LIMIT))
       return -1;
 
-    parserNextWord(true);
-    final String word = parserGetLastWord();
+    final String word = parserNextWord(true);
 
     try {
       limit = Integer.parseInt(word);
@@ -340,8 +338,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     if (!w.equals(KEYWORD_SKIP) && !w.equals(KEYWORD_OFFSET))
       return -1;
 
-    parserNextWord(true);
-    final String word = parserGetLastWord();
+    final String word = parserNextWord(true);
 
     try {
       skip = Integer.parseInt(word);

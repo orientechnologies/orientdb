@@ -465,30 +465,28 @@ public abstract class OBaseParser {
 
   /**
    * Parses the next word.
-   * 
+   *
    * @param iForceUpperCase
    *          True if must return UPPERCASE, otherwise false
    */
-  protected void parserNextWord(final boolean iForceUpperCase) {
-    parserNextWord(iForceUpperCase, " =><(),\r\n");
+  protected String parserNextWord(final boolean iForceUpperCase) {
+    return parserNextWord(iForceUpperCase, " =><(),\r\n");
   }
 
   /**
    * Parses the next word.
-   * 
-   * @param iForceUpperCase
+   *  @param iForceUpperCase
    *          True if must return UPPERCASE, otherwise false
    * @param iSeparatorChars
-   *          Separator characters
    */
-  protected void parserNextWord(final boolean iForceUpperCase, final String iSeparatorChars) {
+  protected String parserNextWord(final boolean iForceUpperCase, final String iSeparatorChars) {
     parserPreviousPos = parserCurrentPos;
     parserLastWord.setLength(0);
     parserEscapeSequnceCount = 0;
 
     parserSkipWhiteSpaces();
     if (parserCurrentPos == -1)
-      return;
+      return null;
 
     char stringBeginChar = ' ';
 
@@ -615,6 +613,8 @@ public abstract class OBaseParser {
         parserLastSeparator = ' ';
       }
     }
+
+    return parserLastWord.toString();
   }
 
   /**

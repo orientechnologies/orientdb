@@ -122,8 +122,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
 
       clazz = extractClassFromTarget(subjectName);
 
-      parserNextWord(true);
-      String word = parserGetLastWord();
+      String word = parserNextWord(true);
 
       if (parserIsEnded()
           || (!word.equals(KEYWORD_SET) && !word.equals(KEYWORD_ADD) && !word.equals(KEYWORD_PUT) && !word.equals(KEYWORD_REMOVE)
@@ -133,10 +132,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
             + KEYWORD_MERGE + "," + KEYWORD_PUT + "," + KEYWORD_REMOVE + "," + KEYWORD_INCREMENT + "," + KEYWORD_LOCK + " or "
             + KEYWORD_RETURN + " or " + KEYWORD_UPSERT);
 
-      while ((!parserIsEnded() && !parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
-          || parserGetLastWord().equals(KEYWORD_UPSERT)) {
-        word = parserGetLastWord();
-
+      while ((!parserIsEnded() && !word.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
+          || word.equals(KEYWORD_UPSERT)) {
         if (word.equals(KEYWORD_CONTENT))
           parseContent();
         else if (word.equals(KEYWORD_MERGE))
@@ -162,7 +159,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         else
           break;
 
-        parserNextWord(true);
+        word = parserNextWord(true);
       }
 
       final String additionalStatement = parserGetLastWord();

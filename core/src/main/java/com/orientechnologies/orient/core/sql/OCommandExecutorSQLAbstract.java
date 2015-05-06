@@ -106,8 +106,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     if (!w.equals(KEYWORD_TIMEOUT))
       return false;
 
-    parserNextWord(true);
-    String word = parserGetLastWord();
+    String word = parserNextWord(true);
 
     try {
       timeoutMs = Long.parseLong(word);
@@ -119,8 +118,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     if (timeoutMs < 0)
       throwParsingException("Invalid " + KEYWORD_TIMEOUT + ": value set minor than ZERO. Example: " + KEYWORD_TIMEOUT + " 10000");
 
-    parserNextWord(true);
-    word = parserGetLastWord();
+    word = parserNextWord(true);
 
     if (word.equals(TIMEOUT_STRATEGY.EXCEPTION.toString()))
       timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
@@ -136,8 +134,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
    * Parses the lock keyword if found.
    */
   protected String parseLock() throws OCommandSQLParsingException {
-    parserNextWord(true);
-    final String lockStrategy = parserGetLastWord();
+    final String lockStrategy = parserNextWord(true);
 
     if (!lockStrategy.equalsIgnoreCase("DEFAULT") && !lockStrategy.equalsIgnoreCase("NONE")
         && !lockStrategy.equalsIgnoreCase("RECORD"))

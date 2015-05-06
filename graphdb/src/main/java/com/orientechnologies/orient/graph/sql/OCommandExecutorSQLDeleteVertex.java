@@ -228,8 +228,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
    * Parses the returning keyword if found.
    */
   protected String parseReturn() throws OCommandSQLParsingException {
-    parserNextWord(true);
-    final String returning = parserGetLastWord();
+    final String returning = parserNextWord(true);
 
     if (!returning.equalsIgnoreCase("COUNT") && !returning.equalsIgnoreCase("BEFORE"))
       throwParsingException("Invalid " + KEYWORD_RETURN + " value set to '" + returning

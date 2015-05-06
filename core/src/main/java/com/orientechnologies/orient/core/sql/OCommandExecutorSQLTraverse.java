@@ -146,8 +146,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     if (!w.equals(KEYWORD_MAXDEPTH))
       return false;
 
-    parserNextWord(true);
-    String word = parserGetLastWord();
+    String word = parserNextWord(true);
 
     try {
       traverse.setMaxDepth(Integer.parseInt(word));
@@ -262,8 +261,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     if (!w.equals(KEYWORD_STRATEGY))
       return false;
 
-    parserNextWord(true);
-    final String strategyWord = parserGetLastWord();
+    final String strategyWord = parserNextWord(true);
 
     try {
       traverse.setStrategy(OTraverse.STRATEGY.valueOf(strategyWord.toUpperCase()));

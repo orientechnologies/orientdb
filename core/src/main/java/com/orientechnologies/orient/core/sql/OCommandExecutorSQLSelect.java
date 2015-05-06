@@ -228,8 +228,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         parserSkipWhiteSpaces();
 
         while (!parserIsEnded()) {
-          parserNextWord(true);
-          final String w = parserGetLastWord();
+          final String w = parserNextWord(true);
 
           if (!w.isEmpty()) {
             if (w.equals(KEYWORD_WHERE)) {
@@ -1022,9 +1021,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     int position = parserGetCurrentPosition();
     while (!parserIsEnded()) {
-      parserNextWord(true);
-
-      final String word = OStringSerializerHelper.getStringContent(parserGetLastWord());
+      final String word = OStringSerializerHelper.getStringContent(parserNextWord(true));
       if (!OPatternConst.PATTERN_FETCH_PLAN.matcher(word).matches()) {
         break;
       }
