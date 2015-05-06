@@ -50,14 +50,39 @@ public class TestGraphTransactionOnBatch {
       }
 
       List<ODocument> res = db.query(new OSQLSynchQuery("select from Test"));
-      Assert.assertEquals(res.size(), 0);
+      Assert.assertEquals(0, res.size());
     } finally {
       db.drop();
     }
   }
 
   @Test
-  public void testDuplicateEggeRollback() {
+  public void testDuplicateAlreadyExistingRollback() {
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + TestGraphTransactionOnBatch.class.getSimpleName());
+    try {
+      db.create();
+      db.getMetadata().getSchema().createClass("E");
+      OClass V = db.getMetadata().getSchema().createClass("V");
+      OClass clazz = db.getMetadata().getSchema().createClass("Test");
+      clazz.setSuperClass(V);
+      clazz.createProperty("id", OType.STRING).createIndex(INDEX_TYPE.UNIQUE);
+      db.command(new OCommandSQL("create vertex Test SET id = \"12345678\"")).execute();
+      try {
+        db.command(new OCommandScript("sql", "BEGIN \n LET a = create vertex Test SET id = \"12345678\" \n RETURN $a \n COMMIT"))
+            .execute();
+        Assert.fail("expected record duplicate exception");
+      } catch (ORecordDuplicatedException ex) {
+
+      }
+      List<ODocument> res = db.query(new OSQLSynchQuery("select from Test"));
+      Assert.assertEquals(1, res.size());
+    } finally {
+      db.drop();
+    }
+  }
+
+  @Test
+  public void testDuplicateEdgeRollback() {
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + TestGraphTransactionOnBatch.class.getSimpleName());
     try {
       db.create();
@@ -77,7 +102,39 @@ public class TestGraphTransactionOnBatch {
 
       }
       List<ODocument> res = db.query(new OSQLSynchQuery("select from Test"));
-      Assert.assertEquals(res.size(), 0);
+      Assert.assertEquals(0, res.size());
+    } finally {
+      db.drop();
+    }
+  }
+
+  @Test
+  public void testDuplicateEdgeAlreadyPresentRollback() {
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + TestGraphTransactionOnBatch.class.getSimpleName());
+    try {
+      db.create();
+      OClass E = db.getMetadata().getSchema().createClass("E");
+      db.getMetadata().getSchema().createClass("V");
+      OClass clazz = db.getMetadata().getSchema().createClass("Test");
+      clazz.setSuperClass(E);
+      clazz.createProperty("aKey", OType.STRING).createIndex(INDEX_TYPE.UNIQUE);
+      db.command(
+          new OCommandScript(
+              "sql",
+              "BEGIN \n LET a = create vertex V \n LET b = create vertex V \n LET c =create edge Test from $a to $b SET aKey = \"12345\" \n RETURN $c  \n commit \n"))
+          .execute();
+      try {
+        db.command(
+            new OCommandScript(
+                "sql",
+                "BEGIN \n LET a = create vertex V \n LET b = create vertex V \n LET c =create edge Test from $a to $b SET aKey = \"12345\"\n RETURN $c \n COMMIT"))
+            .execute();
+        Assert.fail("expected record duplicate exception");
+      } catch (ORecordDuplicatedException ex) {
+
+      }
+      List<ODocument> res = db.query(new OSQLSynchQuery("select from Test"));
+      Assert.assertEquals(1, res.size());
     } finally {
       db.drop();
     }
