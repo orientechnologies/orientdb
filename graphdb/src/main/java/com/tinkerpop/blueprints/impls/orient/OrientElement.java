@@ -20,6 +20,13 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Arrays;
+import java.util.Map;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -43,13 +50,6 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.util.ElementHelper;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
-
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Arrays;
-import java.util.Map;
 
 /**
  * Base Graph Element where OrientVertex and OrientEdge classes extends from. Labels are managed as OrientDB classes.
@@ -100,8 +100,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
 
-    final ORecordOperation oper = graph.getRawGraph().getTransaction().getRecordEntry(getIdentity());
-    if (oper != null && oper.type == ORecordOperation.DELETED)
+    if (checkDeletedInTx())
       throw new IllegalStateException("The elements " + getIdentity() + " has already been deleted");
 
     try {
@@ -111,6 +110,14 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     }
 
     getRecord().delete();
+  }
+
+  protected boolean checkDeletedInTx() {
+    OrientBaseGraph curGraph = getGraph();
+    if (curGraph == null)
+      return false;
+    final ORecordOperation oper = curGraph.getRawGraph().getTransaction().getRecordEntry(getIdentity());
+    return oper != null && oper.type == ORecordOperation.DELETED;
   }
 
   /**
@@ -140,6 +147,8 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * @return
    */
   public <T extends OrientElement> T setProperties(final Object... fields) {
+    if (checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
     setPropertiesInternal(fields);
     save();
     return (T) this;
@@ -155,6 +164,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public void setProperty(final String key, final Object value) {
+    if (checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+
     validateProperty(this, key, value);
     final OrientBaseGraph graph = getGraph();
 
@@ -177,6 +189,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    *          Type to set
    */
   public void setProperty(final String key, final Object value, final OType iType) {
+    if (checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+
     validateProperty(this, key, value);
 
     final OrientBaseGraph graph = getGraph();

@@ -140,7 +140,7 @@ public class TestGraphTransactionOnBatch {
     }
   }
 
-  // @Test disabled because failing
+  @Test
   public void testReferInTxDeleteVertex() {
 
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + TestGraphTransactionOnBatch.class.getSimpleName());
