@@ -16,12 +16,12 @@
 
 package com.orientechnologies.lucene.operator;
 
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
 
 public class OLuceneOperatorFactory implements OQueryOperatorFactory {
 

@@ -36,7 +36,7 @@ public class OLuceneIndexUtils {
 
   public static void deleteFolderIfEmpty(File f) {
 
-    if (f.listFiles().length == 0) {
+    if (f != null && f.listFiles() != null && f.listFiles().length == 0) {
       deleteFolder(f);
     }
   }
