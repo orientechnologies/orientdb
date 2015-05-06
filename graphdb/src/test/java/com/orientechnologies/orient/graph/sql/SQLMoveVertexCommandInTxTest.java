@@ -223,4 +223,34 @@ public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
 
     Assert.assertEquals(tot, 2);
   }
+
+  @Test
+  public void testMoveBatch() {
+    for (int i = 0; i < 100; ++i)
+      new ODocument("Customer").field("testMoveBatch", true).save();
+
+    Iterable<OrientVertex> result = graph.command(
+        new OCommandSQL("MOVE VERTEX (select from Customer where testMoveBatch = true) TO CLASS:Provider BATCH 10")).execute();
+
+    // CHECK RESULT
+    int tot = 0;
+    for (OrientVertex v : result) {
+      tot++;
+      ODocument fromTo = v.getRecord();
+      OIdentifiable from = fromTo.field("old");
+      OIdentifiable to = fromTo.field("new");
+
+      // CHECK FROM
+      Assert.assertEquals(from.getIdentity().getClusterId(), customer.getDefaultClusterId());
+
+      // CHECK DESTINATION
+      Assert.assertEquals(to.getIdentity().getClusterId(), provider.getDefaultClusterId());
+      ODocument newDocument = to.getRecord();
+      Assert.assertEquals(newDocument.getClassName(), "Provider");
+
+      Assert.assertTrue((Boolean) newDocument.field("testMoveBatch"));
+    }
+
+    Assert.assertEquals(tot, 100);
+  }
 }
