@@ -132,6 +132,11 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
           if (facetManager.supportsFacets() && facetManager.isFacetField(f)) {
             doc.add(facetManager.buildFacetField(f, val));
           } else {
+
+            if (isToStore(f).equals(Field.Store.YES)) {
+              doc.add(OLuceneIndexType.createField(f + STORED, oIdentifiable, val, Field.Store.YES,
+                  Field.Index.NOT_ANALYZED_NO_NORMS));
+            }
             doc.add(OLuceneIndexType.createField(f, oIdentifiable, val, Field.Store.NO, Field.Index.ANALYZED));
           }
         }
