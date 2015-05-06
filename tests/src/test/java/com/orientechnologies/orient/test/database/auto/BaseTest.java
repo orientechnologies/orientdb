@@ -48,7 +48,7 @@ public abstract class BaseTest<T extends ODatabase> {
       }
     }
 
-    if (storageType.equals("memory")) {
+    if (url.startsWith("memory:") ) {
       final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
       if (!db.exists())
         db.create().close();
