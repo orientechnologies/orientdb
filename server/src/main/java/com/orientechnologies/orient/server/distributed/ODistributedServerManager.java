@@ -36,49 +36,53 @@ import java.util.concurrent.locks.Lock;
  */
 public interface ODistributedServerManager {
 
-  public enum NODE_STATUS {
+  enum NODE_STATUS {
     OFFLINE, STARTING, ONLINE, SHUTTINGDOWN
   };
 
-  public enum DB_STATUS {
+  enum DB_STATUS {
     OFFLINE, SYNCHRONIZING, ONLINE
   };
 
-  public boolean isEnabled();
+  boolean isEnabled();
 
-  public Map<String, Object> getConfigurationMap();
+  ODistributedServerManager registerLifecycleListener(ODistributedLifecycleListener iListener);
 
-  public long getLastClusterChangeOn();
+  ODistributedServerManager unregisterLifecycleListener(ODistributedLifecycleListener iListener);
 
-  public NODE_STATUS getNodeStatus();
+  Map<String, Object> getConfigurationMap();
 
-  public void setNodeStatus(NODE_STATUS iStatus);
+  long getLastClusterChangeOn();
 
-  public boolean checkNodeStatus(NODE_STATUS string);
+  NODE_STATUS getNodeStatus();
 
-  public DB_STATUS getDatabaseStatus(String iNode, String iDatabaseName);
+  void setNodeStatus(NODE_STATUS iStatus);
 
-  public void setDatabaseStatus(String iNode, String iDatabaseName, DB_STATUS iStatus);
+  boolean checkNodeStatus(NODE_STATUS string);
 
-  public ODistributedMessageService getMessageService();
+  DB_STATUS getDatabaseStatus(String iNode, String iDatabaseName);
 
-  public void updateLastClusterChange();
+  void setDatabaseStatus(String iNode, String iDatabaseName, DB_STATUS iStatus);
 
-  public boolean isNodeAvailable(String iNodeName, String databaseName);
+  ODistributedMessageService getMessageService();
 
-  public boolean isOffline();
+  void updateLastClusterChange();
 
-  public String getLocalNodeId();
+  boolean isNodeAvailable(String iNodeName, String databaseName);
 
-  public String getLocalNodeName();
+  boolean isOffline();
 
-  public ODocument getClusterConfiguration();
+  String getLocalNodeId();
 
-  public ODocument getNodeConfigurationById(String iNode);
+  String getLocalNodeName();
 
-  public ODocument getLocalNodeConfiguration();
+  ODocument getClusterConfiguration();
 
-  public void propagateSchemaChanges(ODatabaseInternal iStorage);
+  ODocument getNodeConfigurationById(String iNode);
+
+  ODocument getLocalNodeConfiguration();
+
+  void propagateSchemaChanges(ODatabaseInternal iStorage);
 
   /**
    * Returns a time taking care about the offset with the cluster time. This allows to have a quite precise idea about information
@@ -86,7 +90,7 @@ public interface ODistributedServerManager {
    *
    * @return
    */
-  public long getDistributedTime(long iTme);
+  long getDistributedTime(long iTme);
 
   /**
    * Gets a distributed lock
@@ -95,12 +99,12 @@ public interface ODistributedServerManager {
    *          name of the lock
    * @return
    */
-  public Lock getLock(String iLockName);
+  Lock getLock(String iLockName);
 
-  public ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
+  ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 
-  public Object sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
+  Object sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
       OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
 
-  public ODocument getStats();
+  ODocument getStats();
 }

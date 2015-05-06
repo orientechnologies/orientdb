@@ -19,39 +19,9 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
-import com.hazelcast.core.EntryEvent;
-import com.hazelcast.core.EntryListener;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IMap;
-import com.hazelcast.core.IQueue;
-import com.hazelcast.core.MapEvent;
-import com.hazelcast.core.Member;
-import com.hazelcast.core.MemberAttributeEvent;
-import com.hazelcast.core.MembershipEvent;
-import com.hazelcast.core.MembershipListener;
+import com.hazelcast.core.*;
 import com.orientechnologies.common.console.DefaultConsoleReader;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.exception.OException;
@@ -63,7 +33,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -84,22 +53,34 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedStorage;
-import com.orientechnologies.orient.server.distributed.OLocalClusterStrategy;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -129,6 +110,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   protected volatile HazelcastInstance          hazelcastInstance;
   protected Object                              installDatabaseLock    = new Object();
   protected long                                lastClusterChangeOn;
+  protected List<ODistributedLifecycleListener> listeners              = new ArrayList<ODistributedLifecycleListener>();
 
   public OHazelcastPlugin() {
   }
@@ -560,6 +542,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final Member member = iEvent.getMember();
     final String nodeName = getNodeName(member);
     if (nodeName != null) {
+      // NOTIFY NODE LEFT
+      for (ODistributedLifecycleListener l : listeners)
+        l.onNodeLeft(nodeName);
+
       activeNodes.remove(nodeName);
 
       // REMOVE NODE IN DB CFG
@@ -606,6 +592,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                 + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file");
           }
 
+          // NOTIFY NODE IS GOING TO BE ADDED. EVERYBODY IS OK?
+          for (ODistributedLifecycleListener l : listeners) {
+            if (!l.onNodeJoining(nodeName)) {
+              // DENY JOIN
+              ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
+                  "denied node to join the cluster id=%s name=%s", iEvent.getMember(), getNodeName(iEvent.getMember()));
+              return;
+            }
+          }
+
           activeNodes.put(nodeName, (Member) iEvent.getMember());
 
           ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
@@ -614,6 +610,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
           installNewDatabases(false);
         }
+
+        // NOTIFY NODE WAS ADDED SUCCESSFULLY
+        for (ODistributedLifecycleListener l : listeners)
+          l.onNodeJoined(nodeName);
 
       } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
         // SYNCHRONIZE ADDING OF CLUSTERS TO AVOID DEADLOCKS
@@ -1408,5 +1408,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
 
     return false;
+  }
+
+  @Override
+  public OHazelcastPlugin registerLifecycleListener(final ODistributedLifecycleListener iListener) {
+    listeners.add(iListener);
+    return this;
+  }
+
+  @Override
+  public OHazelcastPlugin unregisterLifecycleListener(final ODistributedLifecycleListener iListener) {
+    listeners.remove(iListener);
+    return this;
   }
 }
