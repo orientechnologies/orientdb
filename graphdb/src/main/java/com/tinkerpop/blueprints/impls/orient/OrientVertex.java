@@ -20,6 +20,13 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
@@ -47,13 +54,6 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * OrientDB Vertex implementation of TinkerPop Blueprints standard.
@@ -726,6 +726,9 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
   public ORID moveTo(final String iClassName, final String iClusterName) {
     final OrientBaseGraph graph = getGraph();
 
+    if (checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+
     final ORID oldIdentity = getIdentity().copy();
 
     final ODocument doc = ((ODocument) rawElement.getRecord()).copy();
@@ -871,9 +874,15 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     if (inVertex == null)
       throw new IllegalArgumentException("destination vertex is null");
 
+    if (checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+
+    if (inVertex.checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + inVertex.getIdentity() + " has been deleted");
     final OrientBaseGraph graph = getGraph();
     if (graph != null) {
       setCurrentGraphInThreadLocal();
+
       graph.autoStartTransaction();
     }
 
