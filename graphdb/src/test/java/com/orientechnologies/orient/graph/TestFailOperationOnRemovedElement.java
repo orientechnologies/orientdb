@@ -24,12 +24,31 @@ public class TestFailOperationOnRemovedElement {
   }
 
   @Test(expected = IllegalStateException.class)
+  public void testAddEdgeOnRemovedVertexSameTransaction() {
+    Vertex v = grap.addVertex(null);
+    Vertex v1 = grap.addVertex(null);
+
+    v.remove();
+    v.addEdge("test", v1);
+  }
+
+  @Test(expected = IllegalStateException.class)
   public void testAddEdgeOnRemovedVertex() {
     Vertex v = grap.addVertex(null);
     Vertex v1 = grap.addVertex(null);
     grap.commit();
 
     v.remove();
+    v.addEdge("test", v1);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testAddEdgeToRemovedVertex() {
+    Vertex v = grap.addVertex(null);
+    Vertex v1 = grap.addVertex(null);
+    grap.commit();
+
+    v1.remove();
     v.addEdge("test", v1);
   }
 
