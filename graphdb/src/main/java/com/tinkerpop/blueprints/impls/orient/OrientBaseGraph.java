@@ -854,8 +854,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
   /**
    * Lookup for a vertex by id using an index.<br>
+   * This API relies on Unique index (SBTREE/HASH) but is deprecated.<br>
    * Example:<code>
-   * Vertex v = getVertexByIndex("V.name", "name", "Jay");
+   * Vertex v = getVertexByKey("V.name", "name", "Jay");
    * </code>
    *
    * @param iKey
@@ -863,7 +864,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param iValue
    *          Field value
    * @return Vertex instance if found, otherwise null
+   * @see #getVertices(String,Object)
    */
+  @Deprecated
   public Vertex getVertexByKey(final String iKey, Object iValue) {
     makeActive();
 
