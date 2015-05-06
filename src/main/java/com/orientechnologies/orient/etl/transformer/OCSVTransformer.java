@@ -18,12 +18,12 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.etl.OETLProcessor;
+import sun.misc.FloatConsts;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -146,32 +146,31 @@ public class OCSVTransformer extends OAbstractTransformer {
           // DETERMINE THE TYPE
           final char firstChar = fieldStringValue.charAt(0);
           if (Character.isDigit(firstChar)) {
-              //DATE
-              DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-              df.setLenient(true);
+            // DATE
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            df.setLenient(true);
+            try {
+              fieldValue = df.parse(fieldStringValue);
+            } catch (ParseException pe) {
+              // NUMBER
               try {
-                  fieldValue = df.parse(fieldStringValue);
-              } catch (ParseException pe) {
-                  // NUMBER
-                  try {
-                      if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
-                          String numberAsString = fieldStringValue.replaceAll(",", ".");
-                          fieldValue = new Float(numberAsString);
-                          if (!Float.isFinite((Float) fieldValue)) {
-                              fieldValue = new Double(numberAsString);
-                          }
-                      } else
-                          try {
-                              fieldValue = new Integer(fieldStringValue);
-                          } catch (Exception e) {
-                              fieldValue = new Long(fieldStringValue);
-                          }
-                  } catch (NumberFormatException nf) {
-                      fieldValue = fieldStringValue;
+                if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
+                  String numberAsString = fieldStringValue.replaceAll(",", ".");
+                  fieldValue = new Float(numberAsString);
+                  if (!isFinite((Float) fieldValue)) {
+                    fieldValue = new Double(numberAsString);
                   }
+                } else
+                  try {
+                    fieldValue = new Integer(fieldStringValue);
+                  } catch (Exception e) {
+                    fieldValue = new Long(fieldStringValue);
+                  }
+              } catch (NumberFormatException nf) {
+                fieldValue = fieldStringValue;
               }
-          }
-          else
+            }
+          } else
             fieldValue = fieldStringValue;
 
           if (nullValue != null && nullValue.equals(fieldValue))
@@ -191,15 +190,20 @@ public class OCSVTransformer extends OAbstractTransformer {
 
     return doc;
   }
-    //TODO Test, and double doubleqoutes case
-    public String getCellContent(String iValue) {
-        if (iValue == null)
-            return null;
 
-        if (iValue.length() > 1
-                && (iValue.charAt(0) == stringCharacter && iValue.charAt(iValue.length() - 1) == stringCharacter))
-            return iValue.substring(1, iValue.length() - 1);
+  // TODO Test, and double doubleqoutes case
+  public String getCellContent(String iValue) {
+    if (iValue == null)
+      return null;
 
-        return iValue;
-    }
+    if (iValue.length() > 1 && (iValue.charAt(0) == stringCharacter && iValue.charAt(iValue.length() - 1) == stringCharacter))
+      return iValue.substring(1, iValue.length() - 1);
+
+    return iValue;
+  }
+
+  public static boolean isFinite(final float value) {
+    return Math.abs(value) <= FloatConsts.MAX_VALUE;
+  }
+
 }
