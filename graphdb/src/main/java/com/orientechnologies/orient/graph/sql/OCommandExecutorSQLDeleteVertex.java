@@ -216,7 +216,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   @Override
   public void end() {
     if (graph != null && shutdownFlag.getValue())
-      graph.shutdown(false);
+      graph.shutdown(false, false);
   }
 
   @Override
