@@ -116,9 +116,16 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     OrientBaseGraph curGraph = getGraph();
     if (curGraph == null)
       return false;
-    final ORecordOperation oper = curGraph.getRawGraph().getTransaction().getRecordEntry(getIdentity());
+
+    ORID id;
+    if (getRecord() != null)
+      id = getRecord().getIdentity();
+    else
+      return false;
+
+    final ORecordOperation oper = curGraph.getRawGraph().getTransaction().getRecordEntry(id);
     if (oper == null)
-      return getIdentity().isTemporary();
+      return id.isTemporary();
     else
       return oper.type == ORecordOperation.DELETED;
   }
