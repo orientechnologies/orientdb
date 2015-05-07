@@ -25,6 +25,7 @@ angular
     'mentio',
     'luegg.directives',
     'scroll',
+    'utils.autofocus',
     'angular-otobox'
   ])
   .config(["$routeProvider", "$httpProvider", "RestangularProvider", function ($routeProvider, $httpProvider, RestangularProvider) {
@@ -128,9 +129,9 @@ else {
   var WEBSOCKET = "ws://" + location.hostname + "/chat";
 }
 
-//WEBSOCKET = 'ws://www.prjhub.com/chat';
-//var WEBSOCKET = 'ws://prjhub.com/chat'
-//var WEBSOCKET = 'ws://localhost:8080/chat'
+String.prototype.capitalize = function() {
+  return this.charAt(0).toUpperCase() + this.slice(1);
+}
 
 'use strict';
 
@@ -145,8 +146,10 @@ angular.module('webappApp')
   .controller('MainCtrl', ["$scope", "Organization", "User", function ($scope, Organization, User) {
 
 
+    $scope.issue = {}
     User.whoami().then(function (data) {
       $scope.member = data;
+      $scope.issue.assignee = data;
       if (User.isMember(ORGANIZATION)) {
         $scope.query = 'is:open ' + 'assignee:' + $scope.member.name + " sort:priority-desc";
       } else if (User.isClient(ORGANIZATION)) {
@@ -155,8 +158,62 @@ angular.module('webappApp')
       } else {
         $scope.query = 'is:open ';
       }
+      Organization.all("members").getList().then(function (data) {
+        $scope.assignees = data.plain();
+      })
+      Organization.all("milestones").all('current').getList().then(function (data) {
+        $scope.milestones = data.plain().map(function (m) {
+          m.current = true;
+          return m;
+        });
+      })
       Organization.all('issues').customGET("", {q: $scope.query, page: $scope.page}).then(function (data) {
         $scope.issues = data.content;
+      });
+      function loadBoard() {
+        var assignee = $scope.issue.assignee ? $scope.issue.assignee.name : "";
+        var assigneeFilter = assignee == "" ? "" : 'assignee:' + assignee;
+        var milestone = $scope.issue.milestone ? "milestone:\"" + $scope.issue.milestone.title + "\"" : "milestone:_current";
+        $scope.queryBacklog = 'is:open ' + assigneeFilter + " !label:\"in progress\" " + milestone + " sort:priority-desc sort:createdAt-desc";
+        Organization.all('board').all("issues").customGET("", {
+          q: $scope.queryBacklog,
+          page: $scope.page
+        }).then(function (data) {
+          $scope.backlogs = data.content;
+        });
+        milestone = $scope.issue.milestone ? "milestone:\"" + $scope.issue.milestone.title + "\"" : "";
+        $scope.queryProgress = 'is:open ' + assigneeFilter + " label:\"in progress\" " + milestone + " sort:priority-desc sort:createdAt-desc";
+        Organization.all('board').all("issues").customGET("", {
+          q: $scope.queryProgress,
+          page: $scope.page
+        }).then(function (data) {
+          $scope.inProgress = data.content;
+        });
+
+        $scope.queryZombies = 'is:open no:assignee sort:createdAt-desc'
+        Organization.all('board').all("issues").customGET("", {
+          q: $scope.queryZombies,
+          page: $scope.page,
+          per_page: 6
+        }).then(function (data) {
+          $scope.zombies = data.content;
+        });
+
+      }
+
+      $scope.isMember = User.isMember(ORGANIZATION);
+      if (User.isMember(ORGANIZATION)) {
+        loadBoard();
+      }
+      $scope.$on("assignee:changed", function (e, assignee) {
+
+        $scope.issue.assignee = assignee;
+        loadBoard();
+
+      });
+      $scope.$on("milestone:changed", function (e, m) {
+        $scope.issue.milestone = m;
+        loadBoard();
       });
     });
 
@@ -191,11 +248,15 @@ angular.module('webappApp')
   }]);
 
 angular.module('webappApp')
-  .controller('ClientEditCtrl', ["$scope", "Organization", "$routeParams", function ($scope, Organization, $routeParams) {
+  .controller('ClientEditCtrl', ["$scope", "Organization", "$routeParams", "$location", function ($scope, Organization, $routeParams,$location) {
 
 
     Organization.all("clients").one($routeParams.id).get().then(function (data) {
       $scope.client = data.plain();
+    }).catch(function (error, status) {
+      if(error.status == 404){
+        $location.path("/");
+      }
     })
     Organization.all("clients").one($routeParams.id).all("members").getList().then(function (data) {
       $scope.members = data.plain();
@@ -238,7 +299,7 @@ angular.module('webappApp')
 
 'use strict';
 angular.module('webappApp')
-  .controller('HeaderCtrl', ["$scope", "User", "BreadCrumb", function ($scope, User, BreadCrumb) {
+  .controller('HeaderCtrl', ["$scope", "User", "BreadCrumb", "$location", "$rootScope", function ($scope, User, BreadCrumb, $location, $rootScope) {
 
     $scope.menuClass = "";
     $scope.breadCrumb = BreadCrumb;
@@ -247,11 +308,40 @@ angular.module('webappApp')
       $scope.member = User.isMember(ORGANIZATION);
       $scope.isClient = User.isClient(ORGANIZATION);
 
+
     })
+
+    $scope.closeMe = function () {
+      $('#myNavmenu').offcanvas('toggle');
+    }
     $scope.toggleMenu = function () {
       $scope.menuClass = $scope.menuClass == "" ? "show-menu" : "";
     }
 
+    $rootScope.$on('$routeChangeSuccess', function (scope, next, current) {
+
+
+      if (next.$$route.originalPath.indexOf('/rooms') != -1) {
+        $scope.isChat = true;
+      } else {
+        $scope.isChat = false;
+      }
+      if (!$scope.user) {
+        $scope.$watch('user', function (user) {
+          if (user && !user.confirmed) {
+            if (!User.isMember(ORGANIZATION) && User.isClient(ORGANIZATION)) {
+              $location.path('/users/' + user.name)
+            }
+          }
+        })
+      } else {
+        if (!$scope.user.confirmed) {
+          if (!User.isMember(ORGANIZATION) && User.isClient(ORGANIZATION)) {
+            $location.path('/users/' + $scope.user.name)
+          }
+        }
+      }
+    })
 
   }]);
 
@@ -262,18 +352,53 @@ angular.module('webappApp')
     $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
 
 
+    $scope.sorts = [{
+      name: 'Newest',
+      filter: 'createdAt-desc'
+    }, {
+      name: 'Oldest',
+      filter: 'createdAt-asc'
+    }, {
+      name: 'More Priority',
+      filter: 'priority-desc'
+    }, {
+      name: 'Less Priority',
+      filter: 'priority-asc'
+    }]
+
     $scope.query = 'is:open '
     $scope.page = 1;
     // Query By Example
     $scope.issue = {};
+    $scope.matched = {};
     if ($routeParams.q) {
       $scope.query = $routeParams.q;
+      var match = $scope.query.match(/(?:[^\s"]+|"[^"]*")+/g);
+
+      match.forEach(function (m) {
+        var splitted = m.split(":")
+        if (splitted[0] == "label") {
+          if (!$scope.matched[splitted[0]]) {
+            $scope.matched[splitted[0]] = []
+          }
+          $scope.matched[splitted[0]].push(splitted[1].replace(/"/g, ""));
+        } else {
+          if (splitted[1]) {
+            $scope.matched[splitted[0]] = splitted[1].replace(/"/g, "");
+          } else {
+            $scope.matched['fulltext'] = splitted[0];
+          }
+        }
+      })
+      $scope.sorts.forEach(function (s) {
+        if (s.filter == $scope.matched['sort']) {
+          $scope.issue.sort = s;
+        }
+      });
+
     }
-
     if ($routeParams.page) {
-
       $scope.page = $routeParams.page;
-      console.log($scope.page);
     }
 
     $scope.labelPopover = {
@@ -305,31 +430,77 @@ angular.module('webappApp')
 
     User.whoami().then(function (data) {
       $scope.isMember = User.isMember(ORGANIZATION);
-
       if ($scope.isMember) {
         Organization.all("clients").getList().then(function (data) {
           $scope.clients = data.plain();
+          $scope.clients.forEach(function (a) {
+            if (a.name == $scope.matched['client']) {
+              $scope.issue.client = a;
+            }
+          })
         })
       }
     });
     Organization.all("scopes").getList().then(function (data) {
       $scope.scopes = data.plain();
+
+
+      $scope.scopes.forEach(function (s) {
+        if (s.name == $scope.matched['area']) {
+          $scope.issue.scope = s;
+        }
+      })
+
+
     })
     Organization.all("members").getList().then(function (data) {
       $scope.assignees = data.plain();
+
+      $scope.assignees.forEach(function (a) {
+        if (a.name == $scope.matched['assignee']) {
+          $scope.issue.assignee = a;
+        }
+      })
     })
     Organization.all("priorities").getList().then(function (data) {
       $scope.priorities = data.plain();
+      $scope.priorities.forEach(function (p) {
+        if (p.name == $scope.matched['priority']) {
+          $scope.issue.priority = p;
+        }
+      })
     })
     Organization.all("milestones").getList().then(function (data) {
       $scope.milestones = data.plain();
       $scope.versions = data.plain();
+
+      $scope.milestones.forEach(function (m) {
+        if (m.title == $scope.matched['milestone']) {
+          $scope.issue.milestone = m;
+        }
+        if (m.title == $scope.matched['version']) {
+          $scope.issue.version = m;
+        }
+      })
     })
     Organization.all("labels").getList().then(function (data) {
       $scope.labels = data.plain();
+      $scope.issue.labels = [];
+      $scope.labels.forEach(function (l) {
+        if ($scope.matched["label"] && $scope.matched["label"].indexOf(l.name) != -1) {
+          $scope.issue.labels.push(l);
+        }
+      })
+
     })
     Organization.all('repos').getList().then(function (data) {
       $scope.repositories = data.plain();
+
+      $scope.repositories.forEach(function (m) {
+        if (m.name == $scope.matched['repo']) {
+          $scope.issue.repository = m;
+        }
+      })
     })
     var addCondition = function (input, name, val) {
       input = input.trim()
@@ -370,11 +541,13 @@ angular.module('webappApp')
       }
     });
     $scope.$on("assignee:changed", function (e, assignee) {
+
+      if ($scope.issue.assignee) {
+        $scope.query = removeCondition($scope.query, "assignee", $scope.issue.assignee.name);
+      }
       if (assignee) {
-        if ($scope.issue.assignee) {
-          $scope.query = removeCondition($scope.query, "assignee", $scope.issue.assignee.name);
-        }
         $scope.query = addCondition($scope.query, "assignee", assignee.name);
+
         $scope.issue.assignee = assignee;
         $scope.search();
       }
@@ -427,6 +600,19 @@ angular.module('webappApp')
         $scope.search();
       }
     });
+    $scope.$on("sort:changed", function (e, sort) {
+      if (sort) {
+        if ($scope.issue.sort) {
+          $scope.query = removeCondition($scope.query, "sort", $scope.issue.sort.filter);
+        }
+        $scope.issue.sort = sort;
+
+        $scope.query = addCondition($scope.query, "sort", sort.filter);
+        $scope.search();
+
+      }
+
+    });
     $scope.calculatePages = function (pager) {
 
       var maxBlocks, maxPage, maxPivotPages, minPage, numPages, pages;
@@ -470,6 +656,13 @@ angular.module('webappApp')
   .controller('IssueNewCtrl', ["$scope", "Organization", "Repo", "$location", "User", function ($scope, Organization, Repo, $location, User) {
 
 
+    $scope.types = {
+      'Bug': 'bug',
+      'Performance': 'performance',
+      'Documentation': 'documentation',
+      'Enhancement': 'enhancement',
+      'Question': 'question'
+    }
     $scope.issue = {}
     $scope.save = function () {
       $scope.issue.scope = $scope.scope.number;
@@ -480,13 +673,14 @@ angular.module('webappApp')
     Organization.all("scopes").getList().then(function (data) {
       $scope.scopes = data.plain();
     })
+    $scope.labels = $scope.types;
     User.whoami().then(function (data) {
       $scope.user = data;
       $scope.isMember = User.isMember(ORGANIZATION);
       $scope.isClient = User.isClient(ORGANIZATION);
       $scope.client = User.getClient(ORGANIZATION);
       User.environments().then(function (data) {
-        $scope.environments = data;
+        $scope.environments = data.plain();
       });
       if ($scope.client)
         $scope.issue.client = $scope.client.clientId;
@@ -521,7 +715,7 @@ angular.module('webappApp')
     });
   }]);
 angular.module('webappApp')
-  .controller('IssueEditCtrl', ["$scope", "$routeParams", "Organization", "Repo", "$popover", "$route", "User", "$timeout", "$location", function ($scope, $routeParams, Organization, Repo, $popover, $route, User, $timeout,$location) {
+  .controller('IssueEditCtrl', ["$scope", "$routeParams", "Organization", "Repo", "$popover", "$route", "User", "$timeout", "$location", function ($scope, $routeParams, Organization, Repo, $popover, $route, User, $timeout, $location) {
 
 
     $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
@@ -605,6 +799,13 @@ angular.module('webappApp')
       }
     }
 
+    $scope.$watch("newComment.body", function (data) {
+      if (data && data != "") {
+        $scope.closeComment = true;
+      } else {
+        $scope.closeComment = false;
+      }
+    })
     $scope.changeTitle = function (title) {
       Repo.one($scope.repo).all("issues").one(number).patch({title: title}).then(function (data) {
         $scope.issue.title = title;
@@ -613,10 +814,19 @@ angular.module('webappApp')
         refreshEvents();
       });
     }
+    $scope.copyIssueNumber = function () {
+
+      var copyEvent = new ClipboardEvent('copy', { dataType: 'text/plain', data: 'Data to be copied' } );fi
+      document.dispatchEvent(copyEvent);
+    }
     $scope.close = function () {
+
       Repo.one($scope.repo).all("issues").one(number).patch({state: "closed"}).then(function (data) {
         $scope.issue.state = "closed";
-        refreshEvents();
+        if ($scope.newComment && $scope.newComment.body) {
+          $scope.comment();
+          refreshEvents();
+        }
       });
     }
     $scope.reopen = function () {
@@ -636,8 +846,6 @@ angular.module('webappApp')
 
     })
     $scope.$on("label:removed", function (e, label) {
-
-
       Repo.one($scope.repo).all("issues").one(number).one("labels", label.name).remove().then(function () {
         var idx = $scope.issue.labels.indexOf(label);
         $scope.issue.labels.splice(idx, 1);
@@ -698,7 +906,7 @@ angular.module('webappApp')
   }]);
 
 angular.module('webappApp')
-  .controller('ChangeLabelCtrl', ["$scope", function ($scope) {
+  .controller('ChangeLabelCtrl', ["$scope", "$filter", function ($scope, $filter) {
 
     $scope.title = $scope.title || 'Apply labels to this issue';
     $scope.isLabeled = function (label) {
@@ -721,13 +929,21 @@ angular.module('webappApp')
       }
     }
 
+    $scope.selectFirst = function () {
+
+      var filtered = $filter('filter')($scope.labels, $scope.labelFilter);
+      if (filtered.length == 1) {
+        $scope.toggleLabel(filtered[0]);
+      }
+    }
   }]);
 
 angular.module('webappApp')
-  .controller('ChangeMilestoneCtrl', ["$scope", "$routeParams", "Repo", "$popover", function ($scope, $routeParams, Repo, $popover) {
+  .controller('ChangeMilestoneCtrl', ["$scope", "$filter", "$routeParams", "Repo", "$popover", function ($scope, $filter, $routeParams, Repo, $popover) {
 
     $scope.title = $scope.title || 'Change target milestone';
     $scope.isMilestoneSelected = function (milestone) {
+      if (!milestone) return false;
       if ($scope.issue.milestone) {
         if (milestone.number) {
           return milestone.number == $scope.issue.milestone.number;
@@ -739,15 +955,25 @@ angular.module('webappApp')
       }
     }
     $scope.toggleMilestone = function (milestone) {
-      if (!$scope.isMilestoneSelected(milestone)) {
+      if (!milestone) {
+        $scope.$emit("milestone:changed", milestone);
+        $scope.$hide();
+      } else if (!$scope.isMilestoneSelected(milestone)) {
         $scope.$emit("milestone:changed", milestone);
         $scope.$hide();
       }
     }
 
+    $scope.selectFirst = function () {
+
+      var filtered = $filter('filter')($scope.milestones, $scope.filter);
+      if (filtered.length == 1) {
+        $scope.toggleMilestone(filtered[0]);
+      }
+    }
   }]);
 angular.module('webappApp')
-  .controller('ChangeVersionCtrl', ["$scope", function ($scope) {
+  .controller('ChangeVersionCtrl', ["$scope", "$filter", function ($scope, $filter) {
 
     $scope.title = $scope.title || 'Change affected version';
     $scope.isVersionSelected = function (version) {
@@ -768,25 +994,43 @@ angular.module('webappApp')
         $scope.$hide();
       }
     }
+
+    $scope.selectFirst = function () {
+
+      var filtered = $filter('filter')($scope.versions, $scope.filter);
+      if (filtered.length == 1) {
+        $scope.toggleVersion(filtered[0]);
+      }
+    }
   }]);
 angular.module('webappApp')
-  .controller('ChangeAssigneeCtrl', ["$scope", function ($scope) {
+  .controller('ChangeAssigneeCtrl', ["$scope", "$filter", function ($scope, $filter) {
     $scope.title = $scope.title || 'Assign this issue';
-    $scope.isAssigneeSelected = function (assignee) {
 
+    $scope.isAssigneeSelected = function (assignee) {
       return ($scope.issue.assignee && assignee) ? assignee.name == $scope.issue.assignee.name : false;
     }
     $scope.toggleAssignee = function (assignee) {
-      if (!$scope.isAssigneeSelected(assignee)) {
+      if (!assignee) {
+        $scope.$emit("assignee:changed", assignee);
+        $scope.$hide();
+      } else if (!$scope.isAssigneeSelected(assignee)) {
         $scope.$emit("assignee:changed", assignee);
         $scope.$hide();
       }
     }
 
+    $scope.selectFirst = function () {
+
+      var filtered = $filter('filter')($scope.assignees, $scope.filter);
+      if (filtered.length == 1) {
+        $scope.toggleAssignee(filtered[0]);
+      }
+    }
   }]);
 
 angular.module('webappApp')
-  .controller('ChangePriorityCtrl', ["$scope", function ($scope) {
+  .controller('ChangePriorityCtrl', ["$scope", "$filter", function ($scope, $filter) {
 
     $scope.isPrioritized = function (priority) {
       return $scope.issue.priority ? priority.name == $scope.issue.priority.name : false;
@@ -798,10 +1042,17 @@ angular.module('webappApp')
       }
     }
 
+    $scope.selectFirst = function () {
+
+      var filtered = $filter('filter')($scope.priorities, $scope.filter);
+      if (filtered.length == 1) {
+        $scope.togglePriority(filtered[0]);
+      }
+    }
   }]);
 
 angular.module('webappApp')
-  .controller('ChangeScopeCtrl', ["$scope", function ($scope) {
+  .controller('ChangeScopeCtrl', ["$scope", "$filter", function ($scope, $filter) {
     $scope.title = $scope.title || 'Change Area';
     $scope.isScoped = function (scope) {
       return $scope.issue.scope ? scope.name == $scope.issue.scope.name : false;
@@ -813,9 +1064,16 @@ angular.module('webappApp')
       $scope.$hide();
     }
 
+    $scope.selectFirst = function () {
+
+      var filtered = $filter('filter')($scope.scopes, $scope.filter);
+      if (filtered.length == 1) {
+        $scope.toggleScope(filtered[0]);
+      }
+    }
   }]);
 angular.module('webappApp')
-  .controller('ChangeRepoCtrl', ["$scope", function ($scope) {
+  .controller('ChangeRepoCtrl', ["$scope", "$filter", function ($scope, $filter) {
     $scope.title = $scope.title || 'Change Repository';
     $scope.isRepo = function (repository) {
       return $scope.issue.repository ? repository.name == $scope.issue.repository.name : false;
@@ -827,9 +1085,17 @@ angular.module('webappApp')
       $scope.$hide();
     }
 
+    $scope.selectFirst = function () {
+
+      var filtered = $filter('filter')($scope.repositories, $scope.filter);
+      if (filtered.length == 1) {
+        $scope.toggleRepo(filtered[0]);
+      }
+    }
+
   }]);
 angular.module('webappApp')
-  .controller('ChangeClientCtrl', ["$scope", function ($scope) {
+  .controller('ChangeClientCtrl', ["$scope", "$filter", function ($scope, $filter) {
 
     $scope.isClientSelected = function (client) {
       return $scope.issue.client ? client.name == $scope.issue.client.name : false;
@@ -841,8 +1107,30 @@ angular.module('webappApp')
       $scope.$hide();
     }
 
+    $scope.selectFirst = function () {
+
+      var filtered = $filter('filter')($scope.clients, $scope.queryClient);
+      if (filtered.length == 1) {
+        $scope.toggleClient(filtered[0]);
+      }
+    }
   }]);
 
+angular.module('webappApp')
+  .controller('ChangeSortCtrl', ["$scope", function ($scope) {
+
+
+    $scope.isSortSelected = function (sort) {
+      return $scope.issue.sort ? sort.name == $scope.issue.sort.name : false;
+    }
+    $scope.toggleSort = function (sort) {
+      if (!$scope.isSortSelected(sort)) {
+        $scope.$emit("sort:changed", sort);
+      }
+      $scope.$hide();
+    }
+
+  }]);
 angular.module('webappApp').controller('CommentController', ["$scope", "Repo", function ($scope, Repo) {
   $scope.preview = true;
 
@@ -917,10 +1205,15 @@ angular.module('webappApp')
 angular.module('webappApp')
   .controller('UserCtrl', ["$scope", "User", function ($scope, User) {
 
-    $scope.tabs = [{
-      title: 'Environment',
-      url: 'views/users/environment.html'
-    }]
+    $scope.tabs = [
+      {
+        title: 'Profile',
+        url: 'views/users/profile.html'
+      },
+      {
+        title: 'Environment',
+        url: 'views/users/environment.html'
+      }]
 
     $scope.currentTab = $scope.tabs[0].url;
 
@@ -1037,11 +1330,38 @@ angular.module('webappApp')
     })
     Organization.all("repos").getList().then(function (data) {
       $scope.repositories = data.plain();
+      if ($scope.repositories.length > 0) {
+        $scope.selectedRepo = $scope.repositories[0];
+      }
     })
     Organization.all("scopes").getList().then(function (data) {
       $scope.areas = data.plain();
     })
 
+    Organization.all("bots").getList().then(function (data) {
+      $scope.bots = data.plain();
+    })
+
+    Organization.all("milestones").all('current').getList().then(function (data) {
+      var currents = data.plain();
+      Organization.all("milestones").getList().then(function (data) {
+        $scope.milestones = data.plain().map(function (m) {
+          currents.forEach(function (m1) {
+            if (m1.title == m.title) {
+              m.current = true;
+            }
+          })
+          return m;
+        });
+      })
+    })
+
+
+    $scope.addBot = function () {
+      Organization.all("bots").one($scope.newBot).post().then(function (data) {
+        $scope.bots.push(data);
+      });
+    }
     $scope.addRepository = function () {
       Organization.all("repos").one($scope.newRepo).post().then(function (data) {
         $scope.repositories.push(data.plain());
@@ -1052,6 +1372,11 @@ angular.module('webappApp')
       $scope.areaEditing = true;
       $scope.area = {}
       $scope.area.members = [];
+    }
+    $scope.saveMilestone = function (milestone) {
+      Organization.all("milestones").one(encodeURI(milestone.title)).patch({current: milestone.current}).then(function (data) {
+
+      })
     }
     $scope.cancelArea = function () {
       $scope.areaEditing = false;
@@ -1096,6 +1421,28 @@ angular.module('webappApp')
 
 
 angular.module('webappApp')
+  .controller('UserProfileCtrl', ["$scope", "User", "Repo", function ($scope, User, Repo) {
+
+
+    $scope.message = 'Please fill this information to use PrjHub';
+    User.whoami().then(function (user) {
+      $scope.user = user;
+
+      $scope.member = User.isMember(ORGANIZATION);
+      $scope.isClient = User.isClient(ORGANIZATION);
+      $scope.viewMessage = !$scope.user.confirmed && !$scope.member && !$scope.isClient;
+    });
+
+    $scope.save = function () {
+
+      User.save($scope.user).then(function (data) {
+
+        var jacked = humane.create({baseCls: 'humane-jackedup', addnCls: 'humane-jackedup-success'})
+        jacked.log("Profile saved.");
+      });
+    }
+  }])
+angular.module('webappApp')
   .controller('ChangeSelectEnvironmentCtrl', ["$scope", "User", "Repo", function ($scope, User, Repo) {
 
 
@@ -1122,7 +1469,7 @@ angular.module('webappApp')
  * Controller of the webappApp
  */
 angular.module('webappApp')
-  .controller('ChatCtrl', ["$scope", "Organization", "$routeParams", "$route", "User", "$timeout", "BreadCrumb", "$location", "ChatService", "$rootScope", function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb, $location, ChatService, $rootScope) {
+  .controller('ChatCtrl', ["$scope", "Organization", "$routeParams", "$route", "User", "$timeout", "BreadCrumb", "$location", "ChatService", "$rootScope", "$filter", function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb, $location, ChatService, $rootScope, $filter) {
 
     $scope.isNew = false;
     $scope.placeholder = "Click here to type a message. Enter to send.";
@@ -1132,23 +1479,37 @@ angular.module('webappApp')
 
     $scope.connected = ChatService.connected;
 
+
+    $scope.closeMe = function () {
+      $('#roomsMobile').offcanvas('toggle');
+    }
     $rootScope.$on('msg-received', function (e, msg) {
 
-      if (msg.sender.name != $scope.currentUser.name) {
-        if ($scope.clientId == msg.clientId) {
-          $scope.$apply(function () {
-            addNewMessage(msg);
-            visit()
 
-          });
+      if (msg.sender.name != $scope.currentUser.name) {
+
+        if (msg.edited) {
+
+          if ($scope.clientId == msg.clientId) {
+            replaceMsg(msg);
+            visit();
+          }
         } else {
-          $scope.$apply(function () {
-            $scope.clients.forEach(function (c) {
-              if (c.clientId == msg.clientId) {
-                c.timestamp = new Date().getTime();
-              }
-            })
-          });
+          if ($scope.clientId == msg.clientId) {
+            $scope.$apply(function () {
+              addNewMessage(msg);
+              visit()
+
+            });
+          } else {
+            $scope.$apply(function () {
+              $scope.clients.forEach(function (c) {
+                if (c.clientId == msg.clientId) {
+                  c.timestamp = new Date().getTime();
+                }
+              })
+            });
+          }
         }
       }
     });
@@ -1220,6 +1581,16 @@ angular.module('webappApp')
       });
       return newMsg;
     }
+
+    var replaceMsg = function (msg) {
+      $scope.messages.forEach(function (g) {
+        g.messages.forEach(function (m) {
+          if (m.id === msg.id) {
+            m.body = msg.body;
+          }
+        });
+      })
+    }
     var addNewMessage = function (message) {
 
 
@@ -1264,6 +1635,8 @@ angular.module('webappApp')
         if (clients.length > 0) {
           $scope.clients = clients;
           if (!$scope.clientId) {
+
+            $scope.clients = $filter('orderBy')($scope.clients, "timestamp", true);
             $scope.clientId = $scope.clients[0].clientId.toString();
             $scope.client = $scope.clients[0];
           } else {
@@ -1308,15 +1681,59 @@ angular.module('webappApp')
     }
     $scope.sendMessage = function () {
       $scope.sending = true;
-      Organization.all("clients").one($scope.clientId).all("room").patch({body: $scope.current}).then(function (data) {
-        $scope.current = null;
-        addNewMessage(data);
-        $scope.sending = false;
-      }).catch(function () {
-        $scope.sending = false;
-      })
+
+      var last = angular.copy($scope.current);
+      $scope.current = null;
+      $scope.$apply();
+      if (last != null) {
+        Organization.all("clients").one($scope.clientId).all("room").patch({body: last}).then(function (data) {
+          //$scope.current = null;
+          addNewMessage(data);
+          $scope.sending = false;
+          visit();
+        }).catch(function () {
+          $scope.current = last;
+          $scope.sending = false;
+        })
+      }
     }
   }]);
+
+
+angular.module('webappApp').controller('MessageController', ["$scope", "Organization", function ($scope, Organization) {
+
+
+  $scope.placeholder = "This message was deleted";
+
+
+  $scope.owner = $scope.message.sender.name === $scope.currentUser.name;
+  $scope.edit = function () {
+    $scope.preview = false;
+  }
+
+  $scope.timeToChange = function (message) {
+    var input = new Date(parseInt(message.date));
+
+    var then = moment(input);
+
+    var now = moment(new Date());
+
+    var difference = moment.duration(now.diff(then))
+    return difference._data.minutes < 10;
+
+  }
+  $scope.delete = function () {
+    $scope.message.body = null;
+    $scope.patchMessage();
+  }
+  $scope.patchMessage = function () {
+    Organization.all("clients").one($scope.clientId).all("room").one(encodeURI($scope.message.id.replace("#", ""))).patch({body: $scope.message.body}).then(function (data) {
+      $scope.preview = true
+    }).catch(function () {
+      $scope.preview = true;
+    })
+  }
+}]);
 
 'use strict';
 
@@ -1369,6 +1786,15 @@ angular.module('webappApp').factory("User", ["Restangular", "$q", function (Rest
       } else {
         deferred.resolve(self.current);
       }
+      return deferred.promise;
+    },
+    save: function (user) {
+      var deferred = $q.defer();
+      var self = this;
+      allUserService.one(user.name).patch(user).then(function (data) {
+        self.current = data;
+        deferred.resolve(data);
+      });
       return deferred.promise;
     },
     environments: function () {
@@ -1464,8 +1890,12 @@ angular.module('webappApp').factory("BreadCrumb", ["$rootScope", function ($root
 'use strict';
 
 
-angular.module('webappApp').factory("ChatService", ["$rootScope", "$location", "$timeout", "User", "Organization", function ($rootScope, $location,$timeout ,User, Organization) {
+angular.module('webappApp').factory("ChatService", ["$rootScope", "$location", "$timeout", "$window", "User", "Organization", function ($rootScope, $location, $timeout, $window, User, Organization) {
 
+
+  var favicon = new Favico({
+    animation: 'popFade'
+  });
 
   var charSocketWrapper = {
     socket: null,
@@ -1480,6 +1910,11 @@ angular.module('webappApp').factory("ChatService", ["$rootScope", "$location", "
   var chatService = {
     connected: false,
     clients: [],
+    badge: 0,
+    clean: function () {
+      this.badge = 0;
+      favicon.badge(0);
+    },
     notify: function (msg) {
       if (!("Notification" in window)) {
         alert("This browser does not support desktop notification");
@@ -1501,6 +1936,7 @@ angular.module('webappApp').factory("ChatService", ["$rootScope", "$location", "
         Notification.requestPermission(function (permission) {
           // If the user is okay, let's create a notification
           if (permission === "granted") {
+
             var notification = new Notification("Room " + this.getClientName(msg.clientId), {body: msg.body});
           }
         });
@@ -1529,6 +1965,9 @@ angular.module('webappApp').factory("ChatService", ["$rootScope", "$location", "
     }, 1000);
   }
 
+  $window.onfocus = function () {
+    chatService.clean();
+  }
   function initializer() {
 
     charSocketWrapper.socket.onopen = function () {
@@ -1553,7 +1992,10 @@ angular.module('webappApp').factory("ChatService", ["$rootScope", "$location", "
     charSocketWrapper.socket.onmessage = function (evt) {
       var msg = JSON.parse(evt.data);
       if (msg.sender.name != chatService.currentUser.name) {
-        chatService.notify(msg);
+        if (!msg.edited)
+          chatService.notify(msg);
+        chatService.badge += 1;
+        favicon.badge(chatService.badge);
         $rootScope.$broadcast('msg-received', msg);
       }
     };
@@ -1569,7 +2011,7 @@ angular.module('webappApp').factory("ChatService", ["$rootScope", "$location", "
   poll();
 
   return chatService;
-}]).run(["ChatService", function(ChatService){
+}]).run(["ChatService", function (ChatService) {
 
 }]);
 
@@ -1661,11 +2103,13 @@ angular.module('webappApp').directive('vueEditor', ["$timeout", "$compile", "$ht
     scope: {
       preview: "=?preview",
       placeholder: "=?placeholder",
+      nullValue: "=?nullValue",
       onSend: '&'
     },
     templateUrl: 'views/vueditor.html',
     controller: ["$scope", function ($scope) {
       $scope.preview = $scope.preview || true
+
     }],
     link: function (scope, elem, attrs, ngModel) {
       var editor;
@@ -1677,10 +2121,7 @@ angular.module('webappApp').directive('vueEditor', ["$timeout", "$compile", "$ht
 
       function initialize(value) {
 
-        if (value) {
-          ngModel.$setViewValue(value);
-        }
-
+        ngModel.$setViewValue(value);
 
         if (!editor) {
           var showing = false;
@@ -1689,6 +2130,7 @@ angular.module('webappApp').directive('vueEditor', ["$timeout", "$compile", "$ht
             if (val) {
               scope.actors = val;
 
+              var text = elem.children()[0];
               $(elem.children()[0]).suggest('@', {
                 data: scope.actors,
                 map: function (user) {
@@ -1701,6 +2143,7 @@ angular.module('webappApp').directive('vueEditor', ["$timeout", "$compile", "$ht
                   showing = true;
                 },
                 onselect: function (e) {
+                  editor.$data.input = $(text).val()
                   showing = false;
                 },
                 onhide: function () {
@@ -1710,8 +2153,10 @@ angular.module('webappApp').directive('vueEditor', ["$timeout", "$compile", "$ht
               })
             }
           })
+
           scope.placeholder = scope.placeholder || 'Leave a comment'
           var defaultVal = scope.preview ? 'No description' : '';
+          defaultVal = scope.nullValue ? scope.nullValue : defaultVal;
           var elementArea = elem[0];
 
           $(elementArea).focus();
@@ -1725,8 +2170,8 @@ angular.module('webappApp').directive('vueEditor', ["$timeout", "$compile", "$ht
             },
             methods: {
               send: function (e) {
-
-                if ((e.keyCode == 13) && (!e.ctrlKey) && !showing) {
+                if ((e.keyCode == 13) && (!e.ctrlKey && !e.shiftKey) && !showing) {
+                  e.preventDefault();
                   if (scope.onSend && editor.$data.input && editor.$data.input.length > 0) {
                     scope.onSend();
                   }
@@ -1740,14 +2185,15 @@ angular.module('webappApp').directive('vueEditor', ["$timeout", "$compile", "$ht
             scope.sending = val;
 
 
-
           })
           editor.$watch('$data.input', function (newVal, oldval) {
+
             ngModel.$setViewValue(newVal);
 
           });
         } else {
           var defaultVal = scope.preview ? 'No description' : '';
+          defaultVal = scope.nullValue ? scope.nullValue : defaultVal;
           editor.$data.input = value || defaultVal
         }
 
@@ -1782,6 +2228,28 @@ angular.module('scroll', []).directive('whenScrolled', function () {
     });
   };
 });
+
+
+/**
+ * the HTML5 autofocus property can be finicky when it comes to dynamically loaded
+ * templates and such with AngularJS. Use this simple directive to
+ * tame this beast once and for all.
+ *
+ * Usage:
+ * <input type="text" autofocus>
+ */
+angular.module('utils.autofocus', [])
+
+  .directive('autofocus', ['$timeout', function ($timeout) {
+    return {
+      restrict: 'A',
+      link: function ($scope, $element) {
+        $timeout(function () {
+          $element[0].focus();
+        }, 200);
+      }
+    }
+  }]);
 
 (function ($, undefined) {
   $.fn.getCursorPosition = function () {

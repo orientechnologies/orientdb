@@ -193,6 +193,7 @@ public class UserServiceImpl implements UserService {
 
     if (!isMember(current, organization)) {
       blankInfo(issue.getUser());
+      blankClientInfo(issue);
     } else {
       Client client = getClient(issue.getUser(), organization);
       if (client != null) {
@@ -201,6 +202,10 @@ public class UserServiceImpl implements UserService {
         issue.getUser().setClientId(client.getClientId());
       }
     }
+  }
+
+  private void blankClientInfo(Issue issue) {
+    issue.setClient(null);
   }
 
   @Override

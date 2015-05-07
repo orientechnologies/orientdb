@@ -40,10 +40,12 @@ body {
 
 /* Custom page footer */
 .footer {
-  padding-top: 19px;
+  padding-top: 5px;
+  text-align:center;
   color: #777;
   border-top: 1px solid #e5e5e5;
 }
+
 
 /* Customize container */
 @media (min-width: 768px) {
@@ -109,9 +111,28 @@ body {
     margin-left: 70px;
     margin-top: 60px;
   }
-
+  .app-view > .container-fluid {
+    padding-bottom: 40px;
+  }
   .footer {
-    margin-left: 70px;
+
+  }
+  .footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 30px;
+    background-color: #f5f5f5;
+  }
+  .board-member {
+    margin-top: 20px;
+  }
+  .board-member .selected-member .avatar-container{
+    padding: 7px;
+  }
+  .panel-milestone {
+    max-height: 200px;
+    overflow: auto;
   }
 }
 
@@ -387,6 +408,14 @@ span.label-dark {
 .chat-group > div {
   margin-bottom: 10px;
 }
+
+.chat-group.odd{
+  background-color: rgb(237, 239, 240);
+  border-radius: 2px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
 .fa-green {
   color: #5cb85c;
 }
@@ -408,3 +437,24 @@ span.label-dark {
   -webkit-align-items: center;
   align-items: center;
 }
+.edit-msg-container {
+  position: relative;
+}
+.edit-msg {
+  position: absolute;
+}
+.edit-msg-remove {
+  position: absolute;
+  right: 10px;
+}
+
+.icon-red {
+  background-color: #bd2c00 !important;
+  color: white !important;
+}
+.icon-green {
+  background-color: #6cc644 !important;
+  color: white !important;
+}
+
+

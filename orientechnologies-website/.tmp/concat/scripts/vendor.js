@@ -69976,3 +69976,2184 @@ angularOtobox.directive("otobox", ['$timeout', function ($timeout) {
     }
   }
 }]);
+/**
+ * @license MIT
+ * @fileOverview Favico animations
+ * @author Miroslav Magda, http://blog.ejci.net
+ * @version 0.3.5
+ */
+
+/**
+ * Create new favico instance
+ * @param {Object} Options
+ * @return {Object} Favico object
+ * @example
+ * var favico = new Favico({
+ *    bgColor : '#d00',
+ *    textColor : '#fff',
+ *    fontFamily : 'sans-serif',
+ *    fontStyle : 'bold',
+ *    position : 'down',
+ *    type : 'circle',
+ *    animation : 'slide',
+ * });
+ */
+(function() {
+
+	var Favico = (function(opt) {'use strict';
+		opt = (opt) ? opt : {};
+		var _def = {
+			bgColor : '#d00',
+			textColor : '#fff',
+			fontFamily : 'sans-serif', //Arial,Verdana,Times New Roman,serif,sans-serif,...
+			fontStyle : 'bold', //normal,italic,oblique,bold,bolder,lighter,100,200,300,400,500,600,700,800,900
+			type : 'circle',
+			position : 'down', // down, up, left, leftup (upleft)
+			animation : 'slide',
+			elementId : false
+		};
+		var _opt, _orig, _h, _w, _canvas, _context, _img, _ready, _lastBadge, _running, _readyCb, _stop, _browser, _animTimeout, _drawTimeout;
+
+		_browser = {};
+		_browser.ff = typeof InstallTrigger != 'undefined';
+		_browser.chrome = !!window.chrome;
+		_browser.opera = !!window.opera || navigator.userAgent.indexOf('Opera') >= 0;
+		_browser.ie = /*@cc_on!@*/false;
+		_browser.safari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		_browser.supported = (_browser.chrome || _browser.ff || _browser.opera);
+
+		var _queue = [];
+		_readyCb = function() {
+		};
+		_ready = _stop = false;
+		/**
+		 * Initialize favico
+		 */
+		var init = function() {
+			//merge initial options
+			_opt = merge(_def, opt);
+			_opt.bgColor = hexToRgb(_opt.bgColor);
+			_opt.textColor = hexToRgb(_opt.textColor);
+			_opt.position = _opt.position.toLowerCase();
+			_opt.animation = (animation.types['' + _opt.animation]) ? _opt.animation : _def.animation;
+
+			var isUp = _opt.position.indexOf('up') > -1;
+			var isLeft = _opt.position.indexOf('left') > -1;
+
+			//transform animation
+			if (isUp || isLeft) {
+				for (var i = 0; i < animation.types['' + _opt.animation].length; i++) {
+					var step = animation.types['' + _opt.animation][i];
+
+					if (isUp) {
+						if (step.y < 0.6) {
+							step.y = step.y - 0.4;
+						} else {
+							step.y = step.y - 2 * step.y + (1 - step.w);
+						}
+					}
+
+					if (isLeft) {
+						if (step.x < 0.6) {
+							step.x = step.x - 0.4;
+						} else {
+							step.x = step.x - 2 * step.x + (1 - step.h);
+						}
+					}
+
+					animation.types['' + _opt.animation][i] = step;
+				}
+			}
+			_opt.type = (type['' + _opt.type]) ? _opt.type : _def.type;
+			try {
+				_orig = link.getIcon();
+				//create temp canvas
+				_canvas = document.createElement('canvas');
+				//create temp image
+				_img = document.createElement('img');
+				if (_orig.hasAttribute('href')) {
+					_img.setAttribute('src', _orig.getAttribute('href'));
+					//get width/height
+					_img.onload = function() {
+						_h = (_img.height > 0) ? _img.height : 32;
+						_w = (_img.width > 0) ? _img.width : 32;
+						_canvas.height = _h;
+						_canvas.width = _w;
+						_context = _canvas.getContext('2d');
+						icon.ready();
+					};
+				} else {
+					_img.setAttribute('src', '');
+					_h = 32;
+					_w = 32;
+					_img.height = _h;
+					_img.width = _w;
+					_canvas.height = _h;
+					_canvas.width = _w;
+					_context = _canvas.getContext('2d');
+					icon.ready();
+				}
+			} catch(e) {
+				throw 'Error initializing favico. Message: ' + e.message;
+			}
+
+		};
+		/**
+		 * Icon namespace
+		 */
+		var icon = {};
+		/**
+		 * Icon is ready (reset icon) and start animation (if ther is any)
+		 */
+		icon.ready = function() {
+			_ready = true;
+			icon.reset();
+			_readyCb();
+		};
+		/**
+		 * Reset icon to default state
+		 */
+		icon.reset = function() {
+			//reset
+			if (!_ready) {
+				return;
+			}
+			_queue = [];
+			_lastBadge = false;
+			_context.clearRect(0, 0, _w, _h);
+			_context.drawImage(_img, 0, 0, _w, _h);
+			//_stop=true;
+			link.setIcon(_canvas);
+			//webcam('stop');
+			//video('stop');
+			window.clearTimeout(_animTimeout);
+			window.clearTimeout(_drawTimeout);
+		};
+		/**
+		 * Start animation
+		 */
+		icon.start = function() {
+			if (!_ready || _running) {
+				return;
+			}
+			var finished = function() {
+				_lastBadge = _queue[0];
+				_running = false;
+				if (_queue.length > 0) {
+					_queue.shift();
+					icon.start();
+				} else {
+
+				}
+			};
+			if (_queue.length > 0) {
+				_running = true;
+				var run = function() {
+					// apply options for this animation
+					['type', 'animation', 'bgColor', 'textColor', 'fontFamily', 'fontStyle'].forEach(function(a) {
+						if ( a in _queue[0].options) {
+							_opt[a] = _queue[0].options[a];
+						}
+					});
+					animation.run(_queue[0].options, function() {
+						finished();
+					}, false);
+				};
+				if (_lastBadge) {
+					animation.run(_lastBadge.options, function() {
+						run();
+					}, true);
+				} else {
+					run();
+				}
+			}
+		};
+
+		/**
+		 * Badge types
+		 */
+		var type = {};
+		var options = function(opt) {
+			opt.n = (( typeof opt.n) === 'number') ? Math.abs(opt.n | 0) : opt.n;
+			opt.x = _w * opt.x;
+			opt.y = _h * opt.y;
+			opt.w = _w * opt.w;
+			opt.h = _h * opt.h;
+			opt.len = ("" + opt.n).length;
+			return opt;
+		};
+		/**
+		 * Generate circle
+		 * @param {Object} opt Badge options
+		 */
+		type.circle = function(opt) {
+			opt = options(opt);
+			var more = false;
+			if (opt.len === 2) {
+				opt.x = opt.x - opt.w * 0.4;
+				opt.w = opt.w * 1.4;
+				more = true;
+			} else if (opt.len >= 3) {
+				opt.x = opt.x - opt.w * 0.65;
+				opt.w = opt.w * 1.65;
+				more = true;
+			}
+			_context.clearRect(0, 0, _w, _h);
+			_context.drawImage(_img, 0, 0, _w, _h);
+			_context.beginPath();
+			_context.font = _opt.fontStyle + " " + Math.floor(opt.h * (opt.n > 99 ? 0.85 : 1)) + "px " + _opt.fontFamily;
+			_context.textAlign = 'center';
+			if (more) {
+				_context.moveTo(opt.x + opt.w / 2, opt.y);
+				_context.lineTo(opt.x + opt.w - opt.h / 2, opt.y);
+				_context.quadraticCurveTo(opt.x + opt.w, opt.y, opt.x + opt.w, opt.y + opt.h / 2);
+				_context.lineTo(opt.x + opt.w, opt.y + opt.h - opt.h / 2);
+				_context.quadraticCurveTo(opt.x + opt.w, opt.y + opt.h, opt.x + opt.w - opt.h / 2, opt.y + opt.h);
+				_context.lineTo(opt.x + opt.h / 2, opt.y + opt.h);
+				_context.quadraticCurveTo(opt.x, opt.y + opt.h, opt.x, opt.y + opt.h - opt.h / 2);
+				_context.lineTo(opt.x, opt.y + opt.h / 2);
+				_context.quadraticCurveTo(opt.x, opt.y, opt.x + opt.h / 2, opt.y);
+			} else {
+				_context.arc(opt.x + opt.w / 2, opt.y + opt.h / 2, opt.h / 2, 0, 2 * Math.PI);
+			}
+			_context.fillStyle = 'rgba(' + _opt.bgColor.r + ',' + _opt.bgColor.g + ',' + _opt.bgColor.b + ',' + opt.o + ')';
+			_context.fill();
+			_context.closePath();
+			_context.beginPath();
+			_context.stroke();
+			_context.fillStyle = 'rgba(' + _opt.textColor.r + ',' + _opt.textColor.g + ',' + _opt.textColor.b + ',' + opt.o + ')';
+			//_context.fillText((more) ? '9+' : opt.n, Math.floor(opt.x + opt.w / 2), Math.floor(opt.y + opt.h - opt.h * 0.15));
+			if (( typeof opt.n) === 'number' && opt.n > 999) {
+				_context.fillText(((opt.n > 9999) ? 9 : Math.floor(opt.n / 1000) ) + 'k+', Math.floor(opt.x + opt.w / 2), Math.floor(opt.y + opt.h - opt.h * 0.2));
+			} else {
+				_context.fillText(opt.n, Math.floor(opt.x + opt.w / 2), Math.floor(opt.y + opt.h - opt.h * 0.15));
+			}
+			_context.closePath();
+		};
+		/**
+		 * Generate rectangle
+		 * @param {Object} opt Badge options
+		 */
+		type.rectangle = function(opt) {
+			opt = options(opt);
+			var more = false;
+			if (opt.len === 2) {
+				opt.x = opt.x - opt.w * 0.4;
+				opt.w = opt.w * 1.4;
+				more = true;
+			} else if (opt.len >= 3) {
+				opt.x = opt.x - opt.w * 0.65;
+				opt.w = opt.w * 1.65;
+				more = true;
+			}
+			_context.clearRect(0, 0, _w, _h);
+			_context.drawImage(_img, 0, 0, _w, _h);
+			_context.beginPath();
+			_context.font = _opt.fontStyle + " " + Math.floor(opt.h * (opt.n > 99 ? 0.9 : 1)) + "px " + _opt.fontFamily;
+			_context.textAlign = 'center';
+			_context.fillStyle = 'rgba(' + _opt.bgColor.r + ',' + _opt.bgColor.g + ',' + _opt.bgColor.b + ',' + opt.o + ')';
+			_context.fillRect(opt.x, opt.y, opt.w, opt.h);
+			_context.fillStyle = 'rgba(' + _opt.textColor.r + ',' + _opt.textColor.g + ',' + _opt.textColor.b + ',' + opt.o + ')';
+			//_context.fillText((more) ? '9+' : opt.n, Math.floor(opt.x + opt.w / 2), Math.floor(opt.y + opt.h - opt.h * 0.15));
+			if (( typeof opt.n) === 'number' && opt.n > 999) {
+				_context.fillText(((opt.n > 9999) ? 9 : Math.floor(opt.n / 1000) ) + 'k+', Math.floor(opt.x + opt.w / 2), Math.floor(opt.y + opt.h - opt.h * 0.2));
+			} else {
+				_context.fillText(opt.n, Math.floor(opt.x + opt.w / 2), Math.floor(opt.y + opt.h - opt.h * 0.15));
+			}
+			_context.closePath();
+		};
+
+		/**
+		 * Set badge
+		 */
+		var badge = function(number, opts) {
+			opts = (( typeof opts) === 'string' ? {
+				animation : opts
+			} : opts) || {};
+			_readyCb = function() {
+				try {
+					if ( typeof (number) === 'number' ? (number > 0) : (number !== '')) {
+						var q = {
+							type : 'badge',
+							options : {
+								n : number
+							}
+						};
+						if ('animation' in opts && animation.types['' + opts.animation]) {
+							q.options.animation = '' + opts.animation;
+						}
+						if ('type' in opts && type['' + opts.type]) {
+							q.options.type = '' + opts.type;
+						}
+						['bgColor', 'textColor'].forEach(function(o) {
+							if ( o in opts) {
+								q.options[o] = hexToRgb(opts[o]);
+							}
+						});
+						['fontStyle', 'fontFamily'].forEach(function(o) {
+							if ( o in opts) {
+								q.options[o] = opts[o];
+							}
+						});
+						_queue.push(q);
+						if (_queue.length > 100) {
+							throw 'Too many badges requests in queue.';
+						}
+						icon.start();
+					} else {
+						icon.reset();
+					}
+				} catch(e) {
+					throw 'Error setting badge. Message: ' + e.message;
+				}
+			};
+			if (_ready) {
+				_readyCb();
+			}
+		};
+
+		/**
+		 * Set image as icon
+		 */
+		var image = function(imageElement) {
+			_readyCb = function() {
+				try {
+					var w = imageElement.width;
+					var h = imageElement.height;
+					var newImg = document.createElement('img');
+					var ratio = (w / _w < h / _h) ? (w / _w) : (h / _h);
+					newImg.setAttribute('src', imageElement.getAttribute('src'));
+					newImg.height = (h / ratio);
+					newImg.width = (w / ratio);
+					_context.clearRect(0, 0, _w, _h);
+					_context.drawImage(newImg, 0, 0, _w, _h);
+					link.setIcon(_canvas);
+				} catch(e) {
+					throw 'Error setting image. Message: ' + e.message;
+				}
+			};
+			if (_ready) {
+				_readyCb();
+			}
+		};
+		/**
+		 * Set video as icon
+		 */
+		var video = function(videoElement) {
+			_readyCb = function() {
+				try {
+					if (videoElement === 'stop') {
+						_stop = true;
+						icon.reset();
+						_stop = false;
+						return;
+					}
+					//var w = videoElement.width;
+					//var h = videoElement.height;
+					//var ratio = (w / _w < h / _h) ? (w / _w) : (h / _h);
+					videoElement.addEventListener('play', function() {
+						drawVideo(this);
+					}, false);
+
+				} catch(e) {
+					throw 'Error setting video. Message: ' + e.message;
+				}
+			};
+			if (_ready) {
+				_readyCb();
+			}
+		};
+		/**
+		 * Set video as icon
+		 */
+		var webcam = function(action) {
+			//UR
+			if (!window.URL || !window.URL.createObjectURL) {
+				window.URL = window.URL || {};
+				window.URL.createObjectURL = function(obj) {
+					return obj;
+				};
+			}
+			if (_browser.supported) {
+				var newVideo = false;
+				navigator.getUserMedia = navigator.getUserMedia || navigator.oGetUserMedia || navigator.msGetUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
+				_readyCb = function() {
+					try {
+						if (action === 'stop') {
+							_stop = true;
+							icon.reset();
+							_stop = false;
+							return;
+						}
+						newVideo = document.createElement('video');
+						newVideo.width = _w;
+						newVideo.height = _h;
+						navigator.getUserMedia({
+							video : true,
+							audio : false
+						}, function(stream) {
+							newVideo.src = URL.createObjectURL(stream);
+							newVideo.play();
+							drawVideo(newVideo);
+						}, function() {
+						});
+					} catch(e) {
+						throw 'Error setting webcam. Message: ' + e.message;
+					}
+				};
+				if (_ready) {
+					_readyCb();
+				}
+			}
+
+		};
+
+		/**
+		 * Draw video to context and repeat :)
+		 */
+		function drawVideo(video) {
+			if (video.paused || video.ended || _stop) {
+				return false;
+			}
+			//nasty hack for FF webcam (Thanks to Julian Ćwirko, kontakt@redsunmedia.pl)
+			try {
+				_context.clearRect(0, 0, _w, _h);
+				_context.drawImage(video, 0, 0, _w, _h);
+			} catch(e) {
+
+			}
+			_drawTimeout = setTimeout(drawVideo, animation.duration, video);
+			link.setIcon(_canvas);
+		}
+
+		var link = {};
+		/**
+		 * Get icon from HEAD tag or create a new <link> element
+		 */
+		link.getIcon = function() {
+			var elm = false;
+			var url = '';
+			//get link element
+			var getLink = function() {
+				var link = document.getElementsByTagName('head')[0].getElementsByTagName('link');
+				for (var l = link.length, i = (l - 1); i >= 0; i--) {
+					if ((/(^|\s)icon(\s|$)/i).test(link[i].getAttribute('rel'))) {
+						return link[i];
+					}
+				}
+				return false;
+			};
+			if (_opt.elementId) {
+				//if img element identified by elementId
+				elm = document.getElementById(_opt.elementId);
+				elm.setAttribute('href', elm.getAttribute('src'));
+			} else {
+				//if link element
+				elm = getLink();
+				if (elm === false) {
+					elm = document.createElement('link');
+					elm.setAttribute('rel', 'icon');
+					document.getElementsByTagName('head')[0].appendChild(elm);
+				}
+			}
+			//check if image and link url is on same domain. if not raise error
+			url = (_opt.elementId) ? elm.src : elm.href;
+			if (url.substr(0, 5) !== 'data:' && url.indexOf(document.location.hostname) === -1) {
+				throw new Error('Error setting favicon. Favicon image is on different domain (Icon: ' + url + ', Domain: ' + document.location.hostname + ')');
+			}
+			elm.setAttribute('type', 'image/png');
+			return elm;
+		};
+		link.setIcon = function(canvas) {
+			var url = canvas.toDataURL('image/png');
+			if (_opt.elementId) {
+				//if is attached to element (image)
+				document.getElementById(_opt.elementId).setAttribute('src', url);
+			} else {
+				//if is attached to fav icon
+				if (_browser.ff || _browser.opera) {
+					//for FF we need to "recreate" element, atach to dom and remove old <link>
+					//var originalType = _orig.getAttribute('rel');
+					var old = _orig;
+					_orig = document.createElement('link');
+					//_orig.setAttribute('rel', originalType);
+					if (_browser.opera) {
+						_orig.setAttribute('rel', 'icon');
+					}
+					_orig.setAttribute('rel', 'icon');
+					_orig.setAttribute('type', 'image/png');
+					document.getElementsByTagName('head')[0].appendChild(_orig);
+					_orig.setAttribute('href', url);
+					if (old.parentNode) {
+						old.parentNode.removeChild(old);
+					}
+				} else {
+					_orig.setAttribute('href', url);
+				}
+			}
+		};
+
+		//http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb#answer-5624139
+		//HEX to RGB convertor
+		function hexToRgb(hex) {
+			var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+			hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+				return r + r + g + g + b + b;
+			});
+			var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+			return result ? {
+				r : parseInt(result[1], 16),
+				g : parseInt(result[2], 16),
+				b : parseInt(result[3], 16)
+			} : false;
+		}
+
+		/**
+		 * Merge options
+		 */
+		function merge(def, opt) {
+			var mergedOpt = {};
+			var attrname;
+			for (attrname in def) {
+				mergedOpt[attrname] = def[attrname];
+			}
+			for (attrname in opt) {
+				mergedOpt[attrname] = opt[attrname];
+			}
+			return mergedOpt;
+		}
+
+		/**
+		 * Cross-browser page visibility shim
+		 * http://stackoverflow.com/questions/12536562/detect-whether-a-window-is-visible
+		 */
+		function isPageHidden() {
+			return document.hidden || document.msHidden || document.webkitHidden || document.mozHidden;
+		}
+
+		/**
+		 * @namespace animation
+		 */
+		var animation = {};
+		/**
+		 * Animation "frame" duration
+		 */
+		animation.duration = 40;
+		/**
+		 * Animation types (none,fade,pop,slide)
+		 */
+		animation.types = {};
+		animation.types.fade = [{
+			x : 0.4,
+			y : 0.4,
+			w : 0.6,
+			h : 0.6,
+			o : 0.0
+		}, {
+			x : 0.4,
+			y : 0.4,
+			w : 0.6,
+			h : 0.6,
+			o : 0.1
+		}, {
+			x : 0.4,
+			y : 0.4,
+			w : 0.6,
+			h : 0.6,
+			o : 0.2
+		}, {
+			x : 0.4,
+			y : 0.4,
+			w : 0.6,
+			h : 0.6,
+			o : 0.3
+		}, {
+			x : 0.4,
+			y : 0.4,
+			w : 0.6,
+			h : 0.6,
+			o : 0.4
+		}, {
+			x : 0.4,
+			y : 0.4,
+			w : 0.6,
+			h : 0.6,
+			o : 0.5
+		}, {
+			x : 0.4,
+			y : 0.4,
+			w : 0.6,
+			h : 0.6,
+			o : 0.6
+		}, {
+			x : 0.4,
+			y : 0.4,
+			w : 0.6,
+			h : 0.6,
+			o : 0.7
+		}, {
+			x : 0.4,
+			y : 0.4,
+			w : 0.6,
+			h : 0.6,
+			o : 0.8
+		}, {
+			x : 0.4,
+			y : 0.4,
+			w : 0.6,
+			h : 0.6,
+			o : 0.9
+		}, {
+			x : 0.4,
+			y : 0.4,
+			w : 0.6,
+			h : 0.6,
+			o : 1.0
+		}];
+		animation.types.none = [{
+			x : 0.4,
+			y : 0.4,
+			w : 0.6,
+			h : 0.6,
+			o : 1
+		}];
+		animation.types.pop = [{
+			x : 1,
+			y : 1,
+			w : 0,
+			h : 0,
+			o : 1
+		}, {
+			x : 0.9,
+			y : 0.9,
+			w : 0.1,
+			h : 0.1,
+			o : 1
+		}, {
+			x : 0.8,
+			y : 0.8,
+			w : 0.2,
+			h : 0.2,
+			o : 1
+		}, {
+			x : 0.7,
+			y : 0.7,
+			w : 0.3,
+			h : 0.3,
+			o : 1
+		}, {
+			x : 0.6,
+			y : 0.6,
+			w : 0.4,
+			h : 0.4,
+			o : 1
+		}, {
+			x : 0.5,
+			y : 0.5,
+			w : 0.5,
+			h : 0.5,
+			o : 1
+		}, {
+			x : 0.4,
+			y : 0.4,
+			w : 0.6,
+			h : 0.6,
+			o : 1
+		}];
+		animation.types.popFade = [{
+			x : 0.75,
+			y : 0.75,
+			w : 0,
+			h : 0,
+			o : 0
+		}, {
+			x : 0.65,
+			y : 0.65,
+			w : 0.1,
+			h : 0.1,
+			o : 0.2
+		}, {
+			x : 0.6,
+			y : 0.6,
+			w : 0.2,
+			h : 0.2,
+			o : 0.4
+		}, {
+			x : 0.55,
+			y : 0.55,
+			w : 0.3,
+			h : 0.3,
+			o : 0.6
+		}, {
+			x : 0.50,
+			y : 0.50,
+			w : 0.4,
+			h : 0.4,
+			o : 0.8
+		}, {
+			x : 0.45,
+			y : 0.45,
+			w : 0.5,
+			h : 0.5,
+			o : 0.9
+		}, {
+			x : 0.4,
+			y : 0.4,
+			w : 0.6,
+			h : 0.6,
+			o : 1
+		}];
+		animation.types.slide = [{
+			x : 0.4,
+			y : 1,
+			w : 0.6,
+			h : 0.6,
+			o : 1
+		}, {
+			x : 0.4,
+			y : 0.9,
+			w : 0.6,
+			h : 0.6,
+			o : 1
+		}, {
+			x : 0.4,
+			y : 0.9,
+			w : 0.6,
+			h : 0.6,
+			o : 1
+		}, {
+			x : 0.4,
+			y : 0.8,
+			w : 0.6,
+			h : 0.6,
+			o : 1
+		}, {
+			x : 0.4,
+			y : 0.7,
+			w : 0.6,
+			h : 0.6,
+			o : 1
+		}, {
+			x : 0.4,
+			y : 0.6,
+			w : 0.6,
+			h : 0.6,
+			o : 1
+		}, {
+			x : 0.4,
+			y : 0.5,
+			w : 0.6,
+			h : 0.6,
+			o : 1
+		}, {
+			x : 0.4,
+			y : 0.4,
+			w : 0.6,
+			h : 0.6,
+			o : 1
+		}];
+		/**
+		 * Run animation
+		 * @param {Object} opt Animation options
+		 * @param {Object} cb Callabak after all steps are done
+		 * @param {Object} revert Reverse order? true|false
+		 * @param {Object} step Optional step number (frame bumber)
+		 */
+		animation.run = function(opt, cb, revert, step) {
+			var animationType = animation.types[isPageHidden() ? 'none' : _opt.animation];
+			if (revert === true) {
+				step = ( typeof step !== 'undefined') ? step : animationType.length - 1;
+			} else {
+				step = ( typeof step !== 'undefined') ? step : 0;
+			}
+			cb = (cb) ? cb : function() {
+			};
+			if ((step < animationType.length) && (step >= 0)) {
+				type[_opt.type](merge(opt, animationType[step]));
+				_animTimeout = setTimeout(function() {
+					if (revert) {
+						step = step - 1;
+					} else {
+						step = step + 1;
+					}
+					animation.run(opt, cb, revert, step);
+				}, animation.duration);
+
+				link.setIcon(_canvas);
+			} else {
+				cb();
+				return;
+			}
+		};
+		//auto init
+		init();
+		return {
+			badge : badge,
+			video : video,
+			image : image,
+			webcam : webcam,
+			reset : icon.reset,
+			browser : {
+				supported : _browser.supported
+			}
+		};
+	});
+
+	// AMD / RequireJS
+	if ( typeof define !== 'undefined' && define.amd) {
+		define([], function() {
+			return Favico;
+		});
+	}
+	// CommonJS
+	else if ( typeof module !== 'undefined' && module.exports) {
+		module.exports = Favico;
+	}
+	// included directly via <script> tag
+	else {
+		this.Favico = Favico;
+	}
+
+})();
+
+
+// Generated by CoffeeScript 1.6.2
+/*Copyright (c) 2013 Serkan Yersen
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
+
+(function() {
+  "use strict";
+  var addEvent, customEvent, doc, fireEvent, hidden, idleStartedTime, idleTime, ie, ifvisible, init, initialized, status, trackIdleStatus, visibilityChange;
+
+  ifvisible = {};
+
+  doc = document;
+
+  initialized = false;
+
+  status = "active";
+
+  idleTime = 60000;
+
+  idleStartedTime = false;
+
+  customEvent = (function() {
+    var S4, addCustomEvent, cgid, fireCustomEvent, guid, listeners;
+
+    S4 = function() {
+      return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+    };
+    guid = function() {
+      return S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4();
+    };
+    listeners = {};
+    cgid = '__ceGUID';
+    addCustomEvent = function(obj, event, callback) {
+      obj[cgid] = undefined;
+      if (!obj[cgid]) {
+        obj[cgid] = "ifvisible.object.event.identifier";
+      }
+      if (!listeners[obj[cgid]]) {
+        listeners[obj[cgid]] = {};
+      }
+      if (!listeners[obj[cgid]][event]) {
+        listeners[obj[cgid]][event] = [];
+      }
+      return listeners[obj[cgid]][event].push(callback);
+    };
+    fireCustomEvent = function(obj, event, memo) {
+      var ev, _i, _len, _ref, _results;
+
+      if (obj[cgid] && listeners[obj[cgid]] && listeners[obj[cgid]][event]) {
+        _ref = listeners[obj[cgid]][event];
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          ev = _ref[_i];
+          _results.push(ev(memo || {}));
+        }
+        return _results;
+      }
+    };
+    return {
+      add: addCustomEvent,
+      fire: fireCustomEvent
+    };
+  })();
+
+  addEvent = (function() {
+    var setListener;
+
+    setListener = false;
+    return function(el, ev, fn) {
+      if (!setListener) {
+        if (el.addEventListener) {
+          setListener = function(el, ev, fn) {
+            return el.addEventListener(ev, fn, false);
+          };
+        } else if (el.attachEvent) {
+          setListener = function(el, ev, fn) {
+            return el.attachEvent('on' + ev, fn, false);
+          };
+        } else {
+          setListener = function(el, ev, fn) {
+            return el['on' + ev] = fn;
+          };
+        }
+      }
+      return setListener(el, ev, fn);
+    };
+  })();
+
+  fireEvent = function(element, event) {
+    var evt;
+
+    if (doc.createEventObject) {
+      return element.fireEvent('on' + event, evt);
+    } else {
+      evt = doc.createEvent('HTMLEvents');
+      evt.initEvent(event, true, true);
+      return !element.dispatchEvent(evt);
+    }
+  };
+
+  ie = (function() {
+    var all, check, div, undef, v;
+
+    undef = void 0;
+    v = 3;
+    div = doc.createElement("div");
+    all = div.getElementsByTagName("i");
+    check = function() {
+      return (div.innerHTML = "<!--[if gt IE " + (++v) + "]><i></i><![endif]-->", all[0]);
+    };
+    while (check()) {
+      continue;
+    }
+    if (v > 4) {
+      return v;
+    } else {
+      return undef;
+    }
+  })();
+
+  hidden = false;
+
+  visibilityChange = void 0;
+
+  if (typeof doc.hidden !== "undefined") {
+    hidden = "hidden";
+    visibilityChange = "visibilitychange";
+  } else if (typeof doc.mozHidden !== "undefined") {
+    hidden = "mozHidden";
+    visibilityChange = "mozvisibilitychange";
+  } else if (typeof doc.msHidden !== "undefined") {
+    hidden = "msHidden";
+    visibilityChange = "msvisibilitychange";
+  } else if (typeof doc.webkitHidden !== "undefined") {
+    hidden = "webkitHidden";
+    visibilityChange = "webkitvisibilitychange";
+  }
+
+  trackIdleStatus = function() {
+    var timer, wakeUp;
+
+    timer = false;
+    wakeUp = function() {
+      clearTimeout(timer);
+      if (status !== "active") {
+        ifvisible.wakeup();
+      }
+      idleStartedTime = +(new Date());
+      return timer = setTimeout(function() {
+        if (status === "active") {
+          return ifvisible.idle();
+        }
+      }, idleTime);
+    };
+    wakeUp();
+    addEvent(doc, "mousemove", wakeUp);
+    addEvent(doc, "keyup", wakeUp);
+    addEvent(window, "scroll", wakeUp);
+    return ifvisible.focus(wakeUp);
+  };
+
+  init = function() {
+    var blur;
+
+    if (initialized) {
+      return true;
+    }
+    if (hidden === false) {
+      blur = "blur";
+      if (ie < 9) {
+        blur = "focusout";
+      }
+      addEvent(window, blur, function() {
+        return ifvisible.blur();
+      });
+      addEvent(window, "focus", function() {
+        return ifvisible.focus();
+      });
+    } else {
+      addEvent(doc, visibilityChange, function() {
+        if (doc[hidden]) {
+          return ifvisible.blur();
+        } else {
+          return ifvisible.focus();
+        }
+      }, false);
+    }
+    initialized = true;
+    return trackIdleStatus();
+  };
+
+  ifvisible = {
+    setIdleDuration: function(seconds) {
+      return idleTime = seconds * 1000;
+    },
+    getIdleDuration: function() {
+      return idleTime;
+    },
+    getIdleInfo: function() {
+      var now, res;
+
+      now = +(new Date());
+      res = {};
+      if (status === "idle") {
+        res.isIdle = true;
+        res.idleFor = now - idleStartedTime;
+        res.timeLeft = 0;
+        res.timeLeftPer = 100;
+      } else {
+        res.isIdle = false;
+        res.idleFor = now - idleStartedTime;
+        res.timeLeft = (idleStartedTime + idleTime) - now;
+        res.timeLeftPer = (100 - (res.timeLeft * 100 / idleTime)).toFixed(2);
+      }
+      return res;
+    },
+    focus: function(callback) {
+      if (typeof callback === "function") {
+        return this.on("focus", callback);
+      }
+      status = "active";
+      customEvent.fire(this, "focus");
+      customEvent.fire(this, "wakeup");
+      return customEvent.fire(this, "statusChanged", {
+        status: status
+      });
+    },
+    blur: function(callback) {
+      if (typeof callback === "function") {
+        return this.on("blur", callback);
+      }
+      status = "hidden";
+      customEvent.fire(this, "blur");
+      customEvent.fire(this, "idle");
+      return customEvent.fire(this, "statusChanged", {
+        status: status
+      });
+    },
+    idle: function(callback) {
+      if (typeof callback === "function") {
+        return this.on("idle", callback);
+      }
+      status = "idle";
+      customEvent.fire(this, "idle");
+      return customEvent.fire(this, "statusChanged", {
+        status: status
+      });
+    },
+    wakeup: function(callback) {
+      if (typeof callback === "function") {
+        return this.on("wakeup", callback);
+      }
+      status = "active";
+      customEvent.fire(this, "wakeup");
+      return customEvent.fire(this, "statusChanged", {
+        status: status
+      });
+    },
+    on: function(name, callback) {
+      init();
+      return customEvent.add(this, name, callback);
+    },
+    onEvery: function(seconds, callback) {
+      var t;
+
+      init();
+      t = setInterval(function() {
+        if (status === "active") {
+          return callback();
+        }
+      }, seconds * 1000);
+      return {
+        stop: function() {
+          return clearInterval(t);
+        },
+        code: t,
+        callback: callback
+      };
+    },
+    now: function() {
+      init();
+      return status === "active";
+    }
+  };
+
+  if (typeof define === "function" && define.amd) {
+    define(function() {
+      return ifvisible;
+    });
+  } else {
+    window.ifvisible = ifvisible;
+  }
+
+}).call(this);
+
+/*
+//@ sourceMappingURL=ifvisible.map
+*/
+
+/*!
+ * Jasny Bootstrap v3.1.3 (http://jasny.github.io/bootstrap)
+ * Copyright 2012-2014 Arnold Daniels
+ * Licensed under Apache-2.0 (https://github.com/jasny/bootstrap/blob/master/LICENSE)
+ */
+
+if (typeof jQuery === 'undefined') { throw new Error('Jasny Bootstrap\'s JavaScript requires jQuery') }
+
+/* ========================================================================
+ * Bootstrap: transition.js v3.1.3
+ * http://getbootstrap.com/javascript/#transitions
+ * ========================================================================
+ * Copyright 2011-2014 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+
++function ($) {
+  'use strict';
+
+  // CSS TRANSITION SUPPORT (Shoutout: http://www.modernizr.com/)
+  // ============================================================
+
+  function transitionEnd() {
+    var el = document.createElement('bootstrap')
+
+    var transEndEventNames = {
+      WebkitTransition : 'webkitTransitionEnd',
+      MozTransition    : 'transitionend',
+      OTransition      : 'oTransitionEnd otransitionend',
+      transition       : 'transitionend'
+    }
+
+    for (var name in transEndEventNames) {
+      if (el.style[name] !== undefined) {
+        return { end: transEndEventNames[name] }
+      }
+    }
+
+    return false // explicit for ie8 (  ._.)
+  }
+
+  if ($.support.transition !== undefined) return  // Prevent conflict with Twitter Bootstrap
+
+  // http://blog.alexmaccaw.com/css-transitions
+  $.fn.emulateTransitionEnd = function (duration) {
+    var called = false, $el = this
+    $(this).one($.support.transition.end, function () { called = true })
+    var callback = function () { if (!called) $($el).trigger($.support.transition.end) }
+    setTimeout(callback, duration)
+    return this
+  }
+
+  $(function () {
+    $.support.transition = transitionEnd()
+  })
+
+}(window.jQuery);
+
+/* ========================================================================
+ * Bootstrap: offcanvas.js v3.1.3
+ * http://jasny.github.io/bootstrap/javascript/#offcanvas
+ * ========================================================================
+ * Copyright 2013-2014 Arnold Daniels
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License")
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * ======================================================================== */
+
++function ($) { "use strict";
+
+  // OFFCANVAS PUBLIC CLASS DEFINITION
+  // =================================
+
+  var OffCanvas = function (element, options) {
+    this.$element = $(element)
+    this.options  = $.extend({}, OffCanvas.DEFAULTS, options)
+    this.state    = null
+    this.placement = null
+    
+    if (this.options.recalc) {
+      this.calcClone()
+      $(window).on('resize', $.proxy(this.recalc, this))
+    }
+    
+    if (this.options.autohide)
+      $(document).on('click', $.proxy(this.autohide, this))
+
+    if (this.options.toggle) this.toggle()
+    
+    if (this.options.disablescrolling) {
+        this.options.disableScrolling = this.options.disablescrolling
+        delete this.options.disablescrolling
+    }
+  }
+
+  OffCanvas.DEFAULTS = {
+    toggle: true,
+    placement: 'auto',
+    autohide: true,
+    recalc: true,
+    disableScrolling: true
+  }
+
+  OffCanvas.prototype.offset = function () {
+    switch (this.placement) {
+      case 'left':
+      case 'right':  return this.$element.outerWidth()
+      case 'top':
+      case 'bottom': return this.$element.outerHeight()
+    }
+  }
+  
+  OffCanvas.prototype.calcPlacement = function () {
+    if (this.options.placement !== 'auto') {
+        this.placement = this.options.placement
+        return
+    }
+    
+    if (!this.$element.hasClass('in')) {
+      this.$element.css('visiblity', 'hidden !important').addClass('in')
+    } 
+    
+    var horizontal = $(window).width() / this.$element.width()
+    var vertical = $(window).height() / this.$element.height()
+        
+    var element = this.$element
+    function ab(a, b) {
+      if (element.css(b) === 'auto') return a
+      if (element.css(a) === 'auto') return b
+      
+      var size_a = parseInt(element.css(a), 10)
+      var size_b = parseInt(element.css(b), 10)
+  
+      return size_a > size_b ? b : a
+    }
+    
+    this.placement = horizontal >= vertical ? ab('left', 'right') : ab('top', 'bottom')
+      
+    if (this.$element.css('visibility') === 'hidden !important') {
+      this.$element.removeClass('in').css('visiblity', '')
+    }
+  }
+  
+  OffCanvas.prototype.opposite = function (placement) {
+    switch (placement) {
+      case 'top':    return 'bottom'
+      case 'left':   return 'right'
+      case 'bottom': return 'top'
+      case 'right':  return 'left'
+    }
+  }
+  
+  OffCanvas.prototype.getCanvasElements = function() {
+    // Return a set containing the canvas plus all fixed elements
+    var canvas = this.options.canvas ? $(this.options.canvas) : this.$element
+    
+    var fixed_elements = canvas.find('*').filter(function() {
+      return $(this).css('position') === 'fixed'
+    }).not(this.options.exclude)
+    
+    return canvas.add(fixed_elements)
+  }
+  
+  OffCanvas.prototype.slide = function (elements, offset, callback) {
+    // Use jQuery animation if CSS transitions aren't supported
+    if (!$.support.transition) {
+      var anim = {}
+      anim[this.placement] = "+=" + offset
+      return elements.animate(anim, 350, callback)
+    }
+
+    var placement = this.placement
+    var opposite = this.opposite(placement)
+    
+    elements.each(function() {
+      if ($(this).css(placement) !== 'auto')
+        $(this).css(placement, (parseInt($(this).css(placement), 10) || 0) + offset)
+      
+      if ($(this).css(opposite) !== 'auto')
+        $(this).css(opposite, (parseInt($(this).css(opposite), 10) || 0) - offset)
+    })
+    
+    this.$element
+      .one($.support.transition.end, callback)
+      .emulateTransitionEnd(350)
+  }
+
+  OffCanvas.prototype.disableScrolling = function() {
+    var bodyWidth = $('body').width()
+    var prop = 'padding-' + this.opposite(this.placement)
+
+    if ($('body').data('offcanvas-style') === undefined) {
+      $('body').data('offcanvas-style', $('body').attr('style') || '')
+    }
+      
+    $('body').css('overflow', 'hidden')
+
+    if ($('body').width() > bodyWidth) {
+      var padding = parseInt($('body').css(prop), 10) + $('body').width() - bodyWidth
+      
+      setTimeout(function() {
+        $('body').css(prop, padding)
+      }, 1)
+    }
+  }
+
+  OffCanvas.prototype.show = function () {
+    if (this.state) return
+    
+    var startEvent = $.Event('show.bs.offcanvas')
+    this.$element.trigger(startEvent)
+    if (startEvent.isDefaultPrevented()) return
+
+    this.state = 'slide-in'
+    this.calcPlacement();
+    
+    var elements = this.getCanvasElements()
+    var placement = this.placement
+    var opposite = this.opposite(placement)
+    var offset = this.offset()
+
+    if (elements.index(this.$element) !== -1) {
+      $(this.$element).data('offcanvas-style', $(this.$element).attr('style') || '')
+      this.$element.css(placement, -1 * offset)
+      this.$element.css(placement); // Workaround: Need to get the CSS property for it to be applied before the next line of code
+    }
+
+    elements.addClass('canvas-sliding').each(function() {
+      if ($(this).data('offcanvas-style') === undefined) $(this).data('offcanvas-style', $(this).attr('style') || '')
+      if ($(this).css('position') === 'static') $(this).css('position', 'relative')
+      if (($(this).css(placement) === 'auto' || $(this).css(placement) === '0px') &&
+          ($(this).css(opposite) === 'auto' || $(this).css(opposite) === '0px')) {
+        $(this).css(placement, 0)
+      }
+    })
+    
+    if (this.options.disableScrolling) this.disableScrolling()
+    
+    var complete = function () {
+      if (this.state != 'slide-in') return
+      
+      this.state = 'slid'
+
+      elements.removeClass('canvas-sliding').addClass('canvas-slid')
+      this.$element.trigger('shown.bs.offcanvas')
+    }
+
+    setTimeout($.proxy(function() {
+      this.$element.addClass('in')
+      this.slide(elements, offset, $.proxy(complete, this))
+    }, this), 1)
+  }
+
+  OffCanvas.prototype.hide = function (fast) {
+    if (this.state !== 'slid') return
+
+    var startEvent = $.Event('hide.bs.offcanvas')
+    this.$element.trigger(startEvent)
+    if (startEvent.isDefaultPrevented()) return
+
+    this.state = 'slide-out'
+
+    var elements = $('.canvas-slid')
+    var placement = this.placement
+    var offset = -1 * this.offset()
+
+    var complete = function () {
+      if (this.state != 'slide-out') return
+      
+      this.state = null
+      this.placement = null
+      
+      this.$element.removeClass('in')
+      
+      elements.removeClass('canvas-sliding')
+      elements.add(this.$element).add('body').each(function() {
+        $(this).attr('style', $(this).data('offcanvas-style')).removeData('offcanvas-style')
+      })
+
+      this.$element.trigger('hidden.bs.offcanvas')
+    }
+
+    elements.removeClass('canvas-slid').addClass('canvas-sliding')
+    
+    setTimeout($.proxy(function() {
+      this.slide(elements, offset, $.proxy(complete, this))
+    }, this), 1)
+  }
+
+  OffCanvas.prototype.toggle = function () {
+    if (this.state === 'slide-in' || this.state === 'slide-out') return
+    this[this.state === 'slid' ? 'hide' : 'show']()
+  }
+
+  OffCanvas.prototype.calcClone = function() {
+    this.$calcClone = this.$element.clone()
+      .html('')
+      .addClass('offcanvas-clone').removeClass('in')
+      .appendTo($('body'))
+  }
+
+  OffCanvas.prototype.recalc = function () {
+    if (this.$calcClone.css('display') === 'none' || (this.state !== 'slid' && this.state !== 'slide-in')) return
+    
+    this.state = null
+    this.placement = null
+    var elements = this.getCanvasElements()
+    
+    this.$element.removeClass('in')
+    
+    elements.removeClass('canvas-slid')
+    elements.add(this.$element).add('body').each(function() {
+      $(this).attr('style', $(this).data('offcanvas-style')).removeData('offcanvas-style')
+    })
+  }
+  
+  OffCanvas.prototype.autohide = function (e) {
+    if ($(e.target).closest(this.$element).length === 0) this.hide()
+  }
+
+  // OFFCANVAS PLUGIN DEFINITION
+  // ==========================
+
+  var old = $.fn.offcanvas
+
+  $.fn.offcanvas = function (option) {
+    return this.each(function () {
+      var $this   = $(this)
+      var data    = $this.data('bs.offcanvas')
+      var options = $.extend({}, OffCanvas.DEFAULTS, $this.data(), typeof option === 'object' && option)
+
+      if (!data) $this.data('bs.offcanvas', (data = new OffCanvas(this, options)))
+      if (typeof option === 'string') data[option]()
+    })
+  }
+
+  $.fn.offcanvas.Constructor = OffCanvas
+
+
+  // OFFCANVAS NO CONFLICT
+  // ====================
+
+  $.fn.offcanvas.noConflict = function () {
+    $.fn.offcanvas = old
+    return this
+  }
+
+
+  // OFFCANVAS DATA-API
+  // =================
+
+  $(document).on('click.bs.offcanvas.data-api', '[data-toggle=offcanvas]', function (e) {
+    var $this   = $(this), href
+    var target  = $this.attr('data-target')
+        || e.preventDefault()
+        || (href = $this.attr('href')) && href.replace(/.*(?=#[^\s]+$)/, '') //strip for ie7
+    var $canvas = $(target)
+    var data    = $canvas.data('bs.offcanvas')
+    var option  = data ? 'toggle' : $this.data()
+
+    e.stopPropagation()
+
+    if (data) data.toggle()
+      else $canvas.offcanvas(option)
+  })
+
+}(window.jQuery);
+
+/* ============================================================
+ * Bootstrap: rowlink.js v3.1.3
+ * http://jasny.github.io/bootstrap/javascript/#rowlink
+ * ============================================================
+ * Copyright 2012-2014 Arnold Daniels
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * ============================================================ */
+
++function ($) { "use strict";
+
+  var Rowlink = function (element, options) {
+    this.$element = $(element)
+    this.options = $.extend({}, Rowlink.DEFAULTS, options)
+    
+    this.$element.on('click.bs.rowlink', 'td:not(.rowlink-skip)', $.proxy(this.click, this))
+  }
+
+  Rowlink.DEFAULTS = {
+    target: "a"
+  }
+
+  Rowlink.prototype.click = function(e) {
+    var target = $(e.currentTarget).closest('tr').find(this.options.target)[0]
+    if ($(e.target)[0] === target) return
+    
+    e.preventDefault();
+    
+    if (target.click) {
+      target.click()
+    } else if (document.createEvent) {
+      var evt = document.createEvent("MouseEvents"); 
+      evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null); 
+      target.dispatchEvent(evt);
+    }
+  }
+
+  
+  // ROWLINK PLUGIN DEFINITION
+  // ===========================
+
+  var old = $.fn.rowlink
+
+  $.fn.rowlink = function (options) {
+    return this.each(function () {
+      var $this = $(this)
+      var data = $this.data('bs.rowlink')
+      if (!data) $this.data('bs.rowlink', (data = new Rowlink(this, options)))
+    })
+  }
+
+  $.fn.rowlink.Constructor = Rowlink
+
+
+  // ROWLINK NO CONFLICT
+  // ====================
+
+  $.fn.rowlink.noConflict = function () {
+    $.fn.rowlink = old
+    return this
+  }
+
+
+  // ROWLINK DATA-API
+  // ==================
+
+  $(document).on('click.bs.rowlink.data-api', '[data-link="row"]', function (e) {
+    if ($(e.target).closest('.rowlink-skip').length !== 0) return
+    
+    var $this = $(this)
+    if ($this.data('bs.rowlink')) return
+    $this.rowlink($this.data())
+    $(e.target).trigger('click.bs.rowlink')
+  })
+  
+}(window.jQuery);
+
+/* ===========================================================
+ * Bootstrap: inputmask.js v3.1.0
+ * http://jasny.github.io/bootstrap/javascript/#inputmask
+ * 
+ * Based on Masked Input plugin by Josh Bush (digitalbush.com)
+ * ===========================================================
+ * Copyright 2012-2014 Arnold Daniels
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License")
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * ========================================================== */
+
++function ($) { "use strict";
+
+  var isIphone = (window.orientation !== undefined)
+  var isAndroid = navigator.userAgent.toLowerCase().indexOf("android") > -1
+  var isIE = window.navigator.appName == 'Microsoft Internet Explorer'
+
+  // INPUTMASK PUBLIC CLASS DEFINITION
+  // =================================
+
+  var Inputmask = function (element, options) {
+    if (isAndroid) return // No support because caret positioning doesn't work on Android
+    
+    this.$element = $(element)
+    this.options = $.extend({}, Inputmask.DEFAULTS, options)
+    this.mask = String(this.options.mask)
+    
+    this.init()
+    this.listen()
+        
+    this.checkVal() //Perform initial check for existing values
+  }
+
+  Inputmask.DEFAULTS = {
+    mask: "",
+    placeholder: "_",
+    definitions: {
+      '9': "[0-9]",
+      'a': "[A-Za-z]",
+      'w': "[A-Za-z0-9]",
+      '*': "."
+    }
+  }
+
+  Inputmask.prototype.init = function() {
+    var defs = this.options.definitions
+    var len = this.mask.length
+
+    this.tests = [] 
+    this.partialPosition = this.mask.length
+    this.firstNonMaskPos = null
+
+    $.each(this.mask.split(""), $.proxy(function(i, c) {
+      if (c == '?') {
+        len--
+        this.partialPosition = i
+      } else if (defs[c]) {
+        this.tests.push(new RegExp(defs[c]))
+        if (this.firstNonMaskPos === null)
+          this.firstNonMaskPos =  this.tests.length - 1
+      } else {
+        this.tests.push(null)
+      }
+    }, this))
+
+    this.buffer = $.map(this.mask.split(""), $.proxy(function(c, i) {
+      if (c != '?') return defs[c] ? this.options.placeholder : c
+    }, this))
+
+    this.focusText = this.$element.val()
+
+    this.$element.data("rawMaskFn", $.proxy(function() {
+      return $.map(this.buffer, function(c, i) {
+        return this.tests[i] && c != this.options.placeholder ? c : null
+      }).join('')
+    }, this))
+  }
+    
+  Inputmask.prototype.listen = function() {
+    if (this.$element.attr("readonly")) return
+
+    var pasteEventName = (isIE ? 'paste' : 'input') + ".mask"
+
+    this.$element
+      .on("unmask.bs.inputmask", $.proxy(this.unmask, this))
+
+      .on("focus.bs.inputmask", $.proxy(this.focusEvent, this))
+      .on("blur.bs.inputmask", $.proxy(this.blurEvent, this))
+
+      .on("keydown.bs.inputmask", $.proxy(this.keydownEvent, this))
+      .on("keypress.bs.inputmask", $.proxy(this.keypressEvent, this))
+
+      .on(pasteEventName, $.proxy(this.pasteEvent, this))
+  }
+
+  //Helper Function for Caret positioning
+  Inputmask.prototype.caret = function(begin, end) {
+    if (this.$element.length === 0) return
+    if (typeof begin == 'number') {
+      end = (typeof end == 'number') ? end : begin
+      return this.$element.each(function() {
+        if (this.setSelectionRange) {
+          this.setSelectionRange(begin, end)
+        } else if (this.createTextRange) {
+          var range = this.createTextRange()
+          range.collapse(true)
+          range.moveEnd('character', end)
+          range.moveStart('character', begin)
+          range.select()
+        }
+      })
+    } else {
+      if (this.$element[0].setSelectionRange) {
+        begin = this.$element[0].selectionStart
+        end = this.$element[0].selectionEnd
+      } else if (document.selection && document.selection.createRange) {
+        var range = document.selection.createRange()
+        begin = 0 - range.duplicate().moveStart('character', -100000)
+        end = begin + range.text.length
+      }
+      return {
+        begin: begin, 
+        end: end
+      }
+    }
+  }
+  
+  Inputmask.prototype.seekNext = function(pos) {
+    var len = this.mask.length
+    while (++pos <= len && !this.tests[pos]);
+
+    return pos
+  }
+  
+  Inputmask.prototype.seekPrev = function(pos) {
+    while (--pos >= 0 && !this.tests[pos]);
+
+    return pos
+  }
+
+  Inputmask.prototype.shiftL = function(begin,end) {
+    var len = this.mask.length
+
+    if (begin < 0) return
+
+    for (var i = begin, j = this.seekNext(end); i < len; i++) {
+      if (this.tests[i]) {
+        if (j < len && this.tests[i].test(this.buffer[j])) {
+          this.buffer[i] = this.buffer[j]
+          this.buffer[j] = this.options.placeholder
+        } else
+          break
+        j = this.seekNext(j)
+      }
+    }
+    this.writeBuffer()
+    this.caret(Math.max(this.firstNonMaskPos, begin))
+  }
+
+  Inputmask.prototype.shiftR = function(pos) {
+    var len = this.mask.length
+
+    for (var i = pos, c = this.options.placeholder; i < len; i++) {
+      if (this.tests[i]) {
+        var j = this.seekNext(i)
+        var t = this.buffer[i]
+        this.buffer[i] = c
+        if (j < len && this.tests[j].test(t))
+          c = t
+        else
+          break
+      }
+    }
+  },
+
+  Inputmask.prototype.unmask = function() {
+    this.$element
+      .unbind(".mask")
+      .removeData("inputmask")
+  }
+
+  Inputmask.prototype.focusEvent = function() {
+    this.focusText = this.$element.val()
+    var len = this.mask.length 
+    var pos = this.checkVal()
+    this.writeBuffer()
+
+    var that = this
+    var moveCaret = function() {
+      if (pos == len)
+        that.caret(0, pos)
+      else
+        that.caret(pos)
+    }
+
+    moveCaret()
+    setTimeout(moveCaret, 50)
+  }
+
+  Inputmask.prototype.blurEvent = function() {
+    this.checkVal()
+    if (this.$element.val() !== this.focusText)
+      this.$element.trigger('change')
+  }
+
+  Inputmask.prototype.keydownEvent = function(e) {
+    var k = e.which
+
+    //backspace, delete, and escape get special treatment
+    if (k == 8 || k == 46 || (isIphone && k == 127)) {
+      var pos = this.caret(),
+      begin = pos.begin,
+      end = pos.end
+
+      if (end - begin === 0) {
+        begin = k != 46 ? this.seekPrev(begin) : (end = this.seekNext(begin - 1))
+        end = k == 46 ? this.seekNext(end) : end
+      }
+      this.clearBuffer(begin, end)
+      this.shiftL(begin, end - 1)
+
+      return false
+    } else if (k == 27) {//escape
+      this.$element.val(this.focusText)
+      this.caret(0, this.checkVal())
+      return false
+    }
+  }
+
+  Inputmask.prototype.keypressEvent = function(e) {
+    var len = this.mask.length
+
+    var k = e.which,
+    pos = this.caret()
+
+    if (e.ctrlKey || e.altKey || e.metaKey || k < 32)  {//Ignore
+      return true
+    } else if (k) {
+      if (pos.end - pos.begin !== 0) {
+        this.clearBuffer(pos.begin, pos.end)
+        this.shiftL(pos.begin, pos.end - 1)
+      }
+
+      var p = this.seekNext(pos.begin - 1)
+      if (p < len) {
+        var c = String.fromCharCode(k)
+        if (this.tests[p].test(c)) {
+          this.shiftR(p)
+          this.buffer[p] = c
+          this.writeBuffer()
+          var next = this.seekNext(p)
+          this.caret(next)
+        }
+      }
+      return false
+    }
+  }
+
+  Inputmask.prototype.pasteEvent = function() {
+    var that = this
+
+    setTimeout(function() {
+      that.caret(that.checkVal(true))
+    }, 0)
+  }
+
+  Inputmask.prototype.clearBuffer = function(start, end) {
+    var len = this.mask.length
+
+    for (var i = start; i < end && i < len; i++) {
+      if (this.tests[i])
+        this.buffer[i] = this.options.placeholder
+    }
+  }
+
+  Inputmask.prototype.writeBuffer = function() {
+    return this.$element.val(this.buffer.join('')).val()
+  }
+
+  Inputmask.prototype.checkVal = function(allow) {
+    var len = this.mask.length
+    //try to place characters where they belong
+    var test = this.$element.val()
+    var lastMatch = -1
+
+    for (var i = 0, pos = 0; i < len; i++) {
+      if (this.tests[i]) {
+        this.buffer[i] = this.options.placeholder
+        while (pos++ < test.length) {
+          var c = test.charAt(pos - 1)
+          if (this.tests[i].test(c)) {
+            this.buffer[i] = c
+            lastMatch = i
+            break
+          }
+        }
+        if (pos > test.length)
+          break
+      } else if (this.buffer[i] == test.charAt(pos) && i != this.partialPosition) {
+        pos++
+        lastMatch = i
+      }
+    }
+    if (!allow && lastMatch + 1 < this.partialPosition) {
+      this.$element.val("")
+      this.clearBuffer(0, len)
+    } else if (allow || lastMatch + 1 >= this.partialPosition) {
+      this.writeBuffer()
+      if (!allow) this.$element.val(this.$element.val().substring(0, lastMatch + 1))
+    }
+    return (this.partialPosition ? i : this.firstNonMaskPos)
+  }
+
+  
+  // INPUTMASK PLUGIN DEFINITION
+  // ===========================
+
+  var old = $.fn.inputmask
+  
+  $.fn.inputmask = function (options) {
+    return this.each(function () {
+      var $this = $(this)
+      var data = $this.data('bs.inputmask')
+      
+      if (!data) $this.data('bs.inputmask', (data = new Inputmask(this, options)))
+    })
+  }
+
+  $.fn.inputmask.Constructor = Inputmask
+
+
+  // INPUTMASK NO CONFLICT
+  // ====================
+
+  $.fn.inputmask.noConflict = function () {
+    $.fn.inputmask = old
+    return this
+  }
+
+
+  // INPUTMASK DATA-API
+  // ==================
+
+  $(document).on('focus.bs.inputmask.data-api', '[data-mask]', function (e) {
+    var $this = $(this)
+    if ($this.data('bs.inputmask')) return
+    $this.inputmask($this.data())
+  })
+
+}(window.jQuery);
+
+/* ===========================================================
+ * Bootstrap: fileinput.js v3.1.3
+ * http://jasny.github.com/bootstrap/javascript/#fileinput
+ * ===========================================================
+ * Copyright 2012-2014 Arnold Daniels
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License")
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * ========================================================== */
+
++function ($) { "use strict";
+
+  var isIE = window.navigator.appName == 'Microsoft Internet Explorer'
+
+  // FILEUPLOAD PUBLIC CLASS DEFINITION
+  // =================================
+
+  var Fileinput = function (element, options) {
+    this.$element = $(element)
+    
+    this.$input = this.$element.find(':file')
+    if (this.$input.length === 0) return
+
+    this.name = this.$input.attr('name') || options.name
+
+    this.$hidden = this.$element.find('input[type=hidden][name="' + this.name + '"]')
+    if (this.$hidden.length === 0) {
+      this.$hidden = $('<input type="hidden">').insertBefore(this.$input)
+    }
+
+    this.$preview = this.$element.find('.fileinput-preview')
+    var height = this.$preview.css('height')
+    if (this.$preview.css('display') !== 'inline' && height !== '0px' && height !== 'none') {
+      this.$preview.css('line-height', height)
+    }
+        
+    this.original = {
+      exists: this.$element.hasClass('fileinput-exists'),
+      preview: this.$preview.html(),
+      hiddenVal: this.$hidden.val()
+    }
+    
+    this.listen()
+  }
+  
+  Fileinput.prototype.listen = function() {
+    this.$input.on('change.bs.fileinput', $.proxy(this.change, this))
+    $(this.$input[0].form).on('reset.bs.fileinput', $.proxy(this.reset, this))
+    
+    this.$element.find('[data-trigger="fileinput"]').on('click.bs.fileinput', $.proxy(this.trigger, this))
+    this.$element.find('[data-dismiss="fileinput"]').on('click.bs.fileinput', $.proxy(this.clear, this))
+  },
+
+  Fileinput.prototype.change = function(e) {
+    var files = e.target.files === undefined ? (e.target && e.target.value ? [{ name: e.target.value.replace(/^.+\\/, '')}] : []) : e.target.files
+    
+    e.stopPropagation()
+
+    if (files.length === 0) {
+      this.clear()
+      return
+    }
+
+    this.$hidden.val('')
+    this.$hidden.attr('name', '')
+    this.$input.attr('name', this.name)
+
+    var file = files[0]
+
+    if (this.$preview.length > 0 && (typeof file.type !== "undefined" ? file.type.match(/^image\/(gif|png|jpeg)$/) : file.name.match(/\.(gif|png|jpe?g)$/i)) && typeof FileReader !== "undefined") {
+      var reader = new FileReader()
+      var preview = this.$preview
+      var element = this.$element
+
+      reader.onload = function(re) {
+        var $img = $('<img>')
+        $img[0].src = re.target.result
+        files[0].result = re.target.result
+        
+        element.find('.fileinput-filename').text(file.name)
+        
+        // if parent has max-height, using `(max-)height: 100%` on child doesn't take padding and border into account
+        if (preview.css('max-height') != 'none') $img.css('max-height', parseInt(preview.css('max-height'), 10) - parseInt(preview.css('padding-top'), 10) - parseInt(preview.css('padding-bottom'), 10)  - parseInt(preview.css('border-top'), 10) - parseInt(preview.css('border-bottom'), 10))
+        
+        preview.html($img)
+        element.addClass('fileinput-exists').removeClass('fileinput-new')
+
+        element.trigger('change.bs.fileinput', files)
+      }
+
+      reader.readAsDataURL(file)
+    } else {
+      this.$element.find('.fileinput-filename').text(file.name)
+      this.$preview.text(file.name)
+      
+      this.$element.addClass('fileinput-exists').removeClass('fileinput-new')
+      
+      this.$element.trigger('change.bs.fileinput')
+    }
+  },
+
+  Fileinput.prototype.clear = function(e) {
+    if (e) e.preventDefault()
+    
+    this.$hidden.val('')
+    this.$hidden.attr('name', this.name)
+    this.$input.attr('name', '')
+
+    //ie8+ doesn't support changing the value of input with type=file so clone instead
+    if (isIE) { 
+      var inputClone = this.$input.clone(true);
+      this.$input.after(inputClone);
+      this.$input.remove();
+      this.$input = inputClone;
+    } else {
+      this.$input.val('')
+    }
+
+    this.$preview.html('')
+    this.$element.find('.fileinput-filename').text('')
+    this.$element.addClass('fileinput-new').removeClass('fileinput-exists')
+    
+    if (e !== undefined) {
+      this.$input.trigger('change')
+      this.$element.trigger('clear.bs.fileinput')
+    }
+  },
+
+  Fileinput.prototype.reset = function() {
+    this.clear()
+
+    this.$hidden.val(this.original.hiddenVal)
+    this.$preview.html(this.original.preview)
+    this.$element.find('.fileinput-filename').text('')
+
+    if (this.original.exists) this.$element.addClass('fileinput-exists').removeClass('fileinput-new')
+     else this.$element.addClass('fileinput-new').removeClass('fileinput-exists')
+    
+    this.$element.trigger('reset.bs.fileinput')
+  },
+
+  Fileinput.prototype.trigger = function(e) {
+    this.$input.trigger('click')
+    e.preventDefault()
+  }
+
+  
+  // FILEUPLOAD PLUGIN DEFINITION
+  // ===========================
+
+  var old = $.fn.fileinput
+  
+  $.fn.fileinput = function (options) {
+    return this.each(function () {
+      var $this = $(this),
+          data = $this.data('bs.fileinput')
+      if (!data) $this.data('bs.fileinput', (data = new Fileinput(this, options)))
+      if (typeof options == 'string') data[options]()
+    })
+  }
+
+  $.fn.fileinput.Constructor = Fileinput
+
+
+  // FILEINPUT NO CONFLICT
+  // ====================
+
+  $.fn.fileinput.noConflict = function () {
+    $.fn.fileinput = old
+    return this
+  }
+
+
+  // FILEUPLOAD DATA-API
+  // ==================
+
+  $(document).on('click.fileinput.data-api', '[data-provides="fileinput"]', function (e) {
+    var $this = $(this)
+    if ($this.data('bs.fileinput')) return
+    $this.fileinput($this.data())
+      
+    var $target = $(e.target).closest('[data-dismiss="fileinput"],[data-trigger="fileinput"]');
+    if ($target.length > 0) {
+      e.preventDefault()
+      $target.trigger('click.bs.fileinput')
+    }
+  })
+
+}(window.jQuery);

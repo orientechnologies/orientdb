@@ -70,7 +70,6 @@ public class IssueCommentedEvent extends EventInternal<Comment> {
       actorsInIssue = issueRepository.findToNotifyPrivateActors(issue);
       involvedActors.addAll(actorsInIssue);
     }
-    issueRepository.findInvolvedActors(issue);
     String[] actors = getActorsEmail(owner, involvedActors,actorsInIssue);
     if (actors.length > 0) {
       for (String actor : actors) {

@@ -34,13 +34,13 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
       }
     }
     for (OUser actorsInIssue : actorsInIssues) {
-      if (!Boolean.TRUE.equals(actorsInIssue.getNotification())) {
+      if (Boolean.TRUE.equals(actorsInIssue.getNotification())) {
         if (actorsInIssue.getEmail() != null && !actorsInIssue.getEmail().isEmpty()
             && !actorsInIssue.getEmail().equals(owner.getEmail())) {
-          actors.remove(actorsInIssue.getEmail());
+          actors.add(actorsInIssue.getEmail());
         } else if (actorsInIssue.getWorkingEmail() != null && !actorsInIssue.getWorkingEmail().isEmpty()
             && !actorsInIssue.getWorkingEmail().equals(owner.getWorkingEmail())) {
-          actors.remove(actorsInIssue.getWorkingEmail());
+          actors.add(actorsInIssue.getWorkingEmail());
         }
       }
     }
