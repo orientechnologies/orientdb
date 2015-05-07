@@ -179,6 +179,10 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
         graph.shutdown(false);
     }
   }
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
+  }
 
   @Override
   public String getSyntax() {

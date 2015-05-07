@@ -38,7 +38,6 @@ public class OCommandExecutorSQLLiveUnsubscribe extends OCommandExecutorSQLAbstr
   protected String           unsubscribeToken;
 
   public OCommandExecutorSQLLiveUnsubscribe() {
-
   }
 
   private Object executeUnsubscribe() {
@@ -88,5 +87,10 @@ public class OCommandExecutorSQLLiveUnsubscribe extends OCommandExecutorSQLAbstr
       requestText.setText(originalText);
     }
     return this;
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.NONE;
   }
 }

@@ -19,15 +19,10 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.*;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -40,6 +35,16 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Ask for deployment of database from a remote node.
@@ -178,8 +183,8 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
   }
 
   @Override
-  public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.NONE;
+  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
+    return OCommandDistributedReplicateRequest.QUORUM_TYPE.NONE;
   }
 
   @Override

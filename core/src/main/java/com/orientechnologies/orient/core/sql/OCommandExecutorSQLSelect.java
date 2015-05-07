@@ -2400,4 +2400,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     this.noCache = noCache;
   }
 
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.READ;
+  }
+
 }

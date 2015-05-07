@@ -320,7 +320,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
 
   @Override
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return upsertMode ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+    // REPLICATE MODE COULD BE MORE EFFICIENT ON MASSIVE UPDATES
+    return upsertMode || query == null ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
   }
 
   @Override
@@ -691,8 +692,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       fieldValue = getBlock(parserRequiredWord(false, "Value expected", " =><,\r\n"));
 
       // INSERT TRANSFORMED FIELD VALUE
-      putEntries.put(fieldName, new OPair<String, Object>((String) getFieldValueCountingParameters(fieldKey),
-          getFieldValueCountingParameters(fieldValue)));
+      putEntries.put(fieldName, new OPair<String, Object>((String) getFieldValueCountingParameters(fieldKey), getFieldValueCountingParameters(fieldValue)));
       parserSkipWhiteSpaces();
     }
 
@@ -748,5 +748,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
 
     if (incrementEntries.size() == 0)
       throwSyntaxErrorException("Entries to increment <field> = <value> are missed. Example: salary = -100");
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
   }
 }

@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
@@ -512,7 +513,7 @@ public class ODistributedResponseManager {
   }
 
   protected void manageConflicts() {
-    if (!groupResponsesByResult || request.getTask().getQuorumType() == OAbstractRemoteTask.QUORUM_TYPE.NONE)
+    if (!groupResponsesByResult || request.getTask().getQuorumType() == OCommandDistributedReplicateRequest.QUORUM_TYPE.NONE)
       // NO QUORUM
       return;
 

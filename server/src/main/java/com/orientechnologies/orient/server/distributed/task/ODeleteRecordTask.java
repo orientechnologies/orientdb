@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -81,8 +82,8 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.WRITE;
+  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
+    return OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   }
 
   @Override

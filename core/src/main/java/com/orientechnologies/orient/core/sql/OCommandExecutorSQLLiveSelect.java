@@ -202,4 +202,10 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     }
 
   }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.NONE;
+  }
+
 }

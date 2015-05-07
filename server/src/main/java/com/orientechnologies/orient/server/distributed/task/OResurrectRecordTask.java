@@ -19,19 +19,20 @@
      */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
- import java.io.ObjectInput;
- import java.io.ObjectOutput;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedStorage;
 
- import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
- import com.orientechnologies.orient.core.id.ORecordId;
- import com.orientechnologies.orient.core.version.ORecordVersion;
- import com.orientechnologies.orient.core.version.OVersionFactory;
- import com.orientechnologies.orient.server.OServer;
- import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
- import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
- import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
- import com.orientechnologies.orient.server.distributed.ODistributedStorage;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
   * Distributed task to fix delete record in conflict on synchronization.
@@ -77,8 +78,8 @@ import java.io.IOException;
      return Boolean.FALSE;
    }
 
-   public QUORUM_TYPE getQuorumType() {
-     return QUORUM_TYPE.NONE;
+   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
+     return OCommandDistributedReplicateRequest.QUORUM_TYPE.NONE;
    }
 
    @Override

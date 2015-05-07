@@ -237,4 +237,9 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     return returning;
   }
 
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
+  }
+
 }

@@ -19,14 +19,9 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -46,6 +41,12 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Distributed create record task used for synchronization.
@@ -149,8 +150,8 @@ public class OTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.WRITE;
+  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
+    return OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   }
 
   @Override
