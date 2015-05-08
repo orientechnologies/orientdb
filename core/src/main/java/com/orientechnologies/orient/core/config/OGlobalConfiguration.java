@@ -436,7 +436,7 @@ public enum OGlobalConfiguration {
       Level.class, Level.SEVERE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
-      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE),
+      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.FALSE),
 
   // DISTRIBUTED
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout",
