@@ -1,10 +1,9 @@
 package com.orientechnologies.orient.core.db.record;
 
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.OutputStream;
 import java.util.Iterator;
 
 import org.testng.annotations.AfterClass;
@@ -12,12 +11,11 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 public class ORecordLazySetTest {
 
@@ -133,6 +131,26 @@ public class ORecordLazySetTest {
     assertEquals(set.size(), 3);
     set.remove(null);
     assertEquals(set.size(), 2);
+  }
+
+  @Test
+  public void testSetWithNotExistentRecordWithValidation() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testSetWithNotExistentRecordWithValidation");
+    db.create();
+    OClass test = db.getMetadata().getSchema().createClass("test");
+    OClass test1 = db.getMetadata().getSchema().createClass("test1");
+    test.createProperty("fi", OType.LINKSET).setLinkedClass(test1);
+    try {
+      ODocument doc = new ODocument(test);
+      ORecordLazySet set = new ORecordLazySet(doc);
+      set.add(new ORecordId(5, 1000));
+      doc.field("fi", set);
+      db.begin();
+      db.save(doc);
+      db.commit();
+    } finally {
+      db.drop();
+    }
   }
 
 }
