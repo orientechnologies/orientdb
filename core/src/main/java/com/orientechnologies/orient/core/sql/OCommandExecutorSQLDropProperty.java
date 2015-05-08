@@ -128,6 +128,11 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
     return null;
   }
 
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
+  }
+
   private void dropRelatedIndexes(final List<OIndex<?>> indexes) {
     final ODatabaseDocument database = getDatabase();
     for (final OIndex<?> index : indexes) {

@@ -91,4 +91,9 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLAbstract im
   public String getSyntax() {
     return "DROP INDEX <index-name>|<class>.<property>|*";
   }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
+  }
 }

@@ -134,4 +134,9 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
   public boolean involveSchema() {
     return true;
   }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
+  }
 }

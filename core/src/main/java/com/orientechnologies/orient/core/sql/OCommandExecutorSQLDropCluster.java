@@ -90,6 +90,11 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
     return true;
   }
 
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
+  }
+
   protected boolean isClusterDeletable(int clusterId) {
     final ODatabaseDocument database = getDatabase();
     for (OClass iClass : database.getMetadata().getSchema().getClasses()) {

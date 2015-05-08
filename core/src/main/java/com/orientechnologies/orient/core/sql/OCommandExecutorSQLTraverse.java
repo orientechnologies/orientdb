@@ -237,4 +237,9 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     }
     return true;
   }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.READ;
+  }
 }

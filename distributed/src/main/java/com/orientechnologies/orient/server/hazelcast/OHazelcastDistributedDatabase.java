@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.hazelcast;
 
 import com.hazelcast.core.IQueue;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -313,7 +314,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     int quorum = 0;
 
-    final OAbstractRemoteTask.QUORUM_TYPE quorumType = iRequest.getTask().getQuorumType();
+    final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType = iRequest.getTask().getQuorumType();
 
     switch (quorumType) {
     case NONE:

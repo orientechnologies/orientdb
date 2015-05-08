@@ -284,7 +284,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 
   @Override
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return indexName != null ? DISTRIBUTED_EXECUTION_MODE.REPLICATE : DISTRIBUTED_EXECUTION_MODE.LOCAL;
+    return indexName != null || query != null ? DISTRIBUTED_EXECUTION_MODE.REPLICATE : DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
   public String getSyntax() {
@@ -335,5 +335,10 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     } else {
       return OSQLHelper.getValue(value);
     }
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
   }
 }

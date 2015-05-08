@@ -151,4 +151,9 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
   public String getSyntax() {
     return "ALTER CLUSTER <cluster-name>|<cluster-id> <attribute-name> <attribute-value>";
   }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
+  }
 }

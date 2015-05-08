@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -149,8 +150,8 @@ public class OTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.WRITE;
+  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
+    return OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   }
 
   @Override
