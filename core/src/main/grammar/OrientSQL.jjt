@@ -1005,6 +1005,7 @@ OUpdateItem UpdateItem():
 {
 (
 	jjtThis.left = Identifier()
+	[ jjtThis.leftModifier = Modifier() ]
 	(
 	    <EQ> { jjtThis.operator = OUpdateItem.OPERATOR_EQ; }
 	    |
