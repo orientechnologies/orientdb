@@ -262,6 +262,14 @@ public class ODistributedResponseManager {
           // OK
           break;
 
+        if (Thread.currentThread().isInterrupted()) {
+          // INTERRUPTED
+          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+              "thread has been interrupted wait for request (%s)", request);
+          Thread.currentThread().interrupt();
+          break;
+        }
+
         final long now = System.currentTimeMillis();
         final long elapsed = now - beginTime;
         currentTimeout = synchTimeout - elapsed;
@@ -609,8 +617,8 @@ public class ODistributedResponseManager {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
               "fixing response (%s) for request (%s) in server %s to be: %s", r, request, r.getExecutorNodeName(), goodResponse);
 
-          final OAbstractRemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, request.getTask(), r.getPayload(),
-              goodResponse.getPayload());
+          final OAbstractRemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, request.getTask(),
+              r.getPayload(), goodResponse.getPayload());
 
           if (fixTask != null)
             dManager.sendRequest(request.getDatabaseName(), null, Collections.singleton(r.getExecutorNodeName()), fixTask,
