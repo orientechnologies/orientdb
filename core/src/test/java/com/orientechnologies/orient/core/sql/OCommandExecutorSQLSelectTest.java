@@ -302,7 +302,7 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testLimitWithMetadataQuery() {
-    List<ODocument> qResult = db.command(new OCommandSQL("select from metadata:schema limit 3")).execute();
+    List<ODocument> qResult = db.command(new OCommandSQL("select expand(classes) from metadata:schema limit 3")).execute();
     assertEquals(qResult.size(), 3);
   }
 
