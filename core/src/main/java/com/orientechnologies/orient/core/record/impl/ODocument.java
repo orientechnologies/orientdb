@@ -431,9 +431,16 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   protected static void validateLinkCollection(final OProperty property, Collection<Object> values) {
     if (property.getLinkedClass() != null) {
+      boolean autoconvert = false;
+      if (values instanceof ORecordLazyMultiValue) {
+        autoconvert = ((ORecordLazyMultiValue) values).isAutoConvertToRecord();
+        ((ORecordLazyMultiValue) values).setAutoConvertToRecord(false);
+      }
       for (Object object : values) {
         validateLink(property, object, OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
       }
+      if (values instanceof ORecordLazyMultiValue)
+        ((ORecordLazyMultiValue) values).setAutoConvertToRecord(autoconvert);
     }
   }
 
