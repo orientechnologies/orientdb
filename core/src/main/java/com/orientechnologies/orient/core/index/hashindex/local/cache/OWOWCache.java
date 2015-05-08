@@ -1164,6 +1164,9 @@ public class OWOWCache {
     @Override
     public void run() {
       OLogSequenceNumber minLsn = writeAheadLog.getFlushedLSN();
+      // if nothing is flushed yet, we do not need to proceed
+      if (minLsn == null)
+        return;
 
       for (Map.Entry<GroupKey, WriteGroup> entry : writeGroups.entrySet()) {
         Lock groupLock = lockManager.acquireExclusiveLock(entry.getKey());
