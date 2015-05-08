@@ -2277,6 +2277,7 @@ OOrderBy OrderBy():
     jjtThis.items = new java.util.ArrayList();
     OOrderByItem lastItem;
     OIdentifier lastIdentifier;
+    OModifier lastModifier;
     ORid lastRid;
     Token lastToken;
 }
@@ -2291,7 +2292,10 @@ OOrderBy OrderBy():
                     jjtThis.items.add(lastItem);
                 }
                 (
-                    lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                    (
+                        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                        [ lastModifier = Modifier()  { lastItem.modifier = lastModifier; } ]
+                    )
                     |
                     lastItem.rid = Rid()
                     |
@@ -2309,7 +2313,10 @@ OOrderBy OrderBy():
                     jjtThis.items.add(lastItem);
                 }
                 (
-                    lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                    (
+                        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                        [ lastModifier = Modifier()  { lastItem.modifier = lastModifier; } ]
+                    )
                     |
                     lastItem.rid = Rid()
                     |
@@ -2330,7 +2337,10 @@ OOrderBy OrderBy():
                         jjtThis.items.add(lastItem);
                     }
                     (
-                        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                        (
+                            lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                            [ lastModifier = Modifier()  { lastItem.modifier = lastModifier; } ]
+                        )
                         |
                         lastItem.rid = Rid()
                         |
@@ -2348,7 +2358,10 @@ OOrderBy OrderBy():
                         jjtThis.items.add(lastItem);
                     }
                     (
-                        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                        (
+                            lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                            [ lastModifier = Modifier()  { lastItem.modifier = lastModifier; } ]
+                        )
                         |
                         lastItem.rid = Rid()
                         |
