@@ -35,6 +35,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedStorage;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -117,48 +118,59 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
           ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying database %s...",
               databaseName);
 
-          final File f = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
-          if (f.exists())
-            f.delete();
-          else
-            f.getParentFile().mkdirs();
-          f.createNewFile();
-
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-              "creating backup of database '%s' in directory: %s...", databaseName, f.getAbsolutePath());
-
           final AtomicLong lastOperationId = new AtomicLong(-1);
 
-          FileOutputStream fileOutputStream = new FileOutputStream(f);
-          try {
-            database.backup(fileOutputStream, null, new Callable<Object>() {
-              @Override
-              public Object call() throws Exception {
-                lastOperationId.set(database.getStorage().getLastOperationId());
-                return null;
-              }
-            }, this, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+          File backupFile = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
 
-            final long fileSize = f.length();
+          if (backupFile == null || !backupFile.exists()) {
+            // CREATE A BACKUP OF DATABASE FROM SCRATCH
+            backupFile = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
 
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "sending the compressed database '%s' over the NETWORK to node '%s', size=%s, lastOperationId=%d...", databaseName,
-                getNodeSource(), OFileUtils.getSizeAsString(fileSize), lastOperationId.get());
+                "creating backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
 
-            final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), f, 0, CHUNK_MAX_SIZE);
+            if (backupFile.exists())
+              backupFile.delete();
+            else
+              backupFile.getParentFile().mkdirs();
+            backupFile.createNewFile();
 
-            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
-                "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
+            final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
+            try {
+              database.backup(fileOutputStream, null, new Callable<Object>() {
+                @Override
+                public Object call() throws Exception {
+                  lastOperationId.set(database.getStorage().getLastOperationId());
+                  return null;
+                }
+              }, this, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+            } finally {
+              fileOutputStream.close();
+            }
 
-            if (chunk.last)
-              // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
-              iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+            // RECORD LAST BACKUP TO BE REUSED IN CASE ANOTHER NODE ASK FOR THE SAME IN SHORT TIME WHILE THE DB IS NOT UPDATED
+            ((ODistributedStorage) database.getStorage()).setLastValidBackup(backupFile);
+          } else
+            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                "reusing last backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
 
-            return chunk;
+          final long fileSize = backupFile.length();
 
-          } finally {
-            fileOutputStream.close();
-          }
+          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+              "sending the compressed database '%s' over the NETWORK to node '%s', size=%s, lastOperationId=%d...", databaseName,
+              getNodeSource(), OFileUtils.getSizeAsString(fileSize), lastOperationId.get());
+
+          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), backupFile, 0,
+              CHUNK_MAX_SIZE);
+
+          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
+              "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
+
+          if (chunk.last)
+            // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
+            iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+
+          return chunk;
 
         } finally {
           lock.unlock();
