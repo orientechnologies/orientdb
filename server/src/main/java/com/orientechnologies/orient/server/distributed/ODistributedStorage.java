@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -112,6 +113,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   protected final BlockingQueue<OAsynchDistributedOperation>                asynchronousOperationsQueue;
   protected final Thread                                                    asynchWorker;
   protected volatile boolean                                                running         = true;
+  protected volatile File                                                   lastValidBackup = null;
 
   public ODistributedStorage(final OServer iServer, final OAbstractPaginatedStorage wrapped) {
     this.serverInstance = iServer;
@@ -422,6 +424,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRecordId, final byte[] iContent,
       final ORecordVersion iRecordVersion, final byte iRecordType, final int iMode, final ORecordCallback<Long> iCallback) {
+    resetLastValidBackup();
+
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
       // ALREADY DISTRIBUTED
       return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
@@ -582,6 +586,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRecordId, final boolean updateContent,
       final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType, final int iMode,
       final ORecordCallback<ORecordVersion> iCallback) {
+    resetLastValidBackup();
+
     if (deletedRecords.get(iRecordId) != null)
       // DELETED
       throw new ORecordNotFoundException("Record " + iRecordId + " was not found");
@@ -669,6 +675,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   @Override
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRecordId, final ORecordVersion iVersion, final int iMode,
       final ORecordCallback<Boolean> iCallback) {
+    resetLastValidBackup();
+
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
       // ALREADY DISTRIBUTED
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
@@ -1273,6 +1281,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   public void pushDeletedRecord(final ORecordId rid, final ORecordVersion version) {
+    resetLastValidBackup();
+
     deletedRecords.putIfAbsent(rid, new OPair<Long, ORecordVersion>(System.currentTimeMillis(), version));
   }
 
@@ -1311,6 +1321,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       throw new ODistributedException("Cannot execute write operation on node '" + localNodeName + "' because is non master");
   }
 
+  public File getLastValidBackup() {
+    return lastValidBackup;
+  }
+
+  public void setLastValidBackup(final File lastValidBackup) {
+    this.lastValidBackup = lastValidBackup;
+  }
+
   protected void asynchronousExecution(final OAsynchDistributedOperation iOperation) {
     asynchronousOperationsQueue.offer(iOperation);
   }
@@ -1334,5 +1352,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       return ((OFreezableStorage) wrapped);
     else
       throw new UnsupportedOperationException("Storage engine " + wrapped.getType() + " does not support freeze operation");
+  }
+
+  private void resetLastValidBackup() {
+    if (lastValidBackup != null)
+      lastValidBackup = null;
   }
 }
