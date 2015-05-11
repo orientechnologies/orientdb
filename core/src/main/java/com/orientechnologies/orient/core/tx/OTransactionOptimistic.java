@@ -232,6 +232,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     return record;
   }
 
+  @Override
+  public ORecord loadRecord(ORID rid, ORecord record, String fetchPlan, boolean ignoreCache) {
+    return loadRecord(rid, record, fetchPlan, ignoreCache, false, OStorage.LOCKING_STRATEGY.NONE);
+  }
+
   public void deleteRecord(final ORecord iRecord, final OPERATION_MODE iMode) {
     if (!iRecord.getIdentity().isValid())
       return;

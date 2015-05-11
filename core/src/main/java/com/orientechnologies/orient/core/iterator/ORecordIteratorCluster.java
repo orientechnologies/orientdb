@@ -42,6 +42,13 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
   }
 
   public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentTx iLowLevelDatabase,
+      final int iClusterId, final long firstClusterEntry, final long lastClusterEntry, final boolean iUseCache) {
+    this(iDatabase, iLowLevelDatabase, iClusterId, firstClusterEntry, lastClusterEntry, iUseCache, false,
+        OStorage.LOCKING_STRATEGY.NONE);
+  }
+
+  @Deprecated
+  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentTx iLowLevelDatabase,
       final int iClusterId, final long firstClusterEntry, final long lastClusterEntry, final boolean iUseCache,
       final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);

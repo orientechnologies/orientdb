@@ -45,6 +45,12 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   protected ORID    endRange;
 
   public ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
+      final int[] iClusterIds, final boolean iUseCache) {
+    this(iDatabase, iLowLevelDatabase, iClusterIds, iUseCache, false, OStorage.LOCKING_STRATEGY.NONE);
+  }
+
+  @Deprecated
+  public ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final int[] iClusterIds, final boolean iUseCache, final boolean iterateThroughTombstones,
       final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
@@ -55,6 +61,12 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     config();
   }
 
+  protected ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
+      final boolean iUseCache) {
+    this(iDatabase, iLowLevelDatabase, iUseCache, false, OStorage.LOCKING_STRATEGY.NONE);
+  }
+
+  @Deprecated
   protected ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
