@@ -91,7 +91,6 @@ public class OStorageConfiguration implements OSerializableStream {
   private volatile String                            recordSerializer;
   private volatile int                               recordSerializerVersion;
 
-
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
     fileTemplate = new OStorageSegmentConfiguration();
@@ -120,7 +119,7 @@ public class OStorageConfiguration implements OSerializableStream {
    * @throws OSerializationException
    */
   public OStorageConfiguration load() throws OSerializationException {
-    final byte[] record = storage.readRecord(CONFIG_RID, null, false, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult().buffer;
+    final byte[] record = storage.readRecord(CONFIG_RID, null, false, null).getResult().buffer;
 
     if (record == null)
       throw new OStorageException("Cannot load database's configuration. The database seems to be corrupted.");

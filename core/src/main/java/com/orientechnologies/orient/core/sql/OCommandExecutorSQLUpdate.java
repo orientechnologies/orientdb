@@ -222,7 +222,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     returnHandler.reset();
 
     if (lockStrategy.equals("RECORD"))
-      query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK);
+      query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK);
 
     for (int r = 0; r < retry; ++r) {
       try {
@@ -692,7 +692,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       fieldValue = getBlock(parserRequiredWord(false, "Value expected", " =><,\r\n"));
 
       // INSERT TRANSFORMED FIELD VALUE
-      putEntries.put(fieldName, new OPair<String, Object>((String) getFieldValueCountingParameters(fieldKey), getFieldValueCountingParameters(fieldValue)));
+      putEntries.put(fieldName, new OPair<String, Object>((String) getFieldValueCountingParameters(fieldKey),
+          getFieldValueCountingParameters(fieldValue)));
       parserSkipWhiteSpaces();
     }
 

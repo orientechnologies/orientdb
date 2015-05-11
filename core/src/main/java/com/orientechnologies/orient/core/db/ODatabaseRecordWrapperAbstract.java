@@ -245,12 +245,14 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseDocumen
   }
 
   @Override
+  @Deprecated
   public <RET extends ORecord> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
       OStorage.LOCKING_STRATEGY iLockingStrategy) {
     return (RET) underlying.load(iRecordId, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @Override
+  @Deprecated
   public <RET extends ORecord> RET load(ORecord iObject, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
       OStorage.LOCKING_STRATEGY iLockingStrategy) {
     return (RET) underlying.load(iObject, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
@@ -342,17 +344,18 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseDocumen
     return false;
   }
 
-  public <DBTYPE extends ODatabaseDocument> DBTYPE checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
+  public <DBTYPE extends ODatabaseDocument> DBTYPE checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific,
+      final int iOperation) {
     return (DBTYPE) underlying.checkSecurity(resourceGeneric, resourceSpecific, iOperation);
   }
 
-  public <DBTYPE extends ODatabaseDocument> DBTYPE checkSecurity(final ORule.ResourceGeneric iResourceGeneric, final int iOperation,
-      final Object iResourceSpecific) {
+  public <DBTYPE extends ODatabaseDocument> DBTYPE checkSecurity(final ORule.ResourceGeneric iResourceGeneric,
+      final int iOperation, final Object iResourceSpecific) {
     return (DBTYPE) underlying.checkSecurity(iResourceGeneric, iOperation, iResourceSpecific);
   }
 
-  public <DBTYPE extends ODatabaseDocument> DBTYPE checkSecurity(final ORule.ResourceGeneric iResourceGeneric, final int iOperation,
-      final Object... iResourcesSpecific) {
+  public <DBTYPE extends ODatabaseDocument> DBTYPE checkSecurity(final ORule.ResourceGeneric iResourceGeneric,
+      final int iOperation, final Object... iResourcesSpecific) {
     return (DBTYPE) underlying.checkSecurity(iResourceGeneric, iOperation, iResourcesSpecific);
   }
 
@@ -512,7 +515,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseDocumen
     if (iClusterId == -1)
       return;
 
-    for (OClass clazz : ((OMetadataInternal)getMetadata()).getImmutableSchemaSnapshot().getClasses()) {
+    for (OClass clazz : ((OMetadataInternal) getMetadata()).getImmutableSchemaSnapshot().getClasses()) {
       if (clazz.getDefaultClusterId() == iClusterId)
         throw new OSchemaException("Cannot drop the cluster '" + getClusterNameById(iClusterId) + "' because the classes ['"
             + clazz.getName() + "'] are bound to it. Drop these classes before dropping the cluster");

@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.common.listener.OProgressListener;
@@ -35,18 +35,17 @@ import java.util.*;
  */
 @SuppressWarnings("serial")
 public abstract class OCommandRequestAbstract implements OCommandRequestInternal, ODistributedCommand {
-  protected OCommandResultListener    resultListener;
-  protected OProgressListener         progressListener;
-  protected int                       limit           = -1;
-  protected long                      timeoutMs       = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
-  protected TIMEOUT_STRATEGY          timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
-  protected OStorage.LOCKING_STRATEGY lockStrategy    = OStorage.LOCKING_STRATEGY.NONE;
-  protected Map<Object, Object>       parameters;
-  protected String                    fetchPlan       = null;
-  protected boolean                   useCache        = false;
-  protected OCommandContext           context;
+  protected OCommandResultListener resultListener;
+  protected OProgressListener      progressListener;
+  protected int                    limit           = -1;
+  protected long                   timeoutMs       = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+  protected TIMEOUT_STRATEGY       timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
+  protected Map<Object, Object>    parameters;
+  protected String                 fetchPlan       = null;
+  protected boolean                useCache        = false;
+  protected OCommandContext        context;
 
-  private final Set<String>           nodesToExclude  = new HashSet<String>();
+  private final Set<String>        nodesToExclude  = new HashSet<String>();
 
   protected OCommandRequestAbstract() {
   }
@@ -151,14 +150,6 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 
   public TIMEOUT_STRATEGY getTimeoutStrategy() {
     return timeoutStrategy;
-  }
-
-  public OStorage.LOCKING_STRATEGY getLockingStrategy() {
-    return lockStrategy;
-  }
-
-  public void setLockStrategy(final OStorage.LOCKING_STRATEGY lockStrategy) {
-    this.lockStrategy = lockStrategy;
   }
 
   @Override

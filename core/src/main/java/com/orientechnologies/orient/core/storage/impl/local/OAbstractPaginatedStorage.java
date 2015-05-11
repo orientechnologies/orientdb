@@ -20,10 +20,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
-import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableBoolean;
@@ -83,7 +81,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
 
 /**
  * @author Andrey Lomakin
@@ -694,10 +691,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   @Override
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
+      ORecordCallback<ORawBuffer> iCallback) {
     checkOpeness();
-    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true, loadTombstones,
-        iLockingStrategy));
+    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid));
   }
 
   @Override
@@ -1407,8 +1403,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     writeCache.unlock();
   }
 
-  private ORawBuffer readRecord(final OCluster clusterSegment, final ORecordId rid, boolean atomicLock, boolean loadTombstones,
-      LOCKING_STRATEGY iLockingStrategy) {
+  private ORawBuffer readRecord(final OCluster clusterSegment, final ORecordId rid) {
     checkOpeness();
 
     if (!rid.isPersistent())
@@ -1428,20 +1423,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     final long timer = Orient.instance().getProfiler().startChrono();
     clusterSegment.getExternalModificationLock().requestModificationLock();
     try {
-      lockRecord(rid, iLockingStrategy);
+      lockManager.acquireLock(this, rid, OLockManager.LOCK.SHARED);
       try {
         ORawBuffer buff;
-        if (atomicLock)
-          lock.acquireSharedLock();
+        lock.acquireSharedLock();
         try {
           buff = doReadRecord(clusterSegment, rid);
           return buff;
         } finally {
-          if (atomicLock)
-            lock.releaseSharedLock();
+          lock.releaseSharedLock();
         }
       } finally {
-        unlockRecord(rid, iLockingStrategy);
+        lockManager.releaseLock(this, rid, OLockManager.LOCK.SHARED);
       }
     } finally {
       clusterSegment.getExternalModificationLock().releaseModificationLock();
@@ -1682,34 +1675,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", ioe);
       throw new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster + ")", ioe);
-    }
-  }
-
-  private void unlockRecord(ORecordId rid, LOCKING_STRATEGY iLockingStrategy) {
-    switch (iLockingStrategy) {
-    case DEFAULT:
-      rid.unlock();
-      break;
-
-    case KEEP_EXCLUSIVE_LOCK:
-    case NONE:
-    case KEEP_SHARED_LOCK:
-      // DO NOTHING
-      break;
-    }
-  }
-
-  private void lockRecord(ORecordId rid, LOCKING_STRATEGY iLockingStrategy) {
-    switch (iLockingStrategy) {
-    case DEFAULT:
-    case KEEP_SHARED_LOCK:
-      rid.lock(false);
-      break;
-    case NONE:
-      // DO NOTHING
-      break;
-    case KEEP_EXCLUSIVE_LOCK:
-      rid.lock(true);
     }
   }
 

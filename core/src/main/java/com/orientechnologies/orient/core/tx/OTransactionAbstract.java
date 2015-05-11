@@ -105,11 +105,11 @@ public abstract class OTransactionAbstract implements OTransaction {
       try {
         final LockedRecordMetadata lockedRecordMetadata = lock.getValue();
 
-        if (lockedRecordMetadata.strategy.equals(OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)) {
+        if (lockedRecordMetadata.strategy.equals(OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)) {
           for (int i = 0; i < lockedRecordMetadata.locksCount; i++) {
             ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseWriteLock(lock.getKey());
           }
-        } else if (lockedRecordMetadata.strategy.equals(OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK)) {
+        } else if (lockedRecordMetadata.strategy.equals(OStorage.LOCKING_STRATEGY.SHARED_LOCK)) {
           for (int i = 0; i < lockedRecordMetadata.locksCount; i++) {
             ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseReadLock(lock.getKey());
           }
@@ -141,10 +141,12 @@ public abstract class OTransactionAbstract implements OTransaction {
       addItem = true;
     }
 
-    if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
+    if (lockingStrategy == OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)
       ((OAbstractPaginatedStorage) stg.getUnderlying()).acquireWriteLock(rid);
-    else
+    else if (lockingStrategy == OStorage.LOCKING_STRATEGY.SHARED_LOCK)
       ((OAbstractPaginatedStorage) stg.getUnderlying()).acquireReadLock(rid);
+    else
+      throw new IllegalStateException("Unsupported locking strategy " + lockingStrategy);
 
     lockedRecordMetadata.locksCount++;
 
@@ -189,10 +191,12 @@ public abstract class OTransactionAbstract implements OTransaction {
 
     if (lockedRecordMetadata == null || lockedRecordMetadata.locksCount == 0)
       throw new OLockException("Cannot unlock a never acquired lock");
-    else if (lockedRecordMetadata.strategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
+    else if (lockedRecordMetadata.strategy == OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)
       ((OAbstractPaginatedStorage) stg.getUnderlying()).releaseWriteLock(rid);
-    else
+    else if (lockedRecordMetadata.strategy == OStorage.LOCKING_STRATEGY.SHARED_LOCK)
       ((OAbstractPaginatedStorage) stg.getUnderlying()).releaseReadLock(rid);
+    else
+      throw new IllegalStateException("Unsupported locking strategy " + lockedRecordMetadata.strategy);
 
     lockedRecordMetadata.locksCount--;
 

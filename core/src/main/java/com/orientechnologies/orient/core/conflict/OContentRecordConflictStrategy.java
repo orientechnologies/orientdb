@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -50,7 +49,7 @@ public class OContentRecordConflictStrategy extends OVersionRecordConflictStrate
 
     if (iRecordType == ODocument.RECORD_TYPE) {
       // No need lock, is already inside a lock.
-      OStorageOperationResult<ORawBuffer> res = storage.readRecord(rid, null, false, null, false, LOCKING_STRATEGY.NONE);
+      OStorageOperationResult<ORawBuffer> res = storage.readRecord(rid, null, false, null);
       final ODocument storedRecord = new ODocument(rid).fromStream(res.getResult().getBuffer());
       final ODocument newRecord = new ODocument().fromStream(iRecordContent);
 

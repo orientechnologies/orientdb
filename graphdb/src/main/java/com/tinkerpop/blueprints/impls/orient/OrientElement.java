@@ -359,7 +359,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   @Override
   public void lock(final boolean iExclusive) {
     ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
-        .lockRecord(this, iExclusive ? OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK);
+        .lockRecord(this, iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
   }
 
   /**
