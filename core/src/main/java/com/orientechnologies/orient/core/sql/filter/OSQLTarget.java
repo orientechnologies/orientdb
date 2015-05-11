@@ -196,7 +196,7 @@ public class OSQLTarget extends OBaseParser {
       parserMoveCurrentPosition(1);
     } else {
 
-      while (!parserIsEnded() && (targetClasses == null && targetClusters == null && targetIndex == null && targetIndexValues == null)) {
+      while (!parserIsEnded() && (targetClasses == null && targetClusters == null && targetIndex == null && targetIndexValues == null && targetRecords == null)) {
         String originalSubjectName = parserRequiredWord(false, "Target not found");
         String subjectName = originalSubjectName.toUpperCase();
 

@@ -20,13 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
@@ -54,6 +47,13 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * OrientDB Vertex implementation of TinkerPop Blueprints standard.
@@ -731,6 +731,18 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     final ORID oldIdentity = getIdentity().copy();
 
+    final ORecord oldRecord = oldIdentity.getRecord();
+    if (oldRecord == null)
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+
+    graph.autoStartTransaction();
+
+    if (!graph.getRawGraph().getTransaction().isActive())
+      throw new IllegalStateException("Move vertex requires an active transaction to be executed in safe manner");
+
+    // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
+    oldRecord.delete();
+
     final ODocument doc = ((ODocument) rawElement.getRecord()).copy();
 
     final Iterable<Edge> outEdges = getEdges(Direction.OUT);
@@ -792,11 +804,6 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     // FINAL SAVE
     doc.save();
-
-    // DELETE OLD RECORD
-    final ORecord oldRecord = oldIdentity.getRecord();
-    if (oldRecord != null)
-      oldRecord.delete();
 
     return newIdentity;
   }

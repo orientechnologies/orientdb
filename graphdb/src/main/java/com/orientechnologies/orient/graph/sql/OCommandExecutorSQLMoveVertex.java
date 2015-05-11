@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.ArrayList;
@@ -124,7 +124,7 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     OModifiableBoolean shutdownGraph = new OModifiableBoolean();
-    final OrientGraphNoTx graph = OGraphCommandExecutorSQLFactory.getGraphNoTx(shutdownGraph);
+    final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(true, shutdownGraph);
     try {
       final Set<OIdentifiable> sourceRIDs = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), source, context, iArgs);
 

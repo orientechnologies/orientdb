@@ -1,17 +1,18 @@
 package com.orientechnologies.orient.core.sql;
 
-import static org.testng.Assert.*;
-
-import java.util.List;
-
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.List;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 @Test
 public class OCommandExecutorSQLSelectTest {
@@ -92,7 +93,8 @@ public class OCommandExecutorSQLSelectTest {
   public void testUseIndexWithOrderBy2() throws Exception {
     long idxUsagesBefore = indexUsages(db);
 
-    List<ODocument> qResult = db.command(new OCommandSQL("select * from foo where address.city = 'NY' order by name ASC")).execute();
+    List<ODocument> qResult = db.command(new OCommandSQL("select * from foo where address.city = 'NY' order by name ASC"))
+        .execute();
     assertEquals(qResult.size(), 1);
   }
 
@@ -197,9 +199,7 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testOperatorPriority2() {
     List<ODocument> qResult = db
-        .command(
-            new OCommandSQL(
-                "select * from bar where name ='a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
+        .command(new OCommandSQL("select * from bar where name ='a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
         .execute();
 
     List<ODocument> qResult2 = db
@@ -236,9 +236,7 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testOperatorPriority3() {
     List<ODocument> qResult = db
-        .command(
-            new OCommandSQL(
-                "select * from bar where name <> 'a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
+        .command(new OCommandSQL("select * from bar where name <> 'a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
         .execute();
 
     List<ODocument> qResult2 = db
@@ -286,6 +284,18 @@ public class OCommandExecutorSQLSelectTest {
 
     assertEquals(qResult.size(), 1);
     assertEquals(qResult.get(0).field("city"), "NY");
+  }
+
+  @Test
+  public void testLimit() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit 3")).execute();
+    assertEquals(qResult.size(), 3);
+  }
+
+  @Test
+  public void testLimitWithMetadataQuery() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select expand(classes) from metadata:schema limit 3")).execute();
+    assertEquals(qResult.size(), 3);
   }
 
   @Test
