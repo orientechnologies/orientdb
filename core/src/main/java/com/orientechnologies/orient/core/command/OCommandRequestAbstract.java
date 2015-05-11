@@ -35,18 +35,17 @@ import java.util.*;
  */
 @SuppressWarnings("serial")
 public abstract class OCommandRequestAbstract implements OCommandRequestInternal, ODistributedCommand {
-  protected OCommandResultListener    resultListener;
-  protected OProgressListener         progressListener;
-  protected int                       limit           = -1;
-  protected long                      timeoutMs       = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
-  protected TIMEOUT_STRATEGY          timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
-  protected OStorage.LOCKING_STRATEGY lockStrategy    = OStorage.LOCKING_STRATEGY.NONE;
-  protected Map<Object, Object>       parameters;
-  protected String                    fetchPlan       = null;
-  protected boolean                   useCache        = false;
-  protected OCommandContext           context;
+  protected OCommandResultListener resultListener;
+  protected OProgressListener      progressListener;
+  protected int                    limit           = -1;
+  protected long                   timeoutMs       = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+  protected TIMEOUT_STRATEGY       timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
+  protected Map<Object, Object>    parameters;
+  protected String                 fetchPlan       = null;
+  protected boolean                useCache        = false;
+  protected OCommandContext        context;
 
-  private final Set<String>           nodesToExclude  = new HashSet<String>();
+  private final Set<String>        nodesToExclude  = new HashSet<String>();
 
   protected OCommandRequestAbstract() {
   }
@@ -151,14 +150,6 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 
   public TIMEOUT_STRATEGY getTimeoutStrategy() {
     return timeoutStrategy;
-  }
-
-  public OStorage.LOCKING_STRATEGY getLockingStrategy() {
-    return lockStrategy;
-  }
-
-  public void setLockStrategy(final OStorage.LOCKING_STRATEGY lockStrategy) {
-    this.lockStrategy = lockStrategy;
   }
 
   @Override

@@ -654,6 +654,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return (ODocument) result;
   }
 
+  @Deprecated
   public ODocument load(final String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
     Object result;
     try {

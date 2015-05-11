@@ -590,6 +590,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@inheritDoc}
    */
   @Override
+  @Deprecated
   public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(final String iClusterName, final Class<REC> iRecordClass,
       final long startClusterPosition, final long endClusterPosition, final boolean loadTombstones) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
@@ -600,6 +601,18 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true, loadTombstones,
         OStorage.LOCKING_STRATEGY.DEFAULT);
+  }
+
+  @Override
+  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
+      long startClusterPosition, long endClusterPosition) {
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
+
+    setCurrentDatabaseInThreadLocal();
+
+    final int clusterId = getClusterIdByName(iClusterName);
+
+    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true);
   }
 
   /**
@@ -1415,6 +1428,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @SuppressWarnings("unchecked")
   @Override
+  @Deprecated
   public <RET extends ORecord> RET load(ORecord iRecord, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
       OStorage.LOCKING_STRATEGY iLockingStrategy) {
     return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
@@ -1423,23 +1437,24 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecord> RET load(final ORecord iRecord) {
-    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
+    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, null, false);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecord> RET load(final ORID recordId) {
-    return (RET) currentTx.loadRecord(recordId, null, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
+    return (RET) currentTx.loadRecord(recordId, null, null, false);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecord> RET load(final ORID iRecordId, final String iFetchPlan) {
-    return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
+    return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, false);
   }
 
   @SuppressWarnings("unchecked")
   @Override
+  @Deprecated
   public <RET extends ORecord> RET load(final ORID iRecordId, String iFetchPlan, final boolean iIgnoreCache,
       final boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
     return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
@@ -1458,8 +1473,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecord> RET reload(final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
-    ORecord record = currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false,
-        OStorage.LOCKING_STRATEGY.DEFAULT);
+    ORecord record = currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache);
+
     if (record != null && iRecord != record) {
       iRecord.fromStream(record.toStream());
       iRecord.getRecordVersion().copyFrom(record.getRecordVersion());
@@ -1522,7 +1537,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    */
   public <RET extends ORecord> RET load(final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
     return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false,
-        OStorage.LOCKING_STRATEGY.DEFAULT);
+        OStorage.LOCKING_STRATEGY.NONE);
   }
 
   /**
@@ -1563,10 +1578,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
           record.reload();
 
-        if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK)
+        if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+          OLogManager.instance().warn(this,
+              "You use depricated record locking strategy : %s it may lead to deadlocks " + iLockingStrategy);
           record.lock(false);
-        else if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
+
+        } else if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
+          OLogManager.instance().warn(this,
+              "You use depricated record locking strategy : %s it may lead to deadlocks " + iLockingStrategy);
           record.lock(true);
+        }
 
         callbackHooks(ORecordHook.TYPE.AFTER_READ, record);
         return (RET) record;
@@ -1577,7 +1598,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         recordBuffer = null;
       else {
         OFetchHelper.checkFetchPlanValid(iFetchPlan);
-        recordBuffer = storage.readRecord(rid, iFetchPlan, iIgnoreCache, null, loadTombstones, iLockingStrategy).getResult();
+        recordBuffer = storage.readRecord(rid, iFetchPlan, iIgnoreCache, null).getResult();
       }
 
       if (recordBuffer == null)
@@ -2356,7 +2377,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
               deletedInTx++;
           }
         }
-        if (op.type == ORecordOperation.CREATED){
+        if (op.type == ORecordOperation.CREATED) {
           final ORecord rec = op.getRecord();
           if (rec != null && rec instanceof ODocument) {
             if (((ODocument) rec).getSchemaClass().isSubClassOf(iClassName))

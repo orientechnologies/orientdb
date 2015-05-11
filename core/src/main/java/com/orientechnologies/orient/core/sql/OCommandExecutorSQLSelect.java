@@ -261,7 +261,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             } else if (lock.equals("NONE")) {
               lockingStrategy = OStorage.LOCKING_STRATEGY.NONE;
             } else if (lock.equals("RECORD")) {
-              lockingStrategy = OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK;
+              lockingStrategy = OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;
             }
           } else if (w.equals(KEYWORD_PARALLEL)) {
             parallel = parseParallel(w);
@@ -461,45 +461,42 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OStorage.LOCKING_STRATEGY localLockingStrategy = contextLockingStrategy != null ? contextLockingStrategy
         : lockingStrategy;
 
-    ORecord record = null;
+    if (localLockingStrategy != null
+        && !(localLockingStrategy == LOCKING_STRATEGY.DEFAULT || localLockingStrategy == LOCKING_STRATEGY.NONE
+            || localLockingStrategy == LOCKING_STRATEGY.EXCLUSIVE_LOCK || localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK))
+      throw new IllegalStateException("Unsupported locking strategy " + localLockingStrategy);
+
+    final ORecord record;
+    if (!(id instanceof ORecord)) {
+      record = getDatabase().load(id.getIdentity(), null, noCache);
+      if (id instanceof OContextualRecordId && ((OContextualRecordId) id).getContext() != null) {
+        Map<String, Object> ridContext = ((OContextualRecordId) id).getContext();
+        for (String key : ridContext.keySet()) {
+          context.setVariable(key, ridContext.get(key));
+        }
+      }
+    } else {
+      record = (ORecord) id;
+    }
+
+    context.updateMetric("recordReads", +1);
+
+    if (record == null || ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE)
+    // SKIP IT
+    {
+      return true;
+    }
+    context.updateMetric("documentReads", +1);
+
+    if (localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK) {
+      record.lock(false);
+      record.reload();
+    } else if (localLockingStrategy == LOCKING_STRATEGY.EXCLUSIVE_LOCK) {
+      record.lock(true);
+      record.reload();
+    }
+
     try {
-      if (id instanceof ORecord) {
-        record = (ORecord) id;
-
-        // LOCK THE RECORD IF NEEDED
-        if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
-          record.lock(true);
-        } else if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
-          record.lock(false);
-        }
-
-      } else {
-        boolean useNoCache = noCache;
-
-        if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
-            || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK)
-          // FORCE NO CACHE
-          useNoCache = true;
-
-        record = getDatabase().load(id.getIdentity(), null, useNoCache, false, localLockingStrategy);
-        if (id instanceof OContextualRecordId && ((OContextualRecordId) id).getContext() != null) {
-          Map<String, Object> ridContext = ((OContextualRecordId) id).getContext();
-          for (String key : ridContext.keySet()) {
-            context.setVariable(key, ridContext.get(key));
-          }
-        }
-      }
-
-      context.updateMetric("recordReads", +1);
-
-      if (record == null || ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE)
-      // SKIP IT
-      {
-        return true;
-      }
-
-      context.updateMetric("documentReads", +1);
-
       context.setVariable("current", record);
 
       if (filter(record)) {
@@ -510,10 +507,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
     } finally {
-      if (record != null && localLockingStrategy != null && record.isLocked()) {
+      if (localLockingStrategy != null && record.isLocked()) {
         // CONTEXT LOCK: lock must be released (no matter if filtered or not)
-        if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
-            || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+        if (localLockingStrategy == LOCKING_STRATEGY.EXCLUSIVE_LOCK || localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK) {
           record.unlock();
         }
       }

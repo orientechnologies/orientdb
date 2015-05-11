@@ -465,7 +465,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
-      final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
+      final ORecordCallback<ORawBuffer> iCallback) {
 
     if (OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting)
       // PENDING NETWORK OPERATION, CAN'T EXECUTE IT NOW
@@ -483,7 +483,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             network.writeByte((byte) (iIgnoreCache ? 1 : 0));
 
           if (network.getSrvProtocolVersion() >= 13)
-            network.writeByte(loadTombstones ? (byte) 1 : (byte) 0);
+            network.writeByte((byte) 0);
         } finally {
           endRequest(network);
         }

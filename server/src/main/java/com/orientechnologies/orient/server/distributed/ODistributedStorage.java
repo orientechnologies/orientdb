@@ -527,8 +527,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan,
-      final boolean iIgnoreCache, final ORecordCallback<ORawBuffer> iCallback, final boolean loadTombstones,
-      LOCKING_STRATEGY iLockingStrategy) {
+      final boolean iIgnoreCache, final ORecordCallback<ORawBuffer> iCallback) {
 
     if (deletedRecords.get(iRecordId) != null)
       // DELETED
@@ -546,7 +545,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         return (OStorageOperationResult<ORawBuffer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
           @Override
           public Object call() throws Exception {
-            return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
+            return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback);
           }
         });
       }
@@ -609,8 +608,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       if (executionModeSynch) {
         // SYNCHRONOUS: LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
-        final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null, false,
-            LOCKING_STRATEGY.DEFAULT);
+        final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null);
 
         // REPLICATE IT
         final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new OUpdateRecordTask(
@@ -637,8 +635,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       nodes.remove(dManager.getLocalNodeName());
       if (!nodes.isEmpty()) {
         // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
-        final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null, false,
-            LOCKING_STRATEGY.DEFAULT);
+        final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null);
 
         asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
             new OUpdateRecordTask(iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version,
@@ -880,8 +877,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               ((ODocument) record).validate();
 
             // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
-            final OStorageOperationResult<ORawBuffer> previousContent = wrapped.readRecord(rid, null, false, null, false,
-                LOCKING_STRATEGY.DEFAULT);
+            final OStorageOperationResult<ORawBuffer> previousContent = wrapped.readRecord(rid, null, false, null);
 
             if (previousContent.getResult() == null)
               // DELETED

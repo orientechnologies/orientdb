@@ -677,18 +677,16 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
               && rid.equals(new ORecordId(storage2.getConfiguration().schemaRecordId)))
             continue;
 
-          final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
-              .getResult();
+          final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null).getResult();
           final ORawBuffer buffer2;
           if (ridMapper == null)
-            buffer2 = storage2.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
+            buffer2 = storage2.readRecord(rid, null, true, null).getResult();
           else {
             final ORID newRid = ridMapper.map(rid);
             if (newRid == null)
-              buffer2 = storage2.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
+              buffer2 = storage2.readRecord(rid, null, true, null).getResult();
             else
-              buffer2 = storage2.readRecord(new ORecordId(newRid), null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
-                  .getResult();
+              buffer2 = storage2.readRecord(new ORecordId(newRid), null, true, null).getResult();
           }
 
           if (buffer1 == null && buffer2 == null)
