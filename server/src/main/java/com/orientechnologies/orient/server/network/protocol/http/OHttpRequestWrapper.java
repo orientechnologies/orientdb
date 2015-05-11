@@ -87,6 +87,15 @@ import java.util.Map;
    }
 
    /**
+    * Return the request's HTTP headers
+    * 
+    * @return The HTTP request headers in the form of a map
+    */
+   public Map<String, String> getHeaders() {
+     return request.headers;
+   }
+   
+   /**
     * Return the request's IF-MATCH header.
     *
     * @return The if-match header in form of String
