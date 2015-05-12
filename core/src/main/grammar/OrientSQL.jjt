@@ -430,6 +430,7 @@ OIdentifier Identifier():
 {
     //Token quotedToken = null;
     Token token = null;
+
 }
 {
 (
@@ -469,6 +470,39 @@ OIdentifier Identifier():
     //TODO REPLACE THIS WITH <QUOTED_IDENTIFIER>
         <BACKTICK>
         (
+            token = <IDENTIFIER>
+            |
+            token = <IN>
+            |
+            token = <SET>
+            |
+            token = <PUT>
+            |
+            token = <ADD>
+            |
+            token = <REMOVE>
+            |
+            token = <MERGE>
+            |
+            token = <CONTENT>
+            |
+            token = <ORDER>
+            |
+            token = <KEY>
+            |
+            token = <OFFSET>
+            |
+            token = <GROUP>
+            |
+            token = <VALUES>
+            |
+            token = <RECORD>
+            |
+            token = <TO>
+            |
+            token = <LUCENE>
+            //plus reserved keyworks
+            |
             token = <FROM>
             |
             token = <SELECT>
@@ -482,6 +516,7 @@ OIdentifier Identifier():
             token = <WHERE>
             |
             token = <INSERT>
+
         )
         <BACKTICK>
     )

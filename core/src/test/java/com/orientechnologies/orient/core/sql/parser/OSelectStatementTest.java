@@ -198,10 +198,16 @@ public class OSelectStatementTest {
   }
 
 
-  public void testQuotedFieldName() {
+  public void testQuotedFieldNameFrom() {
     SimpleNode result = checkRightSyntax("select `from` from City where country.@class = 'Country'");
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
+
+  }
+
+  public void testQuotedFieldName() {
+    checkRightSyntax("select `foo` from City where country.@class = 'Country'");
+
 
   }
 
