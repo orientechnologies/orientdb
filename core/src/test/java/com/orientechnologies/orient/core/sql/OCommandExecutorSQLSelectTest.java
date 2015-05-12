@@ -307,6 +307,12 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
+  public void testOrderByWithMetadataQuery() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select expand(classes) from metadata:schema order by name")).execute();
+    assertTrue(qResult.size() > 0);
+  }
+
+  @Test
   public void testLimitWithUnnamedParam() {
     List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit ?")).execute(3);
     assertEquals(qResult.size(), 3);
