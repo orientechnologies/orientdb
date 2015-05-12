@@ -862,7 +862,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           final ORecordId rid = (ORecordId) record.getIdentity();
 
           switch (op.type) {
-          case ORecordOperation.CREATED:
+          case ORecordOperation.CREATED: {
             if (rid.isNew()) {
               // CREATE THE TASK PASSING THE RECORD OR A COPY BASED ON EXECUTION TYPE: IF ASYNCHRONOUS THE COPY PREVENT TO EARLY
               // ASSIGN CLUSTER IDS
@@ -873,8 +873,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               break;
             }
             // ELSE TREAT IT AS UPDATE: GO DOWN
+          }
 
-          case ORecordOperation.UPDATED:
+          case ORecordOperation.UPDATED: {
             if (record instanceof ODocument)
               ((ODocument) record).validate();
 
@@ -886,13 +887,19 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               // DELETED
               throw new OTransactionException("Cannot update record '" + rid + "' because has been deleted");
 
-            task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
-                record.toStream(), record.getRecordVersion(), ORecordInternal.getRecordType(record));
-            break;
+            final ORecordVersion v = executionModeSynch ? record.getRecordVersion() : record.getRecordVersion().copy();
 
-          case ORecordOperation.DELETED:
-            task = new ODeleteRecordTask(rid, record.getRecordVersion());
+            task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
+                record.toStream(), v, ORecordInternal.getRecordType(record));
+
             break;
+          }
+
+          case ORecordOperation.DELETED: {
+            final ORecordVersion v = executionModeSynch ? record.getRecordVersion() : record.getRecordVersion().copy();
+            task = new ODeleteRecordTask(rid, v);
+            break;
+          }
 
           default:
             continue;
