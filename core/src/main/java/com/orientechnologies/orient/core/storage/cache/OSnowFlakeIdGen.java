@@ -34,15 +34,19 @@ public class OSnowFlakeIdGen implements OWriteCacheIdGen {
 
   @Override
   public synchronized int nextId() {
-    if (sequenceCounter < 15)
-      sequenceCounter++;
-    else
-      sequenceCounter = 1;
+    int id;
+    do {
+      if (sequenceCounter < 15)
+        sequenceCounter++;
+      else
+        sequenceCounter = 1;
 
-    lastTs = System.currentTimeMillis();
-    rnd.nextBytes(rndBytes);
-
-    return composeId();
+      lastTs = System.currentTimeMillis();
+      rnd.nextBytes(rndBytes);
+      id = composeId();
+      // This id is used for generate fileId that in case of ridBag cannot be negative.
+    } while (id < 0);
+    return id;
   }
 
   private int composeId() {
