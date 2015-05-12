@@ -2030,6 +2030,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     final long startOrderBy = System.currentTimeMillis();
     try {
+      if(tempResult instanceof OMultiCollectionIterator) {
+        final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
+        for (OIdentifiable o : tempResult) {
+          list.add(o);
+        }
+        tempResult = list;
+      } 
       tempResult = applySort((List<OIdentifiable>) tempResult, orderedFields, context);
       orderedFields.clear();
     } finally {
@@ -2039,13 +2046,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   private Iterable<OIdentifiable> applySort(List<OIdentifiable> iCollection, List<OPair<String, String>> iOrderFields,
       OCommandContext iContext) {
-    if (iCollection instanceof OMultiCollectionIterator) {
-      final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
-      for (OIdentifiable o : iCollection) {
-        list.add(o);
-      }
-      iCollection = list;
-    }
 
     ODocumentHelper.sort(iCollection, iOrderFields, iContext);
     return iCollection;
