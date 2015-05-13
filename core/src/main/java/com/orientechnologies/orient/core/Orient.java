@@ -417,13 +417,26 @@ public class Orient extends OListenerManger<OOrientListener> {
     if (iURL.endsWith("/"))
       iURL = iURL.substring(0, iURL.length() - 1);
 
-    if (isWindowsOS()) {
-      // WINDOWS ONLY: REMOVE DOUBLE SLASHES NOT AS PREFIX (WINDOWS PATH COULD NEED STARTING FOR "\\". EXAMPLE: "\\mydrive\db"). AT
-      // THIS LEVEL BACKSLASHES ARRIVES AS SLASHES
-      iURL = iURL.charAt(0) + iURL.substring(1).replace("//", "/");
-    } else
-      // REMOVE ANY //
-      iURL = iURL.replace("//", "/");
+    
+    if (isWindowsOS())
+    {
+       // WINDOWS ONLY: REMOVE ALL DOUBLE FORWARD SLASHES IN THE URL THAT ARE NOT PART OF A UNC PREFIX ("//mydrive/db")
+       // TEST FOR THE ENGINE : PLUS UNC PREFIX ("PLOCAL://mydrive/db"), REMOVE ALL OTHER DOUBLE FORWARD SLASHES				
+       int colonDblSlash = iURL.indexOf("://");
+		
+       // "://" EXISTS AND THE STRING LENGTH IS AT LEAST ONE CHARACTER LONGER AFTER "://" (FOR THE SECOND substring CALL)
+       if(colonDblSlash != -1 && iURL.length() >= colonDblSlash + 4)
+       {
+          // COPY THE ENGINE + UNC PREFIX PORTION.  REPLACE ANY OTHER "//" WITH "/".  COPY THE REST OF THE URL.
+          iURL = iURL.substring(0, colonDblSlash+3) + iURL.substring(colonDblSlash+3).replace("//", "/");
+       }
+    }
+    else
+    {
+       // REPLACE ANY "//" WITH "/"
+       iURL = iURL.replace("//", "/");
+    }
+    
 
     // SEARCH FOR ENGINE
     int pos = iURL.indexOf(':');
