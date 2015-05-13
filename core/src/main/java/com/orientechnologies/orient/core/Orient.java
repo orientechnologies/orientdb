@@ -19,6 +19,22 @@
  */
 package com.orientechnologies.orient.core;
 
+import java.io.IOException;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -39,22 +55,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.IOException;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Orient extends OListenerManger<OOrientListener> {
   public static final String                                                         ORIENTDB_HOME                 = "ORIENTDB_HOME";
@@ -85,6 +85,8 @@ public class Orient extends OListenerManger<OOrientListener> {
   static {
     instance.startup();
   }
+
+  private String                                                                     os;
   private volatile Timer                                                             timer;
   private volatile ORecordFactoryManager                                             recordFactoryManager          = new ORecordFactoryManager();
   private OrientShutdownHook                                                         shutdownHook;
@@ -187,6 +189,8 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (active)
         // ALREADY ACTIVE
         return this;
+
+      os = System.getProperty("os.name").toLowerCase();
 
       if (timer == null)
         timer = new Timer(true);
@@ -418,11 +422,13 @@ public class Orient extends OListenerManger<OOrientListener> {
     if (iURL.endsWith("/"))
       iURL = iURL.substring(0, iURL.length() - 1);
 
-    iURL = iURL.replace("//", "/");
-
-    if (iURL.indexOf("\\\\") > 0)
-      // REMOVE DOUBLE BACKSLASHES NOT AS PREFIX (WINDOWS PATH COULD NEED STARTING FOR "\\". EXAMPLE: "\\mydrive\db")
-      iURL = iURL.charAt(0) + iURL.substring(1).replace("\\\\", "\\");
+    if (isWindowsOS()) {
+      // WINDOWS ONLY: REMOVE DOUBLE SLASHES NOT AS PREFIX (WINDOWS PATH COULD NEED STARTING FOR "\\". EXAMPLE: "\\mydrive\db"). AT
+      // THIS LEVEL BACKSLASHES ARRIVES AS SLASHES
+      iURL = iURL.charAt(0) + iURL.substring(1).replace("//", "/");
+    } else
+      // REMOVE ANY //
+      iURL = iURL.replace("//", "/");
 
     // SEARCH FOR ENGINE
     int pos = iURL.indexOf(':');
@@ -495,6 +501,10 @@ public class Orient extends OListenerManger<OOrientListener> {
     } finally {
       engineLock.readLock().unlock();
     }
+  }
+
+  public boolean isWindowsOS() {
+    return os.indexOf("win") >= 0;
   }
 
   public OStorage registerStorage(OStorage storage) throws IOException {
