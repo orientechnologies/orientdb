@@ -734,24 +734,25 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       try {
         OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry,
             ODurablePage.TrackMode.NONE, false);
+
         for (int i = 0; i < HASH_CODE_SIZE; i++) {
           if (!metadataPage.isRemoved(i)) {
             diskCache.openFile(metadataPage.getFileId(i));
             diskCache.deleteFile(metadataPage.getFileId(i));
           }
-        } finally {
-          diskCache.release(hashStateEntry);
         }
+      } finally {
+        diskCache.release(hashStateEntry);
+      }
 
-        diskCache.deleteFile(fileStateId);
+      diskCache.deleteFile(fileStateId);
 
-        directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
-        directory.deleteWithoutOpen();
+      directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
+      directory.deleteWithoutOpen();
 
-        if (diskCache.exists(name + nullBucketFileExtension)) {
-          final long nullBucketId = diskCache.openFile(name + nullBucketFileExtension);
-          diskCache.deleteFile(nullBucketId);
-        }
+      if (diskCache.exists(name + nullBucketFileExtension)) {
+        final long nullBucketId = diskCache.openFile(name + nullBucketFileExtension);
+        diskCache.deleteFile(nullBucketId);
       }
     } catch (IOException ioe) {
       throw new OIndexException("Can not delete hash table with name " + name, ioe);
