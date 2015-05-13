@@ -36,7 +36,7 @@
     "angular-translate": "2.2.0",
     "angular-translate-loader-partial": "2.0.0",
     "angular-bootstrap-switch": "0.3.0",
-    "angular-smart-table": "~2.0.1",
+    "angular-smart-table": "~2.0.1"
   },
   "devDependencies": {
     "angular-mocks": "~1.0.5",
