@@ -275,24 +275,22 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         indexEngine.load(rid, name, indexDefinition, determineValueSerializer(), isAutomatic());
       } catch (Exception e) {
         OLogManager.instance().error(this, "");
-        if (onCorruptionRepairDatabase(null, "load", "Index will be rebuilt")) {
-          if (isAutomatic() && getStorage() instanceof OAbstractPaginatedStorage)
-            // AUTOMATIC REBUILD IT
-            OLogManager.instance().warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(),
-                rid);
-          try {
-            indexEngine.deleteWithoutLoad(name);
-            indexEngine.create(name, indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
-                determineValueSerializer(), isAutomatic());
+        if (isAutomatic() && getStorage() instanceof OAbstractPaginatedStorage)
+          // AUTOMATIC REBUILD IT
+          OLogManager.instance()
+              .warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(), rid);
+        try {
+          indexEngine.deleteWithoutLoad(name);
+          indexEngine.create(name, indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
+              determineValueSerializer(), isAutomatic());
 
-            rebuild();
-          } catch (Throwable t) {
-            OLogManager.instance().error(this,
-                "Cannot rebuild index '%s' from storage (rid=%s) because '" + t + "'. The index will be removed in configuration",
-                e, getName(), rid);
-            // REMOVE IT
-            return false;
-          }
+          rebuild();
+        } catch (Throwable t) {
+          OLogManager.instance().error(this,
+              "Cannot rebuild index '%s' from storage (rid=%s) because '" + t + "'. The index will be removed in configuration", e,
+              getName(), rid);
+          // REMOVE IT
+          return false;
         }
       }
 
