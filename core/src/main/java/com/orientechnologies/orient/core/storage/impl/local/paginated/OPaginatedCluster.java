@@ -385,8 +385,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         if (entryContentLength < OClusterPage.MAX_RECORD_SIZE) {
           try {
-            lockTillAtomicOperationCompletes();
-
             byte[] entryContent = new byte[entryContentLength];
 
             int entryPosition = 0;
@@ -426,8 +424,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           }
         } else {
           try {
-            lockTillAtomicOperationCompletes();
-
             int entrySize = grownContentSize + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE;
 
             if (useCRC32)
@@ -767,8 +763,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         }
 
         try {
-          lockTillAtomicOperationCompletes();
-
           int entryPosition = 0;
           recordEntry[entryPosition] = recordType;
           entryPosition++;

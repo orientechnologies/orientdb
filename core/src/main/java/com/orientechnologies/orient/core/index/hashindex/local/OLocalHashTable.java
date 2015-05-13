@@ -616,7 +616,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           while (bucket.size() == 0 || comparator.compare(bucket.getKey(bucket.size() - 1), key) <= 0) {
             bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
             if (bucketPath == null)
-              return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
+              return new OHashIndexBucket.Entry[0];
 
             releasePage(atomicOperation, cacheEntry, diskCache);
 
@@ -743,8 +743,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           final long nullBucketId = openFile(atomicOperation, name + nullBucketFileExtension, diskCache);
           deleteFile(atomicOperation, nullBucketId, diskCache);
         }
-      } finally {
-        releasePage(atomicOperation, hashStateEntry, diskCache);
       }
 
       endAtomicOperation(false);
@@ -896,7 +894,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           while (bucket.size() == 0) {
             bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
             if (bucketPath == null)
-              return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
+              return new OHashIndexBucket.Entry[0];
 
             releasePage(atomicOperation, cacheEntry, diskCache);
             final long nextPointer = directory
@@ -1055,7 +1053,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           while (bucket.size() == 0 || comparator.compare(bucket.getKey(0), key) >= 0) {
             final BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
             if (prevBucketPath == null)
-              return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
+              return new OHashIndexBucket.Entry[0];
 
             releasePage(atomicOperation, cacheEntry, diskCache);
 
@@ -1118,7 +1116,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           while (bucket.size() == 0) {
             final BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
             if (prevBucketPath == null)
-              return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
+              return new OHashIndexBucket.Entry[0];
 
             releasePage(atomicOperation, cacheEntry, diskCache);
 

@@ -430,8 +430,6 @@ public class OClusterPositionMap extends ODurableComponent {
 
         if (result == null)
           result = new long[0];
-        if (result == null)
-          result = OCommonConst.EMPTY_LONG_ARRAY;
 
         return result;
       } finally {

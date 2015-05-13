@@ -285,7 +285,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       makeStorageDirty();
 
-      atomicOperationsManager.startAtomicOperation();
+      atomicOperationsManager.startAtomicOperation(null);
     } finally {
       lock.releaseSharedLock();
     }
@@ -1447,7 +1447,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-
   private void endStorageTx() throws IOException {
     atomicOperationsManager.endAtomicOperation(false);
 
@@ -1466,7 +1465,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     transaction.set(new OStorageTransaction(clientTx));
     try {
-      atomicOperationsManager.startAtomicOperation();
+      atomicOperationsManager.startAtomicOperation(null);
     } catch (RuntimeException e) {
       transaction.set(null);
       throw e;
@@ -1508,7 +1507,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         recordVersion = OVersionFactory.instance().createVersion();
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation();
+      atomicOperationsManager.startAtomicOperation(null);
       try {
         ppos = cluster.createRecord(content, recordVersion, recordType);
         rid.clusterPosition = ppos.clusterPosition;
@@ -1576,7 +1575,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation();
+      atomicOperationsManager.startAtomicOperation(null);
       try {
         if (updateContent)
           cluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
@@ -1631,7 +1630,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation();
+      atomicOperationsManager.startAtomicOperation(null);
       try {
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
@@ -1655,7 +1654,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private OStorageOperationResult<Boolean> doHideRecord(ORecordId rid, OCluster cluster) {
     try {
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation();
+      atomicOperationsManager.startAtomicOperation(null);
       try {
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
@@ -2301,24 +2300,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     } catch (OWALPageBrokenException e) {
       OLogManager.instance().error(this,
           "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.");
-
-      final List<OWALRecord> hardBatch = new ArrayList<OWALRecord>();
-      for (SoftReference<OWALRecord> reference : batch) {
-        final OWALRecord record = reference.get();
-
-        if (record == null) {
-          System.gc();
-
-          OLogManager.instance().error(this, "You have not enough amount of heap to operate with restore buffer of size %d",
-              batchSize);
-          break;
-        } else {
-          hardBatch.add(record);
-        }
-      }
-
-      OLogManager.instance().info(this, "Apply last batch of operations are read from WAL.");
-      restoreWALBatch(hardBatch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
     }
 
     return atLeastOnePageUpdate.getValue();

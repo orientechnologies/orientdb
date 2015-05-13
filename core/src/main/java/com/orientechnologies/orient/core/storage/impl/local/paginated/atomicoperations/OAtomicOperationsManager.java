@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 import java.io.IOException;
@@ -60,7 +61,7 @@ public class OAtomicOperationsManager {
     this.writeAheadLog = storage.getWALInstance();
   }
 
-  public OAtomicOperation startAtomicOperation() throws IOException {
+  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent) throws IOException {
     if (writeAheadLog == null)
       return null;
 
@@ -128,7 +129,7 @@ public class OAtomicOperationsManager {
     if (operation == null)
       return;
 
-    if (operation.containsInLockedObjects(lockObject))
+    if (operation.containsInLockedObjects(durableComponent))
       return;
 
     lockManager.acquireLock(this, durableComponent, OLockManager.LOCK.EXCLUSIVE);

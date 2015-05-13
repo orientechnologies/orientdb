@@ -75,7 +75,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
     this.storage = storage;
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
-    this.writeAheadLog = storage.getWALInstance();
   }
 
   @Override
@@ -88,11 +87,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation();
-  }
-
-  protected void lockTillAtomicOperationCompletes() {
-    atomicOperationsManager.lockTillOperationComplete(this);
+    return atomicOperationsManager.startAtomicOperation(this);
   }
 
   protected static OWALChangesTree getChangesTree(OAtomicOperation atomicOperation, OCacheEntry entry) {

@@ -226,7 +226,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         indexEngine.deleteWithoutLoad(name);
         removeValuesContainer();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during deletion of index %s .", name);
       }
 
       indexEngine.create(this.name, indexDefinition, clusterIndexName, valueSerializer, isAutomatic());
