@@ -1581,7 +1581,8 @@ var OrientGraph = (function () {
       var self = this;
       self.lastDataSize = data.length;
 
-      var tempEdge = {}
+      if (!self.tempEdge)
+        self.tempEdge = {}
       data.forEach(function (elem) {
 
 
@@ -1605,7 +1606,7 @@ var OrientGraph = (function () {
                 v.loaded = true;
               }
             }
-            inspectVertex(elem, v, tempEdge);
+            inspectVertex(elem, v);
           } else if (elem['in'] && elem['out']) {
             var v1 = self.get(elem['in']);
             if (!v1) {
@@ -1638,14 +1639,15 @@ var OrientGraph = (function () {
         }
       )
 
-      var keys = Object.keys(tempEdge).filter(function (e) {
-        return tempEdge[e].in && tempEdge[e].out;
+      var keys = Object.keys(self.tempEdge).filter(function (e) {
+        return self.tempEdge[e].in && self.tempEdge[e].out;
       })
       keys.forEach(function (k) {
-        var e = new OEdge(self, tempEdge[k].out, tempEdge[k].in, tempEdge[k].rel, k);
+        var e = new OEdge(self, self.tempEdge[k].out, self.tempEdge[k].in, self.tempEdge[k].rel, k);
         self.addEdge(e);
+        delete self.tempEdge[k];
       })
-      function inspectVertex(elem, v, tmpEdge) {
+      function inspectVertex(elem, v) {
         var keys = Object.keys(elem);
         keys.forEach(function (k) {
           if (elem[k] instanceof Array) {
@@ -1658,7 +1660,7 @@ var OrientGraph = (function () {
                       if (!v1) {
                         v1 = new OVertex(self, rid);
                         self.addVertex(v1);
-                        inspectVertex(rid, v1, tmpEdge);
+                        inspectVertex(rid, v1);
                       }
                       var e = new OEdge(self, v, v1, k);
                       self.addEdge(e);
@@ -1698,7 +1700,7 @@ var OrientGraph = (function () {
                       }
                       self.addEdge(e);
                     } else {
-                      var edge = tmpEdge[rid];
+                      var edge = self.tempEdge[rid];
                       if (!edge) {
                         edge = {}
                       }
@@ -1709,7 +1711,7 @@ var OrientGraph = (function () {
                         edge.out = v;
                       }
                       edge.rel = k
-                      tmpEdge[rid] = edge;
+                      self.tempEdge[rid] = edge;
                     }
 
                   }
