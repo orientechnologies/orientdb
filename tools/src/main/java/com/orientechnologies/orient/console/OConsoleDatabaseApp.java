@@ -1060,7 +1060,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     message("\n\nDATABASE PROPERTIES");
 
-    if (dbCfg.properties != null) {
+    if (dbCfg.getProperties() != null) {
       message("\n--------------------------------+----------------------------------------------------+");
       message("\n NAME                           | VALUE                                              |");
       message("\n--------------------------------+----------------------------------------------------+");
@@ -1078,12 +1078,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message("\n %-30s | %-50s |", "Dictionary RID", format(dbCfg.dictionaryRecordId, 50));
       message("\n--------------------------------+----------------------------------------------------+");
 
-      if (!dbCfg.properties.isEmpty()) {
+      if (!dbCfg.getProperties().isEmpty()) {
         message("\n\nDATABASE CUSTOM PROPERTIES:");
         message("\n +-------------------------------+--------------------------------------------------+");
         message("\n | NAME                          | VALUE                                            |");
         message("\n +-------------------------------+--------------------------------------------------+");
-        for (OStorageEntryConfiguration cfg : dbCfg.properties)
+        for (OStorageEntryConfiguration cfg : dbCfg.getProperties())
           message("\n | %-29s | %-49s|", cfg.name, format(cfg.value, 49));
         message("\n +-------------------------------+--------------------------------------------------+");
       }

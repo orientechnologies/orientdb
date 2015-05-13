@@ -298,8 +298,8 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.endCollection();
 
       json.beginCollection("properties");
-      if (db.getStorage().getConfiguration().properties != null)
-        for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
+      if (db.getStorage().getConfiguration().getProperties() != null)
+        for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().getProperties()) {
           if (entry != null) {
             json.beginObject();
             json.writeAttribute("name", entry.name);
