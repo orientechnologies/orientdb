@@ -1580,6 +1580,8 @@ var OrientGraph = (function () {
 
       var self = this;
       self.lastDataSize = data.length;
+
+      var tempEdge = {}
       data.forEach(function (elem) {
 
 
@@ -1603,7 +1605,7 @@ var OrientGraph = (function () {
                 v.loaded = true;
               }
             }
-            inspectVertex(elem, v);
+            inspectVertex(elem, v, tempEdge);
           } else if (elem['in'] && elem['out']) {
             var v1 = self.get(elem['in']);
             if (!v1) {
@@ -1635,19 +1637,28 @@ var OrientGraph = (function () {
 
         }
       )
-      function inspectVertex(elem, v) {
+
+      var keys = Object.keys(tempEdge).filter(function (e) {
+        return tempEdge[e].in && tempEdge[e].out;
+      })
+      keys.forEach(function (k) {
+        var e = new OEdge(self, tempEdge[k].out, tempEdge[k].in, tempEdge[k].rel, k);
+        self.addEdge(e);
+      })
+      function inspectVertex(elem, v, tmpEdge) {
         var keys = Object.keys(elem);
         keys.forEach(function (k) {
           if (elem[k] instanceof Array) {
             elem[k].forEach(function (rid) {
                 if (checkInput(rid)) {
+
                   if (typeof rid == 'object') {
                     if (self.isVertex(rid)) {
                       var v1 = self.get(rid['@rid']);
                       if (!v1) {
                         v1 = new OVertex(self, rid);
                         self.addVertex(v1);
-                        inspectVertex(rid, v1);
+                        inspectVertex(rid, v1, tmpEdge);
                       }
                       var e = new OEdge(self, v, v1, k);
                       self.addEdge(e);
@@ -1686,6 +1697,19 @@ var OrientGraph = (function () {
                         var e = new OEdge(self, v, v1, k);
                       }
                       self.addEdge(e);
+                    } else {
+                      var edge = tmpEdge[rid];
+                      if (!edge) {
+                        edge = {}
+                      }
+                      if (k.startsWith('in_')) {
+                        edge.in = v;
+
+                      } else {
+                        edge.out = v;
+                      }
+                      edge.rel = k
+                      tmpEdge[rid] = edge;
                     }
 
                   }
