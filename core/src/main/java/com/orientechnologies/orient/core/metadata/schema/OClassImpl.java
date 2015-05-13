@@ -27,8 +27,8 @@ import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -38,7 +38,12 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -51,7 +56,11 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -1823,8 +1832,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void fireDatabaseMigration(final ODatabaseDocument database, final String propertyName, final OType type) {
-    database.query(new OSQLAsynchQuery<Object>("select from " + name + " where " + propertyName + ".type() <> \"" + type.name()
-        + "\"", new OCommandResultListener() {
+    final boolean strictSQL = ((ODatabaseInternal) database).getStorage().getConfiguration().isStrictSql();
+
+    database.query(new OSQLAsynchQuery<Object>("select from " + getEscapedName(name, strictSQL) + " where "
+        + getEscapedName(propertyName, strictSQL) + ".type() <> \"" + type.name() + "\"", new OCommandResultListener() {
 
       @Override
       public boolean result(Object iRecord) {
@@ -1838,35 +1849,40 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       public void end() {
       }
     }));
-
   }
 
   public void firePropertyNameMigration(final ODatabaseDocument database, final String propertyName, final String newPropertyName,
       final OType type) {
-    database.query(new OSQLAsynchQuery<Object>("select from " + name + " where " + propertyName + " is not null ",
-        new OCommandResultListener() {
+    final boolean strictSQL = ((ODatabaseInternal) database).getStorage().getConfiguration().isStrictSql();
 
-          @Override
-          public boolean result(Object iRecord) {
-            final ODocument record = ((OIdentifiable) iRecord).getRecord();
-            record.setFieldType(propertyName, type);
-            record.field(newPropertyName, record.field(propertyName), type);
-            database.save(record);
-            return true;
-          }
+    database.query(new OSQLAsynchQuery<Object>("select from " + getEscapedName(name, strictSQL) + " where "
+        + getEscapedName(propertyName, strictSQL) + " is not null ", new OCommandResultListener() {
 
-          @Override
-          public void end() {
-          }
-        }));
+      @Override
+      public boolean result(Object iRecord) {
+        final ODocument record = ((OIdentifiable) iRecord).getRecord();
+        record.setFieldType(propertyName, type);
+        record.field(newPropertyName, record.field(propertyName), type);
+        database.save(record);
+        return true;
+      }
+
+      @Override
+      public void end() {
+      }
+    }));
 
   }
 
-  public void checkPersistentPropertyType(final ODatabase<ORecord> database, final String propertyName, final OType type) {
+  public void checkPersistentPropertyType(final ODatabaseInternal<ORecord> database, final String propertyName, final OType type) {
+    final boolean strictSQL = database.getStorage().getConfiguration().isStrictSql();
 
     final StringBuilder builder = new StringBuilder(256);
-    builder.append("select count(*) from ").append(name).append(" where ");
-    builder.append(propertyName).append(".type() not in [");
+    builder.append("select count(*) from ");
+    builder.append(getEscapedName(name, strictSQL));
+    builder.append(" where ");
+    builder.append(getEscapedName(propertyName, strictSQL));
+    builder.append(".type() not in [");
 
     final Iterator<OType> cur = type.getCastable().iterator();
     while (cur.hasNext()) {
@@ -1874,15 +1890,21 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       if (cur.hasNext())
         builder.append(",");
     }
-    builder.append("] and ").append(propertyName).append(" is not null ");
+    builder.append("] and ").append(getEscapedName(propertyName, strictSQL)).append(" is not null ");
     if (type.isMultiValue())
-      builder.append(" and ").append(propertyName).append(".size() <> 0 limit 1");
+      builder.append(" and ").append(getEscapedName(propertyName, strictSQL)).append(".size() <> 0 limit 1");
 
     final List<ODocument> res = database.command(new OCommandSQL(builder.toString())).execute();
     if (((Long) res.get(0).field("count")) > 0)
       throw new OSchemaException("The database contains some schema-less data in the property '" + name + "." + propertyName
           + "' that is not compatible with the type " + type + ". Fix those records and change the schema again");
+  }
 
+  protected String getEscapedName(final String iName, final boolean iStrictSQL) {
+    if (iStrictSQL)
+      // ESCAPE NAME
+      return "`" + iName + "`";
+    return iName;
   }
 
   public OSchemaShared getOwner() {
@@ -2223,9 +2245,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     try {
       final StringBuilder cmd = new StringBuilder("create property ");
       // CLASS.PROPERTY NAME
+      // if (getDatabase().getStorage().getConfiguration().isStrictSql())
+      // cmd.append('`');
       cmd.append(name);
       cmd.append('.');
       cmd.append(propertyName);
+      // if (getDatabase().getStorage().getConfiguration().isStrictSql())
+      // cmd.append('`');
 
       // TYPE
       cmd.append(' ');
@@ -2343,7 +2369,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  private void checkRecursion(OClass baseClass) {
+  private void checkRecursion(final OClass baseClass) {
     if (isSubClassOf(baseClass)) {
       throw new OSchemaException("Can't add base class '" + baseClass.getName() + "', because of recursion");
     }
@@ -2354,7 +2380,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       removePolymorphicClusterId(clusterId);
   }
 
-  private void removePolymorphicClusterId(int clusterId) {
+  private void removePolymorphicClusterId(final int clusterId) {
     final int index = Arrays.binarySearch(polymorphicClusterIds, clusterId);
     if (index == -1)
       return;
@@ -2370,7 +2396,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  private void removeClusterFromIndexes(int iId) {
+  private void removeClusterFromIndexes(final int iId) {
     if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
       final String clusterName = getDatabase().getClusterNameById(iId);
       final List<String> indexesToRemove = new ArrayList<String>();
@@ -2384,7 +2410,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  private void tryDropCluster(int defaultClusterId) {
+  private void tryDropCluster(final int defaultClusterId) {
     if (name.toLowerCase().equals(getDatabase().getClusterNameById(defaultClusterId))) {
       // DROP THE DEFAULT CLUSTER CALLED WITH THE SAME NAME ONLY IF EMPTY
       if (getDatabase().getClusterRecordSizeById(defaultClusterId) == 0)
@@ -2426,7 +2452,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  public List<OType> extractFieldTypes(String[] fieldNames) {
+  public List<OType> extractFieldTypes(final String[] fieldNames) {
     final List<OType> types = new ArrayList<OType>(fieldNames.length);
 
     for (String fieldName : fieldNames) {

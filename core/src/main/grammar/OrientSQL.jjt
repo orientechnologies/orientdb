@@ -308,6 +308,7 @@ TOKEN :
 | < DOT: "." >
 | < AT: "@" >
 | < DOLLAR: "$" >
+| < BACKTICK: "`" >
 }
 
 /* OPERATORS */
@@ -373,6 +374,8 @@ TOKEN :
 TOKEN :
 {
   < IDENTIFIER: ( (<DOLLAR>)? <LETTER> (<PART_LETTER>)* ) >
+//|
+//  < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
 |
   < INDEX_IDENTIFIER: "index:" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
 |
@@ -424,7 +427,11 @@ OStatement parse() :
 }
 
 OIdentifier Identifier():
-{Token token;}
+{
+    //Token quotedToken = null;
+    Token token = null;
+
+}
 {
 (
     token = <IDENTIFIER>
@@ -458,7 +465,80 @@ OIdentifier Identifier():
     token = <TO>
     |
     token = <LUCENE>
-) { jjtThis.value = token.image; return jjtThis; }
+    |
+    (
+    //TODO REPLACE THIS WITH <QUOTED_IDENTIFIER>
+        <BACKTICK>
+        (
+            token = <IDENTIFIER>
+            |
+            token = <IN>
+            |
+            token = <SET>
+            |
+            token = <PUT>
+            |
+            token = <ADD>
+            |
+            token = <REMOVE>
+            |
+            token = <MERGE>
+            |
+            token = <CONTENT>
+            |
+            token = <ORDER>
+            |
+            token = <KEY>
+            |
+            token = <OFFSET>
+            |
+            token = <GROUP>
+            |
+            token = <VALUES>
+            |
+            token = <RECORD>
+            |
+            token = <TO>
+            |
+            token = <LUCENE>
+            //plus reserved keyworks
+            |
+            token = <FROM>
+            |
+            token = <SELECT>
+            |
+            token = <UPDATE>
+            |
+            token = <DELETE>
+            |
+            token = <TRAVERSE>
+            |
+            token = <WHERE>
+            |
+            token = <INSERT>
+
+        )
+        <BACKTICK>
+    )
+) {
+
+    //if(token!=null){
+    jjtThis.value = token.image;
+    /*
+    }else{
+        jjtThis.value = quotedToken.image;
+        jjtThis.value = jjtThis.value.substring(1, jjtThis.value.length() - 1);
+        try{
+            jjtThis.value = java.net.URLEncoder.encode(jjtThis.value, null);
+        }catch(Exception e){
+
+        }
+    }
+    */
+    return jjtThis;
+
+
+    }
 }
 
 OInteger Integer():

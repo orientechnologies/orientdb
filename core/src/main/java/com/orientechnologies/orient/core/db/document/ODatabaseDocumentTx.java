@@ -32,15 +32,32 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.record.OClassTrigger;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHook;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerProxy;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OTransactionBlockedException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
@@ -71,7 +88,13 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -377,7 +400,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       getStorage().getConfiguration().setRecordSerializerVersion(getSerializer().getCurrentVersion());
 
       // since 2.1 newly created databases use strinct SQL validation by default
-      getStorage().getConfiguration().properties.add(new OStorageEntryConfiguration(OStatement.CUSTOM_STRICT_SQL, "true"));
+      getStorage().getConfiguration().setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
 
       getStorage().getConfiguration().update();
 
@@ -1255,7 +1278,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       return storage.getConfiguration().getCharset();
 
     case CUSTOM:
-      return storage.getConfiguration().properties;
+      return storage.getConfiguration().getProperties();
 
     case CLUSTERSELECTION:
       return storage.getConfiguration().getClusterSelection();
@@ -2755,7 +2778,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   private void clearCustomInternal() {
-    storage.getConfiguration().properties.clear();
+    storage.getConfiguration().clearProperties();
   }
 
   private void removeCustomInternal(final String iName) {
@@ -2763,31 +2786,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   private void setCustomInternal(final String iName, final String iValue) {
-    if (iValue == null || "null".equalsIgnoreCase(iValue)) {
+    if (iValue == null || "null".equalsIgnoreCase(iValue))
       // REMOVE
-      for (Iterator<OStorageEntryConfiguration> it = storage.getConfiguration().properties.iterator(); it.hasNext();) {
-        final OStorageEntryConfiguration e = it.next();
-        if (e.name.equals(iName)) {
-          it.remove();
-          break;
-        }
-      }
-
-    } else {
+      storage.getConfiguration().removeProperty(iName);
+    else
       // SET
-      boolean found = false;
-      for (OStorageEntryConfiguration e : storage.getConfiguration().properties) {
-        if (e.name.equals(iName)) {
-          e.value = iValue;
-          found = true;
-          break;
-        }
-      }
-
-      if (!found)
-        // CREATE A NEW ONE
-        storage.getConfiguration().properties.add(new OStorageEntryConfiguration(iName, iValue));
-    }
+      storage.getConfiguration().setProperty(iName, iValue);
 
     storage.getConfiguration().update();
   }

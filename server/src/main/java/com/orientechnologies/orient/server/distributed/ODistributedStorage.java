@@ -19,25 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
@@ -95,6 +76,25 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.task.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -884,7 +884,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           final ORecordId rid = (ORecordId) record.getIdentity();
 
           switch (op.type) {
-          case ORecordOperation.CREATED:
+          case ORecordOperation.CREATED: {
             if (rid.isNew()) {
               // CREATE THE TASK PASSING THE RECORD OR A COPY BASED ON EXECUTION TYPE: IF ASYNCHRONOUS THE COPY PREVENT TO EARLY
               // ASSIGN CLUSTER IDS
@@ -895,8 +895,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               break;
             }
             // ELSE TREAT IT AS UPDATE: GO DOWN
+          }
 
-          case ORecordOperation.UPDATED:
+          case ORecordOperation.UPDATED: {
             if (record instanceof ODocument)
               ((ODocument) record).validate();
 
@@ -907,13 +908,19 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               // DELETED
               throw new OTransactionException("Cannot update record '" + rid + "' because has been deleted");
 
-            task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
-                record.toStream(), record.getRecordVersion(), ORecordInternal.getRecordType(record));
-            break;
+            final ORecordVersion v = executionModeSynch ? record.getRecordVersion() : record.getRecordVersion().copy();
 
-          case ORecordOperation.DELETED:
-            task = new ODeleteRecordTask(rid, record.getRecordVersion());
+            task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
+                record.toStream(), v, ORecordInternal.getRecordType(record));
+
             break;
+          }
+
+          case ORecordOperation.DELETED: {
+            final ORecordVersion v = executionModeSynch ? record.getRecordVersion() : record.getRecordVersion().copy();
+            task = new ODeleteRecordTask(rid, v);
+            break;
+          }
 
           default:
             continue;
