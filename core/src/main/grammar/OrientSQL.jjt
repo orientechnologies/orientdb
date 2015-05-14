@@ -1860,7 +1860,13 @@ OFromItem FromItem():
     	|
     	/*jjtThis.className = Identifier()
     	|*/
-    	<LPAREN> ( jjtThis.statement = SelectStatement() | jjtThis.statement = TraverseStatement() ) <RPAREN>
+    	<LPAREN> (
+    	            LOOKAHEAD(SelectStatement()) jjtThis.statement = SelectStatement()
+    	            |
+    	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.statement = SelectWithoutTargetStatement()
+    	            |
+    	            jjtThis.statement = TraverseStatement()
+    	) <RPAREN>
     	|
     	jjtThis.inputParam = InputParameter()
     	|
