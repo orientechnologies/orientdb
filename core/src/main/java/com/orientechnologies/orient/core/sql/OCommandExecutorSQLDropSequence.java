@@ -48,4 +48,9 @@ public class OCommandExecutorSQLDropSequence extends OCommandExecutorSQLAbstract
     public String getSyntax() {
         return "DROP SEQUENCE <sequence>";
     }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
+  }
 }

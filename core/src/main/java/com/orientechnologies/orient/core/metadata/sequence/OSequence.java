@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.annotation.OExposedMethod;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -22,7 +23,7 @@ public abstract class OSequence extends ODocumentWrapper {
   public static final int DEFAULT_INCREMENT = 1;
   public static final int DEFAULT_CACHE = 20;
 
-  protected static final int RETRY_COUNT = 10;
+  protected static final int RETRY_COUNT = 100;
   public static final String CLASS_NAME = "OSequence";
 
   private static final String FIELD_START = "start";
@@ -209,6 +210,9 @@ public abstract class OSequence extends ODocumentWrapper {
         } else {
           throw new OSequenceException(e);
         }
+      } catch (OException ex) {
+        --retry;
+        reloadSequence();
       } catch (Exception e) {
         throw new OSequenceException(e);
       }

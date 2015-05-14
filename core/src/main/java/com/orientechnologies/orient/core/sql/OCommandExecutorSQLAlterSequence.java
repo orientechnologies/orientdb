@@ -7,9 +7,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceHelper;
 
-import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -17,13 +15,13 @@ import java.util.Map;
  * @since 3/5/2015
  */
 public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_ALTER = "ALTER";
-  public static final String KEYWORD_SEQUENCE = "SEQUENCE";
-  public static final String KEYWORD_START = "START";
-  public static final String KEYWORD_INCREMENT = "INCREMENT";
-  public static final String KEYWORD_CACHE = "CACHE";
+  public static final String     KEYWORD_ALTER     = "ALTER";
+  public static final String     KEYWORD_SEQUENCE  = "SEQUENCE";
+  public static final String     KEYWORD_START     = "START";
+  public static final String     KEYWORD_INCREMENT = "INCREMENT";
+  public static final String     KEYWORD_CACHE     = "CACHE";
 
-  private String sequenceName;
+  private String                 sequenceName;
   private OSequence.CreateParams params;
 
   @Override
@@ -74,5 +72,10 @@ public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstrac
   @Override
   public String getSyntax() {
     return "ALTER SEQUENCE <class> ";
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
   }
 }

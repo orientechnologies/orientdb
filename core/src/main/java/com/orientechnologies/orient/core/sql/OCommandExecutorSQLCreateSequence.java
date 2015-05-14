@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.sql;
 
+import java.util.Arrays;
+import java.util.Map;
+
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -7,25 +10,23 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceHelper;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
-import java.util.Arrays;
-import java.util.Map;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceHelper;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 2/28/2015
  */
 public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_CREATE = "CREATE";
-  public static final String KEYWORD_SEQUENCE = "SEQUENCE";
-  public static final String KEYWORD_TYPE = "TYPE";
-  public static final String KEYWORD_START = "START";
-  public static final String KEYWORD_INCREMENT = "INCREMENT";
-  public static final String KEYWORD_CACHE = "CACHE";
+  public static final String     KEYWORD_CREATE    = "CREATE";
+  public static final String     KEYWORD_SEQUENCE  = "SEQUENCE";
+  public static final String     KEYWORD_TYPE      = "TYPE";
+  public static final String     KEYWORD_START     = "START";
+  public static final String     KEYWORD_INCREMENT = "INCREMENT";
+  public static final String     KEYWORD_CACHE     = "CACHE";
 
-  private String sequenceName;
-  private SEQUENCE_TYPE sequenceType;
+  private String                 sequenceName;
+  private SEQUENCE_TYPE          sequenceType;
   private OSequence.CreateParams params;
 
   @Override
@@ -51,8 +52,8 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
         try {
           this.sequenceType = OSequenceHelper.getSequenceTyeFromString(typeAsString);
         } catch (IllegalArgumentException e) {
-          throw new OCommandSQLParsingException("Unknown sequence's type '" + typeAsString +
-                  "'. Supported attributes are: " + Arrays.toString(SEQUENCE_TYPE.values()));
+          throw new OCommandSQLParsingException("Unknown sequence's type '" + typeAsString + "'. Supported attributes are: "
+              + Arrays.toString(SEQUENCE_TYPE.values()));
         }
       } else if (temp.equals(KEYWORD_START)) {
         String startAsString = parserRequiredWord(true, "Expected <start value>");
@@ -85,5 +86,10 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
   @Override
   public String getSyntax() {
     return "CREATE SEQUENCE <sequence> [TYPE <CACHED|ORDERED>] [START <value>] [INCREMENT <value>] [CACHE <value>]";
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
   }
 }
