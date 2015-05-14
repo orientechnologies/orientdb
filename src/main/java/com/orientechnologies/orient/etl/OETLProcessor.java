@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLProcessor {
-  protected final OETLComponentFactory factory    = new OETLComponentFactory();
+  protected final OETLComponentFactory factory     = new OETLComponentFactory();
   protected List<OBlock>               beginBlocks;
   protected List<OBlock>               endBlocks;
   protected OSource                    source;
@@ -60,11 +60,12 @@ public class OETLProcessor {
   protected OBasicCommandContext       context;
   protected long                       startTime;
   protected long                       elapsed;
-  protected OETLProcessorStats         stats      = new OETLProcessorStats();
+  protected OETLProcessorStats         stats       = new OETLProcessorStats();
   protected TimerTask                  dumpTask;
-  protected LOG_LEVELS                 logLevel   = LOG_LEVELS.INFO;
-  protected boolean                    parallel   = false;
-  protected int                        maxRetries = 10;
+  protected LOG_LEVELS                 logLevel    = LOG_LEVELS.INFO;
+  protected boolean                    haltOnError = true;
+  protected boolean                    parallel    = false;
+  protected int                        maxRetries  = 10;
   private Thread[]                     threads;
 
   public enum LOG_LEVELS {
@@ -204,6 +205,8 @@ public class OETLProcessor {
    *          List of Block configurations to execute at the end of processing
    * @param iContext
    *          Execution Context
+   * 
+   * @return Current OETProcessor instance
    **/
   public OETLProcessor parse(final Collection<ODocument> iBeginBlocks, final ODocument iSource, final ODocument iExtractor,
       final Collection<ODocument> iTransformers, final ODocument iLoader, final Collection<ODocument> iEndBlocks,
@@ -353,7 +356,7 @@ public class OETLProcessor {
         threads[i] = new Thread(new Runnable() {
           @Override
           public void run() {
-            final OETLPipeline pipeline = new OETLPipeline(processor, transformers, loader, logLevel, maxRetries);
+            final OETLPipeline pipeline = new OETLPipeline(processor, transformers, loader, logLevel, maxRetries, haltOnError);
             pipeline.begin();
 
             while (!extractionFinished.get() || counter.get() > 0) {
@@ -469,7 +472,7 @@ public class OETLProcessor {
           extractor.extract(reader);
       }
 
-      final OETLPipeline pipeline = new OETLPipeline(this, transformers, loader, logLevel, maxRetries);
+      final OETLPipeline pipeline = new OETLPipeline(this, transformers, loader, logLevel, maxRetries, haltOnError);
       pipeline.begin();
 
       while (extractor.hasNext()) {
@@ -603,6 +606,10 @@ public class OETLProcessor {
     final String cfgLog = (String) context.getVariable("log");
     if (cfgLog != null)
       logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase());
+
+    final Boolean cfgHaltOnError = (Boolean) context.getVariable("haltOnError");
+    if (cfgHaltOnError != null)
+      haltOnError = cfgHaltOnError;
 
     final Object parallelSetting = context.getVariable("parallel");
     if (parallelSetting != null)

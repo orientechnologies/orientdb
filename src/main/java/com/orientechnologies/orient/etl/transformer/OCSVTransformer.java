@@ -18,18 +18,19 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.etl.OETLProcessor;
-import sun.misc.FloatConsts;
-
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+
+import sun.misc.FloatConsts;
+
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.etl.OETLProcessor;
 
 public class OCSVTransformer extends OAbstractTransformer {
   private char         separator          = ',';
@@ -94,22 +95,117 @@ public class OCSVTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-    line++;
-
-    if (skipFrom > -1) {
-      if (skipTo > -1) {
-        if (line >= skipFrom && line <= skipTo)
-          return null;
-      } else if (line >= skipFrom)
-        // SKIP IT
-        return null;
-    }
+    if (skipTransform())
+      return null;
 
     log(OETLProcessor.LOG_LEVELS.DEBUG, "parsing=%s", input);
 
     final List<String> fields = OStringSerializerHelper.smartSplit(input.toString(), new char[] { separator }, 0, -1, false, false,
         false, false);
 
+    if (!isColumnNamesCorrect(fields))
+      return null;
+
+    final ODocument doc = new ODocument();
+    for (int i = 0; i < columnNames.size() && i < fields.size(); ++i) {
+      final String fieldName = columnNames.get(i);
+      Object fieldValue = null;
+      try {
+        final String fieldStringValue = getCellContent(fields.get(i));
+        final OType fieldType = columnTypes != null ? columnTypes.get(i) : null;
+
+        if (fieldType != null && fieldType != OType.ANY) {
+          // DEFINED TYPE
+          fieldValue = processKnownType(doc, i, fieldName, fieldStringValue, fieldType);
+        } else {
+          // DETERMINE THE TYPE
+
+          if (fieldStringValue == null)
+            fieldValue = null;
+          else
+            fieldValue = determineTheType(fieldStringValue);
+        }
+        doc.field(fieldName, fieldValue);
+
+      } catch (Exception e) {
+        processor.getStats().incrementErrors();
+        log(OETLProcessor.LOG_LEVELS.ERROR, "Error on setting document field %s=%s (cause=%s)", fieldName, fieldValue, e.toString());
+      }
+    }
+
+    log(OETLProcessor.LOG_LEVELS.DEBUG, "document=%s", doc);
+    return doc;
+  }
+
+  public static boolean isFinite(final float value) {
+    return Math.abs(value) <= FloatConsts.MAX_VALUE;
+  }
+
+  private Object processKnownType(ODocument doc, int i, String fieldName, String fieldStringValue, OType fieldType) {
+    Object fieldValue;
+    fieldValue = getCellContent(fieldStringValue);
+    try {
+      fieldValue = OType.convert(fieldValue, fieldType.getDefaultJavaType());
+      doc.field(fieldName, fieldValue);
+    } catch (Exception e) {
+      processor.getStats().incrementErrors();
+      log(OETLProcessor.LOG_LEVELS.ERROR, "Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s",
+          processor.getExtractor().getProgress(), fieldName, i, fieldValue, fieldValue.getClass().getName(), fieldType);
+    }
+    return fieldValue;
+  }
+
+  private Object determineTheType(String fieldStringValue) {
+    Object fieldValue;
+    if ((fieldValue = transformToDate(fieldStringValue)) == null)// try maybe Date type
+      if ((fieldValue = transformToNumeric(fieldStringValue)) == null)// try maybe Numeric type
+        fieldValue = fieldStringValue; // type String
+    return fieldValue;
+  }
+
+  private Object transformToDate(String fieldStringValue) {
+    // DATE
+    DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+    df.setLenient(true);
+    Object fieldValue;
+    try {
+      fieldValue = df.parse(fieldStringValue);
+    } catch (ParseException pe) {
+      fieldValue = null;
+    }
+    return fieldValue;
+  }
+
+  private Object transformToNumeric(final String fieldStringValue) {
+    if (fieldStringValue.isEmpty())
+      return fieldStringValue;
+
+    final char c = fieldStringValue.charAt(0);
+    if (c != '-' && !Character.isDigit(c))
+      // NOT A NUMBER FOR SURE
+      return fieldStringValue;
+
+    Object fieldValue;
+    try {
+      if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
+        String numberAsString = fieldStringValue.replaceAll(",", ".");
+        fieldValue = new Float(numberAsString);
+        if (!isFinite((Float) fieldValue)) {
+          fieldValue = new Double(numberAsString);
+        }
+      } else
+        try {
+          fieldValue = new Integer(fieldStringValue);
+        } catch (Exception e) {
+          fieldValue = new Long(fieldStringValue);
+        }
+    } catch (NumberFormatException nf) {
+      fieldValue = fieldStringValue;
+    }
+    return fieldValue;
+  }
+
+  private boolean isColumnNamesCorrect(List<String> fields) {
     if (columnNames == null) {
       if (!columnsOnFirstLine)
         throw new OTransformException(getName() + ": columnsOnFirstLine=false and no columns declared");
@@ -119,81 +215,41 @@ public class OCSVTransformer extends OAbstractTransformer {
       for (int i = 0; i < columnNames.size(); ++i)
         columnNames.set(i, getCellContent(columnNames.get(i)));
 
-      return null;
+      return false;
     }
 
-    final ODocument doc = new ODocument();
-    for (int i = 0; i < columnNames.size() && i < fields.size(); ++i) {
-      final String fieldName = columnNames.get(i);
-      Object fieldValue = null;
-      try {
-        final String fieldStringValue = getCellContent(fields.get(i));
+    if (columnsOnFirstLine && line == 0)
+      // JUST SKIP FIRST LINE
+      return false;
 
-        final OType fieldType = columnTypes != null ? columnTypes.get(i) : null;
+    return true;
+  }
 
-        if (fieldType != null && fieldType != OType.ANY) {
-          // DEFINED TYPE
-          fieldValue = getCellContent(fieldStringValue);
-          try {
-            fieldValue = OType.convert(fieldValue, fieldType.getDefaultJavaType());
-            doc.field(fieldName, fieldValue);
-          } catch (Exception e) {
-            processor.getStats().incrementErrors();
-            log(OETLProcessor.LOG_LEVELS.ERROR, "Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s",
-                processor.getExtractor().getProgress(), fieldName, i, fieldValue, fieldValue.getClass().getName(), fieldType);
-          }
-        } else if (fieldStringValue != null && !fieldStringValue.isEmpty()) {
-          // DETERMINE THE TYPE
-          final char firstChar = fieldStringValue.charAt(0);
-          if (Character.isDigit(firstChar)) {
-            // DATE
-            DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-            df.setLenient(true);
-            try {
-              fieldValue = df.parse(fieldStringValue);
-            } catch (ParseException pe) {
-              // NUMBER
-              try {
-                if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
-                  String numberAsString = fieldStringValue.replaceAll(",", ".");
-                  fieldValue = new Float(numberAsString);
-                  if (!isFinite((Float) fieldValue)) {
-                    fieldValue = new Double(numberAsString);
-                  }
-                } else
-                  try {
-                    fieldValue = new Integer(fieldStringValue);
-                  } catch (Exception e) {
-                    fieldValue = new Long(fieldStringValue);
-                  }
-              } catch (NumberFormatException nf) {
-                fieldValue = fieldStringValue;
-              }
-            }
-          } else
-            fieldValue = fieldStringValue;
+  private boolean skipTransform() {
+    line++;
 
-          if (nullValue != null && nullValue.equals(fieldValue))
-            // NULL VALUE, SKIP
-            continue;
-
-          doc.field(fieldName, fieldValue);
-        }
-
-      } catch (Exception e) {
-        processor.getStats().incrementErrors();
-        log(OETLProcessor.LOG_LEVELS.ERROR, "Error on setting document field %s=%s (cause=%s)", fieldName, fieldValue, e.toString());
-      }
+    if (skipFrom > -1) {
+      if (skipTo > -1) {
+        if (line >= skipFrom && line <= skipTo)
+          return true;
+      } else if (line >= skipFrom)
+        // SKIP IT
+        return true;
     }
+    return false;
+  }
 
-    log(OETLProcessor.LOG_LEVELS.DEBUG, "document=%s", doc);
-
-    return doc;
+  /**
+   * Backport copy of Float.isFinite() method that was introduced since Java 1.8 but we must support 1.6. TODO replace after
+   * choosing Java 1.8 as minimal supported
+   **/
+  protected boolean isFinite(Float f) {
+    return Math.abs(f) <= FloatConsts.MAX_VALUE;
   }
 
   // TODO Test, and double doubleqoutes case
   public String getCellContent(String iValue) {
-    if (iValue == null)
+    if (iValue == null || iValue.isEmpty() || "NULL".equals(iValue))
       return null;
 
     if (iValue.length() > 1 && (iValue.charAt(0) == stringCharacter && iValue.charAt(iValue.length() - 1) == stringCharacter))
@@ -201,9 +257,4 @@ public class OCSVTransformer extends OAbstractTransformer {
 
     return iValue;
   }
-
-  public static boolean isFinite(final float value) {
-    return Math.abs(value) <= FloatConsts.MAX_VALUE;
-  }
-
 }

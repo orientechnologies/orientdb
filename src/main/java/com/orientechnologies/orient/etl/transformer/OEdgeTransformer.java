@@ -30,19 +30,26 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OEdgeTransformer extends OAbstractLookupTransformer {
-  private String  edgeClass    = "E";
-  private boolean directionOut = true;
+  private String    edgeClass    = "E";
+  private boolean   directionOut = true;
+  private ODocument targetVertexFields;
+  private ODocument edgeFields;
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{joinValue:{optional:true,description:'value to use for join'}},"
-        + "{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
-        + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
-        + "{direction:{optional:true,description:'Direction between \'in\' and \'out\'. Default is \'out\''}},"
-        + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
-        + "{unresolvedVertexAction:{optional:true,description:'action when a unresolved vertices is found',values:"
-        + stringArray2Json(ACTION.values()) + "}}]," + "input:['ODocument','OrientVertex'],output:'OrientVertex'}");
+    return new ODocument()
+        .fromJSON("{parameters:["
+            + getCommonConfigurationParameters()
+            + ","
+            + "{joinValue:{optional:true,description:'value to use for join'}},"
+            + "{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
+            + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
+            + "{direction:{optional:true,description:'Direction between \'in\' and \'out\'. Default is \'out\''}},"
+            + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
+            + "{targetVertexFields:{optional:true,description:'Map of fields to set in target vertex. Use ${$input.<field>} to get input field values'}},"
+            + "{edgeFields:{optional:true,description:'Map of fields to set in edge. Use ${$input.<field>} to get input field values'}},"
+            + "{unresolvedVertexAction:{optional:true,description:'action when a unresolved vertices is found',values:"
+            + stringArray2Json(ACTION.values()) + "}}]," + "input:['ODocument','OrientVertex'],output:'OrientVertex'}");
   }
 
   @Override
@@ -58,6 +65,11 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
       else
         throw new OConfigurationException("Direction can be 'in' or 'out', but found: " + direction);
     }
+
+    if (iConfiguration.containsField("targetVertexFields"))
+      targetVertexFields = (ODocument) iConfiguration.field("targetVertexFields");
+    if (iConfiguration.containsField("edgeFields"))
+      edgeFields = (ODocument) iConfiguration.field("edgeFields");
   }
 
   @Override
@@ -112,6 +124,12 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
           final String[] lookupParts = lookup.split("\\.");
           final OrientVertex linkedV = pipeline.getGraphDatabase().addTemporaryVertex(lookupParts[0]);
           linkedV.setProperty(lookupParts[1], joinCurrentValue);
+
+          if (targetVertexFields != null) {
+            for (String f : targetVertexFields.fieldNames())
+              linkedV.setProperty(f, resolve(targetVertexFields.field(f)));
+          }
+
           linkedV.save();
 
           log(OETLProcessor.LOG_LEVELS.DEBUG, "created new vertex=%s", linkedV.getRecord());
@@ -144,6 +162,11 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
         edge = (OrientEdge) vertex.addEdge(edgeClass, targetVertex);
       else
         edge = (OrientEdge) targetVertex.addEdge(edgeClass, vertex);
+
+      if (edgeFields != null) {
+        for (String f : edgeFields.fieldNames())
+          edge.setProperty(f, resolve(edgeFields.field(f)));
+      }
 
       log(OETLProcessor.LOG_LEVELS.DEBUG, "created new edge=%s", edge);
       return edge;
