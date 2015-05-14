@@ -195,8 +195,8 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
     json.endCollection(2, true);
 
     json.beginCollection(2, true, "properties");
-    if (db.getStorage().getConfiguration().properties != null)
-      for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
+    if (db.getStorage().getConfiguration().getProperties() != null)
+      for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().getProperties()) {
         if (entry != null) {
           json.beginObject(3, true, null);
           json.writeAttribute(4, false, "name", entry.name);

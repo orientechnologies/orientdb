@@ -30,6 +30,7 @@ import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -42,7 +43,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -53,7 +54,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
 /**
@@ -71,6 +74,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   protected String                           type;
   protected String                           valueContainerAlgorithm;
   protected final ONewLockManager<Object>    keyLockManager   = new ONewLockManager<Object>();
+
   @ODocumentInstance
   protected ODocument                        configuration;
   protected ODocument                        metadata;
@@ -83,12 +87,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   private Thread                             rebuildThread    = null;
 
-  private final ThreadLocal<IndexTxSnapshot> txSnapshot       = new ThreadLocal<IndexTxSnapshot>() {
-                                                                @Override
-                                                                protected IndexTxSnapshot initialValue() {
-                                                                  return new IndexTxSnapshot();
-                                                                }
-                                                              };
+  private final ThreadLocal<IndexTxSnapshot> txSnapshot       = new IndexTxSnapshotThreadLocal();
   private final ReadWriteLock                rwLock           = new ReentrantReadWriteLock();
 
   protected static final class RemovedValue {
@@ -144,6 +143,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     } else {
       // @COMPATIBILITY 1.0rc6 new index model was implemented
       final Boolean isAutomatic = config.field(OIndexInternal.CONFIG_AUTOMATIC);
+      OIndexFactory factory = OIndexes.getFactory(type, algorithm);
       if (Boolean.TRUE.equals(isAutomatic)) {
         final int pos = indexName.lastIndexOf('.');
         if (pos < 0)
@@ -156,7 +156,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         if (keyTypeStr == null)
           throw new OIndexException("Can not convert from old index model to new one. " + "Index key type is absent.");
         final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
-        loadedIndexDefinition = new OPropertyIndexDefinition(className, propertyName, keyType);
+
+        loadedIndexDefinition = new OPropertyIndexDefinition(className, propertyName, keyType, factory.getLastVersion());
 
         config.removeField(OIndexInternal.CONFIG_AUTOMATIC);
         config.removeField(OIndexInternal.CONFIG_KEYTYPE);
@@ -164,7 +165,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         final String keyTypeStr = config.field(OIndexInternal.CONFIG_KEYTYPE);
         final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
 
-        loadedIndexDefinition = new OSimpleKeyIndexDefinition(keyType);
+        loadedIndexDefinition = new OSimpleKeyIndexDefinition(factory.getLastVersion(), keyType);
 
         config.removeField(OIndexInternal.CONFIG_KEYTYPE);
       }
@@ -675,10 +676,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       final IndexTxSnapshot indexTxSnapshot = txSnapshot.get();
 
       final Boolean clearAll = operationDocument.field("clear");
-      if (clearAll != null && clearAll) {
-        indexTxSnapshot.clear = true;
-        indexTxSnapshot.indexSnapshot.clear();
-      }
+      if (clearAll != null && clearAll)
+        clearSnapshot(indexTxSnapshot);
 
       final Collection<ODocument> entries = operationDocument.field("entries");
       final Map<Object, Object> snapshot = indexTxSnapshot.indexSnapshot;
@@ -692,7 +691,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     }
   }
 
-  @Override
   public void commit() {
     acquireExclusiveLock();
     try {
@@ -706,12 +704,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     }
   }
 
-  @Override
   public void preCommit() {
     txSnapshot.set(new IndexTxSnapshot());
   }
 
-  @Override
   public void postCommit() {
     txSnapshot.set(new IndexTxSnapshot());
   }
@@ -865,21 +861,35 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     return key;
   }
 
-  protected abstract void commitSnapshot(Map<Object, Object> snapshot);
+  protected void commitSnapshot(Map<Object, Object> snapshot) {
+    // do nothing by default
+    // storage will delay real operations till the end of tx
+  }
 
-  protected abstract void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot);
+  protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    // storage will delay real operations till the end of tx
+    put(key, value);
+  }
 
-  protected abstract void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot);
+  protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    // storage will delay real operations till the end of tx
+    remove(key, value);
+  }
+
+  protected void removeFromSnapshot(Object key, Map<Object, Object> snapshot) {
+    // storage will delay real operations till the end of tx
+    remove(key);
+  }
+
+  protected void clearSnapshot(IndexTxSnapshot indexTxSnapshot) {
+    // storage will delay real operations till the end of tx
+    clear();
+  }
 
   @Override
   public int compareTo(OIndex<T> index) {
     final String name = index.getName();
     return this.name.compareTo(name);
-  }
-
-  protected void removeFromSnapshot(Object key, Map<Object, Object> snapshot) {
-    key = getCollatingValue(key);
-    snapshot.put(key, RemovedValue.INSTANCE);
   }
 
   protected void checkForKeyType(final Object iKey) {
@@ -890,7 +900,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       if (type == null)
         return;
 
-      indexDefinition = new OSimpleKeyIndexDefinition(type);
+      indexDefinition = new OSimpleKeyIndexDefinition(indexEngine.getVersion(), type);
       updateConfiguration();
     }
   }
@@ -970,15 +980,32 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
       final OStorage storage = getStorage();
       if (storage instanceof OAbstractPaginatedStorage) {
-        final ODiskCache diskCache = ((OAbstractPaginatedStorage) storage).getDiskCache();
-        try {
-          final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
-          if (diskCache.exists(fileName)) {
-            final long fileId = diskCache.openFile(fileName);
-            diskCache.deleteFile(fileId);
+        final OAtomicOperation atomicOperation = ((OAbstractPaginatedStorage) storage).getAtomicOperationsManager()
+            .getCurrentOperation();
+
+        final OReadCache readCache = ((OAbstractPaginatedStorage) storage).getReadCache();
+        final OWriteCache writeCache = ((OAbstractPaginatedStorage) storage).getWriteCache();
+
+        if (atomicOperation == null) {
+          try {
+            final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
+            if (writeCache.exists(fileName)) {
+              final long fileId = readCache.openFile(fileName, writeCache);
+              readCache.deleteFile(fileId, writeCache);
+            }
+          } catch (IOException e) {
+            OLogManager.instance().error(this, "Can't delete file for value containers", e);
           }
-        } catch (IOException e) {
-          OLogManager.instance().error(this, "Can't delete file for value containers", e);
+        } else {
+          try {
+            final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
+            if (atomicOperation.isFileExists(fileName)) {
+              final long fileId = atomicOperation.openFile(fileName);
+              atomicOperation.deleteFile(fileId);
+            }
+          } catch (IOException e) {
+            OLogManager.instance().error(this, "Can't delete file for value containers", e);
+          }
         }
       }
     }
@@ -1028,9 +1055,15 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
           else {
             removeFromSnapshot(key, value, snapshot);
           }
-
         }
       }
+    }
+  }
+
+  private static class IndexTxSnapshotThreadLocal extends ThreadLocal<IndexTxSnapshot> {
+    @Override
+    protected IndexTxSnapshot initialValue() {
+      return new IndexTxSnapshot();
     }
   }
 }

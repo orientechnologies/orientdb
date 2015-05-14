@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -26,8 +30,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-
-import java.util.Map;
 
 /**
  * SQL CREATE CLASS command: Creates a new property in the target class.
@@ -44,7 +46,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   public static final String KEYWORD_CLUSTER  = "CLUSTER";
 
   private String             className;
-  private OClass             superClass;
+  private List<OClass>       superClasses     = new ArrayList<OClass>();
   private int[]              clusterIds;
 
   public OCommandExecutorSQLCreateClass parse(final OCommandRequest iRequest) {
@@ -77,16 +79,27 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
     while ((pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true)) > -1) {
       final String k = word.toString();
       if (k.equals(KEYWORD_EXTENDS)) {
-        oldPos = pos;
-        pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-        if (pos == -1)
-          throw new OCommandSQLParsingException("Syntax error after EXTENDS for class " + className
-              + ". Expected the super-class name. Use " + getSyntax(), parserText, oldPos);
-
-        if (!database.getMetadata().getSchema().existsClass(word.toString()))
-          throw new OCommandSQLParsingException("Super-class " + word + " not exists", parserText, oldPos);
-
-        superClass = database.getMetadata().getSchema().getClass(word.toString());
+        boolean hasNext;
+        OClass superClass;
+        do {
+          oldPos = pos;
+          pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
+          if (pos == -1)
+            throw new OCommandSQLParsingException("Syntax error after EXTENDS for class " + className
+                + ". Expected the super-class name. Use " + getSyntax(), parserText, oldPos);
+          if (!database.getMetadata().getSchema().existsClass(word.toString()))
+            throw new OCommandSQLParsingException("Super-class " + word + " not exists", parserText, oldPos);
+          superClass = database.getMetadata().getSchema().getClass(word.toString());
+          superClasses.add(superClass);
+          hasNext = false;
+          for (; pos < parserText.length(); pos++) {
+            char ch = parserText.charAt(pos);
+            if (ch == ',')
+              hasNext = true;
+            else if (Character.isLetterOrDigit(ch))
+              break;
+          }
+        } while (hasNext);
       } else if (k.equals(KEYWORD_CLUSTER)) {
         oldPos = pos;
         pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false, " =><()");
@@ -133,6 +146,11 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
     return this;
   }
 
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
+  }
+
   /**
    * Execute the CREATE CLASS.
    */
@@ -141,18 +159,18 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     final ODatabaseDocument database = getDatabase();
-    database.getMetadata().getSchema().createClass(className, superClass, clusterIds);
+    database.getMetadata().getSchema().createClass(className, clusterIds, superClasses.toArray(new OClass[0]));
 
     return database.getMetadata().getSchema().getClasses().size();
   }
 
   @Override
   public String getSyntax() {
-    return "CREATE CLASS <class> [EXTENDS <super-class>] [CLUSTER <clusterId>*] [ABSTRACT]";
+    return "CREATE CLASS <class> [EXTENDS <super-class> [,<super-class2>*] ] [CLUSTER <clusterId>*] [ABSTRACT]";
   }
 
   @Override
-  public boolean involveSchema(){
+  public boolean involveSchema() {
     return true;
   }
 }

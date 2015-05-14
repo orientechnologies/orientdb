@@ -67,6 +67,7 @@ public class ODatabaseHelper {
     if (existsDatabase(database, storageType)) {
       if (database.getURL().startsWith("remote:")) {
         new OServerAdmin(database.getURL()).connect("root", getServerRootPassword(directory)).dropDatabase(storageType);
+        database.close();
       } else {
         if (database.isClosed())
           database.open("admin", "admin");

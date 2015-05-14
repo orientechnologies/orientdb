@@ -100,4 +100,9 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract
   public String getSyntax() {
     return "REBUILD INDEX <index-name>";
   }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
+  }
 }

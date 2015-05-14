@@ -4,9 +4,10 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
@@ -24,8 +25,14 @@ import java.util.List;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 5/19/14
  */
-@Test(enabled = false)
+@Test
 public class OLocalHashTableWAL extends OLocalHashTableTest {
+
+  static {
+    OGlobalConfiguration.FILE_LOCK.setValue(false);
+    OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(100000000);
+  }
+
   private String              buildDirectory;
 
   private String              actualStorageDir;
@@ -33,17 +40,17 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
 
   private ODatabaseDocumentTx expectedDatabaseDocumentTx;
 
-  @BeforeClass(enabled = false)
+  @BeforeClass
   @Override
   public void beforeClass() {
   }
 
-  @AfterClass(enabled = false)
+  @AfterClass
   @Override
   public void afterClass() {
   }
 
-  @BeforeMethod(enabled = false)
+  @BeforeMethod
   public void beforeMethod() throws IOException {
     OGlobalConfiguration.INDEX_TX_MODE.setValue("FULL");
     OGlobalConfiguration.WAL_MAX_SIZE.setValue(200 * 1024);
@@ -82,7 +89,7 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     createActualHashTable();
   }
 
-  @AfterMethod(enabled = false)
+  @AfterMethod
   @Override
   public void afterMethod() throws IOException {
     if (databaseDocumentTx.isClosed())
@@ -102,9 +109,10 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", murmurHash3HashFunction, true, null);
+    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", murmurHash3HashFunction, true,
+        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
     localHashTable.create("actualLocalHashTable", OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance()
-        .<String> getObjectSerializer(OType.STRING), null, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage(), true);
+        .<String> getObjectSerializer(OType.STRING), null, true);
   }
 
   @Override
@@ -216,7 +224,6 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
       batch.add(walRecord);
 
       if (batch.size() >= 1000) {
-        System.out.println("Apply batch");
         atomicChangeIsProcessed = restoreDataFromBatch(atomicChangeIsProcessed, atomicUnit, batch);
         batch = new ArrayList<OWALRecord>();
       }
@@ -225,7 +232,6 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     }
 
     if (batch.size() > 0) {
-      System.out.println("Apply batch the last batch.");
       restoreDataFromBatch(atomicChangeIsProcessed, atomicUnit, batch);
       batch = null;
     }
@@ -233,25 +239,28 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     Assert.assertTrue(atomicUnit.isEmpty());
     log.close();
 
-    final ODiskCache expectedDiskCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getDiskCache();
-    expectedDiskCache.flushBuffer();
+    OWriteCache writeCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getWriteCache();
+    writeCache.flush();
   }
 
   private boolean restoreDataFromBatch(boolean atomicChangeIsProcessed, List<OWALRecord> atomicUnit, List<OWALRecord> records)
       throws IOException {
 
-    final ODiskCache expectedDiskCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getDiskCache();
+    final OReadCache expectedReadCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getReadCache();
+    final OWriteCache expectedWriteCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getWriteCache();
+
     for (OWALRecord walRecord : records) {
       atomicUnit.add(walRecord);
 
-      if (!atomicChangeIsProcessed) {
-        Assert.assertTrue(walRecord instanceof OAtomicUnitStartRecord);
+      if (!atomicChangeIsProcessed && walRecord instanceof OAtomicUnitStartRecord) {
         atomicChangeIsProcessed = true;
       } else if (walRecord instanceof OAtomicUnitEndRecord) {
         atomicChangeIsProcessed = false;
 
         for (OWALRecord restoreRecord : atomicUnit) {
-          if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord)
+          if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord
+              || restoreRecord instanceof ONonTxOperationPerformedWALRecord || restoreRecord instanceof OFullCheckpointStartRecord
+              || restoreRecord instanceof OCheckpointEndRecord)
             continue;
 
           if (restoreRecord instanceof OUpdatePageRecord) {
@@ -260,32 +269,40 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
 
-            if (!expectedDiskCache.isOpen(fileId))
-              expectedDiskCache.openFile(fileId);
+            if (!expectedWriteCache.isOpen(fileId))
+              expectedReadCache.openFile(fileId, expectedWriteCache);
 
-            final OCacheEntry cacheEntry = expectedDiskCache.load(fileId, pageIndex, true);
+            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache);
+            if (cacheEntry == null)
+              do {
+                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
+              } while (cacheEntry.getPageIndex() != pageIndex);
+
             cacheEntry.acquireExclusiveLock();
             try {
-              ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
+              ODurablePage durablePage = new ODurablePage(cacheEntry, null);
               durablePage.restoreChanges(updatePageRecord.getChanges());
               durablePage.setLsn(updatePageRecord.getLsn());
-
-              cacheEntry.markDirty();
             } finally {
               cacheEntry.releaseExclusiveLock();
-              expectedDiskCache.release(cacheEntry);
+              expectedReadCache.release(cacheEntry, expectedWriteCache);
             }
-          } else if (restoreRecord instanceof OFileCreatedCreatedWALRecord) {
-            final OFileCreatedCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedCreatedWALRecord) restoreRecord;
-            expectedDiskCache.openFile(
-                fileCreatedCreatedRecord.getFileName().replace("actualLocalHashTable", "expectedLocalHashTable"),
-                fileCreatedCreatedRecord.getFileId());
+          } else if (restoreRecord instanceof OFileCreatedWALRecord) {
+            final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
+            String fileName = fileCreatedCreatedRecord.getFileName().replace("actualLocalHashTable", "expectedLocalHashTable");
+
+            if (expectedWriteCache.exists(fileName))
+              expectedReadCache.openFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
+            else
+              expectedReadCache.addFile(fileName, expectedWriteCache);
           }
         }
 
         atomicUnit.clear();
       } else {
-        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedCreatedWALRecord);
+        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
+            || walRecord instanceof ONonTxOperationPerformedWALRecord || walRecord instanceof OFullCheckpointStartRecord
+            || walRecord instanceof OCheckpointEndRecord);
       }
 
     }

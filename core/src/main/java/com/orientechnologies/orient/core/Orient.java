@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
+import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public class Orient extends OListenerManger<OOrientListener> {
@@ -64,6 +65,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   private final ConcurrentMap<String, OEngine>                                       engines                       = new ConcurrentHashMap<String, OEngine>();
   private final ConcurrentMap<String, OStorage>                                      storages                      = new ConcurrentHashMap<String, OStorage>();
+  private final ConcurrentHashMap<Integer, Boolean>                                  storageIds                    = new ConcurrentHashMap<Integer, Boolean>();
 
   private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners          = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
   private final ODatabaseFactory                                                     databaseFactory               = new ODatabaseFactory();
@@ -83,6 +85,8 @@ public class Orient extends OListenerManger<OOrientListener> {
   static {
     instance.startup();
   }
+
+  private String                                                                     os;
   private volatile Timer                                                             timer;
   private volatile ORecordFactoryManager                                             recordFactoryManager          = new ORecordFactoryManager();
   private OrientShutdownHook                                                         shutdownHook;
@@ -185,6 +189,8 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (active)
         // ALREADY ACTIVE
         return this;
+
+      os = System.getProperty("os.name").toLowerCase();
 
       if (timer == null)
         timer = new Timer(true);
@@ -292,6 +298,20 @@ public class Orient extends OListenerManger<OOrientListener> {
       // NOTE: DON'T REMOVE PROFILER TO AVOID NPE AROUND THE CODE IF ANY THREADS IS STILL WORKING
       profiler.shutdown();
 
+      purgeWeakShutdownListeners();
+      for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners)
+        try {
+          if (wl != null) {
+            final OOrientShutdownListener l = wl.get();
+            if (l != null) {
+              l.onShutdown();
+            }
+          }
+
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error during orient shutdown.", e);
+        }
+
       // CALL THE SHUTDOWN ON ALL THE LISTENERS
       for (OOrientListener l : browseListeners()) {
         if (l != null)
@@ -302,19 +322,6 @@ public class Orient extends OListenerManger<OOrientListener> {
           }
 
       }
-
-      purgeWeakShutdownListeners();
-      for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners)
-        try {
-          if (wl != null) {
-            final OOrientShutdownListener l = wl.get();
-            if (l != null)
-              l.onShutdown();
-          }
-
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during orient shutdown.", e);
-        }
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
@@ -415,7 +422,13 @@ public class Orient extends OListenerManger<OOrientListener> {
     if (iURL.endsWith("/"))
       iURL = iURL.substring(0, iURL.length() - 1);
 
-    iURL = iURL.replace("//", "/");
+    if (isWindowsOS()) {
+      // WINDOWS ONLY: REMOVE DOUBLE SLASHES NOT AS PREFIX (WINDOWS PATH COULD NEED STARTING FOR "\\". EXAMPLE: "\\mydrive\db"). AT
+      // THIS LEVEL BACKSLASHES ARRIVES AS SLASHES
+      iURL = iURL.charAt(0) + iURL.substring(1).replace("//", "/");
+    } else
+      // REMOVE ANY //
+      iURL = iURL.replace("//", "/");
 
     // SEARCH FOR ENGINE
     int pos = iURL.indexOf(':');
@@ -465,7 +478,11 @@ public class Orient extends OListenerManger<OOrientListener> {
         storage = storages.get(dbName);
         if (storage == null) {
           // NOT FOUND: CREATE IT
-          storage = engine.createStorage(dbPath, parameters);
+
+          do {
+            storage = engine.createStorage(dbPath, parameters);
+          } while ((storage instanceof OIdentifiableStorage)
+              && storageIds.putIfAbsent(((OIdentifiableStorage) storage).getId(), Boolean.TRUE) != null);
 
           final OStorage oldStorage = storages.putIfAbsent(dbName, storage);
           if (oldStorage != null)
@@ -484,6 +501,10 @@ public class Orient extends OListenerManger<OOrientListener> {
     } finally {
       engineLock.readLock().unlock();
     }
+  }
+
+  public boolean isWindowsOS() {
+    return os.indexOf("win") >= 0;
   }
 
   public OStorage registerStorage(OStorage storage) throws IOException {

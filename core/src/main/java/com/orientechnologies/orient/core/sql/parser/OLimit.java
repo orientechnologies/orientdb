@@ -2,10 +2,15 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OLimit extends SimpleNode {
+import java.util.Map;
 
-  protected Integer num;
+public class OLimit extends SimpleNode {
+
+  protected OInteger         num;
+
+  protected OInputParameter inputParam;
+
+  protected Object          inputFinalValue;
 
   public OLimit(int id) {
     super(id);
@@ -15,18 +20,35 @@ class OLimit extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  public Integer getNum() {
-    return num;
+  public void replaceParameters(Map<Object, Object> params) {
+    if (inputParam != null) {
+      Object result = inputParam.bindFromInputParams(params);
+      if (inputParam != result) {
+        inputFinalValue = result;
+      }
+    }
   }
 
-  public void setNum(Integer num) {
-    this.num = num;
+  @Override
+  public String toString() {
+    if (num == null && inputParam == null) {
+      return "";
+    }
+    StringBuilder result = new StringBuilder();
+    result.append(" LIMIT ");
+    if (num != null) {
+      result.append(num);
+    } else if (inputFinalValue != null) {
+      result.append(inputFinalValue);
+    } else {
+      result.append(inputParam);
+    }
+    return result.toString();
   }
 }
 /* JavaCC - OriginalChecksum=1063b9489290bb08de6048ba55013171 (do not edit this line) */

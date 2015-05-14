@@ -96,6 +96,8 @@ public abstract class AbstractServerClusterTest {
         Thread.sleep(delayServerStartup * serverInstance.size());
       } catch (InterruptedException e) {
       }
+
+      onServerStarted(server);
     }
 
     try {
@@ -122,19 +124,31 @@ public abstract class AbstractServerClusterTest {
       System.out.println("\n******************************************************************************************");
       System.out.println("Shutting down nodes...");
       System.out.println("******************************************************************************************\n");
-      for (ServerRun server : serverInstance)
+      for (ServerRun server : serverInstance) {
+        System.out.println("Shutting down node " + server.getServerId() + "...");
         server.shutdownServer();
-      Hazelcast.shutdownAll();
+      }
+
       System.out.println("\n******************************************************************************************");
       System.out.println("Test finished");
       System.out.println("******************************************************************************************\n");
+
+      onTestEnded();
+
+      Hazelcast.shutdownAll();
+
       deleteServers();
     }
   }
 
-  protected void onAfterExecution() {
+  protected void onServerStarted(ServerRun server) {
   }
 
+  protected void onTestEnded() {
+  }
+
+  protected void onAfterExecution() {
+  }
 
   protected abstract String getDatabaseName();
 

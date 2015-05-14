@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.ArrayList;
@@ -55,12 +55,14 @@ import java.util.Set;
 public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest {
   public static final String            NAME          = "MOVE VERTEX";
   private static final String           KEYWORD_MERGE = "MERGE";
+  private static final String           KEYWORD_BATCH = "BATCH";
   private String                        source        = null;
   private String                        clusterName;
   private String                        className;
   private OClass                        clazz;
   private LinkedHashMap<String, Object> fields;
   private ODocument                     merge;
+  private int                           batch         = -1;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLMoveVertex parse(final OCommandRequest iRequest) {
@@ -106,6 +108,10 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
       } else if (temp.equals(KEYWORD_MERGE)) {
         merge = parseJSON();
 
+      } else if (temp.equals(KEYWORD_BATCH)) {
+        temp = parserNextWord(true);
+        if (temp != null)
+          batch = Integer.parseInt(temp);
       }
 
       temp = parserOptionalWord(true);
@@ -124,7 +130,7 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     OModifiableBoolean shutdownGraph = new OModifiableBoolean();
-    final OrientGraphNoTx graph = OGraphCommandExecutorSQLFactory.getGraphNoTx(shutdownGraph);
+    final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(true, shutdownGraph);
     try {
       final Set<OIdentifiable> sourceRIDs = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), source, context, iArgs);
 
@@ -139,34 +145,47 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
         final ORID oldVertex = fromVertex.getIdentity().copy();
         final ORID newVertex = fromVertex.moveTo(className, clusterName);
 
-        if (fields != null)
+        final ODocument newVertexDoc = newVertex.getRecord();
+
+        if (fields != null) {
           // EVALUATE FIELDS
           for (Entry<String, Object> f : fields.entrySet()) {
             if (f.getValue() instanceof OSQLFunctionRuntime)
               fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(newVertex.getRecord(), null, context));
           }
 
-        OSQLHelper.bindParameters(fromVertex.getRecord(), fields, new OCommandParameters(iArgs), context);
+          OSQLHelper.bindParameters(newVertexDoc, fields, new OCommandParameters(iArgs), context);
+        }
 
         if (merge != null)
-          fromVertex.getRecord().merge(merge, true, false);
+          newVertexDoc.merge(merge, true, false);
 
         // SAVE CHANGES
-        fromVertex.save();
+        newVertexDoc.save();
 
         // PUT THE MOVE INTO THE RESULT
         result.add(new ODocument().field("old", oldVertex, OType.LINK).field("new", newVertex, OType.LINK));
+
+        if (batch > 0 && result.size() % batch == 0)
+          graph.commit();
       }
+
+      graph.commit();
 
       return result;
     } finally {
+
       if (shutdownGraph.getValue())
         graph.shutdown(false);
     }
   }
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
+  }
 
   @Override
   public String getSyntax() {
-    return "MOVE VERTEX <source> TO <destination> [SET [<field>=<value>]* [,]] [MERGE <JSON>]";
+    return "MOVE VERTEX <source> TO <destination> [SET [<field>=<value>]* [,]] [MERGE <JSON>] [BATCH <batch-size>]";
   }
 }

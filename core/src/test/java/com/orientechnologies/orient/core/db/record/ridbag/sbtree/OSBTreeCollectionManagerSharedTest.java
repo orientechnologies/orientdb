@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.DatabaseAbstractTest;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -21,7 +22,7 @@ public class OSBTreeCollectionManagerSharedTest extends DatabaseAbstractTest {
 
   @BeforeMethod
   public void beforeMethod() {
-    sbTreeCollectionManager = new OSBTreeCollectionManagerShared(5, 10);
+    sbTreeCollectionManager = new OSBTreeCollectionManagerShared(5, 10, (OAbstractPaginatedStorage) database.getStorage());
   }
 
   @AfterMethod

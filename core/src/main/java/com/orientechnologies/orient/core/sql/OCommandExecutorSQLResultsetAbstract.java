@@ -52,7 +52,15 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -266,8 +274,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     boolean stop = false;
     while (!stop) {
       // PARSE THE KEY
-      parserNextWord(false);
-      final String letName = parserGetLastWord();
+      final String letName = parserNextWord(false);
 
       parserOptionalKeyword("=");
 
@@ -304,8 +311,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     if (!w.equals(KEYWORD_LIMIT))
       return -1;
 
-    parserNextWord(true);
-    final String word = parserGetLastWord();
+    final String word = parserNextWord(true);
 
     try {
       limit = Integer.parseInt(word);
@@ -332,8 +338,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     if (!w.equals(KEYWORD_SKIP) && !w.equals(KEYWORD_OFFSET))
       return -1;
 
-    parserNextWord(true);
-    final String word = parserGetLastWord();
+    final String word = parserNextWord(true);
 
     try {
       skip = Integer.parseInt(word);
@@ -434,18 +439,13 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iCls.getName().toLowerCase());
 
-    // NO INDEXES: SCAN THE ENTIRE CLUSTER
-
-    OStorage.LOCKING_STRATEGY locking = context != null && context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
-        .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
-
     final ORID[] range = getRange();
     if (iAscendentOrder)
-      return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, request.isUseCache(), false,
-          locking).setRange(range[0], range[1]);
+      return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, request.isUseCache()).setRange(
+          range[0], range[1]);
     else
       return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic,
-          request.isUseCache(), false, locking).setRange(range[0], range[1]);
+          request.isUseCache()).setRange(range[0], range[1]);
   }
 
   protected void searchInClusters() {
@@ -484,11 +484,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final ORID[] range = getRange();
 
-    final OStorage.LOCKING_STRATEGY locking = context != null && context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
-        .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
-
-    target = new ORecordIteratorClusters<ORecord>(database, database, clIds, request.isUseCache(), false, locking).setRange(
-        range[0], range[1]);
+    target = new ORecordIteratorClusters<ORecord>(database, database, clIds, request.isUseCache()).setRange(range[0], range[1]);
   }
 
   protected void applyLimitAndSkip() {
@@ -499,7 +495,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       if (tempResult instanceof List<?>) {
         final List<OIdentifiable> t = (List<OIdentifiable>) tempResult;
         final int start = Math.min(skip, t.size());
-        final int tot = Math.min(limit + start, t.size());
+
+        int tot = t.size();
+        if (limit > -1) {
+          tot = Math.min(limit + start, tot);
+        }
         for (int i = start; i < tot; ++i)
           newList.add(t.get(i));
 

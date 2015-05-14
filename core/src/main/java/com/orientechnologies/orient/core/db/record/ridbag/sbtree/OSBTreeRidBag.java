@@ -28,6 +28,7 @@ import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
@@ -249,10 +250,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
   }
 
-  private final class RIDBagIterator implements Iterator<OIdentifiable>, OResettable, OSizeable {
+  private final class RIDBagIterator implements Iterator<OIdentifiable>, OResettable, OSizeable, OAutoConvertToRecord {
     private final NavigableMap<OIdentifiable, Change>              changedValues;
     private final SBTreeMapEntryIterator                           sbTreeIterator;
-    private final boolean                                          convertToRecord;
+    private boolean                                                convertToRecord;
     private Iterator<Map.Entry<OIdentifiable, OModifiableInteger>> newEntryIterator;
     private Iterator<Map.Entry<OIdentifiable, Change>>             changedValuesIterator;
     private Map.Entry<OIdentifiable, Change>                       nextChange;
@@ -390,6 +391,16 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     @Override
     public int size() {
       return OSBTreeRidBag.this.size();
+    }
+
+    @Override
+    public boolean isAutoConvertToRecord() {
+      return convertToRecord;
+    }
+
+    @Override
+    public void setAutoConvertToRecord(final boolean convertToRecord) {
+      this.convertToRecord = convertToRecord;
     }
 
     private Map.Entry<OIdentifiable, Change> nextChangedNotRemovedEntry(Iterator<Map.Entry<OIdentifiable, Change>> iterator) {

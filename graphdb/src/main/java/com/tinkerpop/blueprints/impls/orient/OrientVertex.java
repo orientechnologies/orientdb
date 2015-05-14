@@ -25,6 +25,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
+import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
@@ -80,7 +81,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       className = checkForClassInSchema(OrientBaseGraph.encodeClassName(className));
 
     rawElement = new ODocument(className == null ? OrientVertexType.CLASS_NAME : className);
-    setProperties(fields);
+    setPropertiesInternal(fields);
   }
 
   public OrientVertex(final OrientBaseGraph graph, final OIdentifiable record) {
@@ -148,12 +149,12 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         outType = OType.LINKBAG;
       } else
         throw new IllegalStateException("Type of field provided in schema '" + prop.getType()
-            + " can not be used for link creation.");
+            + "' can not be used for link creation.");
 
     } else if (found instanceof OIdentifiable) {
       if (prop != null && propType == OType.LINK)
         throw new IllegalStateException("Type of field provided in schema '" + prop.getType()
-            + " can not be used for creation to hold several links.");
+            + "' can not be used for creation to hold several links.");
 
       if (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered"))) {
         final Collection coll = new ORecordLazyList(iFromVertex);
@@ -532,7 +533,12 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    *          Predicate to evaluate. Use OSQLPredicate to use SQL
    */
   public Object execute(final OCommandPredicate iPredicate) {
-    return iPredicate.evaluate(rawElement.getRecord(), null, null);
+    final Object result = iPredicate.evaluate(rawElement.getRecord(), null, null);
+
+    if (result instanceof OAutoConvertToRecord)
+      ((OAutoConvertToRecord) result).setAutoConvertToRecord(true);
+
+    return result;
   }
 
   /**
@@ -724,7 +730,20 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
   public ORID moveTo(final String iClassName, final String iClusterName) {
     final OrientBaseGraph graph = getGraph();
 
+    if (checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+
     final ORID oldIdentity = getIdentity().copy();
+
+    final ORecord oldRecord = oldIdentity.getRecord();
+    if (oldRecord == null)
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+
+    if (!graph.getRawGraph().getTransaction().isActive())
+      throw new IllegalStateException("Move vertex requires an active transaction to be executed in safe manner");
+
+    // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
+    oldRecord.delete();
 
     final ODocument doc = ((ODocument) rawElement.getRecord()).copy();
 
@@ -762,6 +781,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       } else {
         // REPLACE WITH NEW VERTEX
         oe.vOut = newIdentity;
+        oe.getRecord().field(OrientBaseGraph.CONNECTION_OUT, newIdentity);
+        oe.save();
       }
     }
 
@@ -778,16 +799,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       } else {
         // REPLACE WITH NEW VERTEX
         oe.vIn = newIdentity;
+        oe.getRecord().field(OrientBaseGraph.CONNECTION_IN, newIdentity);
+        oe.save();
       }
     }
 
     // FINAL SAVE
     doc.save();
-
-    // DELETE OLD RECORD
-    final ORecord oldRecord = oldIdentity.getRecord();
-    if (oldRecord != null)
-      oldRecord.delete();
 
     return newIdentity;
   }
@@ -864,6 +882,12 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       final Object... fields) {
     if (inVertex == null)
       throw new IllegalArgumentException("destination vertex is null");
+
+    if (checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+
+    if (inVertex.checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + inVertex.getIdentity() + " has been deleted");
 
     final OrientBaseGraph graph = setCurrentGraphInThreadLocal();
     if (graph != null)

@@ -598,7 +598,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertEquals(page.size(), 10);
 
     for (int i = 0; i < page.size(); ++i) {
-      Assert.assertEquals(page.get(i), result.get(10 + i));
+      Assert.assertEquals((Object) page.get(i), (Object) result.get(10 + i));
     }
   }
 
@@ -619,7 +619,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertEquals(page.size(), 10);
 
     for (int i = 0; i < page.size(); ++i) {
-      Assert.assertEquals(page.get(i), result.get(10 + i));
+      Assert.assertEquals((Object) page.get(i), (Object) result.get(10 + i));
     }
   }
 
@@ -631,7 +631,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertEquals(page.size(), 10);
 
     for (int i = 0; i < page.size(); ++i) {
-      Assert.assertEquals(page.get(i), result.get(10 + i));
+      Assert.assertEquals((Object) page.get(i), (Object) result.get(10 + i));
     }
   }
 
@@ -643,7 +643,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertEquals(page.size(), 10);
 
     for (int i = 0; i < page.size(); ++i) {
-      Assert.assertEquals(page.get(i), result.get(10 + i));
+      Assert.assertEquals((Object) page.get(i), (Object) result.get(10 + i));
     }
   }
 

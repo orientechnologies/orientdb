@@ -119,6 +119,10 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
       else
         doc = iDocument;
 
+      // we even not allowed to read it.
+      if (doc == null)
+        return false;
+
       return database
           .getMetadata()
           .getSecurity()

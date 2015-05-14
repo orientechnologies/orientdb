@@ -84,16 +84,12 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   private final String                userName;
   private final String                password;
   private final int                   maxSize;
-  private final ThreadLocal<PoolData> poolData       = new ThreadLocal<PoolData>() {
-                                                       @Override
-                                                       protected PoolData initialValue() {
-                                                         return new PoolData();
-                                                       }
-                                                     };
+  private final ThreadLocal<PoolData> poolData       = new ThreadPoolData();
   private final AtomicBoolean         poolBusy       = new AtomicBoolean();
   private final int                   maxPartitions  = Runtime.getRuntime().availableProcessors() << 3;
   private volatile PoolPartition[]    partitions;
   private volatile boolean            closed         = false;
+  private boolean                     autoCreate     = false;
 
   private static final class PoolData {
     private final int                hashCode;
@@ -109,6 +105,13 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     private final AtomicInteger                                   currentSize         = new AtomicInteger();
     private final AtomicInteger                                   acquiredConnections = new AtomicInteger();
     private final ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue               = new ConcurrentLinkedQueue<DatabaseDocumentTxPolled>();
+  }
+
+  private static class ThreadPoolData extends ThreadLocal<PoolData> {
+    @Override
+    protected PoolData initialValue() {
+      return new PoolData();
+    }
   }
 
   private final class DatabaseDocumentTxPolled extends ODatabaseDocumentTx {
@@ -270,7 +273,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
               throw new IllegalStateException("You have reached maximum pool size for given partition");
 
             db = new DatabaseDocumentTxPolled(url);
-            db.open(userName, password);
+            openDatabase(db);
             db.partition = partition;
 
             data.acquireCount = 1;
@@ -282,7 +285,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
             return db;
           }
         } else {
-          db.open(userName, password);
+          openDatabase(db);
           db.partition = partition;
           partition.acquiredConnections.incrementAndGet();
 
@@ -293,6 +296,23 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
         }
       }
     }
+  }
+
+  public boolean isAutoCreate() {
+    return autoCreate;
+  }
+
+  public OPartitionedDatabasePool setAutoCreate(final boolean autoCreate) {
+    this.autoCreate = autoCreate;
+    return this;
+  }
+
+  protected void openDatabase(final DatabaseDocumentTxPolled db) {
+    if (!db.getURL().startsWith("remote:") && !db.exists()) {
+      if (autoCreate)
+        db.create();
+    } else
+      db.open(userName, password);
   }
 
   @Override

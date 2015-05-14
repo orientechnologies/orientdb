@@ -18,8 +18,8 @@ cp ../modules/orientdb-etl/script/oetl.* $DIR/bin/
 
 cd distribution/target/orientdb-community-$1-distribution.dir
 
-rm orientdb-community-$1-distribution.tar.gz 
-tar cvzf ../orientdb-community-$1-distribution.tar.gz orientdb-community-2.0.3
+rm orientdb-community-$1.tar.gz 
+tar cvzf ../orientdb-community-$1.tar.gz orientdb-community-$1
 
-rm orientdb-community-$1-distribution.zip
-zip -X -r -9 ../orientdb-community-$1-distribution.zip orientdb-community-2.0.3
+rm orientdb-community-$1.zip
+zip -X -r -9 ../orientdb-community-$1.zip orientdb-community-$1

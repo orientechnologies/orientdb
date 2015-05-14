@@ -27,7 +27,11 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -76,9 +80,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     String queryText = textRequest.getText();
     String originalQuery = queryText;
     try {
-//      System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-//      System.out.println("NEW PARSER   TO: " + queryText);
       textRequest.setText(queryText);
       final ODatabaseDocument database = getDatabase();
 
@@ -166,7 +168,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     if (query != null) {
       // AGAINST CLUSTERS AND CLASSES
       if (lockStrategy.equals("RECORD"))
-        query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK);
+        query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK);
 
       query.execute(iArgs);
 
@@ -292,11 +294,11 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 
   @Override
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return indexName != null ? DISTRIBUTED_EXECUTION_MODE.REPLICATE : DISTRIBUTED_EXECUTION_MODE.LOCAL;
+    return indexName != null || query != null ? DISTRIBUTED_EXECUTION_MODE.REPLICATE : DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
   public String getSyntax() {
-    return "DELETE FROM <Class>|RID|cluster:<cluster> [UNSAFE] [LOCK <NONE|RECORD>] [RETURNING <COUNT|BEFORE>] [WHERE <condition>*]";
+    return "DELETE FROM <Class>|RID|cluster:<cluster> [UNSAFE] [LOCK <NONE|RECORD>] [RETURN <COUNT|BEFORE>] [WHERE <condition>*]";
   }
 
   @Override
@@ -312,8 +314,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
    * Parses the returning keyword if found.
    */
   protected String parseReturn() throws OCommandSQLParsingException {
-    parserNextWord(true);
-    final String returning = parserGetLastWord();
+    final String returning = parserNextWord(true);
 
     if (!returning.equalsIgnoreCase("COUNT") && !returning.equalsIgnoreCase("BEFORE"))
       throwParsingException("Invalid " + KEYWORD_RETURN + " value set to '" + returning
@@ -343,5 +344,10 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     } else {
       return OSQLHelper.getValue(value);
     }
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
   }
 }

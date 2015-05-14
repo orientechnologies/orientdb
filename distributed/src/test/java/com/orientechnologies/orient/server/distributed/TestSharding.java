@@ -18,9 +18,10 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 public class TestSharding extends AbstractServerClusterTest {
 
-  protected final static int SERVERS = 3;
+  protected final static int SERVERS     = 3;
   protected OrientVertex[]   vertices;
   protected int[]            versions;
+  protected long             totalAmount = 0;
 
   @Test
   public void test() throws Exception {
@@ -102,7 +103,11 @@ public class TestSharding extends AbstractServerClusterTest {
           }
 
           vertices[i].setProperty("name", "shard_" + i);
-          vertices[i].setProperty("amount", i * 10000);
+
+          long amount = i * 10000;
+          vertices[i].setProperty("amount", amount);
+
+          totalAmount += amount;
 
           System.out.println("Create vertex, class: " + vertices[i].getLabel() + ", cluster: " + clId + " -> "
               + vertices[i].getRecord());
@@ -224,6 +229,10 @@ public class TestSharding extends AbstractServerClusterTest {
           int count = 0;
           for (OrientVertex v : result) {
             System.out.println("select sum(amount) from ( select from Client ) -> " + v.getRecord());
+
+            // Assert.assertEquals("Returned wrong sum of amount on server " + server, (Long) totalAmount, (Long)
+            // v.getProperty("sum"));
+
             count++;
           }
 

@@ -233,7 +233,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
     listener.onMessage("\n\nDone. Exported " + totalExportedRecords + " of total " + totalFoundRecords + " records\n");
 
-    return totalFoundRecords;
+    return totalExportedRecords;
   }
 
   public void close() {

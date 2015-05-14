@@ -23,14 +23,13 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 import java.io.IOException;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
-import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 /**
  * Base class for all durable data structures, that is data structures state of which can be consistently restored after system
@@ -48,14 +47,6 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  * To support of "atomic operation" concept following should be done:
  * <ol>
  * <li>Call {@link #startAtomicOperation()} method.</li>
- * <li>If changes should be isolated till operation completes call also {@link #lockTillAtomicOperationCompletes()} which will apply
- * exclusive lock on existing data structure till atomic operation completes. This lock is not replacement of data structure locking
- * system it is used to serialize access to set of components which participate in single atomic operation. It is kind of rudiment
- * lock manager which is used to isolate access to units which participate in single transaction and which is going to be created to
- * provide efficient multi core scalability feature. It is recommended to always call it just after start of atomic operation but
- * always remember it is not replacement of thread safety mechanics for current data structure it is a mean to provide isolation
- * between atomic operations.</li>
- * <li>Log all page changes in WAL by calling of {@link #logPageChanges(ODurablePage, long, long, boolean)}</li>
  * <li>Call {@link #endAtomicOperation(boolean)} method when atomic operation completes, passed in parameter should be
  * <code>false</code> if atomic operation completes with success and <code>true</code> if there were some exceptions and it is
  * needed to rollback given operation.</li>
@@ -66,96 +57,130 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  * @since 8/27/13
  */
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
-  private OWriteAheadLog            writeAheadLog;
-  private OAtomicOperationsManager  atomicOperationsManager;
-  private OAbstractPaginatedStorage storage;
+  protected final OAtomicOperationsManager  atomicOperationsManager;
+  protected final OAbstractPaginatedStorage storage;
+  protected final OReadCache                readCache;
+  protected final OWriteCache               writeCache;
 
-  public ODurableComponent() {
-  }
+  public ODurableComponent(OAbstractPaginatedStorage storage) {
+    super(true);
 
-  public ODurableComponent(int iTimeout) {
-    super(iTimeout);
-  }
-
-  public ODurableComponent(boolean iConcurrent) {
-    super(iConcurrent);
-  }
-
-  public ODurableComponent(boolean iConcurrent, int iTimeout, boolean ignoreThreadInterruption) {
-    super(iConcurrent, iTimeout, ignoreThreadInterruption);
-  }
-
-  protected void init(final OAbstractPaginatedStorage storage) {
     this.storage = storage;
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
-    this.writeAheadLog = storage.getWALInstance();
+    this.readCache = storage.getReadCache();
+    this.writeCache = storage.getWriteCache();
+
+  }
+
+  @Override
+  protected void acquireExclusiveLock() {
+    super.acquireExclusiveLock();
   }
 
   protected void endAtomicOperation(boolean rollback) throws IOException {
     atomicOperationsManager.endAtomicOperation(rollback);
   }
 
-  protected void startAtomicOperation() throws IOException {
-    atomicOperationsManager.startAtomicOperation();
+  protected OAtomicOperation startAtomicOperation() throws IOException {
+    return atomicOperationsManager.startAtomicOperation(this);
   }
 
-  protected void logPageChanges(ODurablePage localPage, long fileId, long pageIndex, boolean isNewPage) throws IOException {
-    if (writeAheadLog != null) {
-      final OPageChanges pageChanges = localPage.getPageChanges();
-      if (pageChanges.isEmpty())
-        return;
+  protected OWALChangesTree getChangesTree(OAtomicOperation atomicOperation, OCacheEntry entry) {
+    if (atomicOperation == null)
+      return null;
 
-      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-      assert atomicOperation != null;
-
-      final OOperationUnitId unitId = atomicOperation.getOperationUnitId();
-      final OLogSequenceNumber prevLsn;
-      if (isNewPage)
-        prevLsn = atomicOperation.getStartLSN();
-      else
-        prevLsn = localPage.getLsn();
-
-      final OLogSequenceNumber lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, unitId, pageChanges, prevLsn, atomicOperation.getStartLSN()));
-      localPage.setLsn(lsn);
-    }
+    return atomicOperation.getChangesTree(entry.getFileId(), entry.getPageIndex());
   }
 
-  protected void logFileCreation(String fileName, long fileId) throws IOException {
-    if (writeAheadLog != null) {
-      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-      assert atomicOperation != null;
+  protected long getFilledUpTo(OAtomicOperation atomicOperation, long fileId) throws IOException {
+    if (atomicOperation == null)
+      return writeCache.getFilledUpTo(fileId);
 
-      final OOperationUnitId unitId = atomicOperation.getOperationUnitId();
-      writeAheadLog.log(new OFileCreatedCreatedWALRecord(unitId, fileName, fileId, atomicOperation.getStartLSN()));
-    }
+    return atomicOperation.filledUpTo(fileId);
   }
 
-  protected void lockTillAtomicOperationCompletes() {
-    atomicOperationsManager.lockTillOperationComplete(this);
+  protected OCacheEntry loadPage(OAtomicOperation atomicOperation, long fileId, long pageIndex, boolean checkPinnedPages)
+      throws IOException {
+    if (atomicOperation == null)
+      return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache);
+
+    return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages);
   }
 
-  protected ODurablePage.TrackMode getTrackMode() {
-    final ODurablePage.TrackMode trackMode;
-
-    final OStorageTransaction transaction = storage.getStorageTransaction();
-
-    final OTransaction clientTx;
-    if (transaction != null)
-      clientTx = transaction.getClientTx();
+  protected void pinPage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) throws IOException {
+    if (atomicOperation == null)
+      readCache.pinPage(cacheEntry);
     else
-      clientTx = null;
+      atomicOperation.pinPage(cacheEntry);
+  }
 
-    if (storage instanceof ODirectMemoryStorage && transaction == null)
-      return ODurablePage.TrackMode.NONE;
+  protected OCacheEntry addPage(OAtomicOperation atomicOperation, long fileId) throws IOException {
+    if (atomicOperation == null)
+      return readCache.allocateNewPage(fileId, writeCache);
 
-    // very risky and not durable case which may lead to data corruption.
-    if (clientTx instanceof OTransactionOptimistic && !clientTx.isUsingLog())
-      trackMode = ODurablePage.TrackMode.NONE;
-    else if (writeAheadLog == null)
-      trackMode = ODurablePage.TrackMode.NONE;
+    return atomicOperation.addPage(fileId);
+  }
+
+  protected void releasePage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) {
+    if (atomicOperation == null)
+      readCache.release(cacheEntry, writeCache);
     else
-      trackMode = ODurablePage.TrackMode.FULL;
+      atomicOperation.releasePage(cacheEntry);
+  }
 
-    return trackMode;
+  protected long addFile(OAtomicOperation atomicOperation, String fileName) throws IOException {
+    if (atomicOperation == null)
+      return readCache.addFile(fileName, writeCache);
+
+    return atomicOperation.addFile(fileName);
+  }
+
+  protected long openFile(OAtomicOperation atomicOperation, String fileName) throws IOException {
+    if (atomicOperation == null)
+      return readCache.openFile(fileName, writeCache);
+
+    return atomicOperation.openFile(fileName);
+  }
+
+  protected void openFile(OAtomicOperation atomicOperation, long fileId) throws IOException {
+    if (atomicOperation == null)
+      readCache.openFile(fileId, writeCache);
+    else
+      atomicOperation.openFile(fileId);
+  }
+
+  protected void deleteFile(OAtomicOperation atomicOperation, long fileId) throws IOException {
+    if (atomicOperation == null)
+      readCache.deleteFile(fileId, writeCache);
+    else
+      atomicOperation.deleteFile(fileId);
+  }
+
+  protected boolean isFileExists(OAtomicOperation atomicOperation, String fileName) {
+    if (atomicOperation == null)
+      return writeCache.exists(fileName);
+
+    return atomicOperation.isFileExists(fileName);
+  }
+
+  protected boolean isFileExists(OAtomicOperation atomicOperation, long fileId) {
+    if (atomicOperation == null)
+      return writeCache.exists(fileId);
+
+    return atomicOperation.isFileExists(fileId);
+  }
+
+  protected String fileNameById(OAtomicOperation atomicOperation, long fileId) {
+    if (atomicOperation == null)
+      return writeCache.fileNameById(fileId);
+
+    return atomicOperation.fileNameById(fileId);
+  }
+
+  protected void truncateFile(OAtomicOperation atomicOperation, long filedId) throws IOException {
+    if (atomicOperation == null)
+      readCache.truncateFile(filedId, writeCache);
+    else
+      atomicOperation.truncateFile(filedId);
   }
 }

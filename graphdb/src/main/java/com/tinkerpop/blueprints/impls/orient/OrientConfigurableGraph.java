@@ -41,6 +41,7 @@ public abstract class OrientConfigurableGraph {
   protected final boolean        STANDARD_ELEMENT_CONSTRAINTS_DEFAULT             = true;
   protected final boolean        WARN_ON_FORCE_CLOSING_TX_DEFAULT                 = true;
   protected final boolean        AUTO_SCALE_EDGE_TYPE_DEFAULT                     = false;
+  protected final boolean        USE_LOG_DEFAULT                                  = true;
   protected final int            EDGE_CONTAINER_EMBEDDED_2_TREE_THRESHOLD_DEFAULT = -1;
   protected final int            EDGE_CONTAINER_TREE_2_EMBEDDED_THRESHOLD_DEFAULT = -1;
   protected final THREAD_MODE    THREAD_MODE_DEFAULT                              = THREAD_MODE.AUTOSET_IFNULL;
@@ -67,6 +68,7 @@ public abstract class OrientConfigurableGraph {
     private THREAD_MODE threadMode                          = null;
     private Boolean     autoStartTx                         = null;
     private Boolean     requireTransaction                  = null;
+    private Boolean     useLog                              = null;
 
     public Settings copy() {
       final Settings copy = new Settings();
@@ -84,6 +86,7 @@ public abstract class OrientConfigurableGraph {
       copy.threadMode = threadMode;
       copy.autoStartTx = autoStartTx;
       copy.requireTransaction = requireTransaction;
+      copy.useLog = useLog;
       return copy;
     }
 
@@ -92,7 +95,7 @@ public abstract class OrientConfigurableGraph {
      * 
      * @param settings
      */
-    public void copyFrom(Settings settings) {
+    public void copyFrom(final Settings settings) {
       if (settings.useLightweightEdges != null) {
         useLightweightEdges = settings.useLightweightEdges;
       }
@@ -135,6 +138,9 @@ public abstract class OrientConfigurableGraph {
       if (settings.requireTransaction != null) {
         requireTransaction = settings.requireTransaction;
       }
+      if (settings.useLog != null) {
+        useLog = settings.useLog;
+      }
     }
 
     /**
@@ -170,6 +176,25 @@ public abstract class OrientConfigurableGraph {
      */
     public void setAutoScaleEdgeType(final boolean autoScaleEdgeType) {
       this.autoScaleEdgeType = autoScaleEdgeType;
+
+    }
+
+    /**
+     * Returns true if is using transaction logs.
+     */
+    public boolean isUseLog() {
+      if (useLog == null) {
+        return USE_LOG_DEFAULT;
+      }
+
+      return useLog;
+    }
+
+    /**
+     * Changes the setting about usage of transaction log.
+     */
+    public void setUseLog(final boolean useLog) {
+      this.useLog = useLog;
 
     }
 
@@ -642,6 +667,11 @@ public abstract class OrientConfigurableGraph {
    */
   public OrientConfigurableGraph setThreadMode(final THREAD_MODE iControl) {
     this.settings.setThreadMode(iControl);
+    return this;
+  }
+
+  public OrientConfigurableGraph setUseLog(final boolean useLog) {
+    this.settings.useLog = useLog;
     return this;
   }
 

@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.lang.reflect.Array;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
@@ -32,7 +39,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -41,13 +47,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-
-import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Helper class to manage documents.
@@ -459,7 +458,7 @@ public class ODocumentHelper {
 
             if (values.isEmpty())
               // RETURNS NULL
-              value = null;
+              value = values;
             else if (values.size() == 1)
               // RETURNS THE SINGLE ODOCUMENT
               value = values.iterator().next();
@@ -540,7 +539,7 @@ public class ODocumentHelper {
 
   protected static Object getIndexPart(final OCommandContext iContext, final String indexPart) {
     Object index = indexPart;
-    if (indexPart.indexOf(',') == -1 && ( indexPart.charAt(0) == '"' || indexPart.charAt(0) == '\'') )
+    if (indexPart.indexOf(',') == -1 && (indexPart.charAt(0) == '"' || indexPart.charAt(0) == '\''))
       index = OStringSerializerHelper.getStringContent(indexPart);
     else if (indexPart.charAt(0) == '$') {
       final Object ctxValue = iContext.getVariable(indexPart);

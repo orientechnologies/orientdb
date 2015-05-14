@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 /**
  * Default command operator executor factory.

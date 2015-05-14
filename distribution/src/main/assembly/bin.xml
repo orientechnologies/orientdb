@@ -174,7 +174,7 @@
          | copy databases directory
         -->
         <fileSet>
-            <directory>${basedir}/../graphdb/target/databases</directory>
+            <directory>${basedir}/target/databases</directory>
             <outputDirectory>databases</outputDirectory>
         </fileSet>
     </fileSets>

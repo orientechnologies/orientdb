@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import org.testng.Assert;
@@ -26,7 +28,7 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
@@ -47,8 +49,11 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
 
   private ODiskWriteAheadLog                         writeAheadLog;
 
-  private OReadWriteDiskCache                        actualDiskCache;
-  private OReadWriteDiskCache                        expectedDiskCache;
+  private O2QCache                                   actualReadCache;
+  private OWriteCache                                actualWriteCache;
+
+  private O2QCache                                   expectedReadCache;
+  private OWriteCache                                expectedWriteCache;
 
   private OLocalPaginatedStorage                     actualStorage;
 
@@ -84,8 +89,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
     sbTree.delete();
     expectedSBTree.delete();
 
-    actualDiskCache.delete();
-    expectedDiskCache.delete();
+    actualReadCache.deleteStorage(actualWriteCache);
+    expectedReadCache.deleteStorage(expectedWriteCache);
 
     writeAheadLog.delete();
 
@@ -116,12 +121,15 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
 
     writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, actualStorage);
 
-    actualDiskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, actualStorage, null, false, false);
+    actualWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
+        writeAheadLog, 100, 1648L * 1024 * 1024, actualStorage, false, 1);
+
+    actualReadCache = new O2QCache(400L * 1024 * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
+        false);
 
     when(actualStorage.getStorageTransaction()).thenReturn(null);
     when(actualStorage.getAtomicOperationsManager()).thenReturn(actualAtomicOperationsManager);
-    when(actualStorage.getDiskCache()).thenReturn(actualDiskCache);
+    when(actualStorage.getReadCache()).thenReturn(actualReadCache);
     when(actualStorage.getWALInstance()).thenReturn(writeAheadLog);
     when(actualStorage.getConfiguration()).thenReturn(storageConfiguration);
     when(actualStorage.getMode()).thenReturn("rw");
@@ -130,8 +138,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".sbt", true);
-    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, actualStorage);
+    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".sbt", true, actualStorage);
+    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
   }
 
   private void createExpectedSBTree() {
@@ -154,15 +162,17 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
     if (!expectedStorageDirFile.exists())
       expectedStorageDirFile.mkdirs();
 
-    expectedDiskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, expectedStorage, null, false, false);
+    expectedWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
+        writeAheadLog, 100, 1648L * 1024 * 1024, expectedStorage, false, 2);
+    expectedReadCache = new O2QCache(400L * 1024 * 1024 * 1024,
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(expectedStorageDir);
     OAtomicOperationsManager atomicOperationsManager = new OAtomicOperationsManager(null);
 
     when(expectedStorage.getStorageTransaction()).thenReturn(null);
     when(expectedStorage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
-    when(expectedStorage.getDiskCache()).thenReturn(expectedDiskCache);
+    when(expectedStorage.getReadCache()).thenReturn(expectedReadCache);
     when(expectedStorage.getWALInstance()).thenReturn(null);
     when(expectedStorage.getVariableParser()).thenReturn(variableParser);
     when(expectedStorage.getConfiguration()).thenReturn(storageConfiguration);
@@ -170,8 +180,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".sbt", true);
-    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, expectedStorage);
+    expectedSBTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".sbt", true, expectedStorage);
+    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
   }
 
   @Override
@@ -267,11 +277,11 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
     writeAheadLog.close();
     expectedSBTree.close();
 
-    actualDiskCache.clear();
+    actualReadCache.clear();
 
     restoreDataFromWAL();
 
-    expectedDiskCache.clear();
+    expectedReadCache.clear();
 
     assertFileContentIsTheSame(expectedSBTree.getName(), sbTree.getName());
   }
@@ -302,20 +312,25 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
           final long fileId = updatePageRecord.getFileId();
           final long pageIndex = updatePageRecord.getPageIndex();
 
-          if (!expectedDiskCache.isOpen(fileId))
-            expectedDiskCache.openFile(fileId);
+          if (!expectedWriteCache.isOpen(fileId))
+            expectedReadCache.openFile(fileId, expectedWriteCache);
 
-          final OCacheEntry cacheEntry = expectedDiskCache.load(fileId, pageIndex, true);
+          OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache);
+          if (cacheEntry == null) {
+            do {
+              cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
+            } while (cacheEntry.getPageIndex() != pageIndex);
+          }
           cacheEntry.acquireExclusiveLock();
           try {
-            ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
+            ODurablePage durablePage = new ODurablePage(cacheEntry, null);
             durablePage.restoreChanges(updatePageRecord.getChanges());
             durablePage.setLsn(updatePageRecord.getLsn());
 
             cacheEntry.markDirty();
           } finally {
             cacheEntry.releaseExclusiveLock();
-            expectedDiskCache.release(cacheEntry);
+            expectedReadCache.release(cacheEntry, expectedWriteCache);
           }
         }
         atomicUnit.clear();

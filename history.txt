@@ -27,6 +27,53 @@
 This document contains the last changes of OrientDB Community Edition.
 
 ---------------------------------------------------------------------------------------------------
+VERSION 2.1-rc2 - (May, 5th 2015)
+- Bug fixing: 32 issues from 2.1-rc1.
+
+https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A2.1-rc2+is%3Aclosed
+---------------------------------------------------------------------------------------------------
+VERSION 2.1-rc1 - (April, 16th 2015)
+
+https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.1-rc1+is%3Aclosed
+
+- Schema: Support for Multiple inheritance where classes can extend from multiple super classes
+          Support for default values (functions are allowed)
+- Core: Improved WAL management (Journal) to enforce Consistency with transactions 
+        Fetch-plan supports wildcard for names
+- SQL: New SQL parser by default on with new databases and off with those created with old versions
+       Prepared Statements and substitution of parameters and target
+       New Live Query to write Reactive applications
+       New optimization about using of indexes in sub-classes if present
+       New concat() function
+- Distributed: Support for slave (read-only) nodes
+               Included Hazelcast-all.jar including also Cloud support
+- ETL: Skip duplicated vertices
+- Bug fixing: 104 issues in total
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0.7 - (April, 14th 2015)
+- Bug fixing: 10 issues from 2.0.6.
+https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0.7+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0.6 - (March, 31st 2015)
+- Bug fixing: 19 issues from 2.0.5.
+
+https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0.6+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0.5 - (March, 12th 2015)
+- Bug fixing: 11 issues from 2.0.4.
+
+https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0.5+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0.4 - (March, 3rd 2015)
+- Bug fixing: 7 issues from 2.0.3.
+
+https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0.4+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
 VERSION 2.0.3 - (February, 20th 2015)
 - Bug fixing: 10 issues from 2.0.2.
 

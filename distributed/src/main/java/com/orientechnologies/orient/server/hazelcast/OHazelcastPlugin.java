@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -52,17 +53,9 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedStorage;
-import com.orientechnologies.orient.server.distributed.OLocalClusterStrategy;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
@@ -117,6 +110,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   protected volatile HazelcastInstance          hazelcastInstance;
   protected Object                              installDatabaseLock    = new Object();
   protected long                                lastClusterChangeOn;
+  protected List<ODistributedLifecycleListener> listeners              = new ArrayList<ODistributedLifecycleListener>();
 
   public OHazelcastPlugin() {
   }
@@ -178,7 +172,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       }
 
       // PUBLISH LOCAL NODE CFG
-      configurationMap.put(CONFIG_NODE_PREFIX + getLocalNodeId(), getLocalNodeConfiguration());
+      // TODO:check also here
+      ODocument cfg = getLocalNodeConfiguration();
+      ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentTx.getDefaultSerializer());
+      configurationMap.put(CONFIG_NODE_PREFIX + getLocalNodeId(), cfg);
 
       messageService = new OHazelcastDistributedMessageService(this);
 
@@ -545,6 +542,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final Member member = iEvent.getMember();
     final String nodeName = getNodeName(member);
     if (nodeName != null) {
+      // NOTIFY NODE LEFT
+      for (ODistributedLifecycleListener l : listeners)
+        l.onNodeLeft(nodeName);
+
       activeNodes.remove(nodeName);
 
       // REMOVE NODE IN DB CFG
@@ -591,6 +592,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                 + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file");
           }
 
+          // NOTIFY NODE IS GOING TO BE ADDED. EVERYBODY IS OK?
+          for (ODistributedLifecycleListener l : listeners) {
+            if (!l.onNodeJoining(nodeName)) {
+              // DENY JOIN
+              ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
+                  "denied node to join the cluster id=%s name=%s", iEvent.getMember(), getNodeName(iEvent.getMember()));
+              return;
+            }
+          }
+
           activeNodes.put(nodeName, (Member) iEvent.getMember());
 
           ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
@@ -599,6 +610,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
           installNewDatabases(false);
         }
+
+        // NOTIFY NODE WAS ADDED SUCCESSFULLY
+        for (ODistributedLifecycleListener l : listeners)
+          l.onNodeJoined(nodeName);
 
       } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
         // SYNCHRONIZE ADDING OF CLUSTERS TO AVOID DEADLOCKS
@@ -756,7 +771,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       final Serializable result = (Serializable) task.execute(serverInstance, this, database);
 
-      if (result instanceof Throwable)
+      if (result instanceof Throwable && !(result instanceof OException))
         ODistributedServerLog.error(this, getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
             "error on executing request %d (%s) on local node: ", (Throwable) result, req.getId(), req.getTask());
 
@@ -779,9 +794,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void updateCachedDatabaseConfiguration(String iDatabaseName, ODocument cfg, boolean iSaveToDisk, boolean iDeployToCluster) {
     final boolean updated = super.updateCachedDatabaseConfiguration(iDatabaseName, cfg, iSaveToDisk);
 
-    if (updated && iDeployToCluster)
+    if (updated && iDeployToCluster) {
       // DEPLOY THE CONFIGURATION TO THE CLUSTER
+      ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentTx.getDefaultSerializer());
       getConfigurationMap().put(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + iDatabaseName, cfg);
+    }
   }
 
   public long getLastClusterChangeOn() {
@@ -860,13 +877,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     // GET ALL THE OTHER SERVERS
     final Collection<String> nodes = cfg.getServers(null, getLocalNodeName());
 
-    ODistributedServerLog.warn(this, getLocalNodeName(), nodes.toString(), DIRECTION.OUT,
+    // GET THE FIRST ONE TO ASK FOR DATABASE. THIS FORCES TO HAVE ONE NODE TO DO BACKUP SAVING RESOURCES IN CASE BACKUP IS STILL
+    // VALID FOR FURTHER NODES
+    final List<String> firstNode = new ArrayList<String>();
+    if (nodes.iterator().hasNext())
+      firstNode.add(nodes.iterator().next());
+
+    ODistributedServerLog.warn(this, getLocalNodeName(), firstNode.toString(), DIRECTION.OUT,
         "requesting deploy of database '%s' on local server...", databaseName);
 
-    final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, nodes, new ODeployDatabaseTask(null),
-        EXECUTION_MODE.RESPONSE);
+    final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, firstNode, new ODeployDatabaseTask(
+        null), EXECUTION_MODE.RESPONSE);
 
-    ODistributedServerLog.warn(this, getLocalNodeName(), nodes.toString(), DIRECTION.OUT, "deploy returned: %s", results);
+    ODistributedServerLog.warn(this, getLocalNodeName(), firstNode.toString(), DIRECTION.OUT, "deploy returned: %s", results);
 
     // EXTRACT THE REAL RESULT
     for (Entry<String, Object> r : results.entrySet()) {
@@ -1074,12 +1097,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   protected boolean installDbClustersForLocalNode(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg) {
+    final String nodeName = getLocalNodeName();
+    final ODistributedConfiguration.ROLES role = cfg.getServerRole(nodeName);
+    if (role != ODistributedConfiguration.ROLES.MASTER)
+      // NO MASTER, DON'T CREATE LOCAL CLUSTERS
+      return false;
+
     if (iDatabase.isClosed())
       getServerInstance().openDatabase(iDatabase);
 
     // OVERWRITE CLUSTER SELECTION STRATEGY
-    final String nodeName = getLocalNodeName();
-
     final OSchema schema = ((ODatabaseInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
 
     boolean distribCfgDirty = false;
@@ -1197,7 +1224,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
         if (!getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName)) {
           // PUBLISH CFG FIRST TIME
-          getConfigurationMap().put(CONFIG_DATABASE_PREFIX + databaseName, cfg.serialize());
+          ODocument cfgDoc = cfg.serialize();
+          ORecordInternal.setRecordSerializer(cfgDoc, ODatabaseDocumentTx.getDefaultSerializer());
+          getConfigurationMap().put(CONFIG_DATABASE_PREFIX + databaseName, cfgDoc);
         }
 
         final boolean hotAlignment = cfg.isHotAlignment();
@@ -1280,7 +1309,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       if (cfg != null) {
         ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
             "loaded database configuration from active cluster");
-
         updateCachedDatabaseConfiguration(iDatabaseName, cfg, false, false);
         return cfg;
       }
@@ -1386,5 +1414,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
 
     return false;
+  }
+
+  @Override
+  public OHazelcastPlugin registerLifecycleListener(final ODistributedLifecycleListener iListener) {
+    listeners.add(iListener);
+    return this;
+  }
+
+  @Override
+  public OHazelcastPlugin unregisterLifecycleListener(final ODistributedLifecycleListener iListener) {
+    listeners.remove(iListener);
+    return this;
   }
 }

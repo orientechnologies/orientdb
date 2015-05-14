@@ -27,7 +27,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
@@ -67,7 +67,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
 
       for (OStorage s : Orient.instance().getStorages()) {
         if (s instanceof OLocalPaginatedStorage) {
-          final ODiskCache dk = ((OLocalPaginatedStorage) s).getDiskCache();
+          final OReadCache dk = ((OLocalPaginatedStorage) s).getReadCache();
           if (dk == null)
             // NOT YET READY
             continue;
@@ -123,7 +123,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
     long diskCacheTotal = 0;
     for (OStorage stg : Orient.instance().getStorages()) {
       if (stg instanceof OLocalPaginatedStorage) {
-        diskCacheUsed += ((OLocalPaginatedStorage) stg).getDiskCache().getUsedMemory();
+        diskCacheUsed += ((OLocalPaginatedStorage) stg).getReadCache().getUsedMemory();
         diskCacheTotal += OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
         stgs++;
       }

@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.Vertex;
 
 public class OrientCommitMT {
-  public static final String        DB_URL           = "remote:localhost/avltreetest";
+  public static final String        DB_URL           = "plocal:./avltreetest";
   public static final String        DB_USER          = "admin";
   public static final String        DB_PASSWORD      = "admin";
   private static final String       TEST_CLASS       = "ORIENT_COMMIT_TEST";
@@ -58,6 +58,8 @@ public class OrientCommitMT {
     } else {
       OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
       graph.drop();
+      graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
+      graph.shutdown();
     }
     factory = new OrientGraphFactory(DB_URL).setupPool(5, 10);
 
@@ -81,7 +83,6 @@ public class OrientCommitMT {
   }
 
   @Test
-  @Ignore
   public void testWithTransactionEmbeddedRidBag() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
 
@@ -94,7 +95,6 @@ public class OrientCommitMT {
   }
 
   @Test
-  @Ignore
   public void testSingleThreadWithTransactionEmbeddedRidBag() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
 
@@ -107,7 +107,6 @@ public class OrientCommitMT {
   }
 
   @Test
-  @Ignore
   public void testWithTransactionSBTreeRidBag() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
 
@@ -120,7 +119,6 @@ public class OrientCommitMT {
   }
 
   @Test
-  @Ignore
   public void testSingleThreadWithTransactionSBTreeRidBag() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
 

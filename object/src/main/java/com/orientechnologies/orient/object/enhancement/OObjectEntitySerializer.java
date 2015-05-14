@@ -601,8 +601,8 @@ public class OObjectEntitySerializer {
           reloadSchema = true;
         }
 
-        if (currentOClass.getSuperClass() == null || !currentOClass.getSuperClass().equals(oSuperClass)) {
-          currentOClass.setSuperClass(oSuperClass);
+        if (!currentOClass.getSuperClasses().contains(oSuperClass)) {
+          currentOClass.setSuperClasses(Arrays.asList(oSuperClass));
           reloadSchema = true;
         }
 
@@ -1131,7 +1131,7 @@ public class OObjectEntitySerializer {
 
         fieldName = p.getName();
 
-        List<String> classTransientFields = transientFields.get(pojoClass);
+        List<String> classTransientFields = transientFields.get(currentClass);
 
         if ((idField != null && fieldName.equals(idField.getName()) || (vField != null && fieldName.equals(vField.getName())) || (classTransientFields != null && classTransientFields
             .contains(fieldName))))

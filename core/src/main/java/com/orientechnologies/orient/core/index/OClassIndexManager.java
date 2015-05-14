@@ -20,6 +20,22 @@
 
 package com.orientechnologies.orient.core.index;
 
+import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
+import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -37,12 +53,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.util.*;
-
-import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
-import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
 
 /**
  * Handles indexing when records change.
@@ -528,7 +540,14 @@ public class OClassIndexManager extends ODocumentHookAbstract {
             if (!indexDefinition.isNullValuesIgnored() || keyItem != null)
               index.put(keyItem, rid);
         } else if (!indexDefinition.isNullValuesIgnored() || key != null)
-          index.put(key, rid);
+          try {
+            index.put(key, rid);
+          } catch (ORecordDuplicatedException e) {
+            if (!database.getTransaction().isActive()) {
+              database.delete(document);
+            }
+            throw e;
+          }
       }
 
     }

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -21,7 +22,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
  * @author Andrey Lomakin
@@ -36,9 +36,9 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
   public void beforeClass() {
     super.beforeClass();
 
-    localSBTree = new OSBTree<OCompositeKey, OIdentifiable>(".sbt", false, ".nbt", null);
-    localSBTree.create("localSBTreeCompositeKeyTest", OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE, null,
-        (OAbstractPaginatedStorage) database.getStorage().getUnderlying(), 2, false);
+    localSBTree = new OSBTree<OCompositeKey, OIdentifiable>(".sbt", false, ".nbt", (OAbstractPaginatedStorage) database
+        .getStorage().getUnderlying());
+    localSBTree.create("localSBTreeCompositeKeyTest", OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 2, false);
   }
 
   @BeforeMethod

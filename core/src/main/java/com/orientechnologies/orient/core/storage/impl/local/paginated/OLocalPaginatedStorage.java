@@ -33,9 +33,10 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
@@ -52,7 +53,6 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -60,7 +60,8 @@ import java.util.concurrent.TimeUnit;
  * @author Andrey Lomakin
  * @since 28.03.13
  */
-public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage, OBackupable {
+public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage, OBackupable,
+    OIdentifiableStorage {
   private static String[]                  ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
       ".oem", ".oet", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
@@ -76,11 +77,17 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   private final OStorageVariableParser     variableParser;
   private final OPaginatedStorageDirtyFlag dirtyFlag;
+
   private String                           storagePath;
   private ExecutorService                  checkpointExecutor;
+  private final int                        id;
 
-  public OLocalPaginatedStorage(final String name, final String filePath, final String mode) throws IOException {
+  public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id, OReadCache readCache)
+      throws IOException {
     super(name, filePath, mode);
+
+    this.id = id;
+    this.readCache = readCache;
 
     File f = new File(url);
 
@@ -129,7 +136,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     return variableParser;
   }
 
-
   @Override
   public String getType() {
     return OEngineLocalPaginated.NAME;
@@ -166,9 +172,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener) throws IOException {
     if (!isClosed())
-      close();
+      close(true, false);
 
     OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   @Override
@@ -281,33 +292,31 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       checkpointExecutor = Executors.newSingleThreadExecutor(new FullCheckpointThreadFactory());
 
       writeAheadLog = new ODiskWriteAheadLog(this);
-			writeAheadLog.addFullCheckpointListener(this);
+      writeAheadLog.addFullCheckpointListener(this);
     } else
       writeAheadLog = null;
 
     long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
     long writeCacheSize = (long) Math.floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0)
         * diskCacheSize);
-    long readCacheSize = diskCacheSize - writeCacheSize;
 
-    diskCache = new OReadWriteDiskCache(name, readCacheSize, writeCacheSize,
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
-        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000,
-        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), this, writeAheadLog, false, true);
+    writeCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
+        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000, writeAheadLog,
+        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), writeCacheSize, this, true, id);
+    writeCache.addLowDiskSpaceListener(this);
 
-    diskCache.addLowDiskSpaceListener(this);
   }
 
-  private boolean exists(String path) {
+  public static boolean exists(final String path) {
     return new File(path + "/" + OMetadataDefault.CLUSTER_INTERNAL_NAME + OPaginatedCluster.DEF_EXTENSION).exists();
   }
 
-	private static class FullCheckpointThreadFactory implements ThreadFactory {
-		@Override
-		public Thread newThread(Runnable r) {
-			Thread thread = new Thread(r);
-			thread.setDaemon(true);
-			return thread;
-		}
-	}
+  private static class FullCheckpointThreadFactory implements ThreadFactory {
+    @Override
+    public Thread newThread(Runnable r) {
+      Thread thread = new Thread(r);
+      thread.setDaemon(true);
+      return thread;
+    }
+  }
 }

@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -44,9 +45,16 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -80,6 +88,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   private boolean                            upsertMode        = false;
   private boolean                            isUpsertAllowed   = false;
   private boolean                            updated           = false;
+  private OClass                             clazz             = null;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLUpdate parse(final OCommandRequest iRequest) {
@@ -88,9 +97,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     String queryText = textRequest.getText();
     String originalQuery = queryText;
     try {
-//      System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-//      System.out.println("NEW PARSER   TO: " + queryText);
       textRequest.setText(queryText);
 
       final ODatabaseDocument database = getDatabase();
@@ -113,8 +120,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       if (subjectName == null)
         throwSyntaxErrorException("Invalid subject name. Expected cluster, class, index or sub-query");
 
-      parserNextWord(true);
-      String word = parserGetLastWord();
+      clazz = extractClassFromTarget(subjectName);
+
+      String word = parserNextWord(true);
 
       if (parserIsEnded()
           || (!word.equals(KEYWORD_SET) && !word.equals(KEYWORD_ADD) && !word.equals(KEYWORD_PUT) && !word.equals(KEYWORD_REMOVE)
@@ -133,7 +141,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         else if (word.equals(KEYWORD_MERGE))
           parseMerge();
         else if (word.equals(KEYWORD_SET))
-          parseSetFields(null, setEntries);
+          parseSetFields(clazz, setEntries);
         else if (word.equals(KEYWORD_ADD))
           parseAddFields();
         else if (word.equals(KEYWORD_PUT))
@@ -173,6 +181,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
           || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET) || additionalStatement.equals(KEYWORD_LOCK)) {
         query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
             + parserText.substring(parserGetCurrentPosition()), this);
+
         isUpsertAllowed = (((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName) != null);
       } else if (!additionalStatement.isEmpty())
         throwSyntaxErrorException("Invalid keyword " + additionalStatement);
@@ -213,7 +222,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     returnHandler.reset();
 
     if (lockStrategy.equals("RECORD"))
-      query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK);
+      query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK);
 
     for (int r = 0; r < retry; ++r) {
       try {
@@ -236,12 +245,33 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       }
     }
 
-    // IF UPDATE DOES NOT PRODUCE RESULTS AND UPSERT MODE IS ENABLED, CREATE DOCUMENT AND APPLY SET/ADD/PUT/MERGE and so on
     if (upsertMode && !updated) {
+      // IF UPDATE DOES NOT PRODUCE RESULTS AND UPSERT MODE IS ENABLED, CREATE DOCUMENT AND APPLY SET/ADD/PUT/MERGE and so on
       final ODocument doc = subjectName != null ? new ODocument(subjectName) : new ODocument();
       final String suspendedLockStrategy = lockStrategy;
       lockStrategy = "NONE";// New record hasn't been created under exclusive lock - just to avoid releasing locks by result(doc)
-      result(doc);
+      try {
+        result(doc);
+      } catch (ORecordDuplicatedException e) {
+        if (upsertMode)
+          // UPDATE THE NEW RECORD
+          getDatabase().query(query, queryArgs);
+        else
+          throw e;
+      } catch (ORecordNotFoundException e) {
+        if (upsertMode)
+          // UPDATE THE NEW RECORD
+          getDatabase().query(query, queryArgs);
+        else
+          throw e;
+      } catch (OConcurrentModificationException e) {
+        if (upsertMode)
+          // UPDATE THE NEW RECORD
+          getDatabase().query(query, queryArgs);
+        else
+          throw e;
+      }
+
       lockStrategy = suspendedLockStrategy;
     }
 
@@ -290,7 +320,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
 
   @Override
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return upsertMode ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+    // REPLICATE MODE COULD BE MORE EFFICIENT ON MASSIVE UPDATES
+    return upsertMode || query == null ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
   }
 
   @Override
@@ -394,8 +425,6 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
           }
         }
       }
-
-      record.clear();
 
       record.merge(restrictedFields, false, false);
       record.merge(content, true, false);
@@ -638,8 +667,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       parserRequiredKeyword("=");
       fieldValue = parserRequiredWord(false, "Value expected", " =><,\r\n");
 
+      final Object v = convertValue(clazz, fieldName, getFieldValueCountingParameters(fieldValue));
+
       // INSERT TRANSFORMED FIELD VALUE
-      addEntries.add(new OPair<String, Object>(fieldName, getFieldValueCountingParameters(fieldValue)));
+      addEntries.add(new OPair<String, Object>(fieldName, v));
       parserSkipWhiteSpaces();
     }
 
@@ -718,5 +749,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
 
     if (incrementEntries.size() == 0)
       throwSyntaxErrorException("Entries to increment <field> = <value> are missed. Example: salary = -100");
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
   }
 }

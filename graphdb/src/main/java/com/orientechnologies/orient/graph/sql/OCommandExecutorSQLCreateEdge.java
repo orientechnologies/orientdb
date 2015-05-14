@@ -28,14 +28,23 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.*;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLRetryAbstract;
+import com.orientechnologies.orient.core.sql.OCommandParameters;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * SQL CREATE EDGE command.
@@ -207,6 +216,11 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
         return edges;
       }
     });
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
   }
 
   @Override

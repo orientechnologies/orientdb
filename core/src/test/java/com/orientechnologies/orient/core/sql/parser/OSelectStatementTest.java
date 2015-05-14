@@ -72,6 +72,14 @@ public class OSelectStatementTest {
 
   }
 
+  public void testUnwind() {
+    checkRightSyntax("select from Foo unwind foo");
+    checkRightSyntax("select from Foo unwind foo, bar");
+    checkRightSyntax("select from Foo where foo = 1 unwind foo, bar");
+    checkRightSyntax("select from Foo where foo = 1 order by foo unwind foo, bar");
+    checkRightSyntax("select from Foo where foo = 1 group by bar order by foo unwind foo, bar");
+  }
+
   public void testSubSelect() {
     checkRightSyntax("select from (select from Foo)");
 
@@ -189,6 +197,20 @@ public class OSelectStatementTest {
 
   }
 
+
+  public void testQuotedFieldNameFrom() {
+    SimpleNode result = checkRightSyntax("select `from` from City where country.@class = 'Country'");
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
+  }
+
+  public void testQuotedFieldName() {
+    checkRightSyntax("select `foo` from City where country.@class = 'Country'");
+
+
+  }
+
   public void testLongDotted() {
     SimpleNode result = checkRightSyntax("select from Profile where location.city.country.name = 'Spain'");
     // result.dump("    ");
@@ -233,9 +255,33 @@ public class OSelectStatementTest {
   }
 
   // issue #3718
-  public void testComplexTarget1(){
+  public void testComplexTarget1() {
     checkRightSyntax("SELECT $e FROM [#1:1,#1:2] LET $e = (SELECT FROM $current.prop1)");
     checkRightSyntax("SELECT $e FROM [#1:1,#1:2] let $e = (SELECT FROM (SELECT FROM $parent.$current))");
+  }
+
+  @Test(enabled = false)
+  public void testSlashInQuery() {
+    checkRightSyntax("insert into test content {\"node_id\": \"MFmqvmht//sYYWB8=\"}");
+    checkRightSyntax("insert into test content { \"node_id\": \"MFmqvmht\\/\\/GYsYYWB8=\"}");
+
+  }
+
+  @Test
+  public void checkOrderBySyntax() {
+    checkRightSyntax("select from test order by something ");
+    checkRightSyntax("select from test order by something, somethingElse ");
+    checkRightSyntax("select from test order by something asc, somethingElse desc");
+    checkRightSyntax("select from test order by something asc, somethingElse ");
+    checkRightSyntax("select from test order by something, somethingElse asc");
+    checkRightSyntax("select from test order by something asc");
+    checkRightSyntax("select from test order by something desc");
+    checkRightSyntax("select from test order by (something desc)");
+    checkRightSyntax("select from test order by (something asc)");
+    checkRightSyntax("select from test order by (something asc),somethingElse");
+    checkRightSyntax("select from test order by (something),(somethingElse)");
+    checkRightSyntax("select from test order by something,(somethingElse)");
+    checkRightSyntax("select from test order by (something asc),(somethingElse desc)");
   }
 
   private void printTree(String s) {

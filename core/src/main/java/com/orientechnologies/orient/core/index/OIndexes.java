@@ -114,6 +114,22 @@ public final class OIndexes {
     return engines;
   }
 
+  public static OIndexFactory getFactory(String indexType, String algorithm) {
+    if (algorithm == null)
+      algorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
+
+    final Iterator<OIndexFactory> ite = getAllFactories();
+
+    while (ite.hasNext()) {
+      final OIndexFactory factory = ite.next();
+      if (factory.getTypes().contains(indexType) && factory.getAlgorithms().contains(algorithm)) {
+        return factory;
+      }
+    }
+
+    throw new OIndexException("Index with type " + indexType + " and algorithm " + algorithm + " does not exist.");
+  }
+
   /**
    * 
    * 

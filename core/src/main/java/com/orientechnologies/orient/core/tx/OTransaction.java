@@ -77,8 +77,11 @@ public interface OTransaction {
 
   public void clearRecordEntries();
 
+  @Deprecated
   public ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache, boolean loadTombstone,
       final OStorage.LOCKING_STRATEGY iLockingStrategy);
+
+  public ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache);
 
   public ORecord saveRecord(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
@@ -146,6 +149,10 @@ public interface OTransaction {
   public void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid);
 
   public int amountOfNestedTxs();
+
+  public boolean isLockedRecord(OIdentifiable iRecord);
+
+  OStorage.LOCKING_STRATEGY lockingStrategy(OIdentifiable iRecord);
 
   public OTransaction lockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY iLockingStrategy);
 

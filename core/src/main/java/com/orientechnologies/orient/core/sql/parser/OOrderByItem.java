@@ -7,6 +7,7 @@ public class OOrderByItem {
   public static final String ASC  = "ASC";
   public static final String DESC = "DESC";
   protected String           alias;
+  protected OModifier        modifier;
   protected String           recordAttr;
   protected ORid             rid;
   protected String           type = ASC;
@@ -48,6 +49,9 @@ public class OOrderByItem {
     StringBuilder result = new StringBuilder();
     if (alias != null) {
       result.append(alias);
+      if (modifier != null) {
+        result.append(modifier.toString());
+      }
     } else if (recordAttr != null) {
       result.append(recordAttr);
     } else if (rid != null) {

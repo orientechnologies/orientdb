@@ -23,7 +23,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
@@ -270,7 +270,7 @@ public enum OGlobalConfiguration {
   SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE("sbtreebonsai.linkBagCache.evictionSize",
       "How many items of cached LINKBAG collections will be removed when cache limit is reached", Integer.class, 1000),
 
-  SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER("sbtreebonsai.freeeSpaceReuseTrigger",
+  SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER("sbtreebonsai.freeSpaceReuseTrigger",
       "How much free space should be in sbtreebonsai file before it will be reused during next allocation", Float.class, 0.5),
 
   // RIDBAG
@@ -334,6 +334,8 @@ public enum OGlobalConfiguration {
       1000000),
 
   NETWORK_HTTP_CONTENT_CHARSET("network.http.charset", "Http response charset", String.class, "utf-8"),
+
+  NETWORK_HTTP_JSON_RESPONSE_ERROR("network.http.jsonResponseError", "Http response error in json", Boolean.class, true),
 
   OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, "utf-8"), NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT(
       "network.http.sessionExpireTimeout", "Timeout after which an http session is considered tp have expired (seconds)",
@@ -434,14 +436,14 @@ public enum OGlobalConfiguration {
       Level.class, Level.SEVERE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
-      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE),
+      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.FALSE),
 
   // DISTRIBUTED
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout",
-      "Maximum timeout in milliseconds to wait for CRUD remote tasks", Integer.class, 3000l),
+      "Maximum timeout in milliseconds to wait for CRUD remote tasks", Integer.class, 3000),
 
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
-      "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 60000l),
+      "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 60000),
 
   DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout",
       "Maximum timeout in milliseconds to wait for database deployment", Long.class, 1200000l),
@@ -455,11 +457,14 @@ public enum OGlobalConfiguration {
   DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout", "Maximum timeout in milliseconds to wait for the response in replication",
       Integer.class, 5000l),
 
+  DISTRIBUTED_ASYNCH_QUEUE_SIZE("distributed.asynchQueueSize",
+      "Queue size to handle distributed asynchronous operations. 0 = dynamic allocation (up to 2^31-1 entries)", Integer.class, 0),
+
   DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT("distributed.asynchResponsesTimeout",
-      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
+      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000),
 
   DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY("distributed.purgeResponsesTimerDelay",
-      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
+      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000),
 
   DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE("db.makeFullCheckpointOnIndexChange",
       "When index metadata is changed full checkpoint is performed", Boolean.class, true),
@@ -697,8 +702,8 @@ public enum OGlobalConfiguration {
             .warn(
                 null,
                 "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE="
-                    + OReadWriteDiskCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
-        DISK_CACHE_SIZE.setValue(OReadWriteDiskCache.MIN_CACHE_SIZE);
+                    + O2QCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+        DISK_CACHE_SIZE.setValue(O2QCache.MIN_CACHE_SIZE);
       }
 
     } catch (NoSuchMethodException e) {

@@ -37,6 +37,8 @@ public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, Wea
 
   @Override
   public ORecord get(final ORID rid) {
+    if (!isEnabled())
+      return null;
     final WeakReference<ORecord> value;
     value = cache.get(rid);
     return get(value);
@@ -44,6 +46,8 @@ public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, Wea
 
   @Override
   public ORecord put(final ORecord record) {
+    if (!isEnabled())
+      return null;
     final WeakReference<ORecord> value;
     value = cache.put(record.getIdentity(), new WeakReference<ORecord>(record));
     return get(value);
@@ -51,6 +55,8 @@ public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, Wea
 
   @Override
   public ORecord remove(final ORID rid) {
+    if (!isEnabled())
+      return null;
     final WeakReference<ORecord> value;
     value = cache.remove(rid);
     return get(value);

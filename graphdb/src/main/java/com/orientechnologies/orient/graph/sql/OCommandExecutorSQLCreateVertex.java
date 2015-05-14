@@ -60,9 +60,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
     String queryText = textRequest.getText();
     String originalQuery = queryText;
     try {
-//      System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-//      System.out.println("NEW PARSER   TO: " + queryText);
       textRequest.setText(queryText);
 
       final ODatabaseDocument database = getDatabase();
@@ -147,6 +145,11 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
   @Override
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.LOCAL;
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
   }
 
   @Override

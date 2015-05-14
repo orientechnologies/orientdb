@@ -39,20 +39,22 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
  * @author Andrey Lomakin
  * @since 8/30/13
  */
 public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
+  public static final int          VERSION                    = 1;
+
   public static final String       DATA_FILE_EXTENSION        = ".sbt";
   public static final String       NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private ORID                     identity;
   private final OSBTree<Object, V> sbTree;
+  private int                      version;
 
-  public OSBTreeIndexEngine(Boolean durableInNonTxMode, ODurablePage.TrackMode trackMode) {
+  public OSBTreeIndexEngine(Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
 
@@ -63,7 +65,9 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     else
       durableInNonTx = durableInNonTxMode;
 
-    sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, durableInNonTx, NULL_BUCKET_FILE_EXTENSION, trackMode);
+    this.version = version;
+
+    sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, durableInNonTx, NULL_BUCKET_FILE_EXTENSION, storage);
   }
 
   @Override
@@ -98,8 +102,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       identity = identityRecord.getIdentity();
 
       sbTree.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer,
-          indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract, keySize, indexDefinition != null
-              && !indexDefinition.isNullValuesIgnored());
+          indexDefinition != null ? indexDefinition.getTypes() : null, keySize,
+          indexDefinition != null && !indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();
     }
@@ -144,10 +148,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   public void deleteWithoutLoad(String indexName) {
     acquireExclusiveLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
-
-      sbTree.deleteWithoutLoad(indexName, storageLocalAbstract);
+      sbTree.deleteWithoutLoad(indexName);
     } finally {
       releaseExclusiveLock();
     }
@@ -162,8 +163,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
       sbTree.load(indexName, determineKeySerializer(indexDefinition), valueSerializer,
-          indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract, determineKeySize(indexDefinition),
-          indexDefinition != null && indexDefinition.isNullValuesIgnored());
+          indexDefinition != null ? indexDefinition.getTypes() : null, determineKeySize(indexDefinition), indexDefinition != null
+              && !indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();
     }
@@ -197,6 +198,11 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     } finally {
       releaseSharedLock();
     }
+  }
+
+  @Override
+  public int getVersion() {
+    return version;
   }
 
   @Override

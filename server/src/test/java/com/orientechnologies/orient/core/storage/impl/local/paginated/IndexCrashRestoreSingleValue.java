@@ -41,7 +41,7 @@ public class IndexCrashRestoreSingleValue {
 
   @BeforeClass
   public void beforeClass() throws Exception {
-		OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+    OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/uniqueIndexCrashRestore";
 
@@ -88,10 +88,11 @@ public class IndexCrashRestoreSingleValue {
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
-			OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+      OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
       OServer server = OServerMain.create();
-      server.startup(RemoteDBRunner.class
-          .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/index-crash-single-value-config.xml"));
+      server
+          .startup(RemoteDBRunner.class
+              .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/index-crash-single-value-config.xml"));
       server.activate();
       while (true)
         ;
@@ -110,12 +111,11 @@ public class IndexCrashRestoreSingleValue {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
-		Thread.sleep(1800000);
+    Thread.sleep(300000);
 
     System.out.println("Wait for process to destroy");
-    Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
-    p.waitFor();
 
+    // process.destroyForcibly();
     process.waitFor();
     System.out.println("Process was destroyed");
 

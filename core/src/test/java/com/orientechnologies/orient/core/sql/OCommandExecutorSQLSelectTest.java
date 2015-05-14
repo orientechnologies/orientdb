@@ -1,17 +1,18 @@
 package com.orientechnologies.orient.core.sql;
 
-import static org.testng.Assert.*;
-
-import java.util.List;
-
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.testng.Assert.*;
 
 @Test
 public class OCommandExecutorSQLSelectTest {
@@ -76,6 +77,10 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into ridsorttest (name) values (8)")).execute();
     db.command(new OCommandSQL("insert into ridsorttest (name) values (6)")).execute();
 
+    db.command(new OCommandSQL("CREATE class unwindtest")).execute();
+    db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('foo', ['foo1', 'foo2'])")).execute();
+    db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('bar', ['bar1', 'bar2'])")).execute();
+
   }
 
   @AfterClass
@@ -92,7 +97,8 @@ public class OCommandExecutorSQLSelectTest {
   public void testUseIndexWithOrderBy2() throws Exception {
     long idxUsagesBefore = indexUsages(db);
 
-    List<ODocument> qResult = db.command(new OCommandSQL("select * from foo where address.city = 'NY' order by name ASC")).execute();
+    List<ODocument> qResult = db.command(new OCommandSQL("select * from foo where address.city = 'NY' order by name ASC"))
+        .execute();
     assertEquals(qResult.size(), 1);
   }
 
@@ -289,6 +295,38 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
+  public void testLimit() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit 3")).execute();
+    assertEquals(qResult.size(), 3);
+  }
+
+  @Test
+  public void testLimitWithMetadataQuery() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select expand(classes) from metadata:schema limit 3")).execute();
+    assertEquals(qResult.size(), 3);
+  }
+
+  @Test
+  public void testOrderByWithMetadataQuery() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select expand(classes) from metadata:schema order by name")).execute();
+    assertTrue(qResult.size() > 0);
+  }
+
+  @Test
+  public void testLimitWithUnnamedParam() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit ?")).execute(3);
+    assertEquals(qResult.size(), 3);
+  }
+
+  @Test
+  public void testLimitWithNamedParam() {
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("lim", 2);
+    List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit :lim")).execute(params);
+    assertEquals(qResult.size(), 2);
+  }
+
+  @Test
   public void testOrderByRid() {
     List<ODocument> qResult = db.command(new OCommandSQL("select from ridsorttest order by @rid ASC")).execute();
     assertTrue(qResult.size() > 0);
@@ -315,6 +353,78 @@ public class OCommandExecutorSQLSelectTest {
     for (int i = 1; i < qResult.size(); i++) {
       assertTrue(prev.getIdentity().compareTo(qResult.get(i).getIdentity()) >= 0);
       prev = qResult.get(i);
+    }
+  }
+
+  @Test
+  public void testUnwind() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll")).execute();
+
+    assertEquals(qResult.size(), 4);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+    }
+  }
+
+  @Test
+  public void testUnwindSkip() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll skip 1")).execute();
+
+    assertEquals(qResult.size(), 3);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+    }
+  }
+
+  @Test
+  public void testUnwindLimit() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll limit 1")).execute();
+
+    assertEquals(qResult.size(), 1);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+    }
+  }
+
+  @Test
+  public void testUnwindLimit3() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll limit 3")).execute();
+
+    assertEquals(qResult.size(), 3);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+    }
+  }
+
+  @Test
+  public void testUnwindSkipAndLimit() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll skip 1 limit 1")).execute();
+
+    assertEquals(qResult.size(), 1);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+    }
+  }
+
+  @Test
+  public void testUnwindSkipAndLimit2() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll skip 1 limit 2")).execute();
+
+    assertEquals(qResult.size(), 2);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
     }
   }
 

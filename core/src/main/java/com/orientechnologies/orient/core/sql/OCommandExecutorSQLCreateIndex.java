@@ -35,6 +35,8 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
+import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
@@ -242,19 +244,20 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
     }
 
     if (fields == null || fields.length == 0) {
+      OIndexFactory factory = OIndexes.getFactory(indexType.toString(), null);
 
       if (keyTypes != null)
         idx = database
             .getMetadata()
             .getIndexManager()
-            .createIndex(indexName, indexType.toString(), new OSimpleKeyIndexDefinition(keyTypes, collatesList), null, null,
-                metadataDoc, engine);
+            .createIndex(indexName, indexType.toString(),
+                new OSimpleKeyIndexDefinition(keyTypes, collatesList, factory.getLastVersion()), null, null, metadataDoc, engine);
       else if (serializerKeyId != 0) {
         idx = database
             .getMetadata()
             .getIndexManager()
-            .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId), null, null, metadataDoc,
-                engine);
+            .createIndex(indexName, indexType.toString(),
+                new ORuntimeKeyIndexDefinition(serializerKeyId, factory.getLastVersion()), null, null, metadataDoc, engine);
       } else
         idx = database.getMetadata().getIndexManager()
             .createIndex(indexName, indexType.toString(), null, null, null, metadataDoc, engine);
@@ -266,7 +269,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
             .extractFieldTypes(fields);
 
         final OIndexDefinition idxDef = OIndexDefinitionFactory.createIndexDefinition(oClass, Arrays.asList(fields), fieldTypeList,
-            collatesList);
+            collatesList, indexType.toString(), null);
 
         idx = database.getMetadata().getIndexManager()
             .createIndex(indexName, indexType.name(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc, engine);
@@ -277,6 +280,11 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       return idx.getSize();
 
     return null;
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
   }
 
   @Override

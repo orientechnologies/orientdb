@@ -142,7 +142,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
       return runInTx(graph, callBack);
     } finally {
       if (shutdownFlag.getValue())
-        graph.shutdown(false);
+        graph.shutdown(false, false);
       ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
     }
   }

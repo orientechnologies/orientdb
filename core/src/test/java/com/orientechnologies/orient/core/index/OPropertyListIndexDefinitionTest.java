@@ -24,7 +24,7 @@ public class OPropertyListIndexDefinitionTest {
 
   @BeforeMethod
   public void beforeMethod() {
-    propertyIndex = new OPropertyListIndexDefinition("testClass", "fOne", OType.INTEGER);
+    propertyIndex = new OPropertyListIndexDefinition("testClass", "fOne", OType.INTEGER, -1);
   }
 
   public void testCreateValueSingleParameter() {

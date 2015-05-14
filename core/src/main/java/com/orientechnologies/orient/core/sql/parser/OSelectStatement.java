@@ -2,9 +2,6 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -14,6 +11,9 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class OSelectStatement extends OStatement {
 
@@ -27,9 +27,11 @@ public class OSelectStatement extends OStatement {
 
   protected OOrderBy     orderBy;
 
-  protected Integer      skip;
+  protected OUnwind      unwind;
 
-  protected Integer      limit;
+  protected OSkip       skip;
+
+  protected OLimit       limit;
 
   protected Boolean      lockRecord;
 
@@ -37,7 +39,7 @@ public class OSelectStatement extends OStatement {
 
   protected OLetClause   letClause;
 
-  protected Integer      timeout;
+  protected Number       timeout;
 
   protected Boolean      parallel;
 
@@ -137,19 +139,19 @@ public class OSelectStatement extends OStatement {
     this.orderBy = orderBy;
   }
 
-  public Integer getSkip() {
+  public OSkip getSkip() {
     return skip;
   }
 
-  public void setSkip(Integer skip) {
+  public void setSkip(OSkip skip) {
     this.skip = skip;
   }
 
-  public Integer getLimit() {
+  public OLimit getLimit() {
     return limit;
   }
 
-  public void setLimit(Integer limit) {
+  public void setLimit(OLimit limit) {
     this.limit = limit;
   }
 
@@ -205,18 +207,21 @@ public class OSelectStatement extends OStatement {
       builder.append(groupBy.toString());
     }
 
+    if (unwind != null) {
+      builder.append(" ");
+      builder.append(unwind.toString());
+    }
+
     if (orderBy != null) {
       builder.append(" ");
       builder.append(orderBy.toString());
     }
 
     if (skip != null) {
-      builder.append(" SKIP ");
       builder.append(skip);
     }
 
     if (limit != null) {
-      builder.append(" LIMIT ");
       builder.append(limit);
     }
 
@@ -255,12 +260,22 @@ public class OSelectStatement extends OStatement {
       projection.replaceParameters(params);
     }
 
-    if (whereClause != null) {
-      whereClause.replaceParameters(params);
-    }
     if (letClause != null) {
       letClause.replaceParameters(params);
     }
+
+    if (whereClause != null) {
+      whereClause.replaceParameters(params);
+    }
+
+    if(skip!=null){
+      skip.replaceParameters(params);
+    }
+
+    if(limit!=null){
+      limit.replaceParameters(params);
+    }
+
   }
 }
 /* JavaCC - OriginalChecksum=b26959b9726a8cf35d6283eca931da6b (do not edit this line) */

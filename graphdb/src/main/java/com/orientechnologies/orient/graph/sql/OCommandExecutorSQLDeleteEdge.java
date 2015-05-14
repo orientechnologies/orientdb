@@ -40,9 +40,18 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.*;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL DELETE EDGE command.
@@ -340,5 +349,10 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
   @Override
   public int getSecurityOperationType() {
     return ORole.PERMISSION_DELETE;
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
   }
 }

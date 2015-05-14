@@ -67,6 +67,7 @@ public class OHttpResponse {
   public String                content;
   public int                   code;
   public boolean               keepAlive     = true;
+  public boolean               jsonErrorResponse     = true;
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
       final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction,
@@ -544,6 +545,11 @@ public class OHttpResponse {
 
   public void setCode(int code) {
     this.code = code;
+  }
+
+
+  public void setJsonErrorResponse(boolean jsonErrorResponse) {
+    this.jsonErrorResponse = jsonErrorResponse;
   }
 
   private String keyFromMapObject(Object key) {

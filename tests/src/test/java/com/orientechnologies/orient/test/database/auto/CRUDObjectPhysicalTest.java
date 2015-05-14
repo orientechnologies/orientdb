@@ -130,7 +130,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     database.getEntityManager().registerEntityClass(DummyForTestFreeze.class);
 
-    database.countClass(Dummy.class.getSimpleName());
+    database.countClass(DummyForTestFreeze.class.getSimpleName());
 
     database.getMetadata().getSchema().dropClass(DummyForTestFreeze.class.getSimpleName());
 
@@ -2446,6 +2446,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     Assert.assertEquals(cresult.size(), 0);
   }
 
+  @Test(enabled = false, dependsOnMethods = "testCreate")
   public void testEmbeddedBinary() {
     database.getMetadata().getSchema().reload();
 

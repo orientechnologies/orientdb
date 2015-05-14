@@ -45,7 +45,7 @@ public class LocalPaginatedStorageCreateCrashRestore {
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
-			OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+      OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
 
       OServer server = OServerMain.create();
       server.startup(RemoteDBRunner.class
@@ -90,23 +90,23 @@ public class LocalPaginatedStorageCreateCrashRestore {
     private void saveDoc(ODocument document) {
       ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
 
-			baseDB.begin();
+      baseDB.begin();
       ODocument testDoc = new ODocument();
       document.copyTo(testDoc);
       document.save();
-			baseDB.commit();
+      baseDB.commit();
 
       ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
-			testDB.begin();
+      testDB.begin();
       testDoc.save();
-			testDB.commit();
+      testDB.commit();
       ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
     }
   }
 
   @BeforeClass
   public void beforeClass() throws Exception {
-		OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+    OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageCreateCrashRestore";
@@ -161,14 +161,13 @@ public class LocalPaginatedStorageCreateCrashRestore {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
-    Thread.sleep(1800000);
+    Thread.sleep(300000);
 
     long lastTs = System.currentTimeMillis();
 
     System.out.println("Wait for process to destroy");
-    Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
-    p.waitFor();
 
+    // process.destroyForcibly();
     process.waitFor();
     System.out.println("Process was destroyed");
 

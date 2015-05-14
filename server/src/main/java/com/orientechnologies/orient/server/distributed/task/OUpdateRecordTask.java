@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -32,10 +38,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 /**
  * Distributed updated record task used for synchronization.
  *
@@ -47,19 +49,30 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
   protected byte[]          previousContent;
   protected ORecordVersion  previousVersion;
+  protected byte            recordType;
 
   protected byte[]          content;
+  private transient ORecord record;
 
   public OUpdateRecordTask() {
   }
 
   public OUpdateRecordTask(final ORecordId iRid, final byte[] iPreviousContent, final ORecordVersion iPreviousVersion,
-      final byte[] iContent, final ORecordVersion iVersion) {
+      final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
     super(iRid, iVersion);
     previousContent = iPreviousContent;
     previousVersion = iPreviousVersion;
-
     content = iContent;
+    recordType = iRecordType;
+  }
+
+  @Override
+  public ORecord getRecord() {
+    if (record == null) {
+      record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+      ORecordInternal.fill(record, rid, version, content, true);
+    }
+    return record;
   }
 
   @Override
@@ -74,8 +87,14 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
     if (loadedRecord instanceof ODocument) {
       // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
-      final ODocument newDocument = new ODocument().fromStream(content);
-      ((ODocument) loadedRecord).merge(newDocument, false, false).getRecordVersion().copyFrom(version);
+      final ODocument newDocument = (ODocument) getRecord();
+
+      ODocument loadedDocument = (ODocument) loadedRecord;
+      ORecordVersion loadedRecordVersion = loadedDocument.merge(newDocument, false, false).getRecordVersion();
+      if (loadedRecordVersion.getCounter() != version.getCounter()) {
+        loadedDocument.setDirty();
+      }
+      loadedRecordVersion.copyFrom(version);
     } else
       ORecordInternal.fill(loadedRecord, rid, version, content, true);
 
@@ -89,16 +108,17 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.WRITE;
+  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
+    return OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   }
 
   @Override
-  public OUpdateRecordTask getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse, final Object iGoodResponse) {
+  public OUpdateRecordTask getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask,
+      final Object iBadResponse, final Object iGoodResponse) {
     final ORecordVersion versionCopy = version.copy();
     versionCopy.setRollbackMode();
 
-    return new OUpdateRecordTask(rid, null, null, ((OUpdateRecordTask) iOriginalTask).content, versionCopy);
+    return new OUpdateRecordTask(rid, null, null, ((OUpdateRecordTask) iOriginalTask).content, versionCopy, recordType);
   }
 
   @Override
@@ -106,7 +126,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     final ORecordVersion versionCopy = previousVersion.copy();
     versionCopy.setRollbackMode();
 
-    return new OUpdateRecordTask(rid, null, null, previousContent, versionCopy);
+    return new OUpdateRecordTask(rid, null, null, previousContent, versionCopy, recordType);
   }
 
   @Override
@@ -114,6 +134,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     super.writeExternal(out);
     out.writeInt(content.length);
     out.write(content);
+    out.write(recordType);
   }
 
   @Override
@@ -122,6 +143,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     final int contentSize = in.readInt();
     content = new byte[contentSize];
     in.readFully(content);
+    recordType = in.readByte();
   }
 
   public byte[] getPreviousContent() {

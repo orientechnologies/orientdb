@@ -51,20 +51,29 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   protected boolean                         liveUpdated            = false;
   protected long                            limit                  = -1;
   protected long                            browsedRecords         = 0;
-  protected OStorage.LOCKING_STRATEGY       lockingStrategy        = OStorage.LOCKING_STRATEGY.DEFAULT;
+  protected OStorage.LOCKING_STRATEGY       lockingStrategy        = OStorage.LOCKING_STRATEGY.NONE;
   protected long                            totalAvailableRecords;
   protected List<ORecordOperation>          txEntries;
   protected int                             currentTxEntryPosition = -1;
   protected long                            firstClusterEntry      = 0;
   protected long                            lastClusterEntry       = Long.MAX_VALUE;
   private String                            fetchPlan;
-  private ORecord                           reusedRecord           = null;                             // DEFAULT = NOT
+  private ORecord                           reusedRecord           = null;                          // DEFAULT = NOT
   // REUSE IT
   private Boolean                           directionForward;
   private long                              currentEntry           = ORID.CLUSTER_POS_INVALID;
   private int                               currentEntryPosition   = -1;
   private OPhysicalPosition[]               positionsToProcess     = null;
 
+  public OIdentifiableIterator(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
+      final boolean useCache) {
+    this(iDatabase, iLowLevelDatabase, useCache, false, OStorage.LOCKING_STRATEGY.NONE);
+  }
+
+  @Deprecated
+  /**
+   * @deprecated usage of this constructor may lead to deadlocks.
+   */
   public OIdentifiableIterator(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final boolean useCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     database = iDatabase;

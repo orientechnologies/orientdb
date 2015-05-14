@@ -2,6 +2,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
@@ -27,7 +28,11 @@ public abstract class BaseTest<T extends ODatabase> {
 
   @Parameters(value = "url")
   public BaseTest(@Optional String url) {
-    storageType = System.getProperty("storageType");
+    String config = System.getProperty("orientdb.test.env");
+    if ("ci".equals(config) || "release".equals(config))
+      storageType = "plocal";
+    else
+      storageType = System.getProperty("storageType");
 
     if (storageType == null)
       storageType = "memory";
@@ -41,6 +46,12 @@ public abstract class BaseTest<T extends ODatabase> {
         url = getStorageType() + ":" + buildDirectory + "/test-db/demo";
         dropDb = true;
       }
+    }
+
+    if (url.startsWith("memory:") ) {
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+      if (!db.exists())
+        db.create().close();
     }
 
     this.url = url;
