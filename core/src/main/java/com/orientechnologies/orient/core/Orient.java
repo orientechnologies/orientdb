@@ -19,22 +19,6 @@
  */
 package com.orientechnologies.orient.core;
 
-import java.io.IOException;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -55,42 +39,58 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.io.IOException;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 public class Orient extends OListenerManger<OOrientListener> {
-  public static final String                                                         ORIENTDB_HOME                 = "ORIENTDB_HOME";
-  public static final String                                                         URL_SYNTAX                    = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
+  public static final String ORIENTDB_HOME = "ORIENTDB_HOME";
+  public static final String URL_SYNTAX    = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-  private static final Orient                                                        instance                      = new Orient();
-  private static volatile boolean                                                    registerDatabaseByPath        = false;
+  private static final    Orient  instance               = new Orient();
+  private static volatile boolean registerDatabaseByPath = false;
 
-  private final ConcurrentMap<String, OEngine>                                       engines                       = new ConcurrentHashMap<String, OEngine>();
-  private final ConcurrentMap<String, OStorage>                                      storages                      = new ConcurrentHashMap<String, OStorage>();
+  private final ConcurrentMap<String, OEngine>  engines  = new ConcurrentHashMap<String, OEngine>();
+  private final ConcurrentMap<String, OStorage> storages = new ConcurrentHashMap<String, OStorage>();
 
-  private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners          = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
-  private final ODatabaseFactory                                                     databaseFactory               = new ODatabaseFactory();
-  private final OScriptManager                                                       scriptManager                 = new OScriptManager();
-  private final ThreadGroup                                                          threadGroup;
-  private final AtomicInteger                                                        serialId                      = new AtomicInteger();
-  private final ReadWriteLock                                                        engineLock                    = new ReentrantReadWriteLock();
-  private final ORecordConflictStrategyFactory                                       recordConflictStrategy        = new ORecordConflictStrategyFactory();
-  private final ReferenceQueue<OOrientStartupListener>                               removedStartupListenersQueue  = new ReferenceQueue<OOrientStartupListener>();
-  private final ReferenceQueue<OOrientShutdownListener>                              removedShutdownListenersQueue = new ReferenceQueue<OOrientShutdownListener>();
-  private final Set<OOrientStartupListener>                                          startupListeners              = Collections
-                                                                                                                       .newSetFromMap(new ConcurrentHashMap<OOrientStartupListener, Boolean>());
-  private final Set<WeakHashSetValueHolder<OOrientStartupListener>>                  weakStartupListeners          = Collections
-                                                                                                                       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientStartupListener>, Boolean>());
-  private final Set<WeakHashSetValueHolder<OOrientShutdownListener>>                 weakShutdownListeners         = Collections
-                                                                                                                       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientShutdownListener>, Boolean>());
+  private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
+  private final ODatabaseFactory                                                     databaseFactory      = new ODatabaseFactory();
+  private final OScriptManager                                                       scriptManager        = new OScriptManager();
+  private final ThreadGroup threadGroup;
+  private final AtomicInteger                                        serialId                      = new AtomicInteger();
+  private final ReadWriteLock                                        engineLock                    = new ReentrantReadWriteLock();
+  private final ORecordConflictStrategyFactory                       recordConflictStrategy        = new ORecordConflictStrategyFactory();
+  private final ReferenceQueue<OOrientStartupListener>               removedStartupListenersQueue  = new ReferenceQueue<OOrientStartupListener>();
+  private final ReferenceQueue<OOrientShutdownListener>              removedShutdownListenersQueue = new ReferenceQueue<OOrientShutdownListener>();
+  private final Set<OOrientStartupListener>                          startupListeners              = Collections.newSetFromMap(new ConcurrentHashMap<OOrientStartupListener, Boolean>());
+  private final Set<WeakHashSetValueHolder<OOrientStartupListener>>  weakStartupListeners          = Collections.newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientStartupListener>, Boolean>());
+  private final Set<WeakHashSetValueHolder<OOrientShutdownListener>> weakShutdownListeners         = Collections.newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientShutdownListener>, Boolean>());
+
   static {
     instance.startup();
   }
-  private volatile Timer                                                             timer;
-  private volatile ORecordFactoryManager                                             recordFactoryManager          = new ORecordFactoryManager();
-  private OrientShutdownHook                                                         shutdownHook;
-  private volatile OProfilerMBean                                                    profiler;
-  private ODatabaseThreadLocalFactory                                                databaseThreadFactory;
-  private volatile boolean                                                           active                        = false;
-  private ThreadPoolExecutor                                                         workers;
-  private OSignalHandler                                                             signalHandler;
+
+  private          String os;
+  private volatile Timer  timer;
+  private volatile ORecordFactoryManager recordFactoryManager = new ORecordFactoryManager();
+  private          OrientShutdownHook          shutdownHook;
+  private volatile OProfilerMBean              profiler;
+  private          ODatabaseThreadLocalFactory databaseThreadFactory;
+  private volatile boolean active = false;
+  private ThreadPoolExecutor workers;
+  private OSignalHandler     signalHandler;
 
   private static class WeakHashSetValueHolder<T> extends WeakReference<T> {
     private final int hashCode;
@@ -185,6 +185,8 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (active)
         // ALREADY ACTIVE
         return this;
+
+      os = System.getProperty("os.name").toLowerCase();
 
       if (timer == null)
         timer = new Timer(true);
@@ -415,8 +417,26 @@ public class Orient extends OListenerManger<OOrientListener> {
     if (iURL.endsWith("/"))
       iURL = iURL.substring(0, iURL.length() - 1);
 
-	 // Commented out for issue http://www.prjhub.com/#/issues/3948
-    // iURL = iURL.replace("//", "/");
+    
+    if (isWindowsOS())
+    {
+       // WINDOWS ONLY: REMOVE ALL DOUBLE FORWARD SLASHES IN THE URL THAT ARE NOT PART OF A UNC PREFIX ("//mydrive/db")
+       // TEST FOR THE ENGINE : PLUS UNC PREFIX ("PLOCAL://mydrive/db"), REMOVE ALL OTHER DOUBLE FORWARD SLASHES				
+       int colonDblSlash = iURL.indexOf("://");
+		
+       // "://" EXISTS AND THE STRING LENGTH IS AT LEAST ONE CHARACTER LONGER AFTER "://" (FOR THE SECOND substring CALL)
+       if(colonDblSlash != -1 && iURL.length() >= colonDblSlash + 4)
+       {
+          // COPY THE ENGINE + UNC PREFIX PORTION.  REPLACE ANY OTHER "//" WITH "/".  COPY THE REST OF THE URL.
+          iURL = iURL.substring(0, colonDblSlash+3) + iURL.substring(colonDblSlash+3).replace("//", "/");
+       }
+    }
+    else
+    {
+       // REPLACE ANY "//" WITH "/"
+       iURL = iURL.replace("//", "/");
+    }
+    
 
     // SEARCH FOR ENGINE
     int pos = iURL.indexOf(':');
@@ -485,6 +505,10 @@ public class Orient extends OListenerManger<OOrientListener> {
     } finally {
       engineLock.readLock().unlock();
     }
+  }
+
+  public boolean isWindowsOS() {
+    return os.indexOf("win") >= 0;
   }
 
   public OStorage registerStorage(OStorage storage) throws IOException {
