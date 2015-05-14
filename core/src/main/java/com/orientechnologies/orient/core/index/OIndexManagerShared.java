@@ -387,11 +387,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
         for (OIndex<?> oldIndex : oldIndexes.values())
           try {
-            OLogManager.instance().warn(this, "Index %s was not found after reload and will be removed", oldIndex.getName());
+            OLogManager.instance().warn(this, "Index '%s' was not found after reload and will be removed", oldIndex.getName());
 
             oldIndex.delete();
           } catch (Exception e) {
-            OLogManager.instance().error(this, "Error on deletion of index %s", e, oldIndex.getName());
+            OLogManager.instance().error(this, "Error on deletion of index '%s'", e, oldIndex.getName());
           }
 
         if (configUpdated) {

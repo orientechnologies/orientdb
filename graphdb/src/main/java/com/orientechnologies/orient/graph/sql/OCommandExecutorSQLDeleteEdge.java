@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -45,13 +52,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * SQL DELETE EDGE command.
@@ -147,7 +147,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
             label = originalTemp;
             clazz = graph.getEdgeType(temp);
             if (clazz == null)
-              throw new OCommandSQLParsingException("Class '" + temp + " was not found");
+              throw new OCommandSQLParsingException("Class '" + temp + "' was not found");
           }
 
           temp = parseOptionalWord(true);

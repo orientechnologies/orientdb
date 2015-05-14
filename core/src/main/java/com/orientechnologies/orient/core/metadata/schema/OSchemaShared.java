@@ -19,6 +19,17 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
@@ -52,17 +63,6 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
@@ -512,11 +512,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       OClass cls = classes.get(key);
 
       if (cls == null)
-        throw new OSchemaException("Class " + className + " was not found in current database");
+        throw new OSchemaException("Class '" + className + "' was not found in current database");
 
       if (!cls.getSubclasses().isEmpty())
-        throw new OSchemaException("Class " + className
-            + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
+        throw new OSchemaException("Class '" + className
+            + "' cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
       cmd = new StringBuilder("drop class ");
       cmd.append(className);
@@ -965,11 +965,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         checkClustersAreAbsent(clusterIds);
 
       cmd = new StringBuilder("create class ");
-//      if (getDatabase().getStorage().getConfiguration().isStrictSql())
-//        cmd.append('`');
+      // if (getDatabase().getStorage().getConfiguration().isStrictSql())
+      // cmd.append('`');
       cmd.append(className);
-//      if (getDatabase().getStorage().getConfiguration().isStrictSql())
-//        cmd.append('`');
+      // if (getDatabase().getStorage().getConfiguration().isStrictSql())
+      // cmd.append('`');
 
       List<OClass> superClassesList = new ArrayList<OClass>();
       if (superClasses != null && superClasses.length > 0) {
@@ -1140,11 +1140,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
       final OClass cls = classes.get(key);
       if (cls == null)
-        throw new OSchemaException("Class " + className + " was not found in current database");
+        throw new OSchemaException("Class '" + className + "' was not found in current database");
 
       if (!cls.getSubclasses().isEmpty())
-        throw new OSchemaException("Class " + className
-            + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
+        throw new OSchemaException("Class '" + className
+            + "' cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
       checkEmbedded(getDatabase().getStorage());
 

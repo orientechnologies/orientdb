@@ -93,8 +93,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           final OIndexInternal<?> index = indexesToCommit.get(indexEntry.getKey()).getInternal();
 
           if (index == null) {
-            OLogManager.instance().error(this, "Index with name " + indexEntry.getKey() + " was not found.");
-            throw new OIndexException("Index with name " + indexEntry.getKey() + " was not found.");
+            OLogManager.instance().error(this, "Index with name '" + indexEntry.getKey() + "' was not found.");
+            throw new OIndexException("Index with name '" + indexEntry.getKey() + "' was not found.");
           } else
             index.addTxOperation((ODocument) indexEntry.getValue());
         }
