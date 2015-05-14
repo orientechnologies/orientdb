@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
@@ -67,7 +68,8 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
         // @COMPATIBILITY0.9.25
         // CHECK FOR OLD VERSION OF DATABASE
-        final ORawBuffer rawRecord = storage.readRecord(CONFIG_RID, null, false, null).getResult();
+        final ORawBuffer rawRecord = storage.readRecord(CONFIG_RID, null, false, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
+            .getResult();
         if (rawRecord != null)
           fromStream(rawRecord.buffer);
 

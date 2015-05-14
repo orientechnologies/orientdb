@@ -93,17 +93,10 @@ public abstract class OTransactionAbstract implements OTransaction {
   public void close() {
     for (Map.Entry<ORID, OStorage.LOCKING_STRATEGY> lock : locks.entrySet()) {
       try {
-        final LockedRecordMetadata lockedRecordMetadata = lock.getValue();
-
-        if (lockedRecordMetadata.strategy.equals(OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)) {
-          for (int i = 0; i < lockedRecordMetadata.locksCount; i++) {
-            ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseWriteLock(lock.getKey());
-          }
-        } else if (lockedRecordMetadata.strategy.equals(OStorage.LOCKING_STRATEGY.SHARED_LOCK)) {
-          for (int i = 0; i < lockedRecordMetadata.locksCount; i++) {
-            ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseReadLock(lock.getKey());
-          }
-        }
+        if (lock.getValue().equals(OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK))
+          ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseWriteLock(lock.getKey());
+        else if (lock.getValue().equals(OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK))
+          ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseReadLock(lock.getKey());
       } catch (Exception e) {
         OLogManager.instance().debug(this, "Error on releasing lock against record " + lock.getKey(), e);
       }
@@ -121,24 +114,10 @@ public abstract class OTransactionAbstract implements OTransaction {
     // if (locks.containsKey(rid))
     // throw new IllegalStateException("Record " + rid + " is already locked");
 
-    LockedRecordMetadata lockedRecordMetadata = locks.get(rid);
-    boolean addItem = false;
-
-    if (lockedRecordMetadata == null) {
-      lockedRecordMetadata = new LockedRecordMetadata(lockingStrategy);
-      addItem = true;
-    } else if (lockedRecordMetadata.strategy != lockingStrategy) {
-      assert lockedRecordMetadata.locksCount == 0;
-      lockedRecordMetadata = new LockedRecordMetadata(lockingStrategy);
-      addItem = true;
-    }
-
-    if (lockingStrategy == OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)
+    if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
       ((OAbstractPaginatedStorage) stg.getUnderlying()).acquireWriteLock(rid);
-    else if (lockingStrategy == OStorage.LOCKING_STRATEGY.SHARED_LOCK)
-      ((OAbstractPaginatedStorage) stg.getUnderlying()).acquireReadLock(rid);
     else
-      throw new IllegalStateException("Unsupported locking strategy " + lockingStrategy);
+      ((OAbstractPaginatedStorage) stg.getUnderlying()).acquireReadLock(rid);
 
     locks.put(rid, iLockingStrategy);
     return this;
@@ -166,12 +145,10 @@ public abstract class OTransactionAbstract implements OTransaction {
 
     if (lock == null)
       throw new OLockException("Cannot unlock a never acquired lock");
-    else if (lockedRecordMetadata.strategy == OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)
+    else if (lock == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
       ((OAbstractPaginatedStorage) stg.getUnderlying()).releaseWriteLock(rid);
-    else if (lockedRecordMetadata.strategy == OStorage.LOCKING_STRATEGY.SHARED_LOCK)
-      ((OAbstractPaginatedStorage) stg.getUnderlying()).releaseReadLock(rid);
     else
-      throw new IllegalStateException("Unsupported locking strategy " + lockedRecordMetadata.strategy);
+      ((OAbstractPaginatedStorage) stg.getUnderlying()).releaseReadLock(rid);
 
     return this;
   }

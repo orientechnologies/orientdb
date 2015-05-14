@@ -1455,7 +1455,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     } else {
       final ORecord record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones,
-          OStorage.LOCKING_STRATEGY.NONE);
+          OStorage.LOCKING_STRATEGY.DEFAULT);
 
       beginResponse();
       try {

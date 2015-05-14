@@ -158,7 +158,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     if (query != null) {
       // AGAINST CLUSTERS AND CLASSES
       if (lockStrategy.equals("RECORD"))
-        query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK);
+        query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK);
 
       query.execute(iArgs);
 

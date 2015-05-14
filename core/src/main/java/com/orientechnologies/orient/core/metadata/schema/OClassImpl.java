@@ -945,28 +945,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  public Collection<OClass> getBaseClasses() {
-    return getSubclasses();
-  }
-
-  public Collection<OClass> getAllBaseClasses() {
-    return getAllSubclasses();
-  }
-
-  @Override
-  public Collection<OClass> getAllSuperClasses() {
-    Set<OClass> ret = new HashSet<OClass>();
-    getAllSuperClasses(ret);
-    return ret;
-  }
-
-  private void getAllSuperClasses(Set<OClass> set) {
-    set.addAll(superClasses);
-    for (OClassImpl superClass : superClasses) {
-      superClass.getAllSuperClasses(set);
-    }
-  }
-
   OClass removeBaseClassInternal(final OClass baseClass) {
     acquireSchemaWriteLock();
     try {
@@ -1753,7 +1731,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           do {
             for (OPhysicalPosition position : positions) {
               final ORecordId identity = new ORecordId(clusterId, position.clusterPosition);
-              final ORawBuffer record = storage.readRecord(identity, null, true, null).getResult();
+              final ORawBuffer record = storage.readRecord(identity, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
+                  .getResult();
 
               if (record.recordType == ODocument.RECORD_TYPE) {
                 final ORecordSerializerSchemaAware2CSV serializer = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory

@@ -57,13 +57,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
   }
 
   public enum LOCKING_STRATEGY {
-    NONE, DEFAULT, SHARED_LOCK, EXCLUSIVE_LOCK,
-
-    @Deprecated
-    KEEP_SHARED_LOCK,
-
-    @Deprecated
-    KEEP_EXCLUSIVE_LOCK
+    NONE, DEFAULT, KEEP_SHARED_LOCK, KEEP_EXCLUSIVE_LOCK
   }
 
   public void open(String iUserName, String iUserPassword, final Map<String, Object> iProperties);
@@ -89,7 +83,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
       ORecordVersion iRecordVersion, byte iRecordType, int iMode, ORecordCallback<Long> iCallback);
 
   public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback);
+      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy);
 
   public OStorageOperationResult<ORecordVersion> updateRecord(ORecordId iRecordId, boolean updateContent, byte[] iContent,
       ORecordVersion iVersion, byte iRecordType, int iMode, ORecordCallback<ORecordVersion> iCallback);

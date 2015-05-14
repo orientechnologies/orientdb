@@ -256,45 +256,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           } else if (w.equals(KEYWORD_LOCK)) {
             final String lock = parseLock();
 
-          if (!w.isEmpty()) {
-            if (w.equals(KEYWORD_WHERE)) {
-              compiledFilter = OSQLEngine.getInstance().parseCondition(
-                  parserText.substring(parserGetCurrentPosition(), endPosition), getContext(), KEYWORD_WHERE);
-              optimize();
-              parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition()
-                  + parserGetCurrentPosition());
-            } else if (w.equals(KEYWORD_LET)) {
-              parseLet();
-            } else if (w.equals(KEYWORD_GROUP)) {
-              parseGroupBy();
-            } else if (w.equals(KEYWORD_ORDER)) {
-              parseOrderBy();
-            } else if (w.equals(KEYWORD_UNWIND)) {
-              parseUnwind();
-            } else if (w.equals(KEYWORD_LIMIT)) {
-              parseLimit(w);
-            } else if (w.equals(KEYWORD_SKIP) || w.equals(KEYWORD_OFFSET)) {
-              parseSkip(w);
-            } else if (w.equals(KEYWORD_FETCHPLAN)) {
-              parseFetchplan(w);
-            } else if (w.equals(KEYWORD_NOCACHE)) {
-              parseNoCache(w);
-            } else if (w.equals(KEYWORD_TIMEOUT)) {
-              parseTimeout(w);
-            } else if (w.equals(KEYWORD_LOCK)) {
-              final String lock = parseLock();
-
-              if (lock.equalsIgnoreCase("DEFAULT")) {
-                lockingStrategy = LOCKING_STRATEGY.DEFAULT;
-              } else if (lock.equals("NONE")) {
-                lockingStrategy = LOCKING_STRATEGY.NONE;
-              } else if (lock.equals("RECORD")) {
-                lockingStrategy = LOCKING_STRATEGY.EXCLUSIVE_LOCK;
-              }
-            } else if (w.equals(KEYWORD_PARALLEL)) {
-              parallel = parseParallel(w);
-            } else {
-              throwParsingException("Invalid keyword '" + w + "'");
+            if (lock.equalsIgnoreCase("DEFAULT")) {
+              lockingStrategy = OStorage.LOCKING_STRATEGY.DEFAULT;
+            } else if (lock.equals("NONE")) {
+              lockingStrategy = OStorage.LOCKING_STRATEGY.NONE;
+            } else if (lock.equals("RECORD")) {
+              lockingStrategy = OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK;
             }
           } else if (w.equals(KEYWORD_PARALLEL)) {
             parallel = parseParallel(w);
@@ -494,42 +461,45 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OStorage.LOCKING_STRATEGY localLockingStrategy = contextLockingStrategy != null ? contextLockingStrategy
         : lockingStrategy;
 
-    if (localLockingStrategy != null
-        && !(localLockingStrategy == LOCKING_STRATEGY.DEFAULT || localLockingStrategy == LOCKING_STRATEGY.NONE
-            || localLockingStrategy == LOCKING_STRATEGY.EXCLUSIVE_LOCK || localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK))
-      throw new IllegalStateException("Unsupported locking strategy " + localLockingStrategy);
+    ORecord record = null;
+    try {
+      if (id instanceof ORecord) {
+        record = (ORecord) id;
 
-    final ORecord record;
-    if (!(id instanceof ORecord)) {
-      record = getDatabase().load(id.getIdentity(), null, noCache);
-      if (id instanceof OContextualRecordId && ((OContextualRecordId) id).getContext() != null) {
-        Map<String, Object> ridContext = ((OContextualRecordId) id).getContext();
-        for (String key : ridContext.keySet()) {
-          context.setVariable(key, ridContext.get(key));
+        // LOCK THE RECORD IF NEEDED
+        if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
+          record.lock(true);
+        } else if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+          record.lock(false);
+        }
+
+      } else {
+        boolean useNoCache = noCache;
+
+        if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
+            || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK)
+          // FORCE NO CACHE
+          useNoCache = true;
+
+        record = getDatabase().load(id.getIdentity(), null, useNoCache, false, localLockingStrategy);
+        if (id instanceof OContextualRecordId && ((OContextualRecordId) id).getContext() != null) {
+          Map<String, Object> ridContext = ((OContextualRecordId) id).getContext();
+          for (String key : ridContext.keySet()) {
+            context.setVariable(key, ridContext.get(key));
+          }
         }
       }
-    } else {
-      record = (ORecord) id;
-    }
 
-    context.updateMetric("recordReads", +1);
+      context.updateMetric("recordReads", +1);
 
-    if (record == null || ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE)
-    // SKIP IT
-    {
-      return true;
-    }
-    context.updateMetric("documentReads", +1);
+      if (record == null || ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE)
+      // SKIP IT
+      {
+        return true;
+      }
 
-    if (localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK) {
-      record.lock(false);
-      record.reload();
-    } else if (localLockingStrategy == LOCKING_STRATEGY.EXCLUSIVE_LOCK) {
-      record.lock(true);
-      record.reload();
-    }
+      context.updateMetric("documentReads", +1);
 
-    try {
       context.setVariable("current", record);
 
       if (filter(record)) {
@@ -540,9 +510,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
     } finally {
-      if (localLockingStrategy != null && record.isLocked()) {
+      if (record != null && localLockingStrategy != null && record.isLocked()) {
         // CONTEXT LOCK: lock must be released (no matter if filtered or not)
-        if (localLockingStrategy == LOCKING_STRATEGY.EXCLUSIVE_LOCK || localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK) {
+        if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
+            || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
           record.unlock();
         }
       }

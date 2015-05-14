@@ -118,10 +118,6 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
   public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass);
 
   public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
-      long startClusterPosition, long endClusterPosition);
-
-  @Deprecated
-  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
       long startClusterPosition, long endClusterPosition, boolean loadTombstones);
 
   /**
