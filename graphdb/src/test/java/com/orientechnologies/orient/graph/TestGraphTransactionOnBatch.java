@@ -103,6 +103,54 @@ public class TestGraphTransactionOnBatch {
   }
 
   @Test
+  public void testAbsoluteDuplicateEdgeRollback() {
+    OClass clazz = db.getMetadata().getSchema().createClass("Test");
+    clazz.setSuperClass(E);
+    clazz.createProperty("in", OType.LINK);
+    clazz.createProperty("out", OType.LINK);
+    clazz.createIndex("Unique", INDEX_TYPE.UNIQUE, "in", "out");
+    try {
+      db.command(
+          new OCommandScript(
+              "sql",
+              "BEGIN \n LET a = create vertex V \n LET b = create vertex V \n LET c =create edge Test from $a to $b  \n LET d =create edge Test from $a to $b  \n RETURN $c \n COMMIT"))
+          .execute();
+      Assert.fail("expected record duplicate exception");
+    } catch (ORecordDuplicatedException ex) {
+
+    }
+    List<ODocument> res = db.query(new OSQLSynchQuery("select from Test"));
+    Assert.assertEquals(0, res.size());
+  }
+
+  @Test
+  public void testAbsoluteDuplicateEdgeAlreadyPresentRollback() {
+    OClass clazz = db.getMetadata().getSchema().createClass("Test");
+    clazz.setSuperClass(E);
+    clazz.createProperty("in", OType.LINK);
+    clazz.createProperty("out", OType.LINK);
+    clazz.createIndex("Unique", INDEX_TYPE.UNIQUE, "in", "out");
+    try {
+      db.command(
+          new OCommandScript(
+              "sql",
+              "BEGIN \n LET a = create vertex V set name='a' \n LET b = create vertex V  set name='b' \n LET c =create edge Test from $a to $b  \n LET d =create edge Test from $a to $b  \n RETURN $c \n COMMIT"))
+          .execute();
+      
+      db.command(
+          new OCommandScript(
+              "sql",
+              "BEGIN \n LET c =create edge Test from (select from V  where name='a') to (select from V where name='b')  \n RETURN $c \n COMMIT"))
+          .execute();
+      Assert.fail("expected record duplicate exception");
+    } catch (ORecordDuplicatedException ex) {
+
+    }
+    List<ODocument> res = db.query(new OSQLSynchQuery("select from Test"));
+    Assert.assertEquals(0, res.size());
+  }
+
+  @Test
   public void testDuplicateEdgeAlreadyPresentRollback() {
     OClass clazz = db.getMetadata().getSchema().createClass("Test");
     clazz.setSuperClass(E);
