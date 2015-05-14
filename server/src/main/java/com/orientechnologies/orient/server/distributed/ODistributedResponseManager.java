@@ -559,7 +559,7 @@ public class ODistributedResponseManager {
               conflicts, quorum, request);
 
       final StringBuilder msg = new StringBuilder(256);
-      msg.append("Quorum " + getQuorum() + " not reached for request (" + request + "). Timeout="
+      msg.append("Quorum " + getQuorum() + " not reached for request (" + request + "). Elapsed="
           + (System.currentTimeMillis() - sentOn) + "ms");
       final List<ODistributedResponse> res = getConflictResponses();
       if (res.isEmpty())
