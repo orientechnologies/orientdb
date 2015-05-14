@@ -472,11 +472,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       OClass cls = classes.get(key);
 
       if (cls == null)
-        throw new OSchemaException("Class " + className + " was not found in current database");
+        throw new OSchemaException("Class '" + className + "' was not found in current database");
 
       if (!cls.getBaseClasses().isEmpty())
-        throw new OSchemaException("Class " + className
-            + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
+        throw new OSchemaException("Class '" + className
+            + "' cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
       cmd = new StringBuilder("drop class ");
       cmd.append(className);
@@ -1067,11 +1067,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
       final OClass cls = classes.get(key);
       if (cls == null)
-        throw new OSchemaException("Class " + className + " was not found in current database");
+        throw new OSchemaException("Class '" + className + "' was not found in current database");
 
       if (!cls.getBaseClasses().isEmpty())
-        throw new OSchemaException("Class " + className
-            + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
+        throw new OSchemaException("Class '" + className
+            + "' cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
       checkEmbedded(getDatabase().getStorage());
 

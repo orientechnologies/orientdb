@@ -593,7 +593,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       listener.onMessage("\n- Checking cluster " + String.format("%-25s: ", "'" + clusterName + "'"));
 
       if (cluster2Id == -1) {
-        listener.onMessage("ERR: cluster name " + clusterName + " was not found on database " + storage2);
+        listener.onMessage("ERR: cluster name '" + clusterName + "' was not found on database " + storage2);
         ++differences;
         ok = false;
       }
