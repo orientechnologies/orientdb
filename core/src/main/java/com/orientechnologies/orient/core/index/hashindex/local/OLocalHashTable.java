@@ -487,8 +487,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         endAtomicOperation(false);
         return removed;
       } else {
-        if (getFilledUpTo(atomicOperation, diskCache, nullBucketFileId) == 0)
+        if (getFilledUpTo(atomicOperation, diskCache, nullBucketFileId) == 0) {
+          endAtomicOperation(false);
           return null;
+        }
 
         V removed = null;
 

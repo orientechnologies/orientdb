@@ -618,9 +618,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             initialFreePageIndex = calculateFreePageIndex(localPage);
 
             if (localPage.isDeleted(recordPosition)) {
-              if (removedContentSize == 0)
+              if (removedContentSize == 0) {
+                endAtomicOperation(false);
                 return false;
-              else
+              } else
                 throw new OStorageException("Content of record " + new ORecordId(id, clusterPosition) + " was broken.");
             } else if (removedContentSize == 0) {
               cacheEntry.releaseExclusiveLock();
@@ -920,12 +921,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
     externalModificationLock.requestModificationLock();
     try {
-      OAtomicOperation atomicOperation;
-
-      if (config.useWal)
-        atomicOperation = startAtomicOperation();
-      else
-        atomicOperation = atomicOperationsManager.getCurrentOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation();
 
       acquireExclusiveLock();
       try {
@@ -934,12 +930,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         initCusterState(atomicOperation);
 
-        if (config.useWal)
-          endAtomicOperation(false);
-
+        endAtomicOperation(false);
       } catch (Throwable e) {
-        if (config.useWal)
-          endAtomicOperation(true);
+        endAtomicOperation(true);
         throw new OStorageException(null, e);
       } finally {
         releaseExclusiveLock();

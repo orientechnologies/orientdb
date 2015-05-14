@@ -45,12 +45,12 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
   private boolean          mvccEnabled;
   private long             startedOn;
 
-	@Parameters(value = "url")
-	public ConcurrentUpdatesTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public ConcurrentUpdatesTest(@Optional String url) {
+    super(url);
+  }
 
-	class OptimisticUpdateField implements Runnable {
+  class OptimisticUpdateField implements Runnable {
 
     ODatabaseDocumentTx db;
     ORID                rid1;
@@ -90,12 +90,8 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
             } catch (OResponseProcessingException e) {
               Assert.assertTrue(e.getCause() instanceof ONeedRetryException);
 
-              // System.out.println("Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/" + MAX_RETRIES +
-              // "...");
               Thread.sleep(retry * 10);
             } catch (ONeedRetryException e) {
-              // System.out.println("Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/" + MAX_RETRIES +
-              // "...");
               Thread.sleep(retry * 10);
             }
           }
@@ -133,29 +129,31 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
           if (lock)
             cmd += " lock record";
 
-          for (int retry = 0; retry < MAX_RETRIES; ++retry) {
+          int retries = 0;
+          while (true) {
             try {
               db.command(new OCommandSQL(cmd)).execute();
-              counter.incrementAndGet();
+              if (retries > 100)
+                System.out.println("Success after " + retries + " retries");
+
+              long result = counter.incrementAndGet();
+              if (result % 100 == 0 || result == PESSIMISTIC_CYCLES * THREADS) {
+                System.out.println(result + " records were processed  out of " + (PESSIMISTIC_CYCLES * THREADS));
+              }
+
               break;
 
             } catch (OResponseProcessingException e) {
-              if (e.getCause() instanceof ONeedRetryException) {
-                Assert.assertTrue(e.getCause() instanceof ONeedRetryException);
 
-                // System.out.println("SQL UPDATE - Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/"
-                // + MAX_RETRIES + "...");
-                // Thread.sleep(retry * 10);
+              if (e.getCause() instanceof ONeedRetryException) {
+                retries++;
               } else {
                 e.printStackTrace();
-                Assert.assertTrue(false);
+                throw e;
               }
             } catch (ONeedRetryException e) {
-              // System.out.println("SQL UPDATE - Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/"
-              // + MAX_RETRIES + "...");
-              // Thread.sleep(retry * 10);
+              retries++;
             }
-            // System.out.println("thread " + threadName + " counter " + counter.get());
           }
         }
       } catch (Throwable e) {
@@ -169,7 +167,6 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
   public void init() {
     mvccEnabled = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
 
-
     if (!mvccEnabled)
       OGlobalConfiguration.DB_MVCC.setValue(true);
   }
@@ -181,8 +178,6 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
 
   @Test
   public void concurrentOptimisticUpdates() throws Exception {
-//    System.out.println("Started Test OPTIMISTIC");
-
     counter.set(0);
     startedOn = System.currentTimeMillis();
 
@@ -214,9 +209,6 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     for (int i = 0; i < THREADS; ++i)
       threads[i].join();
 
-//    System.out.println("Done! Total updates executed in parallel: " + counter.get() + " average retries: "
-//        + ((float) totalRetries.get() / (float) counter.get()));
-
     Assert.assertEquals(counter.get(), OPTIMISTIC_CYCLES * THREADS);
 
     doc1 = databases[0].load(rid1, null, true);
@@ -225,22 +217,18 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
       Assert.assertEquals(doc1.field(ops[i].threadName), ops[i].fieldValue, ops[i].threadName);
 
     doc1.toJSON();
-//    System.out.println("RESULT doc 1:");
-//    System.out.println(doc1.toJSON());
 
     doc2 = databases[0].load(rid2, null, true);
 
     for (int i = 0; i < THREADS; ++i)
       Assert.assertEquals(doc2.field(ops[i].threadName), ops[i].fieldValue, ops[i].threadName);
 
-//    System.out.println("RESULT doc 2:");
     doc2.toJSON();
     System.out.println(doc2.toJSON());
 
     for (int i = 0; i < THREADS; ++i)
       databases[i].close();
 
-//    System.out.println("Test completed in " + (System.currentTimeMillis() - startedOn));
   }
 
   @Test
@@ -254,8 +242,6 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
   }
 
   protected void sqlUpdate(boolean lock) throws InterruptedException {
-//    System.out.println("Started Test " + (lock ? "LOCK" : ""));
-
     counter.set(0);
     startedOn = System.currentTimeMillis();
 
@@ -282,8 +268,6 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     for (int i = 0; i < THREADS; ++i)
       threads[i].join();
 
-//    System.out.println("Done! Total sql updates executed in parallel: " + counter.get());
-
     Assert.assertEquals(counter.get(), PESSIMISTIC_CYCLES * THREADS);
 
     doc1 = databases[0].load(rid1, null, true);
@@ -291,8 +275,5 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
 
     for (int i = 0; i < THREADS; ++i)
       databases[i].close();
-
-//    System.out.println("concurrentOptimisticSQLUpdates Test " + (lock ? "LOCK" : "") + " completed in "
-//        + (System.currentTimeMillis() - startedOn));
   }
 }

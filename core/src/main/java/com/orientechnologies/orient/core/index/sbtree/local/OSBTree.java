@@ -595,8 +595,10 @@ public class OSBTree<K, V> extends ODurableComponent {
           ONullBucket<V> nullBucket = new ONullBucket<V>(nullCacheEntry, getChangesTree(atomicOperation, nullCacheEntry),
               valueSerializer, false);
           OSBTreeValue<V> treeValue = nullBucket.getValue();
-          if (treeValue == null)
+          if (treeValue == null) {
+            endAtomicOperation(false);
             return null;
+          }
 
           removedValue = readValue(treeValue, atomicOperation);
           nullBucket.removeValue();

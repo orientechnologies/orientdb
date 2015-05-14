@@ -2355,6 +2355,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         continue;
       } else if (walRecord instanceof OAtomicUnitEndRecord) {
         continue;
+      } else if (walRecord instanceof OFileTruncatedWALRecord) {
+        final OFileTruncatedWALRecord fileTruncatedWALRecord = (OFileTruncatedWALRecord) walRecord;
+        diskCache.truncateFile(fileTruncatedWALRecord.getFileId());
       } else {
         OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
             walRecord.getClass());
