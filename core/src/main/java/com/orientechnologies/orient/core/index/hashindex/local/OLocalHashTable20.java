@@ -486,8 +486,10 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
         endAtomicOperation(false);
         return removed;
       } else {
-        if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0)
+        if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
+          endAtomicOperation(false);
           return null;
+        }
 
         V removed = null;
 
