@@ -80,7 +80,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       className = checkForClassInSchema(OrientBaseGraph.encodeClassName(className));
 
     rawElement = new ODocument(className == null ? OrientVertexType.CLASS_NAME : className);
-    setProperties(fields);
+    setPropertiesInternal(fields);
   }
 
   public OrientVertex(final OrientBaseGraph graph, final OIdentifiable record) {
