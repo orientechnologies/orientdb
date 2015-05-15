@@ -26,6 +26,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
@@ -132,8 +133,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
 
   /**
    * (Blueprints Extension) Sets multiple properties in one shot against Vertices and Edges. This improves performance avoiding to
-   * save the graph element at every property set. After calling this method, the vertex is dirty and need to be saved by calling
-   * the {@link #save()} method.<br>
+   * save the graph element at every property set.<br>
    * Example:
    * 
    * <code>
@@ -162,6 +162,20 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     setPropertiesInternal(fields);
     save();
     return (T) this;
+  }
+
+  /**
+   * (Blueprints Extension) Gets all the properties from a Vertex or Edge in one shot.
+   * 
+   * @return a map containing all the properties of the Vertex/Edge. 
+   */
+  public Map<String, Object> getProperties() {
+    if (this.rawElement == null)
+      return null;
+    ODocument raw = this.rawElement.getRecord();
+    if (raw == null)
+      return null;
+    return raw.toMap();
   }
 
   /**
