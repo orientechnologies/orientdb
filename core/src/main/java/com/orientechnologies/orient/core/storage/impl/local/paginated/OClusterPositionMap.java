@@ -255,8 +255,10 @@ public class OClusterPositionMap extends ODurableComponent {
             cacheEntry));
 
         OClusterPositionMapBucket.PositionEntry positionEntry = bucket.remove(index);
-        if (positionEntry == null)
+        if (positionEntry == null) {
+          endAtomicOperation(false);
           return null;
+        }
 
         endAtomicOperation(false);
         return positionEntry;
