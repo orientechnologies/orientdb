@@ -65,7 +65,26 @@
         </thead>
         <tbody>
         <tr ng-repeat="result in $data track by $index">
-          <td ng-repeat="header in item.headers" ridrender>{{result[header]}}</td>
+          <td ng-repeat="header in item.headers">
+            <div ng-if="isRid(result[header])">
+              <a href="{{linkRid(result[header])}}">
+                {{result[header]}} </a>
+            </div>
+            <div ng-if="isClass(header)">
+              <a href="{{linkClass(result[header])}}">
+                <span class='label label-primary' ng-style='getColorClass()'> {{result[header]}} </span>
+              </a>
+            </div>
+            <div ng-if="isRids(result[header])">
+              <div ridrender="">
+                
+              </div>
+            </div>
+            <div ng-if="otherwise(result[header],header)">
+              {{result[header]}}
+            </div>
+
+          </td>
         </tr>
         </tbody>
       </table>

@@ -379,6 +379,45 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
 
   };
 
+
+  $scope.isRid = function (value) {
+
+    if (typeof value == 'string' && value.indexOf('#') == 0) {
+      return true
+    }
+    return false;
+  }
+  $scope.isClass = function (header) {
+    return header == '@class';
+  }
+  $scope.isRids = function (value) {
+    return (value instanceof Array && value.length > 0 && typeof value[0] == "string" && value[0].indexOf('#') == 0 )
+
+  }
+  $scope.getColorClass = function (value) {
+    var dbName = Database.getName();
+
+    var color = '#428bca';
+    if ($scope.graphConfig) {
+      if ($scope.graphConfig.config && scope.graphConfig.config.classes[value]) {
+        color = $scope.graphConfig.config.classes[value].fill;
+      }
+    }
+    return "background-color: " + color;
+  }
+  $scope.linkClass = function (value) {
+    var dbName = Database.getName();
+    var link = '#/database/' + dbName + '/schema/editclass/' + value.replace('#', '');
+    return link
+  }
+  $scope.otherwise = function (value, header) {
+    return !$scope.isRid(value) && !$scope.isRids(value) && !$scope.isClass(header);
+  }
+  $scope.linkRid = function (value) {
+    var dbName = Database.getName();
+    var link = '#/database/' + dbName + '/browse/edit/' + value.replace('#', '');
+    return link
+  }
   $scope.graphOptions = {
     data: data,
     config: {
@@ -489,7 +528,9 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
 
   }
   $scope.cm.focus();
-}]);
+}
+])
+;
 dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localStorageService', 'BrowseConfig', function ($scope, $routeParams, localStorageService, BrowseConfig) {
 
   var config = BrowseConfig;
