@@ -668,8 +668,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         ODocument distributedCfg = null;
         if (plugin != null && plugin instanceof ODistributedServerManager)
           distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
-
-        channel.writeBytes(distributedCfg != null ? distributedCfg.toStream() : null);
+        
+        channel.writeBytes(distributedCfg != null ? getRecordBytes(distributedCfg) : null);
 
         if (connection.data.protocolVersion >= 14)
           channel.writeString(OConstants.getVersion());
