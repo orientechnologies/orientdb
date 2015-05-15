@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class TestDistributeConfigSerialization extends AbstractServerClusterTest {
 
@@ -26,12 +27,22 @@ public class TestDistributeConfigSerialization extends AbstractServerClusterTest
       db.create();
       db.getMetadata().getSchema().createClass("TestMessaging");
       db.save(new ODocument("TestMessaging").field("test", "test"));
-      db.query(new OSQLAsynchQuery("select from TestMessaging "));
+      db.query(new OSQLSynchQuery("select from TestMessaging "));
       db.close();
     } catch (OException e) {
       e.printStackTrace();
       Assert.fail("error creating a csv database in distributed environment");
     }
+    try {
+      db = new ODatabaseDocumentTx("remote:localhost/" + getDatabaseName());
+      db.open("admin", "admin");
+      db.query(new OSQLSynchQuery("select from TestMessaging "));
+      db.close();
+    } catch (OException e) {
+      e.printStackTrace();
+      Assert.fail("error creating a csv database in distributed environment");
+    }
+
   }
 
   protected String getDatabaseName() {
