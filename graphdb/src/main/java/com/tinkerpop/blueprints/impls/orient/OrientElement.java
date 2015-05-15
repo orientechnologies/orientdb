@@ -20,13 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Arrays;
-import java.util.Map;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -50,6 +43,13 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.util.ElementHelper;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Arrays;
+import java.util.Map;
 
 /**
  * Base Graph Element where OrientVertex and OrientEdge classes extends from. Labels are managed as OrientDB classes.
@@ -221,6 +221,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public <T> T removeProperty(final String key) {
+    if (checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+
     final OrientBaseGraph graph = getGraph();
 
     if (graph != null)
