@@ -80,6 +80,11 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract imp
     return this;
   }
 
+  @Override
+  public long getTimeout() {
+    return delegate.getTimeout();
+  }
+
   public Object execute(final Map<Object, Object> iArgs) {
     return delegate.execute(iArgs);
   }

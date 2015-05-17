@@ -69,6 +69,15 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     return (RET) this;
   }
 
+  /**
+   * No timeout bu default.
+   * 
+   * @return
+   */
+  public long getTimeout() {
+    return 0;
+  }
+
   public int getLimit() {
     return limit;
   }

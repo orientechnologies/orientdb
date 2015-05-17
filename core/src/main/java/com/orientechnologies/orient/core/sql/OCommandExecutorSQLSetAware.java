@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -184,6 +185,11 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
       }
     }
     return v;
+  }
+
+  @Override
+  public long getTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
   protected Object getFieldValueCountingParameters(String fieldValue) {

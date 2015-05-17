@@ -443,7 +443,7 @@ public enum OGlobalConfiguration {
       "Maximum timeout in milliseconds to wait for CRUD remote tasks", Integer.class, 3000),
 
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
-      "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 60000),
+      "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 20000),
 
   DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout",
       "Maximum timeout in milliseconds to wait for database deployment", Long.class, 1200000l),
