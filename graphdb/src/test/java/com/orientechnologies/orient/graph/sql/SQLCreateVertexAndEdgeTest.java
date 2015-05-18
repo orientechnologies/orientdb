@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.List;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -33,6 +25,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+import java.util.List;
 
 @RunWith(JUnit4.class)
 public class SQLCreateVertexAndEdgeTest {
@@ -155,4 +154,39 @@ public class SQLCreateVertexAndEdgeTest {
     System.out.println("done in " + (System.currentTimeMillis() - start) + "ms");
 
   }
+
+  @Test
+  public void testSqlScriptThatDeletesEdge() {
+    long start = System.currentTimeMillis();
+
+    database.command(new OCommandSQL("create vertex V set name = 'testSqlScriptThatDeletesEdge1'")).execute();
+    database.command(new OCommandSQL("create vertex V set name = 'testSqlScriptThatDeletesEdge2'")).execute();
+    database
+        .command(
+            new OCommandSQL(
+                "create edge E from (select from V where name = 'testSqlScriptThatDeletesEdge1') to (select from V where name = 'testSqlScriptThatDeletesEdge2') set name = 'testSqlScriptThatDeletesEdge'"))
+        .execute();
+
+    try {
+      String cmd = "BEGIN\n";
+      cmd += "LET $groupVertices = SELECT FROM V WHERE name = 'testSqlScriptThatDeletesEdge1'\n";
+      cmd += "LET $removeRoleEdge = DELETE edge E WHERE out IN $groupVertices\n";
+      cmd += "COMMIT\n";
+      cmd += "RETURN $groupVertices\n";
+
+
+      Object r = database.command(new OCommandScript("sql", cmd)).execute();
+
+      List<?> edges = database.query(new OSQLSynchQuery<Vertex>("select from E where name = 'testSqlScriptThatDeletesEdge'"));
+
+      Assert.assertEquals(edges.size(), 0);
+    } catch (Exception ex) {
+      System.err.println("commit exception! " + ex);
+      ex.printStackTrace(System.err);
+    }
+
+    System.out.println("done in " + (System.currentTimeMillis() - start) + "ms");
+
+  }
+
 }
