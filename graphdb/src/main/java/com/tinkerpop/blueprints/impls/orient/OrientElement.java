@@ -26,7 +26,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
@@ -167,7 +166,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   /**
    * (Blueprints Extension) Gets all the properties from a Vertex or Edge in one shot.
    * 
-   * @return a map containing all the properties of the Vertex/Edge. 
+   * @return a map containing all the properties of the Vertex/Edge.
    */
   public Map<String, Object> getProperties() {
     if (this.rawElement == null)
@@ -235,6 +234,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public <T> T removeProperty(final String key) {
+    if (checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+
     final OrientBaseGraph graph = getGraph();
 
     if (graph != null)

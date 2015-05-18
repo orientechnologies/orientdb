@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.common.console;
 
+import com.orientechnologies.common.console.annotation.ConsoleCommand;
+import com.orientechnologies.common.console.annotation.ConsoleParameter;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.common.util.OArrays;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -38,26 +44,21 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.orientechnologies.common.console.annotation.ConsoleCommand;
-import com.orientechnologies.common.console.annotation.ConsoleParameter;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.parser.OStringParser;
-import com.orientechnologies.common.util.OArrays;
-
 public class OConsoleApplication {
-  protected static final String[] COMMENT_PREFIXS = new String[] { "#", "--", "//" };
-  protected final StringBuilder   commandBuffer   = new StringBuilder(2048);
-  protected InputStream           in              = System.in;                       // System.in;
-  protected PrintStream           out             = System.out;
-  protected PrintStream           err             = System.err;
-  protected String                wordSeparator   = " ";
-  protected String[]              helpCommands    = { "help", "?" };
-  protected String[]              exitCommands    = { "exit", "bye", "quit" };
-  protected Map<String, String>   properties      = new HashMap<String, String>();
+  protected static final String[]   COMMENT_PREFIXS = new String[] { "#", "--", "//" };
+  protected final StringBuilder     commandBuffer   = new StringBuilder(2048);
+  protected InputStream             in              = System.in;                       // System.in;
+  protected PrintStream             out             = System.out;
+  protected PrintStream             err             = System.err;
+  protected String                  wordSeparator   = " ";
+  protected String[]                helpCommands    = { "help", "?" };
+  protected String[]                exitCommands    = { "exit", "bye", "quit" };
+  protected Map<String, String>     properties      = new HashMap<String, String>();
   // protected OConsoleReader reader = new TTYConsoleReader();
-  protected OConsoleReader        reader          = new DefaultConsoleReader();
-  protected boolean               interactiveMode;
-  protected String[]              args;
+  protected OConsoleReader          reader          = new DefaultConsoleReader();
+  protected boolean                 interactiveMode;
+  protected String[]                args;
+  protected TreeMap<Method, Object> methods;
 
   protected enum RESULT {
     OK, ERROR, EXIT
@@ -452,6 +453,8 @@ public class OConsoleApplication {
    * @return Map&lt;Method,Object&gt;
    */
   protected Map<Method, Object> getConsoleMethods() {
+    if (methods != null)
+      return methods;
 
     // search for declared command collections
     final Iterator<OConsoleCommandCollection> ite = ServiceLoader.load(OConsoleCommandCollection.class).iterator();
@@ -470,8 +473,17 @@ public class OConsoleApplication {
       }
     }
 
-    final Map<Method, Object> consoleMethods = new TreeMap<Method, Object>(new Comparator<Method>() {
+    methods = new TreeMap<Method, Object>(new Comparator<Method>() {
       public int compare(Method o1, Method o2) {
+        final ConsoleCommand ann1 = o1.getAnnotation(ConsoleCommand.class);
+        final ConsoleCommand ann2 = o2.getAnnotation(ConsoleCommand.class);
+
+        if (ann1 != null && ann2 != null) {
+          if (ann1.priority() != ann2.priority())
+            // PRIORITY WINS
+            return ann1.priority() - ann2.priority();
+        }
+
         int res = o1.getName().compareTo(o2.getName());
         if (res == 0)
           res = o1.toString().compareTo(o2.toString());
@@ -480,19 +492,19 @@ public class OConsoleApplication {
     });
 
     for (final Object candidate : candidates) {
-      final Method[] methods = candidate.getClass().getMethods();
+      final Method[] classMethods = candidate.getClass().getMethods();
 
-      for (Method m : methods) {
+      for (Method m : classMethods) {
         if (Modifier.isAbstract(m.getModifiers()) || Modifier.isStatic(m.getModifiers()) || !Modifier.isPublic(m.getModifiers())) {
           continue;
         }
         if (m.getReturnType() != Void.TYPE) {
           continue;
         }
-        consoleMethods.put(m, candidate);
+        methods.put(m, candidate);
       }
     }
-    return consoleMethods;
+    return methods;
   }
 
   protected Map<String, Object> addCommand(Map<String, Object> commandsTree, String commandLine) {

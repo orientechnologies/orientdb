@@ -48,7 +48,7 @@ public abstract class BaseTest<T extends ODatabase> {
       }
     }
 
-    if (url.startsWith("memory:") ) {
+    if (url.startsWith("memory:") && !url.startsWith("remote")) {
       final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
       if (!db.exists())
         db.create().close();

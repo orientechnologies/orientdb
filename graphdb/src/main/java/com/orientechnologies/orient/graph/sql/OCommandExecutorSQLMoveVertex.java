@@ -135,7 +135,7 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
       final Set<OIdentifiable> sourceRIDs = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), source, context, iArgs);
 
       // CREATE EDGES
-      final List<ODocument> result = new ArrayList<ODocument>(sourceRIDs.size());
+        final List<ODocument> result = new ArrayList<ODocument>(sourceRIDs.size());
 
       for (OIdentifiable from : sourceRIDs) {
         final OrientVertex fromVertex = graph.getVertex(from);

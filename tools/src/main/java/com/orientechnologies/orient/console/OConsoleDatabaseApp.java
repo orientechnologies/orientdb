@@ -506,6 +506,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     currentDatabase.getLocalCache().invalidate();
   }
 
+  @ConsoleCommand(splitInWords = false, description = "Move vertices to another position (class/cluster)", priority = 8)
+  // EVALUATE THIS BEFORE 'MOVE'
+  public void moveVertex(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+    sqlCommand("move", iCommandText, "\nMove vertex command executed with result '%s' in %f sec(s).\n", true);
+  }
+
   @ConsoleCommand(description = "Force calling of JVM Garbage Collection")
   public void gc() {
     System.gc();

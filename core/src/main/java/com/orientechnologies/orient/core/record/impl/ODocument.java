@@ -88,6 +88,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -1763,6 +1764,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   @Override
   public void writeExternal(ObjectOutput stream) throws IOException {
     final byte[] idBuffer = _recordId.toStream();
+    stream.writeInt(-1);
     stream.writeInt(idBuffer.length);
     stream.write(idBuffer);
 
@@ -1773,11 +1775,18 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     stream.write(content);
 
     stream.writeBoolean(_dirty);
+    stream.writeObject(this._recordFormat.toString());
   }
 
   @Override
   public void readExternal(ObjectInput stream) throws IOException, ClassNotFoundException {
-    final byte[] idBuffer = new byte[stream.readInt()];
+    int i = stream.readInt();
+    int size;
+    if (i < 0)
+      size = stream.readInt();
+    else
+      size = i;
+    final byte[] idBuffer = new byte[size];
     stream.readFully(idBuffer);
     _recordId.fromStream(idBuffer);
 
@@ -1787,9 +1796,13 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     final byte[] content = new byte[len];
     stream.readFully(content);
 
+    _dirty = stream.readBoolean();
+    if (i < 0) {
+      String str = (String) stream.readObject();
+      _recordFormat = ORecordSerializerFactory.instance().getFormat(str);
+    }
     fromStream(content);
 
-    _dirty = stream.readBoolean();
   }
 
   /**
