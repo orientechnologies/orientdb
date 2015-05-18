@@ -39,4 +39,11 @@ public class OEmbeddedRidBagTest {
 
   }
 
+  @Test(expectedExceptions = NullPointerException.class)
+  public void testExceptionInCaseOfNull() {
+    OEmbeddedRidBag bag = new OEmbeddedRidBag();
+    bag.add(null);
+
+  }
+
 }
