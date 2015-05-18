@@ -42,6 +42,7 @@ import java.util.Set;
  * @since 12/3/13
  */
 public class OAtomicOperation {
+  private final int                storageId;
   private final OLogSequenceNumber startLSN;
   private final OOperationUnitId   operationUnitId;
 
@@ -57,7 +58,8 @@ public class OAtomicOperation {
   private OWriteCache              writeCache;
 
   public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId, OReadCache readCache,
-      OWriteCache writeCache) {
+      OWriteCache writeCache, int storageId) {
+    this.storageId = storageId;
     this.startLSN = startLSN;
     this.operationUnitId = operationUnitId;
     startCounter = 1;
@@ -74,6 +76,8 @@ public class OAtomicOperation {
   }
 
   public OCacheEntry loadPage(long fileId, long pageIndex, boolean checkPinnedPages) throws IOException {
+    fileId = checkFileIdCompatibilty(fileId, storageId);
+
     if (deletedFiles.contains(fileId))
       throw new OStorageException("File with id " + fileId + " is deleted.");
 
@@ -126,6 +130,8 @@ public class OAtomicOperation {
   }
 
   public OCacheEntry addPage(long fileId) throws IOException {
+    fileId = checkFileIdCompatibilty(fileId, storageId);
+
     if (deletedFiles.contains(fileId))
       throw new OStorageException("File with id " + fileId + " is deleted.");
 
@@ -156,6 +162,8 @@ public class OAtomicOperation {
   }
 
   public OWALChangesTree getChangesTree(long fileId, long pageIndex) {
+    fileId = checkFileIdCompatibilty(fileId, storageId);
+
     if (deletedFiles.contains(fileId))
       throw new OStorageException("File with id " + fileId + " is deleted.");
 
@@ -169,6 +177,8 @@ public class OAtomicOperation {
   }
 
   public long filledUpTo(long fileId) throws IOException {
+    fileId = checkFileIdCompatibilty(fileId, storageId);
+
     if (deletedFiles.contains(fileId))
       throw new OStorageException("File with id " + fileId + " is deleted.");
 
@@ -230,6 +240,8 @@ public class OAtomicOperation {
   }
 
   public void openFile(long fileId) throws IOException {
+    fileId = checkFileIdCompatibilty(fileId, storageId);
+
     if (deletedFiles.contains(fileId))
       throw new OStorageException("File with id " + fileId + " is deleted.");
 
@@ -239,6 +251,8 @@ public class OAtomicOperation {
   }
 
   public void deleteFile(long fileId) {
+    fileId = checkFileIdCompatibilty(fileId, storageId);
+
     final FileChanges fileChanges = this.fileChanges.remove(fileId);
     if (fileChanges != null && fileChanges.fileName != null)
       newFileNamesId.remove(fileChanges.fileName);
@@ -259,6 +273,8 @@ public class OAtomicOperation {
   }
 
   public boolean isFileExists(long fileId) {
+    fileId = checkFileIdCompatibilty(fileId, storageId);
+
     if (fileChanges.containsKey(fileId))
       return true;
 
@@ -269,6 +285,8 @@ public class OAtomicOperation {
   }
 
   public String fileNameById(long fileId) {
+    fileId = checkFileIdCompatibilty(fileId, storageId);
+
     FileChanges fileChanges = this.fileChanges.get(fileId);
 
     if (fileChanges != null && fileChanges.fileName != null)
@@ -281,6 +299,8 @@ public class OAtomicOperation {
   }
 
   public void truncateFile(long fileId) {
+    fileId = checkFileIdCompatibilty(fileId, storageId);
+
     FileChanges fileChanges = this.fileChanges.get(fileId);
 
     if (fileChanges == null) {
@@ -427,5 +447,25 @@ public class OAtomicOperation {
     private OLogSequenceNumber lsn         = null;
     private boolean            isNew       = false;
     private boolean            pinPage     = false;
+  }
+
+  private int storageId(long fileId) {
+    return (int) (fileId >>> 32);
+  }
+
+  private long composeFileId(long fileId, int storageId) {
+    return (((long) storageId) << 32) | fileId;
+  }
+
+  private long checkFileIdCompatibilty(long fileId, int storageId) {
+    // indicates that storage has no it's own id.
+    if (storageId == -1)
+      return fileId;
+
+    if (storageId(fileId) == 0) {
+      return composeFileId(fileId, storageId);
+    }
+
+    return fileId;
   }
 }

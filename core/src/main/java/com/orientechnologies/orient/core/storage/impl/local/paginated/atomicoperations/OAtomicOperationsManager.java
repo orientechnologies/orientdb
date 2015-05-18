@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
@@ -84,7 +85,12 @@ public class OAtomicOperationsManager {
     final OOperationUnitId unitId = OOperationUnitId.generateId();
     final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
-    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache);
+    if (storage instanceof OIdentifiableStorage) {
+      operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, ((OIdentifiableStorage) storage).getId());
+    } else {
+      operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, -1);
+    }
+
     currentOperation.set(operation);
 
     if (storage.getStorageTransaction() == null)
