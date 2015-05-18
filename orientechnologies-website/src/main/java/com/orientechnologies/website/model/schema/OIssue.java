@@ -100,6 +100,12 @@ public enum OIssue implements OTypeHolder<Issue> {
       return OType.DATETIME;
     }
   },
+  DUE_TIME("dueTime") {
+    @Override
+    public OType getType() {
+      return OType.DATETIME;
+    }
+  },
   CLOSED_AT("closedAt") {
     @Override
     public OType getType() {
@@ -126,6 +132,7 @@ public enum OIssue implements OTypeHolder<Issue> {
     doc.field(BODY.toString(), entity.getBody());
     doc.field(CREATED_AT.toString(), entity.getCreatedAt());
     doc.field(CLOSED_AT.toString(), entity.getClosedAt());
+    doc.field(DUE_TIME.toString(), entity.getDueTime());
     doc.field(UPDATED_AT.toString(), entity.getUpdatedAt());
     doc.field(TITLE.toString(), entity.getTitle());
     doc.field(NUMBER.toString(), entity.getNumber());
@@ -146,6 +153,7 @@ public enum OIssue implements OTypeHolder<Issue> {
     issue.setClosedAt((Date) doc.field(CLOSED_AT.toString()));
     issue.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
     issue.setUpdatedAt((Date) doc.field(UPDATED_AT.toString()));
+    issue.setDueTime((Date) doc.field(DUE_TIME.toString()));
     issue.setUuid((String) doc.field(UUID.toString()));
     issue.setIid((Long) doc.field(IID.toString()));
     issue.setNumber((Integer) doc.field(NUMBER.toString()));

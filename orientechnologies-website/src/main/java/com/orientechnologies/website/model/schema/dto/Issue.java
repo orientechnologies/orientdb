@@ -27,6 +27,7 @@ public class Issue {
   private Priority          priority;
   private Scope             scope;
   private Environment       environment;
+  private Date              dueTime;
   private Date              createdAt;
   private Date              updatedAt;
   private Date              closedAt;
@@ -122,6 +123,14 @@ public class Issue {
 
   public void setCreatedAt(Date createdAt) {
     this.createdAt = createdAt;
+  }
+
+  public void setDueTime(Date dueTime) {
+    this.dueTime = dueTime;
+  }
+
+  public Date getDueTime() {
+    return dueTime;
   }
 
   public Date getClosedAt() {

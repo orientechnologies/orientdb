@@ -72,4 +72,5 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
   List<OUser> findBots(String name);
 
+  List<Contract> findContracts(String name);
 }

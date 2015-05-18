@@ -45,4 +45,8 @@ public interface OrganizationService {
   OUser registerBot(String name, String username);
 
 
+  @Transactional
+  Contract registerContract(String name, Contract contract);
+
+  public void createMembership(Organization test, OUser user);
 }

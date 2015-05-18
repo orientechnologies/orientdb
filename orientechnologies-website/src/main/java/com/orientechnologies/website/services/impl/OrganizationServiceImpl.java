@@ -83,6 +83,9 @@ public class OrganizationServiceImpl implements OrganizationService {
   @Autowired
   private MessageRepository      messageRepository;
 
+  @Autowired
+  private ContractRepository     contractRepository;
+
   @Override
   public void addMember(String org, String username) throws ServiceException {
 
@@ -325,6 +328,27 @@ public class OrganizationServiceImpl implements OrganizationService {
   }
 
   @Override
+  public Contract registerContract(String name, Contract contract) {
+
+    Organization organization = organizationRepository.findOneByName(name);
+
+    if (organization != null) {
+      contract = contractRepository.save(contract);
+      createContractRelationship(organization, contract);
+    }
+    return null;
+  }
+
+  private void createContractRelationship(Organization organization, Contract contract) {
+
+    OrientGraph graph = dbFactory.getGraph();
+
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(organization.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(contract.getId()));
+    orgVertex.addEdge(HasContract.class.getSimpleName(), devVertex);
+  }
+
+  @Override
   public void checkInRoom(String name, Integer clientId) {
 
     final Client client = organizationRepository.findClient(name, clientId);
@@ -337,8 +361,10 @@ public class OrganizationServiceImpl implements OrganizationService {
         put("timestamp", new Date());
       }
     };
-    graph.command(
-        new OCommandSQL("update ChatLog SET user=:user, room=:room, timestamp=:timestamp , notified=false UPSERT WHERE user=:user and room =:room"))
+    graph
+        .command(
+            new OCommandSQL(
+                "update ChatLog SET user=:user, room=:room, timestamp=:timestamp , notified=false UPSERT WHERE user=:user and room =:room"))
         .execute(params);
 
   }
@@ -440,7 +466,7 @@ public class OrganizationServiceImpl implements OrganizationService {
   // orgVertex.addEdge(HasEnvironment.class.getSimpleName(), devVertex);
   // }
 
-  private void createMembership(Organization organization, OUser user) {
+  public void createMembership(Organization organization, OUser user) {
     OrientGraph graph = dbFactory.getGraph();
 
     OrientVertex orgVertex = graph.getVertex(new ORecordId(organization.getId()));

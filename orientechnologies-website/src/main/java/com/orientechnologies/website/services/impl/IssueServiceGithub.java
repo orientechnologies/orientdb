@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.events.IssueCommentedEvent;
-import com.orientechnologies.website.github.GComment;
-import com.orientechnologies.website.github.GRepo;
-import com.orientechnologies.website.github.GUser;
-import com.orientechnologies.website.github.GitHub;
+import com.orientechnologies.website.github.*;
 import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.services.IssueService;
@@ -153,7 +150,7 @@ public class IssueServiceGithub implements IssueService {
   }
 
   @Override
-  public Issue synchIssue(Issue issue) {
+  public Issue synchIssue(Issue issue, OUser user) {
     throw new UnsupportedOperationException();
   }
 
@@ -233,5 +230,25 @@ public class IssueServiceGithub implements IssueService {
   @Override
   public void changeTitle(Issue original, String title) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isChanged(Issue issue, OUser user) {
+
+    String token = user != null ? user.getToken() : SecurityHelper.currentToken();
+    GitHub github = new GitHub(token);
+
+    ODocument doc = new ODocument();
+    String iPropertyValue = issue.getRepository().getOrganization().getName() + "/" + issue.getRepository().getName();
+    doc.field("full_name", iPropertyValue);
+
+    try {
+      GRepo repo = github.repo(iPropertyValue, doc.toJSON());
+      return repo.isChangedIssue(issue.getNumber(), issue.getUpdatedAt());
+
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return false;
   }
 }

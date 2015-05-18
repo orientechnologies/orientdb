@@ -35,7 +35,7 @@ public interface IssueService {
 
   public Issue changeState(Issue issue, String state, OUser actor, boolean fire);
 
-  public Issue synchIssue(Issue issue);
+  public Issue synchIssue(Issue issue, OUser user);
 
   public void clearEvents(Issue issue);
 
@@ -54,4 +54,6 @@ public interface IssueService {
   public void clearComments(Issue issueDto);
 
   public void changeTitle(Issue original, String title);
+
+  public boolean isChanged(Issue issue, OUser user);
 }

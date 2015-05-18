@@ -28,11 +28,11 @@
                   <select class="form-control" required ng-model="scope"
                           ng-options="scope.name for scope in scopes"></select>
                 </div>
-                <!--<div class="col-md-3">-->
-                  <!--<label>Priority</label>-->
-                  <!--<select class="form-control" required ng-model="issue.priority"-->
-                          <!--ng-options="p.number as p.name for p in priorities"></select>-->
-                <!--</div>-->
+                <div class="col-md-3">
+                  <label>Priority</label>
+                  <select class="form-control" required ng-model="issue.priority"
+                          ng-options="p.number as p.name for p in priorities"></select>
+                </div>
 
                 <div class="col-md-3">
                   <label>Environment</label>
@@ -50,7 +50,7 @@
                           ng-options="m.number as m.title for m in milestones"></select>
                 </div>
                 <div class="col-md-3" ng-hide="!isMember">
-                  <label>Resolve in Milestone</label>
+                  <label>resolve in milestone</label>
                   <select class="form-control"  ng-model="issue.milestone"
                           ng-options="m.number as m.title for m in milestones"></select>
                 </div>

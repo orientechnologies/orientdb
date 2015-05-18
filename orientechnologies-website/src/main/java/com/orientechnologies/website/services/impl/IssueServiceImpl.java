@@ -16,6 +16,7 @@ import com.orientechnologies.website.repository.EventRepository;
 import com.orientechnologies.website.repository.IssueRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.services.IssueService;
+import com.orientechnologies.website.services.SlaService;
 import com.orientechnologies.website.services.reactor.GitHubIssueImporter;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -57,6 +58,9 @@ public class IssueServiceImpl implements IssueService {
   private GitHubIssueImporter  issueImporter;
 
   private IssueService         githubIssueService;
+
+  @Autowired
+  protected SlaService         slaService;
 
   @PostConstruct
   protected void init() {
@@ -298,6 +302,7 @@ public class IssueServiceImpl implements IssueService {
       e = (IssueEventInternal) eventRepository.save(e);
       fireEvent(issue, e);
     }
+    // issue.setDueTime(slaService.calculateDueTime(issue, priority));
   }
 
   @Override
@@ -333,6 +338,7 @@ public class IssueServiceImpl implements IssueService {
     embedEnvironment(issue, e);
   }
 
+  @Transactional
   @Override
   public Comment patchComment(Issue issue, String commentUUID, Comment comment) {
 
@@ -435,9 +441,10 @@ public class IssueServiceImpl implements IssueService {
 
   @Transactional
   @Override
-  public Issue synchIssue(Issue issue) {
+  public Issue synchIssue(Issue issue, OUser user) {
 
-    GitHub github = new GitHub(SecurityHelper.currentToken());
+    String token = user != null ? user.getToken() : SecurityHelper.currentToken();
+    GitHub github = new GitHub(token);
 
     ODocument doc = new ODocument();
     String iPropertyValue = issue.getRepository().getOrganization().getName() + "/" + issue.getRepository().getName();
@@ -454,6 +461,11 @@ public class IssueServiceImpl implements IssueService {
       e.printStackTrace();
     }
     return null;
+  }
+
+  @Override
+  public boolean isChanged(Issue issue,OUser user) {
+    return githubIssueService.isChanged(issue,user);
   }
 
   @Override

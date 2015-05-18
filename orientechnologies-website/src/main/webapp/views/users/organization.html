@@ -203,4 +203,61 @@
     </div>
   </div>
 </div>
+
+<div class="row">
+  <div class="col-md-2">
+    <h4> Contract</h4>
+  </div>
+  <div class="col-md-offset-6 col-md-4">
+    <button class="btn btn-sm btn-success pull-right" ng-show="!contractEditing" ng-click="addContract()">Add Contract
+    </button>
+    <div class="btn-group pull-right" ng-click="saveContract()" ng-show="contractEditing">
+      <button class="btn btn-sm btn-success">Save Contract</button>
+    </div>
+    <div class="btn-group pull-right" ng-show="contractEditing">
+      <button class="btn btn-sm btn-danger" ng-click="cancelContract()">Cancel</button>
+    </div>
+  </div>
+</div>
+<div class="row" ng-show="contractEditing">
+  <div class="col-md-12">
+    <form class="form-horizontal" name="areaForm" role="form">
+      <div class="form-group">
+        <label for="inputName" class="col-sm-2 control-label">Name</label>
+
+        <div class="col-sm-8">
+          <input type="text" class="form-control" id="inputNameContract" required ng-model="contract.name"
+                 placeholder="Name">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Business Hours</label>
+
+        <div class="col-sm-8">
+
+
+          <div class="row" ng-repeat="c in contract.businessHours track by $index">
+            <div class="col-sm-2"> {{$index+1}}</div>
+            <div class="col-sm-10">
+              <input type="text" class="form-control" required ng-model="contract.businessHours[$index]"
+                     placeholder="Hours">
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="row areas-panel">
+  <div class="col-md-12">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <h3><span class="label label-primary" ng-click="selectContract(contract)"
+                  ng-repeat="contract in contracts">{{contract.name}}</span></h3>
+      </div>
+    </div>
+  </div>
+</div>
 </div>

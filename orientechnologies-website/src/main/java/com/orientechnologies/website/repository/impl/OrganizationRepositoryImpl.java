@@ -715,6 +715,20 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   }
 
   @Override
+  public List<Contract> findContracts(String name) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select  from (select expand(out('HasContract')) from Organization where name = '%s') ", name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<Contract> bots = new ArrayList<Contract>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      bots.add(OContract.NAME.fromDoc(doc, db));
+    }
+    return bots;
+  }
+
+  @Override
   public List<Label> findLabels(String name) {
     OrientGraph db = dbFactory.getGraph();
     String query = String

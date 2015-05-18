@@ -156,6 +156,25 @@ public class OrganizationController extends ExceptionController {
     return orgRepository.findBots(name);
   }
 
+  @RequestMapping(value = "{name}/contracts", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public List<Contract> findContracts(@PathVariable("name") String name) {
+    return orgRepository.findContracts(name);
+  }
+
+  @RequestMapping(value = "{name}/contracts", method = RequestMethod.POST)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<Contract> addContractToOrg(@PathVariable("name") String name, @RequestBody Contract contract) {
+    OUser user = SecurityHelper.currentUser();
+
+    if (userService.isMember(user, name)) {
+      Contract c = organizationService.registerContract(name, contract);
+      return new ResponseEntity<Contract>(c, HttpStatus.OK);
+    } else {
+      return new ResponseEntity(null, HttpStatus.NOT_FOUND);
+    }
+  }
+
   @RequestMapping(value = "{name}/bots/{username}", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.OK)
   public OUser addBotToOrg(@PathVariable("name") String name, @PathVariable("username") String username) {

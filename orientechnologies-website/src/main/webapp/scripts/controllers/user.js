@@ -147,6 +147,10 @@ angular.module('webappApp')
       $scope.bots = data.plain();
     })
 
+    Organization.all("contracts").getList().then(function (data) {
+      $scope.contracts = data.plain();
+    })
+
     Organization.all("milestones").all('current').getList().then(function (data) {
       var currents = data.plain();
       Organization.all("milestones").getList().then(function (data) {
@@ -178,15 +182,41 @@ angular.module('webappApp')
       $scope.area = {}
       $scope.area.members = [];
     }
+    $scope.addContract = function () {
+      $scope.contractEditing = true;
+      $scope.contract = {}
+      $scope.contract.businessHours = new Array(7);
+    }
     $scope.saveMilestone = function (milestone) {
       Organization.all("milestones").one(encodeURI(milestone.title)).patch({current: milestone.current}).then(function (data) {
 
       })
     }
+    $scope.cancelContract = function () {
+      $scope.contractEditing = false;
+      $scope.contract = {}
+      $scope.contract.businessHours = new Array(7);
+    }
     $scope.cancelArea = function () {
       $scope.areaEditing = false;
       $scope.area = {}
       $scope.area.members = [];
+    }
+
+    $scope.saveContract = function () {
+
+      if (!$scope.contract.id) {
+        Organization.all("contracts").post($scope.contract).then(function (data) {
+          $scope.contracts.push(data);
+          $scope.cancelContract();
+        })
+      } else {
+        var idx = $scope.contracts.indexOf($scope.selectedContract);
+        Organization.all("contracts").one($scope.contract.name).patch($scope.contract).then(function (data) {
+          $scope.contracts[idx] = data;
+          $scope.cancelContract();
+        })
+      }
     }
     $scope.saveArea = function () {
       if (!$scope.area.number) {
@@ -221,6 +251,11 @@ angular.module('webappApp')
       }
       $scope.area.repository = area.repository.name;
       $scope.areaEditing = true;
+    }
+    $scope.selectContract = function (contract) {
+      $scope.selectedContract = contract;
+      $scope.contract = angular.copy(contract);
+      $scope.contractEditing = true;
     }
   });
 
