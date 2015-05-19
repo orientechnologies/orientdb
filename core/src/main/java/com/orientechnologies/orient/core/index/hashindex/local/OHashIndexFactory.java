@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.*;
@@ -33,7 +28,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * 
@@ -104,7 +102,7 @@ public class OHashIndexFactory implements OIndexFactory {
           getLastVersion());
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage(),
+      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage().getUnderlying(),
           getLastVersion());
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine();
