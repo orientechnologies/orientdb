@@ -212,6 +212,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       try {
         onBeforeRequest();
       } catch (Exception e) {
+        sendError(clientTxId, e);
         handleConnectionError(channel, e);
         sendShutdown();
         return;
