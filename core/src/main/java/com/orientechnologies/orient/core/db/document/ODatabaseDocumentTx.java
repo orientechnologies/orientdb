@@ -131,8 +131,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
   private final Map<String, Object>                         properties        = new HashMap<String, Object>();
   private final Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  private final Set<OIdentifiable>                          inHook            = Collections
-                                                                                  .newSetFromMap(new IdentityHashMap<OIdentifiable, Boolean>());
+  private final Set<OIdentifiable>                          inHook            = new HashSet<OIdentifiable>();
   protected ORecordSerializer                               serializer;
   private String                                            url;
   private OStorage                                          storage;
@@ -979,7 +978,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * @return True if the input record is changed, otherwise false
    */
   public ORecordHook.RESULT callbackHooks(final ORecordHook.TYPE type, final OIdentifiable id) {
-    if (id == null || hooks.isEmpty() || !pushInHook(id))
+    if (id == null || hooks.isEmpty())
+      return ORecordHook.RESULT.RECORD_NOT_CHANGED;
+    ORID identity = id.getIdentity().copy();
+    if (!pushInHook(identity))
       return ORecordHook.RESULT.RECORD_NOT_CHANGED;
 
     try {
@@ -1020,7 +1022,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       return recordChanged ? ORecordHook.RESULT.RECORD_CHANGED : ORecordHook.RESULT.RECORD_NOT_CHANGED;
 
     } finally {
-      popInHook(id);
+      popInHook(identity);
     }
   }
 
