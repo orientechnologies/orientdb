@@ -126,7 +126,10 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    * 
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <RET extends ORecord> RET reload() throws ORecordNotFoundException;
+  <RET extends ORecord> RET reload() throws ORecordNotFoundException;
+
+  <RET extends ORecord> RET reload(final String fetchPlan, final boolean ignoreCache, boolean force)
+      throws ORecordNotFoundException;
 
   /**
    * Saves in-memory changes to the database. Behavior depends by the current running transaction if any. If no transaction is

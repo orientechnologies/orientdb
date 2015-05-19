@@ -246,16 +246,22 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public <RET> RET reload(Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
+    return reload(iPojo, iFetchPlan, iIgnoreCache, true);
+  }
+
+  @Override
+  public <RET> RET reload(Object iObject, String iFetchPlan, boolean iIgnoreCache, boolean force) {
     checkOpeness();
-    if (iPojo == null)
+    if (iObject == null)
       return null;
 
     // GET THE ASSOCIATED DOCUMENT
-    final ODocument record = getRecordByUserObject(iPojo, true);
-    underlying.reload(record, iFetchPlan, iIgnoreCache);
+    final ODocument record = getRecordByUserObject(iObject, true);
+    underlying.reload(record, iFetchPlan, iIgnoreCache, force);
 
-    iPojo = stream2pojo(record, iPojo, iFetchPlan, true);
-    return (RET) iPojo;
+    iObject = stream2pojo(record, iObject, iFetchPlan, true);
+    return (RET) iObject;
+
   }
 
   public <RET> RET load(final Object iPojo, final String iFetchPlan) {

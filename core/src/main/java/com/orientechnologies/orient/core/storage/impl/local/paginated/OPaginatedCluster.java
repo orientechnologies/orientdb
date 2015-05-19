@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
@@ -574,6 +575,53 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         byte[] recordContent = compression.uncompress(fullContent, fullContentPosition, readContentSize);
         return new ORawBuffer(recordContent, recordVersion, recordType);
+      } finally {
+        releaseSharedLock();
+      }
+    } finally {
+      atomicOperationsManager.releaseReadLock(this);
+    }
+  }
+
+  @Override
+  public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, ORecordVersion recordVersion) throws IOException,
+      ORecordNotFoundException {
+    atomicOperationsManager.acquireReadLock(this);
+    try {
+      acquireSharedLock();
+      try {
+        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+        OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
+
+        if (positionEntry == null)
+          throw new ORecordNotFoundException("Record for cluster with id " + id + " and position " + clusterPosition
+              + " is absent.");
+
+        int recordPosition = positionEntry.getRecordPosition();
+        long pageIndex = positionEntry.getPageIndex();
+
+        if (getFilledUpTo(atomicOperation, fileId) <= pageIndex)
+          throw new ORecordNotFoundException("Record for cluster with id " + id + " and position " + clusterPosition
+              + " is absent.");
+
+        ORecordVersion loadedRecordVersion = null;
+
+        OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
+        try {
+          final OClusterPage localPage = new OClusterPage(cacheEntry, false, getChangesTree(atomicOperation, cacheEntry));
+          if (localPage.isDeleted(recordPosition))
+            throw new ORecordNotFoundException("Record for cluster with id " + id + " and position " + clusterPosition
+                + " is absent.");
+
+          loadedRecordVersion = localPage.getRecordVersion(recordPosition);
+        } finally {
+          releasePage(atomicOperation, cacheEntry);
+        }
+
+        if (loadedRecordVersion.compareTo(recordVersion) > 0)
+          return readRecord(clusterPosition);
+
+        return null;
       } finally {
         releaseSharedLock();
       }

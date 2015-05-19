@@ -658,8 +658,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   @Override
-  public ODocument reload(final String iFetchPlan, final boolean iIgnoreCache) {
-    super.reload(iFetchPlan, iIgnoreCache);
+  public ODocument reload(final String fetchPlan, final boolean ignoreCache) {
+    super.reload(fetchPlan, ignoreCache);
     if (!_lazyLoad) {
       checkForFields();
       checkForLoading();

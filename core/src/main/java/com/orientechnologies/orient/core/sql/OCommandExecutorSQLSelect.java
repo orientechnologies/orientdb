@@ -494,10 +494,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     if (localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK) {
       record.lock(false);
-      record.reload();
+      record.reload(null, true, false);
     } else if (localLockingStrategy == LOCKING_STRATEGY.EXCLUSIVE_LOCK) {
       record.lock(true);
-      record.reload();
+      record.reload(null, true, false);
     }
 
     try {
@@ -2030,13 +2030,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     final long startOrderBy = System.currentTimeMillis();
     try {
-      if(tempResult instanceof OMultiCollectionIterator) {
+      if (tempResult instanceof OMultiCollectionIterator) {
         final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
         for (OIdentifiable o : tempResult) {
           list.add(o);
         }
         tempResult = list;
-      } 
+      }
       tempResult = applySort((List<OIdentifiable>) tempResult, orderedFields, context);
       orderedFields.clear();
     } finally {

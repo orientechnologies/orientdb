@@ -42,10 +42,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -450,6 +447,60 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         } finally {
           endResponse(network);
         }
+      } catch (Exception e) {
+        handleException(network, "Error on read record " + rid, e);
+      }
+    } while (true);
+  }
+
+  @Override
+  public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(ORecordId rid, String fetchPlan, boolean ignoreCache,
+      ORecordVersion recordVersion) throws ORecordNotFoundException {
+    if (OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting)
+      // PENDING NETWORK OPERATION, CAN'T EXECUTE IT NOW
+      return new OStorageOperationResult<ORawBuffer>(null);
+
+    OChannelBinaryAsynchClient network = null;
+    do {
+      try {
+
+        try {
+          network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_LOAD_IF_VERSION_NOT_LATEST);
+          network.writeRID(rid);
+          network.writeVersion(recordVersion);
+          network.writeString(fetchPlan != null ? fetchPlan : "");
+          network.writeByte((byte) (ignoreCache ? 1 : 0));
+        } finally {
+          endRequest(network);
+        }
+
+        try {
+          beginResponse(network);
+
+          if (network.readByte() == 0)
+            return new OStorageOperationResult<ORawBuffer>(null);
+
+          byte type = network.readByte();
+          ORecordVersion recVersion = network.readVersion();
+          byte[] bytes = network.readBytes();
+          ORawBuffer buffer = new ORawBuffer(bytes, recVersion, type);
+
+          final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          ORecord record;
+
+          while (network.readByte() == 2) {
+            record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
+
+            if (database != null)
+              // PUT IN THE CLIENT LOCAL CACHE
+              database.getLocalCache().updateRecord(record);
+          }
+          return new OStorageOperationResult<ORawBuffer>(buffer);
+
+        } finally {
+          endResponse(network);
+        }
+
       } catch (Exception e) {
         handleException(network, "Error on read record " + rid, e);
       }

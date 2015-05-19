@@ -333,6 +333,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         readRecord();
         break;
 
+      case OChannelBinaryProtocol.REQUEST_RECORD_LOAD_IF_VERSION_NOT_LATEST:
+        readRecordIfVersionIsNotLatest();
+        break;
+
       case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
         createRecord();
         break;
@@ -660,7 +664,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         ODocument distributedCfg = null;
         if (plugin != null && plugin instanceof ODistributedServerManager)
           distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
-        
+
         channel.writeBytes(distributedCfg != null ? getRecordBytes(distributedCfg) : null);
 
         if (connection.data.protocolVersion >= 14)
@@ -1464,6 +1468,94 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             channel.writeVersion(record.getRecordVersion());
             channel.writeBytes(bytes, length);
           }
+
+          if (fetchPlanString.length() > 0) {
+            // BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH
+            // PLAN
+            if (record instanceof ODocument) {
+              final OFetchPlan fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
+
+              final Set<ORecord> recordsToSend = new HashSet<ORecord>();
+              final ODocument doc = (ODocument) record;
+              final OFetchListener listener = new ORemoteFetchListener() {
+                @Override
+                protected void sendRecord(ORecord iLinked) {
+                  recordsToSend.add(iLinked);
+                }
+              };
+              final OFetchContext context = new ORemoteFetchContext();
+              OFetchHelper.fetch(doc, doc, fetchPlan, listener, context, "");
+
+              // SEND RECORDS TO LOAD IN CLIENT CACHE
+              for (ORecord d : recordsToSend) {
+                if (d.getIdentity().isValid()) {
+                  channel.writeByte((byte) 2); // CLIENT CACHE
+                  // RECORD. IT ISN'T PART OF THE RESULT SET
+                  writeIdentifiable(d);
+                }
+              }
+            }
+
+          }
+        }
+        channel.writeByte((byte) 0); // NO MORE RECORDS
+
+      } finally {
+        endResponse();
+      }
+    }
+  }
+
+  protected void readRecordIfVersionIsNotLatest() throws IOException {
+    setDataCommandInfo("Load record if version is not latest");
+
+    if (!isConnectionAlive())
+      return;
+
+    final ORecordId rid = channel.readRID();
+    final ORecordVersion recordVersion = channel.readVersion();
+    final String fetchPlanString = channel.readString();
+
+    boolean ignoreCache = channel.readByte() == 1;
+
+    if (rid.clusterId == 0 && rid.clusterPosition == 0) {
+      // @COMPATIBILITY 0.9.25
+      // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
+      OFetchHelper.checkFetchPlanValid(fetchPlanString);
+
+      beginResponse();
+      try {
+        sendOk(clientTxId);
+        channel.writeByte((byte) 1);
+        if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
+          channel.writeBytes(connection.database.getStorage().getConfiguration().toStream(connection.data.protocolVersion));
+          channel.writeVersion(OVersionFactory.instance().createVersion());
+          channel.writeByte(ORecordBytes.RECORD_TYPE);
+        } else {
+          channel.writeByte(ORecordBytes.RECORD_TYPE);
+          channel.writeVersion(OVersionFactory.instance().createVersion());
+          channel.writeBytes(connection.database.getStorage().getConfiguration().toStream(connection.data.protocolVersion));
+        }
+        channel.writeByte((byte) 0); // NO MORE RECORDS
+      } finally {
+        endResponse();
+      }
+
+    } else {
+      final ORecord record = connection.database.loadIfVersionIsNotLatest(rid, recordVersion, fetchPlanString, ignoreCache);
+
+      beginResponse();
+      try {
+        sendOk(clientTxId);
+
+        if (record != null) {
+          channel.writeByte((byte) 1); // HAS RECORD
+          byte[] bytes = getRecordBytes(record);
+          int length = trimCsvSerializedContent(bytes);
+
+          channel.writeByte(ORecordInternal.getRecordType(record));
+          channel.writeVersion(record.getRecordVersion());
+          channel.writeBytes(bytes, length);
 
           if (fetchPlanString.length() > 0) {
             // BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH

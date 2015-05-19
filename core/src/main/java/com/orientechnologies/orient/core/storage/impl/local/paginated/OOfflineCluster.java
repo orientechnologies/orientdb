@@ -21,6 +21,7 @@ import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
@@ -145,6 +146,12 @@ public class OOfflineCluster implements OCluster {
 
   @Override
   public ORawBuffer readRecord(long clusterPosition) throws IOException {
+    throw new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'");
+  }
+
+  @Override
+  public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, ORecordVersion recordVersion) throws IOException,
+      ORecordNotFoundException {
     throw new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'");
   }
 

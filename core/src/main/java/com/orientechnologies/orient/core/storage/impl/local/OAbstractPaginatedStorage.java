@@ -697,6 +697,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   @Override
+  public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(ORecordId rid, String fetchPlan, boolean ignoreCache,
+      ORecordVersion recordVersion) throws ORecordNotFoundException {
+    checkOpeness();
+    return new OStorageOperationResult<ORawBuffer>(readRecordIfNotLatest(getClusterById(rid.clusterId), rid, recordVersion));
+  }
+
+  @Override
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId rid, boolean updateContent, byte[] content,
       final ORecordVersion version, final byte recordType, final int mode, ORecordCallback<ORecordVersion> callback) {
     checkOpeness();
@@ -1403,6 +1410,45 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     writeCache.unlock();
   }
 
+  private ORawBuffer readRecordIfNotLatest(final OCluster cluster, final ORecordId rid, final ORecordVersion recordVersion)
+      throws ORecordNotFoundException {
+    checkOpeness();
+
+    if (!rid.isPersistent())
+      throw new IllegalArgumentException("Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
+
+    if (transaction.get() != null) {
+      final long timer = Orient.instance().getProfiler().startChrono();
+      try {
+        return doReadRecordIfNotLatest(cluster, rid, recordVersion);
+      } finally {
+        Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
+      }
+    }
+
+    final long timer = Orient.instance().getProfiler().startChrono();
+    cluster.getExternalModificationLock().requestModificationLock();
+    try {
+      lockManager.acquireLock(this, rid, OLockManager.LOCK.SHARED);
+      try {
+        ORawBuffer buff;
+        lock.acquireSharedLock();
+        try {
+          buff = doReadRecordIfNotLatest(cluster, rid, recordVersion);
+          return buff;
+        } finally {
+          lock.releaseSharedLock();
+        }
+      } finally {
+        lockManager.releaseLock(this, rid, OLockManager.LOCK.SHARED);
+      }
+    } finally {
+      cluster.getExternalModificationLock().releaseModificationLock();
+
+      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
+    }
+  }
+
   private ORawBuffer readRecord(final OCluster clusterSegment, final ORecordId rid) {
     checkOpeness();
 
@@ -1683,6 +1729,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       ORawBuffer buff;
       buff = clusterSegment.readRecord(rid.clusterPosition);
       return buff;
+    } catch (IOException e) {
+      throw new OStorageException("Error during read of record with rid = " + rid, e);
+    }
+  }
+
+  private ORawBuffer doReadRecordIfNotLatest(OCluster cluster, ORecordId rid, ORecordVersion recordVersion)
+      throws ORecordNotFoundException {
+    try {
+      return cluster.readRecordIfVersionIsNotLatest(rid.clusterPosition, recordVersion);
     } catch (IOException e) {
       throw new OStorageException("Error during read of record with rid = " + rid, e);
     }

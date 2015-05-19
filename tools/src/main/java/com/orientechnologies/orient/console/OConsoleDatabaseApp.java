@@ -1885,8 +1885,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void reloadRecordInternal(String iRecordId, String iFetchPlan) {
     checkForDatabase();
 
-    currentRecord = currentDatabase.executeReadRecord(new ORecordId(iRecordId), null, iFetchPlan, true, false,
-        OStorage.LOCKING_STRATEGY.NONE);
+    currentRecord = currentDatabase.executeReadRecord(new ORecordId(iRecordId), null, null, iFetchPlan, true, false,
+        OStorage.LOCKING_STRATEGY.NONE, new ODatabaseDocumentTx.SimpleRecordReader());
     displayRecord(null);
 
     message("\nOK");

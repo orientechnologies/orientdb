@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -251,6 +252,17 @@ public class OStorageRemoteThread implements OStorageProxy {
     pushSession();
     try {
       return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null);
+    } finally {
+      popSession();
+    }
+  }
+
+  @Override
+  public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(ORecordId rid, String fetchPlan, boolean ignoreCache,
+      ORecordVersion recordVersion) throws ORecordNotFoundException {
+    pushSession();
+    try {
+      return delegate.readRecordIfVersionIsNotLatest(rid, fetchPlan, ignoreCache, recordVersion);
     } finally {
       popSession();
     }

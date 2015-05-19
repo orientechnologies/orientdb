@@ -24,6 +24,7 @@ import java.io.IOException;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -112,6 +113,12 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
+  public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, ORecordVersion recordVersion) throws IOException,
+      ORecordNotFoundException {
+    throw new UnsupportedOperationException("readRecordIfVersionIsNotLatest");
+  }
+
+  @Override
   public boolean exists() {
     throw new UnsupportedOperationException("exists");
   }
@@ -129,7 +136,6 @@ public class OClusterRemote implements OCluster {
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
     return null;
   }
-
 
   public long getEntries() {
     return 0;

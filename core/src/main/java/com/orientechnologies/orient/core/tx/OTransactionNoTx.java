@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -78,14 +79,61 @@ public class OTransactionNoTx extends OTransactionAbstract {
     if (iRid.isNew())
       return null;
 
-    return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, loadTombstone, iLockingStrategy);
+    return database.executeReadRecord((ORecordId) iRid, iRecord, null, iFetchPlan, ignoreCache, loadTombstone, iLockingStrategy,
+        new ODatabaseDocumentTx.SimpleRecordReader());
   }
 
   public ORecord loadRecord(final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignoreCache) {
     if (iRid.isNew())
       return null;
 
-    return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, false, OStorage.LOCKING_STRATEGY.NONE);
+    return database.executeReadRecord((ORecordId) iRid, iRecord, null, iFetchPlan, ignoreCache, false,
+        OStorage.LOCKING_STRATEGY.NONE, new ODatabaseDocumentTx.SimpleRecordReader());
+  }
+
+  @Override
+  public ORecord reloadRecord(ORID rid, ORecord record, String fetchPlan, boolean ignoreCache) {
+    return reloadRecord(rid, record, fetchPlan, ignoreCache, true);
+  }
+
+  @Override
+  public ORecord reloadRecord(ORID rid, ORecord record, String fetchPlan, boolean ignoreCache, boolean force) {
+    if (rid.isNew())
+      return null;
+
+    try {
+      final ODatabaseDocumentTx.RecordReader recordReader;
+      if (force) {
+        recordReader = new ODatabaseDocumentTx.SimpleRecordReader();
+      } else {
+        recordReader = new ODatabaseDocumentTx.LatestVersionRecordReader();
+      }
+
+      final ORecord loadedRecord = database.executeReadRecord((ORecordId) rid, record, null, fetchPlan, ignoreCache, false,
+          OStorage.LOCKING_STRATEGY.NONE, recordReader);
+
+      if (force) {
+        return loadedRecord;
+      } else {
+        if (loadedRecord == null)
+          return record;
+
+        return loadedRecord;
+      }
+
+    } catch (ORecordNotFoundException e) {
+      return null;
+    }
+  }
+
+  @Override
+  public ORecord loadRecordIfVersionIsNotLatest(ORID rid, ORecordVersion recordVersion, String fetchPlan, boolean ignoreCache)
+      throws ORecordNotFoundException {
+    if (rid.isNew())
+      return null;
+
+    return database.executeReadRecord((ORecordId) rid, null, recordVersion, fetchPlan, ignoreCache, false,
+        OStorage.LOCKING_STRATEGY.NONE, new ODatabaseDocumentTx.LatestVersionRecordReader());
   }
 
   /**

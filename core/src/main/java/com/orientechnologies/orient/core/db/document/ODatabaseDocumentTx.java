@@ -106,6 +106,7 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
 import java.io.IOException;
@@ -546,7 +547,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@inheritDoc}
    */
   public <RET extends ORecord> RET load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
-    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, iIgnoreCache, false, OStorage.LOCKING_STRATEGY.DEFAULT);
+    return (RET) executeReadRecord((ORecordId) iRecordId, null, null, iFetchPlan, iIgnoreCache, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT, new SimpleRecordReader());
   }
 
   /**
@@ -1477,6 +1479,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @SuppressWarnings("unchecked")
+  public <RET extends ORecord> RET loadIfVersionIsNotLatest(ORID rid, ORecordVersion recordVersion, String fetchPlan,
+      boolean ignoreCache) throws ORecordNotFoundException {
+    return (RET) currentTx.loadRecordIfVersionIsNotLatest(rid, recordVersion, fetchPlan, ignoreCache);
+  }
+
+  @SuppressWarnings("unchecked")
   @Override
   @Deprecated
   public <RET extends ORecord> RET load(final ORID iRecordId, String iFetchPlan, final boolean iIgnoreCache,
@@ -1497,13 +1505,18 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecord> RET reload(final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
-    ORecord record = currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache);
+    return reload(iRecord, iFetchPlan, iIgnoreCache, true);
+  }
 
-    if (record != null && iRecord != record) {
-      iRecord.fromStream(record.toStream());
-      iRecord.getRecordVersion().copyFrom(record.getRecordVersion());
-    } else if (record == null)
-      throw new ORecordNotFoundException("Record with rid " + iRecord.getIdentity() + " was not found in database");
+  @Override
+  public <RET extends ORecord> RET reload(ORecord record, String fetchPlan, boolean ignoreCache, boolean force) {
+    ORecord loadedRecord = currentTx.reloadRecord(record.getIdentity(), record, fetchPlan, ignoreCache);
+
+    if (loadedRecord != null && record != loadedRecord) {
+      record.fromStream(loadedRecord.toStream());
+      record.getRecordVersion().copyFrom(loadedRecord.getRecordVersion());
+    } else if (loadedRecord == null)
+      throw new ORecordNotFoundException("Record with rid " + record.getIdentity() + " was not found in database");
 
     return (RET) record;
   }
@@ -1560,8 +1573,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@inheritDoc}
    */
   public <RET extends ORecord> RET load(final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false,
-        OStorage.LOCKING_STRATEGY.NONE);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, iFetchPlan, iIgnoreCache, false,
+        OStorage.LOCKING_STRATEGY.NONE, new SimpleRecordReader());
   }
 
   /**
@@ -1569,8 +1582,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    *
    * @Internal
    */
-  public <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final String iFetchPlan,
-      final boolean iIgnoreCache, final boolean loadTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, ORecordVersion recordVersion,
+      final String fetchPlan, final boolean ignoreCache, final boolean loadTombstones,
+      final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader) {
     checkOpeness();
 
     ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
@@ -1584,7 +1598,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         // DELETED IN TX
         return null;
 
-      if (record == null && !iIgnoreCache)
+      if (record == null && !ignoreCache)
         // SEARCH INTO THE CACHE
         record = getLocalCache().findRecord(rid);
 
@@ -1595,21 +1609,21 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           record = iRecord;
         }
 
-        OFetchHelper.checkFetchPlanValid(iFetchPlan);
+        OFetchHelper.checkFetchPlanValid(fetchPlan);
         if (callbackHooks(ORecordHook.TYPE.BEFORE_READ, record) == ORecordHook.RESULT.SKIP)
           return null;
 
         if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
           record.reload();
 
-        if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+        if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
           OLogManager.instance().warn(this,
-              "You use depricated record locking strategy : %s it may lead to deadlocks " + iLockingStrategy);
+              "You use depricated record locking strategy : %s it may lead to deadlocks " + lockingStrategy);
           record.lock(false);
 
-        } else if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
+        } else if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
           OLogManager.instance().warn(this,
-              "You use depricated record locking strategy : %s it may lead to deadlocks " + iLockingStrategy);
+              "You use depricated record locking strategy : %s it may lead to deadlocks " + lockingStrategy);
           record.lock(true);
         }
 
@@ -1621,8 +1635,17 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (!rid.isValid())
         recordBuffer = null;
       else {
-        OFetchHelper.checkFetchPlanValid(iFetchPlan);
-        recordBuffer = storage.readRecord(rid, iFetchPlan, iIgnoreCache, null).getResult();
+        OFetchHelper.checkFetchPlanValid(fetchPlan);
+
+        ORecordVersion version;
+        if (iRecord != null)
+          version = iRecord.getRecordVersion();
+        else if (recordVersion != null)
+          version = recordVersion;
+        else
+          version = new OSimpleVersion(-1);
+
+        recordBuffer = recordReader.readRecord(storage, rid, fetchPlan, ignoreCache, version);
       }
 
       if (recordBuffer == null)
@@ -1644,7 +1667,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       callbackHooks(ORecordHook.TYPE.AFTER_READ, iRecord);
 
-      if (!iIgnoreCache)
+      if (!ignoreCache)
         getLocalCache().updateRecord(iRecord);
 
       return (RET) iRecord;
@@ -2940,6 +2963,36 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         it.next().getInternal().release();
         it.remove();
       }
+    }
+  }
+
+  /**
+   * @Internal
+   */
+  public interface RecordReader {
+    ORawBuffer readRecord(OStorage storage, ORecordId rid, String fetchPlan, boolean ignoreCache, ORecordVersion recordVersion)
+        throws ORecordNotFoundException;
+  }
+
+  /**
+   * @Internal
+   */
+  public static final class SimpleRecordReader implements RecordReader {
+    @Override
+    public ORawBuffer readRecord(OStorage storage, ORecordId rid, String fetchPlan, boolean ignoreCache,
+        ORecordVersion recordVersion) throws ORecordNotFoundException {
+      return storage.readRecord(rid, fetchPlan, ignoreCache, null).getResult();
+    }
+  }
+
+  /**
+   * @Internal
+   */
+  public static final class LatestVersionRecordReader implements RecordReader {
+    @Override
+    public ORawBuffer readRecord(OStorage storage, ORecordId rid, String fetchPlan, boolean ignoreCache,
+        ORecordVersion recordVersion) throws ORecordNotFoundException {
+      return storage.readRecordIfVersionIsNotLatest(rid, fetchPlan, ignoreCache, recordVersion).getResult();
     }
   }
 }

@@ -582,6 +582,52 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
+  public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(final ORecordId rid, final String fetchPlan,
+      final boolean ignoreCache, final ORecordVersion recordVersion) throws ORecordNotFoundException {
+
+    if (deletedRecords.get(rid) != null)
+      // DELETED
+      throw new ORecordNotFoundException("Record " + rid + " was not found");
+
+    try {
+      final String clusterName = getClusterNameByRID(rid);
+
+      final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+      final List<String> nodes = dbCfg.getServers(clusterName, null);
+
+      // CHECK IF LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
+      if (nodes.isEmpty() || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName) <= 1) {
+        // DON'T REPLICATE
+        return (OStorageOperationResult<ORawBuffer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+          @Override
+          public Object call() throws Exception {
+            return wrapped.readRecordIfVersionIsNotLatest(rid, fetchPlan, ignoreCache, recordVersion);
+          }
+        });
+      }
+
+      // DISTRIBUTE IT
+      final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
+          new OReadRecordIfNotLatestTask(rid, recordVersion), EXECUTION_MODE.RESPONSE);
+
+      if (result instanceof ONeedRetryException)
+        throw (ONeedRetryException) result;
+      else if (result instanceof Throwable)
+        throw new ODistributedException("Error on execution distributed READ_RECORD", (Throwable) result);
+
+      return new OStorageOperationResult<ORawBuffer>((ORawBuffer) result);
+
+    } catch (ONeedRetryException e) {
+      // PASS THROUGH
+      throw e;
+    } catch (Exception e) {
+      handleDistributedException("Cannot route READ_RECORD operation for %s to the distributed node", e, rid);
+      // UNREACHABLE
+      return null;
+    }
+  }
+
+  @Override
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRecordId, final boolean updateContent,
       final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType, final int iMode,
       final ORecordCallback<ORecordVersion> iCallback) {
