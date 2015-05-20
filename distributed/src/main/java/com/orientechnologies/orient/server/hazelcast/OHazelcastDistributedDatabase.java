@@ -23,6 +23,7 @@ import com.hazelcast.core.IQueue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
@@ -44,8 +45,11 @@ import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -72,6 +76,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected AtomicBoolean                             status                     = new AtomicBoolean(false);
   protected List<ODistributedWorker>                  workers                    = new ArrayList<ODistributedWorker>();
   protected AtomicLong                                waitForMessageId           = new AtomicLong(-1);
+  protected ConcurrentHashMap<ORID, String>           lockManager                = new ConcurrentHashMap<ORID, String>();
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -235,6 +240,35 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       // SET THE NODE.DB AS ONLINE
       manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
     }
+  }
+
+  @Override
+  public boolean lockRecord(final ORID iRecord, final String iNodeName) {
+    return lockManager.putIfAbsent(iRecord, iNodeName) == null;
+  }
+
+  @Override
+  public void unlockRecord(final ORID iRecord) {
+    lockManager.remove(iRecord);
+  }
+
+  @Override
+  public void unlockRecords(final String iNodeName) {
+    int unlocked = 0;
+    final Iterator<Map.Entry<ORID, String>> it = lockManager.entrySet().iterator();
+    while (it.hasNext()) {
+      final Map.Entry<ORID, String> v = it.next();
+      if (v != null && iNodeName.equals(v.getValue())) {
+        // FOUND: UNLOCK IT
+        it.remove();
+        unlocked++;
+      }
+    }
+
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "Unlocked %d locks in database '%s' owned by server '%s'", databaseName, iNodeName);
+
   }
 
   public OHazelcastDistributedDatabase setWaitForMessage(final long iMessageId) {
