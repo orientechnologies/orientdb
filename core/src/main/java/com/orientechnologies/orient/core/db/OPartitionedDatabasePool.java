@@ -19,15 +19,17 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.OOrientListenerAbstract;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * <p>
@@ -117,6 +119,20 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
 
     private DatabaseDocumentTxPolled(String iURL) {
       super(iURL, true);
+    }
+
+    @Override
+    public <DB extends ODatabase> DB open(OToken iToken) {
+      throw new ODatabaseException("Impossible to open a database managed by a pool ");
+    }
+
+    @Override
+    public <DB extends ODatabase> DB open(String iUserName, String iUserPassword) {
+      throw new ODatabaseException("Impossible to open a database managed by a pool ");
+    }
+
+    protected void internalOpen() {
+      super.open(userName, password);
     }
 
     @Override
@@ -310,7 +326,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
       if (autoCreate)
         db.create();
     } else
-      db.open(userName, password);
+      db.internalOpen();
   }
 
   @Override
