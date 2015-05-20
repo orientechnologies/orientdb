@@ -21,11 +21,12 @@ public class TestReplicationVersionIncrementedByOne extends TestCase {
   public void testReplication2() throws Throwable {
     Orient.setRegisterDatabaseByPath(true);
 
+    final BareBonesServer[] servers = new BareBonesServer[1];
     // Start the first DB server.
     Thread dbServer1 = new Thread() {
       @Override
       public void run() {
-        dbServer(DB1_DIR, SERVER_ORIENT_URL_MAIN, "asynch-dserver-config-0.xml");
+        servers[0] = dbServer(DB1_DIR, SERVER_ORIENT_URL_MAIN, "asynch-dserver-config-0.xml");
       }
     };
     dbServer1.start();
@@ -44,9 +45,11 @@ public class TestReplicationVersionIncrementedByOne extends TestCase {
     if (exceptionInThread != null) {
       throw exceptionInThread;
     }
+
+    servers[0].stop();
   }
 
-  private void dbServer(String dbDirectory, String orientUrl, String dbConfigName) {
+  private BareBonesServer dbServer(String dbDirectory, String orientUrl, String dbConfigName) {
     BareBonesServer dbServer = new BareBonesServer();
     dbServer.deleteRecursively(new File(dbDirectory));
     if (orientUrl != null) {
@@ -54,6 +57,8 @@ public class TestReplicationVersionIncrementedByOne extends TestCase {
     }
     System.setProperty("ORIENTDB_HOME", dbDirectory);
     dbServer.start(CONFIG_DIR, dbConfigName);
+
+    return dbServer;
   }
 
   private void dbClient1() {
