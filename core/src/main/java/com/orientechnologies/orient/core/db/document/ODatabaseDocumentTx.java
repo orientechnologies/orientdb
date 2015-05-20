@@ -1757,6 +1757,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         final boolean partialMarshalling = record instanceof ODocument
             && OSerializationSetThreadLocal.INSTANCE.checkIfPartial((ODocument) record);
 
+        if (partialMarshalling && !isNew)
+          // UPDATE + PARTIAL MARSHALLING: SKIP IT BECAUSE THE REAL UPDATE WILL BE EXECUTED BY OUTER SAVE
+          return (RET) record;
+
         if (stream != null && stream.length > 0 && !partialMarshalling) {
           if (callTriggers) {
             final ORecordHook.TYPE triggerType = wasNew ? ORecordHook.TYPE.BEFORE_CREATE : ORecordHook.TYPE.BEFORE_UPDATE;
