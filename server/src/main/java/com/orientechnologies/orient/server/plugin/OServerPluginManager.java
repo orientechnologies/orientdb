@@ -168,7 +168,7 @@ public class OServerPluginManager implements OService {
       // SKIP IT
       return null;
 
-    if( pluginFile.isHidden())
+    if (pluginFile.isHidden())
       // HIDDEN FILE, SKIP IT
       return null;
 
@@ -300,7 +300,7 @@ public class OServerPluginManager implements OService {
     try {
       final URL url = pluginFile.toURI().toURL();
 
-      pluginClassLoader = new URLClassLoader(new URL[] { url });
+      pluginClassLoader = new URLClassLoader(new URL[] { url }, getClass().getClassLoader());
 
       // LOAD PLUGIN.JSON FILE
       final URL r = pluginClassLoader.findResource("plugin.json");
