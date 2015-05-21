@@ -15,38 +15,29 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://www.orientechnologies.com
- *
+ *  
  */
-package com.orientechnologies.orient.server.distributed.task;
+package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.id.ORID;
+import org.junit.Test;
 
 /**
- * Exception thrown when a record is locked by a running distributed transaction.
- * 
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
+ * Distributed TX test against "plocal" protocol.
  */
-public class ODistributedRecordLockedException extends ONeedRetryException {
-  protected ORID rid;
-
-  public ODistributedRecordLockedException() {
+public class LocalConcurrentTxTest extends AbstractDistributedConcurrentTxTest {
+  @Test
+  public void test() throws Exception {
+    init(2);
+    prepare(false);
+    execute();
   }
 
-  public ODistributedRecordLockedException(final ORID iRid) {
-    rid = iRid;
-  }
-
-  public ORID getRid() {
-    return rid;
+  protected String getDatabaseURL(final ServerRun server) {
+    return "plocal:" + server.getDatabasePath(getDatabaseName());
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof ODistributedRecordLockedException))
-      return false;
-
-    return rid.equals(((ODistributedRecordLockedException) obj).rid);
+  public String getDatabaseName() {
+    return "distributed-conc-tx";
   }
 }
