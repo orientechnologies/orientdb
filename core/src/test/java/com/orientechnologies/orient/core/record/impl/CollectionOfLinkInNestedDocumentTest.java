@@ -1,7 +1,10 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
+
+import java.util.Collections;
 
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -54,7 +57,8 @@ public class CollectionOfLinkInNestedDocumentTest {
     ODocument base1 = db.load(id.getIdentity());
     ODocument nest1 = base1.field("nested");
     assertNotNull(nest1);
-    assertEquals(nest1.field("set"), nested.field("set"));
+
+    assertTrue(nested.field("set").equals(nest1.field("set")));
   }
 
   @Test
