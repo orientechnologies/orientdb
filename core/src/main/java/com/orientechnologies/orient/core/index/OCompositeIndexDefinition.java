@@ -57,7 +57,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
    *          - name of class which is owner of this index
    */
   public OCompositeIndexDefinition(final String iClassName, int version) {
-    super(version);
+    super();
 
     indexDefinitions = new ArrayList<OIndexDefinition>(5);
     className = iClassName;
@@ -72,7 +72,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
    *          List of indexDefinitions to add in given index.
    */
   public OCompositeIndexDefinition(final String iClassName, final List<? extends OIndexDefinition> iIndexes, int version) {
-    super(version);
+    super();
 
     indexDefinitions = new ArrayList<OIndexDefinition>(5);
     for (OIndexDefinition indexDefinition : iIndexes) {

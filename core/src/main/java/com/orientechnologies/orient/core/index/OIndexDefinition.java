@@ -133,6 +133,4 @@ public interface OIndexDefinition extends OIndexCallback {
   boolean isNullValuesIgnored();
 
   void setNullValuesIgnored(boolean value);
-
-  int getVersion();
 }

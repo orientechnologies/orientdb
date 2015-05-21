@@ -1544,7 +1544,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         db.getMetadata()
             .getIndexManager()
             .createIndex(className + "." + key, indexType,
-                new OPropertyIndexDefinition(className, key, keyType, factory.getLastVersion()), cls.getPolymorphicClusterIds(),
+                new OPropertyIndexDefinition(className, key, keyType), cls.getPolymorphicClusterIds(),
                 null, metadata);
         return null;
 

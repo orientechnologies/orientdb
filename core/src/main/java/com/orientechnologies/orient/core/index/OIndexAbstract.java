@@ -27,12 +27,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -61,34 +58,33 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
 /**
  * Handles indexing when records change.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
-  protected static final String              CONFIG_MAP_RID   = "mapRid";
-  protected static final String              CONFIG_CLUSTERS  = "clusters";
-  protected final OModificationLock          modificationLock = new OModificationLock();
-  protected final OIndexEngine<T>            indexEngine;
-  private final String                       databaseName;
-  protected String                           type;
-  protected String                           valueContainerAlgorithm;
-  protected final ONewLockManager<Object>    keyLockManager   = new ONewLockManager<Object>();
+  protected static final String CONFIG_MAP_RID = "mapRid";
+  protected static final String CONFIG_CLUSTERS = "clusters";
+  protected final OModificationLock modificationLock = new OModificationLock();
+  protected final OIndexEngine<T> indexEngine;
+  private final String databaseName;
+  protected String type;
+  protected String valueContainerAlgorithm;
+  protected final ONewLockManager<Object> keyLockManager = new ONewLockManager<Object>();
 
   @ODocumentInstance
-  protected ODocument                        configuration;
-  protected ODocument                        metadata;
-  private String                             name;
-  private String                             algorithm;
-  private Set<String>                        clustersToIndex  = new HashSet<String>();
+  protected ODocument configuration;
+  protected ODocument metadata;
+  private String name;
+  private String algorithm;
+  private Set<String> clustersToIndex = new HashSet<String>();
 
-  private volatile OIndexDefinition          indexDefinition;
-  private volatile boolean                   rebuilding       = false;
+  private volatile OIndexDefinition indexDefinition;
+  private volatile boolean rebuilding = false;
 
-  private Thread                             rebuildThread    = null;
+  private Thread rebuildThread = null;
 
-  private final ThreadLocal<IndexTxSnapshot> txSnapshot       = new IndexTxSnapshotThreadLocal();
-  private final ReadWriteLock                rwLock           = new ReentrantReadWriteLock();
+  private final ThreadLocal<IndexTxSnapshot> txSnapshot = new IndexTxSnapshotThreadLocal();
+  private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
   protected static final class RemovedValue {
     public static final RemovedValue INSTANCE = new RemovedValue();
@@ -96,11 +92,11 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   protected static final class IndexTxSnapshot {
     public Map<Object, Object> indexSnapshot = new HashMap<Object, Object>();
-    public boolean             clear         = false;
+    public boolean clear = false;
   }
 
   public OIndexAbstract(final String type, String algorithm, final OIndexEngine<T> indexEngine, String valueContainerAlgorithm,
-      ODocument metadata) {
+                        ODocument metadata) {
     acquireExclusiveLock();
     try {
       databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
@@ -117,7 +113,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   }
 
   public static IndexMetadata loadMetadataInternal(final ODocument config, final String type, final String algorithm,
-      final String valueContainerAlgorithm) {
+                                                   final String valueContainerAlgorithm) {
     String indexName = config.field(OIndexInternal.CONFIG_NAME);
 
     final ODocument indexDefinitionDoc = config.field(OIndexInternal.INDEX_DEFINITION);
@@ -157,7 +153,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
           throw new OIndexException("Can not convert from old index model to new one. " + "Index key type is absent.");
         final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
 
-        loadedIndexDefinition = new OPropertyIndexDefinition(className, propertyName, keyType, factory.getLastVersion());
+        loadedIndexDefinition = new OPropertyIndexDefinition(className, propertyName, keyType);
 
         config.removeField(OIndexInternal.CONFIG_AUTOMATIC);
         config.removeField(OIndexInternal.CONFIG_KEYTYPE);
@@ -197,16 +193,15 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   /**
    * Creates the index.
-   * 
-   * @param clusterIndexName
-   *          Cluster name where to place the TreeMap
+   *
+   * @param clusterIndexName Cluster name where to place the TreeMap
    * @param clustersToIndex
    * @param rebuild
    * @param progressListener
    */
   public OIndexInternal<?> create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
-      final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener,
-      final OStreamSerializer valueSerializer) {
+                                  final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener,
+                                  final OStreamSerializer valueSerializer) {
     acquireExclusiveLock();
     try {
       this.name = name;
@@ -636,8 +631,12 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       try {
         configuration.field(OIndexInternal.CONFIG_TYPE, type);
         configuration.field(OIndexInternal.CONFIG_NAME, name);
+        assert indexEngine.getVersion() > 0;
+        configuration.field(OIndexInternal.INDEX_VERSION, indexEngine.getVersion());
 
         if (indexDefinition != null) {
+
+
           final ODocument indexDefDocument = indexDefinition.toStream();
           if (!indexDefDocument.hasOwners())
             ODocumentInternal.addOwner(indexDefDocument, configuration);
@@ -916,7 +915,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   }
 
   protected long[] indexCluster(final String clusterName, final OProgressListener iProgressListener, long documentNum,
-      long documentIndexed, long documentTotal) {
+                                long documentIndexed, long documentTotal) {
     try {
       for (final ORecord record : getDatabase().browseCluster(clusterName)) {
         if (Thread.interrupted())
@@ -953,7 +952,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       // END OF CLUSTER REACHED, IGNORE IT
     }
 
-    return new long[] { documentNum, documentIndexed };
+    return new long[]{documentNum, documentIndexed};
   }
 
   private OAbstractPaginatedStorage getStorage() {

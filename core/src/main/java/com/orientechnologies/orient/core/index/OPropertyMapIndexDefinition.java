@@ -49,9 +49,8 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
   public OPropertyMapIndexDefinition() {
   }
 
-  public OPropertyMapIndexDefinition(final String iClassName, final String iField, final OType iType, final INDEX_BY indexBy,
-      int version) {
-    super(iClassName, iField, iType, version);
+  public OPropertyMapIndexDefinition(final String iClassName, final String iField, final OType iType, final INDEX_BY indexBy) {
+    super(iClassName, iField, iType);
 
     if (indexBy == null)
       throw new NullPointerException("You have to provide way by which map entries should be mapped");

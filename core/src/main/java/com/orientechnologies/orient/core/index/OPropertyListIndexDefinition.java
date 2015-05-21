@@ -37,8 +37,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiValue implements OIndexDefinitionMultiValue {
 
-  public OPropertyListIndexDefinition(final String iClassName, final String iField, final OType iType, int version) {
-    super(iClassName, iField, iType, version);
+  public OPropertyListIndexDefinition(final String iClassName, final String iField, final OType iType) {
+    super(iClassName, iField, iType);
   }
 
   public OPropertyListIndexDefinition() {

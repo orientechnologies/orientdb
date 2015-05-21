@@ -30,8 +30,8 @@ public abstract class OAbstractIndexDefinitionMultiValue extends OPropertyIndexD
   protected OAbstractIndexDefinitionMultiValue() {
   }
 
-  protected OAbstractIndexDefinitionMultiValue(final String iClassName, final String iField, final OType iType, int version) {
-    super(iClassName, iField, iType, version);
+  protected OAbstractIndexDefinitionMultiValue(final String iClassName, final String iField, final OType iType) {
+    super(iClassName, iField, iType);
   }
 
   protected void processAdd(final Object value, final Map<Object, Integer> keysToAdd, final Map<Object, Integer> keysToRemove) {

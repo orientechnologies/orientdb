@@ -43,7 +43,7 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
 
   @SuppressWarnings("unchecked")
   public ORuntimeKeyIndexDefinition(final byte iId, int version) {
-    super(version);
+    super();
 
     serializer = (OBinarySerializer<T>) OBinarySerializerFactory.getInstance().getObjectSerializer(iId);
     if (serializer == null)

@@ -44,6 +44,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
   public static final String CONFIG_NAME               = "name";
   public static final String INDEX_DEFINITION          = "indexDefinition";
   public static final String INDEX_DEFINITION_CLASS    = "indexDefinitionClass";
+  public static final String INDEX_VERSION             = "indexVersion";
   public static final String METADATA                  = "metadata";
 
   /**
@@ -181,22 +182,22 @@ public interface OIndexInternal<T> extends OIndex<T> {
    */
   void releaseKeysForUpdate(Object... key);
 
-	/**
-	 * Release exclusive lock on keys which prevents read/modification of this keys in following methods:
-	 *
-	 * <ol>
-	 * <li>{@link #put(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
-	 * <li>{@link #checkEntry(com.orientechnologies.orient.core.db.record.OIdentifiable, Object)}</li>
-	 * <li>{@link #remove(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
-	 * <li>{@link #remove(Object)}</li>
-	 * </ol>
-	 *
-	 * This is internal method and can not be used by end users.
-	 *
-	 * @param keys
-	 *          Keys to unlock.
-	 */
-	void releaseKeysForUpdate(Collection<Object> keys);
+  /**
+   * Release exclusive lock on keys which prevents read/modification of this keys in following methods:
+   *
+   * <ol>
+   * <li>{@link #put(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
+   * <li>{@link #checkEntry(com.orientechnologies.orient.core.db.record.OIdentifiable, Object)}</li>
+   * <li>{@link #remove(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
+   * <li>{@link #remove(Object)}</li>
+   * </ol>
+   *
+   * This is internal method and can not be used by end users.
+   *
+   * @param keys
+   *          Keys to unlock.
+   */
+  void releaseKeysForUpdate(Collection<Object> keys);
 
   public IndexMetadata loadMetadata(ODocument iConfig);
 

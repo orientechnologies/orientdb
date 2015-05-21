@@ -143,7 +143,7 @@ public class OIndexDefinitionFactory {
 
       }
 
-      indexDefinition = new OPropertyMapIndexDefinition(oClass.getName(), fieldName, indexType, indexBy, factory.getLastVersion());
+      indexDefinition = new OPropertyMapIndexDefinition(oClass.getName(), fieldName, indexType, indexBy);
     } else if (type.equals(OType.EMBEDDEDLIST) || type.equals(OType.EMBEDDEDSET) || type.equals(OType.LINKLIST)
         || type.equals(OType.LINKSET)) {
       if (type.equals(OType.LINKSET))
@@ -157,11 +157,11 @@ public class OIndexDefinitionFactory {
               + " You should provide linked type for embedded collections that are going to be indexed.");
       }
 
-      indexDefinition = new OPropertyListIndexDefinition(oClass.getName(), fieldName, indexType, factory.getLastVersion());
+      indexDefinition = new OPropertyListIndexDefinition(oClass.getName(), fieldName, indexType);
     } else if (type.equals(OType.LINKBAG)) {
-      indexDefinition = new OPropertyRidBagIndexDefinition(oClass.getName(), fieldName, factory.getLastVersion());
+      indexDefinition = new OPropertyRidBagIndexDefinition(oClass.getName(), fieldName);
     } else
-      indexDefinition = new OPropertyIndexDefinition(oClass.getName(), fieldName, type, factory.getLastVersion());
+      indexDefinition = new OPropertyIndexDefinition(oClass.getName(), fieldName, type);
 
     if (collate == null && propertyToIndex != null)
       collate = propertyToIndex.getCollate();
