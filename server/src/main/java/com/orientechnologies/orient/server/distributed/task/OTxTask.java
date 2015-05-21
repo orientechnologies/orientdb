@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -37,6 +38,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -49,7 +51,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Distributed create record task used for synchronization.
+ * Distributed transaction task.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
@@ -58,11 +60,13 @@ public class OTxTask extends OAbstractReplicatedTask {
   private static final long                   serialVersionUID = 1L;
 
   private List<OAbstractRecordReplicatedTask> tasks            = new ArrayList<OAbstractRecordReplicatedTask>();
+  private transient OTxTaskResult             result;
 
   public OTxTask() {
   }
 
   public void add(final OAbstractRecordReplicatedTask iTask) {
+    iTask.setInTx(true);
     tasks.add(iTask);
   }
 
@@ -78,25 +82,34 @@ public class OTxTask extends OAbstractReplicatedTask {
       database.begin();
       final OTransactionOptimistic tx = (OTransactionOptimistic) database.getTransaction();
 
-      final List<Object> results = new ArrayList<Object>();
+      result = new OTxTaskResult();
 
-      // REGISTER CREATE FIRST TO RESOLVE TEMP RIDS
-      for (OAbstractRecordReplicatedTask task : tasks) {
-        if (task instanceof OCreateRecordTask) {
-          final OCreateRecordTask createRT = (OCreateRecordTask) task;
-          final int clId = createRT.clusterId > -1 ? createRT.clusterId : createRT.getRid().isValid() ? createRT.getRid()
-              .getClusterId() : -1;
-          final String clusterName = clId > -1 ? database.getClusterNameById(clId) : null;
-          tx.addRecord(createRT.getRecord(), ORecordOperation.CREATED, clusterName);
+      final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
+
+      try {
+        // REGISTER CREATE FIRST TO RESOLVE TEMP RIDS
+        for (OAbstractRecordReplicatedTask task : tasks) {
+          if (task instanceof OCreateRecordTask) {
+            final OCreateRecordTask createRT = (OCreateRecordTask) task;
+            final int clId = createRT.clusterId > -1 ? createRT.clusterId : createRT.getRid().isValid() ? createRT.getRid()
+                .getClusterId() : -1;
+            final String clusterName = clId > -1 ? database.getClusterNameById(clId) : null;
+            tx.addRecord(createRT.getRecord(), ORecordOperation.CREATED, clusterName);
+          } else {
+            // UPDATE & DELETE: TRY EARLY LOCKING RECORD
+            final ORID rid = task.getRid();
+            if (!ddb.lockRecord(rid, nodeSource))
+              throw new ODistributedRecordLockedException(rid);
+
+            result.locks.add(rid);
+          }
         }
-      }
 
-      for (OAbstractRecordReplicatedTask task : tasks) {
-        // ASSURE ALL RIDBAGS ARE UNMARSHALLED TO AVOID STORING TEMP RIDS
-        if (task instanceof OAbstractRecordReplicatedTask) {
-          final ORecord record = ((OAbstractRecordReplicatedTask) task).getRecord();
+        for (OAbstractRecordReplicatedTask task : tasks) {
+          final ORecord record = task.getRecord();
 
-          if (record != null)
+          if (record != null) {
+            // ASSURE ALL RIDBAGS ARE UNMARSHALLED TO AVOID STORING TEMP RIDS
             for (String f : ((ODocument) record).fieldNames()) {
               final Object fValue = ((ODocument) record).field(f);
               if (fValue instanceof ORecordLazyMultiValue)
@@ -105,45 +118,57 @@ public class OTxTask extends OAbstractReplicatedTask {
               else if (fValue instanceof ORecordId)
                 ((ODocument) record).field(f, ((ORecordId) fValue).getRecord());
             }
+          }
         }
-      }
 
-      for (OAbstractRecordReplicatedTask task : tasks) {
-        final Object taskResult = task.execute(iServer, iManager, database);
-        results.add(taskResult);
-      }
-
-      database.commit();
-
-      // SEND BACK CHANGED VALUE TO UPDATE
-      for (int i = 0; i < results.size(); ++i) {
-        final Object o = results.get(i);
-
-        final OAbstractRecordReplicatedTask task = tasks.get(i);
-        if (task instanceof OCreateRecordTask) {
-          // SEND RID + VERSION
-          final OCreateRecordTask t = (OCreateRecordTask) task;
-          results.set(i, new OPlaceholder(t.getRecord()));
-        } else if (task instanceof OUpdateRecordTask) {
-          // SEND VERSION
-          if (((OSimpleVersion) o).getCounter() < 0) {
-            results.set(i, task.getRid().getRecord().reload().getRecordVersion());
-          } else
-            results.set(i, o);
+        for (OAbstractRecordReplicatedTask task : tasks) {
+          final Object taskResult = task.execute(iServer, iManager, database);
+          result.results.add(taskResult);
         }
+
+        database.commit();
+
+        // SEND BACK CHANGED VALUE TO UPDATE
+        for (int i = 0; i < result.results.size(); ++i) {
+          final Object o = result.results.get(i);
+
+          final OAbstractRecordReplicatedTask task = tasks.get(i);
+          if (task instanceof OCreateRecordTask) {
+            // SEND RID + VERSION
+            final OCreateRecordTask t = (OCreateRecordTask) task;
+            result.results.set(i, new OPlaceholder(t.getRecord()));
+          } else if (task instanceof OUpdateRecordTask) {
+            // SEND VERSION
+            if (((OSimpleVersion) o).getCounter() < 0) {
+              result.results.set(i, task.getRid().getRecord().reload().getRecordVersion());
+            } else
+              result.results.set(i, o);
+          }
+        }
+      } catch (Exception t) {
+        // EXCEPTION: ASSURE ALL LOCKS ARE FREED
+        for (ORID r : result.locks)
+          ddb.unlockRecord(r);
+        // RETHROW IT
+        throw t;
       }
 
-      return results;
+      return result;
 
     } catch (ONeedRetryException e) {
+      database.rollback();
       return e;
     } catch (OTransactionException e) {
+      database.rollback();
       return e;
     } catch (ORecordDuplicatedException e) {
+      database.rollback();
       return e;
     } catch (ORecordNotFoundException e) {
+      database.rollback();
       return e;
     } catch (Exception e) {
+      database.rollback();
       OLogManager.instance().error(this, "Error on distributed transaction commit", e);
       return e;
     }
@@ -171,7 +196,7 @@ public class OTxTask extends OAbstractReplicatedTask {
       return null;
     }
 
-    final OFixTxTask fixTask = new OFixTxTask();
+    final OFixTxTask fixTask = new OFixTxTask(result.locks);
 
     for (int i = 0; i < tasks.size(); ++i) {
       final OAbstractRecordReplicatedTask t = tasks.get(i);
@@ -186,7 +211,7 @@ public class OTxTask extends OAbstractReplicatedTask {
 
   @Override
   public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
-    final OFixTxTask fixTask = new OFixTxTask();
+    final OFixTxTask fixTask = new OFixTxTask(result.locks);
 
     for (int i = 0; i < tasks.size(); ++i) {
       final OAbstractRecordReplicatedTask t = tasks.get(i);
