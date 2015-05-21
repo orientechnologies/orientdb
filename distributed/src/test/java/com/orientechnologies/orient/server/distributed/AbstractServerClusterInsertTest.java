@@ -16,7 +16,6 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
@@ -31,7 +30,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-
 import junit.framework.Assert;
 
 import java.util.ArrayList;
@@ -48,17 +46,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * Insert records concurrently against the cluster
  */
-public abstract class AbstractServerClusterInsertTest extends AbstractServerClusterTest {
+public abstract class AbstractServerClusterInsertTest extends AbstractDistributedWriteTest {
   protected static final int delayWriter = 0;
   protected static final int delayReader = 1000;
   protected static final int writerCount = 5;
-  protected int              count       = 100;
   protected long             expected;
   protected long             beginInstances;
   protected OIndex<?>        idx;
-  protected CountDownLatch   runningWriters;
-
-	private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
 
   class Writer implements Callable<Void> {
     private final String databaseUrl;
@@ -178,10 +172,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     }
   }
 
-  public String getDatabaseName() {
-    return "distributed";
-  }
-
+  @Override
   public void executeTest() throws Exception {
 
     ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
