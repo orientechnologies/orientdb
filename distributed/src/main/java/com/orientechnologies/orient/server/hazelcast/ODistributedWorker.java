@@ -33,11 +33,11 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -289,8 +289,8 @@ public class ODistributedWorker extends Thread {
         if (database != null) {
           origin = database.getUser();
           try {
-            if (lastUser == null || !(lastUser.getName()).equals(iRequest.getUserName()))
-              lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserName());
+            if (lastUser == null || !(lastUser.getIdentity()).equals(iRequest.getUserRID()))
+              lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserRID());
             database.setUser(lastUser);// set to new user
           } catch (Throwable ex) {
             OLogManager.instance().error(this, "failed to convert to OUser " + ex.getMessage());

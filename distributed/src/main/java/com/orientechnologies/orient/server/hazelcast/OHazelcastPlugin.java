@@ -333,7 +333,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (currentDatabase != null && currentDatabase.getUser() != null)
       // SET CURRENT DATABASE NAME
-      req.setUserName(currentDatabase.getUser().getName());
+      req.setUserRID(currentDatabase.getUser().getIdentity().getIdentity());
 
     final OHazelcastDistributedDatabase db = messageService.getDatabase(iDatabaseName);
 
