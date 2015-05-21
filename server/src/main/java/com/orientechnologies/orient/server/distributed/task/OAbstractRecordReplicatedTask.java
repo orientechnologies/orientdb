@@ -37,6 +37,7 @@ import java.io.ObjectOutput;
 public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedTask {
   protected ORecordId      rid;
   protected ORecordVersion version;
+  protected boolean        inTx = false;
 
   public OAbstractRecordReplicatedTask() {
   }
@@ -75,6 +76,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     if (version == null)
       version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().writeTo(out, version);
+    out.writeBoolean(inTx);
   }
 
   @Override
@@ -83,6 +85,15 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     if (version == null)
       version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().readFrom(in, version);
+    inTx = in.readBoolean();
+  }
+
+  public boolean isInTx() {
+    return inTx;
+  }
+
+  public void setInTx(final boolean inTx) {
+    this.inTx = inTx;
   }
 
   @Override

@@ -983,8 +983,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       if (executionModeSynch) {
         // SYNCHRONOUS CALL: REPLICATE IT
         final Object result = dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE);
-        if (result instanceof List<?>) {
-          final List<Object> list = (List<Object>) result;
+        if (result instanceof OTxTaskResult) {
+          final OTxTaskResult txResult = ((OTxTaskResult) result);
+
+          final List<Object> list = txResult.results;
+
           for (int i = 0; i < txTask.getTasks().size(); ++i) {
             final Object o = list.get(i);
 
@@ -1010,6 +1013,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             final ORecord record = op.getRecord();
             if (record != null)
               ORecordInternal.unsetDirty(record);
+          }
+
+          // SEND FINAL TX COMPLETE TASK TO UNLOCK RECORDS
+          final Object completedResult = dManager.sendRequest(getName(), involvedClusters, nodes, new OCompletedTxTask(
+              txResult.locks), EXECUTION_MODE.RESPONSE);
+
+          if (!(completedResult instanceof Boolean) || !((Boolean) completedResult).booleanValue()) {
+            // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
+            ODistributedServerLog.error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                "distributed transaction complete error: %s", completedResult);
           }
 
         } else if (result instanceof Throwable) {

@@ -546,6 +546,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       for (ODistributedLifecycleListener l : listeners)
         l.onNodeLeft(nodeName);
 
+      // UNLOCK ANY PENDING LOCKS
+      for (String dbName : messageService.getDatabases())
+        messageService.getDatabase(dbName).unlockRecords(nodeName);
+
       activeNodes.remove(nodeName);
 
       // REMOVE NODE IN DB CFG

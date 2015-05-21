@@ -98,6 +98,7 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    locks.clear();
     final int size = in.readInt();
     for (int i = 0; i < size; ++i)
       locks.add((ORID) in.readObject());
