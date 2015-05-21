@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.config;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
@@ -469,6 +470,23 @@ public enum OGlobalConfiguration {
   DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY("distributed.purgeResponsesTimerDelay",
       "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Long.class, 15000l),
 
+  /**
+   * @Since 2.1
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)
+  DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY(
+      "distributed.concurrentTxMaxAutoRetry",
+      "Maximum retries the transaction coordinator can execute a transaction automatically if records are locked. Minimum is 1 (no retry)",
+      Integer.class, 10),
+
+  /**
+   * @Since 2.1
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)
+  DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY("distributed.concurrentTxAutoRetryDelay",
+      "Delay in ms between attempts on executing a distributed transaction failed because of records locked. 0=no delay",
+      Integer.class, 100),
+
   DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE("db.makeFullCheckpointOnIndexChange",
       "When index metadata is changed full checkpoint is performed", Boolean.class, true),
 
@@ -702,10 +720,7 @@ public enum OGlobalConfiguration {
         // LOW MEMORY: SET IT TO 256MB ONLY
         OLogManager
             .instance()
-            .warn(
-                null,
-                "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE="
-                    + O2QCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+            .warn(null, "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + O2QCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
         DISK_CACHE_SIZE.setValue(O2QCache.MIN_CACHE_SIZE);
       }
 

@@ -108,7 +108,14 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
           query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
           break;
 
-        } else if (word.equals(KEYWORD_RETURN)) {
+        } else if (word.equals(KEYWORD_LIMIT)) {
+          word = parseOptionalWord(true);
+          try {
+            limit = Integer.parseInt(word);
+          } catch (Exception e) {
+            throw new OCommandSQLParsingException("Invalid LIMIT: " + word);
+          }
+        }else if (word.equals(KEYWORD_RETURN)) {
           returning = parseReturn();
 
         } else if (word.length() > 0) {
@@ -128,13 +135,20 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
       else
         where = " WHERE " + where;
 
-      if (query == null && rid == null)
-        if (clazz == null)
-          // DELETE ALL VERTEXES
-          query = database.command(new OSQLAsynchQuery<ODocument>("select from V" + where, this));
-        else
-          query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
-
+      if (query == null && rid == null){
+        StringBuilder queryString = new StringBuilder();
+        queryString.append("select from ");
+        if (clazz == null) {
+          queryString.append("V");
+        } else {
+          queryString.append(clazz.getName());
+        }
+        queryString.append(where);
+        if (limit > -1) {
+          queryString.append(" LIMIT " + limit);
+        }
+        query = database.command(new OSQLAsynchQuery<ODocument>(queryString.toString(), this));
+      }
     } finally {
       textRequest.setText(originalQuery);
     }

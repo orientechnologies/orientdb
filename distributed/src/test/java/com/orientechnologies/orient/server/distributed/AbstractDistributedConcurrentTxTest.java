@@ -45,7 +45,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistributedWriteTest {
   protected OrientGraphFactory factory;
   protected ORID               v;
-  protected AtomicLong         lockExceptions = new AtomicLong(0l);
+  protected AtomicLong         lockExceptions              = new AtomicLong(0l);
+  protected boolean            expectedConcurrentException = true;
 
   class TxWriter implements Callable<Void> {
     private final String databaseUrl;
@@ -107,7 +108,10 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
 
       System.out.println("\nWriter " + name + " END. count = " + count + " lockExceptions: " + lockExceptions);
 
-      Assert.assertTrue(lockExceptions.get() > 0);
+      if (expectedConcurrentException)
+        Assert.assertTrue(lockExceptions.get() > 0);
+      else
+        Assert.assertTrue(lockExceptions.get() == 0);
 
       return null;
     }

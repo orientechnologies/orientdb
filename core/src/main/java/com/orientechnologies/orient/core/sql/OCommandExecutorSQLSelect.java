@@ -42,7 +42,13 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngineException;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -55,11 +61,23 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.*;
+import com.orientechnologies.orient.core.sql.filter.OFilterOptimizer;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.operator.*;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.parser.OOrderBy;
 import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
@@ -115,6 +133,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private Set<ORID>                   uniqueResult;
   private boolean                     noCache              = false;
   private int                         tipLimitThreshold    = OGlobalConfiguration.QUERY_LIMIT_THRESHOLD_TIP.getValueAsInteger();
+  private String                      NULL_VALUE           = "null";
 
   public OCommandExecutorSQLSelect() {
 
@@ -697,10 +716,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final long begin = System.currentTimeMillis();
     try {
 
-      Object key = null;
-      if (groupedResult == null) {
+      Object key;
+      if (groupedResult == null)
         groupedResult = new LinkedHashMap<Object, ORuntimeResult>();
-      }
 
       if (fieldValue != null) {
         if (fieldValue.getClass().isArray()) {
@@ -715,17 +733,18 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             if (o != null) {
               keyArray.append(o instanceof OIdentifiable ? ((OIdentifiable) o).getIdentity().toString() : o.toString());
             } else {
-              keyArray.append("null");
+              keyArray.append(NULL_VALUE);
             }
           }
 
           key = keyArray.toString();
-        } else
-        // LOOKUP FOR THE FIELD
-        {
+        } else {
+          // LOOKUP FOR THE FIELD
           key = fieldValue;
         }
-      }
+      } else
+        // USE NULL_VALUE THEN REPLACE WITH REAL NULL
+        key = NULL_VALUE;
 
       ORuntimeResult group = groupedResult.get(key);
       if (group == null) {

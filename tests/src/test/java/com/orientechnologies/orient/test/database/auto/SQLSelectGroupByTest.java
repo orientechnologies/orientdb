@@ -16,8 +16,10 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -32,6 +34,15 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
   @Parameters(value = "url")
   public SQLSelectGroupByTest(@Optional String url) {
     super(url);
+  }
+
+  @BeforeMethod
+  @Override
+  public void beforeMethod() throws Exception {
+    super.beforeMethod();
+
+    if (!database.getMetadata().getSchema().existsClass("Account"))
+      database.getMetadata().getSchema().createClass("Account");
   }
 
   @Test
@@ -85,5 +96,29 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
         Assert.assertTrue(last.compareTo((String) d.field("location")) > 0);
       last = d.field("location");
     }
+  }
+
+  @Test
+  public void queryGroupByAndWithNulls() {
+    // INSERT WITH NO LOCATION (AS NULL)
+    database.command(new OCommandSQL("insert into Account set testNull = true")).execute();
+    database.command(new OCommandSQL("insert into Account set location = 'Rome'")).execute();
+    database.command(new OCommandSQL("insert into Account set location = 'Austin'")).execute();
+    database.command(new OCommandSQL("insert into Account set location = 'Austin'")).execute();
+
+    final List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select location, count(*) from Account group by location")).execute();
+
+    Assert.assertTrue(result.size() > 1);
+
+    boolean foundNullGroup = false;
+    for (ODocument d : result) {
+      if (d.field("location") == null) {
+        Assert.assertFalse(foundNullGroup);
+        foundNullGroup = true;
+      }
+    }
+
+    Assert.assertTrue(foundNullGroup);
   }
 }
