@@ -981,70 +981,92 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       // if (executionModeSynch && !iTx.hasRecordCreation()) {
       if (executionModeSynch) {
-        // SYNCHRONOUS CALL: REPLICATE IT
-        final Object result = dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE);
-        if (result instanceof OTxTaskResult) {
-          final OTxTaskResult txResult = ((OTxTaskResult) result);
+        // SYNCHRONOUS
 
-          final List<Object> list = txResult.results;
+        // AUTO-RETRY IN CASE RECORDS ARE LOCKED
+        final int maxAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
+        final int autoRetryDelay = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
 
-          for (int i = 0; i < txTask.getTasks().size(); ++i) {
-            final Object o = list.get(i);
+        Object result = null;
+        for (int retry = 1; retry <= maxAutoRetry; ++retry) {
+          // SYNCHRONOUS CALL: REPLICATE IT
+          result = dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE);
+          if (result instanceof OTxTaskResult) {
+            final OTxTaskResult txResult = ((OTxTaskResult) result);
 
-            final OAbstractRecordReplicatedTask task = txTask.getTasks().get(i);
+            final List<Object> list = txResult.results;
 
-            if (task instanceof OCreateRecordTask) {
-              final OCreateRecordTask t = (OCreateRecordTask) task;
-              t.getRid().copyFrom(((OPlaceholder) o).getIdentity());
-              t.getVersion().copyFrom(((OPlaceholder) o).getRecordVersion());
+            for (int i = 0; i < txTask.getTasks().size(); ++i) {
+              final Object o = list.get(i);
 
-            } else if (task instanceof OUpdateRecordTask) {
-              final OUpdateRecordTask t = (OUpdateRecordTask) task;
-              t.getVersion().copyFrom((ORecordVersion) o);
+              final OAbstractRecordReplicatedTask task = txTask.getTasks().get(i);
 
-            } else if (task instanceof ODeleteRecordTask) {
+              if (task instanceof OCreateRecordTask) {
+                final OCreateRecordTask t = (OCreateRecordTask) task;
+                t.getRid().copyFrom(((OPlaceholder) o).getIdentity());
+                t.getVersion().copyFrom(((OPlaceholder) o).getRecordVersion());
+
+              } else if (task instanceof OUpdateRecordTask) {
+                final OUpdateRecordTask t = (OUpdateRecordTask) task;
+                t.getVersion().copyFrom((ORecordVersion) o);
+
+              } else if (task instanceof ODeleteRecordTask) {
+
+              }
 
             }
 
-          }
+            // RESET DIRTY FLAGS TO AVOID CALLING AUTO-SAVE
+            for (ORecordOperation op : tmpEntries) {
+              final ORecord record = op.getRecord();
+              if (record != null)
+                ORecordInternal.unsetDirty(record);
+            }
 
-          // RESET DIRTY FLAGS TO AVOID CALLING AUTO-SAVE
-          for (ORecordOperation op : tmpEntries) {
-            final ORecord record = op.getRecord();
-            if (record != null)
-              ORecordInternal.unsetDirty(record);
-          }
+            // SEND FINAL TX COMPLETE TASK TO UNLOCK RECORDS
+            final Object completedResult = dManager.sendRequest(getName(), involvedClusters, nodes, new OCompletedTxTask(
+                txResult.locks), EXECUTION_MODE.RESPONSE);
 
-          // SEND FINAL TX COMPLETE TASK TO UNLOCK RECORDS
-          final Object completedResult = dManager.sendRequest(getName(), involvedClusters, nodes, new OCompletedTxTask(
-              txResult.locks), EXECUTION_MODE.RESPONSE);
+            if (!(completedResult instanceof Boolean) || !((Boolean) completedResult).booleanValue()) {
+              // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
+              ODistributedServerLog.error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                  "distributed transaction complete error: %s", completedResult);
+            }
 
-          if (!(completedResult instanceof Boolean) || !((Boolean) completedResult).booleanValue()) {
+          } else if (result instanceof ODistributedRecordLockedException) {
+            // AUTO RETRY
+            if (autoRetryDelay > 0)
+              Thread.sleep(autoRetryDelay);
+            continue;
+
+          } else if (result instanceof Throwable) {
             // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
-            ODistributedServerLog.error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                "distributed transaction complete error: %s", completedResult);
+            if (ODistributedServerLog.isDebugEnabled())
+              ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                  "distributed transaction error: %s", result, result.toString());
+
+            if (result instanceof OTransactionException || result instanceof ONeedRetryException)
+              throw (RuntimeException) result;
+
+            throw new OTransactionException("Error on committing distributed transaction", (Throwable) result);
+          } else {
+            // UNKNOWN RESPONSE TYPE
+            if (ODistributedServerLog.isDebugEnabled())
+              ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                  "distributed transaction error, received unknown response type: %s", result);
+
+            throw new OTransactionException("Error on committing distributed transaction, received unknown response type " + result);
           }
 
-        } else if (result instanceof Throwable) {
-          // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
-          if (ODistributedServerLog.isDebugEnabled())
-            ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                "distributed transaction error: %s", result, result.toString());
-
-          if (result instanceof OTransactionException || result instanceof ONeedRetryException)
-            throw (RuntimeException) result;
-
-          throw new OTransactionException("Error on committing distributed transaction", (Throwable) result);
-        } else {
-          // UNKNOWN RESPONSE TYPE
-          if (ODistributedServerLog.isDebugEnabled())
-            ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                "distributed transaction error, received unknown response type: %s", result);
-
-          throw new OTransactionException("Error on committing distributed transaction, received unknown response type " + result);
+          return;
         }
 
-        return;
+        if (ODistributedServerLog.isDebugEnabled())
+          ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+              "distributed transaction retries exceed maximum auto-retries (%d)", maxAutoRetry);
+
+        // ONLY CASE: ODistributedRecordLockedException MORE THAN AUTO-RETRY
+        throw (ODistributedRecordLockedException) result;
       }
 
       // ASYNCH

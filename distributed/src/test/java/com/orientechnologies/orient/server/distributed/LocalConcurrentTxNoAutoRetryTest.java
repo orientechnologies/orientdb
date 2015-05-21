@@ -21,15 +21,26 @@ package com.orientechnologies.orient.server.distributed;
 
 import org.junit.Test;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+
 /**
  * Distributed TX test against "plocal" protocol.
  */
-public class LocalConcurrentTxTest extends AbstractDistributedConcurrentTxTest {
+public class LocalConcurrentTxNoAutoRetryTest extends AbstractDistributedConcurrentTxTest {
   @Test
   public void test() throws Exception {
-    init(2);
-    prepare(false);
-    execute();
+    expectedConcurrentException = true;
+
+    OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(1);
+    try {
+
+      init(3);
+      prepare(false);
+      execute();
+
+    } finally {
+      OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(10);
+    }
   }
 
   protected String getDatabaseURL(final ServerRun server) {
@@ -38,6 +49,6 @@ public class LocalConcurrentTxTest extends AbstractDistributedConcurrentTxTest {
 
   @Override
   public String getDatabaseName() {
-    return "distributed-conc-tx";
+    return "distributed-conc-txnoautoretry";
   }
 }
