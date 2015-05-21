@@ -21,7 +21,7 @@ public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
 
   @BeforeMethod
   public void beforeMethod() {
-    propertyIndex = new OPropertyRidBagIndexDefinition("testClass", "fOne", -1);
+    propertyIndex = new OPropertyRidBagIndexDefinition("testClass", "fOne");
   }
 
   public void testCreateValueSingleParameter() {

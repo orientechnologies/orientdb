@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -27,7 +26,6 @@ import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
  * Default OrientDB index factory for indexes based on MVRBTree.<br>
@@ -94,19 +92,21 @@ public class ODefaultIndexFactory implements OIndexFactory {
   }
 
   public OIndexInternal<?> createIndex(ODatabaseDocumentInternal database, String indexType, String algorithm,
-      String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException {
+      String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
     if (valueContainerAlgorithm == null)
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
+    if (version < 0)
+      version = getLastVersion();
 
     if (SBTREE_ALGORITHM.equals(algorithm))
       return createSBTreeIndex(indexType, valueContainerAlgorithm, metadata, (OAbstractPaginatedStorage) database.getStorage()
-          .getUnderlying());
+          .getUnderlying(), version);
 
     throw new OConfigurationException("Unsupported type : " + indexType);
   }
 
   private OIndexInternal<?> createSBTreeIndex(String indexType, String valueContainerAlgorithm, ODocument metadata,
-      OAbstractPaginatedStorage storage) {
+      OAbstractPaginatedStorage storage, int version) {
     Boolean durableInNonTxMode;
 
     Object durable = null;
@@ -122,16 +122,16 @@ public class ODefaultIndexFactory implements OIndexFactory {
 
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
       return new OIndexUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(durableInNonTxMode, storage,
-          getLastVersion()), valueContainerAlgorithm, metadata);
+          version), valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
       return new OIndexNotUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(durableInNonTxMode,
-          storage, getLastVersion()), valueContainerAlgorithm, metadata);
+          storage, version), valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
       return new OIndexFullText(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(durableInNonTxMode,
-          storage, getLastVersion()), valueContainerAlgorithm, metadata);
+          storage, version), valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
       return new OIndexDictionary(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(durableInNonTxMode, storage,
-          getLastVersion()), valueContainerAlgorithm, metadata);
+          version), valueContainerAlgorithm, metadata);
     }
 
     throw new OConfigurationException("Unsupported type : " + indexType);

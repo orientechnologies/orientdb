@@ -38,11 +38,11 @@ public class OPropertyMapIndexDefinitionTest {
   @BeforeMethod
   public void beforeMethod() {
     propertyIndexByKey = new OPropertyMapIndexDefinition("testClass", "fOne", OType.STRING,
-        OPropertyMapIndexDefinition.INDEX_BY.KEY, -1);
+        OPropertyMapIndexDefinition.INDEX_BY.KEY);
     propertyIndexByIntegerKey = new OPropertyMapIndexDefinition("testClass", "fTwo", OType.INTEGER,
-        OPropertyMapIndexDefinition.INDEX_BY.KEY, -1);
+        OPropertyMapIndexDefinition.INDEX_BY.KEY);
     propertyIndexByValue = new OPropertyMapIndexDefinition("testClass", "fOne", OType.INTEGER,
-        OPropertyMapIndexDefinition.INDEX_BY.VALUE, -1);
+        OPropertyMapIndexDefinition.INDEX_BY.VALUE);
   }
 
   public void testCreateValueByKeySingleParameter() {
@@ -196,7 +196,7 @@ public class OPropertyMapIndexDefinitionTest {
     database.create();
 
     propertyIndexByKey = new OPropertyMapIndexDefinition("tesClass", "fOne", OType.STRING,
-        OPropertyMapIndexDefinition.INDEX_BY.KEY, -1);
+        OPropertyMapIndexDefinition.INDEX_BY.KEY);
 
     final ODocument docToStore = propertyIndexByKey.toStream();
     database.save(docToStore);
@@ -215,7 +215,7 @@ public class OPropertyMapIndexDefinitionTest {
     database.create();
 
     propertyIndexByValue = new OPropertyMapIndexDefinition("tesClass", "fOne", OType.INTEGER,
-        OPropertyMapIndexDefinition.INDEX_BY.VALUE, -1);
+        OPropertyMapIndexDefinition.INDEX_BY.VALUE);
 
     final ODocument docToStore = propertyIndexByValue.toStream();
     database.save(docToStore);
@@ -246,7 +246,7 @@ public class OPropertyMapIndexDefinitionTest {
 
   @Test(expectedExceptions = NullPointerException.class)
   public void testIndexByIsRequired() {
-    new OPropertyMapIndexDefinition("testClass", "testField", OType.STRING, null, -1);
+    new OPropertyMapIndexDefinition("testClass", "testField", OType.STRING, null);
   }
 
   public void testCreateDDLByKey() {

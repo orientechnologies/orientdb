@@ -40,8 +40,8 @@ public class OPropertyRidBagIndexDefinition extends OAbstractIndexDefinitionMult
   public OPropertyRidBagIndexDefinition() {
   }
 
-  public OPropertyRidBagIndexDefinition(String className, String field, int version) {
-    super(className, field, OType.LINK, version);
+  public OPropertyRidBagIndexDefinition(String className, String field) {
+    super(className, field, OType.LINK);
   }
 
   @Override

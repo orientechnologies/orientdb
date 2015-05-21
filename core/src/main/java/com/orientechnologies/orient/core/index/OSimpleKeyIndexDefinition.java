@@ -36,7 +36,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   private OType[] keyTypes;
 
   public OSimpleKeyIndexDefinition(int version, final OType... keyTypes) {
-    super(version);
+    super();
 
     this.keyTypes = keyTypes;
   }
@@ -45,7 +45,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   public OSimpleKeyIndexDefinition(OType[] keyTypes2, List<OCollate> collatesList, int version) {
-    super(version);
+    super();
 
     this.keyTypes = keyTypes2;
     if (keyTypes.length > 1) {

@@ -37,8 +37,8 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
   protected String field;
   protected OType  keyType;
 
-  public OPropertyIndexDefinition(final String iClassName, final String iField, final OType iType, int version) {
-    super(version);
+  public OPropertyIndexDefinition(final String iClassName, final String iField, final OType iType) {
+    super();
     className = iClassName;
     field = iField;
     keyType = iType;

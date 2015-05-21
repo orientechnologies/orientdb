@@ -77,7 +77,11 @@ public class OHashIndexFactory implements OIndexFactory {
   }
 
   public OIndexInternal<?> createIndex(ODatabaseDocumentInternal database, String indexType, String algorithm,
-      String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException {
+      String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
+
+    if (version < 0)
+      version = getLastVersion();
+
     if (valueContainerAlgorithm == null)
       valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
 
@@ -98,12 +102,11 @@ public class OHashIndexFactory implements OIndexFactory {
 
     final String storageType = storage.getType();
     if (storageType.equals("memory") || storageType.equals("plocal"))
-      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage(),
-          getLastVersion());
+      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage(), version);
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage().getUnderlying(),
-          getLastVersion());
+      indexEngine = new OHashTableIndexEngine(durableInNonTxMode,
+          (OAbstractPaginatedStorage) database.getStorage().getUnderlying(), version);
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine();
     else
