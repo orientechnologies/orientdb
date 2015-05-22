@@ -956,8 +956,10 @@ public class OWOWCache implements OWriteCache {
 
     NameFileIdEntry nameFileIdEntry;
     while ((nameFileIdEntry = readNextNameIdEntry()) != null) {
-      if (localFileCounter < nameFileIdEntry.fileId)
-        localFileCounter = nameFileIdEntry.fileId;
+
+      final long absFileId = Math.abs(nameFileIdEntry.fileId);
+      if (localFileCounter < absFileId)
+        localFileCounter = absFileId;
 
       nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
     }
