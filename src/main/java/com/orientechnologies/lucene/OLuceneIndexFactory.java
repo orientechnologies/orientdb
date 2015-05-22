@@ -55,24 +55,20 @@ public class OLuceneIndexFactory implements OIndexFactory {
   public OLuceneIndexFactory() {
   }
 
-  @Override
   public int getLastVersion() {
     return 0;
   }
 
-  @Override
   public Set<String> getTypes() {
     return TYPES;
   }
 
-  @Override
   public Set<String> getAlgorithms() {
     return ALGORITHMS;
   }
 
-  @Override
   public OIndexInternal<?> createIndex(ODatabaseDocumentInternal oDatabaseRecord, String indexType, String algorithm,
-      String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException {
+      String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
     return createLuceneIndex(oDatabaseRecord, indexType, valueContainerAlgorithm, metadata);
   }
 
