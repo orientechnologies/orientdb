@@ -241,6 +241,11 @@ public class OSelectStatementTest {
 
   }
 
+  public void testWildcardSuffix() {
+    checkRightSyntax("select foo.* from bar ");
+  }
+
+
   public void testEscape2() {
     try {
       SimpleNode result = checkWrongSyntax("select from cluster:internal where \"\\u005C\" = \"\\u005C\" ");
