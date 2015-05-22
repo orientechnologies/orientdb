@@ -66,6 +66,12 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
     if (iRequest.authorization != null) {
       // GET CREDENTIALS
       final String[] authParts = iRequest.authorization.split(":");
+      if (authParts.length != 2) {
+        // NO USER : PASSWD
+        sendAuthorizationRequest(iRequest, iResponse);
+        return false;
+      }
+
       serverUser = authParts[0];
       serverPassword = authParts[1];
       if (authParts.length == 2 && server.authenticate(serverUser, serverPassword, resource))
@@ -79,7 +85,7 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
   }
 
   protected boolean checkGuestAccess() {
-    return server.authenticate(OServerConfiguration.SRV_ROOT_GUEST, null, resource);
+    return server.isAllowed(OServerConfiguration.SRV_ROOT_GUEST, resource);
   }
 
   protected void sendNotAuthorizedResponse(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
