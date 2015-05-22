@@ -232,7 +232,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   private void convertToSbTree() {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
     final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, durableNonTxMode,
-        (OAbstractPaginatedStorage) db.getStorage());
+        (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
 
     tree.addAll(underlying);
 
