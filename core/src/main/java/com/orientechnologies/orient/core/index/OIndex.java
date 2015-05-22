@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -142,6 +143,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * 
    * @return The index instance itself to allow in chain calls
    */
+  @OApi(enduser = false)
   OIndex<T> delete();
 
   void deleteWithoutIndexLoad(String indexName);
