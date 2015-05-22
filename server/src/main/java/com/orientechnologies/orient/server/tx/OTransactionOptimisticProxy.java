@@ -136,6 +136,8 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           if (ORecordInternal.getRecordType(loadedRecord) == ODocument.RECORD_TYPE
               && ORecordInternal.getRecordType(loadedRecord) == ORecordInternal.getRecordType(record)) {
             ((ODocument) loadedRecord).merge((ODocument) record, false, false);
+            ((ODocument) loadedRecord).setDirty();
+
             loadedRecord.getRecordVersion().copyFrom(record.getRecordVersion());
             entry.getValue().record = loadedRecord;
 
