@@ -1445,12 +1445,8 @@ OProjectionItem ProjectionItem():
 {}
 {
 (
-	"*" {jjtThis.all = true;}
-	|
-	(
-        jjtThis.expression = Expression()
-		[ <AS> jjtThis.alias = Alias() ]
-	)
+    jjtThis.expression = Expression()
+    [ <AS> jjtThis.alias = Alias() ]
 ){return jjtThis;}
 }
 
@@ -1550,13 +1546,10 @@ OFunctionCall FunctionCall():
     	)
     	<LPAREN>
     	(
-    		<STAR> { jjtThis.star = true;}
-    		|
-    		(
-    			[
-    			lastExpression = Expression() {jjtThis.params.add(lastExpression);} ( <COMMA> lastExpression = Expression() {jjtThis.params.add(lastExpression);})*
-    			]
-    		)
+            [
+            lastExpression = Expression() {jjtThis.params.add(lastExpression);} ( <COMMA> lastExpression = Expression() {jjtThis.params.add(lastExpression);})*
+            ]
+
     	)
     	<RPAREN>
     )
@@ -1600,6 +1593,8 @@ OSuffixIdentifier SuffixIdentifier():
         |
         LOOKAHEAD( RecordAttribute() )
         jjtThis.recordAttribute = RecordAttribute()
+        |
+        ( <STAR> { jjtThis.star = true; } )
     )
     { return jjtThis; }
 }
@@ -2633,12 +2628,8 @@ OTraverseProjectionItem TraverseProjectionItem():
 {}
 {
     (
-        <STAR> { jjtThis.star = true; }
-        |
-        (
-            jjtThis.base = BaseIdentifier()
-            [ LOOKAHEAD( Modifier() ) jjtThis.modifier = Modifier() ]
-        )
+        jjtThis.base = BaseIdentifier()
+        [ LOOKAHEAD( Modifier() ) jjtThis.modifier = Modifier() ]
     )
     { return jjtThis; }
 }

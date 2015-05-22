@@ -6,6 +6,7 @@ public class OSuffixIdentifier extends SimpleNode {
 
   protected OIdentifier      identifier;
   protected ORecordAttribute recordAttribute;
+  protected boolean          star = false;
 
   public OSuffixIdentifier(int id) {
     super(id);
@@ -26,6 +27,8 @@ public class OSuffixIdentifier extends SimpleNode {
       return identifier.toString();
     } else if (recordAttribute != null) {
       return recordAttribute.toString();
+    } else if (star) {
+      return "*";
     }
     return super.toString();
   }
