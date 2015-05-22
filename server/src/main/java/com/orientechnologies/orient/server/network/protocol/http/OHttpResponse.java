@@ -360,9 +360,9 @@ public class OHttpResponse {
     else
       socket = connection.protocol.getChannel().socket;
     if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
-      OLogManager.instance().debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)", connection,
+      OLogManager.instance().debug(this, "[OHttpResponse] found and removed pending closed channel %d (%s)", connection,
           socket);
-      throw new IOException("Connection is closed ");
+      throw new IOException("Connection is closed");
     }
 
   }
