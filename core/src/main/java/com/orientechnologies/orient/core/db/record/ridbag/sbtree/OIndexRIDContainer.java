@@ -20,12 +20,6 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -35,6 +29,12 @@ import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
@@ -234,7 +234,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   private void convertToSbTree() {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
     final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, durableNonTxMode,
-        (OAbstractPaginatedStorage) db.getStorage());
+        (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
 
     tree.addAll(underlying);
 
