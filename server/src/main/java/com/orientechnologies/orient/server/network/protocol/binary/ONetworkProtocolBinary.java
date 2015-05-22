@@ -100,6 +100,18 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
   protected Boolean           tokenBased;
@@ -458,14 +470,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       if (connection.serverUser == null)
         throw new OSecurityAccessException("Server user not authenticated.");
 
-      if (!server.authenticate(connection.serverUser.name, null, iResource))
+      if (!server.isAllowed(connection.serverUser.name, iResource))
         throw new OSecurityAccessException("User '" + connection.serverUser.name + "' cannot access to the resource [" + iResource
             + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
     } else {
       if (!connection.data.serverUser)
         throw new OSecurityAccessException("Server user not authenticated.");
 
-      if (!server.authenticate(connection.data.serverUsername, null, iResource))
+      if (!server.isAllowed(connection.data.serverUsername, iResource))
         throw new OSecurityAccessException("User '" + connection.data.serverUsername + "' cannot access to the resource ["
             + iResource + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
     }

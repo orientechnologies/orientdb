@@ -461,7 +461,32 @@ public class OServer {
   public boolean authenticate(final String iUserName, final String iPassword, final String iResourceToCheck) {
     final OServerUserConfiguration user = getUser(iUserName);
 
-    if (user != null && (iPassword == null || user.password.equals(iPassword))) {
+    if (user != null && user.password.equals(iPassword)) {
+      if (user.resources.equals("*"))
+        // ACCESS TO ALL
+        return true;
+
+      String[] resourceParts = user.resources.split(",");
+      for (String r : resourceParts)
+        if (r.equals(iResourceToCheck))
+          return true;
+    }
+
+    // WRONG PASSWORD OR NO AUTHORIZATION
+    return false;
+  }
+
+  /**
+   * Checks if a server user is allowed to operate with a resource.
+   *
+   * @param iUserName
+   *          Username to authenticate
+   * @return true if authentication is ok, otherwise false
+   */
+  public boolean isAllowed(final String iUserName, final String iResourceToCheck) {
+    final OServerUserConfiguration user = getUser(iUserName);
+
+    if (user != null) {
       if (user.resources.equals("*"))
         // ACCESS TO ALL
         return true;
