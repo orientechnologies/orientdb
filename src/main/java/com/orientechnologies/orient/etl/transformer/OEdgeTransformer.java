@@ -102,13 +102,19 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
       // RESOLVE SINGLE JOINS
       for (Object o : OMultiValue.getMultiValueIterable(joinCurrentValue)) {
         final Object r = lookup(o, false);
-        if (createEdge(vertex, o, r) == null)
-          return null;
+        if (createEdge(vertex, o, r) == null) {
+          if (unresolvedLinkAction == ACTION.SKIP)
+            // RETURN NULL ONLY IN CASE SKIP ACTION IS REQUESTED
+            return null;
+        }
       }
     } else {
       final Object result = lookup(joinCurrentValue, false);
-      if (createEdge(vertex, joinCurrentValue, result) == null)
-        return null;
+      if (createEdge(vertex, joinCurrentValue, result) == null) {
+        if (unresolvedLinkAction == ACTION.SKIP)
+          // RETURN NULL ONLY IN CASE SKIP ACTION IS REQUESTED
+          return null;
+      }
     }
     return input;
   }
