@@ -75,6 +75,7 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -2276,10 +2277,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   private void browseRecords(final int limit, final OIdentifiableIterator<?> it) {
     final OTableFormatter tableFormatter = new OTableFormatter(this).setMaxWidthSize(getWindowSize());
 
-    currentResultSet.clear();
+    setResultset(new ArrayList<OIdentifiable>());
     while (it.hasNext() && currentResultSet.size() <= limit)
       currentResultSet.add(it.next());
-    setResultset(currentResultSet);
 
     tableFormatter.writeRecords(currentResultSet, limit);
   }
