@@ -884,7 +884,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   /**
    * {@inheritDoc}
    */
-  public void setUser(OSecurityUser user) {
+  public void setUser(final OSecurityUser user) {
     if (user instanceof OUser) {
       OMetadata metadata = getMetadata();
       if (metadata != null) {
