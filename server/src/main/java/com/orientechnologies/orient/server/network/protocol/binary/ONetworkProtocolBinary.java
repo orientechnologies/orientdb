@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -98,6 +91,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
+import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
 import java.io.IOException;
@@ -204,7 +198,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             final ODatabaseDocumentTx database = new ODatabaseDocumentTx(type + ":" + db);
             if (connection.data.serverUser) {
               database.resetInitialization();
-              database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
+              database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
               database.open(connection.data.serverUsername, null);
             } else
               database.open(token);
@@ -501,7 +495,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
           // SERVER AUTHENTICATED, BYPASS SECURITY
           database.resetInitialization();
-          database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
+          database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
           database.open(iUser, iPassword);
         }
       }
