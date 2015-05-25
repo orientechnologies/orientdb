@@ -27,6 +27,12 @@
 This document contains the last changes of OrientDB Community Edition.
 
 ---------------------------------------------------------------------------------------------------
+VERSION 2.0.10 - (May, 25th 2015)
+- Bug fixing: 17 issues from 2.0.9.
+
+https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0.10+is%3Aclosed+
+
+---------------------------------------------------------------------------------------------------
 VERSION 2.0.9 - (May, 14th 2015)
 - Bug fixing: 21 issues from 2.0.8.
 
