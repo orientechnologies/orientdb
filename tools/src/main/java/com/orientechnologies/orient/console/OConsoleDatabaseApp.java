@@ -2269,10 +2269,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   private void browseRecords(final int limit, final OIdentifiableIterator<?> it) {
     final OTableFormatter tableFormatter = new OTableFormatter(this).setMaxWidthSize(getWindowSize());
 
-    currentResultSet.clear();
+    setResultset(new ArrayList<OIdentifiable>());
     while (it.hasNext() && currentResultSet.size() <= limit)
       currentResultSet.add(it.next());
-    setResultset(currentResultSet);
 
     tableFormatter.writeRecords(currentResultSet, limit);
   }
