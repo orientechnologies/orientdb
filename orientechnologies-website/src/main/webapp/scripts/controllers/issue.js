@@ -17,6 +17,10 @@ angular.module('webappApp')
     }, {
       name: 'Less Priority',
       filter: 'priority-asc'
+
+    }, {
+      name: 'Due Date',
+      filter: 'dueTime-asc'
     }]
 
     $scope.query = 'is:open '
@@ -368,16 +372,24 @@ angular.module('webappApp')
     });
   });
 angular.module('webappApp')
-  .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User, $timeout, $location) {
+  .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User, $timeout, $location, $q) {
 
 
     $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
 
+    var waiting_reply = 'waiting reply';
+    var in_progress = 'in progress';
     $scope.number = $routeParams.id;
     var number = $scope.number;
     User.whoami().then(function (data) {
       $scope.isMember = User.isMember(ORGANIZATION);
       $scope.currentUser = data;
+
+      if ($scope.isMember) {
+        Organization.all("clients").getList().then(function (data) {
+          $scope.clients = data.plain();
+        })
+      }
     });
     Organization.all("issues").one(number).get().then(function (data) {
       $scope.issue = data.plain();
@@ -389,14 +401,20 @@ angular.module('webappApp')
       Repo.one($scope.repo).all("issues").one(number).all("actors").getList().then(function (data) {
         $scope.actors = data.plain();
       });
+
+      $scope.isInWait = function () {
+        var found = false;
+        $scope.issue.labels.forEach(function (l) {
+          found = found || l.name == waiting_reply;
+        })
+        return found;
+      };
+      $scope.issue.labels
       refreshEvents();
       initTypologic();
     }).catch(function (e) {
       $location.path("/issues");
     });
-    //Repo.one(repo).all("issues").one(number).get().then(function (data) {
-    //  $scope.issue = data.plain();
-    //});
     Organization.all("priorities").getList().then(function (data) {
       $scope.priorities = data.plain();
     })
@@ -437,21 +455,33 @@ angular.module('webappApp')
     }
     $scope.comment = function () {
 
+
+      var deferred = $q.defer();
       if ($scope.newComment && $scope.newComment.body) {
         Repo.one($scope.repo).all("issues").one(number).all("comments").post($scope.newComment).then(function (data) {
           if (data) {
             $scope.comments.push(data.plain());
             $scope.newComment.body = "";
+            refreshEvents();
           } else {
             $scope.newComment.body = "";
             $timeout(function () {
               refreshEvents();
             }, 2000)
           }
+          deferred.resolve();
         });
       }
+      return deferred.promise;
     }
 
+    $scope.commentAndWait = function () {
+
+      $scope.comment().then(function (data) {
+
+        $scope.addLabel(waiting_reply);
+      })
+    }
     $scope.$watch("newComment.body", function (data) {
       if (data && data != "") {
         $scope.closeComment = true;
@@ -469,22 +499,51 @@ angular.module('webappApp')
     }
     $scope.copyIssueNumber = function () {
 
-      var copyEvent = new ClipboardEvent('copy', { dataType: 'text/plain', data: 'Data to be copied' } );fi
+      var copyEvent = new ClipboardEvent('copy', {dataType: 'text/plain', data: 'Data to be copied'});
+
       document.dispatchEvent(copyEvent);
     }
     $scope.close = function () {
 
+
       Repo.one($scope.repo).all("issues").one(number).patch({state: "closed"}).then(function (data) {
-        $scope.issue.state = "closed";
+        $scope.issue.state = "CLOSED";
         if ($scope.newComment && $scope.newComment.body) {
           $scope.comment();
-          refreshEvents();
+        }
+        refreshEvents();
+        $scope.removeLabel(in_progress);
+      });
+
+    }
+    $scope.removeLabel = function (l) {
+
+      var localLabel = null;
+      $scope.issue.labels.forEach(function (label) {
+        if (label.name == l) {
+          localLabel = label;
         }
       });
+
+      if (localLabel) {
+        $scope.$emit("label:removed", localLabel);
+      }
+    }
+    $scope.addLabel = function (l) {
+      var localLabel = null;
+      $scope.labels.forEach(function (label) {
+        if (label.name == l) {
+          localLabel = label;
+        }
+      });
+
+      if (localLabel) {
+        $scope.$emit("label:added", localLabel);
+      }
     }
     $scope.reopen = function () {
       Repo.one($scope.repo).all("issues").one(number).patch({state: "open"}).then(function (data) {
-        $scope.issue.state = "open";
+        $scope.issue.state = "OPEN";
         refreshEvents();
       });
     }
@@ -512,6 +571,15 @@ angular.module('webappApp')
 
       Repo.one($scope.repo).all("issues").one(number).patch({version: version.number}).then(function (data) {
         $scope.issue.version = version;
+        refreshEvents();
+      })
+
+
+    });
+    $scope.$on("client:changed", function (e, client) {
+
+      Repo.one($scope.repo).all("issues").one(number).patch({client: client.clientId}).then(function (data) {
+        $scope.issue.client = client;
         refreshEvents();
       })
 

@@ -43,6 +43,8 @@ public class GithubLabelEvent implements GithubIssueEvent {
   private RepositoryService      repositoryService;
 
   @Autowired
+  private IssueRepository        issueRepository;
+  @Autowired
   private OrganizationRepository orgRepository;
 
   @Override
@@ -80,6 +82,7 @@ public class GithubLabelEvent implements GithubIssueEvent {
           add(label1.getName());
         }
       }, findUser(payload), true, false);
+      issueRepository.save(issueDto);
     } catch (Throwable e) {
       OLogManager.instance().warn(this, "Error labeling issue :" + payload.toJSON(), e);
     }

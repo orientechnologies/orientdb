@@ -16,6 +16,9 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
     },
     send: function (msg) {
       this.socket.send(msg);
+    },
+    deinit: function () {
+      this.socket.close();
     }
   }
   var chatService = {
@@ -55,6 +58,13 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
     },
     send: function (msg) {
       charSocketWrapper.send(msg);
+    },
+
+    connect: function () {
+      charSocketWrapper.init(initializer)
+    },
+    disconnect: function () {
+      charSocketWrapper.deinit();
     },
     getClientName: function (clientId) {
       var name = ''
@@ -117,9 +127,8 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
 
   }
 
-  charSocketWrapper.init(initializer)
 
-  poll();
+
 
   return chatService;
 }).run(function (ChatService) {

@@ -46,14 +46,14 @@ public class MockMailSender extends JavaMailSenderImpl {
       try {
         Email email = new HtmlEmail();
 
-        email.setSmtpPort(587);
-        email.setAuthenticator(new DefaultAuthenticator("prjhub@orientechnologies.com", "Prj_Hubb_WoW945"));
+        email.setSmtpPort(mailConfiguration.port);
+        email.setAuthenticator(new DefaultAuthenticator(mailConfiguration.username, mailConfiguration.password));
         email.setDebug(false);
 
-        email.setHostName("mail.orientechnologies.com");
-        email.setFrom("prjhub@orientechnologies.com", "PrjHub");
+        email.setHostName(mailConfiguration.host);
+        email.setFrom(mailConfiguration.from, "PrjHub");
         email.setSubject(simpleMessage.getSubject());
-        email.setContent(simpleMessage.getText(),"text/html");
+        email.setContent(simpleMessage.getText(), "text/html");
         for (String s : simpleMessage.getTo()) {
           email.addTo(s);
         }

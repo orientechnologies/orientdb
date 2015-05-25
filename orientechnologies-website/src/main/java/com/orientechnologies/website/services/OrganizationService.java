@@ -6,6 +6,7 @@ import com.orientechnologies.website.model.schema.dto.web.ImportDTO;
 import com.orientechnologies.website.model.schema.dto.web.hateoas.ScopeDTO;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.List;
 
 public interface OrganizationService {
@@ -44,9 +45,14 @@ public interface OrganizationService {
   @Transactional
   OUser registerBot(String name, String username);
 
-
   @Transactional
   Contract registerContract(String name, Contract contract);
 
   public void createMembership(Organization test, OUser user);
+
+  @Transactional
+  public Contract registerClientContract(String name, Integer id, String contractName, Date from, Date to);
+
+  @Transactional
+  public Contract patchContract(String name, String uuid, Contract contract);
 }

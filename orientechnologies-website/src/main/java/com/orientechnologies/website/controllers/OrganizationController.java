@@ -175,6 +175,19 @@ public class OrganizationController extends ExceptionController {
     }
   }
 
+  @RequestMapping(value = "{name}/contracts/{uuid}", method = RequestMethod.PATCH)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<Contract> patchContractToOrg(@PathVariable("name") String name,@PathVariable("uuid") String uuid, @RequestBody Contract contract) {
+    OUser user = SecurityHelper.currentUser();
+
+    if (userService.isMember(user, name)) {
+      Contract c = organizationService.patchContract(name,uuid, contract);
+      return new ResponseEntity<Contract>(c, HttpStatus.OK);
+    } else {
+      return new ResponseEntity(null, HttpStatus.NOT_FOUND);
+    }
+  }
+
   @RequestMapping(value = "{name}/bots/{username}", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.OK)
   public OUser addBotToOrg(@PathVariable("name") String name, @PathVariable("username") String username) {
@@ -299,6 +312,34 @@ public class OrganizationController extends ExceptionController {
       return new ResponseEntity<List<OUser>>(orgRepository.findClientMembers(name, id), HttpStatus.OK);
     } else {
       return new ResponseEntity<List<OUser>>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  @RequestMapping(value = "{name}/clients/{id}/contracts", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<List<Contract>> findClientContracts(@PathVariable("name") String name, @PathVariable("id") Integer id) {
+
+    OUser user = SecurityHelper.currentUser();
+    if (userService.isMember(user, name) || userService.isClient(user, name)) {
+      return new ResponseEntity<List<Contract>>(orgRepository.findClientContracts(name, id), HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<Contract>>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  @RequestMapping(value = "{name}/clients/{id}/contracts", method = RequestMethod.POST)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<Contract> postClientContract(@PathVariable("name") String name, @PathVariable("id") Integer id,
+      @RequestBody Contract contract) {
+
+    OUser user = SecurityHelper.currentUser();
+    if (userService.isMember(user, name) || userService.isClient(user, name)) {
+      return new ResponseEntity<Contract>(organizationService.registerClientContract(name, id, contract.getUuid(),
+          contract.getFrom(), contract.getTo()), HttpStatus.OK);
+    } else {
+      return new ResponseEntity<Contract>(HttpStatus.NOT_FOUND);
     }
 
   }

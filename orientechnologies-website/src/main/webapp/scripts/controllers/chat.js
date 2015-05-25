@@ -19,6 +19,8 @@ angular.module('webappApp')
     $scope.connected = ChatService.connected;
 
 
+
+
     $scope.closeMe = function () {
       $('#roomsMobile').offcanvas('toggle');
     }

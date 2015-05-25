@@ -1,9 +1,11 @@
 package com.orientechnologies.website.controller;
 
 import com.jayway.restassured.RestAssured;
+import com.jayway.restassured.response.Response;
 import com.jayway.restassured.specification.RequestSpecification;
 import com.orientechnologies.website.Application;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.model.schema.dto.Client;
 import com.orientechnologies.website.model.schema.dto.Contract;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.model.schema.dto.Organization;
@@ -11,6 +13,7 @@ import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.UserRepository;
 import com.orientechnologies.website.services.OrganizationService;
 import org.hamcrest.Matchers;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,6 +25,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
+
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 import static com.jayway.restassured.RestAssured.given;
 
@@ -36,24 +43,24 @@ import static com.jayway.restassured.RestAssured.given;
 @IntegrationTest("server.port:0")
 public class OrganizationControllerTest {
 
-  public static boolean   dbInit = false;
+  public static boolean  dbInit = false;
   @Autowired
-  OrganizationRepository  repository;
+  OrganizationRepository repository;
 
   @Autowired
-  OrganizationService organizationService;
+  OrganizationService    organizationService;
 
   @Autowired
-  UserRepository          userRepository;
+  UserRepository         userRepository;
 
   @Autowired
-  OrientDBFactory         dbFactory;
+  OrientDBFactory        dbFactory;
   @Value("${local.server.port}")
-  int                     port;
+  int                    port;
 
-  Organization            test;
+  static Organization    test;
 
-  OUser                   user;
+  static OUser           user;
 
   @Before
   public void setUp() {
@@ -65,12 +72,17 @@ public class OrganizationControllerTest {
       user.setToken("testToken");
 
       test = new Organization();
-      test.setName("Organization Test");
+      test.setName("fake");
 
       test = repository.save(test);
       user = userRepository.save(user);
 
+      Client client = new Client();
+      client.setClientId(1);
+      client.setName("Test client");
+
       organizationService.createMembership(test, user);
+      organizationService.registerClient(test.getName(), client);
       dbFactory.getGraph().commit();
       RestAssured.port = port;
       dbInit = true;
@@ -86,23 +98,85 @@ public class OrganizationControllerTest {
   public void testFetchOrganization() {
 
     header().when().get("/api/v1/orgs/{name}", test.getName()).then().statusCode(HttpStatus.OK.value())
-        .body("name", Matchers.is(test.getName())).body("id", Matchers.not(Matchers.isEmptyOrNullString()))
-        .body("codename", Matchers.is(test.getId()));
+        .body("name", Matchers.is(test.getName())).body("id", Matchers.not(Matchers.isEmptyOrNullString()));
 
   }
 
   @Test
-  public void testAddContract() {
+  public void testAddAndAssociateContract() {
 
     Contract contract = new Contract();
     contract.setName("Developer Support");
-    header().given().body(contract).when().post("/api/v1/orgs/fake/contracts").then().statusCode(HttpStatus.OK.value())
-        .body("name", Matchers.is("Developer Support"));
-    header().when().get("/api/v1/orgs/fake/contracts").then().statusCode(HttpStatus.OK.value());
+    contract.getBusinessHours().add("10:00-19:00");
+    contract.getBusinessHours().add("10:00-19:00");
+    contract.getBusinessHours().add("10:00-19:00");
+    contract.getBusinessHours().add("10:00-19:00");
+    contract.getBusinessHours().add("10:00-19:00");
+
+    contract.getSlas().put(1, 2);
+    contract.getSlas().put(2, 4);
+    contract.getSlas().put(3, 8);
+    contract.getSlas().put(4, 24);
+    Response post = header().given().body(contract).when().post("/api/v1/orgs/fake/contracts");
+
+    Assert.assertEquals(post.statusCode(), 200);
+    Contract response = post.getBody().as(Contract.class);
+
+    String uuid = response.getUuid();
+    Assert.assertNotNull(uuid);
+    Assert.assertEquals(contract.getName(), response.getName());
+    Assert.assertEquals(contract.getBusinessHours(), response.getBusinessHours());
+    Assert.assertEquals(contract.getSlas(), response.getSlas());
+
+    post = header().when().get("/api/v1/orgs/fake/contracts");
+
+    Assert.assertEquals(post.statusCode(), 200);
+
+    List<Contract> contracts = Arrays.asList(post.getBody().as(Contract[].class));
+
+    Assert.assertEquals(contracts.size(), 1);
+
+    response = contracts.iterator().next();
+
+    Assert.assertEquals(contract.getName(), response.getName());
+    Assert.assertEquals(contract.getBusinessHours(), response.getBusinessHours());
+    Assert.assertEquals(contract.getSlas(), response.getSlas());
+
+    Date fromDate = new Date();
+    Date toDate = new Date();
+    contract.setUuid(uuid);
+    contract.setFrom(fromDate);
+    contract.setTo(toDate);
+
+    post = header().given().body(contract).when().post("/api/v1/orgs/fake/clients/1/contracts");
+
+    Assert.assertEquals(200, post.statusCode());
+
+    response = post.getBody().as(Contract.class);
+
+    Assert.assertEquals(contract.getName(), response.getName());
+    Assert.assertEquals(contract.getBusinessHours(), response.getBusinessHours());
+    Assert.assertEquals(contract.getSlas(), response.getSlas());
+
+    post = header().when().get("/api/v1/orgs/fake/clients/1/contracts");
+
+    Assert.assertEquals(200, post.statusCode());
+
+    contracts = Arrays.asList(post.getBody().as(Contract[].class));
+
+    Assert.assertEquals(contracts.size(), 1);
+
+    response = contracts.iterator().next();
+
+    Assert.assertEquals(contract.getName(), response.getName());
+    Assert.assertEquals(contract.getBusinessHours(), response.getBusinessHours());
+    Assert.assertEquals(contract.getSlas(), response.getSlas());
+    Assert.assertEquals(contract.getFrom(), response.getFrom());
+    Assert.assertEquals(contract.getTo(), response.getTo());
 
   }
 
   public static RequestSpecification header() {
-    return given().header("X-AUTH-TOKEN", "testToken");
+    return given().header("X-AUTH-TOKEN", "testToken").given().contentType("application/json");
   }
 }

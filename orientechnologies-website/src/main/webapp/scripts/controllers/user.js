@@ -133,6 +133,10 @@ angular.module('webappApp')
     Organization.all("members").getList().then(function (data) {
       $scope.members = data.plain();
     })
+
+    Organization.all("priorities").getList().then(function (data) {
+      $scope.priorities = data.plain();
+    })
     Organization.all("repos").getList().then(function (data) {
       $scope.repositories = data.plain();
       if ($scope.repositories.length > 0) {
@@ -166,6 +170,16 @@ angular.module('webappApp')
     })
 
 
+    $scope.getPriority = function (id) {
+      var priority;
+      $scope.priorities.forEach(function (p) {
+
+        if (p.number == id) {
+          priority = p.name;
+        }
+      })
+      return priority;
+    }
     $scope.addBot = function () {
       Organization.all("bots").one($scope.newBot).post().then(function (data) {
         $scope.bots.push(data);
@@ -186,6 +200,10 @@ angular.module('webappApp')
       $scope.contractEditing = true;
       $scope.contract = {}
       $scope.contract.businessHours = new Array(7);
+      $scope.contract.slas = {}
+      $scope.priorities.forEach(function (p) {
+        $scope.contract.slas[p.number] = 2 * p.number;
+      })
     }
     $scope.saveMilestone = function (milestone) {
       Organization.all("milestones").one(encodeURI(milestone.title)).patch({current: milestone.current}).then(function (data) {
@@ -212,7 +230,7 @@ angular.module('webappApp')
         })
       } else {
         var idx = $scope.contracts.indexOf($scope.selectedContract);
-        Organization.all("contracts").one($scope.contract.name).patch($scope.contract).then(function (data) {
+        Organization.all("contracts").one($scope.contract.uuid).patch($scope.contract).then(function (data) {
           $scope.contracts[idx] = data;
           $scope.cancelContract();
         })

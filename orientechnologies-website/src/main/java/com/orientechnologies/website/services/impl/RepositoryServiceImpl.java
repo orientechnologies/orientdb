@@ -122,6 +122,7 @@ public class RepositoryServiceImpl implements RepositoryService {
     if (issue.getPriority() != null) {
       if (original.getPriority() == null || original.getPriority().getNumber() != issue.getPriority()) {
         handlePriority(r, original, issue.getPriority());
+        original = issueRepository.save(original);
       }
     }
     if (issue.getAssignee() != null) {
@@ -152,8 +153,21 @@ public class RepositoryServiceImpl implements RepositoryService {
       original = issueRepository.save(original);
     }
 
+    if (issue.getClient() != null) {
+      handleClient(r, original, issue.getClient());
+    }
     if (skipGithub) {
       if (issue.getState() != null) {
+
+        if (issue.getState().equalsIgnoreCase("OPEN")) {
+          original.setClosedAt(null);
+          original.setUpdatedAt(new Date());
+        }
+        if (issue.getState().equalsIgnoreCase("CLOSED")) {
+          Date d = new Date();
+          original.setClosedAt(d);
+          original.setUpdatedAt(d);
+        }
         if (!original.getState().equals(issue.getState())) {
           original = issueService.changeState(original, issue.getState(), null, true);
         }
@@ -174,7 +188,9 @@ public class RepositoryServiceImpl implements RepositoryService {
     issueDomain.setConfidential(true);
     issueDomain.setTitle(issue.getTitle());
     issueDomain.setBody(issue.getBody());
-    issueDomain.setCreatedAt(new Date());
+    Date createdAt = new Date();
+    issueDomain.setCreatedAt(createdAt);
+    issueDomain.setSlaAt(createdAt);
     issueDomain.setState(Issue.IssueState.OPEN.toString());
     issueDomain = issueRepository.save(issueDomain);
     createIssue(repository, issueDomain);
@@ -182,12 +198,12 @@ public class RepositoryServiceImpl implements RepositoryService {
     issueService.changeUser(issueDomain, user);
     handleMilestone(repository, issueDomain, milestoneId);
     handleVersion(repository, issueDomain, versionId);
-    handlePriority(repository, issueDomain, priorityId);
     handleScope(repository, issueDomain, scope);
     handleClient(repository, issueDomain, client);
     handleLabels(repository, issueDomain, issue.getLabels());
     handleEnvironment(repository, issueDomain, env);
     handleAssignee(issueDomain, assignee);
+    handlePriority(repository, issueDomain, priorityId);
     Issue issue1 = issueRepository.save(issueDomain);
     eventManager.pushInternalEvent(IssueCreatedEvent.EVENT, issue1);
     List<OUser> bots = organizationRepo.findBots(repository.getOrganization().getName());

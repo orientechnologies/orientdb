@@ -26,7 +26,7 @@ public class IssueServiceGithub implements IssueService {
   }
 
   @Override
-  public void commentIssue(Issue issue, Comment comment) {
+  public void commentIssue(Issue issue, Comment comment,boolean bot) {
     throw new UnsupportedOperationException();
   }
 
@@ -155,6 +155,11 @@ public class IssueServiceGithub implements IssueService {
   }
 
   @Override
+  public Issue conditionalSynchIssue(Issue issue, OUser user) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void clearEvents(Issue issue) {
     throw new UnsupportedOperationException();
   }
@@ -233,7 +238,7 @@ public class IssueServiceGithub implements IssueService {
   }
 
   @Override
-  public boolean isChanged(Issue issue, OUser user) {
+  public GIssue isChanged(Issue issue, OUser user) {
 
     String token = user != null ? user.getToken() : SecurityHelper.currentToken();
     GitHub github = new GitHub(token);
@@ -249,6 +254,11 @@ public class IssueServiceGithub implements IssueService {
     } catch (IOException e) {
       e.printStackTrace();
     }
-    return false;
+    return null;
+  }
+
+  @Override
+  public void changeSlaDueTime(Issue issue, Priority priority) {
+    throw new UnsupportedOperationException();
   }
 }

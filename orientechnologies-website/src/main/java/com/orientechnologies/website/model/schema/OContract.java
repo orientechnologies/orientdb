@@ -25,6 +25,12 @@ public enum OContract implements OTypeHolder<Contract> {
       return OType.EMBEDDEDLIST;
     }
   },
+  UUID("uuid") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
+    }
+  },
   SLAS("slas") {
     @Override
     public OType getType() {
@@ -32,6 +38,11 @@ public enum OContract implements OTypeHolder<Contract> {
     }
   };
   private final String name;
+
+  @Override
+  public String toString() {
+    return name;
+  }
 
   OContract(String name) {
     this.name = name;
@@ -42,6 +53,7 @@ public enum OContract implements OTypeHolder<Contract> {
     Contract contract = new Contract();
     contract.setId(doc.getIdentity().toString());
     contract.setName((String) doc.field(NAME.toString()));
+    contract.setUuid((String) doc.field(UUID.toString()));
     contract.setBusinessHours((List<String>) doc.field(BUSINESS_HOURS.toString()));
     contract.setSlas((Map<Integer, Integer>) doc.field(SLAS.toString()));
     return contract;
@@ -53,9 +65,11 @@ public enum OContract implements OTypeHolder<Contract> {
     if (entity.getId() == null) {
       doc = new ODocument(entity.getClass().getSimpleName());
       doc.field(NAME.toString(), entity.getName());
+      doc.field(UUID.toString(), java.util.UUID.randomUUID().toString());
     } else {
       doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
     }
+    doc.field(NAME.toString(), entity.getName());
     doc.field(BUSINESS_HOURS.toString(), entity.getBusinessHours());
     doc.field(SLAS.toString(), entity.getSlas());
     return doc;

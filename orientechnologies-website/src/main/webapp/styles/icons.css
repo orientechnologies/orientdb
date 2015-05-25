@@ -52,3 +52,10 @@
 .fa-referenced:before {
   content: "\f097";
 }
+
+.fa-slaStarted:before {
+  content: "\f017";
+}
+.fa-slaStopped:before {
+  content: "\f017";
+}

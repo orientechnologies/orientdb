@@ -26,13 +26,14 @@ angular.module('webappApp')
   });
 
 angular.module('webappApp')
-  .controller('ClientEditCtrl', function ($scope, Organization, $routeParams,$location) {
+  .controller('ClientEditCtrl', function ($scope, Organization, $routeParams, $location) {
 
 
+    $scope.contractEditing = false;
     Organization.all("clients").one($routeParams.id).get().then(function (data) {
       $scope.client = data.plain();
     }).catch(function (error, status) {
-      if(error.status == 404){
+      if (error.status == 404) {
         $location.path("/");
       }
     })
@@ -42,8 +43,30 @@ angular.module('webappApp')
     Organization.all("clients").one($routeParams.id).all("environments").getList().then(function (data) {
       $scope.environments = data.plain();
     })
+
+    Organization.all("clients").one($routeParams.id).all("contracts").getList().then(function (data) {
+      $scope.contracts = data.plain();
+    })
+    Organization.all("contracts").getList().then(function (data) {
+      $scope.contractsTypes = data.plain();
+    })
     $scope.save = function () {
 
+    }
+
+    $scope.saveContract = function () {
+
+      Organization.all("clients").one($routeParams.id).all("contracts").post($scope.selectedContract).then(function (data) {
+        $scope.contracts.push(data.plain());
+        $scope.selectedContract = null;
+        $scope.cancelContract();
+      })
+    }
+    $scope.addContract = function () {
+      $scope.contractEditing = true;
+    }
+    $scope.cancelContract = function () {
+      $scope.contractEditing = false;
     }
     $scope.createChat = function () {
       Organization.all("clients").one($routeParams.id).all("room").post().then(function (data) {

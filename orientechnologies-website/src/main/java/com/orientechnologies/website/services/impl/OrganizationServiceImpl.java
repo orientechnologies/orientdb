@@ -335,6 +335,20 @@ public class OrganizationServiceImpl implements OrganizationService {
     if (organization != null) {
       contract = contractRepository.save(contract);
       createContractRelationship(organization, contract);
+      return contract;
+    }
+    return null;
+  }
+
+  @Override
+  public Contract patchContract(String name, String uuid, Contract contract) {
+
+    Contract c = contractRepository.findByUUID(name, uuid);
+    if (c != null) {
+      c.setName(contract.getName());
+      c.setBusinessHours(contract.getBusinessHours());
+      c.setSlas(contract.getSlas());
+      return contractRepository.save(c);
     }
     return null;
   }
@@ -346,6 +360,16 @@ public class OrganizationServiceImpl implements OrganizationService {
     OrientVertex orgVertex = graph.getVertex(new ORecordId(organization.getId()));
     OrientVertex devVertex = graph.getVertex(new ORecordId(contract.getId()));
     orgVertex.addEdge(HasContract.class.getSimpleName(), devVertex);
+  }
+
+  private void createContractClientRelationship(Client client, Contract contract, Date from, Date to) {
+
+    OrientGraph graph = dbFactory.getGraph();
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(client.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(contract.getId()));
+    Edge edge = orgVertex.addEdge(HasContract.class.getSimpleName(), devVertex);
+    edge.setProperty("from", from);
+    edge.setProperty("to", to);
   }
 
   @Override
@@ -473,6 +497,21 @@ public class OrganizationServiceImpl implements OrganizationService {
     OrientVertex devVertex = graph.getVertex(new ORecordId(user.getRid()));
 
     orgVertex.addEdge(HasMember.class.getSimpleName(), devVertex);
+
+  }
+
+  @Override
+  public Contract registerClientContract(String name, Integer id, String contractUUID, Date from, Date to) {
+
+    Organization organization = organizationRepository.findOneByName(name);
+    Client client = organizationRepository.findClient(name, id);
+    Contract contract = contractRepository.findByUUID(name, contractUUID);
+    if (organization != null && client != null && contract != null) {
+      createContractClientRelationship(client, contract, from, to);
+      return contract;
+    } else {
+      throw ServiceException.create(101, "Organization, Contract or Client not found");
+    }
 
   }
 

@@ -1,5 +1,6 @@
 package com.orientechnologies.website.services;
 
+import com.orientechnologies.website.github.GIssue;
 import com.orientechnologies.website.model.schema.dto.*;
 
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.List;
  */
 public interface IssueService {
 
-  public void commentIssue(Issue issue, Comment comment);
+  public void commentIssue(Issue issue, Comment comment,boolean bot);
 
   public Comment createNewCommentOnIssue(Issue issue, Comment comment);
 
@@ -37,6 +38,8 @@ public interface IssueService {
 
   public Issue synchIssue(Issue issue, OUser user);
 
+  public Issue conditionalSynchIssue(Issue issue, OUser user);
+
   public void clearEvents(Issue issue);
 
   public void changeScope(Issue issue, Scope scope);
@@ -55,5 +58,7 @@ public interface IssueService {
 
   public void changeTitle(Issue original, String title);
 
-  public boolean isChanged(Issue issue, OUser user);
+  public GIssue isChanged(Issue issue, OUser user);
+
+  public void changeSlaDueTime(Issue issue,Priority priority);
 }

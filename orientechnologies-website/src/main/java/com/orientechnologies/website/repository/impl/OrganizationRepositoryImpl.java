@@ -18,6 +18,7 @@ import com.orientechnologies.website.services.UserService;
 import com.orientechnologies.website.websocket.ChatHandler;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -74,7 +75,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
 
     String query = String
         .format(
-            "select *,$priority from (select expand(out('HasRepo').out('HasIssue')) from Organization where name = '%s') let $priority = out('HasPriority')[0].number ",
+            "select *,$priority,$cola from (select expand(out('HasRepo').out('HasIssue')) from Organization where name = '%s') let $priority = out('HasPriority')[0].number, $cola = coalesce(dueTime.asLong(),2147483647) ",
             name);
     query = addParams(name, q, query);
     Integer limit = new Integer(perPage);
@@ -144,6 +145,9 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     }
     if ("createdAt".equalsIgnoreCase(values[0])) {
       order = " createdAt " + values[1];
+    }
+    if ("dueTime".equalsIgnoreCase(values[0])) {
+      order = " $cola " + values[1];
     }
     return !first ? ("," + order) : "order by " + order;
   }
@@ -247,6 +251,11 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     if ("repo".equals(name)) {
       val = value;
       query = query + "in('HasIssue').name  IN '%s'";
+    }
+    if ("has".equals(name)) {
+      if ("client".equals(value)) {
+        query = query + " in('HasClient').size() > 0";
+      }
     }
     if ("no".equals(name)) {
       if ("label".equals(value)) {
@@ -724,6 +733,26 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     for (OrientVertex vertice : vertices) {
       ODocument doc = vertice.getRecord();
       bots.add(OContract.NAME.fromDoc(doc, db));
+    }
+    return bots;
+  }
+
+  @Override
+  public List<Contract> findClientContracts(String name, Integer id) {
+
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format(
+        "select  from (select expand(out('HasClient')[clientId = %d].outE('HasContract')) from Organization where name = '%s') ",
+        id, name);
+    Iterable<OrientEdge> edges = db.command(new OCommandSQL(query)).execute();
+
+    List<Contract> bots = new ArrayList<Contract>();
+    for (OrientEdge edge : edges) {
+      OrientVertex contract = edge.getVertex(Direction.IN);
+      Contract contract1 = OContract.NAME.fromDoc(contract.getRecord(), db);
+      contract1.setFrom((Date) edge.getProperty("from"));
+      contract1.setTo((Date) edge.getProperty("to"));
+      bots.add(contract1);
     }
     return bots;
   }

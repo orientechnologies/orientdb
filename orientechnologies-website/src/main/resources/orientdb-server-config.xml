@@ -49,7 +49,7 @@
         <!-- AUTOMATIC BACKUP, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
         <handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
             <parameters>
-                <parameter name="enabled" value="false"/>
+                <parameter name="enabled" value="true"/>
                 <parameter name="delay" value="4h"/>
                 <parameter name="target.directory" value="backup"/>
                 <parameter name="target.fileName" value="${DBNAME}-${DATE:yyyyMMddHHmmss}.zip"/>

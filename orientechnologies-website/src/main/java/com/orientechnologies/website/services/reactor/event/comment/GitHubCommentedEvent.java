@@ -60,7 +60,7 @@ public class GitHubCommentedEvent implements GithubCommentEvent {
       comment.setCreatedAt(gComment.getCreatedAt());
       comment.setUpdatedAt(gComment.getUpdatedAt());
       comment = commentRepository.save(comment);
-      issueService.commentIssue(issueDto, comment);
+      issueService.commentIssue(issueDto, comment, false);
 
       eventManager.pushInternalEvent(IssueCommentedEvent.EVENT, comment);
     }

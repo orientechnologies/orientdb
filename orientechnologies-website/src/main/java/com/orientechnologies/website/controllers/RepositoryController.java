@@ -57,7 +57,7 @@ public class RepositoryController {
 
         Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
 
-        return issue != null ? new ResponseEntity<Issue>(issueService.synchIssue(issue,null), HttpStatus.OK) : new ResponseEntity<Issue>(
+        return issue != null ? new ResponseEntity<Issue>(issueService.conditionalSynchIssue(issue,null), HttpStatus.OK) : new ResponseEntity<Issue>(
                 HttpStatus.NOT_FOUND);
     }
 

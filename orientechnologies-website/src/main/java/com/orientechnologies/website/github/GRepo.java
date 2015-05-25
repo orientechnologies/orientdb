@@ -9,12 +9,19 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
  * Created by Enrico Risa on 05/11/14.
  */
 public class GRepo extends GEntity {
+
+  private static SimpleDateFormat dateFormat;
+  static {
+    dateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z");
+    dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+  }
 
   protected GRepo(GitHub gitHub, String content) {
     super(gitHub, null, content);
@@ -125,11 +132,20 @@ public class GRepo extends GEntity {
     return g;
   }
 
-  public boolean isChangedIssue(Integer number, Date updatedAt) throws IOException {
-    int status = github.REQUEST.uri().path(getBaseUrl() + "/issues/" + number).back().method("GET")
-        .header("Authorization", String.format("token %s", github.token)).header("If-Modified-Since", updatedAt.toString()).fetch()
-        .status();
-    return status == 304;
+  public GIssue isChangedIssue(Integer number, Date updatedAt) throws IOException {
+
+    String date = dateFormat.format(updatedAt);
+    Response reponse = github.REQUEST.uri().path(getBaseUrl() + "/issues/" + number).back().method("GET")
+
+    .header("Authorization", String.format("token %s", github.token)).header("If-Modified-Since", date).fetch();
+
+    int status = reponse.status();
+
+    if (status == 304) {
+      return null;
+    }
+    GIssue g = new GIssue(github, this, reponse.body());
+    return g;
   }
 
   public GIssue openIssue(String content) throws IOException {

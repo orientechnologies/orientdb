@@ -294,7 +294,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
 
             comment = commentRepository.save(comment);
             if (isNewComment)
-                issueService.commentIssue(issueDto, comment);
+                issueService.commentIssue(issueDto, comment,true);
 
         }
     }

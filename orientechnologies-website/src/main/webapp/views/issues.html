@@ -128,6 +128,7 @@
                                                                                   ng-if="issue.client">{{issue.client.name}}</span>
                 <i ng-show="issue.milestone" class="fa fa-milestoned"> {{ issue.milestone.title }}</i>
                 <i ng-show="issue.version" class="fa fa-versioned"> {{ issue.version.title }}</i>
+                <span class="label label-warning" ng-show="issue.dueTime"> Due {{ issue.dueTime | fromNow}}</span>
               </p>
             </div>
             <div class="col-md-3 label-column">

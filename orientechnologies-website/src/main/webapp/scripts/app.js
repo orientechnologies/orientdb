@@ -96,6 +96,19 @@ angular
         }
       };
     });
+  }).run(function ($rootScope, ChatService) {
+    $rootScope.$on("$routeChangeSuccess",
+      function (event, current, previous, rejection) {
+
+        if (ChatService.connected) {
+          ChatService.disconnect();
+        }
+        if (current.loadedTemplateUrl == 'views/room.html') {
+          ChatService.connect();
+        }
+
+
+      });
   });
 angular.module('webappApp').factory('oauthHttpInterceptor', function ($cookies, AccessToken) {
   return {
@@ -129,6 +142,6 @@ else {
   var WEBSOCKET = "ws://" + location.hostname + "/chat";
 }
 
-String.prototype.capitalize = function() {
+String.prototype.capitalize = function () {
   return this.charAt(0).toUpperCase() + this.slice(1);
 }

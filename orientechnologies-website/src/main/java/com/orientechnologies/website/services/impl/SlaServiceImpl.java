@@ -60,6 +60,9 @@ public class SlaServiceImpl implements SlaService {
     } else {
       LocalTime localTime = dt.toLocalTime();
       String s = contract.getBusinessHours().get(dayOfWeek - 1);
+      if (s == null) {
+        return false;
+      }
       List<LocalTime> fromTo = getFromTo(s);
       LocalTime to = fromTo.get(1);
       if (localTime.getHourOfDay() == 23 && localTime.getMinuteOfHour() == 59) {
@@ -92,10 +95,11 @@ public class SlaServiceImpl implements SlaService {
 
   private int findResolutionHour(Contract contract, Priority priority) {
     Integer integer = contract.getSlas().get(priority.getNumber());
-    if (integer == null) {
+    Integer integer1 = contract.getSlas().get(priority.getNumber().toString());
+    if (integer == null && integer1 == null) {
       throw new RuntimeException("Error calculating sla. Configuration not found for" + priority);
     }
-    return integer;
+    return integer != null ? integer : integer1;
   }
 
   private List<LocalTime> getFromTo(String business) {

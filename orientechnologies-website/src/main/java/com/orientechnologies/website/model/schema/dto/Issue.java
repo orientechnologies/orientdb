@@ -29,6 +29,7 @@ public class Issue {
   private Environment       environment;
   private Date              dueTime;
   private Date              createdAt;
+  private Date              slaAt;
   private Date              updatedAt;
   private Date              closedAt;
   private Long              comments;
@@ -203,6 +204,15 @@ public class Issue {
 
   public Environment getEnvironment() {
     return environment;
+  }
+
+
+  public void setSlaAt(Date slaAt) {
+    this.slaAt = slaAt;
+  }
+
+  public Date getSlaAt() {
+    return slaAt;
   }
 
   public void setEnvironment(Environment environment) {

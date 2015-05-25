@@ -1,19 +1,28 @@
 package com.orientechnologies.website.model.schema.dto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Enrico Risa on 12/05/15.
  */
 public class Contract {
 
-  private String                    id;
-  private String                    name;
-  private List<String> businessHours = new ArrayList<String>();
-  private Map<Integer, Integer>     slas          = new HashMap<Integer, Integer>();
+  private String                id;
+  private String                name;
+  private List<String>          businessHours = new ArrayList<String>();
+  private Map<Integer, Integer> slas          = new HashMap<Integer, Integer>();
+  private String                uuid;
+  private Date                  from;
+  private Date                  to;
+
+
+  public String getUuid() {
+    return uuid;
+  }
+
+  public void setUuid(String uuid) {
+    this.uuid = uuid;
+  }
 
   public String getId() {
 
@@ -46,5 +55,22 @@ public class Contract {
 
   public void setSlas(Map<Integer, Integer> slas) {
     this.slas = slas;
+  }
+
+  public Date getFrom() {
+    return from;
+  }
+
+  public void setFrom(Date from) {
+
+    this.from = from;
+  }
+
+  public Date getTo() {
+    return to;
+  }
+
+  public void setTo(Date to) {
+    this.to = to;
   }
 }

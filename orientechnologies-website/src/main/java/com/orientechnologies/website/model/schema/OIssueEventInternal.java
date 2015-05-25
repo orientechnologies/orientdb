@@ -38,6 +38,18 @@ public enum OIssueEventInternal implements OTypeHolder<IssueEventInternal> {
     public OType getType() {
       return OType.EMBEDDED;
     }
+  },
+  SECRET("secret") {
+    @Override
+    public OType getType() {
+      return OType.BOOLEAN;
+    }
+  },
+  TIME("time") {
+    @Override
+    public OType getType() {
+      return OType.DATETIME;
+    }
   };
 
   private String name;
@@ -61,6 +73,8 @@ public enum OIssueEventInternal implements OTypeHolder<IssueEventInternal> {
     event.setPriority(OPriority.NAME.fromDoc((ODocument) doc.field(PRIORITY.toString()), graph));
     event.setScope(OScope.NAME.fromDoc((ODocument) doc.field(SCOPE.toString()), graph));
     event.setEnvironment(OEnvironment.EID.fromDoc(doc.<ODocument> field(ENVIRONMENT.toString()), graph));
+    event.setSecret((Boolean) doc.field(SECRET.toString()));
+    event.setTime((Date) doc.field(TIME.toString()));
     return event;
   }
 
@@ -87,6 +101,8 @@ public enum OIssueEventInternal implements OTypeHolder<IssueEventInternal> {
     doc.field(SCOPE.toString(), (entity.getScope() != null ? OScope.NAME.toDoc(entity.getScope(), graph) : null));
     doc.field(ENVIRONMENT.toString(), (entity.getEnvironment() != null ? OEnvironment.EID.toDoc(entity.getEnvironment(), graph)
         : null));
+    doc.field(SECRET.toString(), entity.getSecret());
+    doc.field(TIME.toString(), entity.getTime());
     return doc;
   }
 

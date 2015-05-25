@@ -1,5 +1,6 @@
 package com.orientechnologies.website.services.impl;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.OrientDBFactory;
@@ -11,12 +12,10 @@ import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.*;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.OUser;
-import com.orientechnologies.website.repository.CommentRepository;
-import com.orientechnologies.website.repository.EventRepository;
-import com.orientechnologies.website.repository.IssueRepository;
-import com.orientechnologies.website.repository.RepositoryRepository;
+import com.orientechnologies.website.repository.*;
 import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.SlaService;
+import com.orientechnologies.website.services.UserService;
 import com.orientechnologies.website.services.reactor.GitHubIssueImporter;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -39,37 +38,70 @@ import java.util.List;
 @Service
 public class IssueServiceImpl implements IssueService {
 
+  private static String          WAIT_FOR_REPLY = "waiting reply";
   @Autowired
-  private OrientDBFactory      dbFactory;
+  private OrientDBFactory        dbFactory;
 
   @Autowired
-  protected CommentRepository  commentRepository;
+  protected CommentRepository    commentRepository;
 
   @Autowired
-  protected EventManager       eventManager;
+  protected EventManager         eventManager;
   @Autowired
-  private RepositoryRepository repoRepository;
+  private RepositoryRepository   repoRepository;
   @Autowired
-  private EventRepository      eventRepository;
+  private EventRepository        eventRepository;
   @Autowired
-  private IssueRepository      issueRepository;
+  private IssueRepository        issueRepository;
 
   @Autowired
-  private GitHubIssueImporter  issueImporter;
+  private GitHubIssueImporter    issueImporter;
 
-  private IssueService         githubIssueService;
+  private IssueService           githubIssueService;
 
   @Autowired
-  protected SlaService         slaService;
+  private OrganizationRepository organizationRepository;
+  @Autowired
+  private ContractRepository     contractRepository;
+  @Autowired
+  protected SlaService           slaService;
+
+  @Autowired
+  protected UserService          userService;
 
   @PostConstruct
   protected void init() {
     githubIssueService = new IssueServiceGithub(this);
   }
 
-  @Override
   public void commentIssue(Issue issue, Comment comment) {
+    commentIssue(issue, comment, false);
+  }
+
+  @Override
+  public void commentIssue(Issue issue, Comment comment, boolean bot) {
     createCommentRelationship(issue, comment);
+
+    if (!bot) {
+      if (issue.getClient() != null) {
+        Client client = userService.getClient(comment.getUser(), issue.getRepository().getOrganization().getName());
+        if (client != null && client.getClientId() == issue.getClient().getClientId() && issue.getDueTime() == null) {
+          issue.setSlaAt(new Date());
+          changeSlaDueTime(issue, issue.getPriority());
+          issue = issueRepository.save(issue);
+          List<OUser> bots = organizationRepository.findBots(issue.getRepository().getOrganization().getName());
+          if (bots.size() > 0) {
+            removeLabel(issue, WAIT_FOR_REPLY, bots.iterator().next(), !Boolean.TRUE.equals(issue.getConfidential()));
+          }
+
+        }
+      } else {
+        List<OUser> bots = organizationRepository.findBots(issue.getRepository().getOrganization().getName());
+        if (bots.size() > 0) {
+          removeLabel(issue, WAIT_FOR_REPLY, bots.iterator().next(), !Boolean.TRUE.equals(issue.getConfidential()));
+        }
+      }
+    }
   }
 
   @Transactional
@@ -101,6 +133,7 @@ public class IssueServiceImpl implements IssueService {
   public List<Label> addLabels(Issue issue, List<String> labels, OUser actor, boolean fire, boolean remote) {
 
     if (!remote) {
+
       return labelIssue(issue, labels, actor, fire);
     } else {
       return githubIssueService.addLabels(issue, labels, actor, fire, remote);
@@ -113,8 +146,14 @@ public class IssueServiceImpl implements IssueService {
 
     for (String label : labels) {
       Label l = repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
-      if (l != null)
+      if (l != null) {
         lbs.add(l);
+        if (WAIT_FOR_REPLY.equals(l.getName())) {
+          if (issue.getClient() != null)
+            removeSlaCounting(issue);
+        }
+      }
+
     }
     changeLabels(issue, lbs, false);
 
@@ -136,24 +175,39 @@ public class IssueServiceImpl implements IssueService {
     return lbs;
   }
 
+  private void removeSlaCounting(Issue issue) {
+    issue.setDueTime(null);
+    issueRepository.save(issue);
+    IssueEventInternal e = new IssueEventInternal();
+    e.setCreatedAt(new Date());
+    e.setEvent("slaStopped");
+    e.setPriority(issue.getPriority());
+    e.setActor(SecurityHelper.currentUser());
+    e.setSecret(true);
+    e.setTime(issue.getDueTime());
+    e = (IssueEventInternal) eventRepository.save(e);
+    fireEvent(issue, e);
+  }
+
   @Transactional
   @Override
   public void removeLabel(Issue issue, String label, OUser actor, boolean remote) {
     if (!remote) {
       Label l = repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
       if (l != null) {
-        removeLabelRelationship(issue, l);
-        IssueEvent e = new IssueEvent();
-        e.setCreatedAt(new Date());
-        e.setEvent("unlabeled");
-        e.setLabel(l);
-        if (actor == null) {
-          e.setActor(SecurityHelper.currentUser());
-        } else {
-          e.setActor(actor);
+        if (removeLabelRelationship(issue, l)) {
+          IssueEvent e = new IssueEvent();
+          e.setCreatedAt(new Date());
+          e.setEvent("unlabeled");
+          e.setLabel(l);
+          if (actor == null) {
+            e.setActor(SecurityHelper.currentUser());
+          } else {
+            e.setActor(actor);
+          }
+          e = (IssueEvent) eventRepository.save(e);
+          fireEvent(issue, e);
         }
-        e = (IssueEvent) eventRepository.save(e);
-        fireEvent(issue, e);
       }
     } else {
       githubIssueService.removeLabel(issue, label, actor, remote);
@@ -283,6 +337,39 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
+  public void changeSlaDueTime(Issue issue, Priority priority) {
+
+    if (issue.getClient() != null) {
+
+      List<Contract> contracts = organizationRepository.findClientContracts(issue.getRepository().getOrganization().getName(),
+          issue.getClient().getClientId());
+
+      // TODO WHICH CONTRACT?
+      if (contracts.size() > 0) {
+
+        try {
+          Contract c = contracts.iterator().next();
+          issue.setDueTime(slaService.calculateDueTime(issue.getSlaAt(), c, priority));
+          IssueEventInternal e = new IssueEventInternal();
+          e.setCreatedAt(new Date());
+          e.setEvent("slaStarted");
+          e.setPriority(priority);
+          e.setActor(SecurityHelper.currentUser());
+          e.setSecret(true);
+          e.setTime(issue.getDueTime());
+          e = (IssueEventInternal) eventRepository.save(e);
+          fireEvent(issue, e);
+        } catch (Exception ex) {
+          OLogManager.instance().warn(this, "Error Calculating sla", ex);
+        }
+
+      }
+
+    }
+
+  }
+
+  @Override
   public void changePriority(Issue issue, Priority priority) {
     Priority oldPriority = issue.getPriority();
     createPriorityRelationship(issue, priority);
@@ -302,7 +389,7 @@ public class IssueServiceImpl implements IssueService {
       e = (IssueEventInternal) eventRepository.save(e);
       fireEvent(issue, e);
     }
-    // issue.setDueTime(slaService.calculateDueTime(issue, priority));
+    changeSlaDueTime(issue, priority);
   }
 
   @Override
@@ -330,6 +417,7 @@ public class IssueServiceImpl implements IssueService {
 
   @Override
   public void changeClient(Issue issue, Client client) {
+    issue.setClient(client);
     createClientRelationship(issue, client);
   }
 
@@ -464,8 +552,29 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
-  public boolean isChanged(Issue issue,OUser user) {
-    return githubIssueService.isChanged(issue,user);
+  public Issue conditionalSynchIssue(Issue issue, OUser user) {
+    String token = user != null ? user.getToken() : SecurityHelper.currentToken();
+    GitHub github = new GitHub(token);
+
+    ODocument doc = new ODocument();
+    String iPropertyValue = issue.getRepository().getOrganization().getName() + "/" + issue.getRepository().getName();
+    doc.field("full_name", iPropertyValue);
+
+    try {
+      GRepo repo = github.repo(iPropertyValue, doc.toJSON());
+      GIssue is = repo.isChangedIssue(issue.getNumber(), issue.getUpdatedAt());
+      if (is != null) {
+        issueImporter.importSingleIssue(issue.getRepository(), is);
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  @Override
+  public GIssue isChanged(Issue issue, OUser user) {
+    return githubIssueService.isChanged(issue, user);
   }
 
   @Override
@@ -511,19 +620,20 @@ public class IssueServiceImpl implements IssueService {
 
   }
 
-  private void removeLabelRelationship(Issue issue, Label label) {
+  private boolean removeLabelRelationship(Issue issue, Label label) {
 
     OrientGraph graph = dbFactory.getGraph();
     OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
-
+    boolean found = false;
     for (Edge edge : orgVertex.getEdges(Direction.OUT, HasLabel.class.getSimpleName())) {
       Vertex v = edge.getVertex(Direction.IN);
       if (label.getName().equals(v.getProperty(OLabel.NAME.toString()))) {
         edge.remove();
+        found = true;
       }
 
     }
-
+    return found;
   }
 
   private void createLabelsRelationship(Issue issue, List<Label> labels, boolean replace) {
