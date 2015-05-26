@@ -123,7 +123,6 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     out.writeUTF(databaseName);
     out.writeUTF(userName);
     out.writeObject(task);
-    out.writeUTF(userName);
   }
 
   @Override
@@ -134,7 +133,6 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     databaseName = in.readUTF();
     userName = in.readUTF();
     task = (OAbstractRemoteTask) in.readObject();
-    userName = in.readUTF();
   }
 
   @Override
