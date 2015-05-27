@@ -42,32 +42,32 @@ public class OMatchStatementTest {
 
   @Test
   public void testBasicMatch() {
-    checkRightSyntax("MATCH {class: 'V', as: 'foo'} RETURN foo");
+    checkRightSyntax("MATCH {class: 'V', as: foo} RETURN foo");
   }
 
   @Test
   public void testNoReturn() {
-    checkWrongSyntax("MATCH {class: 'V', as: 'foo'}");
+    checkWrongSyntax("MATCH {class: 'V', as: foo}");
   }
 
   @Test
   public void testSingleMethod() {
-    checkRightSyntax("MATCH {class: 'V', as: 'foo'}.out() RETURN foo");
+    checkRightSyntax("MATCH {class: 'V', as: foo}.out() RETURN foo");
   }
 
   @Test
   public void testSingleMethodAndFilter() {
-    checkRightSyntax("MATCH {class: 'V', as: 'foo'}.out(){class: 'V', as: 'bar'} RETURN foo");
+    checkRightSyntax("MATCH {class: 'V', as: foo}.out(){class: 'V', as: bar} RETURN foo");
   }
 
   @Test
   public void testLongPath() {
-    checkRightSyntax("MATCH {class: 'V', as: 'foo'}.out().in('foo').both('bar').out(){as: 'bar'} RETURN foo");
+    checkRightSyntax("MATCH {class: 'V', as: foo}.out().in('foo').both('bar').out(){as: bar} RETURN foo");
   }
 
   @Test
   public void testLongPath2() {
-    checkRightSyntax("MATCH {class: 'V', as: 'foo'}.out().in('foo'){}.both('bar'){CLASS: 'bar'}.out(){as: 'bar'} RETURN foo");
+    checkRightSyntax("MATCH {class: 'V', as: foo}.out().in('foo'){}.both('bar'){CLASS: 'bar'}.out(){as: bar} RETURN foo");
   }
 
   @Test
@@ -75,7 +75,7 @@ public class OMatchStatementTest {
     StringBuilder query = new StringBuilder();
     query.append("MATCH {");
     query.append("   class: 'v', ");
-    query.append("   as: 'foo', ");
+    query.append("   as: foo, ");
     query.append("   where: (name = 'foo' and surname = 'bar' or aaa in [1,2,3]), ");
     query.append("   minDepth: 0, ");
     query.append("   maxDepth: 10 ");
@@ -89,7 +89,7 @@ public class OMatchStatementTest {
     StringBuilder query = new StringBuilder();
     query.append("MATCH {");
     query.append("   classes: ['V', 'E'], ");
-    query.append("   as: 'foo', ");
+    query.append("   as: foo, ");
     query.append("   where: (name = 'foo' and surname = 'bar' or aaa in [1,2,3]), ");
     query.append("   minDepth: 0, ");
     query.append("   maxDepth: 10 ");
@@ -97,7 +97,6 @@ public class OMatchStatementTest {
     System.out.println(query);
     checkRightSyntax(query.toString());
   }
-
 
   @Test
   public void testMultiPath() {
@@ -108,6 +107,12 @@ public class OMatchStatementTest {
     checkRightSyntax(query.toString());
   }
 
+  @Test
+  public void testMultipleMatches() {
+    String query = "" + "MATCH {class: 'V', as: foo}.out(){class: 'V', as: bar}, "
+        + "{class: 'V', as: foo}.out(){class: 'V', as: bar}," + " {class: 'V', as: foo}.out(){class: 'V', as: bar} RETURN foo";
+    checkRightSyntax(query);
+  }
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

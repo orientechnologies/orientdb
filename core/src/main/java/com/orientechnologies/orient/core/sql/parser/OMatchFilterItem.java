@@ -5,7 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 public class OMatchFilterItem extends SimpleNode {
   protected OExpression         className;
   protected OExpression         classNames;
-  protected OExpression         alias;
+  protected OIdentifier         alias;
   protected OWhereClause        filter;
   protected OArrayRangeSelector depth;
   protected OInteger            minDepth;

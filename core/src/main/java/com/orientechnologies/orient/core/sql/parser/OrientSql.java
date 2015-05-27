@@ -7996,7 +7996,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
       case AS:
         jj_consume_token(AS);
         jj_consume_token(COLON);
-        jjtn000.alias = Expression();
+        jjtn000.alias = Identifier();
         break;
       case MINDEPTH:
         jj_consume_token(MINDEPTH);

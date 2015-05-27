@@ -84,7 +84,7 @@ public interface OCommandExecutor {
 
   /**
    * Returns the security operation type use to check about security.
-   * 
+   * @see com.orientechnologies.orient.core.metadata.security.ORole PERMISSION_*
    * @return
    */
   public int getSecurityOperationType();

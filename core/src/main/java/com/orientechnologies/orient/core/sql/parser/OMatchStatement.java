@@ -2,12 +2,22 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class OMatchStatement extends OStatement {
+public class OMatchStatement extends OStatement implements OCommandExecutor {
   protected List<OMatchExpression> matchExpressions = new ArrayList<OMatchExpression>();
   protected List<OIdentifier>      returnItems      = new ArrayList<OIdentifier>();
+
+  private OCommandContext          context;
 
   public OMatchStatement(int id) {
     super(id);
@@ -20,6 +30,67 @@ public class OMatchStatement extends OStatement {
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  @Override
+  public <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest) {
+    return null;
+  }
+
+  @Override
+  public Object execute(Map<Object, Object> iArgs) {
+    return null;
+  }
+
+  @Override
+  public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
+    return null;
+  }
+
+  @Override
+  public <RET extends OCommandExecutor> RET setLimit(int iLimit) {
+    return null;
+  }
+
+  @Override
+  public String getFetchPlan() {
+    return null;
+  }
+
+  @Override
+  public Map<Object, Object> getParameters() {
+    return null;
+  }
+
+  @Override
+  public OCommandContext getContext() {
+    return null;
+  }
+
+  @Override
+  public void setContext(OCommandContext context) {
+
+    this.context = context;
+  }
+
+  @Override
+  public boolean isIdempotent() {
+    return true;
+  }
+
+  @Override
+  public Set<String> getInvolvedClusters() {
+    return null;// TODO
+  }
+
+  @Override
+  public int getSecurityOperationType() {
+    return ORole.PERMISSION_READ;
+  }
+
+  @Override
+  public boolean involveSchema() {
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=6ff0afbe9d31f08b72159fcf24070c9f (do not edit this line) */

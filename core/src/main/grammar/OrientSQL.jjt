@@ -2795,7 +2795,7 @@ OMatchFilterItem MatchFilterItem():
         )
         |
         (
-            <AS> <COLON> jjtThis.alias = Expression()
+            <AS> <COLON> jjtThis.alias = Identifier()
         )
         |
         (
