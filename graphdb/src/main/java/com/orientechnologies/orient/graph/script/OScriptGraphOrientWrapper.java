@@ -34,6 +34,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 public class OScriptGraphOrientWrapper extends OScriptOrientWrapper {
 
   public OScriptGraphOrientWrapper() {
+    super(ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner());
   }
 
   public OScriptGraphWrapper getGraphNoTx() {
