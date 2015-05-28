@@ -38,7 +38,11 @@ public class ODistributedCounter extends OOrientListenerAbstract {
     updateCounter(-1);
   }
 
-  private void updateCounter(int delta) {
+  public void add(long delta) {
+    updateCounter(delta);
+  }
+
+  private void updateCounter(long delta) {
     final int hashCode = threadHashCode.get();
 
     while (true) {
@@ -95,13 +99,17 @@ public class ODistributedCounter extends OOrientListenerAbstract {
   }
 
   public boolean isEmpty() {
+    return get() == 0;
+  }
+
+  public long get() {
     long sum = 0;
 
     for (AtomicLong counter : counters)
       if (counter != null)
         sum += counter.get();
 
-    return sum == 0;
+    return sum;
   }
 
   private static int nextHashCode() {

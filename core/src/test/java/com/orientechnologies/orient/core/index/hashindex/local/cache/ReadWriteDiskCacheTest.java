@@ -126,7 +126,8 @@ public class ReadWriteDiskCacheTest {
 
   private void initBuffer() throws IOException {
     writeBuffer = new OWOWCache(false, 8 + systemOffset, -1, writeAheadLog, -1,
-        15000 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), storageLocal, false, 1);
+        15000 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 15000 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING) + 4
+            * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), storageLocal, false, 1);
 
     readBuffer = new O2QCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, false);
   }
@@ -568,96 +569,8 @@ public class ReadWriteDiskCacheTest {
     }
   }
 
-  public void testIfAllPagesAreUsedInA1InCacheSizeShouldBeIncreased() throws Exception {
-    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean();
-
-    OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(true);
-    long fileId = readBuffer.addFile(fileName, writeBuffer);
-
-    OCacheEntry[] entries = new OCacheEntry[5];
-
-    for (int i = 0; i < 5; i++) {
-      entries[i] = readBuffer.load(fileId, i, false, writeBuffer);
-      if (entries[i] == null) {
-        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer);
-        Assert.assertEquals(entries[i].getPageIndex(), i);
-      }
-
-      entries[i].getCachePointer().acquireExclusiveLock();
-
-      entries[i].markDirty();
-      entries[i].getCachePointer().getDataPointer()
-          .set(systemOffset + OWOWCache.PAGE_PADDING, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
-      if (i - 4 >= 0) {
-        readBuffer.load(fileId, i - 4, false, writeBuffer);
-        entries[i - 4].getCachePointer().getDataPointer()
-            .set(systemOffset + OWOWCache.PAGE_PADDING, new byte[] { (byte) (i - 4), 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
-      }
-    }
-
-    for (int i = 0; i < 5; i++) {
-      entries[i].getCachePointer().releaseExclusiveLock();
-
-      readBuffer.release(entries[i], writeBuffer);
-      if (i - 4 >= 0) {
-        readBuffer.release(entries[i - 4], writeBuffer);
-      }
-    }
-
-    int maxSize = readBuffer.getMaxSize();
-    Assert.assertEquals(maxSize, 5);
-    OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
-  }
-
-  public void testIfAllPagesAreUsedInAmCacheSizeShouldBeIncreased() throws Exception {
-    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean();
-
-    OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(true);
-    long fileId = readBuffer.addFile(fileName, writeBuffer);
-
-    OCacheEntry[] entries = new OCacheEntry[20];
-
-    for (int i = 0; i < 6; i++) {
-      entries[i] = readBuffer.load(fileId, i, false, writeBuffer);
-      if (entries[i] == null) {
-        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer);
-        Assert.assertEquals(entries[i].getPageIndex(), i);
-      }
-
-      entries[i].getCachePointer().acquireExclusiveLock();
-
-      entries[i].markDirty();
-      entries[i].getCachePointer().getDataPointer()
-          .set(systemOffset + OWOWCache.PAGE_PADDING, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
-
-      entries[i].getCachePointer().releaseExclusiveLock();
-      readBuffer.release(entries[i], writeBuffer);
-    }
-
-    for (int i = 0; i < 4; i++) {
-      entries[i] = readBuffer.load(fileId, i, false, writeBuffer);
-      entries[i].getCachePointer().acquireExclusiveLock();
-
-      entries[i].markDirty();
-      entries[i].getCachePointer().getDataPointer()
-          .set(systemOffset + OWOWCache.PAGE_PADDING, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
-    }
-
-    for (int i = 0; i < 4; i++) {
-      entries[i].getCachePointer().releaseExclusiveLock();
-      readBuffer.release(entries[i], writeBuffer);
-    }
-
-    int maxSize = readBuffer.getMaxSize();
-    Assert.assertEquals(maxSize, 5);
-    OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
-  }
-
   @Test(expectedExceptions = OAllCacheEntriesAreUsedException.class)
   public void testIfAllPagesAreUsedExceptionShouldBeThrown() throws Exception {
-    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean();
-
-    OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(false);
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
     OCacheEntry[] entries = new OCacheEntry[5];
@@ -685,8 +598,6 @@ public class ReadWriteDiskCacheTest {
         entries[i].getCachePointer().releaseExclusiveLock();
         readBuffer.release(entries[i], writeBuffer);
       }
-
-      OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
     }
   }
 
@@ -802,6 +713,7 @@ public class ReadWriteDiskCacheTest {
     Assert.assertEquals("readWriteDiskCacheTest.tst", pageErrors[1].fileName);
   }
 
+  @Test(enabled = false)
   public void testFlushTillLSN() throws Exception {
     closeBufferAndDeleteFile();
 
@@ -816,7 +728,8 @@ public class ReadWriteDiskCacheTest {
     segmentConfiguration.fileType = OFileClassic.NAME;
 
     writeBuffer = new OWOWCache(false, 8 + systemOffset, 10000, writeAheadLog, -1,
-        2 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), storageLocal, false, 10);
+        2 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 2 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING) + 4
+            * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), storageLocal, false, 10);
     readBuffer = new O2QCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, false);
 
     long fileId = readBuffer.addFile(fileName, writeBuffer);
@@ -890,7 +803,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   private OCacheEntry generateEntry(long fileId, long pageIndex, ODirectMemoryPointer pointer, boolean dirty, OLogSequenceNumber lsn) {
-    return new OCacheEntry(fileId, pageIndex, new OCachePointer(pointer, lsn), dirty);
+    return new OCacheEntry(fileId, pageIndex, new OCachePointer(pointer, lsn, fileId, pageIndex), dirty);
   }
 
   private OCacheEntry generateRemovedEntry(long fileId, long pageIndex) {
