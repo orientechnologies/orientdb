@@ -141,7 +141,7 @@ public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
       lowSpaceEventsPublisher = Executors.newCachedThreadPool(new LowSpaceEventsPublisherFactory(storageLocal.getName()));
 
       if (pageFlushInterval > 0)
-        commitExecutor.scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.NANOSECONDS);
+        commitExecutor.scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
 
     } finally {
       filesLock.releaseWriteLock();
