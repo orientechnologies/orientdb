@@ -30,7 +30,6 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -45,11 +44,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 
 import java.io.*;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -81,7 +76,9 @@ public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
   private final AtomicLong                                 lastDiskSpaceCheck    = new AtomicLong(System.currentTimeMillis());
   private final String                                     storagePath;
 
-  private final ConcurrentSkipListMap<PagedKey, PageGroup> writePages            = new ConcurrentSkipListMap<PagedKey, PageGroup>();
+  private final ConcurrentSkipListMap<PagedKey, PageGroup> cachePages            = new ConcurrentSkipListMap<PagedKey, PageGroup>();
+  private final ConcurrentSkipListSet<PagedKey>            writePages            = new ConcurrentSkipListSet<PagedKey>();
+
   private final OBinarySerializer<String>                  stringSerializer;
   private final Map<Integer, OFileClassic>                 files;
   private final boolean                                    syncOnPageFlush;
@@ -471,10 +468,10 @@ public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
       final PagedKey pagedKey = new PagedKey(intId, pageIndex);
       Lock groupLock = lockManager.acquireExclusiveLock(pagedKey);
       try {
-        PageGroup pageGroup = writePages.get(pagedKey);
+        PageGroup pageGroup = cachePages.get(pagedKey);
         if (pageGroup == null) {
           pageGroup = new PageGroup(System.currentTimeMillis(), dataPointer);
-          writePages.put(pagedKey, pageGroup);
+          cachePages.put(pagedKey, pageGroup);
           cacheSize.increment();
 
           dataPointer.setWritersListener(this);
@@ -506,7 +503,7 @@ public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
       final PagedKey pagedKey = new PagedKey(intId, pageIndex);
       Lock groupLock = lockManager.acquireSharedLock(pagedKey);
       try {
-        final PageGroup pageGroup = writePages.get(pagedKey);
+        final PageGroup pageGroup = cachePages.get(pagedKey);
 
         OCachePointer pagePointer;
         if (pageGroup == null) {
@@ -532,11 +529,13 @@ public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
   @Override
   public void addOnlyWriters(long fileId, long pageIndex) {
     writeCacheSize.increment();
+    writePages.add(new PagedKey(extractFileId(fileId), pageIndex));
   }
 
   @Override
   public void removeOnlyWriters(long fileId, long pageIndex) {
     writeCacheSize.decrement();
+    writePages.remove(new PagedKey(extractFileId(fileId), pageIndex));
   }
 
   public void flush(long fileId) {
@@ -1208,55 +1207,160 @@ public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
     @Override
     public void run() {
       try {
-        if (writePages.isEmpty())
+        if (cachePages.isEmpty())
           return;
 
         int writePagesToFlush = 0;
 
+        final long wcs = writeCacheSize.get();
         final long cs = cacheSize.get();
-        final double threshold = ((double) cs) / cacheMaxSize;
 
-        if (threshold > 0.7)
-          writePagesToFlush = (int) Math.floor((threshold - 0.7) * cs);
+        boolean iterateByWritePagesFirst = false;
+        boolean forceFlush = false;
 
-        if (lastCacheSize > 0 && cs - lastCacheSize > writePagesToFlush)
-          writePagesToFlush = (int) Math.ceil((cs - lastCacheSize) * 1.2);
+        double writeCacheThreshold = ((double) wcs) / writeCacheMaxSize;
+        if (writeCacheThreshold > 0.3) {
+          if (writeCacheThreshold > 0.7) {
+            writeCacheThreshold = 0.7;
+            forceFlush = true;
+          }
 
-        lastCacheSize = cs;
+          writePagesToFlush = (int) Math.floor(writeCacheThreshold * wcs);
+          iterateByWritePagesFirst = true;
+        }
+
+        double cacheThreshold = ((double) cs) / cacheMaxSize;
+        if (cacheThreshold > 0.3) {
+          if (cacheThreshold > 0.7) {
+            cacheThreshold = 0.7;
+            forceFlush = true;
+          }
+
+          final int pagesToFlush = (int) Math.floor((cacheThreshold - 0.7) * cs);
+          writePagesToFlush = Math.max(pagesToFlush, writePagesToFlush);
+        }
+
+        if (lastCacheSize > 0)
+          writePagesToFlush = Math.max((int) (Math.ceil(cs - lastCacheSize) * 1.2), writePagesToFlush);
 
         if (writePagesToFlush < 4)
           writePagesToFlush = 4;
 
+        lastCacheSize = cs;
+
         int flushedPages = 0;
 
-        flushedPages = flushRing(writePagesToFlush, flushedPages, false);
+        flushedPages = flushRing(writePagesToFlush, flushedPages, false, iterateByWritePagesFirst);
 
-        if (flushedPages < writePagesToFlush)
-          flushRing(writePagesToFlush, flushedPages, true);
+        if (flushedPages < writePagesToFlush && iterateByWritePagesFirst)
+          flushedPages = flushRing(writePagesToFlush, flushedPages, false, false);
+
+        if (flushedPages < writePagesToFlush && forceFlush) {
+          flushedPages = flushRing(writePagesToFlush, flushedPages, true, iterateByWritePagesFirst);
+
+          if (flushedPages < writePagesToFlush && iterateByWritePagesFirst)
+            flushedPages = flushRing(writePagesToFlush, flushedPages, true, false);
+        }
 
       } catch (Exception e) {
         OLogManager.instance().error(this, "Exception during data flush.", e);
       }
     }
 
-    private int flushRing(int writePagesToFlush, int flushedPages, boolean forceFlush) throws IOException {
-      NavigableMap<PagedKey, PageGroup> subMap = writePages.tailMap(lastPageKey, false);
+    private int flushRing(int writePagesToFlush, int flushedPages, boolean forceFlush, boolean iterateByWritePagesFirst)
+        throws IOException {
+      NavigableMap<PagedKey, PageGroup> subMap = null;
+      NavigableSet<PagedKey> writePagesSubset = null;
 
-      if (!subMap.isEmpty()) {
-        flushedPages = iterateBySubRing(subMap, writePagesToFlush, 0, forceFlush);
-        if (flushedPages < writePagesToFlush) {
-          if (!subMap.isEmpty()) {
-            subMap = writePages.headMap(subMap.firstKey(), false);
-            flushedPages = iterateBySubRing(subMap, writePagesToFlush, flushedPages, forceFlush);
-          }
-        }
-      } else
-        flushedPages = iterateBySubRing(writePages, writePagesToFlush, flushedPages, forceFlush);
+      if (iterateByWritePagesFirst) {
+        writePagesSubset = writePages.tailSet(lastPageKey, false);
+      } else {
+        subMap = cachePages.tailMap(lastPageKey, false);
+      }
+
+      flushedPages = iterateBySubRing(subMap, writePagesSubset, writePagesToFlush, flushedPages, forceFlush,
+          iterateByWritePagesFirst);
+
+      if (flushedPages < writePagesToFlush) {
+        flushedPages = iterateBySubRing(cachePages, writePages, writePagesToFlush, flushedPages, forceFlush,
+            iterateByWritePagesFirst);
+      }
 
       return flushedPages;
     }
 
-    private int iterateBySubRing(NavigableMap<PagedKey, PageGroup> subMap, int writePagesToFlush, int flushedWritePages,
+    private int iterateBySubRing(NavigableMap<PagedKey, PageGroup> subMap, NavigableSet<PagedKey> subSet, int writePagesToFlush,
+        int flushedWritePages, boolean forceFlush, boolean iterateByWritePagesFirst) throws IOException {
+      if (!iterateByWritePagesFirst) {
+        return iterateByCacheSubRing(subMap, writePagesToFlush, flushedWritePages, forceFlush);
+      } else {
+        return iterateByWritePagesSubRing(subSet, writePagesToFlush, flushedWritePages, forceFlush);
+      }
+    }
+
+    private int iterateByWritePagesSubRing(NavigableSet<PagedKey> subSet, int writePagesToFlush, int flushedWritePages,
+        boolean forceFlush) throws IOException {
+      Iterator<PagedKey> entriesIterator = subSet.iterator();
+      long currentTime = System.currentTimeMillis();
+
+      int flushedRegions = 0;
+
+      long lastPageIndex = -1;
+      while (entriesIterator.hasNext() && (flushedWritePages < writePagesToFlush || flushedRegions < 2)) {
+        PagedKey entry = entriesIterator.next();
+        Lock groupLock = lockManager.acquireExclusiveLock(entry);
+        try {
+          final PageGroup group = cachePages.get(entry);
+          if (group == null) {
+            entriesIterator.remove();
+            continue;
+          }
+
+          final boolean weakLockMode = group.creationTime - currentTime < groupTTL && !forceFlush;
+          if (group.recencyBit && weakLockMode)
+            group.recencyBit = false;
+          else {
+            group.recencyBit = false;
+
+            final OCachePointer pagePointer = group.page;
+
+            if (!pagePointer.tryAcquireSharedLock())
+              continue;
+
+            try {
+              flushPage(entry.fileId, entry.pageIndex, pagePointer.getDataPointer());
+
+              final OLogSequenceNumber flushedLSN = ODurablePage.getLogSequenceNumberFromPage(pagePointer.getDataPointer());
+              pagePointer.setLastFlushedLsn(flushedLSN);
+            } finally {
+              pagePointer.releaseSharedLock();
+            }
+
+            pagePointer.decrementWritersReferrer();
+            pagePointer.setWritersListener(null);
+
+            entriesIterator.remove();
+            cachePages.remove(entry);
+          }
+        } finally {
+          lockManager.releaseLock(groupLock);
+        }
+
+        lastPageKey = entry;
+        flushedWritePages++;
+
+        if (lastPageIndex >= 0 && lastPageIndex + 1 != entry.pageIndex)
+          flushedRegions++;
+
+        lastPageIndex = entry.pageIndex;
+
+        cacheSize.decrement();
+      }
+
+      return flushedWritePages;
+    }
+
+    private int iterateByCacheSubRing(NavigableMap<PagedKey, PageGroup> subMap, int writePagesToFlush, int flushedWritePages,
         boolean forceFlush) throws IOException {
       Iterator<Map.Entry<PagedKey, PageGroup>> entriesIterator = subMap.entrySet().iterator();
       long currentTime = System.currentTimeMillis();
@@ -1300,6 +1404,7 @@ public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
             pagePointer.setWritersListener(null);
 
             entriesIterator.remove();
+            writePages.remove(entry.getKey());
           }
         } finally {
           lockManager.releaseLock(groupLock);
@@ -1328,7 +1433,7 @@ public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
     public void run() {
       OLogSequenceNumber minLsn = writeAheadLog.getFlushedLSN();
 
-      for (Map.Entry<PagedKey, PageGroup> entry : writePages.entrySet()) {
+      for (Map.Entry<PagedKey, PageGroup> entry : cachePages.entrySet()) {
         Lock groupLock = lockManager.acquireExclusiveLock(entry.getKey());
         try {
           PageGroup group = entry.getValue();
@@ -1374,7 +1479,7 @@ public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
       final PagedKey firstKey = new PagedKey(fileId, 0);
       final PagedKey lastKey = new PagedKey(fileId, Long.MAX_VALUE);
 
-      NavigableMap<PagedKey, PageGroup> subMap = writePages.subMap(firstKey, true, lastKey, true);
+      NavigableMap<PagedKey, PageGroup> subMap = cachePages.subMap(firstKey, true, lastKey, true);
       Iterator<Map.Entry<PagedKey, PageGroup>> entryIterator = subMap.entrySet().iterator();
 
       while (entryIterator.hasNext()) {
@@ -1423,7 +1528,7 @@ public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
       final PagedKey firstKey = new PagedKey(fileId, 0);
       final PagedKey lastKey = new PagedKey(fileId, Long.MAX_VALUE);
 
-      NavigableMap<PagedKey, PageGroup> subMap = writePages.subMap(firstKey, true, lastKey, true);
+      NavigableMap<PagedKey, PageGroup> subMap = cachePages.subMap(firstKey, true, lastKey, true);
       Iterator<Map.Entry<PagedKey, PageGroup>> entryIterator = subMap.entrySet().iterator();
 
       while (entryIterator.hasNext()) {
