@@ -106,7 +106,6 @@ public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
 
   private final ODistributedCounter                        allocatedSpace        = new ODistributedCounter();
   private final int                                        id;
-  private long                                             lastCacheSize         = -1;
 
   public OWOWCache(boolean syncOnPageFlush, int pageSize, long groupTTL, OWriteAheadLog writeAheadLog, long pageFlushInterval,
       long writeCacheMaxSize, long cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize, int id) {
@@ -142,7 +141,7 @@ public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
       lowSpaceEventsPublisher = Executors.newCachedThreadPool(new LowSpaceEventsPublisherFactory(storageLocal.getName()));
 
       if (pageFlushInterval > 0)
-        commitExecutor.scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
+        commitExecutor.scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.NANOSECONDS);
 
     } finally {
       filesLock.releaseWriteLock();
@@ -1240,13 +1239,8 @@ public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
           writePagesToFlush = Math.max(pagesToFlush, writePagesToFlush);
         }
 
-        if (lastCacheSize > 0)
-          writePagesToFlush = Math.max((int) (Math.ceil(cs - lastCacheSize) * 1.2), writePagesToFlush);
-
         if (writePagesToFlush < 4)
           writePagesToFlush = 4;
-
-        lastCacheSize = cs;
 
         int flushedPages = 0;
 
