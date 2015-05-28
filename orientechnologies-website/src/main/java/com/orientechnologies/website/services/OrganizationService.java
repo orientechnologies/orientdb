@@ -55,4 +55,7 @@ public interface OrganizationService {
 
   @Transactional
   public Contract patchContract(String name, String uuid, Contract contract);
+
+  @Transactional
+  public Topic registerTopic(String name, Topic topic);
 }

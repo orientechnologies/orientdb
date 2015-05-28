@@ -182,6 +182,81 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     return new Page<Issue>(p, pP, count, issues);
   }
 
+  // TOPICS
+
+  @Override
+  public Page<Topic> findOrganizationTopics(String name, String q, String page, String perPage) {
+
+    String query = topicsQueryParams(q, name, false);
+    String queryCount = topicsQueryParams(q, name, true);
+
+    OrientGraph db = dbFactory.getGraph();
+    Integer limit = new Integer(perPage);
+    Integer skip = limit * (new Integer(page) - 1);
+    query += " SKIP " + skip + " LIMIT " + limit;
+
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    Iterable<OrientElement> documents = db.command(new OCommandSQL(queryCount)).execute();
+    long count = documents.iterator().next().getRecord().field("count");
+    long p = new Long(page);
+    long pP = new Long(perPage);
+
+    List<Topic> topics = new ArrayList<Topic>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      topics.add(OTopic.NUMBER.fromDoc(doc, db));
+    }
+    return new Page<Topic>(p, pP, count, topics);
+  }
+
+  private String topicsQueryParams(String q, String name, boolean count) {
+    String query;
+    if (q == null || q.isEmpty()) {
+      if (count) {
+        query = String.format("select count(*) from (select expand(out('HasTopic')) from Organization where name = '%s') ", name);
+      } else {
+        query = String.format("select expand(out('HasTopic')) from Organization where name = '%s' ", name);
+      }
+
+    } else {
+      Map<String, String> stringStringMap = parseQuery(q);
+      if (count) {
+        query = String.format("select count(*) from Topic where [title,body] LUCENE '%s') ", stringStringMap.get("text"));
+      } else {
+        query = String.format("select * from Topic where [title,body] LUCENE '%s') ", stringStringMap.get("text"));
+      }
+
+    }
+    return query;
+  }
+
+  private Map<String, String> parseQuery(String q) {
+    Map<String, String> params = new HashMap<String, String>();
+    String[] queries = q.split(" (?=(([^'\"]*['\"]){2})*[^'\"]*$)");
+
+    for (String s : queries) {
+      String[] values = s.split(":");
+      params.put(values[0], values[1].replace("\"", ""));
+    }
+
+    return params;
+  }
+
+  @Override
+  public Topic findSingleTopicByNumber(String name, Long number) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(out('HasTopic')[number = %d]) from Organization where name = '%s') ", number, name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+    try {
+      ODocument doc = vertices.iterator().next().getRecord();
+      return OTopic.NUMBER.fromDoc(doc, db);
+    } catch (NoSuchElementException e) {
+      return null;
+    }
+
+  }
+
   private String applyParam(String incominQuery, String name, String value, int idx) {
 
     // LITTLE UGLY BUT WORKS :D

@@ -1,14 +1,13 @@
 package com.orientechnologies.website.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.response.Response;
 import com.jayway.restassured.specification.RequestSpecification;
 import com.orientechnologies.website.Application;
 import com.orientechnologies.website.OrientDBFactory;
-import com.orientechnologies.website.model.schema.dto.Client;
-import com.orientechnologies.website.model.schema.dto.Contract;
-import com.orientechnologies.website.model.schema.dto.OUser;
-import com.orientechnologies.website.model.schema.dto.Organization;
+import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.UserRepository;
 import com.orientechnologies.website.services.OrganizationService;
@@ -26,6 +25,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -174,6 +174,69 @@ public class OrganizationControllerTest {
     Assert.assertEquals(contract.getFrom(), response.getFrom());
     Assert.assertEquals(contract.getTo(), response.getTo());
 
+  }
+
+  @Test
+  public void testInsertTopic() throws IOException {
+
+    Topic t = new Topic();
+    t.setTitle("FirstTest");
+    t.setBody("Test body");
+
+    Response post = header().given().body(t).when().post("/api/v1/orgs/fake/topics");
+
+    Assert.assertEquals(200, post.statusCode());
+
+    Topic response = post.getBody().as(Topic.class);
+
+    Assert.assertNotNull(response);
+    Assert.assertNotNull(response.getNumber());
+    Assert.assertNotNull(response.getUuid());
+    Assert.assertNotNull(response.getUser());
+    Assert.assertNotNull(response.getCreatedAt());
+
+    Assert.assertEquals(t.getTitle(), response.getTitle());
+    Assert.assertEquals(t.getBody(), response.getBody());
+
+    post = header().given().when().get("/api/v1/orgs/fake/topics/" + response.getNumber());
+
+    Assert.assertEquals(200, post.statusCode());
+
+    response = post.getBody().as(Topic.class);
+
+    Assert.assertNotNull(response);
+    Assert.assertNotNull(response.getNumber());
+    Assert.assertNotNull(response.getUuid());
+    Assert.assertNotNull(response.getUser());
+    Assert.assertNotNull(response.getCreatedAt());
+    Assert.assertEquals(t.getTitle(), response.getTitle());
+    Assert.assertEquals(t.getBody(), response.getBody());
+
+    for (int i = 0; i < 100; i++) {
+      t = new Topic();
+      t.setTitle("Test " + i);
+      t.setBody("Test body " + i);
+      post = header().given().body(t).when().post("/api/v1/orgs/fake/topics");
+      Assert.assertEquals(200, post.statusCode());
+    }
+
+    post = header().given().when().get("/api/v1/orgs/fake/topics");
+    Assert.assertEquals(200, post.statusCode());
+    ObjectMapper mapper = new ObjectMapper();
+    JsonNode jsonNode = mapper.readTree(post.getBody().asString());
+    JsonNode content = jsonNode.get("content");
+    List<Topic> topics = Arrays.asList(mapper.readValue(content.toString(), Topic[].class));
+    Assert.assertEquals(10, topics.size());
+
+    // /SEARCH
+
+    post = header().given().param("q", "text:\"FirstTest\"").when().get("/api/v1/orgs/fake/topics");
+    Assert.assertEquals(200, post.statusCode());
+
+    jsonNode = mapper.readTree(post.getBody().asString());
+    content = jsonNode.get("content");
+    topics = Arrays.asList(mapper.readValue(content.toString(), Topic[].class));
+    Assert.assertEquals(1, topics.size());
   }
 
   public static RequestSpecification header() {

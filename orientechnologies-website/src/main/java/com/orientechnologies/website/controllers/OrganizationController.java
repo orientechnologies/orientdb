@@ -4,12 +4,14 @@ import com.orientechnologies.website.configuration.ApiVersion;
 import com.orientechnologies.website.hateoas.Page;
 import com.orientechnologies.website.hateoas.assembler.IssueAssembler;
 import com.orientechnologies.website.hateoas.assembler.PagedResourceAssembler;
+import com.orientechnologies.website.hateoas.assembler.TopicAssembler;
 import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.ImportDTO;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
 import com.orientechnologies.website.model.schema.dto.web.hateoas.IssueResource;
 import com.orientechnologies.website.model.schema.dto.web.hateoas.ScopeDTO;
+import com.orientechnologies.website.model.schema.dto.web.hateoas.TopicResource;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.services.OrganizationService;
@@ -44,6 +46,9 @@ public class OrganizationController extends ExceptionController {
 
   @Autowired
   private IssueAssembler         issueAssembler;
+
+  @Autowired
+  private TopicAssembler         topicAssembler;
 
   @Autowired
   private PagedResourceAssembler pagedResourceAssembler;
@@ -177,11 +182,12 @@ public class OrganizationController extends ExceptionController {
 
   @RequestMapping(value = "{name}/contracts/{uuid}", method = RequestMethod.PATCH)
   @ResponseStatus(HttpStatus.OK)
-  public ResponseEntity<Contract> patchContractToOrg(@PathVariable("name") String name,@PathVariable("uuid") String uuid, @RequestBody Contract contract) {
+  public ResponseEntity<Contract> patchContractToOrg(@PathVariable("name") String name, @PathVariable("uuid") String uuid,
+      @RequestBody Contract contract) {
     OUser user = SecurityHelper.currentUser();
 
     if (userService.isMember(user, name)) {
-      Contract c = organizationService.patchContract(name,uuid, contract);
+      Contract c = organizationService.patchContract(name, uuid, contract);
       return new ResponseEntity<Contract>(c, HttpStatus.OK);
     } else {
       return new ResponseEntity(null, HttpStatus.NOT_FOUND);
@@ -412,5 +418,28 @@ public class OrganizationController extends ExceptionController {
   @ResponseStatus(HttpStatus.OK)
   public List<Scope> findEvents(@PathVariable("name") String name) {
     return orgRepository.findScopes(name);
+  }
+
+  @RequestMapping(value = "{name}/topics", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<PagedResources<TopicResource>> getKnowledgePaged(@PathVariable("name") String name,
+      @RequestParam(value = "q", defaultValue = "") String q, @RequestParam(value = "page", defaultValue = "1") String page,
+      @RequestParam(value = "per_page", defaultValue = "10") String perPage) {
+
+    Page<Topic> topics = orgRepository.findOrganizationTopics(name, q, page, perPage);
+    return new ResponseEntity<PagedResources<TopicResource>>(pagedResourceAssembler.toResource(topics, topicAssembler),
+        HttpStatus.OK);
+  }
+
+  @RequestMapping(value = "{name}/topics", method = RequestMethod.POST)
+  @ResponseStatus(HttpStatus.OK)
+  public Topic postTopic(@PathVariable("name") String name, @RequestBody Topic topic) {
+    return organizationService.registerTopic(name, topic);
+  }
+
+  @RequestMapping(value = "{name}/topics/{number}", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public Topic getSingleTopic(@PathVariable("name") String name, @PathVariable("number") Long uuid) {
+    return orgRepository.findSingleTopicByNumber(name, uuid);
   }
 }

@@ -33,6 +33,8 @@ public class OSiteSchema {
     addVertexClass(OOrganization.class, Organization.class.getSimpleName());
     addVertexClass(OEnvironment.class, Environment.class.getSimpleName());
     addVertexClass(OContract.class, Contract.class.getSimpleName());
+    addVertexClass(OTopic.class, Topic.class.getSimpleName());
+    addVertexClass(OTopicComment.class, TopicComment.class.getSimpleName());
 
     addEdgeClass(HasLabel.class);
     addEdgeClass(HasEvent.class);
@@ -49,6 +51,8 @@ public class OSiteSchema {
     addEdgeClass(HasEnvironment.class);
     addEdgeClass(IsAssigned.class);
     addEdgeClass(HasSla.class);
+    addEdgeClass(HasTopic.class);
+    addEdgeClass(HasTopicComment.class);
 
   }
 
@@ -127,7 +131,14 @@ public class OSiteSchema {
       }
     }
 
+
+    OClass topic = schema.getClass(Topic.class.getSimpleName());
+    topic.createIndex("Topic.title_body", "FULLTEXT", null, null, "LUCENE", new String[] { "title", "body" });
+
+
     OSiteSchemaPopupator.populateData(db);
+
+
   }
   // Edges
 

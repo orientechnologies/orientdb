@@ -70,6 +70,10 @@ angular
         templateUrl: 'views/room.html',
         controller: 'ChatCtrl'
       })
+      .when('/knowledge', {
+        templateUrl: 'views/knowledge.html',
+        controller: 'KnowledgeCtrl'
+      })
       .when('/clients/new', {
         templateUrl: 'views/clients/newClient.html',
         controller: 'ClientNewCtrl'

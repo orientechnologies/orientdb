@@ -39,6 +39,7 @@ import java.util.List;
 public class IssueServiceImpl implements IssueService {
 
   private static String          WAIT_FOR_REPLY = "waiting reply";
+  private static String          IN_PROGRESS    = "in progress";
   @Autowired
   private OrientDBFactory        dbFactory;
 
@@ -141,6 +142,10 @@ public class IssueServiceImpl implements IssueService {
 
   }
 
+  private boolean isStopSla(String label) {
+    return WAIT_FOR_REPLY.equals(label) || IN_PROGRESS.equals(label);
+  }
+
   private List<Label> labelIssue(Issue issue, List<String> labels, OUser actor, boolean fire) {
     List<Label> lbs = new ArrayList<Label>();
 
@@ -148,7 +153,7 @@ public class IssueServiceImpl implements IssueService {
       Label l = repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
       if (l != null) {
         lbs.add(l);
-        if (WAIT_FOR_REPLY.equals(l.getName())) {
+        if (isStopSla(l.getName())) {
           if (issue.getClient() != null)
             removeSlaCounting(issue);
         }
@@ -519,8 +524,14 @@ public class IssueServiceImpl implements IssueService {
 
       if (evt.equals("reopened")) {
         eventManager.pushInternalEvent(IssueReopenEvent.EVENT, e);
+        issue.setSlaAt(new Date());
+        changeSlaDueTime(issue, issue.getPriority());
+        issue = issueRepository.save(issue);
+
       } else {
         eventManager.pushInternalEvent(IssueClosedEvent.EVENT, e);
+        if (issue.getClient() != null)
+          removeSlaCounting(issue);
       }
     }
 

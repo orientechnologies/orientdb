@@ -16,6 +16,7 @@ public class OSiteSchemaPopupator {
     graph.command(new OCommandSQL("insert into OSequence set className='Issue', value=1")).execute();
     graph.command(new OCommandSQL("insert into OSequence set className='Environment', value=1")).execute();
     graph.command(new OCommandSQL("insert into OSequence set className='Scope', value=1")).execute();
+    graph.command(new OCommandSQL("insert into OSequence set className='Topic', value=1")).execute();
 
     graph.commit();
     // OrientVertex org = graph.addVertex("class:" + OSiteSchema.Organization.class.getSimpleName(), new Object[] {

@@ -15,6 +15,8 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
   public Page<Issue> findOrganizationIssuesPagedProfiled(String name, String q, String page, String perPage);
 
+  public Page<Topic> findOrganizationTopics(String name, String q, String page, String perPage);
+
   public List<Repository> findOrganizationRepositories(String name);
 
   public List<Client> findClients(String name);
@@ -75,4 +77,6 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
   List<Contract> findContracts(String name);
 
   List<Contract> findClientContracts(String name, Integer id);
+
+  public Topic findSingleTopicByNumber(String name, Long number);
 }

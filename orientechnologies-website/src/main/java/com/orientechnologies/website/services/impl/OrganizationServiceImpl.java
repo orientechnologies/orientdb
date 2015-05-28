@@ -86,6 +86,9 @@ public class OrganizationServiceImpl implements OrganizationService {
   @Autowired
   private ContractRepository     contractRepository;
 
+  @Autowired
+  private TopicRepository        topicRepository;
+
   @Override
   public void addMember(String org, String username) throws ServiceException {
 
@@ -351,6 +354,40 @@ public class OrganizationServiceImpl implements OrganizationService {
       return contractRepository.save(c);
     }
     return null;
+  }
+
+  @Override
+  public Topic registerTopic(String name, Topic topic) {
+
+    Organization organization = organizationRepository.findOneByName(name);
+    if (organization != null) {
+      OUser oUser = SecurityHelper.currentUser();
+      topic.setCreatedAt(new Date());
+      Topic saved = topicRepository.save(topic);
+      createTopicUserRelationship(saved, oUser);
+      createTopicOrganizationRelationship(organization, saved);
+      saved.setUser(oUser);
+      return saved;
+    }
+    return null;
+  }
+
+  private void createTopicOrganizationRelationship(Organization organization, Topic saved) {
+
+    OrientGraph graph = dbFactory.getGraph();
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(organization.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(saved.getId()));
+    orgVertex.addEdge(HasTopic.class.getSimpleName(), devVertex);
+  }
+
+  private void createTopicUserRelationship(Topic topic, OUser user) {
+    OrientGraph graph = dbFactory.getGraph();
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(topic.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(user.getRid()));
+    if (orgVertex.countEdges(Direction.OUT, HasOwner.class.getSimpleName()) == 0) {
+      orgVertex.addEdge(HasOwner.class.getSimpleName(), devVertex);
+    }
+
   }
 
   private void createContractRelationship(Organization organization, Contract contract) {
