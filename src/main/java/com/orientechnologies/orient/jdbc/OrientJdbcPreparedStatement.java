@@ -196,7 +196,7 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   }
 
   public ResultSetMetaData getMetaData() throws SQLException {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
