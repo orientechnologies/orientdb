@@ -28,12 +28,8 @@ import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.Date;
+import java.util.*;
 
 /**
  * 
@@ -196,6 +192,9 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   }
 
   public ResultSetMetaData getMetaData() throws SQLException {
+    if (this.getResultSet() != null) {
+      return this.getResultSet().getMetaData();
+    }
     return null;
   }
 
