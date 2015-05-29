@@ -14,8 +14,10 @@ import com.orientechnologies.website.model.schema.dto.web.hateoas.ScopeDTO;
 import com.orientechnologies.website.model.schema.dto.web.hateoas.TopicResource;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
+import com.orientechnologies.website.repository.TopicRepository;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.RepositoryService;
+import com.orientechnologies.website.services.TopicService;
 import com.orientechnologies.website.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -55,6 +57,12 @@ public class OrganizationController extends ExceptionController {
 
   @Autowired
   private UserService            userService;
+
+  @Autowired
+  private TopicService           topicService;
+
+  @Autowired
+  private TopicRepository        topicRepository;
 
   @RequestMapping(value = "{name}", method = RequestMethod.GET)
   public ResponseEntity<Organization> getOrganizationInfo(@PathVariable("name") String name) {
@@ -420,6 +428,7 @@ public class OrganizationController extends ExceptionController {
     return orgRepository.findScopes(name);
   }
 
+  /* TOPICS */
   @RequestMapping(value = "{name}/topics", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<PagedResources<TopicResource>> getKnowledgePaged(@PathVariable("name") String name,
@@ -437,9 +446,97 @@ public class OrganizationController extends ExceptionController {
     return organizationService.registerTopic(name, topic);
   }
 
+  @RequestMapping(value = "{name}/topics/{number}/comments", method = RequestMethod.POST)
+  @ResponseStatus(HttpStatus.OK)
+  public TopicComment postTopicComment(@PathVariable("name") String name, @PathVariable("number") Long uuid,
+      @RequestBody TopicComment topicComment) {
+    Topic singleTopicByNumber = orgRepository.findSingleTopicByNumber(name, uuid);
+    return topicService.postComment(singleTopicByNumber, topicComment);
+  }
+
+  @RequestMapping(value = "{name}/topics/{number}/comments", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public List<TopicComment> getTopicCommentc(@PathVariable("name") String name, @PathVariable("number") Long uuid) {
+    return topicRepository.findTopicComments(name, uuid);
+  }
+
+  @RequestMapping(value = "{name}/topics/{number}/comments/{uuid}", method = RequestMethod.DELETE)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<TopicComment> deleteSingleTopicComment(@PathVariable("name") String name,
+      @PathVariable("number") Long number, @PathVariable("uuid") String uuid) {
+
+    TopicComment comment = topicRepository.findTopicCommentByUUID(name, number, uuid);
+
+    if (comment != null) {
+
+      topicService.deleteSingleTopicComment(comment);
+
+      return new ResponseEntity<TopicComment>(HttpStatus.OK);
+    } else {
+      return new ResponseEntity<TopicComment>(HttpStatus.NOT_FOUND);
+    }
+  }
+
+  @RequestMapping(value = "{name}/topics/{number}/comments/{uuid}", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<TopicComment> getSingleTopicComment(@PathVariable("name") String name, @PathVariable("number") Long number,
+      @PathVariable("uuid") String uuid) {
+
+    TopicComment comment = topicRepository.findTopicCommentByUUID(name, number, uuid);
+
+    if (comment != null) {
+      return new ResponseEntity<TopicComment>(comment, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<TopicComment>(HttpStatus.NOT_FOUND);
+    }
+  }
+
+  @RequestMapping(value = "{name}/topics/{number}/comments/{uuid}", method = RequestMethod.PATCH)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<TopicComment> patchSingleTopicComment(@PathVariable("name") String name,
+      @PathVariable("number") Long number, @PathVariable("uuid") String uuid, @RequestBody TopicComment topicComment) {
+
+    TopicComment comment = topicRepository.findTopicCommentByUUID(name, number, uuid);
+
+    if (comment != null) {
+
+      TopicComment patched = topicService.patchComment(comment, topicComment);
+      return new ResponseEntity<TopicComment>(patched, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<TopicComment>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
   @RequestMapping(value = "{name}/topics/{number}", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
-  public Topic getSingleTopic(@PathVariable("name") String name, @PathVariable("number") Long uuid) {
-    return orgRepository.findSingleTopicByNumber(name, uuid);
+  public ResponseEntity<Topic> getSingleTopic(@PathVariable("name") String name, @PathVariable("number") Long uuid) {
+    Topic singleTopicByNumber = orgRepository.findSingleTopicByNumber(name, uuid);
+    if (singleTopicByNumber != null) {
+      return new ResponseEntity<Topic>(singleTopicByNumber, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<Topic>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  @RequestMapping(value = "{name}/topics/{number}", method = RequestMethod.DELETE)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<Topic> deleteSingleTopic(@PathVariable("name") String name, @PathVariable("number") Long uuid) {
+    Topic singleTopicByNumber = orgRepository.findSingleTopicByNumber(name, uuid);
+    topicService.deleteSingleTopic(singleTopicByNumber);
+    return new ResponseEntity<Topic>(HttpStatus.OK);
+  }
+
+  @RequestMapping(value = "{name}/topics/{number}", method = RequestMethod.PATCH)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<Topic> patchSingleTopic(@PathVariable("name") String name, @PathVariable("number") Long uuid,
+      @RequestBody Topic patch) {
+    Topic singleTopicByNumber = orgRepository.findSingleTopicByNumber(name, uuid);
+    if (singleTopicByNumber == null) {
+      return new ResponseEntity<Topic>(HttpStatus.NOT_FOUND);
+    }
+    Topic t = topicService.patchTopic(singleTopicByNumber, patch);
+    return new ResponseEntity<Topic>(t, HttpStatus.OK);
   }
 }

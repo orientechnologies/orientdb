@@ -177,7 +177,7 @@ public class OrganizationControllerTest {
   }
 
   @Test
-  public void testInsertTopic() throws IOException {
+  public void testTopic() throws IOException {
 
     Topic t = new Topic();
     t.setTitle("FirstTest");
@@ -218,6 +218,7 @@ public class OrganizationControllerTest {
       t.setBody("Test body " + i);
       post = header().given().body(t).when().post("/api/v1/orgs/fake/topics");
       Assert.assertEquals(200, post.statusCode());
+
     }
 
     post = header().given().when().get("/api/v1/orgs/fake/topics");
@@ -227,6 +228,94 @@ public class OrganizationControllerTest {
     JsonNode content = jsonNode.get("content");
     List<Topic> topics = Arrays.asList(mapper.readValue(content.toString(), Topic[].class));
     Assert.assertEquals(10, topics.size());
+
+    /* TEST PATCH + DELETE */
+
+    Topic secondTest = topics.get(1);
+    secondTest.setBody("Patched Test");
+    post = header().given().body(secondTest).when().patch("/api/v1/orgs/fake/topics/" + secondTest.getNumber());
+    Assert.assertEquals(200, post.statusCode());
+    response = post.getBody().as(Topic.class);
+    Assert.assertEquals(secondTest.getBody(), response.getBody());
+
+    post = header().given().when().get("/api/v1/orgs/fake/topics/" + secondTest.getNumber());
+
+    Assert.assertEquals(200, post.statusCode());
+    response = post.getBody().as(Topic.class);
+    Assert.assertEquals(secondTest.getBody(), response.getBody());
+
+    post = header().given().when().delete("/api/v1/orgs/fake/topics/" + secondTest.getNumber());
+    Assert.assertEquals(200, post.statusCode());
+
+    post = header().given().when().get("/api/v1/orgs/fake/topics/" + topics.get(1).getNumber());
+    Assert.assertEquals(404, post.statusCode());
+
+    /* TEST POST COMMENT */
+
+    Topic commentTest = topics.get(0);
+
+    TopicComment comment = new TopicComment();
+    comment.setBody("TestComment");
+
+    post = header().given().body(comment).when().post("/api/v1/orgs/fake/topics/" + commentTest.getNumber() + "/comments");
+
+    Assert.assertEquals(200, post.statusCode());
+
+    TopicComment res = post.getBody().as(TopicComment.class);
+    Assert.assertNotNull(res);
+    Assert.assertNotNull(res.getUuid());
+    Assert.assertNotNull(res.getUser());
+    Assert.assertNotNull(res.getCreatedAt());
+    Assert.assertEquals(comment.getBody(), res.getBody());
+
+    post = header().given().when().get("/api/v1/orgs/fake/topics/" + commentTest.getNumber() + "/comments/" + res.getUuid());
+
+    Assert.assertEquals(200, post.statusCode());
+
+    res = post.getBody().as(TopicComment.class);
+    Assert.assertNotNull(res);
+    Assert.assertNotNull(res.getUuid());
+    Assert.assertNotNull(res.getUser());
+    Assert.assertNotNull(res.getCreatedAt());
+    Assert.assertEquals(comment.getBody(), res.getBody());
+
+    comment.setBody("PatchedComment");
+
+    post = header().given().body(comment).when()
+        .patch("/api/v1/orgs/fake/topics/" + commentTest.getNumber() + "/comments/" + res.getUuid());
+
+    Assert.assertEquals(200, post.statusCode());
+    res = post.getBody().as(TopicComment.class);
+    Assert.assertNotNull(res);
+    Assert.assertNotNull(res.getUuid());
+    Assert.assertNotNull(res.getUser());
+    Assert.assertNotNull(res.getCreatedAt());
+    Assert.assertEquals(comment.getBody(), res.getBody());
+
+    post = header().given().when().get("/api/v1/orgs/fake/topics/" + commentTest.getNumber() + "/comments");
+
+    Assert.assertEquals(200, post.statusCode());
+    List<TopicComment> comments = Arrays.asList(post.getBody().as(TopicComment[].class));
+
+    Assert.assertEquals(1, comments.size());
+
+    post = header().given().when().get("/api/v1/orgs/fake/topics/" + commentTest.getNumber() + "/comments/" + res.getUuid());
+
+    Assert.assertEquals(200, post.statusCode());
+
+    res = post.getBody().as(TopicComment.class);
+    Assert.assertNotNull(res);
+    Assert.assertNotNull(res.getUuid());
+    Assert.assertNotNull(res.getUser());
+    Assert.assertNotNull(res.getCreatedAt());
+    Assert.assertEquals(comment.getBody(), res.getBody());
+
+    post = header().given().when().delete("/api/v1/orgs/fake/topics/" + commentTest.getNumber() + "/comments/" + res.getUuid());
+
+    Assert.assertEquals(200, post.statusCode());
+
+    post = header().given().when().get("/api/v1/orgs/fake/topics/" + commentTest.getNumber() + "/comments/" + res.getUuid());
+    Assert.assertEquals(404, post.statusCode());
 
     // /SEARCH
 

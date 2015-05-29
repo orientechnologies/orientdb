@@ -15,7 +15,7 @@ public class Topic {
   @JsonIgnore
   private String       id;
   private String       uuid;
-  private Integer number;
+  private Long         number;
   private String       title;
   private String       body;
   private Organization organization;
@@ -30,11 +30,11 @@ public class Topic {
     return id;
   }
 
-  public Integer getNumber() {
+  public Long getNumber() {
     return number;
   }
 
-  public void setNumber(Integer number) {
+  public void setNumber(Long number) {
     this.number = number;
   }
 

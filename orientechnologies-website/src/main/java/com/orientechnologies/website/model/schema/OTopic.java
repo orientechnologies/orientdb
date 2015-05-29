@@ -44,7 +44,7 @@ public enum OTopic implements OTypeHolder<Topic> {
   NUMBER("number") {
     @Override
     public OType getType() {
-      return OType.INTEGER;
+      return OType.LONG;
     }
   },
   CONFIDENTIAL("confidential") {
@@ -138,7 +138,7 @@ public enum OTopic implements OTypeHolder<Topic> {
     issue.setId(doc.getIdentity().toString());
     issue.setTitle((String) doc.field(TITLE.toString()));
     issue.setBody((String) doc.field(BODY.toString()));
-    issue.setNumber((Integer) doc.field(NUMBER.toString()));
+    issue.setNumber((Long) doc.field(NUMBER.toString()));
     issue.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
     issue.setUpdatedAt((Date) doc.field(UPDATED_AT.toString()));
     issue.setUuid((String) doc.field(UUID.toString()));
@@ -154,7 +154,7 @@ public enum OTopic implements OTypeHolder<Topic> {
       break;
     }
     long count = 0;
-    for (Vertex vertex : iss.getVertices(Direction.OUT, HasTopicComment.class.getSimpleName())) {
+    for (Vertex vertex : iss.getVertices(Direction.OUT, HasComment.class.getSimpleName())) {
       count += 1;
     }
     issue.setComments(count);

@@ -3,11 +3,11 @@ package com.orientechnologies.website.model.schema;
 /**
  * Created by Enrico Risa on 04/11/14.
  */
-public enum HasTopicComment {
+public enum HasComment {
   ;
   private final String description;
 
-  HasTopicComment(String description) {
+  HasComment(String description) {
     this.description = description;
   }
 

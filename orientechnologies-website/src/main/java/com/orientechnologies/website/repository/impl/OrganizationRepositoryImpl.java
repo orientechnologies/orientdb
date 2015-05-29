@@ -187,7 +187,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   @Override
   public Page<Topic> findOrganizationTopics(String name, String q, String page, String perPage) {
 
-    String query = topicsQueryParams(q, name, false);
+      String query = topicsQueryParams(q, name, false);
     String queryCount = topicsQueryParams(q, name, true);
 
     OrientGraph db = dbFactory.getGraph();
@@ -198,7 +198,8 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
 
     Iterable<OrientElement> documents = db.command(new OCommandSQL(queryCount)).execute();
-    long count = documents.iterator().next().getRecord().field("count");
+    Number number = documents.iterator().next().getRecord().field("count");
+    long count = number.longValue();
     long p = new Long(page);
     long pP = new Long(perPage);
 
@@ -216,15 +217,21 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
       if (count) {
         query = String.format("select count(*) from (select expand(out('HasTopic')) from Organization where name = '%s') ", name);
       } else {
-        query = String.format("select expand(out('HasTopic')) from Organization where name = '%s' ", name);
+        query = String.format("select from (select expand(out('HasTopic')) from Organization where name = '%s') ", name);
       }
 
     } else {
       Map<String, String> stringStringMap = parseQuery(q);
       if (count) {
-        query = String.format("select count(*) from Topic where [title,body] LUCENE '%s') ", stringStringMap.get("text"));
+        query = String
+            .format(
+                "select unionAll.size() as count  from (select unionAll($a,$b)  let $a= (select from Topic where [title,body] LUCENE '%s'),  $b = (select expand(in('HasComment')) from TopicComment where body lucene '%s') )",
+                stringStringMap.get("text"), stringStringMap.get("text"));
       } else {
-        query = String.format("select * from Topic where [title,body] LUCENE '%s') ", stringStringMap.get("text"));
+        query = String
+            .format(
+                "select expand(unionAll)  from (select unionAll($a,$b)  let $a= (select from Topic where [title,body] LUCENE '%s'),  $b = (select expand(in('HasComment')) from TopicComment where body lucene '%s') )",
+                stringStringMap.get("text"), stringStringMap.get("text"));
       }
 
     }

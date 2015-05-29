@@ -1,37 +1,37 @@
 <!doctype html>
 <html class="no-js">
 <head>
-  <meta charset="utf-8">
-  <title>Project Hub</title>
-  <meta name="body" content="">
-  <meta name="viewport" content="width=device-width">
-  <link rel="shortcut icon" type="image/png" href="images/favicon.png"/>
+    <meta charset="utf-8">
+    <title>Project Hub</title>
+    <meta name="body" content="">
+    <meta name="viewport" content="width=device-width">
+    <link rel="shortcut icon" type="image/png" href="images/favicon.png"/>
 
-  <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
-  <!-- build:css(src/main/webapp) styles/vendor.css -->
-  <!-- bower:css -->
-  <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
-  <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.css" />
-  <link rel="stylesheet" href="bower_components/bootstrap-markdown/css/bootstrap-markdown.min.css" />
-  <link rel="stylesheet" href="bower_components/angular-motion/dist/angular-motion.css" />
-  <link rel="stylesheet" href="bower_components/jasny-bootstrap/dist/css/jasny-bootstrap.css" />
-  <!-- endbower -->
-  <!-- endbuild -->
-  <!-- build:css(.tmp) styles/main.css -->
-  <link rel="stylesheet" href="styles/main.css">
-  <link rel="stylesheet" href="styles/menu.css">
-  <link rel="stylesheet" href="styles/responsive.css">
-  <link rel="stylesheet" href="styles/icons.css">
-  <link rel="stylesheet" href="styles/popovers.css">
-  <link rel="stylesheet" href="styles/bootstrap-suggest.css">
-  <link rel="stylesheet" href="bower_components/humane/themes/jackedup.css" />
+    <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+    <!-- build:css(src/main/webapp) styles/vendor.css -->
+    <!-- bower:css -->
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css"/>
+    <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.css"/>
+    <link rel="stylesheet" href="bower_components/bootstrap-markdown/css/bootstrap-markdown.min.css"/>
+    <link rel="stylesheet" href="bower_components/angular-motion/dist/angular-motion.css"/>
+    <link rel="stylesheet" href="bower_components/jasny-bootstrap/dist/css/jasny-bootstrap.css"/>
+    <!-- endbower -->
+    <!-- endbuild -->
+    <!-- build:css(.tmp) styles/main.css -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/menu.css">
+    <link rel="stylesheet" href="styles/responsive.css">
+    <link rel="stylesheet" href="styles/icons.css">
+    <link rel="stylesheet" href="styles/popovers.css">
+    <link rel="stylesheet" href="styles/bootstrap-suggest.css">
+    <link rel="stylesheet" href="bower_components/humane/themes/jackedup.css"/>
 
-  <!-- endbuild -->
+    <!-- endbuild -->
 </head>
 <body ng-app="webappApp" class="app">
 <!--[if lt IE 7]>
 <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade
-  your browser</a> to improve your experience.</p>
+    your browser</a> to improve your experience.</p>
 <![endif]-->
 
 <!-- Add your site or application content here -->
@@ -41,36 +41,35 @@
 <div class="container-fluid app-container">
 
 
-  <div ng-view="" class="app-view"></div>
+    <div ng-view="" class="app-view"></div>
 
-  <!--<div class="footer">-->
-  <!--&lt;!&ndash;<p><span class="glyphicon glyphicon-heart"></span> from the Yeoman team</p>&ndash;&gt;-->
-  <!--</div>-->
-  <footer class="footer">
-    <div class="container">
-      <p class="text-muted">©2015 <a href="http://orientechnologies.com">Orient Technologies</a> LTD</p>
-    </div>
-  </footer>
+    <!--<div class="footer">-->
+    <!--&lt;!&ndash;<p><span class="glyphicon glyphicon-heart"></span> from the Yeoman team</p>&ndash;&gt;-->
+    <!--</div>-->
+    <footer class="footer">
+        <div class="container">
+            <p class="text-muted">©2015 <a href="http://orientechnologies.com">Orient Technologies</a> LTD</p>
+        </div>
+    </footer>
 </div>
-
 
 
 <!-- Google Analytics: change UA-XXXXX-X to be your site's ID -->
 <script>
-  (function (i, s, o, g, r, a, m) {
-    i['GoogleAnalyticsObject'] = r;
-    i[r] = i[r] || function () {
-      (i[r].q = i[r].q || []).push(arguments)
-    }, i[r].l = 1 * new Date();
-    a = s.createElement(o),
-      m = s.getElementsByTagName(o)[0];
-    a.async = 1;
-    a.src = g;
-    m.parentNode.insertBefore(a, m)
-  })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+    (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r;
+        i[r] = i[r] || function () {
+                    (i[r].q = i[r].q || []).push(arguments)
+                }, i[r].l = 1 * new Date();
+        a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0];
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
 
-  ga('create', 'UA-XXXXX-X');
-  ga('send', 'pageview');
+    ga('create', 'UA-XXXXX-X');
+    ga('send', 'pageview');
 
 </script>
 
@@ -123,6 +122,7 @@
 <script src="scripts/controllers/login.js"></script>
 <script src="scripts/controllers/user.js"></script>
 <script src="scripts/controllers/chat.js"></script>
+<script src="scripts/controllers/topic.js"></script>
 <script src="scripts/services/user-services.js"></script>
 <script src="scripts/services/issue-services.js"></script>
 <script src="scripts/services/organization-services.js"></script>

@@ -52,7 +52,7 @@ public class OSiteSchema {
     addEdgeClass(IsAssigned.class);
     addEdgeClass(HasSla.class);
     addEdgeClass(HasTopic.class);
-    addEdgeClass(HasTopicComment.class);
+    addEdgeClass(HasComment.class);
 
   }
 

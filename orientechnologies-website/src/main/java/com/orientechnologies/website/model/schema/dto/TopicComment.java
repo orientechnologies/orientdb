@@ -2,6 +2,8 @@ package com.orientechnologies.website.model.schema.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.util.Date;
+
 /**
  * Created by Enrico Risa on 28/05/15.
  */
@@ -11,8 +13,27 @@ public class TopicComment {
   private String  id;
   private String  uuid;
   private String  body;
+  private Date    createdAt;
+  private Date    updatedAt;
   private OUser   user;
   private boolean confidential;
+
+  public Date getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public void setUpdatedAt(Date updatedAt) {
+    this.updatedAt = updatedAt;
+  }
+
+  public Date getCreatedAt() {
+
+    return createdAt;
+  }
+
+  public void setCreatedAt(Date createdAt) {
+    this.createdAt = createdAt;
+  }
 
   public String getId() {
     return id;
