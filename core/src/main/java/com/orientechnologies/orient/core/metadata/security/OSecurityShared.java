@@ -216,6 +216,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public OUser getUser(final ORID iRecordId) {
+    if (iRecordId == null)
+      return null;
+
     ODocument result;
     result = getDatabase().load(iRecordId, "roles:1");
     if (!result.getClassName().equals(OUser.CLASS_NAME)) {
