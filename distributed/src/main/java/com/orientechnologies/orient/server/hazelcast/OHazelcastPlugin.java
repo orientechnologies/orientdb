@@ -811,6 +811,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public void onMessage(String iText) {
+    if (iText.startsWith("\r\n"))
+      iText = iText.substring(2);
+    else if (iText.startsWith("\n"))
+      iText = iText.substring(1);
+
     OLogManager.instance().info(this, iText);
   }
 
@@ -828,7 +833,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return getHazelcastInstance().getMap("orientdb");
   }
 
-  public boolean installDatabase(boolean iStartup, String databaseName, ODocument config) {
+  public boolean installDatabase(boolean iStartup, final String databaseName, ODocument config) {
 
     final Boolean hotAlignment = config.field("hotAlignment");
     final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
@@ -971,17 +976,23 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           if (stg != null)
             stg.close();
 
-          distrDatabase.configureDatabase(false, true, new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-              final boolean distribCfgDirty = installDbClustersForLocalNode(db, cfg);
-              if (distribCfgDirty) {
-                OLogManager.instance().warn(this, "Distributed configuration modified");
-                updateCachedDatabaseConfiguration(db.getName(), cfg.serialize(), true, true);
+          final Lock lock = getLock("orientdb." + databaseName + ".install");
+          lock.lock();
+          try {
+            distrDatabase.configureDatabase(false, true, new Callable<Void>() {
+              @Override
+              public Void call() throws Exception {
+                final boolean distribCfgDirty = installDbClustersForLocalNode(db, cfg);
+                if (distribCfgDirty) {
+                  OLogManager.instance().warn(this, "Distributed configuration modified");
+                  updateCachedDatabaseConfiguration(db.getName(), cfg.serialize(), true, true);
+                }
+                return null;
               }
-              return null;
-            }
-          });
+            });
+          } finally {
+            lock.unlock();
+          }
 
           db.close();
         }

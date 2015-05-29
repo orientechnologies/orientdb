@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -46,6 +40,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Shared security class. It's shared by all the database instances that point to the same storage.
@@ -217,6 +217,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public OUser getUser(final ORID iRecordId) {
+    if( iRecordId == null )
+      return null;
+
     ODocument result;
     result = getDatabase().load(iRecordId, "roles:1");
     if (!result.getClassName().equals(OUser.CLASS_NAME)) {
