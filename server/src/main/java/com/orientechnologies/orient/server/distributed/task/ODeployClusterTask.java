@@ -19,6 +19,14 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -34,14 +42,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Ask for deployment of single cluster from a remote node.
@@ -183,6 +183,8 @@ public class ODeployClusterTask extends OAbstractReplicatedTask implements OComm
 
   @Override
   public void onMessage(String iText) {
+    if (iText.startsWith("\r\n"))
+      iText = iText.substring(2);
     if (iText.startsWith("\n"))
       iText = iText.substring(1);
 

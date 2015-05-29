@@ -120,7 +120,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     this.dManager = iServer.getDistributedManager();
     this.wrapped = wrapped;
 
-    ODistributedServerLog.info(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
+    ODistributedServerLog.debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
         ODistributedServerLog.DIRECTION.NONE, "Installing distributed storage on database '%s'", wrapped.getName());
 
     purgeDeletedRecordsTask = new TimerTask() {

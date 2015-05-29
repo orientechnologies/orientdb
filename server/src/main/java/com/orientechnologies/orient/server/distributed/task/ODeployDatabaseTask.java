@@ -238,6 +238,8 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
 
   @Override
   public void onMessage(String iText) {
+    if (iText.startsWith("\r\n"))
+      iText = iText.substring(2);
     if (iText.startsWith("\n"))
       iText = iText.substring(1);
 
