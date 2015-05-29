@@ -152,16 +152,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public int getSessionId() {
-    return OStorageRemoteThreadLocal.INSTANCE.get().sessionId;
+    final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
+    return instance != null ? instance.get().sessionId : -1;
   }
 
   public String getServerURL() {
-    final OStorageRemoteSession instance = OStorageRemoteThreadLocal.INSTANCE.get();
-    return instance != null ? instance.serverURL : null;
+    final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
+    return instance != null ? instance.get().serverURL : null;
   }
 
   public byte[] getSessionToken() {
-    return OStorageRemoteThreadLocal.INSTANCE.get().token;
+    final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
+    return instance != null ? instance.get().token : null;
   }
 
   public void setSessionId(final String iServerURL, final int iSessionId, byte[] token) {
@@ -183,7 +185,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public void clearSession() {
-    OStorageRemoteThreadLocal.INSTANCE.remove();
+    final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
+    if (instance != null)
+      instance.remove();
   }
 
   public ORemoteServerEventListener getAsynchEventListener() {
