@@ -160,14 +160,13 @@ public class ODistributedWorker extends Thread {
           ODistributedAbstractPlugin.REPLICATOR_USER);
       database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
           replicatorUser.password);
+      database.reload();
 
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
       final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
           ODistributedAbstractPlugin.REPLICATOR_USER);
       database.open(replicatorUser.name, replicatorUser.password);
-
-    } else {
       database.reload();
     }
   }
