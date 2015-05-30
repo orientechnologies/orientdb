@@ -19,13 +19,13 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPoolFactory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 
 /**
  * Manages Script engines per database. Parsing of function library is done only the first time and when changes.
@@ -82,7 +82,9 @@ public class ODatabaseScriptManager {
               }
             };
           }
-        }, OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger());
+        });
+    pooledEngines.setMaxPoolSize(OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger());
+    pooledEngines.setMaxPartitions(1);
   }
 
   public OPartitionedObjectPool.PoolEntry<ScriptEngine> acquireEngine(final String language) {

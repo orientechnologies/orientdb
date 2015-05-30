@@ -19,7 +19,7 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
   private static final int           MIN_POOL_SIZE  = 2;
   private static final AtomicInteger nextHashCode   = new AtomicInteger();
 
-  private final int                  maxPartitions  = Runtime.getRuntime().availableProcessors() << 3;
+  private final int                  maxPartitions;
   private final ObjectFactory<T>     factory;
   private final int                  maxSize;
   private final ThreadLocal<Integer> threadHashCode = new ThreadLocal<Integer>() {
@@ -33,11 +33,12 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
   private volatile PoolPartition[]   partitions;
   private volatile boolean           closed         = false;
 
-  public OPartitionedObjectPool(ObjectFactory factory, int maxSize) {
+  public OPartitionedObjectPool(final ObjectFactory factory, final int maxSize, final int maxPartitions) {
     this.factory = factory;
     this.maxSize = maxSize;
+    this.maxPartitions = maxPartitions;
 
-    final PoolPartition[] pts = new PoolPartition[2];
+    final PoolPartition[] pts = new PoolPartition[maxPartitions < 2 ? maxPartitions : 2];
 
     for (int i = 0; i < pts.length; i++) {
       final PoolPartition partition = new PoolPartition();
