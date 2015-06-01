@@ -38,7 +38,12 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexes;
+import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -51,7 +56,12 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
-import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.GraphQuery;
+import com.tinkerpop.blueprints.Index;
+import com.tinkerpop.blueprints.Parameter;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
@@ -60,7 +70,14 @@ import org.apache.commons.configuration.Configuration;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
@@ -282,6 +299,20 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       // ENCODE LABELS
       for (int i = 0; i < iLabels.length; ++i)
         iLabels[i] = encodeClassName(iLabels[i]);
+  }
+
+  /**
+   * (Internal) Returns the case sensitive edge class names.
+   */
+  public static void getEdgeClassNames(final OrientBaseGraph graph, final String... iLabels) {
+    if (iLabels != null && graph.isUseClassForEdgeLabel()) {
+      for (int i = 0; i < iLabels.length; ++i) {
+        final OrientEdgeType edgeType = graph.getEdgeType(iLabels[i]);
+        if (edgeType != null)
+          // OVERWRITE CLASS NAME BECAUSE ATTRIBUTES ARE CASE SENSITIVE
+          iLabels[i] = edgeType.getName();
+      }
+    }
   }
 
   /**
@@ -1543,9 +1574,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         OIndexFactory factory = OIndexes.getFactory(indexType, null);
         db.getMetadata()
             .getIndexManager()
-            .createIndex(className + "." + key, indexType,
-                new OPropertyIndexDefinition(className, key, keyType), cls.getPolymorphicClusterIds(),
-                null, metadata);
+            .createIndex(className + "." + key, indexType, new OPropertyIndexDefinition(className, key, keyType),
+                cls.getPolymorphicClusterIds(), null, metadata);
         return null;
 
       }
