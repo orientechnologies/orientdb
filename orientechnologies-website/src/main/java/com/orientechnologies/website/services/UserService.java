@@ -11,32 +11,34 @@ import java.util.List;
  * Created by Enrico Risa on 20/10/14.
  */
 public interface UserService {
-    public void initUser(String token) throws ServiceException;
+  public void initUser(String token) throws ServiceException;
 
-    public UserDTO forWeb(OUser user);
+  public UserDTO forWeb(OUser user);
 
-    boolean isMember(OUser user, String orgName);
+  boolean isMember(OUser user, String orgName);
 
-    boolean isTeamMember(OUser user, Repository repo);
+  boolean isTeamMember(OUser user, Repository repo);
 
-    public Client getClient(OUser user, String orgName);
+  public Client getClient(OUser user, String orgName);
 
-    public boolean isClient(OUser user, String orgName);
+  public boolean isSupport(OUser user, String orgName);
 
-    @Transactional
-    public Environment registerUserEnvironment(OUser user, Environment environment);
+  public boolean isClient(OUser user, String orgName);
 
-    public void deregisterUserEnvironment(OUser user, Long environmentId);
+  @Transactional
+  public Environment registerUserEnvironment(OUser user, Environment environment);
 
-    public Environment patchUserEnvironment(OUser user, Long environmentId, Environment environment);
+  public void deregisterUserEnvironment(OUser user, Long environmentId);
 
-    public List<Environment> getUserEnvironments(OUser user);
+  public Environment patchUserEnvironment(OUser user, Long environmentId, Environment environment);
 
-    public OUser patchUser(OUser current, UserDTO user);
+  public List<Environment> getUserEnvironments(OUser user);
 
-    public void profileIssue(OUser current, Issue issue, String organization);
+  public OUser patchUser(OUser current, UserDTO user);
 
-    public void profileEvent(OUser user, Event event, String organization);
+  public void profileIssue(OUser current, Issue issue, String organization);
 
-    public void profileUser(OUser current, OUser toProfile, String organization);
+  public void profileEvent(OUser user, Event event, String organization);
+
+  public void profileUser(OUser current, OUser toProfile, String organization);
 }

@@ -2,6 +2,7 @@ package com.orientechnologies.website.services.impl;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.daemon.IssueAlignDaemon;
 import com.orientechnologies.website.events.EventManager;
 import com.orientechnologies.website.events.IssueCreatedEvent;
 import com.orientechnologies.website.helper.SecurityHelper;
@@ -65,6 +66,9 @@ public class RepositoryServiceImpl implements RepositoryService {
 
   @Autowired
   protected EnvironmentRepository  environmentRepository;
+
+  @Autowired
+  protected IssueAlignDaemon       alignDaemon;
 
   @PostConstruct
   protected void init() {
@@ -323,6 +327,17 @@ public class RepositoryServiceImpl implements RepositoryService {
     OrientVertex orgVertex = graph.getVertex(new ORecordId(repo.getId()));
     OrientVertex devVertex = graph.getVertex(new ORecordId(milestone.getId()));
     orgVertex.addEdge(HasMilestone.class.getSimpleName(), devVertex);
+  }
+
+  @Override
+  public void syncRepository(final Repository repository) {
+
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        alignDaemon.importRepository(repository);
+      }
+    }).start();
   }
 
   private void createHasIssueRelationship(Repository repository, Issue issue) {

@@ -103,6 +103,16 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  public boolean isSupport(OUser user, String orgName) {
+
+    Client c = getClient(user, orgName);
+    if (c != null) {
+      return c.isSupport();
+    }
+    return false;
+  }
+
+  @Override
   public boolean isTeamMember(OUser user, Repository repo) {
     return isMember(user, repo.getOrganization().getName());
   }
@@ -191,7 +201,7 @@ public class UserServiceImpl implements UserService {
   @Override
   public void profileIssue(OUser current, Issue issue, String organization) {
 
-    if (!isMember(current, organization)) {
+    if (!isMember(current, organization) && !isSupport(current, organization)) {
       blankInfo(issue.getUser());
       blankClientInfo(issue);
     } else {
@@ -234,7 +244,7 @@ public class UserServiceImpl implements UserService {
   @Override
   public void profileUser(OUser current, OUser toProfile, String organization) {
 
-    if (!isMember(current, organization)) {
+    if (!isMember(current, organization) && !isSupport(current, organization)) {
       blankInfo(toProfile);
     } else {
       Client client = getClient(toProfile, organization);

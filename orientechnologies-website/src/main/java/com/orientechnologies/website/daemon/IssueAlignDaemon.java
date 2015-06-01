@@ -1,18 +1,14 @@
 package com.orientechnologies.website.daemon;
 
-import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.github.GIssueState;
 import com.orientechnologies.website.github.GRepo;
 import com.orientechnologies.website.github.GitHub;
-import com.orientechnologies.website.model.schema.ORepository;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.model.schema.dto.Repository;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.reactor.GitHubIssueImporter;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -70,37 +66,45 @@ public class IssueAlignDaemon {
   @Scheduled(cron = "0 30 23 * * ?")
   public void importIssues() {
 
-    OrientGraph db = dbFactory.getGraph();
+//    OrientGraph db = dbFactory.getGraph();
+//
+//    ORecordIteratorClass<ODocument> oDocuments = db.getRawGraph().browseClass(Repository.class.getSimpleName());
+//
+//    ExecutorService executor = Executors.newSingleThreadExecutor();
+//    while (oDocuments.hasNext()) {
+//      ODocument doc = oDocuments.next();
+//      Repository repo = ORepository.NAME.fromDoc(doc, db);
+//      importRepository(executor, repo);
+//    }
 
-    ORecordIteratorClass<ODocument> oDocuments = db.getRawGraph().browseClass(Repository.class.getSimpleName());
+  }
 
-    ExecutorService executor = Executors.newSingleThreadExecutor();
-    while (oDocuments.hasNext()) {
-      ODocument doc = oDocuments.next();
-      Repository repo = ORepository.NAME.fromDoc(doc, db);
-      List<OUser> bots = organizationRepository.findBots(repo.getOrganization().getName());
-      if (bots.size() > 0) {
-        OUser next = bots.iterator().next();
-        GitHub github = new GitHub(next.getToken());
-        try {
-          GRepo repository = github.repo(repo.getOrganization().getName() + '/' + repo.getName());
-          GitHubIssueImporter.GitHubIssueMessage gitHubIssueMessage = new GitHubIssueImporter.GitHubIssueMessage(repository);
-          gitHubIssueMessage.setState(GIssueState.OPEN);
+  protected void importRepository(ExecutorService executor, Repository repo) {
+    List<OUser> bots = organizationRepository.findBots(repo.getOrganization().getName());
+    if (bots.size() > 0) {
+      OUser next = bots.iterator().next();
+      GitHub github = new GitHub(next.getToken());
+      try {
+        GRepo repository = github.repo(repo.getOrganization().getName() + '/' + repo.getName());
+        GitHubIssueImporter.GitHubIssueMessage gitHubIssueMessage = new GitHubIssueImporter.GitHubIssueMessage(repository);
+        gitHubIssueMessage.setState(GIssueState.OPEN);
 
-          importIssues(executor, gitHubIssueMessage);
-          gitHubIssueMessage = new GitHubIssueImporter.GitHubIssueMessage(repository);
-          gitHubIssueMessage.setState(GIssueState.CLOSED);
+        importIssues(executor, gitHubIssueMessage);
+        gitHubIssueMessage = new GitHubIssueImporter.GitHubIssueMessage(repository);
+        gitHubIssueMessage.setState(GIssueState.CLOSED);
 
-          importIssues(executor, gitHubIssueMessage);
+        importIssues(executor, gitHubIssueMessage);
 
-        } catch (Exception e) {
-
-        }
+      } catch (Exception e) {
 
       }
 
     }
 
+  }
+
+  public void importRepository(Repository r) {
+    importRepository(Executors.newSingleThreadExecutor(), r);
   }
 
   public void importIssues(ExecutorService executor, final GitHubIssueImporter.GitHubIssueMessage message)

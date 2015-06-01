@@ -168,6 +168,23 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
   }
 
+  @Transactional
+  @Override
+  public Client patchClient(String org, Integer clientId, Client patch) {
+
+    Client client = organizationRepository.findClient(org, clientId);
+
+    if (client != null) {
+
+      client.setName(patch.getName());
+      client.setSupport(patch.isSupport());
+      client = clientRepository.save(client);
+      return client;
+    }
+
+    return null;
+  }
+
   @Override
   public OUser addMemberClient(String org, Integer clientId, String username) {
     Client client = organizationRepository.findClient(org, clientId);

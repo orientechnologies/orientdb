@@ -1,4 +1,4 @@
-angular.module('webappApp').controller('TopicCtrl', function ($scope, $location, $routeParams, Organization) {
+angular.module('webappApp').controller('TopicCtrl', function ($scope, $location, $routeParams, Organization,User) {
 
 
     $scope.page = 1;
@@ -20,6 +20,10 @@ angular.module('webappApp').controller('TopicCtrl', function ($scope, $location,
         $scope.page = $routeParams.page;
     }
 
+    User.whoami().then(function(data){
+        $scope.isMember = User.isMember(ORGANIZATION);
+        $scope.isSupport = User.isSupport(ORGANIZATION);
+    })
     $scope.searchQuestions = function () {
         Organization.all('topics').customGET("", {q: $scope.queryText, page: $scope.page}).then(function (data) {
             $scope.topics = data.content;

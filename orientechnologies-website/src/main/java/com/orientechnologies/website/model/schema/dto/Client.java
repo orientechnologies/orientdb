@@ -9,6 +9,8 @@ public class Client {
   protected String  id;
   protected Integer clientId;
 
+  protected boolean support;
+
   public Integer getClientId() {
     return clientId;
   }
@@ -33,4 +35,11 @@ public class Client {
     this.id = id;
   }
 
+  public boolean isSupport() {
+    return support;
+  }
+
+  public void setSupport(boolean support) {
+    this.support = support;
+  }
 }

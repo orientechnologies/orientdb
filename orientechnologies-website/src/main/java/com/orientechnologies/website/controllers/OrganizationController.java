@@ -15,6 +15,7 @@ import com.orientechnologies.website.model.schema.dto.web.hateoas.TopicResource;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.repository.TopicRepository;
+import com.orientechnologies.website.security.SecurityManager;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.RepositoryService;
 import com.orientechnologies.website.services.TopicService;
@@ -64,6 +65,9 @@ public class OrganizationController extends ExceptionController {
   @Autowired
   private TopicRepository        topicRepository;
 
+  @Autowired
+  private SecurityManager        securityManager;
+
   @RequestMapping(value = "{name}", method = RequestMethod.GET)
   public ResponseEntity<Organization> getOrganizationInfo(@PathVariable("name") String name) {
 
@@ -103,7 +107,7 @@ public class OrganizationController extends ExceptionController {
     OUser user = SecurityHelper.currentUser();
     if (Boolean.TRUE.equals(issue.getConfidential())) {
 
-      if (!userService.isMember(user, organization)) {
+      if (!userService.isMember(user, organization) && !userService.isSupport(user, organization)) {
 
         Client client = issue.getClient();
         Client currentClient = userService.getClient(user, organization);
@@ -211,7 +215,21 @@ public class OrganizationController extends ExceptionController {
   @RequestMapping(value = "{name}/clients", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.OK)
   public Client addClientToOrg(@PathVariable("name") String name, @RequestBody Client client) {
-    return organizationService.registerClient(name, client);
+    OUser user = SecurityHelper.currentUser();
+    if (userService.isMember(user, name)) {
+      return organizationService.registerClient(name, client);
+    }
+    return null;
+  }
+
+  @RequestMapping(value = "{name}/clients/{id}", method = RequestMethod.PATCH)
+  @ResponseStatus(HttpStatus.OK)
+  public Client patchClient(@PathVariable("name") String name, @PathVariable("id") Integer clientId, @RequestBody Client client) {
+    OUser user = SecurityHelper.currentUser();
+    if (userService.isMember(user, name)) {
+      return organizationService.patchClient(name, clientId, client);
+    }
+    return null;
   }
 
   @RequestMapping(value = "{name}/clients/{id}/room", method = RequestMethod.POST)
@@ -442,8 +460,15 @@ public class OrganizationController extends ExceptionController {
 
   @RequestMapping(value = "{name}/topics", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.OK)
-  public Topic postTopic(@PathVariable("name") String name, @RequestBody Topic topic) {
-    return organizationService.registerTopic(name, topic);
+  public ResponseEntity<Topic> postTopic(@PathVariable("name") String name, @RequestBody Topic topic) {
+
+    if (securityManager.isCurrentMemberOrSupport(name)) {
+      Topic topic1 = organizationService.registerTopic(name, topic);
+      return new ResponseEntity<Topic>(topic1, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<Topic>(HttpStatus.NOT_FOUND);
+    }
+
   }
 
   @RequestMapping(value = "{name}/topics/{number}/comments", method = RequestMethod.POST)

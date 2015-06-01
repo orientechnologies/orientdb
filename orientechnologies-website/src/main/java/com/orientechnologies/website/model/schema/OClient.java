@@ -21,6 +21,12 @@ public enum OClient implements OTypeHolder<Client> {
     public OType getType() {
       return OType.INTEGER;
     }
+  },
+  SUPPORT("support") {
+    @Override
+    public OType getType() {
+      return OType.BOOLEAN;
+    }
   };
   private final String description;
 
@@ -39,6 +45,7 @@ public enum OClient implements OTypeHolder<Client> {
     }
     doc.field(NAME.toString(), entity.getName());
     doc.field(CLIENT_ID.toString(), entity.getClientId());
+    doc.field(SUPPORT.toString(), entity.isSupport());
     return doc;
   }
 
@@ -52,6 +59,9 @@ public enum OClient implements OTypeHolder<Client> {
     l.setId(doc.getIdentity().toString());
     l.setName((String) doc.field(NAME.toString()));
     l.setClientId((Integer) doc.field(CLIENT_ID.toString()));
+    Boolean field = (Boolean) doc.field(SUPPORT.toString());
+    l.setSupport(field != null ? field : false);
+
     return l;
   }
 

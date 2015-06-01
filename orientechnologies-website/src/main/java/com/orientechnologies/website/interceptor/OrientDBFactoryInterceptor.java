@@ -2,6 +2,7 @@ package com.orientechnologies.website.interceptor;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.website.OrientDBFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.ModelAndView;
@@ -18,10 +19,10 @@ public class OrientDBFactoryInterceptor extends HandlerInterceptorAdapter {
 
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-//    OrientGraph graph = factory.getGraph();
-//
-//    graph.begin();
-//    ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());
+    // OrientGraph graph = factory.getGraph();
+    //
+    // graph.begin();
+    // ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());
     return super.preHandle(request, response, handler);
   }
 
@@ -29,8 +30,10 @@ public class OrientDBFactoryInterceptor extends HandlerInterceptorAdapter {
   public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView)
       throws Exception {
 
+    OrientGraph graph = factory.getGraph();
     factory.unsetDb();
     ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    graph.shutdown();
     super.postHandle(request, response, handler, modelAndView);
   }
 }

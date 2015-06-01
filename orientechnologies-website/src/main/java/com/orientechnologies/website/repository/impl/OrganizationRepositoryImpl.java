@@ -155,7 +155,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   private String addProfilation(String orgName, String query, int idx) {
     OUser user = SecurityHelper.currentUser();
 
-    boolean isMember = userService.isMember(user, orgName);
+    boolean isMember = userService.isMember(user, orgName) || userService.isSupport(user, orgName);
     if (isMember) {
       return query;
     }
@@ -187,7 +187,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   @Override
   public Page<Topic> findOrganizationTopics(String name, String q, String page, String perPage) {
 
-      String query = topicsQueryParams(q, name, false);
+    String query = topicsQueryParams(q, name, false);
     String queryCount = topicsQueryParams(q, name, true);
 
     OrientGraph db = dbFactory.getGraph();
@@ -526,7 +526,9 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
     try {
       ODocument doc = vertices.iterator().next().getRecord();
-      return OIssue.NUMBER.fromDoc(doc, db);
+      Issue issue = OIssue.NUMBER.fromDoc(doc, db);
+      userService.profileIssue(SecurityHelper.currentUser(), issue, name);
+      return issue;
     } catch (NoSuchElementException e) {
       return null;
     }

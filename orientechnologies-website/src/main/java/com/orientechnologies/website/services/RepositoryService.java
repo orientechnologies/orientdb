@@ -19,4 +19,6 @@ public interface RepositoryService {
   public void addLabel(Repository repo, Label label);
 
   public void addMilestone(Repository repoDtp, Milestone m);
+
+  public void syncRepository(Repository repository);
 }

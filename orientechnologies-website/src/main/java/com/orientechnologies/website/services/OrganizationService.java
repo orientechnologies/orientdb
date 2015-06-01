@@ -17,6 +17,8 @@ public interface OrganizationService {
 
   public Client registerClient(String org, Client client);
 
+  public Client patchClient(String org, Integer clientId, Client patch);
+
   @Transactional
   public OUser addMemberClient(String org, Integer clientId, String username);
 

@@ -135,4 +135,9 @@ public class RepositoryServiceGithub implements RepositoryService {
   public void addMilestone(Repository repoDtp, Milestone m) {
 
   }
+
+  @Override
+  public void syncRepository(Repository repository) {
+    throw new UnsupportedOperationException();
+  }
 }
