@@ -160,23 +160,14 @@ public class ODistributedWorker extends Thread {
           ODistributedAbstractPlugin.REPLICATOR_USER);
       database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
           replicatorUser.password);
+      database.reload();
 
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
       final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
           ODistributedAbstractPlugin.REPLICATOR_USER);
       database.open(replicatorUser.name, replicatorUser.password);
-
-    } else {
-      // After initialize database, create replicator user in DB and reset database with OSecurityShared instead of OSecurityNull
-      // OSecurity security = database.getMetadata().getSecurity();
-      // if (security == null || security instanceof OSecurityNull) {
-      // final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
-      // ODistributedAbstractPlugin.REPLICATOR_USER);
-      // createReplicatorUser(database, replicatorUser);
-      // database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
-      // replicatorUser.password);
-      // }
+      database.reload();
     }
   }
 

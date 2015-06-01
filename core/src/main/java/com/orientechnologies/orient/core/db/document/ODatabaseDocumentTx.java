@@ -494,9 +494,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   public ODatabaseDocumentTx copy() {
-    if (this.isClosed()) {
-      throw new ODatabaseException("trying to copy a closed db");
-    }
+    if (this.isClosed())
+      throw new ODatabaseException("Cannot copy a closed db");
+
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(this.url);
     db.user = this.user;
     db.properties.putAll(this.properties);
@@ -538,6 +538,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @Override
   public void reload() {
+    if (this.isClosed())
+      throw new ODatabaseException("Cannot reload a closed db");
+
     metadata.reload();
     storage.reload();
   }
