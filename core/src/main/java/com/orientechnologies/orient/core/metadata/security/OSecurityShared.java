@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -46,6 +40,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Shared security class. It's shared by all the database instances that point to the same storage.
@@ -268,7 +268,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   public ORole getRole(final String roleName, final boolean allowRepair) {
     List<ODocument> result = getDatabase().<OCommandRequest> command(
-        new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1")).execute();
+        new OSQLSynchQuery<ODocument>("select from ORole where name = ? limit 1")).execute(roleName);
 
     if (result != null && !result.isEmpty())
       return new ORole(result.get(0));
@@ -487,8 +487,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
       return null;
 
     List<ODocument> result = getDatabase().<OCommandRequest> command(
-        new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
-        .execute();
+        new OSQLSynchQuery<ODocument>("select from OUser where name = ? limit 1").setFetchPlan("roles:1"))
+        .execute(iUserName);
 
     if (result != null && !result.isEmpty())
       return new OUser(result.get(0));
