@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -106,8 +107,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
           final OrientElement element = (OrientElement) input;
 
           final OClass cls;
-          final String clsName = className != null ? className : (element instanceof OrientVertex ? element
-              .getLabel() : element.getLabel());
+          final String clsName = className != null ? className : (element instanceof OrientVertex ? element.getLabel() : element
+              .getLabel());
           if (clsName != null)
             cls = getOrCreateClass(clsName, element.getBaseClassName());
           else
@@ -369,16 +370,21 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     } else
       ODatabaseRecordThreadLocal.INSTANCE.set(documentDatabase);
 
-    if (className != null) {
-      schemaClass = getOrCreateClass(className, null);
-      log(OETLProcessor.LOG_LEVELS.DEBUG, "%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
-    }
-
     if (classes != null) {
       for (ODocument cls : classes) {
         schemaClass = getOrCreateClass((String) cls.field("name"), (String) cls.field("extends"));
+
+        Integer clusters = cls.field("clusters");
+        if (clusters != null)
+          OClassImpl.addClusters(schemaClass, clusters);
+
         log(OETLProcessor.LOG_LEVELS.DEBUG, "%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
       }
+    }
+
+    if (className != null) {
+      schemaClass = getOrCreateClass(className, null);
+      log(OETLProcessor.LOG_LEVELS.DEBUG, "%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
     }
 
     if (indexes != null) {
