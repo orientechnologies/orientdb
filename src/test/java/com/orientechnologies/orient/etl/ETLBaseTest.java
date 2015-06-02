@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import junit.framework.TestCase;
@@ -53,9 +54,15 @@ public abstract class ETLBaseTest extends TestCase {
     return ((TestLoader) proc.getLoader()).loadedRecords;
   }
 
-  protected void process(String cfgJson) {
+  protected void process(final String cfgJson) {
     ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
     proc.parse(cfg, null);
+    proc.execute();
+  }
+
+  protected void process(final String cfgJson, final OBasicCommandContext iContext) {
+    ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
+    proc.parse(cfg, iContext);
     proc.execute();
   }
 }

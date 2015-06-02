@@ -411,8 +411,8 @@ public class OETLProcessor {
     if (cfgMaxRetries != null)
       maxRetries = cfgMaxRetries;
 
-    final int dumpEveryMs = (Integer) context.getVariable("dumpEveryMs");
-    if (dumpEveryMs > 0) {
+    final Integer dumpEveryMs = (Integer) context.getVariable("dumpEveryMs");
+    if (dumpEveryMs != null && dumpEveryMs > 0) {
       dumpTask = new TimerTask() {
         @Override
         public void run() {
