@@ -18,6 +18,8 @@
 
 package com.orientechnologies.orient.etl.loader;
 
+import java.util.List;
+
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -36,8 +38,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import java.util.List;
 
 /**
  * ETL Loader that saves record into OrientDB database.
@@ -261,7 +261,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       break;
 
     case GRAPH:
-      final OrientGraphFactory factory = new OrientGraphFactory(dbURL);
+      final OrientGraphFactory factory = new OrientGraphFactory(dbURL, dbUser, dbPassword);
       if (dbAutoDropIfExists && factory.exists()) {
         log(OETLProcessor.LOG_LEVELS.INFO, "Dropping existent database '%s'...", dbURL);
         factory.drop();
@@ -288,7 +288,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         break;
 
       case GRAPH:
-        final OrientGraphFactory factory = new OrientGraphFactory(dbURL);
+        final OrientGraphFactory factory = new OrientGraphFactory(dbURL, dbUser, dbPassword);
         final OrientBaseGraph graphDatabase = tx ? factory.getTx() : factory.getNoTx();
         graphDatabase.setUseLightweightEdges(useLightweightEdges);
         graphDatabase.setStandardElementConstraints(standardElementConstraints);
@@ -356,7 +356,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         break;
 
       case GRAPH:
-        final OrientGraphFactory factory = new OrientGraphFactory(dbURL);
+        final OrientGraphFactory factory = new OrientGraphFactory(dbURL, dbUser, dbPassword);
         graphDatabase = factory.getNoTx();
         graphDatabase.setUseLightweightEdges(useLightweightEdges);
         graphDatabase.setStandardElementConstraints(standardElementConstraints);
