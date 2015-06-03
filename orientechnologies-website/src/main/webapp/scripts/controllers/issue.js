@@ -662,6 +662,39 @@ angular.module('webappApp')
   });
 
 angular.module('webappApp')
+  .controller('ChangeTagCtrl', function ($scope, $filter) {
+
+    $scope.title = $scope.title || 'Apply tags to this topic';
+    $scope.isTagged = function (tag) {
+
+      for (var l in $scope.topic.tags) {
+        if ($scope.topic.tags[l].name == tag.name) {
+          return true;
+        }
+      }
+      return false;
+    }
+    $scope.toggleTag = function (tag) {
+      if (!$scope.isTagged(tag)) {
+        $scope.$emit("tag:added", tag);
+      } else {
+        $scope.$emit("tag:removed", tag);
+      }
+      if ($scope.labelPopover && $scope.labelPopover) {
+        $scope.$hide();
+      }
+    }
+
+    $scope.selectFirst = function () {
+
+      var filtered = $filter('filter')($scope.tags, $scope.labelFilter);
+      if (filtered.length == 1) {
+        $scope.toggleTag(filtered[0]);
+      }
+    }
+  });
+
+angular.module('webappApp')
   .controller('ChangeMilestoneCtrl', function ($scope, $filter, $routeParams, Repo, $popover) {
 
     $scope.title = $scope.title || 'Change target milestone';
