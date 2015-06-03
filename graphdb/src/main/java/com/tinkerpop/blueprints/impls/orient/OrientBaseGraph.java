@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -65,6 +66,7 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
+
 import org.apache.commons.configuration.Configuration;
 
 import java.io.UnsupportedEncodingException;
@@ -1470,8 +1472,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     final ODocument doc = rec.getRecord();
     if (doc != null) {
-      final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(doc);
-      if (schemaClass != null && schemaClass.isSubClassOf(OrientEdgeType.CLASS_NAME))
+      final OImmutableClass schemaClass = ODocumentInternal.getImmutableSchemaClass(doc);
+      if (schemaClass != null && schemaClass.isEdgeType())
         return new OrientEdge(this, doc);
       else
         return new OrientVertex(this, doc);

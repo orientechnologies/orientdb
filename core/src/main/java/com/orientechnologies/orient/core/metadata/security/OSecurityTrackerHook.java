@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
@@ -55,10 +56,11 @@ public class OSecurityTrackerHook extends ODocumentHookAbstract {
   }
 
   private void incrementSchemaVersion(ODocument doc) {
-    if (ODocumentInternal.getImmutableSchemaClass(doc) == null)
+    OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(doc);
+    if (immutableClass == null)
       return;
 
-    final String className = ODocumentInternal.getImmutableSchemaClass(doc).getName();
+    final String className = immutableClass.getName();
 
     if (className.equalsIgnoreCase(OUser.CLASS_NAME) || className.equalsIgnoreCase(ORole.CLASS_NAME)) {
       final OSecurity scr = security.get();

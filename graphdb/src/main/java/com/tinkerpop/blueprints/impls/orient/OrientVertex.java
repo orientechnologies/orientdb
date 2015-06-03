@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -278,7 +279,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
             found = true;
             break;
 
-          } else if (ODocumentInternal.getImmutableSchemaClass(curr).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+          } else if (ODocumentInternal.getImmutableSchemaClass(curr).isEdgeType()) {
             final Direction direction = getConnectionDirection(iFieldName, useVertexFieldsForEdgeLabels);
 
             // EDGE, REMOVE THE EDGE
@@ -330,7 +331,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
             found = true;
             break;
 
-          } else if (ODocumentInternal.getImmutableSchemaClass(curr).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+          } else if (ODocumentInternal.getImmutableSchemaClass(curr).isVertexType()) {
             final Direction direction = getConnectionDirection(iFieldName, useVertexFieldsForEdgeLabels);
 
             // EDGE, REMOVE THE EDGE
@@ -422,13 +423,16 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
   private static void deleteEdgeIfAny(final OIdentifiable iRecord) {
     if (iRecord != null) {
       final ODocument doc = iRecord.getRecord();
-      if (doc != null && ODocumentInternal.getImmutableSchemaClass(doc) != null && ODocumentInternal.getImmutableSchemaClass(doc).isSubClassOf(OrientEdgeType.CLASS_NAME))
+      if (doc != null) {
+        OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);  
+        if(clazz != null && clazz.isEdgeType())
         // DELETE THE EDGE RECORD TOO
         try {
           doc.delete();
         } catch (ORecordNotFoundException e) {
           // IGNORE THE EXCEPTION: THE RECORD HAS BEEN ALREADY DELETED
         }
+      }
     }
   }
 
@@ -442,11 +446,12 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       return;
 
     final String inverseFieldName = getInverseConnectionFieldName(iFieldName, useVertexFieldsForEdgeLabels);
-    if (ODocumentInternal.getImmutableSchemaClass(r).isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(r);
+    if (immutableClass.isVertexType()) {
       // DIRECT VERTEX
       removeEdges(r, inverseFieldName, iVertex, false, useVertexFieldsForEdgeLabels);
 
-    } else if (ODocumentInternal.getImmutableSchemaClass(r).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+    } else if (immutableClass.isEdgeType()) {
       // EDGE, REMOVE THE EDGE
       final OIdentifiable otherVertex = OrientEdge.getConnection(r, getConnectionDirection(inverseFieldName, useVertexFieldsForEdgeLabels));
 
@@ -470,7 +475,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     if (fieldRecord == null)
       return null;
 
-    if (ODocumentInternal.getImmutableSchemaClass(fieldRecord).isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(fieldRecord);
+    if (immutableClass.isVertexType()) {
       if (iTargetVertex != null && !iTargetVertex.equals(fieldValue))
         return null;
 
@@ -480,7 +486,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       else
         toAdd = new OrientEdge(graph, fieldRecord, doc, connection.getValue());
 
-    } else if (ODocumentInternal.getImmutableSchemaClass(fieldRecord).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+    } else if (immutableClass.isEdgeType()) {
       // EDGE
       if (iTargetVertex != null) {
         Object targetVertex = OrientEdge.getConnection(fieldRecord, connection.getKey().opposite());
@@ -1262,10 +1268,11 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     final OrientVertex toAdd;
 
     final ODocument fieldRecord = ((OIdentifiable) fieldValue).getRecord();
-    if (ODocumentInternal.getImmutableSchemaClass(fieldRecord).isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(fieldRecord);
+    if (immutableClass.isVertexType()) {
       // DIRECT VERTEX
       toAdd = new OrientVertex(graph, fieldRecord);
-    } else if (ODocumentInternal.getImmutableSchemaClass(fieldRecord).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+    } else if (immutableClass.isEdgeType()) {
       // EDGE
       if (settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(fieldRecord), iLabels)) {
         final OIdentifiable vertexDoc = OrientEdge.getConnection(fieldRecord, connection.getKey().opposite());

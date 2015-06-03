@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -182,8 +183,8 @@ public class OClassTrigger extends ODocumentHookAbstract {
       return RESULT.RECORD_NOT_CHANGED;
 
     final ODocument document = (ODocument) iRecord;
-    if (ODocumentInternal.getImmutableSchemaClass(document) != null
-        && ODocumentInternal.getImmutableSchemaClass(document).isSubClassOf(CLASSNAME))
+    OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(document);
+    if (immutableClass != null && immutableClass.isSubClassOf(CLASSNAME))
       return super.onTrigger(iType, iRecord);
 
     return RESULT.RECORD_NOT_CHANGED;
