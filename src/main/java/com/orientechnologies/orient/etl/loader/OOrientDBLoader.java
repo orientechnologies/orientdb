@@ -345,7 +345,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   }
 
   protected synchronized ODatabaseDocumentTx init() {
-    ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
+    ODatabaseDocumentTx documentDatabase = processor.isParallel() ? null : pipeline.getDocumentDatabase();
     OrientBaseGraph graphDatabase;
 
     if (documentDatabase == null) {
