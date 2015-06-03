@@ -146,7 +146,7 @@ public class SecurityTest extends DocumentDBBaseTest {
     OSecurity security = database.getMetadata().getSecurity();
 
     ORole adminRole = security.getRole("admin");
-    OUser newUser = security.createUser("user'quoted","foobar", adminRole);
+    OUser newUser = security.createUser("user'quoted", "foobar", adminRole);
 
     database.close();
 
@@ -157,5 +157,15 @@ public class SecurityTest extends DocumentDBBaseTest {
     security = database.getMetadata().getSecurity();
     OUser user = security.getUser("user'quoted");
     Assert.assertNotNull(user);
+    security.dropUser(user.getName());
+
+    database.close();
+
+    try{
+      database.open("user'quoted", "foobar");
+      Assert.fail();
+    }catch(Exception e){
+
+    }
   }
 }

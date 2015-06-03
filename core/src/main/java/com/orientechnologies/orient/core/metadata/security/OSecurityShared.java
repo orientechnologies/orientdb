@@ -252,7 +252,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   public boolean dropUser(final String iUserName) {
     final Number removed = getDatabase().<OCommandRequest> command(
-        new OCommandSQL("delete from OUser where name = '" + iUserName + "'")).execute();
+        new OCommandSQL("delete from OUser where name = ?")).execute(iUserName);
 
     return removed != null && removed.intValue() > 0;
   }
