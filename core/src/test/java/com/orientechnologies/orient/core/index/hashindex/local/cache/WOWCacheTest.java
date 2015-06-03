@@ -94,7 +94,7 @@ public class WOWCacheTest {
   }
 
   private void initBuffer() throws IOException {
-    wowCache = new OWOWCache(true, pageSize, 10000, writeAheadLog, 10, 100, storageLocal, false, 1);
+    wowCache = new OWOWCache(true, pageSize, 10000, writeAheadLog, 10, 100, 100, storageLocal, false, 1);
   }
 
   public void testLoadStore() throws IOException {

@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 public class SBTreeNonLeafBucketTest {
   public void testInitialization() throws Exception {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
-    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
+    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cachePointer.incrementReferrer();
 
@@ -53,7 +53,7 @@ public class SBTreeNonLeafBucketTest {
     }
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
-    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
+    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cachePointer.incrementReferrer();
 
@@ -114,7 +114,7 @@ public class SBTreeNonLeafBucketTest {
     }
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
-    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
+    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
 
     cachePointer.incrementReferrer();
