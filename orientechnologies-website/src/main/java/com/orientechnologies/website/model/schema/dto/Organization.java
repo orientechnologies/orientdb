@@ -1,11 +1,12 @@
 package com.orientechnologies.website.model.schema.dto;
 
+import com.orientechnologies.website.model.schema.Identity;
+
 /**
  * Created by enricorisa on 16/10/14.
  */
-public class Organization {
+public class Organization extends Identity {
 
-  private String id;
   private String name;
 
   public String getName() {
@@ -14,14 +15,6 @@ public class Organization {
 
   public void setName(String name) {
     this.name = name;
-  }
-
-  public String getId() {
-    return id;
-  }
-
-  public void setId(String id) {
-    this.id = id;
   }
 
 }

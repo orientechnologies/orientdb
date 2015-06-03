@@ -1,20 +1,18 @@
 package com.orientechnologies.website.model.schema.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.orientechnologies.website.model.schema.Identity;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Enrico Risa on 28/05/15.
  */
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Topic {
+public class Topic extends Identity {
 
-  @JsonIgnore
-  private String       id;
-  private String       uuid;
   private Long         number;
   private String       title;
   private String       body;
@@ -25,10 +23,7 @@ public class Topic {
   private OUser        user;
   private Boolean      confidential;
 
-  public String getId() {
-
-    return id;
-  }
+  protected List<Tag>  tags;
 
   public Long getNumber() {
     return number;
@@ -36,18 +31,6 @@ public class Topic {
 
   public void setNumber(Long number) {
     this.number = number;
-  }
-
-  public void setId(String id) {
-    this.id = id;
-  }
-
-  public String getUuid() {
-    return uuid;
-  }
-
-  public void setUuid(String uuid) {
-    this.uuid = uuid;
   }
 
   public String getTitle() {
@@ -112,5 +95,13 @@ public class Topic {
 
   public void setConfidential(Boolean confidential) {
     this.confidential = confidential;
+  }
+
+  public List<Tag> getTags() {
+    return tags;
+  }
+
+  public void setTags(List<Tag> tags) {
+    this.tags = tags;
   }
 }

@@ -60,4 +60,7 @@ public interface OrganizationService {
 
   @Transactional
   public Topic registerTopic(String name, Topic topic);
+
+  @Transactional
+  public Tag registerTag(String name, Tag tag);
 }

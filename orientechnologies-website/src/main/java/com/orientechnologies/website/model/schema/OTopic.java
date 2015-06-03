@@ -3,14 +3,19 @@ package com.orientechnologies.website.model.schema;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.website.ApplicationContextHelper;
 import com.orientechnologies.website.helper.OSequenceHelper;
+import com.orientechnologies.website.model.schema.dto.Tag;
 import com.orientechnologies.website.model.schema.dto.Topic;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.springframework.context.ApplicationContext;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Enrico Risa on 04/11/14.
@@ -157,6 +162,15 @@ public enum OTopic implements OTypeHolder<Topic> {
     for (Vertex vertex : iss.getVertices(Direction.OUT, HasComment.class.getSimpleName())) {
       count += 1;
     }
+    List<Tag> tags = new ArrayList<Tag>();
+    ApplicationContext applicationContext = ApplicationContextHelper.getApplicationContext();
+    SchemaManager schemaManager = applicationContext.getBean(SchemaManager.class);
+    for (Vertex tag : iss.getVertices(Direction.OUT, HasTag.class.getSimpleName())) {
+      ODocument v = ((OrientVertex) tag).getRecord();
+      Tag tag1 = schemaManager.fromDoc(v, Tag.class);
+      tags.add(tag1);
+    }
+    issue.setTags(tags);
     issue.setComments(count);
 
     return issue;

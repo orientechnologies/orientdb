@@ -26,7 +26,7 @@ public class IssueServiceGithub implements IssueService {
   }
 
   @Override
-  public void commentIssue(Issue issue, Comment comment,boolean bot) {
+  public void commentIssue(Issue issue, Comment comment, boolean bot) {
     throw new UnsupportedOperationException();
   }
 
@@ -99,6 +99,8 @@ public class IssueServiceGithub implements IssueService {
 
   @Override
   public void removeLabel(Issue issue, String label, OUser actor, boolean remote) {
+
+    String token = actor != null ? actor.getToken() : SecurityHelper.currentToken();
 
     GitHub github = new GitHub(SecurityHelper.currentToken());
 

@@ -14,12 +14,10 @@ import com.orientechnologies.website.model.schema.dto.web.hateoas.ScopeDTO;
 import com.orientechnologies.website.model.schema.dto.web.hateoas.TopicResource;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
+import com.orientechnologies.website.repository.TagRepository;
 import com.orientechnologies.website.repository.TopicRepository;
 import com.orientechnologies.website.security.SecurityManager;
-import com.orientechnologies.website.services.OrganizationService;
-import com.orientechnologies.website.services.RepositoryService;
-import com.orientechnologies.website.services.TopicService;
-import com.orientechnologies.website.services.UserService;
+import com.orientechnologies.website.services.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.hateoas.PagedResources;
@@ -27,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -64,6 +63,12 @@ public class OrganizationController extends ExceptionController {
 
   @Autowired
   private TopicRepository        topicRepository;
+
+  @Autowired
+  private TagRepository          tagRepository;
+
+  @Autowired
+  private TagService             tagService;
 
   @Autowired
   private SecurityManager        securityManager;
@@ -303,8 +308,7 @@ public class OrganizationController extends ExceptionController {
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<List<Client>> findClients(@PathVariable("name") String name) {
 
-    OUser user = SecurityHelper.currentUser();
-    if (userService.isMember(user, name)) {
+    if (securityManager.isCurrentMemberOrSupport(name)) {
       return new ResponseEntity<List<Client>>(orgRepository.findClients(name), HttpStatus.OK);
     } else {
       return new ResponseEntity<List<Client>>(HttpStatus.NOT_FOUND);
@@ -326,8 +330,7 @@ public class OrganizationController extends ExceptionController {
   @RequestMapping(value = "{name}/clients/{id}", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<Client> findClient(@PathVariable("name") String name, @PathVariable("id") Integer id) {
-    OUser user = SecurityHelper.currentUser();
-    if (userService.isMember(user, name)) {
+    if (securityManager.isCurrentMember(name)) {
       return new ResponseEntity<Client>(orgRepository.findClient(name, id), HttpStatus.OK);
     } else {
       return new ResponseEntity<Client>(HttpStatus.NOT_FOUND);
@@ -533,6 +536,38 @@ public class OrganizationController extends ExceptionController {
 
   }
 
+  @RequestMapping(value = "{name}/topics/{number}/tags", method = RequestMethod.POST)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity addTagsToTopic(@PathVariable("name") String name, @PathVariable("number") Long number,
+      @RequestBody List<Tag> tags) {
+
+    Topic singleTopicByNumber = orgRepository.findSingleTopicByNumber(name, number);
+
+    if (singleTopicByNumber != null) {
+      topicService.tagsTopic(singleTopicByNumber, tags);
+
+      return new ResponseEntity<TopicComment>(HttpStatus.OK);
+    } else {
+      return new ResponseEntity<TopicComment>(HttpStatus.NOT_FOUND);
+    }
+  }
+
+  @RequestMapping(value = "{name}/topics/{number}/tags/{uuid}", method = RequestMethod.DELETE)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity deleteSingleTopicTag(@PathVariable("name") String name, @PathVariable("number") Long number,
+      @PathVariable("uuid") String uuid) {
+
+    Topic singleTopicByNumber = orgRepository.findSingleTopicByNumber(name, number);
+
+    if (singleTopicByNumber != null) {
+      topicService.deleteSingleTopicTag(singleTopicByNumber, uuid);
+
+      return new ResponseEntity<TopicComment>(HttpStatus.OK);
+    } else {
+      return new ResponseEntity<TopicComment>(HttpStatus.NOT_FOUND);
+    }
+  }
+
   @RequestMapping(value = "{name}/topics/{number}", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<Topic> getSingleTopic(@PathVariable("name") String name, @PathVariable("number") Long uuid) {
@@ -563,5 +598,64 @@ public class OrganizationController extends ExceptionController {
     }
     Topic t = topicService.patchTopic(singleTopicByNumber, patch);
     return new ResponseEntity<Topic>(t, HttpStatus.OK);
+  }
+
+  // TAGS
+
+  @RequestMapping(value = "{name}/tags", method = RequestMethod.POST)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<Tag> postTag(@PathVariable("name") String name, @RequestBody Tag tag) {
+
+    if (securityManager.isCurrentMember(name)) {
+      tag = organizationService.registerTag(name, tag);
+      return new ResponseEntity<Tag>(tag, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<Tag>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  @RequestMapping(value = "{name}/tags/{uuid}", method = RequestMethod.PATCH)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<Tag> updateTag(@PathVariable("name") String name, @PathVariable("uuid") String uuid, @RequestBody Tag tag) {
+
+    if (securityManager.isCurrentMember(name)) {
+      Tag t = tagService.patchTagByUUID(name, uuid, tag);
+      return new ResponseEntity<Tag>(t, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<Tag>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  @RequestMapping(value = "{name}/tags/{uuid}", method = RequestMethod.DELETE)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<Tag> updateTag(@PathVariable("name") String name, @PathVariable("uuid") String uuid) {
+
+    if (securityManager.isCurrentMember(name)) {
+      tagService.dropTag(name, uuid);
+      return new ResponseEntity<Tag>(HttpStatus.OK);
+    } else {
+      return new ResponseEntity<Tag>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  @RequestMapping(value = "{name}/tags", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<List<Tag>> getTags(@PathVariable("name") String name) {
+
+    if (securityManager.isCurrentMember(name)) {
+
+      List<Tag> tags = new ArrayList<Tag>();
+      Iterable<Tag> all = tagRepository.findAll();
+      for (Tag tag : all) {
+        tags.add(tag);
+      }
+      return new ResponseEntity<List<Tag>>(tags, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<Tag>>(HttpStatus.NOT_FOUND);
+    }
+
   }
 }

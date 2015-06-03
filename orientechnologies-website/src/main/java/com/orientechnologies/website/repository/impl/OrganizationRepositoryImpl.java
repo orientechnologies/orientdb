@@ -39,6 +39,9 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   @Autowired
   private ChatHandler     chatHandler;
 
+  @Autowired
+  private SchemaManager   schemaManager;
+
   @Override
   public Organization findOneByName(String name) {
 
@@ -262,6 +265,20 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
       return null;
     }
 
+  }
+
+  @Override
+  public Tag findTagByUUID(String name, String uuid) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(out('HasTag')[uuid = '%s']) from Organization where name = '%s') ", uuid, name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+    try {
+      ODocument doc = vertices.iterator().next().getRecord();
+
+      return schemaManager.fromDoc(doc, Tag.class);
+    } catch (NoSuchElementException e) {
+      return null;
+    }
   }
 
   private String applyParam(String incominQuery, String name, String value, int idx) {

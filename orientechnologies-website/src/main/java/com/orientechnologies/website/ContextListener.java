@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.website.model.schema.OSiteSchema;
+import com.orientechnologies.website.model.schema.SchemaManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,6 +23,9 @@ public class ContextListener {
   @Autowired
   private OrientDBConnectionSettings settings;
 
+  @Autowired
+  protected SchemaManager            schemaManager;
+
   @PostConstruct
   public void atStartup() {
 
@@ -32,7 +36,8 @@ public class ContextListener {
       server.activate();
       ODatabaseDocumentTx tx = Orient.instance().getDatabaseFactory().createDatabase("graph", settings.getUrl());
 
-      OSiteSchema.createSchema(tx);
+      OSiteSchema.createSchema(tx,schemaManager);
+
     } catch (Exception e) {
       e.printStackTrace();
     }

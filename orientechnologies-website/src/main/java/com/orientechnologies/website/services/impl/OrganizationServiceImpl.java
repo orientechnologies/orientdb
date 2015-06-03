@@ -23,6 +23,7 @@ import com.orientechnologies.website.repository.*;
 import com.orientechnologies.website.security.DeveloperAuthentication;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.RepositoryService;
+import com.orientechnologies.website.services.TopicService;
 import com.orientechnologies.website.services.reactor.GitHubIssueImporter;
 import com.orientechnologies.website.services.reactor.ReactorMSG;
 import com.tinkerpop.blueprints.Direction;
@@ -88,6 +89,15 @@ public class OrganizationServiceImpl implements OrganizationService {
 
   @Autowired
   private TopicRepository        topicRepository;
+
+  @Autowired
+  private TagRepository          tagRepository;
+
+  @Autowired
+  private SchemaManager          schemaManager;
+
+  @Autowired
+  private TopicService           topicService;
 
   @Override
   public void addMember(String org, String username) throws ServiceException {
@@ -380,11 +390,28 @@ public class OrganizationServiceImpl implements OrganizationService {
     if (organization != null) {
       OUser oUser = SecurityHelper.currentUser();
       topic.setCreatedAt(new Date());
+      List<Tag> tags = topic.getTags();
       Topic saved = topicRepository.save(topic);
+      saved.setOrganization(organization);
       createTopicUserRelationship(saved, oUser);
       createTopicOrganizationRelationship(organization, saved);
+      topicService.tagsTopic(saved, tags);
       saved.setUser(oUser);
       return saved;
+    }
+    return null;
+  }
+
+  @Override
+  public Tag registerTag(String name, Tag tag) {
+    Organization organization = organizationRepository.findOneByName(name);
+
+    if (organization != null) {
+      tag = tagRepository.save(tag);
+
+      schemaManager.connect(organization, tag, "HasTag");
+
+      return tag;
     }
     return null;
   }
@@ -492,33 +519,6 @@ public class OrganizationServiceImpl implements OrganizationService {
     orgVertex.addEdge(HasOwner.class.getSimpleName(), devVertex);
   }
 
-  // @Override
-  // public Environment registerClientEnvironment(String name, Integer id, Environment environment) {
-  // Organization organization = organizationRepository.findOneByName(name);
-  // Client client = organizationRepository.findClient(name, id);
-  // if (organization != null) {
-  // environment = environmentRepository.save(environment);
-  // createClientEnvironmentRelationship(client, environment);
-  // return environment;
-  // } else {
-  // throw ServiceException.create(HttpStatus.NOT_FOUND.value()).withMessage("Organization not Found");
-  // }
-  // }
-
-  // @Override
-  // public Sla registerClientSlaToEnvironment(String name, Integer id, String env, Sla sla) {
-  // Organization organization = organizationRepository.findOneByName(name);
-  // Client client = organizationRepository.findClient(name, id);
-  // Environment e = organizationRepository.findClientEnvironmentById(name, id, env);
-  // if (organization != null && client != null && e != null) {
-  // sla = slaRepository.save(sla);
-  // createEnvironmentSlaRelationship(e, sla);
-  // return sla;
-  // } else {
-  // throw ServiceException.create(HttpStatus.NOT_FOUND.value()).withMessage("Organization not Found");
-  // }
-  // }
-
   private void createRepoScopeRelationship(Repository repo, Scope scope) {
     OrientGraph graph = dbFactory.getGraph();
 
@@ -534,15 +534,6 @@ public class OrganizationServiceImpl implements OrganizationService {
     OrientVertex devVertex = graph.getVertex(new ORecordId(sla.getId()));
     orgVertex.addEdge(HasSla.class.getSimpleName(), devVertex);
   }
-
-  // private void createClientEnvironmentRelationship(Client client, Environment environment) {
-  //
-  // OrientGraph graph = dbFactory.getGraph();
-  //
-  // OrientVertex orgVertex = graph.getVertex(new ORecordId(client.getId()));
-  // OrientVertex devVertex = graph.getVertex(new ORecordId(environment.getId()));
-  // orgVertex.addEdge(HasEnvironment.class.getSimpleName(), devVertex);
-  // }
 
   public void createMembership(Organization organization, OUser user) {
     OrientGraph graph = dbFactory.getGraph();

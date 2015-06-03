@@ -79,4 +79,6 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
   List<Contract> findClientContracts(String name, Integer id);
 
   public Topic findSingleTopicByNumber(String name, Long number);
+
+  public Tag findTagByUUID(String name, String uuid);
 }

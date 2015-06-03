@@ -26,6 +26,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -179,10 +180,16 @@ public class OrganizationControllerTest {
   @Test
   public void testTopic() throws IOException {
 
+    final Tag tag = testCreateTag();
+
     Topic t = new Topic();
     t.setTitle("FirstTest");
     t.setBody("Test body");
-
+    t.setTags(new ArrayList<Tag>() {
+      {
+        add(tag);
+      }
+    });
     Response post = header().given().body(t).when().post("/api/v1/orgs/fake/topics");
 
     Assert.assertEquals(200, post.statusCode());
@@ -197,6 +204,11 @@ public class OrganizationControllerTest {
 
     Assert.assertEquals(t.getTitle(), response.getTitle());
     Assert.assertEquals(t.getBody(), response.getBody());
+    Assert.assertEquals(1, t.getTags().size());
+
+    post = header().given().when().delete("/api/v1/orgs/fake/topics/" + response.getNumber() + "/tags/" + tag.getUuid());
+
+    Assert.assertEquals(200, post.statusCode());
 
     post = header().given().when().get("/api/v1/orgs/fake/topics/" + response.getNumber());
 
@@ -211,6 +223,33 @@ public class OrganizationControllerTest {
     Assert.assertNotNull(response.getCreatedAt());
     Assert.assertEquals(t.getTitle(), response.getTitle());
     Assert.assertEquals(t.getBody(), response.getBody());
+    Assert.assertEquals(0, response.getTags().size());
+
+    List<Tag> tags = new ArrayList<Tag>() {
+      {
+        add(tag);
+      }
+    };
+    post = header().given().body(tags).when().post("/api/v1/orgs/fake/topics/" + response.getNumber() + "/tags");
+
+    Assert.assertEquals(200, post.statusCode());
+
+    post = header().given().when().get("/api/v1/orgs/fake/topics/" + response.getNumber());
+
+    Assert.assertEquals(200, post.statusCode());
+
+    response = post.getBody().as(Topic.class);
+
+    Assert.assertNotNull(response);
+    Assert.assertNotNull(response.getNumber());
+    Assert.assertNotNull(response.getUuid());
+    Assert.assertNotNull(response.getUser());
+    Assert.assertNotNull(response.getCreatedAt());
+    Assert.assertEquals(t.getTitle(), response.getTitle());
+    Assert.assertEquals(t.getBody(), response.getBody());
+    Assert.assertEquals(1, response.getTags().size());
+
+    testDeleteTag(tag);
 
     for (int i = 0; i < 100; i++) {
       t = new Topic();
@@ -326,6 +365,61 @@ public class OrganizationControllerTest {
     content = jsonNode.get("content");
     topics = Arrays.asList(mapper.readValue(content.toString(), Topic[].class));
     Assert.assertEquals(1, topics.size());
+
+  }
+
+  protected Tag testCreateTag() {
+
+    Tag t = new Tag();
+    t.setName("core");
+    t.setColor("#ffffff");
+    Response post = header().given().body(t).when().post("/api/v1/orgs/fake/tags");
+
+    Assert.assertEquals(200, post.statusCode());
+
+    Tag response = post.getBody().as(Tag.class);
+
+    Assert.assertNotNull(response);
+    Assert.assertNotNull(response.getUuid());
+    Assert.assertNotNull(response.getName());
+    Assert.assertNotNull(response.getColor());
+    post = header().given().when().get("/api/v1/orgs/fake/tags");
+    Assert.assertEquals(200, post.statusCode());
+    List<Tag> tags = Arrays.asList(post.getBody().as(Tag[].class));
+    Assert.assertEquals(1, tags.size());
+    return response;
+  }
+
+  @Test
+  public void testTags() {
+
+    Tag t = testCreateTag();
+    // TEST PATCH
+
+    t.setName("core1");
+
+    Response post = header().given().body(t).when().patch("/api/v1/orgs/fake/tags/" + t.getUuid());
+    Assert.assertEquals(200, post.statusCode());
+    Tag response = post.getBody().as(Tag.class);
+
+    Assert.assertEquals(t.getName(), response.getName());
+
+    testDeleteTag(t);
+
+    post = header().given().when().get("/api/v1/orgs/fake/tags");
+    Assert.assertEquals(200, post.statusCode());
+
+    List<Tag> tags = Arrays.asList(post.getBody().as(Tag[].class));
+
+    Assert.assertEquals(0, tags.size());
+
+    // TEST DELETE
+  }
+
+  private void testDeleteTag(Tag t) {
+    Response post;
+    post = header().given().when().delete("/api/v1/orgs/fake/tags/" + t.getUuid());
+    Assert.assertEquals(200, post.statusCode());
   }
 
   public static RequestSpecification header() {

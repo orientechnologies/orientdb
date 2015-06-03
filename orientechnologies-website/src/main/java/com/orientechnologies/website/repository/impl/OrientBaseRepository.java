@@ -77,5 +77,10 @@ public abstract class OrientBaseRepository<T> implements BaseRepository<T> {
     return entities;
   }
 
+  @Override
+  public T patch(T entity, T patch) {
+    throw new UnsupportedOperationException();
+  }
+
   public abstract OTypeHolder<T> getHolder();
 }

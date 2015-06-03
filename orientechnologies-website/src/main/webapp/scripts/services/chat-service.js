@@ -11,7 +11,13 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
   var charSocketWrapper = {
     socket: null,
     init: function (callback) {
-      this.socket = new WebSocket(WEBSOCKET);
+
+      try {
+        this.socket = new WebSocket(WEBSOCKET);
+      } catch (err) {
+        console.log(err);
+        return;
+      }
       callback();
     },
     send: function (msg) {
@@ -19,10 +25,12 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
     },
     deinit: function () {
       this.socket.close();
+      this.socket = null;
     }
   }
   var chatService = {
     connected: false,
+    polling: false,
     clients: [],
     badge: 0,
     clean: function () {
@@ -61,10 +69,13 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
     },
 
     connect: function () {
+
       charSocketWrapper.init(initializer)
+      this.polling = true;
     },
     disconnect: function () {
       charSocketWrapper.deinit();
+      this.polling = false;
     },
     getClientName: function (clientId) {
       var name = ''
@@ -78,12 +89,12 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
 
   var poll = function () {
     $timeout(function () {
-      if (!chatService.connected) {
+      if (!chatService.connected && chatService.polling) {
         console.log("Reconnecting to chat service! ")
         charSocketWrapper.init(initializer)
       }
       poll();
-    }, 1000);
+    }, 10000);
   }
 
   $window.onfocus = function () {
@@ -125,9 +136,8 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
       chatService.connected = false;
     };
 
+    //poll();
   }
-
-
 
 
   return chatService;

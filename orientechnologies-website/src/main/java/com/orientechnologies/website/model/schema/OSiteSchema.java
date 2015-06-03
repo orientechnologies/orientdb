@@ -82,11 +82,12 @@ public class OSiteSchema {
     addSchemaClass(cls);
   }
 
-  public static void createSchema(ODatabaseDocumentTx db) {
+  public static void createSchema(ODatabaseDocumentTx db, SchemaManager schemaManager) {
 
     if (!db.exists()) {
       db.create();
       fillSchema(db);
+      schemaManager.createSchema("com.orientechnologies.website.model.schema.dto");
     }
 
   }
@@ -131,13 +132,10 @@ public class OSiteSchema {
       }
     }
 
-
     OClass topic = schema.getClass(Topic.class.getSimpleName());
     topic.createIndex("Topic.title_body", "FULLTEXT", null, null, "LUCENE", new String[] { "title", "body" });
 
-
     OSiteSchemaPopupator.populateData(db);
-
 
   }
   // Edges

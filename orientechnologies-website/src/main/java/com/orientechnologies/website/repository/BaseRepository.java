@@ -13,6 +13,8 @@ public interface BaseRepository<T> {
 
   public void save(Collection<T> entities);
 
+  public T patch(T entity, T patch);
+
   public Class<T> getEntityClass();
 
   public T load(T entity);
