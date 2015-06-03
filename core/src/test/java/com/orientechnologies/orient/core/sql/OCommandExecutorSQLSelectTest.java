@@ -81,6 +81,7 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('foo', ['foo1', 'foo2'])")).execute();
     db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('bar', ['bar1', 'bar2'])")).execute();
 
+    db.command(new OCommandSQL("CREATE class edge")).execute();
   }
 
   @AfterClass
@@ -414,6 +415,14 @@ public class OCommandExecutorSQLSelectTest {
       String coll = doc.field("coll");
       assertTrue(coll.startsWith(name));
     }
+  }
+
+  @Test
+  public void testQuotedClassName() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from `edge`")).execute();
+
+    assertEquals(qResult.size(), 0);
+
   }
 
   @Test

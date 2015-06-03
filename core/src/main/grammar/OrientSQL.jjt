@@ -516,7 +516,10 @@ OIdentifier Identifier():
             token = <WHERE>
             |
             token = <INSERT>
-
+            |
+            token = <VERTEX>
+            |
+            token = <EDGE>
         )
         <BACKTICK>
     )
