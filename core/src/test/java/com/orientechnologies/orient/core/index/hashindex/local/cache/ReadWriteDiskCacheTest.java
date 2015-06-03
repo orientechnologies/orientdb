@@ -713,7 +713,7 @@ public class ReadWriteDiskCacheTest {
     Assert.assertEquals("readWriteDiskCacheTest.tst", pageErrors[1].fileName);
   }
 
-  @Test(enabled = false)
+
   public void testFlushTillLSN() throws Exception {
     closeBufferAndDeleteFile();
 
@@ -727,13 +727,14 @@ public class ReadWriteDiskCacheTest {
         "readWriteDiskCacheTest.tst", 0);
     segmentConfiguration.fileType = OFileClassic.NAME;
 
-    writeBuffer = new OWOWCache(false, 8 + systemOffset, 10000, writeAheadLog, -1,
+    writeBuffer = new OWOWCache(false, 8 + systemOffset, 10000, writeAheadLog, 100,
         2 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 2 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING) + 4
             * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), storageLocal, false, 10);
     readBuffer = new O2QCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, false);
 
     long fileId = readBuffer.addFile(fileName, writeBuffer);
     OLogSequenceNumber lsnToFlush = null;
+
     for (int i = 0; i < 8; i++) {
       OCacheEntry cacheEntry = readBuffer.load(fileId, i, false, writeBuffer);
       if (cacheEntry == null) {
@@ -748,13 +749,15 @@ public class ReadWriteDiskCacheTest {
 
       setLsn(dataPointer.getDataPointer(), pageLSN);
 
-      if (i == 5)
-        lsnToFlush = pageLSN;
+      lsnToFlush = pageLSN;
 
       cacheEntry.markDirty();
       dataPointer.releaseExclusiveLock();
       readBuffer.release(cacheEntry, writeBuffer);
+
     }
+
+    Thread.sleep(1000);
 
     Assert.assertEquals(writeAheadLog.getFlushedLSN(), lsnToFlush);
   }
