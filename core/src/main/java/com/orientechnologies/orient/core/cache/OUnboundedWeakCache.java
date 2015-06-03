@@ -22,8 +22,6 @@ package com.orientechnologies.orient.core.cache;
 
 import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -33,8 +31,6 @@ import com.orientechnologies.orient.core.record.ORecord;
  */
 public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, WeakReference<ORecord>>> implements OCache {
 
-  private final Lock lock = new ReentrantLock();
-
   public OUnboundedWeakCache() {
     super(new WeakHashMap<ORID, WeakReference<ORecord>>());
   }
@@ -42,36 +38,21 @@ public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, Wea
   @Override
   public ORecord get(final ORID rid) {
     final WeakReference<ORecord> value;
-    lock.lock();
-    try {
-      value = cache.get(rid);
-    } finally {
-      lock.unlock();
-    }
+    value = cache.get(rid);
     return get(value);
   }
 
   @Override
   public ORecord put(final ORecord record) {
     final WeakReference<ORecord> value;
-    lock.lock();
-    try {
-      value = cache.put(record.getIdentity(), new WeakReference<ORecord>(record));
-    } finally {
-      lock.unlock();
-    }
+    value = cache.put(record.getIdentity(), new WeakReference<ORecord>(record));
     return get(value);
   }
 
   @Override
   public ORecord remove(final ORID rid) {
     final WeakReference<ORecord> value;
-    lock.lock();
-    try {
-      value = cache.remove(rid);
-    } finally {
-      lock.unlock();
-    }
+    value = cache.remove(rid);
     return get(value);
   }
 
