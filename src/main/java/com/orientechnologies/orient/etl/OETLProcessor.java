@@ -321,6 +321,10 @@ public class OETLProcessor {
     return context;
   }
 
+  public boolean isParallel() {
+    return threads != null;
+  }
+
   protected void executeParallel() {
     try {
       begin();
