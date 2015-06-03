@@ -92,8 +92,8 @@ public class OAtomicOperation {
 
     if (changesContainer.isNew) {
       if (pageIndex <= changesContainer.maxNewPageIndex)
-        return new OCacheEntry(fileId, pageIndex, new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1)),
-            false);
+        return new OCacheEntry(fileId, pageIndex, new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1),
+            fileId, pageIndex), false);
       else
         return null;
     } else {
@@ -106,8 +106,8 @@ public class OAtomicOperation {
         }
 
         if (pageChangesContainer.isNew)
-          return new OCacheEntry(fileId, pageIndex, new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1)),
-              false);
+          return new OCacheEntry(fileId, pageIndex, new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1),
+              fileId, pageIndex), false);
         else
           return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache);
       }
@@ -149,8 +149,8 @@ public class OAtomicOperation {
     changesContainer.pageChangesMap.put(filledUpTo, pageChangesContainer);
     changesContainer.maxNewPageIndex = filledUpTo;
 
-    return new OCacheEntry(fileId, filledUpTo, new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1)),
-        false);
+    return new OCacheEntry(fileId, filledUpTo, new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1),
+        fileId, filledUpTo), false);
   }
 
   public void releasePage(OCacheEntry cacheEntry) {
