@@ -10,9 +10,7 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 @Test
 public class OCommandExecutorSQLSelectTest {
@@ -77,6 +75,8 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into ridsorttest (name) values (8)")).execute();
     db.command(new OCommandSQL("insert into ridsorttest (name) values (6)")).execute();
 
+    db.command(new OCommandSQL("CREATE class TestFromInSquare")).execute();
+    db.command(new OCommandSQL("insert into TestFromInSquare set tags = {' from ':'foo',' to ':'bar'}")).execute();
   }
 
   @AfterClass
@@ -199,7 +199,9 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testOperatorPriority2() {
     List<ODocument> qResult = db
-        .command(new OCommandSQL("select * from bar where name ='a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
+        .command(
+            new OCommandSQL(
+                "select * from bar where name ='a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
         .execute();
 
     List<ODocument> qResult2 = db
@@ -236,7 +238,9 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testOperatorPriority3() {
     List<ODocument> qResult = db
-        .command(new OCommandSQL("select * from bar where name <> 'a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
+        .command(
+            new OCommandSQL(
+                "select * from bar where name <> 'a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
         .execute();
 
     List<ODocument> qResult2 = db
@@ -296,6 +300,19 @@ public class OCommandExecutorSQLSelectTest {
   public void testLimitWithMetadataQuery() {
     List<ODocument> qResult = db.command(new OCommandSQL("select expand(classes) from metadata:schema limit 3")).execute();
     assertEquals(qResult.size(), 3);
+  }
+
+  @Test
+  public void testFromInSquareBrackets() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select tags[' from '] as a from TestFromInSquare")).execute();
+    assertEquals(qResult.size(), 1);
+    assertEquals(qResult.get(0).field("a"), "foo");
+  }
+
+  @Test
+  public void testNewline() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select\n1 as ACTIVE\nFROM foo")).execute();
+    assertEquals(qResult.size(), 5);
   }
 
   @Test

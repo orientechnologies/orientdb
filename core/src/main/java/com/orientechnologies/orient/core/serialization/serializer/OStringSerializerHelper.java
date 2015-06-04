@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer;
 
-import java.math.BigDecimal;
-import java.util.*;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.types.OBinary;
@@ -39,6 +36,9 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+
+import java.math.BigDecimal;
+import java.util.*;
 
 public abstract class OStringSerializerHelper {
   public static final char   RECORD_SEPARATOR        = ',';
@@ -574,8 +574,7 @@ public abstract class OStringSerializerHelper {
           iCollection.add(buffer.toString().trim());
           buffer.setLength(0);
         }
-      }
-      else if (!escape && ((insideQuote == ' ' && (c == '"' || c == '\'')) || (insideQuote==c))) {
+      } else if (!escape && ((insideQuote == ' ' && (c == '"' || c == '\'')) || (insideQuote == c))) {
         insideQuote = insideQuote == ' ' ? c : ' ';
         buffer.append(c);
       } else {
@@ -929,6 +928,63 @@ public abstract class OStringSerializerHelper {
         lowest = index;
     }
     return lowest;
+  }
+
+  public static int getLowerIndexOfKeywords(final String iText, final int iBeginOffset, final String... iToSearch) {
+    Character lastQuote = null;
+    List<Character> nestedStack = new LinkedList<Character>();
+
+    for (int i = iBeginOffset; i < iText.length(); i++) {
+      char lastChar = iText.charAt(i);
+      if (lastQuote != null) {
+        if (lastQuote.equals(lastChar)) {
+          lastQuote = null;
+        }
+        continue;
+      }
+      if (lastChar == '\'' || lastChar == '"') {
+        lastQuote = lastChar;
+        continue;
+      }
+
+      if (lastChar == '(' || lastChar == '[' || lastChar == '{') {
+        nestedStack.add(0, lastChar);
+        continue;
+      }
+
+      if (nestedStack.size() > 0) {
+        Character stackTop = nestedStack.get(0);
+
+        if (lastChar == ')' && stackTop == '(') {
+          nestedStack.remove(0);
+        }
+        if (lastChar == ']' && stackTop == '[') {
+          nestedStack.remove(0);
+        }
+        if (lastChar == '}' && stackTop == '{') {
+          nestedStack.remove(0);
+        }
+        continue;
+      }
+
+      for (String s : iToSearch) {
+        if (iText.length() < i + s.length()) {
+          continue;
+        }
+
+        if (iText.substring(i, i + s.length()).equalsIgnoreCase(s)) {
+          if (iText.length() == (i + s.length())) {
+            return i;
+          }
+          char nextChar = iText.charAt(i + s.length());
+          if (nextChar == ' ' || nextChar == '\n' || nextChar == '\t') {
+            return i;
+          }
+        }
+      }
+    }
+
+    return -1;
   }
 
   public static int getHigherIndexOf(final String iText, final int iBeginOffset, final String... iToSearch) {
