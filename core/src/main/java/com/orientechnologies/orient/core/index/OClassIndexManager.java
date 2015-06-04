@@ -429,7 +429,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
       final OIndexInternal<?> index = entry.getKey().getInternal();
-      index.lockKeysForUpdate(entry.getValue());
+      index.lockKeysForUpdateNoTx(entry.getValue());
     }
 
     indexKeysMapQueue.push(indexKeysMap);
@@ -493,7 +493,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
       final OIndexInternal<?> index = entry.getKey().getInternal();
-      index.lockKeysForUpdate(entry.getValue());
+      index.lockKeysForUpdateNoTx(entry.getValue());
     }
 
     indexKeysMapQueue.push(indexKeysMap);
@@ -624,7 +624,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeyMap.entrySet()) {
       final OIndexInternal<?> index = entry.getKey().getInternal();
       try {
-        index.releaseKeysForUpdate(entry.getValue());
+        index.releaseKeysForUpdateNoTx(entry.getValue());
       } catch (RuntimeException e) {
         OLogManager.instance().error(this, "Error during unlock of keys for index %s", e, index.getName());
       }
