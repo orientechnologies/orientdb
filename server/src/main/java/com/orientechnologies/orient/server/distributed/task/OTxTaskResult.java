@@ -74,4 +74,9 @@ public class OTxTaskResult implements Externalizable {
     for (int i = 0; i < locksSize; ++i)
       locks.add((ORID) in.readObject());
   }
+
+  @Override
+  public String toString() {
+    return "TX[result=" + results.size() + ", locks=" + locks.size() + "]";
+  }
 }

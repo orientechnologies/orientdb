@@ -853,7 +853,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
         // MOVE THE DATABASE ON CURRENT NODE
         ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "moving existent database '%s' in '%s' t '%s' and get a fresh copy from a remote node...", databaseName, dbPath,
+            "moving existent database '%s' in '%s' to '%s' and get a fresh copy from a remote node...", databaseName, dbPath,
             backupPath);
 
         final File oldDirectory = new File(dbPath);

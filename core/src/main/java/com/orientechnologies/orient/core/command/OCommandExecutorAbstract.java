@@ -133,4 +133,8 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     }
     return result.toString();
   }
+
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
+    return OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS;
+  }
 }

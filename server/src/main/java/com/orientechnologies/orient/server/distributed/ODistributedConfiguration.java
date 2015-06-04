@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,12 +32,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Distributed configuration. It uses an ODocument object to store the configuration. Every changes increment the field "version".
@@ -227,20 +227,31 @@ public class ODistributedConfiguration {
       for (String p : iClusterNames) {
         final List<String> serverList = getClusterConfiguration(p).field("servers");
         if (serverList != null) {
-          boolean localNodeFound = false;
+          boolean found = false;
           // CHECK IF THE LOCAL NODE IS INVOLVED: IF YES PREFER LOCAL EXECUTION
           for (String s : serverList)
             if (s.equals(iLocalNode)) {
               // FOUND: JUST USE THIS AND CONTINUE WITH THE NEXT PARTITION
               partitions.add(s);
-              localNodeFound = true;
+              found = true;
               break;
             }
 
-          if (!localNodeFound)
+          if (!found)
+            // CHECK IF A NODE IS ALREADY IN THE RESULT SET
+            for (String s : serverList)
+              if (partitions.contains(s)) {
+                // ALREADY CONTAINED, REUSE IT
+                found = true;
+                break;
+              }
+
+          if (!found)
+            // TODO: DON'T JUST PUT THE FIRST NODE, BUT THE NODE WITH MORE CHANCE TO HAVE OTHER NODES TOO
+
+            // PUT THE FIRST NODE IN THE LIST
             for (String s : serverList)
               if (!s.equals(NEW_NODE_TAG)) {
-                // TODO: USE A ROUND-ROBIN OR RANDOM ALGORITHM
                 partitions.add(s);
                 break;
               }

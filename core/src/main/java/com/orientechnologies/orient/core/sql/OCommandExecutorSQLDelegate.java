@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.sql.parser.OrientSql;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL UPDATE command.
@@ -121,5 +122,10 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract imp
     if (delegate instanceof OCommandDistributedReplicateRequest)
       return ((OCommandDistributedReplicateRequest) delegate).getQuorumType();
     return QUORUM_TYPE.ALL;
+  }
+
+  @Override
+  public Set<String> getInvolvedClusters() {
+    return delegate.getInvolvedClusters();
   }
 }

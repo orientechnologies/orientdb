@@ -296,6 +296,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    *
    * @return set of involved cluster names
    */
+  @Override
   public Set<String> getInvolvedClusters() {
 
     final Set<String> clusters = new HashSet<String>();
