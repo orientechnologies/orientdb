@@ -82,6 +82,9 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('bar', ['bar1', 'bar2'])")).execute();
 
     db.command(new OCommandSQL("CREATE class edge")).execute();
+
+    db.command(new OCommandSQL("CREATE class TestFromInSquare")).execute();
+    db.command(new OCommandSQL("insert into TestFromInSquare set tags = {' from ':'foo',' to ':'bar'}")).execute();
   }
 
   @AfterClass
@@ -325,6 +328,19 @@ public class OCommandExecutorSQLSelectTest {
     params.put("lim", 2);
     List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit :lim")).execute(params);
     assertEquals(qResult.size(), 2);
+  }
+
+  @Test
+  public void testFromInSquareBrackets() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select tags[' from '] as a from TestFromInSquare")).execute();
+    assertEquals(qResult.size(), 1);
+    assertEquals(qResult.get(0).field("a"), "foo");
+  }
+
+  @Test
+  public void testNewline() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select\n1 as ACTIVE\nFROM foo")).execute();
+    assertEquals(qResult.size(), 5);
   }
 
   @Test
