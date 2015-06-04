@@ -42,6 +42,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.Writer;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -427,4 +430,11 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     treeBag.setCollectionPointer(pointer);
     delegate = treeBag;
   }
+
+  public void debugPrint(PrintStream writer) throws IOException {
+    if (delegate instanceof OSBTreeRidBag) {
+      ((OSBTreeRidBag) delegate).debugPrint(writer);
+    }
+  }
+
 }
