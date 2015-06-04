@@ -81,6 +81,10 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('foo', ['foo1', 'foo2'])")).execute();
     db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('bar', ['bar1', 'bar2'])")).execute();
 
+    db.command(new OCommandSQL("CREATE class edge")).execute();
+
+    db.command(new OCommandSQL("CREATE class TestFromInSquare")).execute();
+    db.command(new OCommandSQL("insert into TestFromInSquare set tags = {' from ':'foo',' to ':'bar'}")).execute();
   }
 
   @AfterClass
@@ -327,6 +331,19 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
+  public void testFromInSquareBrackets() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select tags[' from '] as a from TestFromInSquare")).execute();
+    assertEquals(qResult.size(), 1);
+    assertEquals(qResult.get(0).field("a"), "foo");
+  }
+
+  @Test
+  public void testNewline() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select\n1 as ACTIVE\nFROM foo")).execute();
+    assertEquals(qResult.size(), 5);
+  }
+
+  @Test
   public void testOrderByRid() {
     List<ODocument> qResult = db.command(new OCommandSQL("select from ridsorttest order by @rid ASC")).execute();
     assertTrue(qResult.size() > 0);
@@ -414,6 +431,14 @@ public class OCommandExecutorSQLSelectTest {
       String coll = doc.field("coll");
       assertTrue(coll.startsWith(name));
     }
+  }
+
+  @Test
+  public void testQuotedClassName() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from `edge`")).execute();
+
+    assertEquals(qResult.size(), 0);
+
   }
 
   @Test

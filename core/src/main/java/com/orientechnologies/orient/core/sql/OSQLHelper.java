@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -311,8 +312,9 @@ public class OSQLHelper {
           fieldValue = ODatabaseRecordThreadLocal.INSTANCE.get().command(cmd).execute();
 
           // CHECK FOR CONVERSIONS
-          if (ODocumentInternal.getImmutableSchemaClass(iDocument) != null) {
-            final OProperty prop = ODocumentInternal.getImmutableSchemaClass(iDocument).getProperty(fieldName);
+          OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(iDocument);
+          if (immutableClass != null) {
+            final OProperty prop = immutableClass.getProperty(fieldName);
             if (prop != null) {
               if (prop.getType() == OType.LINK) {
                 if (OMultiValue.isMultiValue(fieldValue)) {

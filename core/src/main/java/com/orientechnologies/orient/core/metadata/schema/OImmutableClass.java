@@ -25,7 +25,9 @@ import java.util.Set;
  * @since 10/21/14
  */
 public class OImmutableClass implements OClass {
-  private boolean                         inited = false;
+  public static final String              EDGE_CLASS_NAME   = "E";
+  public static final String              VERTEX_CLASS_NAME = "V";
+  private boolean                         inited            = false;
   private final boolean                   isAbstract;
   private final boolean                   strictMode;
 
@@ -52,6 +54,8 @@ public class OImmutableClass implements OClass {
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
   private Collection<OImmutableClass>     subclasses;
   private boolean                         restricted;
+  private boolean                         isVertexType;
+  private boolean                         isEdgeType;
 
   public OImmutableClass(OClass oClass, OImmutableSchema schema) {
     isAbstract = oClass.isAbstract();
@@ -109,6 +113,8 @@ public class OImmutableClass implements OClass {
       this.allProperties = Collections.unmodifiableCollection(allProperties);
       this.allPropertiesMap = Collections.unmodifiableMap(allPropsMap);
       this.restricted = isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME);
+      this.isVertexType = isSubClassOf(VERTEX_CLASS_NAME);
+      this.isEdgeType = isSubClassOf(EDGE_CLASS_NAME);
       inited = true;
     }
   }
@@ -373,18 +379,17 @@ public class OImmutableClass implements OClass {
   public Collection<OClass> getAllBaseClasses() {
     return getAllSubclasses();
   }
-  
+
   @Override
   public Collection<OClass> getAllSuperClasses() {
     Set<OClass> ret = new HashSet<OClass>();
     getAllSuperClasses(ret);
     return ret;
   }
-  
+
   private void getAllSuperClasses(Set<OClass> set) {
     set.addAll(superClasses);
-    for(OImmutableClass superClass: superClasses)
-    {
+    for (OImmutableClass superClass : superClasses) {
       superClass.getAllSuperClasses(set);
     }
   }
@@ -717,6 +722,14 @@ public class OImmutableClass implements OClass {
 
   public boolean isRestricted() {
     return restricted;
+  }
+
+  public boolean isEdgeType() {
+    return isEdgeType;
+  }
+
+  public boolean isVertexType() {
+    return isVertexType;
   }
 
 }

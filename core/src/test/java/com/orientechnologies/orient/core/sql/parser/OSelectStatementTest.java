@@ -225,6 +225,14 @@ public class OSelectStatementTest {
   }
 
   @Test
+  public void testQuotedTargetName() {
+    checkRightSyntax("select from `edge`");
+    checkRightSyntax("select from `from`");
+    checkRightSyntax("select from `vertex`");
+    checkRightSyntax("select from `select`");
+  }
+
+  @Test
   public void testQuotedFieldName() {
     checkRightSyntax("select `foo` from City where country.@class = 'Country'");
 

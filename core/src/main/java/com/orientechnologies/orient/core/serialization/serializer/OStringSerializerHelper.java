@@ -960,6 +960,63 @@ public abstract class OStringSerializerHelper {
     return lowest;
   }
 
+  public static int getLowerIndexOfKeywords(final String iText, final int iBeginOffset, final String... iToSearch) {
+    Character lastQuote = null;
+    List<Character> nestedStack = new LinkedList<Character>();
+
+    for (int i = iBeginOffset; i < iText.length(); i++) {
+      char lastChar = iText.charAt(i);
+      if (lastQuote != null) {
+        if (lastQuote.equals(lastChar)) {
+          lastQuote = null;
+        }
+        continue;
+      }
+      if (lastChar == '\'' || lastChar == '"') {
+        lastQuote = lastChar;
+        continue;
+      }
+
+      if (lastChar == '(' || lastChar == '[' || lastChar == '{') {
+        nestedStack.add(0, lastChar);
+        continue;
+      }
+
+      if (nestedStack.size() > 0) {
+        Character stackTop = nestedStack.get(0);
+
+        if (lastChar == ')' && stackTop == '(') {
+          nestedStack.remove(0);
+        }
+        if (lastChar == ']' && stackTop == '[') {
+          nestedStack.remove(0);
+        }
+        if (lastChar == '}' && stackTop == '{') {
+          nestedStack.remove(0);
+        }
+        continue;
+      }
+
+      for (String s : iToSearch) {
+        if (iText.length() < i + s.length()) {
+          continue;
+        }
+
+        if (iText.substring(i, i + s.length()).equalsIgnoreCase(s)) {
+          if (iText.length() == (i + s.length())) {
+            return i;
+          }
+          char nextChar = iText.charAt(i + s.length());
+          if (nextChar == ' ' || nextChar == '\n' || nextChar == '\t') {
+            return i;
+          }
+        }
+      }
+    }
+
+    return -1;
+  }
+
   public static int getHigherIndexOf(final String iText, final int iBeginOffset, final String... iToSearch) {
     int lowest = -1;
     for (String toSearch : iToSearch) {

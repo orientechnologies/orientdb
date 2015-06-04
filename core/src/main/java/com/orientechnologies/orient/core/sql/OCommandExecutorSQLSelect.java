@@ -42,13 +42,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngineException;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -61,12 +55,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.OFilterOptimizer;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+import com.orientechnologies.orient.core.sql.filter.*;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
@@ -844,8 +833,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (!parserOptionalKeyword(KEYWORD_SELECT))
       return -1;
 
-    int upperBound = OStringSerializerHelper.getLowerIndexOf(parserTextUpperCase, parserGetCurrentPosition(), KEYWORD_FROM_2FIND,
-        KEYWORD_LET_2FIND);
+    int upperBound = OStringSerializerHelper.getLowerIndexOfKeywords(parserTextUpperCase, parserGetCurrentPosition(), KEYWORD_FROM,
+        KEYWORD_LET);
     if (upperBound == -1)
       // UP TO THE END
       upperBound = parserText.length();
