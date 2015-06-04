@@ -50,6 +50,10 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
     if (iObject instanceof OrientVertex)
       return (OrientVertex) iObject;
 
+    if (iObject == null) {
+      return null;
+    }
+
     final ORecord rec = ((OIdentifiable) iObject).getRecord();
 
     if (rec == null || !(rec instanceof ODocument))
