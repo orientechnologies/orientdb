@@ -1,13 +1,12 @@
 package com.orientechnologies.website.security;
 
+import com.orientechnologies.website.services.TokenAuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import com.orientechnologies.website.services.TokenAuthenticationService;
 
 /**
  * Created by Enrico Risa on 21/10/14.

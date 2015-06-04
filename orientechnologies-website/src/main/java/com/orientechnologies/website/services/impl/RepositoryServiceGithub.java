@@ -90,8 +90,10 @@ public class RepositoryServiceGithub implements RepositoryService {
   }
 
   @Override
-  public Issue patchIssue(Issue original, IssueDTO patch) {
-    GitHub github = new GitHub(SecurityHelper.currentToken());
+  public Issue patchIssue(Issue original, OUser user, IssueDTO patch) {
+
+    String token = user != null ? user.getToken() : SecurityHelper.currentToken();
+    GitHub github = new GitHub(token);
     ODocument doc = new ODocument();
 
     String iPropertyValue = original.getRepository().getOrganization().getName() + "/" + original.getRepository().getName();

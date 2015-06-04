@@ -383,6 +383,8 @@ angular.module('webappApp')
     $scope.number = $routeParams.id;
     var number = $scope.number;
     User.whoami().then(function (data) {
+
+
       $scope.isMember = User.isMember(ORGANIZATION);
       $scope.isSupport = User.isSupport(ORGANIZATION);
       $scope.currentUser = data;

@@ -13,6 +13,7 @@ import com.orientechnologies.website.model.schema.*;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.*;
+import com.orientechnologies.website.security.OSecurityManager;
 import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.SlaService;
 import com.orientechnologies.website.services.UserService;
@@ -70,6 +71,9 @@ public class IssueServiceImpl implements IssueService {
   @Autowired
   protected UserService          userService;
 
+  @Autowired
+  protected OSecurityManager     securityManager;
+
   @PostConstruct
   protected void init() {
     githubIssueService = new IssueServiceGithub(this);
@@ -90,17 +94,13 @@ public class IssueServiceImpl implements IssueService {
           issue.setSlaAt(new Date());
           changeSlaDueTime(issue, issue.getPriority());
           issue = issueRepository.save(issue);
-          List<OUser> bots = organizationRepository.findBots(issue.getRepository().getOrganization().getName());
-          if (bots.size() > 0) {
-            removeLabel(issue, WAIT_FOR_REPLY, bots.iterator().next(), !Boolean.TRUE.equals(issue.getConfidential()));
-          }
+          removeLabel(issue, WAIT_FOR_REPLY, securityManager.bot(issue.getRepository().getOrganization().getName()),
+              !Boolean.TRUE.equals(issue.getConfidential()));
 
         }
       } else {
-        List<OUser> bots = organizationRepository.findBots(issue.getRepository().getOrganization().getName());
-        if (bots.size() > 0) {
-          removeLabel(issue, WAIT_FOR_REPLY, bots.iterator().next(), !Boolean.TRUE.equals(issue.getConfidential()));
-        }
+        removeLabel(issue, WAIT_FOR_REPLY, securityManager.bot(issue.getRepository().getOrganization().getName()),
+            !Boolean.TRUE.equals(issue.getConfidential()));
       }
     }
   }

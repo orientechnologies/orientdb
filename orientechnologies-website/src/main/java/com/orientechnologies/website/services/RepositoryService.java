@@ -1,5 +1,6 @@
 package com.orientechnologies.website.services;
 
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.Label;
 import com.orientechnologies.website.model.schema.dto.Milestone;
@@ -14,7 +15,7 @@ public interface RepositoryService {
 
   public Issue openIssue(Repository repository, IssueDTO issue);
 
-  public Issue patchIssue(Issue original, IssueDTO patch);
+  public Issue patchIssue(Issue original,OUser user, IssueDTO patch);
 
   public void addLabel(Repository repo, Label label);
 

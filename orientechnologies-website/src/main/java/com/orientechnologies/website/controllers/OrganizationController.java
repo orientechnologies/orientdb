@@ -16,7 +16,7 @@ import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.repository.TagRepository;
 import com.orientechnologies.website.repository.TopicRepository;
-import com.orientechnologies.website.security.SecurityManager;
+import com.orientechnologies.website.security.OSecurityManager;
 import com.orientechnologies.website.services.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -71,7 +71,7 @@ public class OrganizationController extends ExceptionController {
   private TagService             tagService;
 
   @Autowired
-  private SecurityManager        securityManager;
+  private OSecurityManager securityManager;
 
   @RequestMapping(value = "{name}", method = RequestMethod.GET)
   public ResponseEntity<Organization> getOrganizationInfo(@PathVariable("name") String name) {

@@ -12,6 +12,7 @@ import com.orientechnologies.website.model.schema.HasMilestone;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
 import com.orientechnologies.website.repository.*;
+import com.orientechnologies.website.security.OSecurityManager;
 import com.orientechnologies.website.services.AutoAssignService;
 import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.RepositoryService;
@@ -70,6 +71,9 @@ public class RepositoryServiceImpl implements RepositoryService {
   @Autowired
   protected IssueAlignDaemon       alignDaemon;
 
+  @Autowired
+  protected OSecurityManager       securityManager;
+
   @PostConstruct
   protected void init() {
     githubService = new RepositoryServiceGithub(this);
@@ -100,13 +104,14 @@ public class RepositoryServiceImpl implements RepositoryService {
 
   @Transactional
   @Override
-  public Issue patchIssue(Issue original, IssueDTO issue) {
+  public Issue patchIssue(Issue original, OUser user, IssueDTO issue) {
 
     if (Boolean.TRUE.equals(original.getConfidential())) {
       return patchPrivateIssue(original, issue, true);
     } else {
       patchPrivateIssue(original, issue, false);
-      return githubService.patchIssue(original, issue);
+      return githubService.patchIssue(original, securityManager.botIfSupport(original.getRepository().getOrganization().getName()),
+          issue);
     }
   }
 

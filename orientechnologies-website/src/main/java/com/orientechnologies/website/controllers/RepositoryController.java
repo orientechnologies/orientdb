@@ -6,6 +6,8 @@ import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
+import com.orientechnologies.website.security.Permissions;
+import com.orientechnologies.website.security.OSecurityManager;
 import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.RepositoryService;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -40,6 +43,9 @@ public class RepositoryController {
   UserService                    userService;
   @Autowired
   protected IssueService         issueService;
+
+  @Autowired
+  protected OSecurityManager     securityManager;
 
   @RequestMapping(value = "{owner}/{repo}/issues/{number}", method = RequestMethod.GET)
   public ResponseEntity<Issue> getSingleIssue(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
@@ -118,10 +124,11 @@ public class RepositoryController {
       @PathVariable("number") Long number, @RequestBody IssueDTO issue) {
 
     Issue i = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
-    return i != null ? new ResponseEntity<Issue>(repositoryService.patchIssue(i, issue), HttpStatus.OK)
+    return i != null ? new ResponseEntity<Issue>(repositoryService.patchIssue(i, null, issue), HttpStatus.OK)
         : new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
   }
 
+  @PreAuthorize(Permissions.ISSUE_LABEL)
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/labels", method = RequestMethod.POST)
   public ResponseEntity<List<Label>> addLabels(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
       @PathVariable("number") Long number, @RequestBody List<String> labels) {
@@ -132,10 +139,11 @@ public class RepositoryController {
       return new ResponseEntity<List<Label>>(HttpStatus.NOT_FOUND);
     }
 
-    return new ResponseEntity<List<Label>>(
-        issueService.addLabels(i, labels, null, true, !Boolean.TRUE.equals(i.getConfidential())), HttpStatus.OK);
+    return new ResponseEntity<List<Label>>(issueService.addLabels(i, labels, securityManager.botIfSupport(owner), true,
+        !Boolean.TRUE.equals(i.getConfidential())), HttpStatus.OK);
   }
 
+  @PreAuthorize(Permissions.ISSUE_LABEL)
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/labels/{lname}", method = RequestMethod.DELETE)
   public ResponseEntity<List<Label>> deleteLabel(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
       @PathVariable("number") Long number, @PathVariable("lname") String lname) {
@@ -144,7 +152,7 @@ public class RepositoryController {
     if (i == null) {
       return new ResponseEntity<List<Label>>(HttpStatus.NOT_FOUND);
     }
-    issueService.removeLabel(i, lname, null, !Boolean.TRUE.equals(i.getConfidential()));
+    issueService.removeLabel(i, lname, securityManager.botIfSupport(owner), !Boolean.TRUE.equals(i.getConfidential()));
     return new ResponseEntity<List<Label>>(HttpStatus.OK);
   }
 
