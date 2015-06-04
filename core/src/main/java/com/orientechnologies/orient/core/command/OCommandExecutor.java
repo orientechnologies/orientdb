@@ -90,4 +90,8 @@ public interface OCommandExecutor {
   public int getSecurityOperationType();
 
   boolean involveSchema();
+
+  long getTimeout();
+
+  String getSyntax();
 }

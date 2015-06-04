@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OMatchFilter extends SimpleNode {
+  // TODO transform in a map
   protected List<OMatchFilterItem> items = new ArrayList<OMatchFilterItem>();
 
   public OMatchFilter(int id) {
@@ -19,6 +20,35 @@ public class OMatchFilter extends SimpleNode {
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  public String getAlias() {
+    for (OMatchFilterItem item : items) {
+      if (item.alias != null) {
+        return item.alias.getValue();
+      }
+    }
+    return null;
+  }
+
+  public OWhereClause getFilter() {
+    for (OMatchFilterItem item : items) {
+      if (item.filter != null) {
+        return item.filter;
+      }
+    }
+    return null;
+  }
+
+  public String getClassName() {
+    for (OMatchFilterItem item : items) {
+      if (item.className != null) {
+        if (item.className.value instanceof String)
+          return (String) item.className.value;
+        // TODO evaluate expression
+      }
+    }
+    return null;
   }
 }
 /* JavaCC - OriginalChecksum=6b099371c69e0d0c1c106fc96b3072de (do not edit this line) */

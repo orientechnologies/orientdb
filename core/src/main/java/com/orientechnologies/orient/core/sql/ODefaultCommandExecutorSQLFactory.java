@@ -15,12 +15,14 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.parser.OMatchStatement;
 
 /**
  * Default command operator executor factory.
@@ -29,12 +31,12 @@ import java.util.Set;
  */
 public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFactory {
 
-  private static final Map<String, Class<? extends OCommandExecutorSQLAbstract>> COMMANDS;
+  private static final Map<String, Class<? extends OCommandExecutor>> COMMANDS;
 
   static {
 
     // COMMANDS
-    final Map<String, Class<? extends OCommandExecutorSQLAbstract>> commands = new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
+    final Map<String, Class<? extends OCommandExecutor>> commands = new HashMap<String, Class<? extends OCommandExecutor>>();
     commands.put(OCommandExecutorSQLAlterDatabase.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterDatabase.KEYWORD_DATABASE,
         OCommandExecutorSQLAlterDatabase.class);
     commands.put(OCommandExecutorSQLSelect.KEYWORD_SELECT, OCommandExecutorSQLSelect.class);
@@ -82,6 +84,7 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
         OCommandExecutorSQLAlterCluster.class);
     commands.put(OCommandExecutorSQLExplain.KEYWORD_EXPLAIN, OCommandExecutorSQLExplain.class);
     commands.put(OCommandExecutorSQLTransactional.KEYWORD_TRANSACTIONAL, OCommandExecutorSQLTransactional.class);
+    commands.put(OMatchStatement.KEYWORD_MATCH, OMatchStatement.class);
 
     COMMANDS = Collections.unmodifiableMap(commands);
   }
@@ -96,8 +99,8 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
   /**
    * {@inheritDoc}
    */
-  public OCommandExecutorSQLAbstract createCommand(final String name) throws OCommandExecutionException {
-    final Class<? extends OCommandExecutorSQLAbstract> clazz = COMMANDS.get(name);
+  public OCommandExecutor createCommand(final String name) throws OCommandExecutionException {
+    final Class<? extends OCommandExecutor> clazz = COMMANDS.get(name);
 
     if (clazz == null) {
       throw new OCommandExecutionException("Unknowned command name :" + name);

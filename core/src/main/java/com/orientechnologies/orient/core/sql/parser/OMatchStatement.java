@@ -6,18 +6,37 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.query.OResultSet;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.*;
 
 public class OMatchStatement extends OStatement implements OCommandExecutor {
+
+  class MatchResult {
+    Set<OIdentifier> matching;
+    boolean          complete = false;
+  }
+
+  public static final String       KEYWORD_MATCH    = "MATCH";
+  // parsed data
   protected List<OMatchExpression> matchExpressions = new ArrayList<OMatchExpression>();
   protected List<OIdentifier>      returnItems      = new ArrayList<OIdentifier>();
 
+  // execution data
   private OCommandContext          context;
+  private OProgressListener        progressListener;
+
+  public OMatchStatement() {
+    super(-1);
+  }
 
   public OMatchStatement(int id) {
     super(id);
@@ -27,29 +46,118 @@ public class OMatchStatement extends OStatement implements OCommandExecutor {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor. *
+   */
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
   @Override
   public <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest) {
-    return null;
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
+    String queryText = textRequest.getText();
+
+    // please, do not look at this... refactor this ASAP with new executor structure
+    final InputStream is = new ByteArrayInputStream(queryText.getBytes());
+    final OrientSql osql = new OrientSql(is);
+    try {
+      OMatchStatement result = (OMatchStatement) osql.parse();
+      this.matchExpressions = result.matchExpressions;
+      this.returnItems = result.returnItems;
+    } catch (ParseException e) {
+      throw new OCommandSQLParsingException(e.getMessage(), e);
+    }
+
+    return (RET) this;
   }
 
   @Override
   public Object execute(Map<Object, Object> iArgs) {
+    OResultSet result = new OResultSet();
+
+    Map<String, OWhereClause> aliasFilters = new HashMap<String, OWhereClause>();
+    Map<String, String> aliasClasses = new HashMap<String, String>();
+    for (OMatchExpression expr : this.matchExpressions) {
+      addAliases(expr, aliasFilters, aliasClasses);
+    }
+
+    Map<String, Long> estimatedRootEntries = estimateRootEntries(aliasClasses, aliasFilters);
+
+    // TODO
+    return result;
+  }
+
+  private Map<String, Long> estimateRootEntries(Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters) {
+    return null;
+  }
+
+  private void addAliases(OMatchExpression expr, Map<String, OWhereClause> aliasFilters, Map<String, String> aliasClasses) {
+    addAliases(expr.origin, aliasFilters, aliasClasses);
+    for (OMatchPathItem item : expr.items) {
+      if (item.filter != null) {
+        addAliases(item.filter, aliasFilters, aliasClasses);
+      }
+    }
+  }
+
+  private void addAliases(OMatchFilter matchFilter, Map<String, OWhereClause> aliasFilters, Map<String, String> aliasClasses) {
+    String alias = matchFilter.getAlias();
+    OWhereClause filter = matchFilter.getFilter();
+    if (alias != null) {
+      if (filter != null && filter.baseExpression != null) {
+        OWhereClause previousFilter = aliasFilters.get(alias);
+        if (previousFilter == null) {
+          previousFilter = new OWhereClause(-1);
+          previousFilter.baseExpression = new OAndBlock(-1);
+          aliasFilters.put(alias, previousFilter);
+        }
+        OAndBlock filterBlock = (OAndBlock) previousFilter.baseExpression;
+        if (filter != null && filter.baseExpression != null) {
+          filterBlock.subBlocks.add(filter.baseExpression);
+        }
+      }
+
+      String clazz = matchFilter.getClassName();
+      if (clazz != null) {
+        String previousClass = aliasClasses.get(alias);
+        if (previousClass == null) {
+          aliasClasses.put(alias, clazz);
+        } else {
+          String lower = getLowerSubclass(clazz, previousClass);
+          if (lower == null) {
+            throw new OCommandExecutionException("classes defined for alias " + alias + " (" + clazz + ", " + previousClass
+                + ") are not in the same hierarchy");
+          }
+          aliasClasses.put(alias, lower);
+        }
+      }
+    }
+  }
+
+  private String getLowerSubclass(String className1, String className2) {
+    OSchema schema = getDatabase().getMetadata().getSchema();
+    OClass class1 = schema.getClass(className1);
+    OClass class2 = schema.getClass(className2);
+    if (class1.isSubClassOf(class2)) {
+      return class1.getName();
+    }
+    if (class2.isSubClassOf(class1)) {
+      return class2.getName();
+    }
     return null;
   }
 
   @Override
   public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
-    return null;
+
+    this.progressListener = progressListener;
+    return (RET) this;
   }
 
   @Override
   public <RET extends OCommandExecutor> RET setLimit(int iLimit) {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -64,12 +172,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor {
 
   @Override
   public OCommandContext getContext() {
-    return null;
+    return context;
   }
 
   @Override
   public void setContext(OCommandContext context) {
-
     this.context = context;
   }
 
@@ -80,7 +187,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor {
 
   @Override
   public Set<String> getInvolvedClusters() {
-    return null;// TODO
+    return Collections.EMPTY_SET;
   }
 
   @Override
@@ -91,6 +198,16 @@ public class OMatchStatement extends OStatement implements OCommandExecutor {
   @Override
   public boolean involveSchema() {
     return false;
+  }
+
+  @Override
+  public long getTimeout() {
+    return -1;
+  }
+
+  @Override
+  public String getSyntax() {
+    return "MATCH <match-statement> [, <match-statement] RETURN <alias>[, <alias>]";
   }
 }
 /* JavaCC - OriginalChecksum=6ff0afbe9d31f08b72159fcf24070c9f (do not edit this line) */

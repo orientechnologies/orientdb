@@ -37,5 +37,6 @@ public class OStatement extends SimpleNode {
   public void replaceParameters(Map<Object, Object> params) {
 
   }
+
 }
 /* JavaCC - OriginalChecksum=589c4dcc8287f430e46d8eb12b0412c5 (do not edit this line) */
