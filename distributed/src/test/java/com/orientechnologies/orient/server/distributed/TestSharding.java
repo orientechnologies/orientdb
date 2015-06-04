@@ -290,6 +290,48 @@ public class TestSharding extends AbstractServerClusterTest {
           g.shutdown();
         }
       }
+
+      // TEST DISTRIBUTED DELETE WITH DIRECT COMMAND AND SQL
+      OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + 0 + "/databases/" + getDatabaseName());
+      OrientGraphNoTx g = f.getNoTx();
+      try {
+        Iterable<OrientVertex> countResultBeforeDelete = g.command(new OCommandSQL("select from Client")).execute();
+        long totalBeforeDelete = 0;
+        for (OrientVertex v : countResultBeforeDelete)
+          totalBeforeDelete++;
+
+        Iterable<OrientVertex> result = g.command(new OCommandSQL("select from Client")).execute();
+
+        int count = 0;
+
+        for (OrientVertex v : result) {
+          if (count % 2 == 0) {
+            // DELETE ONLY EVEN INSTANCES
+            v.remove();
+            count++;
+          }
+        }
+
+        Iterable<OrientVertex> countResultAfterDelete = g.command(new OCommandSQL("select from Client")).execute();
+        long totalAfterDelete = 0;
+        for (OrientVertex v : countResultAfterDelete)
+          totalAfterDelete++;
+
+        Assert.assertEquals(totalBeforeDelete - count, totalAfterDelete);
+
+        g.command(new OCommandSQL("delete vertex Client")).execute();
+
+        Iterable<OrientVertex> countResultAfterFullDelete = g.command(new OCommandSQL("select from Client")).execute();
+        long totalAfterFullDelete = 0;
+        for (OrientVertex v : countResultAfterFullDelete)
+          totalAfterFullDelete++;
+
+        Assert.assertEquals(0, totalAfterFullDelete);
+
+      } finally {
+        g.shutdown();
+      }
+
     } catch (Exception e) {
       e.printStackTrace();
 
