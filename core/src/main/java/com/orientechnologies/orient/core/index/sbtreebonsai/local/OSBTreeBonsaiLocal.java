@@ -1442,36 +1442,38 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         for (int i = 0; i < path.size(); i++)
           writer.append("\t");
         writer.append(" Leaf backet:" + bucketPointer.getPageIndex() + "|" + bucketPointer.getPageOffset());
-        // writer.append(" left:" + keyBucket.getLeftSibling().getPageIndex() + "|" + keyBucket.getLeftSibling().getPageOffset());
-        // writer.append(" right:" + keyBucket.getRightSibling().getPageIndex() + "|" +
-        // keyBucket.getRightSibling().getPageOffset());
+        writer.append(" left bucket:" + keyBucket.getLeftSibling().getPageIndex() + "|"
+            + keyBucket.getLeftSibling().getPageOffset());
+        writer.append(" right bucket:" + keyBucket.getRightSibling().getPageIndex() + "|"
+            + keyBucket.getRightSibling().getPageOffset());
         writer.append(" size:" + keyBucket.size());
         writer.append(" content: [");
         for (int index = 0; index < keyBucket.size(); index++) {
           entry = keyBucket.getEntry(index);
           writer.append(entry.getKey() + ",");
         }
-        writer.append("]\n");
+        writer.append("\n");
       } else {
         for (int i = 0; i < path.size(); i++)
           writer.append("\t");
         writer.append(" node bucket:" + bucketPointer.getPageIndex() + "|" + bucketPointer.getPageOffset());
-        // writer.append(" left:" + keyBucket.getLeftSibling().getPageIndex() + "|" + keyBucket.getLeftSibling().getPageOffset());
-        // writer.append(" right:" + keyBucket.getRightSibling().getPageIndex() + "|" +
-        // keyBucket.getRightSibling().getPageOffset());
+        writer.append(" left bucket:" + keyBucket.getLeftSibling().getPageIndex() + "|"
+            + keyBucket.getLeftSibling().getPageOffset());
+        writer.append(" right bucket:" + keyBucket.getRightSibling().getPageIndex() + "|"
+            + keyBucket.getRightSibling().getPageOffset());
         writer.append("\n");
         for (int index = 0; index < keyBucket.size(); index++) {
           entry = keyBucket.getEntry(index);
           for (int i = 0; i < path.size(); i++)
             writer.append("\t");
-          writer.append(" entry:" + index + " left " + entry.getKey() + "\n");
+          writer.append(" entry:" + index + " key: " + entry.getKey() + " left \n");
           OBonsaiBucketPointer next = entry.leftChild;
           path.add(next);
           debugPrintBucket(next, writer, path);
           path.remove(next);
           for (int i = 0; i < path.size(); i++)
             writer.append("\t");
-          writer.append(" entry:" + index + " right " + entry.getKey() + "\n");
+          writer.append(" entry:" + index + " key: " + entry.getKey() + " right \n");
           next = entry.rightChild;
           path.add(next);
           debugPrintBucket(next, writer, path);

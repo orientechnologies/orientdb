@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
@@ -95,6 +96,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Array;
@@ -1050,7 +1052,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\n empty: %b", debugInfo.empty);
     message("\n contentSize: %d", debugInfo.contentSize);
     message("\n n-pages: %d", debugInfo.pages.size());
-    message("\n\n +----------PAGE_ID---------------+------IN_PAGE_POSITION---------+--------IN_PAGE_SIZE-----------+----PAGE_CONTENT---->> ");
+    message("\n\n +----------PAGE_ID---------------+------IN_PAGE_POSITION----------+---------IN_PAGE_SIZE-----------+----PAGE_CONTENT---->> ");
     for (OClusterPageDebug page : debugInfo.pages) {
       message("\n |%30d ", page.pageIndex);
       message(" |%30d ", page.inPagePosition);
@@ -1086,8 +1088,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         StringWriter writer = new StringWriter();
         prop.readingException.printStackTrace(new PrintWriter(writer));
         message("\n  Exception on reading: %s", writer.getBuffer().toString());
-      } else
-        message("\n  property value: %s", prop.value != null ? prop.value.toString() : "null");
+      } else {
+        if (prop.value instanceof ORidBag) {
+          message("\n  property value: ORidBug ");
+          ((ORidBag) prop.value).debugPrint(System.out);
+        } else
+          message("\n  property value: %s", prop.value != null ? prop.value.toString() : "null");
+      }
       message("\n");
     }
 
