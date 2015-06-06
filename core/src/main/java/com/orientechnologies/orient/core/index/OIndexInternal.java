@@ -47,6 +47,8 @@ public interface OIndexInternal<T> extends OIndex<T> {
   public static final String INDEX_VERSION             = "indexVersion";
   public static final String METADATA                  = "metadata";
 
+  public Object getCollatingValue(final Object key);
+
   /**
    * Loads the index giving the configuration.
    * 

@@ -307,15 +307,16 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
       final OIndexDefinition indexDefinition = index.getDefinition();
       final Object key = index.getDefinition().getDocumentValueToIndex(record);
+
       if (key instanceof Collection) {
         for (final Object keyItem : (Collection<?>) key) {
           if (!indexDefinition.isNullValuesIgnored() || keyItem != null) {
-            keys.add(copyKeyIfNeeded(keyItem));
+            keys.add(copyKeyIfNeeded(index.getInternal().getCollatingValue(keyItem)));
           }
         }
       } else {
         if (!indexDefinition.isNullValuesIgnored() || key != null) {
-          keys.add(copyKeyIfNeeded(key));
+          keys.add(copyKeyIfNeeded(index.getInternal().getCollatingValue(key)));
         }
       }
 
@@ -370,12 +371,12 @@ public class OClassIndexManager extends ODocumentHookAbstract {
           if (key instanceof Collection) {
             for (final Object keyItem : (Collection<?>) key) {
               if (!indexDefinition.isNullValuesIgnored() || keyItem != null) {
-                keys.add(copyKeyIfNeeded(keyItem));
+                keys.add(copyKeyIfNeeded(index.getInternal().getCollatingValue(keyItem)));
               }
             }
           } else {
             if (!indexDefinition.isNullValuesIgnored() || key != null) {
-              keys.add(copyKeyIfNeeded(key));
+              keys.add(copyKeyIfNeeded(index.getInternal().getCollatingValue(key)));
             }
 
           }
