@@ -60,8 +60,7 @@ import java.util.concurrent.TimeUnit;
  * @author Andrey Lomakin
  * @since 28.03.13
  */
-public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage, OBackupable,
-    OIdentifiableStorage {
+public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage, OBackupable {
   private static String[]                  ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
       ".oem", ".oet", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
@@ -80,13 +79,11 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   private String                           storagePath;
   private ExecutorService                  checkpointExecutor;
-  private final int                        id;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id, OReadCache readCache)
       throws IOException {
-    super(name, filePath, mode);
+    super(name, filePath, mode, id);
 
-    this.id = id;
     this.readCache = readCache;
 
     File f = new File(url);
@@ -175,11 +172,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       close(true, false);
 
     OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
-  }
-
-  @Override
-  public int getId() {
-    return id;
   }
 
   @Override
@@ -303,7 +295,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     writeCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000, writeAheadLog,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), writeCacheSize, diskCacheSize, this, true,
-        id);
+        getId());
     writeCache.addLowDiskSpaceListener(this);
 
   }

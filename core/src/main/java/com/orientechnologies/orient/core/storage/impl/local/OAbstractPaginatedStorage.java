@@ -87,7 +87,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @since 28.03.13
  */
 public abstract class OAbstractPaginatedStorage extends OStorageAbstract implements OLowDiskSpaceListener,
-    OFullCheckpointRequestListener {
+    OFullCheckpointRequestListener, OIdentifiableStorage {
   private static final int                                    RECORD_LOCK_TIMEOUT                        = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
                                                                                                              .getValueAsInteger();
 
@@ -119,8 +119,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private volatile OLowDiskSpaceInformation                   lowDiskSpace                               = null;
   private volatile boolean                                    checkpointRequest                          = false;
 
-  public OAbstractPaginatedStorage(String name, String filePath, String mode) {
+  private final int                                           id;
+
+  public OAbstractPaginatedStorage(String name, String filePath, String mode, int id) {
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
+
+    this.id = id;
     lockManager = new OLockManager<ORID, OAbstractPaginatedStorage>(true, -1) {
       @Override
       protected ORID getImmutableResourceId(ORID iResourceId) {
@@ -468,6 +472,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     } finally {
       lock.releaseExclusiveLock();
     }
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   public boolean setClusterStatus(final int clusterId, final OStorageClusterConfiguration.STATUS iStatus) {

@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
@@ -54,7 +55,7 @@ import java.util.zip.CRC32;
  * @author Andrey Lomakin
  * @since 7/23/13
  */
-public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
+public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCachePointer.WritersListener {
   // we add 8 bytes before and after cache pages to prevent word tearing in mt case.
 
   private final int                                        MAX_PAGES_PER_FLUSH;
@@ -1112,18 +1113,6 @@ public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
       fileClassic.synch();
   }
 
-  private static long composeFileId(int id, int fileId) {
-    return (((long) id) << 32) | fileId;
-  }
-
-  public static int extractFileId(long fileId) {
-    return (int) (fileId & 0xFFFFFFFFL);
-  }
-
-  public static int extractStorageId(long fileId) {
-    return (int) (fileId >>> 32);
-  }
-
   private static final class NameFileIdEntry {
     private final String name;
     private final int    fileId;
@@ -1262,7 +1251,6 @@ public class OWOWCache implements OWriteCache, OCachePointer.WritersListener {
 
         if (flushedPages < writePagesToFlush && forceFlush) {
           flushedPages = flushRing(writePagesToFlush, flushedPages, true, iterateByWritePagesFirst);
-
 
           if (flushedPages < writePagesToFlush && iterateByWritePagesFirst) {
             flushRing(writePagesToFlush, flushedPages, true, false);

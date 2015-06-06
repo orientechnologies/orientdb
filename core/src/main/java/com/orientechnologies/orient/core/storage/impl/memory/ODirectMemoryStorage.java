@@ -46,8 +46,8 @@ import java.util.concurrent.Callable;
 public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   private static final int ONE_KB = 1024;
 
-  public ODirectMemoryStorage(String name, String filePath, String mode) {
-    super(name, filePath, mode);
+  public ODirectMemoryStorage(String name, String filePath, String mode, int id) {
+    super(name, filePath, mode, id);
     configuration = new OStorageMemoryConfiguration(this);
   }
 
