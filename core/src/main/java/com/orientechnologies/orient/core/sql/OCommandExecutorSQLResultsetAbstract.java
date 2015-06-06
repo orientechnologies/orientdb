@@ -50,7 +50,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -171,7 +170,12 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   @Override
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.SHARDED;
+    return DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+  }
+
+  @Override
+  public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
+    return DISTRIBUTED_RESULT_MGMT.MERGE;
   }
 
   /**

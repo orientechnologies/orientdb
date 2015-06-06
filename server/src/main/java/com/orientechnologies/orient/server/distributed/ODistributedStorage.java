@@ -245,9 +245,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       Object result = null;
       OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE executionMode = OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE.LOCAL;
+      OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT resultMgmt = OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS;
+
       if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED) {
-        if (exec instanceof OCommandDistributedReplicateRequest)
+        if (exec instanceof OCommandDistributedReplicateRequest) {
           executionMode = ((OCommandDistributedReplicateRequest) exec).getDistributedExecutionMode();
+          resultMgmt = ((OCommandDistributedReplicateRequest) exec).getDistributedResultManagement();
+        }
       }
 
       switch (executionMode) {
@@ -259,34 +263,20 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         final Collection<String> involvedClusters = exec.getInvolvedClusters();
         final Collection<String> nodes;
 
-        task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
+        if (resultMgmt == OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT.MERGE) {
+          nodes = dbCfg.getOneServerPerCluster(involvedClusters, localNodeName);
+          task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.UNION);
+        } else {
+          nodes = dbCfg.getServers(involvedClusters);
+          task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
+        }
 
-        nodes = dbCfg.getServers(involvedClusters);
         if (iCommand instanceof ODistributedCommand)
           nodes.removeAll(((ODistributedCommand) iCommand).nodesToExclude());
 
         if (nodes.isEmpty())
           // / NO NODE TO REPLICATE
           return null;
-
-        result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
-
-        dManager.propagateSchemaChanges(ODatabaseRecordThreadLocal.INSTANCE.get());
-
-        break;
-      }
-
-      case SHARDED: {
-        // SHARDED, GET ONLY ONE NODE PER INVOLVED CLUSTER
-        final Collection<String> involvedClusters = exec.getInvolvedClusters();
-        final Collection<String> nodes;
-
-        task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.UNION);
-
-        nodes = dbCfg.getOneServerPerCluster(involvedClusters, localNodeName);
-
-        if (iCommand instanceof ODistributedCommand)
-          nodes.removeAll(((ODistributedCommand) iCommand).nodesToExclude());
 
         boolean executeLocally = false;
         if (exec.isIdempotent()) {
@@ -313,7 +303,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         // TODO: OPTIMIZE FILTERING BY CHANGING TARGET PER CLUSTER INSTEAD OF LEAVING CLASS
         result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
 
-        if (result instanceof Map) {
+        if (exec.involveSchema())
+          // UPDATE THE SCHEMA
+          dManager.propagateSchemaChanges(ODatabaseRecordThreadLocal.INSTANCE.get());
+
+        if (resultMgmt == OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT.MERGE && result instanceof Map) {
           if (executor instanceof OCommandExecutorSQLDelegate
               && ((OCommandExecutorSQLDelegate) executor).getDelegate() instanceof OCommandExecutorSQLSelect) {
             final OCommandExecutorSQLSelect cmd = (OCommandExecutorSQLSelect) ((OCommandExecutorSQLDelegate) executor)
@@ -908,8 +902,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final OTxTask txTask = new OTxTask();
       final Set<String> involvedClusters = new HashSet<String>();
 
-      final Set<String> nodes = dbCfg.getServers(involvedClusters);
-
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(null);
       if (executionModeSynch == null)
         executionModeSynch = Boolean.TRUE;
@@ -978,6 +970,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       }
 
       OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
+
+      final Set<String> nodes = dbCfg.getServers(involvedClusters);
 
       // if (executionModeSynch && !iTx.hasRecordCreation()) {
       if (executionModeSynch) {

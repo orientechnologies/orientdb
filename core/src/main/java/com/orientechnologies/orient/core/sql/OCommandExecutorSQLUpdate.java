@@ -89,6 +89,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   private boolean                            isUpsertAllowed   = false;
   private boolean                            updated           = false;
   private OClass                             clazz             = null;
+  private DISTRIBUTED_EXECUTION_MODE         distributedMode;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLUpdate parse(final OCommandRequest iRequest) {
@@ -320,8 +321,16 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
 
   @Override
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    // REPLICATE MODE COULD BE MORE EFFICIENT ON MASSIVE UPDATES
-    return upsertMode || query == null ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+    if (distributedMode == null)
+      // REPLICATE MODE COULD BE MORE EFFICIENT ON MASSIVE UPDATES
+      distributedMode = upsertMode || query == null ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+    return distributedMode;
+  }
+
+  @Override
+  public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
+    return distributedMode == DISTRIBUTED_EXECUTION_MODE.LOCAL ? DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS
+        : DISTRIBUTED_RESULT_MGMT.MERGE;
   }
 
   @Override

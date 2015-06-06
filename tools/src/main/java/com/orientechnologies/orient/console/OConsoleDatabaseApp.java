@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
@@ -64,9 +65,13 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializationDebug;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializationDebugProperty;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinaryDebug;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
@@ -75,6 +80,11 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPageDebug;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedClusterDebug;
+
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -86,6 +96,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.Map.Entry;
@@ -1008,7 +1021,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Display a record as raw bytes")
-  public void displayRawRecord(@ConsoleParameter(name = "rid", description = "The record id to display") final String iRecordId) {
+  public void displayRawRecord(@ConsoleParameter(name = "rid", description = "The record id to display") final String iRecordId)
+      throws IOException {
     checkForDatabase();
 
     ORecordId rid;
@@ -1022,19 +1036,68 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         return;
     }
 
-    final ORawBuffer buffer = currentDatabase.getStorage().readRecord(rid, null, false, null).getResult();
+    ORecordId id = new ORecordId(rid);
+    OLocalPaginatedStorage storage = (OLocalPaginatedStorage) currentDatabase.getStorage();
+    OPaginatedCluster cluster = (OPaginatedCluster) storage.getClusterById(id.getClusterId());
+    if (cluster == null) {
+      message("\n cluster with id %i does not exist", id.getClusterId());
+      return;
+    }
+    OPaginatedClusterDebug debugInfo = cluster.readDebug(id.clusterPosition);
+    message("\n\nLOW LEVEL CLUSTER INFO");
+    message("\n cluster fieldId: %d", debugInfo.fileId);
+    message("\n cluster name: %s", cluster.getName());
 
-    if (buffer == null)
+    message("\n in cluster position: %d", debugInfo.clusterPosition);
+    message("\n empty: %b", debugInfo.empty);
+    message("\n contentSize: %d", debugInfo.contentSize);
+    message("\n n-pages: %d", debugInfo.pages.size());
+    message("\n\n +----------PAGE_ID---------------+------IN_PAGE_POSITION----------+---------IN_PAGE_SIZE-----------+----PAGE_CONTENT---->> ");
+    for (OClusterPageDebug page : debugInfo.pages) {
+      message("\n |%30d ", page.pageIndex);
+      message(" |%30d ", page.inPagePosition);
+      message(" |%30d ", page.inPageSize);
+      message(" |%s", OBase64Utils.encodeBytes(page.content));
+    }
+
+    ORawBuffer recored = cluster.readRecord(id.clusterPosition);
+    if (recored == null)
       throw new OException("The record has been deleted");
+    byte[] buff = recored.getBuffer();
+    ORecordSerializerBinaryDebug debugger = new ORecordSerializerBinaryDebug();
+    ORecordSerializationDebug deserializeDebug = debugger.deserializeDebug(buff, currentDatabase);
+    message("\n\nRECORD CONTENT INFO");
+    message("\n class name: %s", deserializeDebug.className);
+    message("\n fail on Reading: %b", deserializeDebug.readingFailure);
+    message("\n fail position: %d", deserializeDebug.failPosition);
+    if (deserializeDebug.readingException != null) {
+      StringWriter writer = new StringWriter();
+      deserializeDebug.readingException.printStackTrace(new PrintWriter(writer));
+      message("\n Exception On Reading: %s", writer.getBuffer().toString());
+    }
 
-    String content;
-    if (Integer.parseInt(properties.get("maxBinaryDisplay")) < buffer.buffer.length)
-      content = new String(Arrays.copyOf(buffer.buffer, Integer.parseInt(properties.get("maxBinaryDisplay"))));
-    else
-      content = new String(buffer.buffer);
+    message("\n number of properties : %d", deserializeDebug.properties.size());
+    message("\n\n PROPERTIES");
+    for (ORecordSerializationDebugProperty prop : deserializeDebug.properties) {
+      message("\n  property name: %s", prop.name);
+      message("\n  property type: %s", prop.type.name());
+      message("\n  property globlaId: %d", prop.globalId);
+      message("\n  fail on reading: %b", prop.faildToRead);
+      if (prop.faildToRead) {
+        message("\n  failed on reading position: %b", prop.failPosition);
+        StringWriter writer = new StringWriter();
+        prop.readingException.printStackTrace(new PrintWriter(writer));
+        message("\n  Exception on reading: %s", writer.getBuffer().toString());
+      } else {
+        if (prop.value instanceof ORidBag) {
+          message("\n  property value: ORidBug ");
+          ((ORidBag) prop.value).debugPrint(System.out);
+        } else
+          message("\n  property value: %s", prop.value != null ? prop.value.toString() : "null");
+      }
+      message("\n");
+    }
 
-    out.println("\nRaw record content. The size is " + buffer.buffer.length + " bytes, while settings force to print first "
-        + content.length() + " bytes:\n\n" + content);
   }
 
   @ConsoleCommand(aliases = { "status" }, description = "Display information about the database")

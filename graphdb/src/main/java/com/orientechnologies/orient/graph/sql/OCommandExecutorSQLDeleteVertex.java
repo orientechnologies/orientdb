@@ -21,7 +21,10 @@ package com.orientechnologies.orient.graph.sql;
 
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -44,8 +47,10 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL DELETE VERTEX command.
@@ -115,7 +120,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
           } catch (Exception e) {
             throw new OCommandSQLParsingException("Invalid LIMIT: " + word);
           }
-        }else if (word.equals(KEYWORD_RETURN)) {
+        } else if (word.equals(KEYWORD_RETURN)) {
           returning = parseReturn();
 
         } else if (word.length() > 0) {
@@ -135,7 +140,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
       else
         where = " WHERE " + where;
 
-      if (query == null && rid == null){
+      if (query == null && rid == null) {
         StringBuilder queryString = new StringBuilder();
         queryString.append("select from ");
         if (clazz == null) {
@@ -260,6 +265,30 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.WRITE;
+  }
+
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return query == null ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+  }
+
+  public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
+    return getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.LOCAL ? DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS
+        : DISTRIBUTED_RESULT_MGMT.MERGE;
+  }
+
+  @Override
+  public Set<String> getInvolvedClusters() {
+    final HashSet<String> result = new HashSet<String>();
+    if (rid != null)
+      result.add(database.getClusterNameById(rid.getClusterId()));
+    else if (query != null) {
+      final OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) query);
+      // COPY THE CONTEXT FROM THE REQUEST
+      executor.setContext(context);
+      executor.parse(query);
+      return executor.getInvolvedClusters();
+    }
+    return result;
   }
 
 }

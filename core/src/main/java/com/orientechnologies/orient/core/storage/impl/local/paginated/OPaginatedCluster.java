@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.zip.CRC32;
+
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -33,7 +41,6 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -43,14 +50,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.zip.CRC32;
-
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -1669,5 +1668,68 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       positions[i] = physicalPosition;
     }
     return positions;
+  }
+
+  public OPaginatedClusterDebug readDebug(long clusterPosition) throws IOException {
+
+    OPaginatedClusterDebug debug = new OPaginatedClusterDebug();
+    debug.clusterPosition = clusterPosition;
+    debug.fileId = fileId;
+    OAtomicOperation atomicOperation = null;
+    OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
+    if (positionEntry == null){
+      debug.empty = true;
+      return debug;
+    }
+
+    long pageIndex = positionEntry.getPageIndex();
+    int recordPosition = positionEntry.getRecordPosition();
+    if (getFilledUpTo(atomicOperation, fileId) <= pageIndex) {
+      debug.empty = true;
+      return debug;
+    }
+
+    debug.pages = new ArrayList<OClusterPageDebug>();
+    int contentSize = 0;
+
+    long nextPagePointer = -1;
+    boolean firstEntry = true;
+    do {
+      OClusterPageDebug debugPage = new OClusterPageDebug();
+      debugPage.pageIndex = pageIndex;
+      OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
+      try {
+        final OClusterPage localPage = new OClusterPage(cacheEntry, false, getChangesTree(atomicOperation, cacheEntry));
+
+        if (localPage.isDeleted(recordPosition)) {
+          if (debug.pages.isEmpty()) {
+            debug.empty = true;
+            return debug;
+          } else
+            throw new OStorageException("Content of record " + new ORecordId(id, clusterPosition) + " was broken.");
+        }
+        debugPage.inPagePosition = recordPosition;
+        debugPage.inPageSize = localPage.getRecordSize(recordPosition);
+        byte[] content = localPage.getRecordBinaryValue(recordPosition, 0, debugPage.inPageSize);
+        debugPage.content = content;
+        if (firstEntry && content[content.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE] == 0) {
+          debug.empty = true;
+          return debug;
+        }
+
+        debug.pages.add(debugPage);
+        nextPagePointer = OLongSerializer.INSTANCE.deserializeNative(content, content.length - OLongSerializer.LONG_SIZE);
+        contentSize += content.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
+
+        firstEntry = false;
+      } finally {
+        releasePage(atomicOperation, cacheEntry);
+      }
+
+      pageIndex = nextPagePointer >>> PAGE_INDEX_OFFSET;
+      recordPosition = (int) (nextPagePointer & RECORD_POSITION_MASK);
+    } while (nextPagePointer >= 0);
+    debug.contentSize = contentSize;
+    return debug;
   }
 }

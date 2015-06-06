@@ -1,9 +1,5 @@
 package com.orientechnologies.orient.server.distributed;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Direction;
@@ -11,10 +7,13 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import junit.framework.Assert;
+import org.junit.Test;
 
 public class TestSharding extends AbstractServerClusterTest {
 
@@ -192,8 +191,8 @@ public class TestSharding extends AbstractServerClusterTest {
 
             String query = "select from cluster:" + clusterName;
 
-            final OrientVertex explain = g.command(new OCommandSQL("explain " + query)).execute();
-            System.out.println("explain " + query + " -> " + ((ODocument) explain.getRecord()).field("servers"));
+            final Object explain = g.getRawGraph().command(new OCommandSQL("explain " + query)).execute();
+            System.out.println("explain " + query + " -> " + explain);
 
             Iterable<OrientVertex> result = g.command(new OCommandSQL(query)).execute();
             Assert.assertTrue("Error on query against '" + clusterName + "' on server '" + server + "': " + query, result
@@ -319,6 +318,10 @@ public class TestSharding extends AbstractServerClusterTest {
 
         Assert.assertEquals(totalBeforeDelete - count, totalAfterDelete);
 
+        g.command(new OCommandSQL("create vertex Client set name = 'temp1'")).execute();
+        g.command(new OCommandSQL("create vertex Client set name = 'temp2'")).execute();
+        g.command(new OCommandSQL("create vertex Client set name = 'temp3'")).execute();
+
         g.command(new OCommandSQL("delete vertex Client")).execute();
 
         Iterable<OrientVertex> countResultAfterFullDelete = g.command(new OCommandSQL("select from Client")).execute();
@@ -330,6 +333,39 @@ public class TestSharding extends AbstractServerClusterTest {
 
       } finally {
         g.shutdown();
+      }
+
+      OrientVertex v1, v2;
+      OrientGraph gTx = f.getTx();
+      try {
+        v1 = gTx.addVertex("class:Client");
+        v1.setProperty("name", "test1");
+
+        v2 = gTx.addVertex("class:Client");
+        v2.setProperty("name", "test1");
+      } finally {
+        gTx.shutdown();
+      }
+
+      gTx = f.getTx();
+      try {
+        // DELETE IN TX
+        v1.remove();
+        v2.remove();
+      } finally {
+        gTx.shutdown();
+      }
+
+      gTx = f.getTx();
+      try {
+        Iterable<OrientVertex> countResultAfterFullDelete = gTx.command(new OCommandSQL("select from Client")).execute();
+        long totalAfterFullDelete = 0;
+        for (OrientVertex v : countResultAfterFullDelete)
+          totalAfterFullDelete++;
+
+        Assert.assertEquals(0, totalAfterFullDelete);
+      } finally {
+        gTx.shutdown();
       }
 
     } catch (Exception e) {

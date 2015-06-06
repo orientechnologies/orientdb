@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -38,7 +39,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -1422,5 +1422,68 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       this.bucketPointer = bucketPointer;
       this.itemIndex = itemIndex;
     }
+  }
+
+  public void debugPrintBucket(PrintStream writer) throws IOException {
+    final ArrayList<OBonsaiBucketPointer> path = new ArrayList<OBonsaiBucketPointer>();
+    path.add(rootBucketPointer);
+    debugPrintBucket(rootBucketPointer, writer, path);
+  }
+
+  public void debugPrintBucket(OBonsaiBucketPointer bucketPointer, PrintStream writer, final ArrayList<OBonsaiBucketPointer> path)
+      throws IOException {
+
+    final OCacheEntry bucketEntry = loadPage(null, fileId, bucketPointer.getPageIndex(), false);
+    OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry;
+    try {
+      final OSBTreeBonsaiBucket<K, V> keyBucket = new OSBTreeBonsaiBucket<K, V>(bucketEntry, bucketPointer.getPageOffset(),
+          keySerializer, valueSerializer, null);
+      if (keyBucket.isLeaf()) {
+        for (int i = 0; i < path.size(); i++)
+          writer.append("\t");
+        writer.append(" Leaf backet:" + bucketPointer.getPageIndex() + "|" + bucketPointer.getPageOffset());
+        writer.append(" left bucket:" + keyBucket.getLeftSibling().getPageIndex() + "|"
+            + keyBucket.getLeftSibling().getPageOffset());
+        writer.append(" right bucket:" + keyBucket.getRightSibling().getPageIndex() + "|"
+            + keyBucket.getRightSibling().getPageOffset());
+        writer.append(" size:" + keyBucket.size());
+        writer.append(" content: [");
+        for (int index = 0; index < keyBucket.size(); index++) {
+          entry = keyBucket.getEntry(index);
+          writer.append(entry.getKey() + ",");
+        }
+        writer.append("\n");
+      } else {
+        for (int i = 0; i < path.size(); i++)
+          writer.append("\t");
+        writer.append(" node bucket:" + bucketPointer.getPageIndex() + "|" + bucketPointer.getPageOffset());
+        writer.append(" left bucket:" + keyBucket.getLeftSibling().getPageIndex() + "|"
+            + keyBucket.getLeftSibling().getPageOffset());
+        writer.append(" right bucket:" + keyBucket.getRightSibling().getPageIndex() + "|"
+            + keyBucket.getRightSibling().getPageOffset());
+        writer.append("\n");
+        for (int index = 0; index < keyBucket.size(); index++) {
+          entry = keyBucket.getEntry(index);
+          for (int i = 0; i < path.size(); i++)
+            writer.append("\t");
+          writer.append(" entry:" + index + " key: " + entry.getKey() + " left \n");
+          OBonsaiBucketPointer next = entry.leftChild;
+          path.add(next);
+          debugPrintBucket(next, writer, path);
+          path.remove(next);
+          for (int i = 0; i < path.size(); i++)
+            writer.append("\t");
+          writer.append(" entry:" + index + " key: " + entry.getKey() + " right \n");
+          next = entry.rightChild;
+          path.add(next);
+          debugPrintBucket(next, writer, path);
+          path.remove(next);
+
+        }
+      }
+    } finally {
+      releasePage(null, bucketEntry);
+    }
+
   }
 }

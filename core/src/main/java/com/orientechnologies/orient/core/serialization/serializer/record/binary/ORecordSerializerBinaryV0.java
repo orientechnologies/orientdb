@@ -273,12 +273,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return clazz;
   }
 
-  private OGlobalProperty getGlobalProperty(final ODocument document, final int len) {
+  protected OGlobalProperty getGlobalProperty(final ODocument document, final int len) {
     final int id = (len * -1) - 1;
     return ODocumentInternal.getGlobalPropertyById(document, id);
   }
 
-  private OType readOType(final BytesContainer bytes) {
+  protected OType readOType(final BytesContainer bytes) {
     return OType.getById(readByte(bytes));
   }
 
@@ -286,7 +286,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     bytes.bytes[pos] = (byte) type.getId();
   }
 
-  private Object readSingleValue(BytesContainer bytes, OType type, ODocument document) {
+  protected Object readSingleValue(BytesContainer bytes, OType type, ODocument document) {
     Object value = null;
     switch (type) {
     case INTEGER:
@@ -748,14 +748,14 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return type;
   }
 
-  private String readString(final BytesContainer bytes) {
+  protected String readString(final BytesContainer bytes) {
     final int len = OVarIntSerializer.readAsInteger(bytes);
     final String res = stringFromBytes(bytes.bytes, bytes.offset, len);
     bytes.skip(len);
     return res;
   }
 
-  private int readInteger(final BytesContainer container) {
+  protected int readInteger(final BytesContainer container) {
     final int value = OIntegerSerializer.INSTANCE.deserializeLiteral(container.bytes, container.offset);
     container.offset += OIntegerSerializer.INT_SIZE;
     return value;
@@ -791,7 +791,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     }
   }
 
-  private String stringFromBytes(final byte[] bytes, final int offset, final int len) {
+  protected String stringFromBytes(final byte[] bytes, final int offset, final int len) {
     try {
       return new String(bytes, offset, len, CHARSET_UTF_8);
     } catch (UnsupportedEncodingException e) {
