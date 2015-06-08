@@ -2,13 +2,15 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OMethodCall extends SimpleNode {
+
+  static Set<String>          bidirectionalMethods = new HashSet<String>(Arrays.asList(new String[] { "out", "in", "both", "outE",
+      "outV", "inE", "inV", "bothE", "bothV"      }));
+
   protected OIdentifier       methodName;
-  protected List<OExpression> params = new ArrayList<OExpression>();
+  protected List<OExpression> params               = new ArrayList<OExpression>();
 
   public OMethodCall(int id) {
     super(id);
@@ -42,11 +44,15 @@ public class OMethodCall extends SimpleNode {
   }
 
   public void replaceParameters(Map<Object, Object> iParams) {
-    if(this.params!=null){
-      for(OExpression exp:this.params){
+    if (this.params != null) {
+      for (OExpression exp : this.params) {
         exp.replaceParameters(iParams);
       }
     }
+  }
+
+  public boolean isBidirectional() {
+    return bidirectionalMethods.contains(methodName);
   }
 }
 /* JavaCC - OriginalChecksum=da95662da21ceb8dee3ad88c0d980413 (do not edit this line) */

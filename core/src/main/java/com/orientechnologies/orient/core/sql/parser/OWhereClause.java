@@ -2,9 +2,10 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+
+import java.util.Map;
 
 public class OWhereClause extends SimpleNode {
   OBooleanExpression baseExpression;
@@ -38,10 +39,21 @@ public class OWhereClause extends SimpleNode {
   }
 
   public void replaceParameters(Map<Object, Object> params) {
-    if(baseExpression!=null) {
+    if (baseExpression != null) {
       baseExpression.replaceParameters(params);
     }
 
+  }
+
+  /**
+   * estimates how many items of this class will be returned applying this filter
+   * 
+   * @param oClass
+   * @return an estimation of the number of records of this class returned applying this filter, 0 if and only if sure that no records are
+   *         returned
+   */
+  public long estimate(OClass oClass) {
+    return oClass.count();// TODO check indexes for an estimation of the number of results
   }
 }
 /* JavaCC - OriginalChecksum=e8015d01ce1ab2bc337062e9e3f2603e (do not edit this line) */

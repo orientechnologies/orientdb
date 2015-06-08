@@ -17,7 +17,9 @@ public class OMatchFilter extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor. *
+   */
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -29,6 +31,24 @@ public class OMatchFilter extends SimpleNode {
       }
     }
     return null;
+  }
+
+  public void setAlias(String alias) {
+    boolean found = false;
+    for (OMatchFilterItem item : items) {
+      if (item.alias != null) {
+        item.alias = new OIdentifier(-1);
+        item.alias.setValue(alias);
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      OMatchFilterItem newItem = new OMatchFilterItem(-1);
+      newItem.alias = new OIdentifier(-1);
+      newItem.alias.setValue(alias);
+      items.add(newItem);
+    }
   }
 
   public OWhereClause getFilter() {

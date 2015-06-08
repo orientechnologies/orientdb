@@ -18,5 +18,9 @@ public class OMatchPathItem extends SimpleNode {
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
+
+  public boolean isBidirectional(){
+    return method.isBidirectional();
+  }
 }
 /* JavaCC - OriginalChecksum=ffe8e0ffde583d7b21c9084eff6a8944 (do not edit this line) */

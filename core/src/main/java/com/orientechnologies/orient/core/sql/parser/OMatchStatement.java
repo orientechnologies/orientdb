@@ -7,10 +7,16 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 
@@ -20,15 +26,68 @@ import java.util.*;
 
 public class OMatchStatement extends OStatement implements OCommandExecutor {
 
-  class MatchResult {
-    Set<OIdentifier> matching;
-    boolean          complete = false;
+  class MatchContext {
+    String                root;
+    Map<String, Iterable> candidates = new HashMap<String, Iterable>();
+    Map<String, ORid>     matched    = new HashMap<String, ORid>();
+  }
+
+  class Pattern {
+    Map<String, PatternNode> aliasToNode = new HashMap<String, PatternNode>();
+
+    void addExpression(OMatchExpression expression) {
+      PatternNode originNode = getOrCreateNode(expression.origin);
+
+      for (OMatchPathItem item : expression.items) {
+        String nextAlias = item.filter.getAlias();
+        PatternNode nextNode = getOrCreateNode(item.filter);
+        originNode.addEdge(item, nextNode);
+        originNode = nextNode;
+      }
+    }
+
+    private PatternNode getOrCreateNode(OMatchFilter origin) {
+      PatternNode originNode = get(origin.getAlias());
+      if (originNode == null) {
+        originNode = new PatternNode();
+        originNode.alias = origin.getAlias();
+        aliasToNode.put(originNode.alias, originNode);
+      }
+      return originNode;
+    }
+
+    PatternNode get(String alias) {
+      return aliasToNode.get(alias);
+    }
+  }
+
+  class PatternNode {
+    String           alias;
+    Set<PatternEdge> out = new HashSet<PatternEdge>();
+    Set<PatternEdge> in  = new HashSet<PatternEdge>();
+
+    void addEdge(OMatchPathItem item, PatternNode to) {
+      PatternEdge edge = new PatternEdge();
+      edge.item = item;
+      edge.out = this;
+      edge.in = to;
+      this.out.add(edge);
+      to.in.add(edge);
+    }
+  }
+
+  class PatternEdge {
+    PatternNode    in;
+    PatternNode    out;
+    OMatchPathItem item;
   }
 
   public static final String       KEYWORD_MATCH    = "MATCH";
   // parsed data
   protected List<OMatchExpression> matchExpressions = new ArrayList<OMatchExpression>();
   protected List<OIdentifier>      returnItems      = new ArrayList<OIdentifier>();
+
+  protected Pattern                pattern;
 
   // execution data
   private OCommandContext          context;
@@ -69,12 +128,36 @@ public class OMatchStatement extends OStatement implements OCommandExecutor {
       throw new OCommandSQLParsingException(e.getMessage(), e);
     }
 
+    assignDefaultAliases(this.matchExpressions);
+    pattern = new Pattern();
+    for (OMatchExpression expr : this.matchExpressions) {
+      pattern.addExpression(expr);
+    }
+
     return (RET) this;
+  }
+
+  private void assignDefaultAliases(List<OMatchExpression> matchExpressions) {
+    String defaultAliasPrefix = "$ORIENT_DEFAULT_ALIAS_";
+    int counter = 0;
+    for (OMatchExpression expression : matchExpressions) {
+      if (expression.origin.getAlias() == null) {
+        expression.origin.setAlias(defaultAliasPrefix + (counter++));
+      }
+
+      for (OMatchPathItem item : expression.items) {
+        if (item.filter == null) {
+          item.filter = new OMatchFilter(-1);
+        }
+        if (item.filter.getAlias() == null) {
+          item.filter.setAlias(defaultAliasPrefix + (counter++));
+        }
+      }
+    }
   }
 
   @Override
   public Object execute(Map<Object, Object> iArgs) {
-    OResultSet result = new OResultSet();
 
     Map<String, OWhereClause> aliasFilters = new HashMap<String, OWhereClause>();
     Map<String, String> aliasClasses = new HashMap<String, String>();
@@ -83,13 +166,93 @@ public class OMatchStatement extends OStatement implements OCommandExecutor {
     }
 
     Map<String, Long> estimatedRootEntries = estimateRootEntries(aliasClasses, aliasFilters);
+    if (estimatedRootEntries.values().contains(0l)) {
+      return new OResultSet();// some aliases do not match on any classes
+    }
 
-    // TODO
+    return calculateMatch(estimatedRootEntries, new MatchContext(), aliasClasses, aliasFilters);
+  }
+
+  private OResultSet calculateMatch(Map<String, Long> estimatedRootEntries, MatchContext matchContext,
+      Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters) {
+    OResultSet result = new OResultSet();
+    calculateMatch(estimatedRootEntries, matchContext, aliasClasses, aliasFilters, result);
     return result;
   }
 
+  private void calculateMatch(Map<String, Long> estimatedRootEntries, MatchContext matchContext, Map<String, String> aliasClasses,
+      Map<String, OWhereClause> aliasFilters, OResultSet result) {
+    String nextAlias = getNextAlias(estimatedRootEntries, matchContext);
+    if (nextAlias == null) {
+      return;
+    }
+    // Iterable aliasMatches = reach()
+    // aliasMatches = query(aliasClasses.get(nextAlias), aliasFilters.get(nextAlias));
+    // TODO start from here!
+
+  }
+
+  private Iterable<OIdentifiable> query(String className, OWhereClause oWhereClause) {
+    final ODatabaseDocument database = getDatabase();
+    OClass schemaClass = database.getMetadata().getSchema().getClass(className);
+    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, schemaClass.getName().toLowerCase());
+
+    Iterable<ORecord> baseIterable = fetchFromIndex(schemaClass, oWhereClause);
+    if (baseIterable == null) {
+      baseIterable = new ORecordIteratorClass<ORecord>((ODatabaseDocumentInternal) database, (ODatabaseDocumentInternal) database,
+          className, true, true);
+    }
+    Iterable<OIdentifiable> result = new FilteredIterator(baseIterable, oWhereClause);
+    return result;
+  }
+
+  private Iterable<ORecord> fetchFromIndex(OClass schemaClass, OWhereClause oWhereClause) {
+    return null;// TODO
+  }
+
+  private String getNextAlias(Map<String, Long> estimatedRootEntries, MatchContext matchContext) {
+    Map.Entry<String, Long> lowerValue = null;
+    for (Map.Entry<String, Long> entry : estimatedRootEntries.entrySet()) {
+      if (matchContext.matched.containsKey(entry.getKey())) {
+        continue;
+      }
+      if (lowerValue == null) {
+        lowerValue = entry;
+      } else if (lowerValue.getValue() > entry.getValue()) {
+        lowerValue = entry;
+      }
+    }
+    return lowerValue.getKey();
+  }
+
   private Map<String, Long> estimateRootEntries(Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters) {
-    return null;
+    Set<String> allAliases = new HashSet<String>();
+    allAliases.addAll(aliasClasses.keySet());
+    allAliases.addAll(aliasFilters.keySet());
+
+    OSchema schema = getDatabase().getMetadata().getSchema();
+
+    Map<String, Long> result = new HashMap<String, Long>();
+    for (String alias : allAliases) {
+      String className = aliasClasses.get(alias);
+      if (className == null) {
+        continue;
+      }
+
+      if (!schema.existsClass(className)) {
+        throw new OCommandExecutionException("class not defined: " + className);
+      }
+      OClass oClass = schema.getClass(alias);
+      long upperBound;
+      OWhereClause filter = aliasFilters.get(alias);
+      if (filter != null) {
+        upperBound = filter.estimate(oClass);
+      } else {
+        upperBound = oClass.count();
+      }
+      result.put(alias, upperBound);
+    }
+    return result;
   }
 
   private void addAliases(OMatchExpression expr, Map<String, OWhereClause> aliasFilters, Map<String, String> aliasClasses) {
