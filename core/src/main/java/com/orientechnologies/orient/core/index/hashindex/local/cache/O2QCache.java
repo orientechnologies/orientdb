@@ -25,6 +25,7 @@ import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
@@ -140,7 +141,7 @@ public class O2QCache implements OReadCache {
 
   @Override
   public void openFile(long fileId, OWriteCache writeCache) throws IOException {
-    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
+    fileId = OAbstractWriteCache.checkFileIdCompatibility(fileId, writeCache.getId());
 
     cacheLock.acquireReadLock();
     Lock fileLock;
@@ -164,7 +165,7 @@ public class O2QCache implements OReadCache {
 
   @Override
   public void openFile(String fileName, long fileId, OWriteCache writeCache) throws IOException {
-    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
+    fileId = OAbstractWriteCache.checkFileIdCompatibility(fileId, writeCache.getId());
 
     cacheLock.acquireWriteLock();
     try {
@@ -188,7 +189,7 @@ public class O2QCache implements OReadCache {
 
   @Override
   public void addFile(String fileName, long fileId, OWriteCache writeCache) throws IOException {
-    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
+    fileId = OAbstractWriteCache.checkFileIdCompatibility(fileId, writeCache.getId());
 
     cacheLock.acquireWriteLock();
     try {
@@ -227,7 +228,7 @@ public class O2QCache implements OReadCache {
   @Override
   public OCacheEntry load(long fileId, final long pageIndex, final boolean checkPinnedPages, OWriteCache writeCache)
       throws IOException {
-    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
+    fileId = OAbstractWriteCache.checkFileIdCompatibility(fileId, writeCache.getId());
 
     final UpdateCacheResult cacheResult = doLoad(fileId, pageIndex, checkPinnedPages, false, writeCache);
     if (cacheResult == null)
@@ -288,7 +289,7 @@ public class O2QCache implements OReadCache {
 
   @Override
   public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache) throws IOException {
-    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
+    fileId = OAbstractWriteCache.checkFileIdCompatibility(fileId, writeCache.getId());
 
     UpdateCacheResult cacheResult;
 
@@ -375,7 +376,7 @@ public class O2QCache implements OReadCache {
   @Override
   public void truncateFile(long fileId, OWriteCache writeCache) throws IOException {
     Lock fileLock;
-    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
+    fileId = OAbstractWriteCache.checkFileIdCompatibility(fileId, writeCache.getId());
 
     cacheLock.acquireReadLock();
     try {
@@ -430,7 +431,7 @@ public class O2QCache implements OReadCache {
 
   @Override
   public void closeFile(long fileId, boolean flush, OWriteCache writeCache) throws IOException {
-    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
+    fileId = OAbstractWriteCache.checkFileIdCompatibility(fileId, writeCache.getId());
 
     Lock fileLock;
     cacheLock.acquireReadLock();
@@ -452,7 +453,7 @@ public class O2QCache implements OReadCache {
 
   @Override
   public void deleteFile(long fileId, OWriteCache writeCache) throws IOException {
-    fileId = checkFileIdCompatibilty(fileId, writeCache.getId());
+    fileId = OAbstractWriteCache.checkFileIdCompatibility(fileId, writeCache.getId());
 
     Lock fileLock;
 
@@ -932,21 +933,5 @@ public class O2QCache implements OReadCache {
       this.removeColdPages = removeColdPages;
       this.cacheEntry = cacheEntry;
     }
-  }
-
-  private int storageId(long fileId) {
-    return (int) (fileId >>> 32);
-  }
-
-  private long composeFileId(long fileId, int storageId) {
-    return (((long) storageId) << 32) | fileId;
-  }
-
-  private long checkFileIdCompatibilty(long fileId, int storageId) {
-    if (storageId(fileId) == 0) {
-      return composeFileId(fileId, storageId);
-    }
-
-    return fileId;
   }
 }
