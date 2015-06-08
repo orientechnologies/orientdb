@@ -77,7 +77,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     if (iScriptText == null || iScriptText.length() == 0)
       return;
 
-    currentResultSet.clear();
+    resetResultSet();
 
     long start = System.currentTimeMillis();
     try {
