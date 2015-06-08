@@ -54,11 +54,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -68,6 +64,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   private boolean              usingLog = true;
   private int                  txStartCounter;
+
 
   private class CommitIndexesCallback implements Runnable {
     private final Map<String, OIndex<?>> indexes;
@@ -114,6 +111,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   public OTransactionOptimistic(final ODatabaseDocumentTx iDatabase) {
     super(iDatabase, txSerial.incrementAndGet());
   }
+
 
   public void begin() {
     if (txStartCounter == 0)
@@ -369,6 +367,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   public void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName) {
     checkTransaction();
+
+    if (iStatus != ORecordOperation.LOADED)
+      changedDocuments.remove(iRecord);
 
     try {
       switch (iStatus) {

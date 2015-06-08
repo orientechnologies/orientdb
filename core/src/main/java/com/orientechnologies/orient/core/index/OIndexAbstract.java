@@ -214,7 +214,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     acquireExclusiveLock();
     try {
       this.name = name;
-      configuration.set(new ODocument());
+      configuration.set(new ODocument().setTrackingChanges(false));
 
       this.indexDefinition = indexDefinition;
 
@@ -696,7 +696,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     ODocument newConfig;
     do {
       oldConfig = configuration.get();
-      newConfig = new ODocument();
+      newConfig = new ODocument().setTrackingChanges(false);
+      if (oldConfig.hasOwners()) {
+        ODocumentInternal.addOwner(newConfig, oldConfig.getOwner());
+      }
 
       oldConfig.copyTo(newConfig);
 
@@ -1112,6 +1115,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
           final String serializedKey = OStringSerializerHelper.decode((String) serKey);
           keyContainer = new ODocument();
           keyContainer.setLazyLoad(false);
+          keyContainer.setTrackingChanges(false);
 
           ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
         } else if (serKey instanceof ODocument) {

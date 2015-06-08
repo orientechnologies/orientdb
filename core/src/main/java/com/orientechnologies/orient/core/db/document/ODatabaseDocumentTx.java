@@ -2844,7 +2844,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       }
       callbackHooks(hookType, record);
 
-      clearDocumentTracking(record);
     }
   }
 
@@ -2853,6 +2852,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       final ORecordHook.TYPE hookType;
       hookType = wasNew ? ORecordHook.TYPE.FINALIZE_CREATION : ORecordHook.TYPE.FINALIZE_UPDATE;
       callbackHooks(hookType, record);
+
+      clearDocumentTracking(record);
     }
   }
 

@@ -135,7 +135,7 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
       final Set<OIdentifiable> sourceRIDs = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), source, context, iArgs);
 
       // CREATE EDGES
-        final List<ODocument> result = new ArrayList<ODocument>(sourceRIDs.size());
+      final List<ODocument> result = new ArrayList<ODocument>(sourceRIDs.size());
 
       for (OIdentifiable from : sourceRIDs) {
         final OrientVertex fromVertex = graph.getVertex(from);
@@ -164,7 +164,8 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
         newVertexDoc.save();
 
         // PUT THE MOVE INTO THE RESULT
-        result.add(new ODocument().field("old", oldVertex, OType.LINK).field("new", newVertex, OType.LINK));
+        result.add(new ODocument().setTrackingChanges(false).field("old", oldVertex, OType.LINK)
+            .field("new", newVertex, OType.LINK));
 
         if (batch > 0 && result.size() % batch == 0)
           graph.commit();
@@ -179,6 +180,7 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
         graph.shutdown(false);
     }
   }
+
   @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.WRITE;

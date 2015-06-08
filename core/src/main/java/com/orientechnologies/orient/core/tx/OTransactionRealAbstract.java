@@ -42,12 +42,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
@@ -63,6 +58,12 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
   protected int                                               id;
   protected int                                               newObjectCounter      = -2;
+
+  /**
+   * This set is used to track which documents are changed during tx, if documents are changed but not saved all changes are made
+   * during tx will be undone.
+   */
+  protected final Set<ODocument>                              changedDocuments      = new HashSet<ODocument>();
 
   /**
    * Represents information for each index operation for each record in DB.
@@ -94,9 +95,33 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     return false;
   }
 
+  public void addChangedDocument(ODocument document) {
+    if (getRecord(document.getIdentity()) == null) {
+      changedDocuments.add(document);
+    }
+  }
+
   public void close() {
     super.close();
 
+    for (final ORecordOperation recordOperation : getAllRecordEntries()) {
+      final ORecord record = recordOperation.getRecord();
+      if (record instanceof ODocument) {
+        final ODocument document = (ODocument) record;
+
+        if (document.isDirty()) {
+          document.undo();
+        }
+
+        changedDocuments.remove(document);
+      }
+    }
+
+    for (ODocument changedDocument : changedDocuments) {
+      changedDocument.undo();
+    }
+
+    changedDocuments.clear();
     temp2persistent.clear();
     allEntries.clear();
     recordEntries.clear();
@@ -123,7 +148,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     recordEntries.clear();
   }
 
-  public void restore(){
+  public void restore() {
     recordEntries.putAll(allEntries);
     allEntries.clear();
   }
@@ -246,10 +271,10 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
   public ODocument getIndexChanges() {
 
-    final ODocument result = new ODocument().setAllowChainedAccess(false);
+    final ODocument result = new ODocument().setAllowChainedAccess(false).setTrackingChanges(false);
 
     for (Entry<String, OTransactionIndexChanges> indexEntry : indexEntries.entrySet()) {
-      final ODocument indexDoc = new ODocument();
+      final ODocument indexDoc = new ODocument().setTrackingChanges(false);
       ODocumentInternal.addOwner(indexDoc, result);
 
       result.field(indexEntry.getKey(), indexDoc, OType.EMBEDDED);
@@ -375,6 +400,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     // SERIALIZE KEY
 
     ODocument keyContainer = new ODocument();
+    keyContainer.setTrackingChanges(false);
 
     try {
       if (entry.key != null) {
@@ -422,6 +448,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       }
     }
     ODocument res = new ODocument();
+    res.setTrackingChanges(false);
     ODocumentInternal.addOwner(res, indexDoc);
     return res.setAllowChainedAccess(false).field("k", keyContainer, OType.EMBEDDED).field("ops", operations, OType.EMBEDDEDLIST);
   }

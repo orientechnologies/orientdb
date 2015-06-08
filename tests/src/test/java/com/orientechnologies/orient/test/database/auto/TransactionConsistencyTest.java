@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -319,10 +320,8 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
   @SuppressWarnings("unchecked")
   @Test
   public void createLinkInTx() {
-    OClass profile = database.getMetadata().getSchema()
-        .createClass("MyProfile", database.addCluster("myprofile"));
-    OClass edge = database.getMetadata().getSchema()
-        .createClass("MyEdge", database.addCluster("myedge"));
+    OClass profile = database.getMetadata().getSchema().createClass("MyProfile", database.addCluster("myprofile"));
+    OClass edge = database.getMetadata().getSchema().createClass("MyEdge", database.addCluster("myedge"));
     profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
     profile.createProperty("in", OType.LINKSET, edge);
@@ -410,7 +409,7 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     database.open("admin", "admin");
     int chunkSize = 500;
     for (int initialValue = 0; initialValue < 10; initialValue++) {
-//      System.out.println("initialValue = " + initialValue);
+      // System.out.println("initialValue = " + initialValue);
       Assert.assertEquals(database.countClusterElements("MyFruit"), 0);
 
       // do insert
@@ -422,16 +421,16 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
         v.addElement(d);
 
       }
-//      System.out.println("populate commit");
+      // System.out.println("populate commit");
       database.commit();
 
       // do delete
       database.begin();
-//      System.out.println("vector size = " + v.size());
+      // System.out.println("vector size = " + v.size());
       for (int i = 0; i < v.size(); i++) {
         database.delete(v.elementAt(i));
       }
-//      System.out.println("delete commit");
+      // System.out.println("delete commit");
       database.commit();
 
       Assert.assertEquals(database.countClusterElements("MyFruit"), 0);
@@ -527,7 +526,7 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
   }
 
   public void TransactionRollbackConstistencyTest() {
-//    System.out.println("**************************TransactionRollbackConsistencyTest***************************************");
+    // System.out.println("**************************TransactionRollbackConsistencyTest***************************************");
 
     OClass vertexClass = database.getMetadata().getSchema().createClass("TRVertex");
     OClass edgeClass = database.getMetadata().getSchema().createClass("TREdge");
@@ -574,7 +573,7 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     final List<ODocument> result1 = database.command(new OCommandSQL("select from TRPerson")).execute();
     Assert.assertNotNull(result1);
     Assert.assertEquals(result1.size(), cnt);
-//    System.out.println("Before transaction commit");
+    // System.out.println("Before transaction commit");
     for (ODocument d : result1)
       System.out.println(d);
 
@@ -624,12 +623,12 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
 
     final List<ODocument> result2 = database.command(new OCommandSQL("select from TRPerson")).execute();
     Assert.assertNotNull(result2);
-//    System.out.println("After transaction commit failure/rollback");
+    // System.out.println("After transaction commit failure/rollback");
     for (ODocument d : result2)
       System.out.println(d);
     Assert.assertEquals(result2.size(), cnt);
 
-//    System.out.println("**************************TransactionRollbackConstistencyTest***************************************");
+    // System.out.println("**************************TransactionRollbackConstistencyTest***************************************");
   }
 
   @Test
@@ -712,6 +711,37 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
           bookCount++;
       }
       Assert.assertEquals(bookCount, 2); // this fails, only 1 entry in the datastore :(
+    } finally {
+      database.close();
+    }
+  }
+
+  public void testTransactionsCache() throws Exception {
+    OObjectDatabaseTx database = new OObjectDatabaseTx(url);
+    database.open("admin", "admin");
+
+    try {
+      Assert.assertFalse(database.getTransaction().isActive());
+      OSchema schema = database.getMetadata().getSchema();
+      OClass classA = schema.createClass("TransA");
+      classA.createProperty("name", OType.STRING);
+      ODocument doc = new ODocument(classA);
+      doc.field("name", "test1");
+      doc.save();
+      ORID orid = doc.getIdentity();
+      database.begin();
+      Assert.assertTrue(database.getTransaction().isActive());
+      doc = orid.getRecord();
+      Assert.assertEquals("test1", doc.field("name"));
+      doc.field("name", "test2");
+      doc = orid.getRecord();
+      Assert.assertEquals("test2", doc.field("name"));
+      // There is NO SAVE!
+      database.commit();
+
+      doc = orid.getRecord();
+      Assert.assertEquals("test1", doc.field("name"));
+
     } finally {
       database.close();
     }
