@@ -28,13 +28,10 @@ import java.util.Set;
 
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.OIdentityChangeListener;
 import com.orientechnologies.orient.core.record.OIdentityChangeListener;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 
 /**
@@ -127,6 +124,11 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
     if (e instanceof ORecord && e.getIdentity().isNew()) {
       ORecordInternal.addIdentityChangeListener((ORecord) e, this);
       map.put(e, e);
+    } else if (!e.getIdentity().isPersistent()){
+      //record id is not fixed yet, so we need to be able to watch for id changes, so get the record for this id to be able to do this.
+      ORecord record = e.getRecord();
+      ORecordInternal.addIdentityChangeListener(record, this);
+      map.put(e, record);
     } else
       map.put(e, ENTRY_REMOVAL);
     setDirty();
