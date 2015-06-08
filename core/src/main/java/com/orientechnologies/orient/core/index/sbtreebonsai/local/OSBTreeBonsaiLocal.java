@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
@@ -140,7 +141,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
       openFile(atomicOperation, fileId);
 
-      this.fileId = fileId;
+      this.fileId = OAbstractWriteCache.checkFileIdCompatibility(fileId, storage.getId());
       this.name = resolveTreeName(fileId, atomicOperation);
 
       initAfterCreate(atomicOperation);
@@ -483,6 +484,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   public void load(long fileId, OBonsaiBucketPointer rootBucketPointer) {
+    fileId = OAbstractWriteCache.checkFileIdCompatibility(fileId, storage.getId());
     Lock lock = fileLockManager.acquireExclusiveLock(fileId);
     try {
       this.rootBucketPointer = rootBucketPointer;

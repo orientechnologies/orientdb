@@ -16,4 +16,12 @@ public class OAbstractWriteCache {
     return (int) (fileId >>> 32);
   }
 
+  public static long checkFileIdCompatibility(long fileId, int storageId) {
+    if (extractStorageId(fileId) == 0) {
+      return composeFileId((int) fileId, storageId);
+    }
+
+    return fileId;
+  }
+
 }
