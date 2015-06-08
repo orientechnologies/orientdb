@@ -130,6 +130,11 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
     if (e instanceof ORecord && e.getIdentity().isNew()) {
       ORecordInternal.addIdentityChangeListener((ORecord) e, this);
       map.put(e, e);
+    } else if (!e.getIdentity().isPersistent()){
+      //record id is not fixed yet, so we need to be able to watch for id changes, so get the record for this id to be able to do this.
+      ORecord record = e.getRecord();
+      ORecordInternal.addIdentityChangeListener(record, this);
+      map.put(e, record);
     } else
       map.put(e, ENTRY_REMOVAL);
     setDirty();
