@@ -27,9 +27,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
+import java.util.Set;
 
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
@@ -54,10 +66,13 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ridbag.OBonsaiTreeRepair;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
@@ -1423,6 +1438,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\nRepairing database...");
 
     boolean verbose = iOptions != null && iOptions.contains("-v");
+    boolean fix_ridbags = iOptions != null && iOptions.contains("--fix-ridbags");
 
     long fixedLinks = 0l;
     long modifiedDocuments = 0l;
@@ -1430,55 +1446,71 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     message("\n- Fixing dirty links...");
     try {
-      for (String clusterName : currentDatabase.getClusterNames()) {
-        for (ORecord rec : currentDatabase.browseCluster(clusterName)) {
-          try {
-            if (rec instanceof ODocument) {
-              boolean changed = false;
+      if (!fix_ridbags) {
+        for (String clusterName : currentDatabase.getClusterNames()) {
+          for (ORecord rec : currentDatabase.browseCluster(clusterName)) {
+            try {
+              if (rec instanceof ODocument) {
+                boolean changed = false;
 
-              final ODocument doc = (ODocument) rec;
-              for (String fieldName : doc.fieldNames()) {
-                final Object fieldValue = doc.rawField(fieldName);
+                final ODocument doc = (ODocument) rec;
+                for (String fieldName : doc.fieldNames()) {
+                  final Object fieldValue = doc.rawField(fieldName);
 
-                if (fieldValue instanceof OIdentifiable) {
-                  if (fixLink(fieldValue)) {
-                    doc.field(fieldName, (OIdentifiable) null);
-                    fixedLinks++;
-                    changed = true;
-                    if (verbose)
-                      message("\n--- reset link " + ((OIdentifiable) fieldValue).getIdentity() + " in field '" + fieldName
-                          + "' (rid=" + doc.getIdentity() + ")");
-                  }
-                } else if (fieldValue instanceof Iterable<?>) {
-                  if (fieldValue instanceof ORecordLazyMultiValue)
-                    ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
-
-                  final Iterator<Object> it = ((Iterable) fieldValue).iterator();
-                  for (int i = 0; it.hasNext(); ++i) {
-                    final Object v = it.next();
-                    if (fixLink(v)) {
-                      it.remove();
+                  if (fieldValue instanceof OIdentifiable) {
+                    if (fixLink(fieldValue)) {
+                      doc.field(fieldName, (OIdentifiable) null);
                       fixedLinks++;
                       changed = true;
                       if (verbose)
-                        message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as item " + i
-                            + " in collection of field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
+                        message("\n--- reset link " + ((OIdentifiable) fieldValue).getIdentity() + " in field '" + fieldName
+                            + "' (rid=" + doc.getIdentity() + ")");
+                    }
+                  } else if (fieldValue instanceof Iterable<?>) {
+                    if (fieldValue instanceof ORecordLazyMultiValue)
+                      ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
+
+                    final Iterator<Object> it = ((Iterable) fieldValue).iterator();
+                    for (int i = 0; it.hasNext(); ++i) {
+                      final Object v = it.next();
+                      if (fixLink(v)) {
+                        it.remove();
+                        fixedLinks++;
+                        changed = true;
+                        if (verbose)
+                          message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as item " + i
+                              + " in collection of field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
+                      }
                     }
                   }
                 }
-              }
 
-              if (changed) {
-                modifiedDocuments++;
-                doc.save();
+                if (changed) {
+                  modifiedDocuments++;
+                  doc.save();
 
-                if (verbose)
-                  message("\n-- updated document " + doc.getIdentity());
+                  if (verbose)
+                    message("\n-- updated document " + doc.getIdentity());
+                }
               }
+            } catch (Exception e) {
+              errors++;
             }
-          } catch (Exception e) {
-            errors++;
           }
+        }
+      } else if (fix_ridbags) {
+        boolean lightweight = false;
+        final List<OStorageEntryConfiguration> custom = (List<OStorageEntryConfiguration>) currentDatabase.get(ATTRIBUTES.CUSTOM);
+        for (OStorageEntryConfiguration c : custom) {
+          if (c.name.equals("useLightweightEdges") && Boolean.TRUE.equals(Boolean.parseBoolean(c.value))) {
+            lightweight = true;
+          }
+        }
+        if (!lightweight) {
+          OBonsaiTreeRepair repairer = new OBonsaiTreeRepair();
+          repairer.repairDatabaseRidbags(currentDatabase);
+        } else {
+          message("cannot execute fix ridbags on a db with ligthweight edges");
         }
       }
 
