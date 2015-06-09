@@ -1468,6 +1468,18 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   @Override
   public ODocument clear() {
     super.clear();
+    if (_fieldValues != null) {
+      if (_fieldOriginalValues == null) {
+        _fieldOriginalValues = new HashMap<String, Object>();
+      }
+
+      for (Map.Entry<String, Object> entry : _fieldValues.entrySet()) {
+        if (!_fieldOriginalValues.containsKey(entry.getKey())) {
+          _fieldOriginalValues.put(entry.getKey(), entry.getValue());
+        }
+      }
+    }
+
     internalReset();
     _owners = null;
     return this;
@@ -1749,7 +1761,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     if (iFields != null && iFields.length > 0) {
-      for(String field:iFields) {
+      for (String field : iFields) {
         if (field.startsWith("@"))
           // ATTRIBUTE
           return true;
