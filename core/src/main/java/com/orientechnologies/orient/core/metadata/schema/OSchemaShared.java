@@ -103,7 +103,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public OSchemaShared(boolean clustersCanNotBeSharedAmongClasses) {
-    super(new ODocument());
+    super(new ODocument().setTrackingChanges(false));
     this.clustersCanNotBeSharedAmongClasses = clustersCanNotBeSharedAmongClasses;
   }
 

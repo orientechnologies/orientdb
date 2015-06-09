@@ -76,8 +76,9 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -91,7 +92,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   protected static final String[]                         EMPTY_STRINGS           = new String[] {};
   private static final long                               serialVersionUID        = 1L;
   protected int                                           _fieldSize;
+
   protected Map<String, ODocumentEntry>                   _fields;
+
   protected boolean                                       _trackingChanges        = true;
   protected boolean                                       _ordered                = true;
   protected boolean                                       _lazyLoad               = true;
@@ -1325,7 +1328,37 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     // THIS IS IMPORTANT TO BE SURE THAT FIELDS ARE LOADED BEFORE IT'S TOO LATE AND THE RECORD _SOURCE IS NULL
     checkForFields();
 
-    return super.setDirty();
+    super.setDirty();
+
+    boolean addToChangedList = false;
+
+    ORecordElement owner;
+    if (!isEmbedded())
+      owner = this;
+    else {
+      owner = getOwner();
+      while (owner != null && owner.getOwner() != null) {
+        owner = owner.getOwner();
+      }
+    }
+
+    if (owner instanceof ODocument && ((ODocument) owner).isTrackingChanges() && ((ODocument) owner).getIdentity().isPersistent())
+      addToChangedList = true;
+
+    if (addToChangedList) {
+      final ODatabaseDocument database = getDatabaseIfDefined();
+
+      if (database != null) {
+        final OTransaction transaction = database.getTransaction();
+
+        if (transaction instanceof OTransactionOptimistic) {
+          OTransactionOptimistic transactionOptimistic = (OTransactionOptimistic) transaction;
+          transactionOptimistic.addChangedDocument(this);
+        }
+      }
+    }
+
+    return this;
   }
 
   @Override
@@ -1728,7 +1761,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     if (iFields != null && iFields.length > 0) {
-      for(String field:iFields) {
+      for (String field : iFields) {
         if (field.startsWith("@"))
           // ATTRIBUTE
           return true;

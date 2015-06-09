@@ -15,11 +15,24 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.Vector;
+
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -32,17 +45,6 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.Address;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.Vector;
 
 @Test
 public class TransactionConsistencyTest extends DocumentDBBaseTest {
@@ -344,6 +346,7 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
   @Test
   public void createLinkInTx() {
     database = new ODatabaseDocumentTx(url).open("admin", "admin");
+
     OClass profile = database.getMetadata().getSchema().createClass("MyProfile", database.addCluster("myprofile"));
     OClass edge = database.getMetadata().getSchema().createClass("MyEdge", database.addCluster("myedge"));
     profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
@@ -659,7 +662,6 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
       System.out.println(d);
     Assert.assertEquals(result2.size(), cnt);
 
-    database.close();
     // System.out.println("**************************TransactionRollbackConstistencyTest***************************************");
   }
 
@@ -743,6 +745,37 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
           bookCount++;
       }
       Assert.assertEquals(bookCount, 2); // this fails, only 1 entry in the datastore :(
+    } finally {
+      database.close();
+    }
+  }
+
+  public void testTransactionsCache() throws Exception {
+    OObjectDatabaseTx database = new OObjectDatabaseTx(url);
+    database.open("admin", "admin");
+
+    try {
+      Assert.assertFalse(database.getTransaction().isActive());
+      OSchema schema = database.getMetadata().getSchema();
+      OClass classA = schema.createClass("TransA");
+      classA.createProperty("name", OType.STRING);
+      ODocument doc = new ODocument(classA);
+      doc.field("name", "test1");
+      doc.save();
+      ORID orid = doc.getIdentity();
+      database.begin();
+      Assert.assertTrue(database.getTransaction().isActive());
+      doc = orid.getRecord();
+      Assert.assertEquals("test1", doc.field("name"));
+      doc.field("name", "test2");
+      doc = orid.getRecord();
+      Assert.assertEquals("test2", doc.field("name"));
+      // There is NO SAVE!
+      database.commit();
+
+      doc = orid.getRecord();
+      Assert.assertEquals("test1", doc.field("name"));
+
     } finally {
       database.close();
     }

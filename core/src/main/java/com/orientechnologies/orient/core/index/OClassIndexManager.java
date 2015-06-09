@@ -49,7 +49,6 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -303,24 +302,12 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
 
     for (final OIndex<?> index : indexes) {
-      final List<Object> keys = new ArrayList<Object>();
+      if (index.getInternal() instanceof OIndexUnique) {
+        OIndexRecorder indexRecorder = new OIndexRecorder((OIndexUnique) index.getInternal());
 
-      final OIndexDefinition indexDefinition = index.getDefinition();
-      final Object key = index.getDefinition().getDocumentValueToIndex(record);
-
-      if (key instanceof Collection) {
-        for (final Object keyItem : (Collection<?>) key) {
-          if (!indexDefinition.isNullValuesIgnored() || keyItem != null) {
-            keys.add(copyKeyIfNeeded(index.getInternal().getCollatingValue(keyItem)));
-          }
-        }
-      } else {
-        if (!indexDefinition.isNullValuesIgnored() || key != null) {
-          keys.add(copyKeyIfNeeded(index.getInternal().getCollatingValue(key)));
-        }
+        addIndexEntry(record, record.getIdentity(), indexRecorder);
+        indexKeysMap.put(index, indexRecorder.getAffectedKeys());
       }
-
-      indexKeysMap.put(index, keys);
     }
 
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
@@ -361,30 +348,13 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       return;
 
     for (final OIndex<?> index : indexes) {
-      final List<Object> keys = new ArrayList<Object>();
 
-      final OIndexDefinition indexDefinition = index.getDefinition();
-      final List<String> indexFields = indexDefinition.getFields();
-      for (final String indexField : indexFields) {
-        if (dirtyFields.contains(indexField)) {
-          final Object key = index.getDefinition().getDocumentValueToIndex(record);
-          if (key instanceof Collection) {
-            for (final Object keyItem : (Collection<?>) key) {
-              if (!indexDefinition.isNullValuesIgnored() || keyItem != null) {
-                keys.add(copyKeyIfNeeded(index.getInternal().getCollatingValue(keyItem)));
-              }
-            }
-          } else {
-            if (!indexDefinition.isNullValuesIgnored() || key != null) {
-              keys.add(copyKeyIfNeeded(index.getInternal().getCollatingValue(key)));
-            }
+      if (index instanceof OIndexUnique) {
+        final OIndexRecorder indexRecorder = new OIndexRecorder((OIndexUnique) index);
+        processIndexUpdate(record, dirtyFields, indexRecorder);
 
-          }
-          break;
-        }
+        indexKeysMap.put(index, indexRecorder.getAffectedKeys());
       }
-
-      indexKeysMap.put(index, keys);
     }
 
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
@@ -401,21 +371,6 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         index.checkEntry(record, keyItem);
       }
     }
-  }
-
-  private Object copyKeyIfNeeded(Object object) {
-    if (object instanceof ORecordId)
-      return new ORecordId((ORecordId) object);
-    else if (object instanceof OCompositeKey) {
-      final OCompositeKey copy = new OCompositeKey();
-      for (Object key : ((OCompositeKey) object).getKeys()) {
-        copy.addKey(copyKeyIfNeeded(key));
-      }
-
-      return copy;
-    }
-
-    return object;
   }
 
   private static ODocument checkForLoading(final ODocument iRecord) {
@@ -444,8 +399,17 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   @Override
-  public void onRecordAfterCreate(final ODocument iDocument) {
-    addIndexesEntries(iDocument);
+  public void onRecordAfterCreate(ODocument document) {
+    document = checkForLoading(document);
+
+    // STORE THE RECORD IF NEW, OTHERWISE ITS RID
+    final OIdentifiable rid = document.getIdentity();
+
+    final OClass cls = ODocumentInternal.getImmutableSchemaClass(document);
+    if (cls != null) {
+      final Collection<OIndex<?>> indexes = cls.getIndexes();
+      addIndexesEntries(document, indexes);
+    }
   }
 
   @Override
@@ -477,13 +441,17 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
       if (!dirtyFields.isEmpty()) {
         for (final OIndex<?> index : indexes) {
-          if (index.getDefinition() instanceof OCompositeIndexDefinition)
-            processCompositeIndexUpdate(index, dirtyFields, iDocument);
-          else
-            processSingleIndexUpdate(index, dirtyFields, iDocument);
+          processIndexUpdate(iDocument, dirtyFields, index);
         }
       }
     }
+  }
+
+  private void processIndexUpdate(ODocument iDocument, Set<String> dirtyFields, OIndex<?> index) {
+    if (index.getDefinition() instanceof OCompositeIndexDefinition)
+      processCompositeIndexUpdate(index, dirtyFields, iDocument);
+    else
+      processSingleIndexUpdate(index, dirtyFields, iDocument);
   }
 
   @Override
@@ -524,34 +492,31 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   public void onRecordDeleteReplicated(final ODocument iDocument) {
   }
 
-  private void addIndexesEntries(ODocument document) {
-    document = checkForLoading(document);
-
+  private void addIndexesEntries(ODocument document, final Collection<OIndex<?>> indexes) {
     // STORE THE RECORD IF NEW, OTHERWISE ITS RID
     final OIdentifiable rid = document.getIdentity();
 
-    final OClass cls = ODocumentInternal.getImmutableSchemaClass(document);
-    if (cls != null) {
-      final Collection<OIndex<?>> indexes = cls.getIndexes();
-      for (final OIndex<?> index : indexes) {
-        final OIndexDefinition indexDefinition = index.getDefinition();
-        final Object key = indexDefinition.getDocumentValueToIndex(document);
-        if (key instanceof Collection) {
-          for (final Object keyItem : (Collection<?>) key)
-            if (!indexDefinition.isNullValuesIgnored() || keyItem != null)
-              index.put(keyItem, rid);
-        } else if (!indexDefinition.isNullValuesIgnored() || key != null)
-          try {
-            index.put(key, rid);
-          } catch (ORecordDuplicatedException e) {
-            if (!database.getTransaction().isActive()) {
-              database.delete(document);
-            }
-            throw e;
-          }
-      }
-
+    for (final OIndex<?> index : indexes) {
+      addIndexEntry(document, rid, index);
     }
+  }
+
+  private void addIndexEntry(ODocument document, OIdentifiable rid, OIndex<?> index) {
+    final OIndexDefinition indexDefinition = index.getDefinition();
+    final Object key = indexDefinition.getDocumentValueToIndex(document);
+    if (key instanceof Collection) {
+      for (final Object keyItem : (Collection<?>) key)
+        if (!indexDefinition.isNullValuesIgnored() || keyItem != null)
+          index.put(keyItem, rid);
+    } else if (!indexDefinition.isNullValuesIgnored() || key != null)
+      try {
+        index.put(key, rid);
+      } catch (ORecordDuplicatedException e) {
+        if (!database.getTransaction().isActive()) {
+          database.delete(document);
+        }
+        throw e;
+      }
   }
 
   private void deleteIndexEntries(ODocument iDocument) {
