@@ -43,7 +43,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> implements ODatabaseInternal<T> {
-  protected DB                          underlying;
+  protected DB                   underlying;
   protected ODatabaseInternal<?> databaseOwner;
 
   public ODatabaseWrapperAbstract(final DB iDatabase) {
@@ -63,6 +63,15 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
     return (THISDB) this;
   }
 
+  @Override
+  public void activateOnCurrentThread() {
+    underlying.activateOnCurrentThread();
+  }
+
+  @Override
+  public boolean isActiveOnCurrentThread() {
+    return underlying.isActiveOnCurrentThread();
+  }
 
   public <THISDB extends ODatabase> THISDB create() {
     return create(null);

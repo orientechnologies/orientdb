@@ -19,15 +19,15 @@
  */
 package com.orientechnologies.orient.server;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 
 public class OClientConnection {
   public final int                         id;
@@ -46,8 +46,10 @@ public class OClientConnection {
 
   public void close() {
     if (database != null) {
-      if (!database.isClosed())
+      if (!database.isClosed()) {
+        database.activateOnCurrentThread();
         database.close();
+      }
 
       database = null;
     }

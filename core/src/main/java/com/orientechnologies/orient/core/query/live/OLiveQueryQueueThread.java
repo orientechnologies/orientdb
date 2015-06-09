@@ -12,11 +12,9 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class OLiveQueryQueueThread extends Thread {
 
-  private BlockingQueue<ORecordOperation> queue       = new LinkedBlockingQueue<ORecordOperation>();
-
-  private Map<Integer, OLiveQueryListener>   subscribers = new ConcurrentHashMap<Integer, OLiveQueryListener>();
-
-  private boolean                         stopped     = false;
+  private final BlockingQueue<ORecordOperation>  queue       = new LinkedBlockingQueue<ORecordOperation>();
+  private final Map<Integer, OLiveQueryListener> subscribers = new ConcurrentHashMap<Integer, OLiveQueryListener>();
+  private boolean                                stopped     = false;
 
   public OLiveQueryQueueThread() {
     setName("LiveQueryQueueThread");
@@ -38,7 +36,6 @@ public class OLiveQueryQueueThread extends Thread {
       for (OLiveQueryListener listener : subscribers.values()) {
         // TODO filter data
         listener.onLiveResult(next);
-
       }
     }
   }

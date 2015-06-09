@@ -50,6 +50,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
   @Parameters(value = "url")
   public DbCreationTest(@Optional String url) {
     super(url);
+    setAutoManageDatabase(false);
 
     Orient.instance().getProfiler().startRecording();
   }
@@ -202,10 +203,10 @@ public class DbCreationTest extends ObjectDBBaseTest {
   public void testCreateAndConnectionPool() throws IOException {
     ODatabaseDocument db = new ODatabaseDocumentTx(url);
 
+    db.activateOnCurrentThread();
     ODatabaseHelper.dropDatabase(db, getStorageType());
 
     ODatabaseHelper.createDatabase(db, url, getStorageType());
-    db.close();
 
     pool = new OPartitionedDatabasePool(url, "admin", "admin");
 
@@ -220,7 +221,6 @@ public class DbCreationTest extends ObjectDBBaseTest {
     // Re-create it so that the db exists for the pool
     db = new ODatabaseDocumentTx(url);
     ODatabaseHelper.createDatabase(db, url, getStorageType());
-    db.close();
   }
 
   @Test(dependsOnMethods = { "testCreateAndConnectionPool" })
@@ -268,6 +268,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
       String ur = u + "/" + i + "$db";
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(ur);
       Assert.assertTrue(ODatabaseHelper.existsDatabase(db, getStorageType()));
+      db.activateOnCurrentThread();
       ODatabaseHelper.dropDatabase(db, getStorageType());
       Assert.assertFalse(ODatabaseHelper.existsDatabase(db, getStorageType()));
     }

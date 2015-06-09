@@ -44,7 +44,6 @@ public class NonBlockingQueryTest extends DocumentDBBaseTest {
     db.commit();
     ODatabaseDocumentTx newDb = db.copy();
 
-    newDb.setCurrentDatabaseInThreadLocal();
     List<ODocument> result = newDb.query(new OSQLSynchQuery<ODocument>("Select from Foo"));
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(result.get(0).field("a"), "bar");

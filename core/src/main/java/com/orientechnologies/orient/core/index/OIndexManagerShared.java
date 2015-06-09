@@ -556,6 +556,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     }
 
     private void setUpDatabase() {
+      newDb.activateOnCurrentThread();
       newDb.resetInitialization();
       newDb.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
       newDb.open("admin", "nopass");

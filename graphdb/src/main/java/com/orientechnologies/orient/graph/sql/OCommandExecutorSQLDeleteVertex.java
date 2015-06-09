@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -46,12 +52,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * SQL DELETE VERTEX command.
  * 
@@ -68,6 +68,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   private List<ORecord>      allDeletedRecords;
   private OrientGraph        graph;
   private OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+  private boolean            txAlreadyBegun;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteVertex parse(final OCommandRequest iRequest) {
@@ -171,9 +172,12 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     if (!returning.equalsIgnoreCase("COUNT"))
       allDeletedRecords = new ArrayList<ORecord>();
 
+    txAlreadyBegun = getDatabase().getTransaction().isActive();
+    graph = OGraphCommandExecutorSQLFactory.getGraph(true, shutdownFlag);
+
     if (rid != null) {
       // REMOVE PUNCTUAL RID
-      OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+      OGraphCommandExecutorSQLFactory.runInTx(graph, new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
         @Override
         public Object call(OrientBaseGraph graph) {
           final OrientVertex v = graph.getVertex(rid);
@@ -181,20 +185,25 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
             v.remove();
             removed = 1;
           }
-
           return null;
         }
       });
+
+      // CLOSE PENDING TX
+      end();
+
     } else if (query != null) {
       // TARGET IS A CLASS + OPTIONAL CONDITION
-      graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
-      OGraphCommandExecutorSQLFactory.runInTx(graph, new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+      OGraphCommandExecutorSQLFactory.runInTx(graph, new OGraphCommandExecutorSQLFactory.GraphCallBack<OrientGraph>() {
         @Override
-        public Object call(OrientBaseGraph graph) {
+        public OrientGraph call(OrientBaseGraph graph) {
           // TARGET IS A CLASS + OPTIONAL CONDITION
-          return query.execute(iArgs);
+          query.setContext(getContext());
+          query.execute(iArgs);
+          return null;
         }
       });
+
     } else
       throw new OCommandExecutionException("Invalid target");
 
@@ -240,8 +249,14 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
   @Override
   public void end() {
-    if (graph != null && shutdownFlag.getValue())
-      graph.shutdown(false, false);
+    if (graph != null) {
+      if (!txAlreadyBegun) {
+        graph.commit();
+
+        if (shutdownFlag.getValue())
+          graph.shutdown(false);
+      }
+    }
   }
 
   @Override

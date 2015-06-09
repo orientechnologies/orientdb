@@ -40,9 +40,6 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -60,47 +57,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
-  protected static final int       TOT_RECORDS         = 100;
-  protected static final int       TOT_RECORDS_COMPANY = 10;
+  protected static final int TOT_RECORDS         = 100;
+  protected static final int TOT_RECORDS_COMPANY = 10;
 
-  protected long                   startRecordNumber;
-  String                           base64;
-  private ODocument                record;
-
-  private OPartitionedDatabasePool pool;
+  protected long             startRecordNumber;
+  String                     base64;
+  private ODocument          record;
 
   @Parameters(value = "url")
   public CRUDDocumentPhysicalTest(@Optional String url) {
     super(url);
   }
 
-  @BeforeClass
-  @Override
-  public void beforeClass() throws Exception {
-    super.beforeClass();
-
-    pool = new OPartitionedDatabasePool(url, "admin", "admin");
-  }
-
-  @BeforeMethod
-  @Override
-  public void beforeMethod() throws Exception {
-    database.close();
-
-    database = pool.acquire();
-  }
-
-  @AfterClass
-  @Override
-  public void afterClass() throws Exception {
-    database.close();
-
-    database = createDatabaseInstance(url);
-    super.afterClass();
-  }
-
   @Test
   public void testPool() throws IOException {
+    OPartitionedDatabasePool pool = new OPartitionedDatabasePool(url, "admin", "admin");
     final ODatabaseDocumentTx[] dbs = new ODatabaseDocumentTx[pool.getMaxSize()];
 
     for (int i = 0; i < 10; ++i) {
@@ -109,13 +80,15 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       for (int db = 0; db < dbs.length; ++db)
         dbs[db].close();
     }
+
+    pool.close();
   }
 
   @Test
   public void cleanAll() {
     record = database.newInstance();
 
-    if( !database.existsCluster("Account"))
+    if (!database.existsCluster("Account"))
       database.addCluster("Account");
 
     startRecordNumber = database.countClusterElements("Account");
@@ -350,8 +323,9 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     dexter.setDirty();
     dexter.save();
 
-    result = database
-        .command(new OSQLSynchQuery<ODocument>("select from Profile where tag_list contains 'actor' and tag_list contains 'test'")).execute();
+    result = database.command(
+        new OSQLSynchQuery<ODocument>("select from Profile where tag_list contains 'actor' and tag_list contains 'test'"))
+        .execute();
     Assert.assertEquals(result.size(), 1);
   }
 
@@ -483,13 +457,13 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
         + jaimeDoc.toJSON() + "}}");
     tyrionDoc.save();
 
-//    System.out.println("The saved documents are:");
+    // System.out.println("The saved documents are:");
     for (ODocument o : database.browseClass("PersonTest")) {
-//      System.out.println("my id is " + o.getIdentity().toString());
-//      System.out.println("my name is: " + o.field("name"));
-//      System.out.println("my ODocument representation is " + o);
-//      System.out.println("my JSON representation is " + o.toJSON());
-//      System.out.println("my traversable links are: ");
+      // System.out.println("my id is " + o.getIdentity().toString());
+      // System.out.println("my name is: " + o.field("name"));
+      // System.out.println("my ODocument representation is " + o);
+      // System.out.println("my JSON representation is " + o.toJSON());
+      // System.out.println("my traversable links are: ");
       for (OIdentifiable id : new OSQLSynchQuery<ODocument>("traverse * from " + o.getIdentity().toString())) {
         database.load(id.getIdentity()).toJSON();
       }
@@ -549,8 +523,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       database.close();
     }
 
-    database = null;
-    database = pool.acquire();
+    database.open("admin", "admin");
 
     doc = testInvalidFetchPlanClearL1Cache(doc, docRid);
     doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, 0));
@@ -685,17 +658,28 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     // WAIT UNTIL ALL RECORD ARE INSERTED. USE A NEW DATABASE CONNECTION
     // TO AVOID TO ENQUEUE THE COUNT ITSELF
-    final ODatabaseDocumentTx db = pool.acquire();
-    long tot;
-    while ((tot = db.countClusterElements("Account")) < startRecordNumber + TOT_RECORDS) {
-//      System.out.println("Asynchronous insertion: found " + tot + " records but waiting till " + (startRecordNumber + TOT_RECORDS)
-//          + " is reached");
-      try {
-        Thread.sleep(100);
-      } catch (InterruptedException e) {
+    final Thread t = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
+        long tot;
+        while ((tot = db.countClusterElements("Account")) < startRecordNumber + TOT_RECORDS) {
+          // System.out.println("Asynchronous insertion: found " + tot + " records but waiting till " + (startRecordNumber +
+          // TOT_RECORDS)
+          // + " is reached");
+          try {
+            Thread.sleep(100);
+          } catch (InterruptedException e) {
+          }
+        }
+        db.close();
       }
+    });
+    t.start();
+    try {
+      t.join();
+    } catch (InterruptedException e) {
     }
-    db.close();
 
     if (database.countClusterElements("Account") > 0)
       for (ODocument d : database.browseClass("Account")) {
@@ -718,8 +702,8 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     database.commit();
 
     database.close();
+    database.open("admin", "admin");
 
-    database = pool.acquire();
     bank.reload();
     Assert.assertTrue(((ODocument) bank.field("embedded")).isEmbedded());
     Assert.assertFalse(((ODocument) bank.field("embedded")).getIdentity().isPersistent());
@@ -749,9 +733,10 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     bank.field("linkeds", linkeds, OType.LINKLIST);
 
     bank.save();
-    database.close();
 
-    database = pool.acquire();
+    database.close();
+    database.open("admin", "admin");
+
     bank.reload();
 
     ODocument changedDoc1 = bank.field("embedded.total", 100);

@@ -101,6 +101,17 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
   <DB extends ODatabase> DB create(Map<OGlobalConfiguration, Object> iInitialSettings);
 
   /**
+   * Activate current database instance on current thread. Call this method before using the database if you switch between multiple
+   * databas instances on the same thread or if you pass them across threads.
+   */
+  void activateOnCurrentThread();
+
+  /**
+   * Returns true if the current database instance is active on current thread, otherwise false.
+   */
+  boolean isActiveOnCurrentThread();
+
+  /**
    * Reloads the database information like the cluster list.
    */
   void reload();

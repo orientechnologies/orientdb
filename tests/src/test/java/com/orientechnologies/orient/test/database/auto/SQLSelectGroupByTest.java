@@ -70,7 +70,7 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select count(*) from Account group by location"))
         .execute();
 
-    Assert.assertTrue(result.size() > 1);
+    Assert.assertTrue(result.size()>1);
   }
 
   @Test

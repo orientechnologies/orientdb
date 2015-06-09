@@ -56,7 +56,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.GraphQuery;
@@ -66,7 +65,6 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
-
 import org.apache.commons.configuration.Configuration;
 
 import java.io.UnsupportedEncodingException;
@@ -356,7 +354,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   protected static void checkForGraphSchema(final ODatabaseDocumentTx iDatabase) {
     final OSchema schema = iDatabase.getMetadata().getSchema();
 
-    schema.getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+//    schema.getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
     final OClass vertexBaseClass = schema.getClass(OrientVertexType.CLASS_NAME);
     final OClass edgeBaseClass = schema.getClass(OrientEdgeType.CLASS_NAME);
@@ -1194,6 +1192,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     password = null;
 
     pollGraphFromStack(closeDb);
+
+    if (!closeDb)
+      database.activateOnCurrentThread();
   }
 
   /**

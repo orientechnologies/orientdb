@@ -499,6 +499,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           }
 
           // SERVER AUTHENTICATED, BYPASS SECURITY
+          database.activateOnCurrentThread();
           database.resetInitialization();
           database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
           database.open(iUser, iPassword);

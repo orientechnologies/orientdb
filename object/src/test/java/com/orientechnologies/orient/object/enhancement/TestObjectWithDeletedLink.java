@@ -21,11 +21,14 @@ public class TestObjectWithDeletedLink {
 
   @AfterTest
   public void after() {
+    db.activateOnCurrentThread();
     db.drop();
   }
 
   @Test
   public void testDeletedLink() {
+    db.activateOnCurrentThread();
+
     SimpleSelfRef ob1 = new SimpleSelfRef();
     ob1.setName("hobby one ");
     SimpleSelfRef ob2 = new SimpleSelfRef();

@@ -1,12 +1,11 @@
 package com.orientechnologies.orient.core.db.document;
 
-import static org.testng.AssertJUnit.assertNull;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertNull;
 
 public class ODatabaseDocumentPoolOpenCloseTest {
 
@@ -21,6 +20,8 @@ public class ODatabaseDocumentPoolOpenCloseTest {
       assertNull(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined());
     } finally {
       pool.close();
+
+      dbo.activateOnCurrentThread();
       dbo.drop();
     }
   }
@@ -36,6 +37,8 @@ public class ODatabaseDocumentPoolOpenCloseTest {
       db.open("admin", "admin");
     } finally {
       pool.close();
+
+      dbo.activateOnCurrentThread();
       dbo.drop();
     }
 
