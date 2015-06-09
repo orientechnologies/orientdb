@@ -46,7 +46,6 @@ public class IndexUniqueTest {
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:./uniqueIndexTest");
     final int cores = Runtime.getRuntime().availableProcessors();
-    db.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, cores);
 
     if (db.exists()) {
       db.open("admin", "admin");
@@ -57,6 +56,8 @@ public class IndexUniqueTest {
       propValues[i] = new AtomicInteger();
 
     db.create();
+
+    db.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, cores);
 
     OSchema schema = db.getMetadata().getSchema();
     OClass oClass = schema.createClass("indexTest");
@@ -112,14 +113,12 @@ public class IndexUniqueTest {
         db.open("admin", "admin");
         try {
           i++;
-          db.begin();
           ODocument document = new ODocument("indexTest");
 
           for (int n = 0; n < 10; n++)
             document.field("prop" + n, propValues[n].get());
 
           document.save();
-          db.commit();
 
           success++;
         } catch (ORecordDuplicatedException e) {
