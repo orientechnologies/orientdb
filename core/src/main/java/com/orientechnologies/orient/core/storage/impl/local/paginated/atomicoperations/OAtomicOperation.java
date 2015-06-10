@@ -49,7 +49,7 @@ public class OAtomicOperation {
   private int                      startCounter;
   private boolean                  rollback;
 
-  private Set<Object>              lockedObjects        = new HashSet<Object>();
+  private Set<String>              lockedObjects        = new HashSet<String>();
   private Map<Long, FileChanges>   fileChanges          = new HashMap<Long, FileChanges>();
   private Map<String, Long>        newFileNamesId       = new HashMap<String, Long>();
   private Set<Long>                deletedFiles         = new HashSet<Long>();
@@ -402,15 +402,15 @@ public class OAtomicOperation {
     return rollback;
   }
 
-  void addLockedObject(Object lockedObject) {
+  void addLockedObject(String lockedObject) {
     lockedObjects.add(lockedObject);
   }
 
-  boolean containsInLockedObjects(Object objectToLock) {
+  boolean containsInLockedObjects(String objectToLock) {
     return lockedObjects.contains(objectToLock);
   }
 
-  Iterable<Object> lockedObjects() {
+  Iterable<String> lockedObjects() {
     return lockedObjects;
   }
 

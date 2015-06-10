@@ -39,16 +39,14 @@ import java.util.Arrays;
 public class OClusterPositionMap extends ODurableComponent {
   public static final String DEF_EXTENSION = ".cpm";
 
-  private String             name;
   private long               fileId;
   private boolean            useWal;
 
   public OClusterPositionMap(OAbstractPaginatedStorage storage, String name, boolean useWal) {
-    super(storage);
+    super(storage, name);
 
     acquireExclusiveLock();
     try {
-      this.name = name;
       this.useWal = useWal;
     } finally {
       releaseExclusiveLock();

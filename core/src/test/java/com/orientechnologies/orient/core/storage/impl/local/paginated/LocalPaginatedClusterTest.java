@@ -101,7 +101,7 @@ public class LocalPaginatedClusterTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
 
-    paginatedCluster = new OPaginatedCluster(storage);
+    paginatedCluster = new OPaginatedCluster("paginatedClusterTest", storage);
     paginatedCluster.configure(storage, 5, "paginatedClusterTest", buildDirectory, -1);
     paginatedCluster.create(-1);
   }

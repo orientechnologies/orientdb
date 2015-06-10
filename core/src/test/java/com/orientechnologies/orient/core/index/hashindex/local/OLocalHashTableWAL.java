@@ -109,10 +109,10 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", murmurHash3HashFunction, true,
-        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
-    localHashTable.create("actualLocalHashTable", OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance()
-        .<String> getObjectSerializer(OType.STRING), null, true);
+    localHashTable = new OLocalHashTable<Integer, String>("actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
+        murmurHash3HashFunction, true, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+    localHashTable.create(OIntegerSerializer.INSTANCE,
+        OBinarySerializerFactory.getInstance().<String> getObjectSerializer(OType.STRING), null, true);
   }
 
   @Override

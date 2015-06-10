@@ -54,7 +54,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   private final OSBTree<Object, V> sbTree;
   private int                      version;
 
-  public OSBTreeIndexEngine(Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
+  public OSBTreeIndexEngine(String name, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
 
@@ -67,7 +67,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
     this.version = version;
 
-    sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, durableInNonTx, NULL_BUCKET_FILE_EXTENSION, storage);
+    sbTree = new OSBTree<Object, V>(name, DATA_FILE_EXTENSION, durableInNonTx, NULL_BUCKET_FILE_EXTENSION, storage);
   }
 
   @Override
@@ -85,8 +85,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public void create(String indexName, OIndexDefinition indexDefinition, String clusterIndexName,
-      OStreamSerializer valueSerializer, boolean isAutomatic) {
+  public void create(OIndexDefinition indexDefinition, String clusterIndexName, OStreamSerializer valueSerializer,
+      boolean isAutomatic) {
     acquireExclusiveLock();
     try {
 
@@ -101,9 +101,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       database.save(identityRecord, clusterIndexName);
       identity = identityRecord.getIdentity();
 
-      sbTree.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer,
-          indexDefinition != null ? indexDefinition.getTypes() : null, keySize,
-          indexDefinition != null && !indexDefinition.isNullValuesIgnored());
+      sbTree.create(keySerializer, (OBinarySerializer<V>) valueSerializer, indexDefinition != null ? indexDefinition.getTypes()
+          : null, keySize, indexDefinition != null && !indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();
     }

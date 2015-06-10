@@ -90,7 +90,6 @@ public class OSBTree<K, V> extends ODurableComponent {
   private final String                   dataFileExtension;
   private final String                   nullFileExtension;
   private final boolean                  durableInNonTxMode;
-  private String                         name;
   private long                           fileId;
   private long                           nullBucketFileId        = -1;
   private int                            keySize;
@@ -99,10 +98,12 @@ public class OSBTree<K, V> extends ODurableComponent {
   private OBinarySerializer<V>           valueSerializer;
   private boolean                        nullPointerSupport;
 
-  public OSBTree(String dataFileExtension, boolean durableInNonTxMode, String nullFileExtension, OAbstractPaginatedStorage storage) {
-    super(storage);
+  public OSBTree(String name, String dataFileExtension, boolean durableInNonTxMode, String nullFileExtension,
+      OAbstractPaginatedStorage storage) {
+    super(storage, name);
     acquireExclusiveLock();
     try {
+      this.name = name;
       this.dataFileExtension = dataFileExtension;
       this.nullFileExtension = nullFileExtension;
       this.durableInNonTxMode = durableInNonTxMode;
@@ -111,8 +112,8 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
-  public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
-      int keySize, boolean nullPointerSupport) {
+  public void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes, int keySize,
+      boolean nullPointerSupport) {
     final OAtomicOperation atomicOperation;
     try {
       atomicOperation = startAtomicOperation();
@@ -126,7 +127,6 @@ public class OSBTree<K, V> extends ODurableComponent {
       this.keySize = keySize;
       this.keyTypes = keyTypes;
 
-      this.name = name;
       this.keySerializer = keySerializer;
       if (keySerializer == null)
         System.out.println("sdf");
@@ -162,15 +162,6 @@ public class OSBTree<K, V> extends ODurableComponent {
       throw new OSBTreeException("Error creation of sbtree with name" + name, e);
     } finally {
       releaseExclusiveLock();
-    }
-  }
-
-  public String getName() {
-    acquireSharedLock();
-    try {
-      return name;
-    } finally {
-      releaseSharedLock();
     }
   }
 

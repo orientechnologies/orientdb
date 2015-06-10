@@ -520,7 +520,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         newCluster = new OOfflineCluster(this, clusterId, cluster.getName());
       } else {
 
-        newCluster = OPaginatedClusterFactory.INSTANCE.createCluster(configuration.version, this);
+        newCluster = OPaginatedClusterFactory.INSTANCE.createCluster(cluster.getName(), configuration.version, this);
         newCluster.configure(this, clusterId, cluster.getName());
         newCluster.open();
       }
@@ -1808,7 +1808,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
 
     if (config.getStatus() == OStorageClusterConfiguration.STATUS.ONLINE)
-      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(configuration.version, this);
+      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(config.getName(), configuration.version, this);
     else
       cluster = new OOfflineCluster(this, config.getId(), config.getName());
     cluster.configure(this, config);
@@ -1874,7 +1874,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (clusterName != null) {
       clusterName = clusterName.toLowerCase();
 
-      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(configuration.version, this);
+      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(clusterName, configuration.version, this);
       cluster.configure(this, clusterPos, clusterName, parameters);
 
       if (clusterName.equals(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME.toLowerCase())) {

@@ -24,7 +24,6 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -109,8 +108,6 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
   public static final int                LEVEL_MASK          = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
 
-  private String                         name;
-
   private final OHashFunction<K>         keyHashFunction;
 
   private OBinarySerializer<K>           keySerializer;
@@ -131,10 +128,10 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
   private final boolean                  durableInNonTxMode;
 
-  public OLocalHashTable20(String metadataConfigurationFileExtension, String treeStateFileExtension, String bucketFileExtension,
-      String nullBucketFileExtension, OHashFunction<K> keyHashFunction, boolean durableInNonTxMode,
+  public OLocalHashTable20(String name, String metadataConfigurationFileExtension, String treeStateFileExtension,
+      String bucketFileExtension, String nullBucketFileExtension, OHashFunction<K> keyHashFunction, boolean durableInNonTxMode,
       OAbstractPaginatedStorage abstractPaginatedStorage) {
-    super(abstractPaginatedStorage);
+    super(abstractPaginatedStorage, name);
 
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
@@ -147,7 +144,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
   }
 
   @Override
-  public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
+  public void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
       boolean nullKeyIsSupported) {
     final OAtomicOperation atomicOperation;
     try {
@@ -162,8 +159,6 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
         this.keyTypes = keyTypes;
         this.nullKeyIsSupported = nullKeyIsSupported;
-
-        this.name = name;
 
         this.directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
 

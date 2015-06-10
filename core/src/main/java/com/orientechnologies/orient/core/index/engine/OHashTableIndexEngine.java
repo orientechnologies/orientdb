@@ -58,7 +58,7 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
   private volatile ORID                          identity;
   private int                                    version;
 
-  public OHashTableIndexEngine(Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
+  public OHashTableIndexEngine(String name, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
     hashFunction = new OMurmurHash3HashFunction<Object>();
 
     boolean durableInNonTx;
@@ -69,10 +69,10 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
 
     this.version = version;
     if (version < 2)
-      hashTable = new OLocalHashTable20<Object, V>(METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
+      hashTable = new OLocalHashTable20<Object, V>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx, storage);
     else
-      hashTable = new OLocalHashTable<Object, V>(METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
+      hashTable = new OLocalHashTable<Object, V>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx, storage);
   }
 
@@ -81,8 +81,8 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
-  public void create(String indexName, OIndexDefinition indexDefinition, String clusterIndexName,
-      OStreamSerializer valueSerializer, boolean isAutomatic) {
+  public void create(OIndexDefinition indexDefinition, String clusterIndexName, OStreamSerializer valueSerializer,
+      boolean isAutomatic) {
     OBinarySerializer keySerializer;
 
     if (indexDefinition != null) {
@@ -105,9 +105,8 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
     identity = identityRecord.getIdentity();
 
     hashFunction.setValueSerializer(keySerializer);
-    hashTable.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer,
-        indexDefinition != null ? indexDefinition.getTypes() : null,
-        indexDefinition != null && !indexDefinition.isNullValuesIgnored());
+    hashTable.create(keySerializer, (OBinarySerializer<V>) valueSerializer, indexDefinition != null ? indexDefinition.getTypes()
+        : null, indexDefinition != null && !indexDefinition.isNullValuesIgnored());
   }
 
   @Override

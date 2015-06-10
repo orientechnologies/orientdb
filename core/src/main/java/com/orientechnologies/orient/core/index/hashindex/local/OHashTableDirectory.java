@@ -44,7 +44,6 @@ public class OHashTableDirectory extends ODurableComponent {
   public static final int                 BINARY_LEVEL_SIZE = LEVEL_SIZE * ITEM_SIZE + 3 * OByteSerializer.BYTE_SIZE;
 
   private final String                    defaultExtension;
-  private final String                    name;
 
   private long                            fileId;
 
@@ -54,9 +53,8 @@ public class OHashTableDirectory extends ODurableComponent {
   private final OAbstractPaginatedStorage storage;
 
   public OHashTableDirectory(String defaultExtension, String name, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
-    super(storage);
+    super(storage, name);
     this.defaultExtension = defaultExtension;
-    this.name = name;
     this.durableInNonTxMode = durableInNonTxMode;
     this.storage = storage;
     this.firstEntryIndex = 0;

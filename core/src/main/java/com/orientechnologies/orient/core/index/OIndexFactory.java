@@ -45,6 +45,8 @@ public interface OIndexFactory {
    *
    *
    *
+   *
+   * @param name
    * @param database
    * @param indexType
    *          index type
@@ -54,7 +56,7 @@ public interface OIndexFactory {
    * @throws OConfigurationException
    *           if index creation failed
    */
-  OIndexInternal<?> createIndex(ODatabaseDocumentInternal database, String indexType, String algorithm,
+  OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException;
 
 }

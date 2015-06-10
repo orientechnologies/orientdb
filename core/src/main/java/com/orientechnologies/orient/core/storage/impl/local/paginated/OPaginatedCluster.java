@@ -67,7 +67,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   private final OModificationLock               externalModificationLock = new OModificationLock();
   private volatile OCompression                 compression;
   private OClusterPositionMap                   clusterPositionMap;
-  private volatile String                       name;
   private OAbstractPaginatedStorage             storageLocal;
   private volatile int                          id;
   private long                                  fileId;
@@ -101,8 +100,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
   }
 
-  public OPaginatedCluster(OAbstractPaginatedStorage storage) {
-    super(storage);
+  public OPaginatedCluster(String name, OAbstractPaginatedStorage storage) {
+    super(storage, name);
     useCRC32 = OGlobalConfiguration.STORAGE_USE_CRC32_FOR_EACH_RECORD.getValueAsBoolean();
   }
 
@@ -1130,11 +1129,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
   public long getRecordsSize() throws IOException {
     atomicOperationsManager.acquireReadLock(this);
     try {
@@ -1677,7 +1671,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     debug.fileId = fileId;
     OAtomicOperation atomicOperation = null;
     OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
-    if (positionEntry == null){
+    if (positionEntry == null) {
       debug.empty = true;
       return debug;
     }

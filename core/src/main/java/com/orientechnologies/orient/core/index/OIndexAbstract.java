@@ -232,7 +232,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         OLogManager.instance().error(this, "Error during deletion of index %s .", name);
       }
 
-      indexEngine.create(this.name, indexDefinition, clusterIndexName, valueSerializer, isAutomatic());
+      indexEngine.create(indexDefinition, clusterIndexName, valueSerializer, isAutomatic());
 
       if (rebuild)
         rebuild(progressListener);
@@ -403,7 +403,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
         removeValuesContainer();
 
-        indexEngine.create(name, indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
+        indexEngine.create(indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
             determineValueSerializer(), isAutomatic());
 
         long documentNum = 0;
