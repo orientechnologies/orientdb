@@ -2747,8 +2747,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * Activates current database instance on current thread.
    */
   @Override
-  public void activateOnCurrentThread() {
+  public ODatabaseDocumentTx activateOnCurrentThread() {
     ODatabaseRecordThreadLocal.INSTANCE.set(this);
+    return this;
   }
 
   @Override

@@ -787,8 +787,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       return;
     }
 
-    OLogManager.instance().error(this, "Authentication error of remote client %s:%d: shutdown is aborted.",
-        channel.socket.getInetAddress(), channel.socket.getPort());
+    OLogManager.instance().error(this, "Authentication error of remote client %s:%d: shutdown is aborted.", channel.socket.getInetAddress(), channel.socket.getPort());
 
     sendErrorOrDropConnection(clientTxId, new OSecurityAccessException("Invalid user/password to shutdown the server"));
   }
@@ -1464,8 +1463,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
 
     } else {
-      final ORecord record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones,
-          OStorage.LOCKING_STRATEGY.NONE);
+      final ORecord record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones, OStorage.LOCKING_STRATEGY.NONE);
 
       beginResponse();
       try {
@@ -1617,8 +1615,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void endResponse() throws IOException {
     // resetting transaction state. Commands are stateless and connection should be cleared
     // otherwise reused connection (connections pool) may lead to unpredicted errors
-    if (connection != null && connection.database != null && connection.database.getTransaction() != null)
+    if (connection != null && connection.database != null && connection.database.activateOnCurrentThread().getTransaction() != null) {
+      connection.database.activateOnCurrentThread();
       connection.database.getTransaction().rollback();
+    }
     channel.flush();
     channel.releaseWriteLock();
   }
