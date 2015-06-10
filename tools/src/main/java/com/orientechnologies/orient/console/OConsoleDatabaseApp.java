@@ -268,7 +268,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       final OStorage stg = Orient.instance().getStorage(currentDatabase.getURL());
 
-      currentDatabase.close();
+      if (!currentDatabase.isClosed())
+        currentDatabase.close();
 
       // FORCE CLOSING OF STORAGE: THIS CLEAN UP REMOTE CONNECTIONS
       if (stg != null)
