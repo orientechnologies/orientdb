@@ -79,6 +79,18 @@ public class OServerCommandMgrServer extends OServerCommandAuthenticatedDbAbstra
         server.save();
         iResponse.writeResult(server);
       }
+    } else if ("PUT".equals(iRequest.httpMethod)) {
+
+      ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+      ODocument server = new ODocument().fromJSON(iRequest.content);
+      ODocument newServer = db.load(server.getIdentity());
+      newServer.merge(server, true, true);
+      String pwd = server.field("password");
+      String enc = OL.encrypt(pwd);
+      newServer.field("password", enc);
+      newServer.save();
+      iResponse.writeResult(server);
+
     }
 
     return false;

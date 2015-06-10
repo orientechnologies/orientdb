@@ -110,7 +110,7 @@ public class IssueServiceGithub implements IssueService {
 
     String token = actor != null ? actor.getToken() : SecurityHelper.currentToken();
 
-    GitHub github = new GitHub(SecurityHelper.currentToken());
+    GitHub github = new GitHub(token);
 
     ODocument doc = new ODocument();
 

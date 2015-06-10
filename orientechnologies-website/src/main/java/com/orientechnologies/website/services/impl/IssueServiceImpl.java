@@ -218,7 +218,7 @@ public class IssueServiceImpl implements IssueService {
       }
     } else {
       if (removeLabelRelationship(issue, l) != null) {
-        OLogManager.instance().info(this, "Current Actor : [%s]" + actor);
+        OLogManager.instance().error(this, "Current Actor : [%s]" , actor);
         githubIssueService.removeLabel(issue, label, actor, remote);
       }
     }

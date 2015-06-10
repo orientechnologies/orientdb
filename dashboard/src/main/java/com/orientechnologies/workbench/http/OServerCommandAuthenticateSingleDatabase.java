@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.workbench.http;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -26,14 +22,14 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+import com.orientechnologies.orient.server.network.protocol.http.*;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 import com.orientechnologies.workbench.OMonitoredServer;
 import com.orientechnologies.workbench.OWorkbenchPlugin;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 public class OServerCommandAuthenticateSingleDatabase extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = { "GET|authenticateUser/*" };
@@ -42,6 +38,7 @@ public class OServerCommandAuthenticateSingleDatabase extends OServerCommandAuth
   private static String         user;
 
   public OServerCommandAuthenticateSingleDatabase() {
+
   }
 
   @Override

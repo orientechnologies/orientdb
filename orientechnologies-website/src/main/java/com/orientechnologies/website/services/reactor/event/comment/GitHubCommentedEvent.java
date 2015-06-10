@@ -51,6 +51,12 @@ public class GitHubCommentedEvent implements GithubCommentEvent {
     Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
 
     Comment comment = commentRepository.findByIssueAndCommentId(issueDto, gComment.getId());
+
+    try {
+      Thread.sleep(10000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
     if (comment == null) {
       comment = new Comment();
       comment.setCommentId(gComment.getId());

@@ -12,6 +12,13 @@ Ofilter.filter('ctype', function () {
         return input.substring(0, index);
     };
 });
+Ofilter.filter('cname', function () {
+
+  return function (input, args) {
+    var index = input.indexOf(".");
+    return input.substring(index + 1, input.length);
+  };
+});
 Ofilter.filter('tconfig', function () {
 
     return function (input, args) {
@@ -22,13 +29,7 @@ Ofilter.filter('tconfig', function () {
         return input;
     };
 });
-Ofilter.filter('cname', function () {
 
-    return function (input, args) {
-        var index = input.indexOf(".");
-        return input.substring(index + 1, input.length);
-    };
-});
 Ofilter.filter('mvalue', function () {
 
     return function (input, arg1, arg2) {

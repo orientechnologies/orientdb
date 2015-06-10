@@ -407,6 +407,8 @@ monitor.factory('Cluster', function ($http, $resource, $q) {
     var url = API + 'distributed/monitor/configuration';
     $http.post(url, cluster).success(function (data) {
       deferred.resolve(data);
+    }).error(function (e) {
+      deferred.reject(e);
     });
     return deferred.promise;
   }

@@ -79,9 +79,8 @@ public class OMonitoredCluster {
     // update policy
     for (Member member : getMembers()) {
 
-      IMap<String, Object> maps = getConfigurationMap();
       ODocument doc = (ODocument) getConfigValue("node." + member.getUuid());
-      if (doc != null) {
+        if (doc != null) {
         String nodeName = (String) doc.field("name");
         String iPropertyValue = getAndRemovePwd(nodeName);
         registerNewServer(doc, iPropertyValue);
