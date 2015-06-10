@@ -41,18 +41,14 @@ import java.util.Arrays;
 public class OClusterPositionMap extends ODurableComponent {
   public static final String DEF_EXTENSION = ".cpm";
 
-  private final ODiskCache   diskCache;
-  private String             name;
   private long               fileId;
   private boolean            useWal;
 
-  public OClusterPositionMap(OAbstractPaginatedStorage storage, ODiskCache diskCache, String name, boolean useWal) {
-    super(storage);
+  public OClusterPositionMap(OAbstractPaginatedStorage storage, String name, boolean useWal) {
+    super(storage, name);
 
     acquireExclusiveLock();
     try {
-      this.diskCache = diskCache;
-      this.name = name;
       this.useWal = useWal;
     } finally {
       releaseExclusiveLock();

@@ -77,8 +77,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   private final String                      dataFileExtension;
 
-  private ODiskCache                        diskCache;
-
   private long                              fileId;
 
   private OBinarySerializer<K>              keySerializer;
@@ -86,13 +84,15 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   private final boolean                     durableInNonTxMode;
 
-  public OSBTreeBonsaiLocal(String dataFileExtension, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
-    super(storage);
+  public OSBTreeBonsaiLocal(String name, String dataFileExtension, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
+    super(storage, name);
+
+    this.name = name;
     this.dataFileExtension = dataFileExtension;
     this.durableInNonTxMode = durableInNonTxMode;
   }
 
-  public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
+  public void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
     final OAtomicOperation atomicOperation;
     try {
       atomicOperation = startAtomicOperation();
@@ -112,8 +112,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       else
         this.fileId = addFile(atomicOperation, name + dataFileExtension, diskCache);
 
-      this.name = name;
-
       initAfterCreate(atomicOperation);
 
       endAtomicOperation(false);
@@ -122,42 +120,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       throw new OSBTreeException("Error creation of sbtree with name" + name, e);
     } catch (Exception e) {
       rollback();
-      throw new OSBTreeException("Error creation of sbtree with name" + name, e);
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
-  public void create(long fileId, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
-    final OAtomicOperation atomicOperation;
-    try {
-      atomicOperation = startAtomicOperation();
-    } catch (IOException e) {
-      throw new OSBTreeException("Error during sbtree creation.", e);
-    }
-
-    acquireExclusiveLock();
-    try {
-      this.diskCache = storage.getDiskCache();
-
-      this.keySerializer = keySerializer;
-      this.valueSerializer = valueSerializer;
-
-      openFile(atomicOperation, fileId, diskCache);
-
-      this.fileId = fileId;
-      this.name = resolveTreeName(fileId, atomicOperation);
-
-      initAfterCreate(atomicOperation);
-
-      endAtomicOperation(false);
-    } catch (IOException e) {
-      rollback();
-
-      throw new OSBTreeException("Error creation of sbtree with name" + name, e);
-    } catch (Exception e) {
-      rollback();
-
       throw new OSBTreeException("Error creation of sbtree with name" + name, e);
     } finally {
       releaseExclusiveLock();
@@ -179,15 +141,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     } finally {
       rootCacheEntry.releaseExclusiveLock();
       releasePage(atomicOperation, rootCacheEntry, diskCache);
-    }
-  }
-
-  public String getName() {
-    acquireSharedLock();
-    try {
-      return name;
-    } finally {
-      releaseSharedLock();
     }
   }
 
@@ -488,8 +441,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  public void load(long fileId, OBonsaiBucketPointer rootBucketPointer) {
-    acquireExclusiveLock();
+  public void load(OBonsaiBucketPointer rootBucketPointer) {
+    Lock lock = fileLockManager.acquireExclusiveLock(fileId);
     try {
       this.rootBucketPointer = rootBucketPointer;
 
@@ -497,12 +450,9 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
       final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-      openFile(atomicOperation, fileId, diskCache);
+      this.fileId = openFile(atomicOperation, name + dataFileExtension);
 
-      this.fileId = fileId;
-      this.name = resolveTreeName(fileId, atomicOperation);
-
-      OCacheEntry rootCacheEntry = loadPage(atomicOperation, this.fileId, this.rootBucketPointer.getPageIndex(), false, diskCache);
+      OCacheEntry rootCacheEntry = loadPage(atomicOperation, this.fileId, this.rootBucketPointer.getPageIndex(), false);
 
       rootCacheEntry.acquireSharedLock();
       try {
@@ -522,11 +472,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     } finally {
       releaseExclusiveLock();
     }
-  }
-
-  private String resolveTreeName(long fileId, OAtomicOperation atomicOperation) {
-    final String fileName = fileNameById(atomicOperation, fileId, diskCache);
-    return fileName.substring(0, fileName.length() - dataFileExtension.length());
   }
 
   private void setSize(long size, OAtomicOperation atomicOperation) throws IOException {

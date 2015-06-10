@@ -69,12 +69,19 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected final OAtomicOperationsManager  atomicOperationsManager;
   protected final OAbstractPaginatedStorage storage;
+  protected volatile String                 name;
+  protected final OReadCache                readCache;
+  protected final OWriteCache               writeCache;
 
-  public ODurableComponent(OAbstractPaginatedStorage storage) {
+  public ODurableComponent(OAbstractPaginatedStorage storage, String name) {
     super(true);
 
     this.storage = storage;
+    this.name = name;
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
+    this.readCache = storage.getReadCache();
+    this.writeCache = storage.getWriteCache();
+
   }
 
   @Override

@@ -226,7 +226,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       } catch (Exception e) {
       }
 
-      indexEngine.create(this.name, indexDefinition, clusterIndexName, valueSerializer, isAutomatic());
+      indexEngine.create(indexDefinition, clusterIndexName, valueSerializer, isAutomatic());
 
       if (rebuild)
         rebuild(progressListener);
@@ -398,6 +398,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         }
 
         removeValuesContainer();
+
+        indexEngine.create(indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
+            determineValueSerializer(), isAutomatic());
 
         long documentNum = 0;
         long documentTotal = 0;

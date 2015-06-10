@@ -93,20 +93,20 @@ public class ODefaultIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public OIndexInternal<?> createIndex(ODatabaseDocumentInternal database, String indexType, String algorithm,
-      String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException {
+  public OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
+      String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
     if (valueContainerAlgorithm == null)
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
 
     if (SBTREE_ALGORITHM.equals(algorithm))
-      return createSBTreeIndex(indexType, valueContainerAlgorithm, metadata, (OAbstractPaginatedStorage) database.getStorage()
-          .getUnderlying());
+      return createSBTreeIndex(name, indexType, valueContainerAlgorithm, metadata, (OAbstractPaginatedStorage) database
+          .getStorage().getUnderlying(), version);
 
     throw new OConfigurationException("Unsupported type : " + indexType);
   }
 
-  private OIndexInternal<?> createSBTreeIndex(String indexType, String valueContainerAlgorithm, ODocument metadata,
-      OAbstractPaginatedStorage storage) {
+  private OIndexInternal<?> createSBTreeIndex(String name, String indexType, String valueContainerAlgorithm, ODocument metadata,
+      OAbstractPaginatedStorage storage, int version) {
     Boolean durableInNonTxMode;
 
     Object durable = null;
@@ -121,17 +121,17 @@ public class ODefaultIndexFactory implements OIndexFactory {
       durableInNonTxMode = null;
 
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
-      return new OIndexUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(durableInNonTxMode, storage),
-          valueContainerAlgorithm, metadata);
+      return new OIndexUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(name, durableInNonTxMode, storage,
+          version), valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
-      return new OIndexNotUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(durableInNonTxMode,
-          storage), valueContainerAlgorithm, metadata);
+      return new OIndexNotUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(name, durableInNonTxMode,
+          storage, version), valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OIndexFullText(indexType, SBTREE_ALGORITHM,
-          new OSBTreeIndexEngine<Set<OIdentifiable>>(durableInNonTxMode, storage), valueContainerAlgorithm, metadata);
+      return new OIndexFullText(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(name, durableInNonTxMode,
+          storage, version), valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
-      return new OIndexDictionary(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(durableInNonTxMode, storage),
-          valueContainerAlgorithm, metadata);
+      return new OIndexDictionary(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(name, durableInNonTxMode,
+          storage, version), valueContainerAlgorithm, metadata);
     }
 
     throw new OConfigurationException("Unsupported type : " + indexType);

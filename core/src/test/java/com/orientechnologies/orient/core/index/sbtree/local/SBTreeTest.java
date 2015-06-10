@@ -49,8 +49,9 @@ public class SBTreeTest {
 
     databaseDocumentTx.create();
 
-    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", false, ".nbt", (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
-    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
+    sbTree = new OSBTree<Integer, OIdentifiable>("sbTree", ".sbt", false, ".nbt",
+        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+    sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
   }
 
   @AfterMethod
@@ -533,9 +534,9 @@ public class SBTreeTest {
   }
 
   public void testNullKeysInSBTree() {
-    final OSBTree<Integer, OIdentifiable> nullSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", false, ".nbt",
+    final OSBTree<Integer, OIdentifiable> nullSBTree = new OSBTree<Integer, OIdentifiable>("nullSBTree", ".sbt", false, ".nbt",
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
-    nullSBTree.create("nullSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, true);
+    nullSBTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, true);
 
     try {
       for (int i = 0; i < 10; i++)

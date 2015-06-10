@@ -152,7 +152,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
           metadata.field("trackMode", "FULL");
       }
 
-      index = OIndexes.createIndex(getDatabase(), iType, algorithm, valueContainerAlgorithm, metadata);
+      index = OIndexes.createIndex(getDatabase(), iName, iType, algorithm, valueContainerAlgorithm, metadata, -1);
 
       // decide which cluster to use ("index" - for automatic and "manindex" for manual)
       final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName
@@ -351,11 +351,16 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         while (indexConfigurationIterator.hasNext()) {
           final ODocument d = indexConfigurationIterator.next();
           try {
-            index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE),
-                (String) d.field(OIndexInternal.ALGORITHM), d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM),
-                (ODocument) d.field(OIndexInternal.METADATA));
+            final int indexVersion = d.field(OIndexInternal.INDEX_VERSION) == null ? 1 : (Integer) d
+                .field(OIndexInternal.INDEX_VERSION);
 
-            OIndexInternal.IndexMetadata newIndexMetadata = index.loadMetadata(d);
+            OIndexInternal.IndexMetadata newIndexMetadata = OIndexAbstract.loadMetadataInternal(d,
+                (String) d.field(OIndexInternal.CONFIG_TYPE), (String) d.field(OIndexInternal.ALGORITHM),
+                d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+            index = OIndexes.createIndex(getDatabase(), newIndexMetadata.getName(), newIndexMetadata.getType(),
+                newIndexMetadata.getAlgorithm(), newIndexMetadata.getValueContainerAlgorithm(),
+                (ODocument) d.field(OIndexInternal.METADATA), indexVersion);
+
             final String normalizedName = newIndexMetadata.getName().toLowerCase();
 
             OIndex<?> oldIndex = oldIndexes.get(normalizedName);
@@ -545,6 +550,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     }
 
     private OIndexInternal<?> createIndex(ODocument idx) {
+      final String indexName = doc.field(OIndexInternal.CONFIG_NAME);
       final String indexType = idx.field(OIndexInternal.CONFIG_TYPE);
       String algorithm = idx.field(OIndexInternal.ALGORITHM);
       String valueContainerAlgorithm = idx.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM);
@@ -555,7 +561,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         throw new OException("Index type is null, will process other record. Index configuration: " + idx.toString());
       }
 
-      return OIndexes.createIndex(newDb, indexType, algorithm, valueContainerAlgorithm, metadata);
+      return OIndexes.createIndex(newDb, indexName, indexType, algorithm, valueContainerAlgorithm, metadata, -1);
     }
 
     private Collection<ODocument> getConfiguration() {

@@ -53,7 +53,7 @@ public class OAtomicOperationsManager {
 
   private final OAbstractPaginatedStorage                      storage;
   private final OWriteAheadLog                                 writeAheadLog;
-  private final OLockManager<Object, OAtomicOperationsManager> lockManager      = new OLockManager<Object, OAtomicOperationsManager>(
+  private final OLockManager<String, OAtomicOperationsManager> lockManager      = new OLockManager<String, OAtomicOperationsManager>(
                                                                                     true, -1);
 
   public OAtomicOperationsManager(OAbstractPaginatedStorage storage) {
@@ -117,7 +117,7 @@ public class OAtomicOperationsManager {
       writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
       currentOperation.set(null);
 
-      for (Object lockObject : operation.lockedObjects())
+      for (String lockObject : operation.lockedObjects())
         lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
     }
 
@@ -129,24 +129,28 @@ public class OAtomicOperationsManager {
     if (operation == null)
       return;
 
-    if (operation.containsInLockedObjects(durableComponent))
+    assert durableComponent.getName() != null;
+
+    if (operation.containsInLockedObjects(durableComponent.getName()))
       return;
 
-    lockManager.acquireLock(this, durableComponent, OLockManager.LOCK.EXCLUSIVE);
-    operation.addLockedObject(durableComponent);
+    lockManager.acquireLock(this, durableComponent.getName(), OLockManager.LOCK.EXCLUSIVE);
+    operation.addLockedObject(durableComponent.getName());
   }
 
   public void acquireReadLock(ODurableComponent durableComponent) {
     if (writeAheadLog == null)
       return;
 
-    lockManager.acquireLock(this, durableComponent, OLockManager.LOCK.SHARED);
+    assert durableComponent.getName() != null;
+    lockManager.acquireLock(this, durableComponent.getName(), OLockManager.LOCK.SHARED);
   }
 
   public void releaseReadLock(ODurableComponent durableComponent) {
     if (writeAheadLog == null)
       return;
 
-    lockManager.releaseLock(this, durableComponent, OLockManager.LOCK.SHARED);
+    assert durableComponent.getName() != null;
+    lockManager.releaseLock(this, durableComponent.getName(), OLockManager.LOCK.SHARED);
   }
 }

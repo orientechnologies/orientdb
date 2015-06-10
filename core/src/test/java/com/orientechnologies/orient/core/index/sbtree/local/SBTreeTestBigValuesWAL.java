@@ -142,8 +142,8 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
     when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt", actualStorage);
-    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, 1, false);
+    sbTree = new OSBTree<Integer, byte[]>("actualSBTree", ".sbt", true, ".nbt", actualStorage);
+    sbTree.create(OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, 1, false);
   }
 
   private void createExpectedSBTree() {
@@ -181,8 +181,8 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
     when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt", expectedStorage);
-    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, 1, false);
+    expectedSBTree = new OSBTree<Integer, byte[]>("expectedSBTree", ".sbt", true, ".nbt", expectedStorage);
+    expectedSBTree.create(OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, 1, false);
   }
 
   @Override

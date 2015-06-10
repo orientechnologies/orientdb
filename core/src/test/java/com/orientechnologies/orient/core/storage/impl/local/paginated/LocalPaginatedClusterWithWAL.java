@@ -90,7 +90,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(storageDir);
 
-    paginatedCluster = new OPaginatedCluster(storage);
+    paginatedCluster = new OPaginatedCluster("testPaginatedClusterWithWALTest", storage);
     paginatedCluster.configure(storage, 6, "testPaginatedClusterWithWALTest", buildDirectory, -1);
     paginatedCluster.create(-1);
   }
@@ -134,7 +134,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(testStorageDir);
 
-    testCluster = new OPaginatedCluster(testStorage);
+    testCluster = new OPaginatedCluster("testPaginatedClusterWithWALTest", testStorage);
     testCluster.configure(testStorage, 6, "testPaginatedClusterWithWALTest", buildDirectory, -1);
     testCluster.create(-1);
   }
