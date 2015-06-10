@@ -127,10 +127,7 @@ public class OCSVTransformer extends OAbstractTransformer {
           fieldValue = processKnownType(doc, i, fieldName, fieldStringValue, fieldType);
         } else {
           // DETERMINE THE TYPE
-
-          if (fieldStringValue == null)
-            fieldValue = null;
-          else
+          if (fieldStringValue != null)
             fieldValue = determineTheType(fieldStringValue);
         }
         doc.field(fieldName, fieldValue);
