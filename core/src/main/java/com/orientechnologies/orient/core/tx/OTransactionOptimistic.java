@@ -65,7 +65,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   private boolean              usingLog = true;
   private int                  txStartCounter;
 
-
   private class CommitIndexesCallback implements Runnable {
     private final Map<String, OIndex<?>> indexes;
 
@@ -112,7 +111,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     super(iDatabase, txSerial.incrementAndGet());
   }
 
-
   public void begin() {
     if (txStartCounter == 0)
       status = TXSTATUS.BEGUN;
@@ -130,7 +128,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   /**
    * The transaction is reentrant. If {@code begin()} has been called several times, the actual commit happens only after the same
    * amount of {@code commit()} calls
-   * 
+   *
    * @param force
    *          commit transaction even
    */
@@ -573,33 +571,35 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     status = TXSTATUS.COMMITTING;
 
-    if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
-        && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
-      database.getStorage().commit(this, null);
-    else {
-      List<OIndexAbstract<?>> lockedIndexes = acquireIndexLocks();
-      try {
-        final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
-        for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
-          indexes.put(index.getName(), index);
+    if (!recordEntries.isEmpty() || !indexEntries.isEmpty()) {
+      if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
+          && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
+        database.getStorage().commit(this, null);
+      else {
+        List<OIndexAbstract<?>> lockedIndexes = acquireIndexLocks();
+        try {
+          final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
+          for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
+            indexes.put(index.getName(), index);
 
-        final Runnable callback = new CommitIndexesCallback(indexes);
+          final Runnable callback = new CommitIndexesCallback(indexes);
 
-        final String storageType = database.getStorage().getUnderlying().getType();
+          final String storageType = database.getStorage().getUnderlying().getType();
 
-        if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
-          database.getStorage().commit(OTransactionOptimistic.this, callback);
-        else {
-          database.getStorage().callInLock(new Callable<Object>() {
-            @Override
-            public Object call() throws Exception {
-              database.getStorage().commit(OTransactionOptimistic.this, callback);
-              return null;
-            }
-          }, true);
+          if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
+            database.getStorage().commit(OTransactionOptimistic.this, callback);
+          else {
+            database.getStorage().callInLock(new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                database.getStorage().commit(OTransactionOptimistic.this, callback);
+                return null;
+              }
+            }, true);
+          }
+        } finally {
+          releaseIndexLocks(lockedIndexes);
         }
-      } finally {
-        releaseIndexLocks(lockedIndexes);
       }
     }
 
