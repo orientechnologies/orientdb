@@ -91,6 +91,14 @@ public class IssueServiceGithub implements IssueService {
       ObjectMapper mapper = new ObjectMapper();
       String value = mapper.writeValueAsString(labels);
       repo.changeIssueLabels(issue.getNumber(), value);
+
+      OUser current = SecurityHelper.currentUser();
+      if (actor != null && !actor.getUsername().equals(current.getUsername())) {
+        for (String label : labels) {
+          Label l = issueService.repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
+          issueService.eventService.fireEvent(issue, SecurityHelper.currentUser(), "labeled", null, l);
+        }
+      }
     } catch (IOException e) {
 
     }
@@ -111,6 +119,11 @@ public class IssueServiceGithub implements IssueService {
     try {
       GRepo repo = github.repo(iPropertyValue, doc.toJSON());
       repo.removeIssueLabel(issue.getNumber(), label);
+      OUser current = SecurityHelper.currentUser();
+      if (actor != null && !actor.getUsername().equals(current.getUsername())) {
+        Label l = issueService.repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
+        issueService.eventService.fireEvent(issue, SecurityHelper.currentUser(), "unlabeled", null, l);
+      }
     } catch (IOException e) {
 
     }

@@ -156,7 +156,7 @@
 
                   <div class="col-md-8 col-md-offset-4">
                     <div class="btn-group pull-right"
-                         ng-show="issue.state == 'OPEN' && !isInWait() && isMember">
+                         ng-show="issue.state == 'OPEN' && !isInWait() && (isMember || isSupport)">
                       <button class="btn btn-sm btn-success" ng-click="commentAndWait()">
                         Comment & wait for reply
                       </button>
@@ -170,12 +170,12 @@
 
                     <div class="btn-group pull-right">
                       <button class="btn btn-sm btn-default"
-                              ng-show="issue.state == 'OPEN' && (isOwner || isMember)"
+                              ng-show="issue.state == 'OPEN' && (isOwner || isMember || isSupport)"
                               ng-click="close()">
                         {{ closeComment ? 'Close and comment' : 'Close'}}
                       </button>
                       <button class="btn btn-sm btn-default"
-                              ng-show="issue.state == 'CLOSED' && (isOwner || isMember)"
+                              ng-show="issue.state == 'CLOSED' && (isOwner || isMember || isSupport)"
                               ng-click="reopen()">
                         Reopen Issue
                       </button>

@@ -336,13 +336,14 @@ angular.module('webappApp')
       $scope.user = data;
       $scope.isMember = User.isMember(ORGANIZATION);
       $scope.isClient = User.isClient(ORGANIZATION);
+      $scope.isSupport = User.isSupport(ORGANIZATION);
       $scope.client = User.getClient(ORGANIZATION);
       User.environments().then(function (data) {
         $scope.environments = data.plain();
       });
       if ($scope.client)
         $scope.issue.client = $scope.client.clientId;
-      if ($scope.isMember) {
+      if ($scope.isMember || $scope.isSupport) {
         Organization.all("clients").getList().then(function (data) {
           $scope.clients = data.plain();
         })

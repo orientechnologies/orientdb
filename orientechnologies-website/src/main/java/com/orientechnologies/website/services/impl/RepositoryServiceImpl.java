@@ -13,10 +13,7 @@ import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
 import com.orientechnologies.website.repository.*;
 import com.orientechnologies.website.security.OSecurityManager;
-import com.orientechnologies.website.services.AutoAssignService;
-import com.orientechnologies.website.services.IssueService;
-import com.orientechnologies.website.services.RepositoryService;
-import com.orientechnologies.website.services.UserService;
+import com.orientechnologies.website.services.*;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +34,8 @@ public class RepositoryServiceImpl implements RepositoryService {
   @Autowired
   protected EventManager           eventManager;
 
+  @Autowired
+  protected EventService           eventService;
   @Autowired
   protected AutoAssignService      autoAssignService;
 
@@ -134,11 +133,7 @@ public class RepositoryServiceImpl implements RepositoryService {
         original = issueRepository.save(original);
       }
     }
-    if (issue.getAssignee() != null) {
-      if (original.getAssignee() == null || !original.getAssignee().getName().equalsIgnoreCase(issue.getAssignee())) {
-        handleAssignee(original, issue.getAssignee());
-      }
-    }
+
     if (issue.getScope() != null) {
       if (original.getScope() == null || original.getScope().getNumber() != issue.getScope()) {
         handleScope(r, original, issue.getScope());
@@ -166,6 +161,11 @@ public class RepositoryServiceImpl implements RepositoryService {
       handleClient(r, original, issue.getClient());
     }
     if (skipGithub) {
+      if (issue.getAssignee() != null) {
+        if (original.getAssignee() == null || !original.getAssignee().getName().equalsIgnoreCase(issue.getAssignee())) {
+          handleAssignee(original, issue.getAssignee());
+        }
+      }
       if (issue.getState() != null) {
 
         if (issue.getState().equalsIgnoreCase("OPEN")) {

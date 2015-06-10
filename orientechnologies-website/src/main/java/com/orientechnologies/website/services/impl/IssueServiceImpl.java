@@ -14,6 +14,7 @@ import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.*;
 import com.orientechnologies.website.security.OSecurityManager;
+import com.orientechnologies.website.services.EventService;
 import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.SlaService;
 import com.orientechnologies.website.services.UserService;
@@ -49,8 +50,11 @@ public class IssueServiceImpl implements IssueService {
 
   @Autowired
   protected EventManager         eventManager;
+
   @Autowired
-  private RepositoryRepository   repoRepository;
+  protected EventService         eventService;
+  @Autowired
+  protected RepositoryRepository   repoRepository;
   @Autowired
   private EventRepository        eventRepository;
   @Autowired
@@ -164,20 +168,24 @@ public class IssueServiceImpl implements IssueService {
 
     if (fire) {
       for (Label lb : lbs) {
-        IssueEvent e = new IssueEvent();
-        e.setCreatedAt(new Date());
-        e.setEvent("labeled");
-        e.setLabel(lb);
-        if (actor == null) {
-          e.setActor(SecurityHelper.currentUser());
-        } else {
-          e.setActor(actor);
-        }
-        e = (IssueEvent) eventRepository.save(e);
-        fireEvent(issue, e);
+        fireLabelEvent(issue, actor, lb);
       }
     }
     return lbs;
+  }
+
+  private void fireLabelEvent(Issue issue, OUser actor, Label lb) {
+    IssueEvent e = new IssueEvent();
+    e.setCreatedAt(new Date());
+    e.setEvent("labeled");
+    e.setLabel(lb);
+    if (actor == null) {
+      e.setActor(SecurityHelper.currentUser());
+    } else {
+      e.setActor(actor);
+    }
+    e = (IssueEvent) eventRepository.save(e);
+    fireEvent(issue, e);
   }
 
   private void removeSlaCounting(Issue issue) {
@@ -201,22 +209,26 @@ public class IssueServiceImpl implements IssueService {
       Label l = repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
       if (l != null) {
         if (removeLabelRelationship(issue, l)) {
-          IssueEvent e = new IssueEvent();
-          e.setCreatedAt(new Date());
-          e.setEvent("unlabeled");
-          e.setLabel(l);
-          if (actor == null) {
-            e.setActor(SecurityHelper.currentUser());
-          } else {
-            e.setActor(actor);
-          }
-          e = (IssueEvent) eventRepository.save(e);
-          fireEvent(issue, e);
+          fireUnLabelEvent(issue, actor, l);
         }
       }
     } else {
       githubIssueService.removeLabel(issue, label, actor, remote);
     }
+  }
+
+  private void fireUnLabelEvent(Issue issue, OUser actor, Label l) {
+    IssueEvent e = new IssueEvent();
+    e.setCreatedAt(new Date());
+    e.setEvent("unlabeled");
+    e.setLabel(l);
+    if (actor == null) {
+      e.setActor(SecurityHelper.currentUser());
+    } else {
+      e.setActor(actor);
+    }
+    e = (IssueEvent) eventRepository.save(e);
+    fireEvent(issue, e);
   }
 
   @Override
@@ -256,20 +268,24 @@ public class IssueServiceImpl implements IssueService {
     createAssigneeRelationship(issue, assignee);
 
     if (fire) {
-      IssueEvent e = new IssueEvent();
-      e.setCreatedAt(new Date());
-      e.setEvent("assigned");
-      e.setAssignee(assignee);
-      if (actor == null) {
-        e.setActor(SecurityHelper.currentUser());
-      } else {
-        e.setActor(actor);
-      }
-      e = (IssueEvent) eventRepository.save(e);
-      fireEvent(issue, e);
-
+      IssueEvent e = fireAssignEvent(issue, assignee, actor);
       eventManager.pushInternalEvent(IssueAssignedEvent.EVENT, e);
     }
+  }
+
+  private IssueEvent fireAssignEvent(Issue issue, OUser assignee, OUser actor) {
+    IssueEvent e = new IssueEvent();
+    e.setCreatedAt(new Date());
+    e.setEvent("assigned");
+    e.setAssignee(assignee);
+    if (actor == null) {
+      e.setActor(SecurityHelper.currentUser());
+    } else {
+      e.setActor(actor);
+    }
+    e = (IssueEvent) eventRepository.save(e);
+    fireEvent(issue, e);
+    return e;
   }
 
   @Override
@@ -310,9 +326,13 @@ public class IssueServiceImpl implements IssueService {
       if (oldMileston != null) {
         e = new IssueEventInternal();
         e.setCreatedAt(new Date());
+        if (actor == null) {
+          e.setActor(SecurityHelper.currentUser());
+        } else {
+          e.setActor(actor);
+        }
         e.setEvent("demilestoned");
         e.setMilestone(oldMileston);
-        e.setActor(SecurityHelper.currentUser());
         e = (IssueEventInternal) eventRepository.save(e);
         fireEvent(issue, e);
       }

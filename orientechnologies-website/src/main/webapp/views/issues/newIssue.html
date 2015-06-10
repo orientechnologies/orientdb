@@ -10,7 +10,7 @@
             <div class="form-group">
               <input type="text" class="form-control" required placeholder="Title" ng-model="issue.title">
             </div>
-            <div class="checkbox"  ng-show="(isMember || isClient)" >
+            <div class="checkbox"  ng-show="(isMember || isClient || isSupport)" >
               <label>
                 <input type="checkbox" placeholder="Private Issue"
                        ng-model="issue.confidential">
@@ -54,7 +54,7 @@
                   <select class="form-control"  ng-model="issue.milestone"
                           ng-options="m.number as m.title for m in milestones"></select>
                 </div>
-                <div class="col-md-3" ng-show="isMember">
+                <div class="col-md-3" ng-show="isMember || isSupport">
                   <label>Client</label>
                   <select class="form-control"  ng-model="issue.client"
                           ng-options="c.clientId as c.name for c in clients"></select>

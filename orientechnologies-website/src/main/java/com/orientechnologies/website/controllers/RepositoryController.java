@@ -139,8 +139,10 @@ public class RepositoryController {
       return new ResponseEntity<List<Label>>(HttpStatus.NOT_FOUND);
     }
 
-    return new ResponseEntity<List<Label>>(issueService.addLabels(i, labels, securityManager.botIfSupport(owner), true,
-        !Boolean.TRUE.equals(i.getConfidential())), HttpStatus.OK);
+    OUser user = Boolean.TRUE.equals(i.getConfidential()) ? null : securityManager.botIfSupport(owner);
+
+    return new ResponseEntity<List<Label>>(
+        issueService.addLabels(i, labels, user, true, !Boolean.TRUE.equals(i.getConfidential())), HttpStatus.OK);
   }
 
   @PreAuthorize(Permissions.ISSUE_LABEL)
@@ -152,7 +154,8 @@ public class RepositoryController {
     if (i == null) {
       return new ResponseEntity<List<Label>>(HttpStatus.NOT_FOUND);
     }
-    issueService.removeLabel(i, lname, securityManager.botIfSupport(owner), !Boolean.TRUE.equals(i.getConfidential()));
+    OUser user = Boolean.TRUE.equals(i.getConfidential()) ? null : securityManager.botIfSupport(owner);
+    issueService.removeLabel(i, lname, user, !Boolean.TRUE.equals(i.getConfidential()));
     return new ResponseEntity<List<Label>>(HttpStatus.OK);
   }
 

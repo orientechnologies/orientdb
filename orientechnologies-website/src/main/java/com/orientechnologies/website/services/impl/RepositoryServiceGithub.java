@@ -107,6 +107,9 @@ public class RepositoryServiceGithub implements RepositoryService {
       }
       if (patch.getState() != null) {
         node.put("state", patch.getState());
+        OUser userByLogin = repositoryService.userRepo.findUserByLogin(patch.getAssignee());
+        String evt = patch.getState().equalsIgnoreCase(Issue.IssueState.OPEN.toString()) ? "reopened" : "closed";
+        repositoryService.eventService.fireEvent(original, SecurityHelper.currentUser(), evt, userByLogin, null);
       }
       if (patch.getTitle() != null) {
         node.put("title", patch.getTitle());
@@ -116,6 +119,8 @@ public class RepositoryServiceGithub implements RepositoryService {
       }
       if (patch.getAssignee() != null) {
         node.put("assignee", patch.getAssignee());
+        OUser userByLogin = repositoryService.userRepo.findUserByLogin(patch.getAssignee());
+        repositoryService.eventService.fireEvent(original, SecurityHelper.currentUser(), "assigned", userByLogin, null);
       }
       if (node.size() > 0) {
         String value = mapper.writeValueAsString(node);

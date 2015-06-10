@@ -57,7 +57,7 @@ public class MockMailSender extends JavaMailSenderImpl {
         for (String s : simpleMessage.getTo()) {
           email.addTo(s);
         }
-        email.setTLS(false);
+        email.setTLS(mailConfiguration.starttls);
         email.send();
         email.setSSL(false);
       } catch (Exception e) {
