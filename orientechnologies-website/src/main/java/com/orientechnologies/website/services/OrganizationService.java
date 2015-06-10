@@ -1,5 +1,7 @@
 package com.orientechnologies.website.services;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.website.annotation.RetryingTransaction;
 import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.ImportDTO;
@@ -39,6 +41,7 @@ public interface OrganizationService {
   public List<OUser> getClientRoomActors(String name, Integer clientId);
 
   @Transactional
+  @RetryingTransaction(exception = ONeedRetryException.class, retries = 5)
   void checkInRoom(String name, Integer clientId);
 
   @Transactional

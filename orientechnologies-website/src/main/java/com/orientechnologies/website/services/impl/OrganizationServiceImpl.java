@@ -466,6 +466,7 @@ public class OrganizationServiceImpl implements OrganizationService {
         put("timestamp", new Date());
       }
     };
+
     graph
         .command(
             new OCommandSQL(

@@ -26,13 +26,14 @@ public abstract class GitHubBaseHandler<T> implements GitHubHandler<T> {
     String action = payload.field("action");
     GithubEvent evt = events.get(action);
     if (evt != null) {
-
       for (int r = 0; r < 10; ++r) {
         try {
           evt.handle(action, payload);
           break;
         } catch (ONeedRetryException retry) {
-          OLogManager.instance().error(this, " Retried");
+          OLogManager.instance().error(this, " Retried %s event ", action);
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error handling %s event with payload %s", action, payload.toJSON());
         }
       }
     }

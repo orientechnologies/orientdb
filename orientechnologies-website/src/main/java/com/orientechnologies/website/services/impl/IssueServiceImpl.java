@@ -54,7 +54,7 @@ public class IssueServiceImpl implements IssueService {
   @Autowired
   protected EventService         eventService;
   @Autowired
-  protected RepositoryRepository   repoRepository;
+  protected RepositoryRepository repoRepository;
   @Autowired
   private EventRepository        eventRepository;
   @Autowired
@@ -205,15 +205,22 @@ public class IssueServiceImpl implements IssueService {
   @Transactional
   @Override
   public void removeLabel(Issue issue, String label, OUser actor, boolean remote) {
+    Label l = repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
     if (!remote) {
-      Label l = repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
+
       if (l != null) {
-        if (removeLabelRelationship(issue, l)) {
+        Edge e = removeLabelRelationship(issue, l);
+
+        if (e != null) {
+          e.remove();
           fireUnLabelEvent(issue, actor, l);
         }
       }
     } else {
-      githubIssueService.removeLabel(issue, label, actor, remote);
+      if (removeLabelRelationship(issue, l) != null) {
+        OLogManager.instance().info(this, "Current Actor : [%s]" + actor);
+        githubIssueService.removeLabel(issue, label, actor, remote);
+      }
     }
   }
 
@@ -651,20 +658,19 @@ public class IssueServiceImpl implements IssueService {
 
   }
 
-  private boolean removeLabelRelationship(Issue issue, Label label) {
+  private Edge removeLabelRelationship(Issue issue, Label label) {
 
     OrientGraph graph = dbFactory.getGraph();
     OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
-    boolean found = false;
+    Edge toRemove = null;
     for (Edge edge : orgVertex.getEdges(Direction.OUT, HasLabel.class.getSimpleName())) {
       Vertex v = edge.getVertex(Direction.IN);
       if (label.getName().equals(v.getProperty(OLabel.NAME.toString()))) {
-        edge.remove();
-        found = true;
+        toRemove = edge;
       }
 
     }
-    return found;
+    return toRemove;
   }
 
   private void createLabelsRelationship(Issue issue, List<Label> labels, boolean replace) {

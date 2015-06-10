@@ -48,6 +48,7 @@ public class GithubAssignedEvent implements GithubIssueEvent {
     }
     Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
     issueService.assign(issueDto, assignee, sender, true);
+
   }
 
   @Override
