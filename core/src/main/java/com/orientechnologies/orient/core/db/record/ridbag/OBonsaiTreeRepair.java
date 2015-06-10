@@ -3,8 +3,10 @@ package com.orientechnologies.orient.core.db.record.ridbag;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -29,7 +31,8 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  */
 public class OBonsaiTreeRepair {
 
-  public void repairDatabaseRidbags(ODatabaseDocumentTx db) {
+  public String repairDatabaseRidbags(ODatabaseDocumentTx db) {
+    StringBuilder report = new StringBuilder();
     Set<String> clusters = db.getStorage().getClusterNames();
     for (String clusterName : clusters) {
       List<DoubleReferenceItem> doubles = new ArrayList<DoubleReferenceItem>();
@@ -48,7 +51,6 @@ public class OBonsaiTreeRepair {
                 if (ridBag.getPointer().isValid()) {
                   OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = (OSBTreeBonsaiLocal<OIdentifiable, Integer>) db
                       .getSbTreeCollectionManager().loadSBTree(ridBag.getPointer());
-                  long fileId = tree.getFileId();
                   List<OBonsaiBucketPointer> buckets = tree.listBuckets();
                   for (OBonsaiBucketPointer oBonsaiBucketPointer : buckets) {
                     Map<ORidBag, String> refBag = map.get(oBonsaiBucketPointer);
@@ -72,7 +74,7 @@ public class OBonsaiTreeRepair {
           e.printStackTrace();
         }
       }
-
+      Map<ODocument, Set<String>> fixedSet = new HashMap<ODocument, Set<String>>();
       for (DoubleReferenceItem doubleRef : doubles) {
         try {
           ORidBag ridBagOne = doubleRef.getRidBagOne();
@@ -89,7 +91,6 @@ public class OBonsaiTreeRepair {
           tree2.clear();
           ODocument docTwo = (ODocument) ridBagTwo.getDelegate().getOwner();
 
-          // TODO check LightWeight
           List<ODocument> list = regenerateRidBag(docOne, doubleRef.getFieldNameOne(), db);
           for (ODocument oDocument : list) {
             ridBagOne.add((OIdentifiable) oDocument.field("res"));
@@ -100,11 +101,35 @@ public class OBonsaiTreeRepair {
             ridBagTwo.add((OIdentifiable) oDocument.field("res"));
           }
           db.save(docTwo);
+
+          Set<String> res = fixedSet.get(docOne);
+          if (res == null) {
+            res = new HashSet<String>();
+            fixedSet.put(docOne, res);
+          }
+          res.add(doubleRef.getFieldNameOne());
+          res = fixedSet.get(docTwo);
+          if (res == null) {
+            res = new HashSet<String>();
+            fixedSet.put(docTwo, res);
+          }
+          res.add(doubleRef.getFieldNameTwo());
         } catch (IOException ex) {
           ex.printStackTrace();
         }
       }
+      if (!fixedSet.isEmpty()) {
+        report.append("In cluster: " + clusterName + " fixed ridbags of records: \n");
+        for (Entry<ODocument, Set<String>> entry : fixedSet.entrySet()) {
+          ODocument doc = entry.getKey();
+          report.append("\t").append(doc.getIdentity()).append("\n");
+          for (String field : entry.getValue())
+            report.append("\t\t").append(field).append("\n");
+        }
+      }
+
     }
+    return report.toString();
 
   }
 

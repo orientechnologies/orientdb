@@ -1504,9 +1504,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     long modifiedDocuments = 0l;
     long errors = 0l;
 
-    message("\n- Fixing dirty links...");
     try {
       if (!fix_ridbags) {
+        message("\n- Fixing dirty links...");
         for (String clusterName : currentDatabase.getClusterNames()) {
           for (ORecord rec : currentDatabase.browseCluster(clusterName)) {
             try {
@@ -1567,8 +1567,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           }
         }
         if (!lightweight) {
+          message("\n- Fixing ridbags ... \n");
           OBonsaiTreeRepair repairer = new OBonsaiTreeRepair();
-          repairer.repairDatabaseRidbags(currentDatabase);
+          message(repairer.repairDatabaseRidbags(currentDatabase));
         } else {
           message("cannot execute fix ridbags on a db with ligthweight edges");
         }
