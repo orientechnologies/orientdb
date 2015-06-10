@@ -190,8 +190,10 @@ public class ODistributedWorker extends Thread {
 
       localQueue.clear();
 
-      if (database != null)
+      if (database != null) {
+        database.activateOnCurrentThread();
         database.close();
+      }
 
     } catch (Exception e) {
       ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
