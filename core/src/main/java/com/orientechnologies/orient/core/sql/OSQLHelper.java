@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
@@ -43,13 +35,12 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemAbstract;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
-import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+import com.orientechnologies.orient.core.sql.filter.*;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * SQL Helper class
@@ -160,7 +151,12 @@ public class OSQLHelper {
       else if (iValue.equalsIgnoreCase("false"))
         // BOOLEAN, FALSE
         fieldValue = Boolean.FALSE;
-      else {
+      else if (iValue.startsWith("date(")) {
+        final OSQLFunctionRuntime func = OSQLHelper.getFunction(null, iValue);
+        if (func != null) {
+          fieldValue = func.execute(null, null, null, iContext);
+        }
+      }else {
         final Object v = parseStringNumber(iValue);
         if (v != null)
           fieldValue = v;
