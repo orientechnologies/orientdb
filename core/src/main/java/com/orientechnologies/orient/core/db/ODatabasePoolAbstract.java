@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.resource.OReentrantResourcePool;
@@ -29,16 +39,6 @@ import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extends OAdaptiveLock implements
     OResourcePoolListener<String, DB>, OOrientListener {
@@ -237,10 +237,6 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
 
     if (pool.returnResource(iDatabase))
       this.notifyEvictor(dbPooledName, iDatabase);
-  }
-
-  public DB reuseResource(final String iKey, final DB iValue) {
-    return iValue;
   }
 
   public Map<String, OReentrantResourcePool<String, DB>> getPools() {

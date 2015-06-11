@@ -674,6 +674,8 @@ public class OServer {
   }
 
   public ODatabaseInternal openDatabase(final ODatabaseInternal database) {
+    database.activateOnCurrentThread();
+
     if (database.isClosed())
       if (database.getStorage() instanceof ODirectMemoryStorage)
         database.create();
@@ -686,7 +688,6 @@ public class OServer {
         }
 
         // SERVER AUTHENTICATED, BYPASS SECURITY
-        database.activateOnCurrentThread();
         database.resetInitialization();
         database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
         database.open(replicatorUser.name, replicatorUser.password);
