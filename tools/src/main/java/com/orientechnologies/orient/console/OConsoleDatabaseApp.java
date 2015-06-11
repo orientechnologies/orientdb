@@ -1558,7 +1558,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
             }
           }
         }
+        if (verbose)
+          message("\n");
+
+        message("Done! Fixed links: " + fixedLinks + ", modified documents: " + modifiedDocuments);
+
+        message("\nRepair database complete (" + errors + " errors)");
       } else if (fix_ridbags) {
+        if (!currentDatabase.getURL().startsWith("plocal")) {
+          message("\n fix-ridbags can be run only on plocal connection \n");
+          return;
+        }
+
         boolean lightweight = false;
         final List<OStorageEntryConfiguration> custom = (List<OStorageEntryConfiguration>) currentDatabase.get(ATTRIBUTES.CUSTOM);
         for (OStorageEntryConfiguration c : custom) {
@@ -1574,13 +1585,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           message("cannot execute fix ridbags on a db with ligthweight edges");
         }
       }
-
-      if (verbose)
-        message("\n");
-
-      message("Done! Fixed links: " + fixedLinks + ", modified documents: " + modifiedDocuments);
-
-      message("\nRepair database complete (" + errors + " errors)");
 
     } catch (Exception e) {
       printError(e);
