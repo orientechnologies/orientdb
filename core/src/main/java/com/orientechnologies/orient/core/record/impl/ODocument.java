@@ -19,26 +19,6 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -50,12 +30,15 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
@@ -79,6 +62,16 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -471,18 +464,19 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
           + " but the value is the RecordID " + fieldValue);
     else if (fieldValue instanceof OIdentifiable) {
-      if (((OIdentifiable) fieldValue).getIdentity().isValid())
+      final OIdentifiable embedded = (OIdentifiable) fieldValue;
+      if (embedded.getIdentity().isValid())
         throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
             + " but the value is a document with the valid RecordID " + fieldValue);
 
       final OClass embeddedClass = p.getLinkedClass();
       if (embeddedClass != null) {
-        final ORecord rec = ((OIdentifiable) fieldValue).getRecord();
-        if (!(rec instanceof ODocument))
+        final ORecord embeddedRecord = embedded.getRecord();
+        if (!(embeddedRecord instanceof ODocument))
           throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
               + " with linked class '" + embeddedClass + "' but the record was not a document");
 
-        final ODocument doc = (ODocument) rec;
+        final ODocument doc = (ODocument) embeddedRecord;
         if (doc.getImmutableSchemaClass() == null)
           throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
               + " with linked class '" + embeddedClass + "' but the record has no class");
@@ -491,6 +485,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
           throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
               + " with linked class '" + embeddedClass + "' but the record is of class '" + doc.getImmutableSchemaClass().getName()
               + "' that is not a subclass of that");
+
+        doc.validate();
       }
 
     } else
