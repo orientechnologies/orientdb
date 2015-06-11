@@ -83,49 +83,103 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
       }
 
       Direction direction = Direction.BOTH;
+      Direction reverseDirection = Direction.BOTH;
       if (iParams.length > 2 && iParams[2] != null) {
         direction = Direction.valueOf(iParams[2].toString().toUpperCase());
       }
+      if (direction == Direction.OUT) {
+        reverseDirection = Direction.IN;
+      } else if (direction == Direction.IN) {
+        reverseDirection = Direction.OUT;
+      }
+
       Object edgeType = null;
       if (iParams.length > 3) {
         edgeType = iParams[3];
       }
 
-      final ArrayDeque<OrientVertex> queue = new ArrayDeque<OrientVertex>();
-      final Set<ORID> visited = new HashSet<ORID>();
-      final Map<ORID, ORID> previouses = new HashMap<ORID, ORID>();
+      final ArrayDeque<OrientVertex> queue1 = new ArrayDeque<OrientVertex>();
+      final ArrayDeque<OrientVertex> queue2 = new ArrayDeque<OrientVertex>();
 
-      queue.add(sourceVertex);
+      final Set<ORID> visited = new HashSet<ORID>();
+
+      final Set<ORID> leftVisited = new HashSet<ORID>();
+      final Set<ORID> rightVisited = new HashSet<ORID>();
+
+      final Map<ORID, ORID> previouses = new HashMap<ORID, ORID>();
+      final Map<ORID, ORID> nexts = new HashMap<ORID, ORID>();
+
+      queue1.add(sourceVertex);
       visited.add(sourceVertex.getIdentity());
 
+      queue2.add(destinationVertex);
+      visited.add(destinationVertex.getIdentity());
+
       OrientVertex current;
-      while (!queue.isEmpty()) {
-        current = queue.poll();
+      OrientVertex reverseCurrent;
 
-        Iterable<Vertex> neighbors;
-        if (edgeType == null) {
-          neighbors = current.getVertices(direction);
-        } else {
-          neighbors = current.getVertices(direction, new String[] { "" + edgeType });
+      while (true) {
+        if (queue1.isEmpty() && queue2.isEmpty()) {
+          break;
         }
-        for (Vertex neighbor : neighbors) {
-          final OrientVertex v = (OrientVertex) neighbor;
-          final ORID neighborIdentity = v.getIdentity();
 
-          if (!visited.contains(neighborIdentity)) {
+        if (!queue1.isEmpty()) {
+          current = queue1.poll();
 
-            previouses.put(neighborIdentity, current.getIdentity());
-
-            if (destinationVertex.equals(neighbor))
-              return computePath(previouses, neighborIdentity);
-
-            queue.offer(v);
-            visited.add(neighborIdentity);
+          Iterable<Vertex> neighbors;
+          if (edgeType == null) {
+            neighbors = current.getVertices(direction);
+          } else {
+            neighbors = current.getVertices(direction, new String[] { "" + edgeType });
           }
+          for (Vertex neighbor : neighbors) {
+            final OrientVertex v = (OrientVertex) neighbor;
+            final ORID neighborIdentity = v.getIdentity();
 
+            if (rightVisited.contains(neighborIdentity)) {
+              previouses.put(neighborIdentity, current.getIdentity());
+              return computePath(previouses, nexts, neighborIdentity);
+            }
+            if (!visited.contains(neighborIdentity)) {
+              previouses.put(neighborIdentity, current.getIdentity());
+
+              queue1.offer(v);
+              visited.add(neighborIdentity);
+              leftVisited.add(neighborIdentity);
+            }
+
+          }
+        }
+
+        if (!queue2.isEmpty()) {
+          reverseCurrent = queue2.poll();
+
+          Iterable<Vertex> neighbors;
+          if (edgeType == null) {
+            neighbors = reverseCurrent.getVertices(reverseDirection);
+          } else {
+            neighbors = reverseCurrent.getVertices(reverseDirection, new String[] { "" + edgeType });
+          }
+          for (Vertex neighbor : neighbors) {
+            final OrientVertex v = (OrientVertex) neighbor;
+            final ORID neighborIdentity = v.getIdentity();
+
+            if (leftVisited.contains(neighborIdentity)) {
+              nexts.put(neighborIdentity, reverseCurrent.getIdentity());
+              return computePath(previouses, nexts, neighborIdentity);
+            }
+            if (!visited.contains(neighborIdentity)) {
+
+              nexts.put(neighborIdentity, reverseCurrent.getIdentity());
+
+              queue2.offer(v);
+              visited.add(neighborIdentity);
+              rightVisited.add(neighborIdentity);
+            }
+
+          }
         }
       }
-
       return new ArrayList<ORID>();
     } finally {
       if (shutdownFlag.getValue())
@@ -138,14 +192,21 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     return "shortestPath(<sourceVertex>, <destinationVertex>, [<direction>, [ <edgeTypeAsString> ]])";
   }
 
-  private List<ORID> computePath(final Map<ORID, ORID> distances, final ORID neighbor) {
+  private List<ORID> computePath(final Map<ORID, ORID> leftDistances, final Map<ORID, ORID> rightDistances, final ORID neighbor) {
     final List<ORID> result = new ArrayList<ORID>();
 
     ORID current = neighbor;
     while (current != null) {
       result.add(0, current);
+      current = leftDistances.get(current);
+    }
 
-      current = distances.get(current);
+    current = neighbor;
+    while (current != null) {
+      current = rightDistances.get(current);
+      if (current != null) {
+        result.add(current);
+      }
     }
 
     return result;
