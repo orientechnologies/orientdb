@@ -89,7 +89,6 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -1624,9 +1623,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   private OStorageOperationResult<ORecordVersion> doUpdateRecord(ORecordId rid, boolean updateContent, byte[] content,
       ORecordVersion version, byte recordType, ORecordCallback<ORecordVersion> callback, OCluster cluster) {
-
-    if (rid.toString().equals("#14:144"))
-      System.out.println(String.format("UPDATE %s version %s: %s", rid, version, Arrays.toString(content)));
 
     try {
       final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
