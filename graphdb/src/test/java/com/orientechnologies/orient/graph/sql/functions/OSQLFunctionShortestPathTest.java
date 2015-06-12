@@ -46,6 +46,13 @@ public class OSQLFunctionShortestPathTest {
     vertices.get(3).setProperty("node_id", "C");
     vertices.get(4).setProperty("node_id", "D");
 
+
+
+    graph.addEdge(null, vertices.get(1), vertices.get(2), "Edge1");
+    graph.addEdge(null, vertices.get(2), vertices.get(3), "Edge1");
+    graph.addEdge(null, vertices.get(3), vertices.get(1), "Edge2");
+    graph.addEdge(null, vertices.get(3), vertices.get(4), "Edge1");
+
     for (int i = 5; i <= 20; i++) {
       vertices.put(i, graph.addVertex(null));
       vertices.get(i).setProperty("node_id", "V" + i);
@@ -54,11 +61,6 @@ public class OSQLFunctionShortestPathTest {
         graph.addEdge(null, vertices.get(i - 2), vertices.get(i), "Edge1");
       }
     }
-
-    graph.addEdge(null, vertices.get(1), vertices.get(2), "Edge1");
-    graph.addEdge(null, vertices.get(2), vertices.get(3), "Edge1");
-    graph.addEdge(null, vertices.get(1), vertices.get(3), "Edge2");
-    graph.addEdge(null, vertices.get(3), vertices.get(4), "Edge1");
     graph.commit();
   }
 
@@ -71,6 +73,18 @@ public class OSQLFunctionShortestPathTest {
     assertEquals(vertices.get(1).getId(), result.get(0));
     assertEquals(vertices.get(3).getId(), result.get(1));
     assertEquals(vertices.get(4).getId(), result.get(2));
+  }
+
+  @Test
+  public void testExecuteOut() throws Exception {
+    final List<ORID> result = function.execute(null, null, null, new Object[] { vertices.get(1), vertices.get(4), "out", null },
+        new OBasicCommandContext());
+
+    assertEquals(4, result.size());
+    assertEquals(vertices.get(1).getId(), result.get(0));
+    assertEquals(vertices.get(2).getId(), result.get(1));
+    assertEquals(vertices.get(3).getId(), result.get(2));
+    assertEquals(vertices.get(4).getId(), result.get(3));
   }
 
   @Test
