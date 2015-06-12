@@ -41,7 +41,7 @@ public class OCSVTransformer extends OAbstractTransformer {
   private long         skipTo             = -1;
   private long         line               = -1;
   private String       nullValue;
-  private char         stringCharacter    = '"';
+  private Character    stringCharacter    = '"';
 
   @Override
   public ODocument getConfiguration() {
@@ -50,7 +50,7 @@ public class OCSVTransformer extends OAbstractTransformer {
         + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
         + "{columns:{optional:true,description:'Columns array containing names, and optionally type after :'}},"
         + "{nullValue:{optional:true,description:'value to consider as NULL. Default is not declared'}},"
-        + "{stringCharacter:{optional:true,description:'String character delimiter'}},"
+        + "{stringCharacter:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
         + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
         + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}}"
         + "],input:['String'],output:'ODocument'}");
@@ -84,8 +84,13 @@ public class OCSVTransformer extends OAbstractTransformer {
       skipTo = ((Number) iConfiguration.field("skipTo")).longValue();
     if (iConfiguration.containsField("nullValue"))
       nullValue = iConfiguration.field("nullValue");
-    if (iConfiguration.containsField("stringCharacter"))
-      stringCharacter = iConfiguration.field("stringCharacter").toString().charAt(0);
+    if (iConfiguration.containsField("stringCharacter")) {
+      final String value = iConfiguration.field("stringCharacter").toString();
+      if (value.isEmpty())
+        stringCharacter = null;
+      else
+        stringCharacter = value.charAt(0);
+    }
   }
 
   @Override
@@ -252,7 +257,8 @@ public class OCSVTransformer extends OAbstractTransformer {
     if (iValue == null || iValue.isEmpty() || "NULL".equals(iValue))
       return null;
 
-    if (iValue.length() > 1 && (iValue.charAt(0) == stringCharacter && iValue.charAt(iValue.length() - 1) == stringCharacter))
+    if (stringCharacter != null && iValue.length() > 1
+        && (iValue.charAt(0) == stringCharacter && iValue.charAt(iValue.length() - 1) == stringCharacter))
       return iValue.substring(1, iValue.length() - 1);
 
     return iValue;
