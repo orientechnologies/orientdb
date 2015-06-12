@@ -201,6 +201,20 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
 
   }
 
+  private static final class InitWNode extends ThreadLocal<WNode> {
+    @Override
+    protected WNode initialValue() {
+      return new WNode();
+    }
+  }
+
+  private static final class InitOModifiableInteger extends ThreadLocal<OModifiableInteger> {
+    @Override
+    protected OModifiableInteger initialValue() {
+      return new OModifiableInteger();
+    }
+  }
+
   private final static class WNode {
     private final Queue<Thread> waitingReaders = new ConcurrentLinkedQueue<Thread>();
 
