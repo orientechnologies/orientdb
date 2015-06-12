@@ -18,8 +18,6 @@
 
 package com.orientechnologies.orient.etl.loader;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -39,6 +37,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.List;
 
 /**
  * ETL Loader that saves record into OrientDB database.
@@ -62,6 +62,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected long            batchCounter               = 0;
   protected DB_TYPE         dbType                     = DB_TYPE.DOCUMENT;
   protected boolean         wal                        = true;
+  protected Boolean         txUseLog                   = null;
 
   protected enum DB_TYPE {
     DOCUMENT, GRAPH
@@ -135,9 +136,10 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
     if (tx && dbType == DB_TYPE.DOCUMENT) {
       final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
-      if (!documentDatabase.getTransaction().isActive())
+      if (!documentDatabase.getTransaction().isActive()) {
         // BEGIN THE TRANSACTION FIRST
-        documentDatabase.begin();
+        beginTransaction(documentDatabase);
+      }
     }
 
     if (input instanceof OrientVertex) {
@@ -173,7 +175,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         if (dbType == DB_TYPE.DOCUMENT) {
           final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
           documentDatabase.commit();
-          documentDatabase.begin();
+          beginTransaction(documentDatabase);
         } else {
           pipeline.getGraphDatabase().commit();
         }
@@ -181,6 +183,12 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       } else
         batchCounter++;
     }
+  }
+
+  private void beginTransaction(final ODatabaseDocumentTx db) {
+    db.begin();
+    if (txUseLog != null)
+      db.getTransaction().setUsingLog(txUseLog);
   }
 
   @Override
@@ -198,6 +206,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
             + "{dbAutoCreate:{optional:true,description:'Auto create the database if not exists. Default is true'}},"
             + "{dbAutoCreateProperties:{optional:true,description:'Auto create properties in schema'}},"
             + "{dbAutoDropIfExists:{optional:true,description:'Auto drop the database if already exists. Default is false.'}},"
+            + "{batchCommit:{optional:true,description:'Auto commit every X items. This speed up creation of edges.'}},"
             + "{wal:{optional:true,description:'Use the WAL (Write Ahead Log)'}},"
             + "{useLightweightEdges:{optional:true,description:'Enable/Disable LightweightEdges in Graphs. Default is false'}},"
             + "{standardElementConstraints:{optional:true,description:'Enable/Disable Standard Blueprints constraints on names. Default is true'}},"
@@ -223,6 +232,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       tx = (Boolean) iConfiguration.field("tx");
     if (iConfiguration.containsField("wal"))
       wal = (Boolean) iConfiguration.field("wal");
+    if (iConfiguration.containsField("txUseLog"))
+      txUseLog = (Boolean) iConfiguration.field("txUseLog");
     if (iConfiguration.containsField("batchCommit"))
       batchCommit = (Integer) iConfiguration.field("batchCommit");
     if (iConfiguration.containsField("dbAutoCreate"))
@@ -240,6 +251,9 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     className = iConfiguration.field("class");
     indexes = iConfiguration.field("indexes");
     classes = iConfiguration.field("classes");
+
+    if (!wal)
+      OGlobalConfiguration.USE_WAL.setValue(wal);
 
     switch (dbType) {
     case DOCUMENT:
@@ -276,9 +290,6 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
   @Override
   public void begin() {
-    if (!wal)
-      OGlobalConfiguration.USE_WAL.setValue(wal);
-
     ODatabaseDocumentTx documentDatabase = init();
 
     if (documentDatabase == null) {
