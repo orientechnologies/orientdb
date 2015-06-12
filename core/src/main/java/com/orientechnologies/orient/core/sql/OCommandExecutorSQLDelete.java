@@ -267,7 +267,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
    * Deletes the current record.
    */
   public boolean result(final Object iRecord) {
-    final ORecordAbstract record = (ORecordAbstract) iRecord;
+    final ORecordAbstract record = ((OIdentifiable) iRecord ).getRecord();
 
     try {
       if (record.getIdentity().isValid()) {
