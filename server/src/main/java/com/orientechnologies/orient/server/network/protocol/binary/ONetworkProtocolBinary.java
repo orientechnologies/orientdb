@@ -483,6 +483,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     List<String> keyList = channel.readStringList();
     ORecordId value = channel.readRID();
     OIndex<?> index = connection.database.getMetadata().getIndexManager().getIndex(indexName);
+
+    if (index == null)
+      throw new OException("index with name " + indexName + "not found");
+
     Object key = index.getDefinition().createValue(keyList);
 
     if (!isConnectionAlive())
@@ -510,6 +514,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String indexName = channel.readString();
     List<String> keyList = channel.readStringList();
     OIndex<?> index = connection.database.getMetadata().getIndexManager().getIndex(indexName);
+    if (index == null)
+      throw new OException("index with name " + indexName + "not found");
+
     Object key = index.getDefinition().createValue(keyList);
 
     if (!isConnectionAlive())
@@ -536,6 +543,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     List<String> keys = channel.readStringList();
     final String fetchPlan = channel.readString();
     OIndex<?> index = connection.database.getMetadata().getIndexManager().getIndex(indexName);
+    if (index == null)
+      throw new OException("index with name " + indexName + "not found");
 
     Object key = index.getDefinition().createValue(keys);
     OAbstractCommandResultListener listener = null;
