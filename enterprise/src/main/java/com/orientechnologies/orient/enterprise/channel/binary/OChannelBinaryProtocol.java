@@ -106,6 +106,10 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR   = 113;
   public static final byte  REQUEST_RIDBAG_GET_SIZE                   = 114;
 
+  public static final int   REQUEST_INDEX_GET                         = 120;
+  public static final int   REQUEST_INDEX_PUT                         = 121;
+  public static final int   REQUEST_INDEX_REMOVE                      = 122;
+
   // INCOMING
   public static final byte  RESPONSE_STATUS_OK                        = 0;
   public static final byte  RESPONSE_STATUS_ERROR                     = 1;
