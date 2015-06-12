@@ -213,6 +213,14 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
           }
         }
 
+        if (edges.isEmpty()) {
+          if (fromIds.isEmpty())
+            throw new OCommandExecutionException("No edge has been created because no source vertices");
+          else if (toIds.isEmpty())
+            throw new OCommandExecutionException("No edge has been created because no target vertices");
+          throw new OCommandExecutionException("No edge has been created between " + fromIds + " and " + toIds);
+        }
+
         return edges;
       }
     });
