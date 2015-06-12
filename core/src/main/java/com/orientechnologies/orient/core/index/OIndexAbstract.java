@@ -709,8 +709,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   protected void doConfigurationUpdate(ODocument newConfig) {
     newConfig.field(OIndexInternal.CONFIG_TYPE, type);
     newConfig.field(OIndexInternal.CONFIG_NAME, name);
-    assert indexEngine.getVersion() > 0;
-    newConfig.field(OIndexInternal.INDEX_VERSION, indexEngine.getVersion());
 
     if (indexDefinition != null) {
 
@@ -1129,6 +1127,13 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
         }
       }
+    }
+  }
+
+  private static class IndexTxSnapshotThreadLocal extends ThreadLocal<IndexTxSnapshot> {
+    @Override
+    protected IndexTxSnapshot initialValue() {
+      return new IndexTxSnapshot();
     }
   }
 }
