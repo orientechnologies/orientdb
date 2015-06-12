@@ -206,7 +206,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             connection.database = database;
           }
           if (connection.data.serverUser) {
-            connection.serverUser = server.serverLogin(connection.data.serverUsername, null, null);
+            connection.serverUser = server.getUser(connection.data.serverUsername);
           }
         }
       }
