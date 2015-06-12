@@ -214,6 +214,8 @@ public interface OIndexInternal<T> extends OIndex<T> {
 
   public void postCommit();
 
+  Object getCollatingValue(Object key);
+
   public final class IndexMetadata {
     private final String           name;
     private final OIndexDefinition indexDefinition;

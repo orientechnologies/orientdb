@@ -935,7 +935,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       put(fieldValue, doc);
   }
 
-  protected Object getCollatingValue(final Object key) {
+  public Object getCollatingValue(final Object key) {
     if (key != null && getDefinition() != null)
       return getDefinition().getCollate().transform(key);
     return key;

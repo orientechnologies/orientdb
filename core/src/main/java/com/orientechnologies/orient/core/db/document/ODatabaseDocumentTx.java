@@ -2723,7 +2723,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     registerHook(new ORestrictedAccessHook(), ORecordHook.HOOK_POSITION.FIRST);
     registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
     registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
-    registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
+    registerHook(new OClassIndexManager(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OSchedulerTrigger(), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new ORidBagDeleteHook(), ORecordHook.HOOK_POSITION.LAST);
   }
