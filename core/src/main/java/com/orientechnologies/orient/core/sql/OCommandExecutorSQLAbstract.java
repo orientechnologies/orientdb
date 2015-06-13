@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -41,6 +34,13 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OrientSql;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL abstract Command Executor implementation.
@@ -122,12 +122,13 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
     word = parserNextWord(true);
 
-    if (word.equals(TIMEOUT_STRATEGY.EXCEPTION.toString()))
-      timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
-    else if (word.equals(TIMEOUT_STRATEGY.RETURN.toString()))
-      timeoutStrategy = TIMEOUT_STRATEGY.RETURN;
-    else
-      parserGoBack();
+    if (word != null)
+      if (word.equals(TIMEOUT_STRATEGY.EXCEPTION.toString()))
+        timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
+      else if (word.equals(TIMEOUT_STRATEGY.RETURN.toString()))
+        timeoutStrategy = TIMEOUT_STRATEGY.RETURN;
+      else
+        parserGoBack();
 
     return true;
   }
