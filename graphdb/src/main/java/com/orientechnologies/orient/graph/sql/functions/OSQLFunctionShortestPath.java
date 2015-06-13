@@ -98,8 +98,8 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
         edgeType = iParams[3];
       }
 
-      final ArrayDeque<OrientVertex> queue1 = new ArrayDeque<OrientVertex>();
-      final ArrayDeque<OrientVertex> queue2 = new ArrayDeque<OrientVertex>();
+      ArrayDeque<OrientVertex> queue1 = new ArrayDeque<OrientVertex>();
+      ArrayDeque<OrientVertex> queue2 = new ArrayDeque<OrientVertex>();
 
       final Set<ORID> visited = new HashSet<ORID>();
 
@@ -123,7 +123,8 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
           break;
         }
 
-        if (!queue1.isEmpty()) {
+        ArrayDeque<OrientVertex> nextLevelQueue = new ArrayDeque<OrientVertex>();
+        while (!queue1.isEmpty()) {
           current = queue1.poll();
 
           Iterable<Vertex> neighbors;
@@ -143,15 +144,17 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
             if (!visited.contains(neighborIdentity)) {
               previouses.put(neighborIdentity, current.getIdentity());
 
-              queue1.offer(v);
+              nextLevelQueue.offer(v);
               visited.add(neighborIdentity);
               leftVisited.add(neighborIdentity);
             }
 
           }
         }
+        queue1 = nextLevelQueue;
+        nextLevelQueue = new ArrayDeque<OrientVertex>();
 
-        if (!queue2.isEmpty()) {
+        while (!queue2.isEmpty()) {
           reverseCurrent = queue2.poll();
 
           Iterable<Vertex> neighbors;
@@ -172,13 +175,14 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
               nexts.put(neighborIdentity, reverseCurrent.getIdentity());
 
-              queue2.offer(v);
+              nextLevelQueue.offer(v);
               visited.add(neighborIdentity);
               rightVisited.add(neighborIdentity);
             }
 
           }
         }
+        queue2 = nextLevelQueue;
       }
       return new ArrayList<ORID>();
     } finally {
