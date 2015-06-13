@@ -22,13 +22,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
@@ -60,17 +54,11 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
- * 
+ *
  */
 public class OObjectProxyMethodHandler implements MethodHandler {
 
@@ -119,7 +107,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   /**
    * Method that detaches all fields contained in the document to the given object
-   * 
+   *
    * @param self
    *          :- The object containing this handler instance
    * @throws InvocationTargetException
@@ -146,7 +134,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   /**
    * Method that detaches all fields contained in the document to the given object
-   * 
+   *
    * @param self
    *          :- The object containing this handler instance
    * @throws InvocationTargetException
@@ -187,8 +175,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   /**
    * Method that attaches all data contained in the object to the associated document
-   * 
-   * 
+   *
+   *
    * @param self
    *          :- The object containing this handler instance
    * @throws IllegalAccessException
@@ -348,11 +336,11 @@ public class OObjectProxyMethodHandler implements MethodHandler {
               Method setMethod = getSetMethod(self.getClass().getSuperclass(), getSetterFieldName(fieldName), value);
               setMethod.invoke(self, value);
             } else if ((value instanceof Set || value instanceof Map)
-                && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) < 0) {
-              if (value instanceof Set)
+                && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) < 0 && !OReflectionHelper.isJavaType(genericMultiValueType)) {
+              if (value instanceof Set && !(value instanceof OTrackedSet))
                 value = new OObjectLazySet(self, (Set<OIdentifiable>) docValue, OObjectEntitySerializer.isCascadeDeleteField(
                     self.getClass(), fieldName));
-              else
+              else if (!(value instanceof OTrackedMap))
                 value = new OObjectLazyMap(self, (Map<Object, OIdentifiable>) docValue,
                     OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), fieldName));
               final Method setMethod = getSetMethod(self.getClass().getSuperclass(), getSetterFieldName(fieldName), value);
