@@ -92,7 +92,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire.version}</version>
                 <configuration>
-                    <argLine>-ea -Xmx2048m</argLine>
+                    <argLine>-ea -Xmx2048m ${argLine}</argLine>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
                     </systemPropertyVariables>

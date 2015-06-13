@@ -1,23 +1,16 @@
 <?xml version="1.0"?>
 
-<!--
-  ~ Copyright 2010-2013 Orient Technologies LTD
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~      http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
+<!-- ~ Copyright 2010-2013 Orient Technologies LTD ~ ~ Licensed under the 
+    Apache License, Version 2.0 (the "License"); ~ you may not use this file 
+    except in compliance with the License. ~ You may obtain a copy of the License 
+    at ~ ~ http://www.apache.org/licenses/LICENSE-2.0 ~ ~ Unless required by 
+    applicable law or agreed to in writing, software ~ distributed under the 
+    License is distributed on an "AS IS" BASIS, ~ WITHOUT WARRANTIES OR CONDITIONS 
+    OF ANY KIND, either express or implied. ~ See the License for the specific 
+    language governing permissions and ~ limitations under the License. -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.orientechnologies</groupId>
@@ -146,11 +139,11 @@
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ssZ</maven.build.timestamp.format>
         <implementation.build>${scmBranch}@r${buildNumber}</implementation.build>
         <!-- | Configuration properties for the OSGi maven-bundle-plugin -->
-        <osgi.fragment.host/>
+        <osgi.fragment.host />
         <osgi.export>${project.groupId}.*;version=${project.version};-noimport:=true</osgi.export>
         <osgi.import>*</osgi.import>
-        <osgi.dynamicImport/>
-        <osgi.private/>
+        <osgi.dynamicImport />
+        <osgi.private />
         <!-- | shared build/report plugins version -->
         <surefire.version>2.17</surefire.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
@@ -214,8 +207,8 @@
                     <version>2.6</version>
                 </plugin>
 
-                <!-- | This plugin's configuration is used to store Eclipse | m2e
-                  settings only. It has no influence on the Maven build itself. -->
+                <!-- | This plugin's configuration is used to store Eclipse 
+                    | m2e settings only. It has no influence on the Maven build itself. -->
                 <plugin>
                     <groupId>org.eclipse.m2e</groupId>
                     <artifactId>lifecycle-mapping</artifactId>
@@ -233,7 +226,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <execute/>
+                                        <execute />
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
@@ -273,8 +266,8 @@
                 <configuration>
                     <doCheck>false</doCheck>
                     <doUpdate>false</doUpdate>
-                    <!-- Use committed revision so it does not change every time svn
-                      update is run -->
+                    <!-- Use committed revision so it does not change every 
+                        time svn update is run -->
                     <useLastCommittedRevision>true</useLastCommittedRevision>
                     <!-- default revision number if unavailable -->
                     <revisionOnScmFailure>??????</revisionOnScmFailure>
@@ -286,11 +279,12 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire.version}</version>
                 <configuration>
-                  <systemPropertyVariables>
-                    <!-- SET THIS TO AVOID ASKING FOR PASSWORD DURING TESTS -->
-                    <propertyName>ORIENTDB_ROOT_PASSWORD</propertyName>
-                    <propertyName>ORIENTDB_NODE_NAME</propertyName>
-                  </systemPropertyVariables>
+                    <systemPropertyVariables>
+                        <!-- SET THIS TO AVOID ASKING FOR PASSWORD DURING 
+                            TESTS -->
+                        <propertyName>ORIENTDB_ROOT_PASSWORD</propertyName>
+                        <propertyName>ORIENTDB_NODE_NAME</propertyName>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
 
@@ -299,19 +293,19 @@
                 <artifactId>maven-bundle-plugin</artifactId>
                 <version>2.3.7</version>
                 <configuration>
-                    <!-- | dummy entry to stop bundle plugin from picking up jar config
-                      and reporting | WARNING: Duplicate name in Manifest | See http://markmail.org/message/mpkl24wk3jrjhhjg -->
+                    <!-- | dummy entry to stop bundle plugin from picking 
+                        up jar config and reporting | WARNING: Duplicate name in Manifest | See http://markmail.org/message/mpkl24wk3jrjhhjg -->
                     <archive>
                         <forced>true</forced>
                     </archive>
                     <excludeDependencies>true</excludeDependencies>
                     <manifestLocation>${project.build.directory}/osgi</manifestLocation>
                     <instructions>
-                        <!-- | stops the "uses" clauses being added to "Export-Package"
-                          manifest entry -->
+                        <!-- | stops the "uses" clauses being added to "Export-Package" 
+                            manifest entry -->
                         <_nouses>true</_nouses>
-                        <!-- | Stop the JAVA_1_n_HOME variables from being treated as
-                          headers by Bnd -->
+                        <!-- | Stop the JAVA_1_n_HOME variables from being 
+                            treated as headers by Bnd -->
                         <_removeheaders>JAVA_1_3_HOME,JAVA_1_4_HOME,JAVA_1_5_HOME,JAVA_1_6_HOME,JAVA_1_7_HOME,
                             Bnd-LastModified,Built-By,Private-Package,Tool,Created-By,Build-Jdk,Include-Resource,
                             Ignore-Package,Private-Package,Bundle-DocURL
@@ -392,6 +386,27 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.7.5.201505241946</version>
+                <configuration>
+                    <destFile>${project.basedir}/../target/jacoco.exec</destFile>
+                    <dataFile>${project.basedir}/../target/jacoco.exec</dataFile>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>jacoco-site</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>${sonar.jacoco.itReportPath}</dataFile>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -445,6 +460,12 @@
                     <additionalJOption>-J-Xmx1024m</additionalJOption>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.6.4.201312101107</version>
+            </plugin>
+
         </plugins>
     </reporting>
 
@@ -512,8 +533,8 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                            <version>1.4</version>
-                            <executions>
+                        <version>1.4</version>
+                        <executions>
                             <execution>
                                 <id>sign-artifacts</id>
                                 <phase>verify</phase>

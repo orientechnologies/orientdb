@@ -134,6 +134,7 @@
                         -Dstorage.makeFullCheckpointAfterOpen=false
                         -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
                         -Dstorage.configuration.syncOnUpdate=false -Ddb.makeFullCheckpointOnIndexChange=false -Ddb.makeFullCheckpointOnSchemaChange=false
+                        ${argLine}
                     </argLine>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
