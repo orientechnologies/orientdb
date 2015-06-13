@@ -350,10 +350,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
             } else if ((value instanceof Set || value instanceof Map)
                 && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) < 0
                 && !OReflectionHelper.isJavaType(genericMultiValueType)) {
-              if (value instanceof Set && !(value instanceof OTrackedSet))
+              if (value instanceof Set)
                 value = new OObjectLazySet(self, (Set<OIdentifiable>) docValue, OObjectEntitySerializer.isCascadeDeleteField(
                     self.getClass(), fieldName));
-              else if (!(value instanceof OTrackedMap))
+              else
                 value = new OObjectLazyMap(self, (Map<Object, OIdentifiable>) docValue,
                     OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), fieldName));
               final Method setMethod = getSetMethod(self.getClass().getSuperclass(), getSetterFieldName(fieldName), value);
