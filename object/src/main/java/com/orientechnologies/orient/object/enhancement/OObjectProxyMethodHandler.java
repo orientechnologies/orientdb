@@ -70,7 +70,7 @@ import java.util.Set;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
- * 
+ *
  */
 public class OObjectProxyMethodHandler implements MethodHandler {
 
@@ -119,7 +119,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   /**
    * Method that detaches all fields contained in the document to the given object
-   * 
+   *
    * @param self
    *          :- The object containing this handler instance
    * @throws InvocationTargetException
@@ -146,7 +146,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   /**
    * Method that detaches all fields contained in the document to the given object
-   * 
+   *
    * @param self
    *          :- The object containing this handler instance
    * @throws InvocationTargetException
@@ -187,8 +187,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   /**
    * Method that attaches all data contained in the object to the associated document
-   * 
-   * 
+   *
+   *
    * @param self
    *          :- The object containing this handler instance
    * @throws IllegalAccessException
@@ -348,11 +348,12 @@ public class OObjectProxyMethodHandler implements MethodHandler {
               Method setMethod = getSetMethod(self.getClass().getSuperclass(), getSetterFieldName(fieldName), value);
               setMethod.invoke(self, value);
             } else if ((value instanceof Set || value instanceof Map)
-                && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) < 0) {
-              if (value instanceof Set)
+                && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) < 0
+                && !OReflectionHelper.isJavaType(genericMultiValueType)) {
+              if (value instanceof Set && !(value instanceof OTrackedSet))
                 value = new OObjectLazySet(self, (Set<OIdentifiable>) docValue, OObjectEntitySerializer.isCascadeDeleteField(
                     self.getClass(), fieldName));
-              else
+              else if (!(value instanceof OTrackedMap))
                 value = new OObjectLazyMap(self, (Map<Object, OIdentifiable>) docValue,
                     OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), fieldName));
               final Method setMethod = getSetMethod(self.getClass().getSuperclass(), getSetterFieldName(fieldName), value);
