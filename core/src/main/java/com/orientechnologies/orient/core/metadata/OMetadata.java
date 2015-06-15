@@ -16,13 +16,14 @@
  */
 package com.orientechnologies.orient.core.metadata;
 
-import java.io.IOException;
-
+import com.orientechnologies.orient.core.cache.OGlobalRecordCache;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener;
+
+import java.io.IOException;
 
 /**
  * @author luca.molino
@@ -30,29 +31,31 @@ import com.orientechnologies.orient.core.schedule.OSchedulerListener;
  */
 public interface OMetadata {
 
-  public void load();
+  void load();
 
-  public void create() throws IOException;
+  void create() throws IOException;
 
-  public OSchema getSchema();
+  OSchema getSchema();
 
-  public OSecurity getSecurity();
+  OSecurity getSecurity();
 
-  public OIndexManagerProxy getIndexManager();
+  OIndexManagerProxy getIndexManager();
 
-  public int getSchemaClusterId();
+  int getSchemaClusterId();
 
   /**
    * Reloads the internal objects.
    */
-  public void reload();
+  void reload();
 
   /**
    * Closes internal objects
    */
-  public void close();
+  void close();
 
-  public OFunctionLibrary getFunctionLibrary();
+  OFunctionLibrary getFunctionLibrary();
 
-  public OSchedulerListener getSchedulerListener();
+  OSchedulerListener getSchedulerListener();
+
+  OGlobalRecordCache getGlobalCache();
 }

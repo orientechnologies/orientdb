@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -52,8 +51,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
  */
 public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement,
     OIdentityChangeListener {
-  protected boolean                     autoConvertToRecord = true;
-  protected Map<OIdentifiable, ORecord> recordCache;
+  protected boolean autoConvertToRecord = true;
 
   public ORecordLazySet(final ODocument iSourceRecord) {
     super(iSourceRecord);
@@ -130,8 +128,9 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
     if (e instanceof ORecord && e.getIdentity().isNew()) {
       ORecordInternal.addIdentityChangeListener((ORecord) e, this);
       map.put(e, e);
-    } else if (!e.getIdentity().isPersistent()){
-      //record id is not fixed yet, so we need to be able to watch for id changes, so get the record for this id to be able to do this.
+    } else if (!e.getIdentity().isPersistent()) {
+      // record id is not fixed yet, so we need to be able to watch for id changes, so get the record for this id to be able to do
+      // this.
       ORecord record = e.getRecord();
       ORecordInternal.addIdentityChangeListener(record, this);
       map.put(e, record);

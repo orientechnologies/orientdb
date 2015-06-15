@@ -18,12 +18,12 @@ package com.orientechnologies.orient.object.metadata;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.core.cache.OGlobalRecordCache;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener;
 import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
@@ -34,14 +34,14 @@ import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
  */
 public class OMetadataObject implements OMetadataInternal {
 
-  protected OMetadataInternal          underlying;
+  protected OMetadataInternal  underlying;
   protected OSchemaProxyObject schema;
 
-  public OMetadataObject(OMetadataInternal iUnderlying) {
+  public OMetadataObject(final OMetadataInternal iUnderlying) {
     underlying = iUnderlying;
   }
 
-  public OMetadataObject(OMetadataInternal iUnderlying, OSchemaProxyObject iSchema) {
+  public OMetadataObject(final OMetadataInternal iUnderlying, final OSchemaProxyObject iSchema) {
     underlying = iUnderlying;
     schema = iSchema;
   }
@@ -59,6 +59,11 @@ public class OMetadataObject implements OMetadataInternal {
   @Override
   public OImmutableSchema getImmutableSchemaSnapshot() {
     return underlying.getImmutableSchemaSnapshot();
+  }
+
+  @Override
+  public void replaceGlobalCache(final OGlobalRecordCache iGlobalCache) {
+    underlying.replaceGlobalCache(iGlobalCache);
   }
 
   @Override
@@ -112,6 +117,11 @@ public class OMetadataObject implements OMetadataInternal {
   @Override
   public OSchedulerListener getSchedulerListener() {
     return underlying.getSchedulerListener();
+  }
+
+  @Override
+  public OGlobalRecordCache getGlobalCache() {
+    return underlying.getGlobalCache();
   }
 
   public OMetadata getUnderlying() {

@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.cache.OGlobalRecordCache;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
@@ -34,21 +35,25 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
    * version of storage. So if you open a database create with old version of OrientDB it defines a components that should be used
    * to provide backward compatibility with that version of database.
    */
-  public OCurrentStorageComponentsFactory getStorageVersions();
+  OCurrentStorageComponentsFactory getStorageVersions();
 
   /**
    * Internal. Gets an instance of sb-tree collection manager for current database.
    */
-  public OSBTreeCollectionManager getSbTreeCollectionManager();
+  OSBTreeCollectionManager getSbTreeCollectionManager();
+
+  /**
+   * Internal. Returns the global cache instance.
+   */
+  OGlobalRecordCache getGlobalCache();
 
   /**
    * @return the factory of binary serializers.
    */
-  public OBinarySerializerFactory getSerializerFactory();
+  OBinarySerializerFactory getSerializerFactory();
 
   /**
    * @return serializer which is used for document serialization.
    */
-  public ORecordSerializer getSerializer();
-
+  ORecordSerializer getSerializer();
 }

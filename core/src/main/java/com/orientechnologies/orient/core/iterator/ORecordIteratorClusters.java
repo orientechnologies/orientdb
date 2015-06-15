@@ -61,11 +61,6 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     config();
   }
 
-  protected ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
-      final boolean iUseCache) {
-    this(iDatabase, iLowLevelDatabase, iUseCache, false, OStorage.LOCKING_STRATEGY.NONE);
-  }
-
   @Deprecated
   protected ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {

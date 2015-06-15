@@ -26,6 +26,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCacheLevelOneLocatorImpl;
+import com.orientechnologies.orient.core.cache.OGlobalRecordCache;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -973,6 +974,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return localCache;
   }
 
+  @Override
+  public OGlobalRecordCache getGlobalCache() {
+    return metadata.getGlobalCache();
+  }
+
   /**
    * {@inheritDoc}
    */
@@ -1659,6 +1665,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       if (record == null && !ignoreCache)
         // SEARCH INTO THE CACHE
+        record = getGlobalCache().findRecord(rid);
+
+      if (record == null && !ignoreCache)
+        // SEARCH INTO THE CACHE
         record = getLocalCache().findRecord(rid);
 
       if (record != null) {
@@ -1676,13 +1686,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           record.reload();
 
         if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
-          OLogManager.instance().warn(this,
-              "You use depricated record locking strategy : %s it may lead to deadlocks " + lockingStrategy);
+          OLogManager.instance().warn(this, "You use deprecated record locking strategy: %s It may lead to deadlocks",
+              lockingStrategy);
           record.lock(false);
 
         } else if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
-          OLogManager.instance().warn(this,
-              "You use depricated record locking strategy : %s it may lead to deadlocks " + lockingStrategy);
+          OLogManager.instance().warn(this, "You use deprecated record locking strategy: %s. It may lead to deadlocks",
+              lockingStrategy);
           record.lock(true);
         }
 
@@ -1729,18 +1739,22 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (!ignoreCache)
         getLocalCache().updateRecord(iRecord);
 
+      final OGlobalRecordCache globalCache = getGlobalCache();
+      if (globalCache != null)
+        globalCache.updateRecord(iRecord);
+
       return (RET) iRecord;
     } catch (OOfflineClusterException t) {
       throw t;
     } catch (Throwable t) {
       if (rid.isTemporary())
-        throw new ODatabaseException("Error on retrieving record using temporary RecordId: " + rid, t);
+        throw new ODatabaseException("Error on retrieving record using temporary RID: " + rid, t);
       else
         throw new ODatabaseException("Error on retrieving record " + rid + " (cluster: "
             + storage.getPhysicalClusterNameById(rid.clusterId) + ")", t);
     } finally {
       ORecordSerializationContext.pullContext();
-      ((OMetadataInternal) getMetadata()).clearThreadLocalSchemaSnapshot();
+      getMetadata().clearThreadLocalSchemaSnapshot();
     }
   }
 

@@ -1,13 +1,15 @@
 package com.orientechnologies.orient.core.metadata;
 
+import com.orientechnologies.orient.core.cache.OGlobalRecordCache;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 
-public interface OMetadataInternal  extends OMetadata{
+public interface OMetadataInternal extends OMetadata {
 
-  public void makeThreadLocalSchemaSnapshot();
+  void makeThreadLocalSchemaSnapshot();
 
-  public void clearThreadLocalSchemaSnapshot();
+  void clearThreadLocalSchemaSnapshot();
 
-  public OImmutableSchema getImmutableSchemaSnapshot();
-  
+  OImmutableSchema getImmutableSchemaSnapshot();
+
+  void replaceGlobalCache(OGlobalRecordCache iGlobalCache);
 }
