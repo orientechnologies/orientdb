@@ -84,9 +84,9 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     String fileName;
     OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
     if (atomicOperation == null) {
-      fileName = storage.getWriteCache().fileNameById(collectionPointer.getFileId());
+      fileName = storage.getDiskCache().fileNameById(collectionPointer.getFileId());
     } else {
-      fileName = atomicOperation.fileNameById(collectionPointer.getFileId());
+      fileName = atomicOperation.fileNameById(collectionPointer.getFileId(), storage.getDiskCache());
     }
 
     OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(fileName.substring(0,

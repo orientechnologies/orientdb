@@ -43,6 +43,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
   private long               fileId;
   private boolean            useWal;
+  private ODiskCache         diskCache;
 
   public OClusterPositionMap(OAbstractPaginatedStorage storage, String name, boolean useWal) {
     super(storage, name);
@@ -50,6 +51,7 @@ public class OClusterPositionMap extends ODurableComponent {
     acquireExclusiveLock();
     try {
       this.useWal = useWal;
+      this.diskCache = storage.getDiskCache();
     } finally {
       releaseExclusiveLock();
     }

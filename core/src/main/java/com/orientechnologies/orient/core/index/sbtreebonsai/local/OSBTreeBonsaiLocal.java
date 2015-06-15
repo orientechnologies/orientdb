@@ -83,6 +83,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   private OBinarySerializer<V>              valueSerializer;
 
   private final boolean                     durableInNonTxMode;
+  private ODiskCache                        diskCache;
 
   public OSBTreeBonsaiLocal(String name, String dataFileExtension, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
     super(storage, name);
@@ -442,7 +443,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   public void load(OBonsaiBucketPointer rootBucketPointer) {
-    Lock lock = fileLockManager.acquireExclusiveLock(fileId);
+    acquireExclusiveLock();
     try {
       this.rootBucketPointer = rootBucketPointer;
 
@@ -450,9 +451,9 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
       final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-      this.fileId = openFile(atomicOperation, name + dataFileExtension);
+      this.fileId = openFile(atomicOperation, name + dataFileExtension, diskCache);
 
-      OCacheEntry rootCacheEntry = loadPage(atomicOperation, this.fileId, this.rootBucketPointer.getPageIndex(), false);
+      OCacheEntry rootCacheEntry = loadPage(atomicOperation, this.fileId, this.rootBucketPointer.getPageIndex(), false, diskCache);
 
       rootCacheEntry.acquireSharedLock();
       try {

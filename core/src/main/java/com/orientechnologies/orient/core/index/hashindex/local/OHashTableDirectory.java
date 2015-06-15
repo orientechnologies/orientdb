@@ -54,6 +54,7 @@ public class OHashTableDirectory extends ODurableComponent {
 
   private final boolean                   durableInNonTxMode;
   private final OAbstractPaginatedStorage storage;
+  private final ODiskCache                diskCache;
 
   public OHashTableDirectory(String defaultExtension, String name, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
     super(storage, name);
@@ -61,6 +62,7 @@ public class OHashTableDirectory extends ODurableComponent {
     this.durableInNonTxMode = durableInNonTxMode;
     this.storage = storage;
     this.firstEntryIndex = 0;
+    this.diskCache = storage.getDiskCache();
   }
 
   public void create() throws IOException {

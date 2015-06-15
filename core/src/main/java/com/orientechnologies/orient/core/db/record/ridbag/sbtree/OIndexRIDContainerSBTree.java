@@ -55,9 +55,9 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
     OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
     if (atomicOperation == null)
-      fileName = storage.getWriteCache().fileNameById(fileId);
+      fileName = storage.getDiskCache().fileNameById(fileId);
     else
-      fileName = atomicOperation.fileNameById(fileId);
+      fileName = atomicOperation.fileNameById(fileId, storage.getDiskCache());
 
     tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
         INDEX_FILE_EXTENSION, durableMode, storage);
@@ -71,9 +71,9 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
     OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
     if (atomicOperation == null)
-      fileName = storage.getWriteCache().fileNameById(fileId);
+      fileName = storage.getDiskCache().fileNameById(fileId);
     else
-      fileName = atomicOperation.fileNameById(fileId);
+      fileName = atomicOperation.fileNameById(fileId, storage.getDiskCache());
 
     tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
         INDEX_FILE_EXTENSION, durableMode, storage);

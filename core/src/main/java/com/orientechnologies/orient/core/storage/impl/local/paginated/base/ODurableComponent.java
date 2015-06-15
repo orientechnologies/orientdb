@@ -50,13 +50,6 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  * To support of "atomic operation" concept following should be done:
  * <ol>
  * <li>Call {@link #startAtomicOperation()} method.</li>
- * <li>If changes should be isolated till operation completes call also {@link #lockTillAtomicOperationCompletes()} which will apply
- * exclusive lock on existing data structure till atomic operation completes. This lock is not replacement of data structure locking
- * system it is used to serialize access to set of components which participate in single atomic operation. It is kind of rudiment
- * lock manager which is used to isolate access to units which participate in single transaction and which is going to be created to
- * provide efficient multi core scalability feature. It is recommended to always call it just after start of atomic operation but
- * always remember it is not replacement of thread safety mechanics for current data structure it is a mean to provide isolation
- * between atomic operations.</li>
  * <li>Call {@link #endAtomicOperation(boolean)} method when atomic operation completes, passed in parameter should be
  * <code>false</code> if atomic operation completes with success and <code>true</code> if there were some exceptions and it is
  * needed to rollback given operation.</li>
@@ -70,8 +63,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected final OAtomicOperationsManager  atomicOperationsManager;
   protected final OAbstractPaginatedStorage storage;
   protected volatile String                 name;
-  protected final OReadCache                readCache;
-  protected final OWriteCache               writeCache;
 
   public ODurableComponent(OAbstractPaginatedStorage storage, String name) {
     super(true);
@@ -79,9 +70,10 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     this.storage = storage;
     this.name = name;
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
-    this.readCache = storage.getReadCache();
-    this.writeCache = storage.getWriteCache();
+  }
 
+  public String getName() {
+    return name;
   }
 
   @Override

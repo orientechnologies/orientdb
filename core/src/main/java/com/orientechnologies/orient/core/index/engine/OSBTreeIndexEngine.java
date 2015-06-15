@@ -62,8 +62,6 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     else
       durableInNonTx = durableInNonTxMode;
 
-    this.version = version;
-
     sbTree = new OSBTree<Object, V>(name, DATA_FILE_EXTENSION, durableInNonTx, NULL_BUCKET_FILE_EXTENSION, storage);
   }
 

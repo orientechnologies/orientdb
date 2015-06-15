@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -109,15 +110,15 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   public static final int                HASH_CODE_SIZE      = 64;
   public static final int                MAX_LEVEL_DEPTH     = 8;
   public static final int                MAX_LEVEL_SIZE      = 1 << MAX_LEVEL_DEPTH;
+  public static final int                LEVEL_MASK          = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
 
-  private final OHashFunction<K>         keyHashFunction;
-
-  private ODiskCache                     diskCache;
+  private final ODiskCache               diskCache;
   private final OHashFunction<K>         keyHashFunction;
 
   private OBinarySerializer<K>           keySerializer;
   private OBinarySerializer<V>           valueSerializer;
   private OType[]                        keyTypes;
+  private final boolean                  durableInNonTxMode;
 
   private final KeyHashCodeComparator<K> comparator;
 
@@ -145,9 +146,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     this.durableInNonTxMode = durableInNonTxMode;
 
     this.comparator = new KeyHashCodeComparator<K>(this.keyHashFunction);
+    this.diskCache = abstractPaginatedStorage.getDiskCache();
   }
 
-  @Override
   public void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
       boolean nullKeyIsSupported) {
     final OAtomicOperation atomicOperation;
@@ -657,8 +658,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     try {
       this.keyTypes = keyTypes;
       this.nullKeyIsSupported = nullKeyIsSupported;
-
-      diskCache = storage.getDiskCache();
 
       this.name = name;
 

@@ -23,17 +23,13 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -58,7 +54,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-import javafx.beans.property.ReadOnlySetProperty;
 
 /**
  * Handles indexing when records change.
@@ -219,14 +214,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         this.clustersToIndex = new HashSet<String>();
 
       markStorageDirty();
-      // do not remove this, it is needed to remove index garbage if such one exists
-      try {
-        indexEngine.deleteWithoutLoad(name);
-        removeValuesContainer();
-      } catch (Exception e) {
-      }
-
-      indexEngine.create(indexDefinition, clusterIndexName, valueSerializer, isAutomatic());
 
       if (rebuild)
         rebuild(progressListener);
@@ -278,7 +265,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
               .warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(), rid);
         try {
           indexEngine.deleteWithoutLoad(name);
-          indexEngine.create(name, indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
+          indexEngine.create(indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
               determineValueSerializer(), isAutomatic());
 
           rebuild();
@@ -391,13 +378,12 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         rebuildThread = Thread.currentThread();
         rebuilding = true;
 
+        // do not remove this, it is needed to remove index garbage if such one exists
         try {
-          indexEngine.clear();
+          indexEngine.deleteWithoutLoad(name);
+          removeValuesContainer();
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during index %s clear .", name);
         }
-
-        removeValuesContainer();
 
         indexEngine.create(indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
             determineValueSerializer(), isAutomatic());

@@ -79,9 +79,6 @@ public class OHashIndexFactory implements OIndexFactory {
   public OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
 
-    if (version < 0)
-      version = getLastVersion();
-
     if (valueContainerAlgorithm == null)
       valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
 
