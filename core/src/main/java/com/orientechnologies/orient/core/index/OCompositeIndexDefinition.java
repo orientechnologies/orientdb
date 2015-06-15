@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.collate.OCollate;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,12 +35,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.collate.OCollate;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Index that consist of several indexDefinitions like {@link OPropertyIndexDefinition}.
@@ -285,6 +285,9 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
    * {@inheritDoc}
    */
   public Object createValue(final Object... params) {
+    if (params.length == 1 && params[0] instanceof Collection)
+      return params[0];
+
     return createValue(Arrays.asList(params));
   }
 
