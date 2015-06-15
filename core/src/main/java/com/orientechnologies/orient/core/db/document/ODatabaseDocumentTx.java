@@ -2618,6 +2618,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
 
     getLocalCache().clear();
+    OSerializationSetThreadLocal.clear();
 
     return this;
   }

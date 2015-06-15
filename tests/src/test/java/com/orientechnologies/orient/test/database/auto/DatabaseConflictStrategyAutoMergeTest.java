@@ -1,13 +1,5 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-
-import java.util.ArrayList;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.conflict.OAutoMergeRecordConflictStrategy;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -15,6 +7,11 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 public class DatabaseConflictStrategyAutoMergeTest {
 
@@ -22,7 +19,6 @@ public class DatabaseConflictStrategyAutoMergeTest {
 
   private static final int    NUM_OF_LOOP_ITERATIONS = 50;
   private static Object       LOCK                   = new Object();
-  private ArrayList<Object>   verticeIds             = new ArrayList<Object>();
   private volatile Throwable  exceptionInThread;
   private Object              parentV1Id;
   private Object              parentV2Id;
