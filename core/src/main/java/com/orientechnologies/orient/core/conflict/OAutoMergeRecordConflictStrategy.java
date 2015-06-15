@@ -20,15 +20,11 @@
 
 package com.orientechnologies.orient.core.conflict;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -52,18 +48,6 @@ public class OAutoMergeRecordConflictStrategy extends OVersionRecordConflictStra
       storedRecord.merge(newRecord, true, true);
 
       iDatabaseVersion.setCounter(Math.max(iDatabaseVersion.getCounter(), iRecordVersion.getCounter()) + 1);
-
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-
-      // UPDATE THE CACHE TO USE THIS RECORD
-      db.getLocalCache().updateRecord(storedRecord);
-
-      final OTransaction tx = db.getTransaction();
-      if (tx.isActive()) {
-        final ORecord txRecord = tx.getRecord(rid);
-        if (txRecord != null)
-          txRecord.fromStream(iRecordContent);
-      }
 
       return storedRecord.toStream();
     } else
