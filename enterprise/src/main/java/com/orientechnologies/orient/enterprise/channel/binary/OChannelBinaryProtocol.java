@@ -106,9 +106,9 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR   = 113;
   public static final byte  REQUEST_RIDBAG_GET_SIZE                   = 114;
 
-  public static final int   REQUEST_INDEX_GET                         = 120;
-  public static final int   REQUEST_INDEX_PUT                         = 121;
-  public static final int   REQUEST_INDEX_REMOVE                      = 122;
+  public static final byte  REQUEST_INDEX_GET                         = 120;
+  public static final byte  REQUEST_INDEX_PUT                         = 121;
+  public static final byte  REQUEST_INDEX_REMOVE                      = 122;
 
   // INCOMING
   public static final byte  RESPONSE_STATUS_OK                        = 0;
@@ -131,8 +131,9 @@ public class OChannelBinaryProtocol {
   public static final int   PROTOCOL_VERSION_29                       = 29;                 // ADDED PUSH SUPPORT FOR LIVE QUERY
   public static final int   PROTOCOL_VERSION_30                       = 30;                 // NEW COMMAND TO READ RECORD ONLY IF
                                                                                              // VERSION IS NOT LATEST WAS ADD
-
-  public static final int   CURRENT_PROTOCOL_VERSION                  = PROTOCOL_VERSION_30;
+  public static final int   PROTOCOL_VERSION_31                       = 30;                 // NEW INDEX COMMANDS: INDEX_GET,
+                                                                                             // INDEX_PUT, INDEX_REMOVE
+  public static final int   CURRENT_PROTOCOL_VERSION                  = PROTOCOL_VERSION_31;
 
   public static OIdentifiable readIdentifiable(final OChannelBinaryAsynchClient network) throws IOException {
     final int classId = network.readShort();

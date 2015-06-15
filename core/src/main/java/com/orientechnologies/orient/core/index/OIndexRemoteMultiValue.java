@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 /**
  * Proxied index.
@@ -51,8 +52,7 @@ public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiabl
   }
 
   public Collection<OIdentifiable> get(final Object iKey) {
-    final OCommandRequest cmd = formatCommand(QUERY_GET, name);
-    return new HashSet<OIdentifiable>((Collection<OIdentifiable>) getDatabase().command(cmd).execute(iKey));
+    return (Collection<OIdentifiable>) ((OStorageProxy) getDatabase().getStorage()).indexGet(name, iKey, null);
   }
 
   public Iterator<Entry<Object, Collection<OIdentifiable>>> iterator() {

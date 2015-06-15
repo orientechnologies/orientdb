@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -523,6 +524,107 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       } catch (Exception e) {
         handleException(network, "Error on read record " + rid, e);
+      }
+    } while (true);
+  }
+
+  public Object indexGet(final String iIndexName, Object iKey, final String iFetchPlan) {
+    if (iIndexName == null || iIndexName.isEmpty())
+      throw new IllegalArgumentException("Index name is mandatory");
+
+    OChannelBinaryAsynchClient network = null;
+    do {
+      try {
+
+        try {
+          network = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_GET);
+          network.writeString(iIndexName);
+          if (iKey instanceof OCompositeKey)
+            iKey = ((OCompositeKey) iKey).getKeys();
+          network.writeBytes(new ODocument().field("key", iKey).toStream());
+          network.writeString(iFetchPlan != null ? iFetchPlan : "");
+        } finally {
+          endRequest(network);
+        }
+
+        try {
+          beginResponse(network);
+
+          return readSynchResult(network, ODatabaseRecordThreadLocal.INSTANCE.get());
+
+        } finally {
+          endResponse(network);
+        }
+
+      } catch (Exception e) {
+        handleException(network, "Error on index get for key: " + iKey, e);
+
+      }
+    } while (true);
+  }
+
+  public void indexPut(final String iIndexName, Object iKey, final OIdentifiable iValue) {
+    if (iIndexName == null || iIndexName.isEmpty())
+      throw new IllegalArgumentException("Index name is mandatory");
+
+    OChannelBinaryAsynchClient network = null;
+    do {
+      try {
+
+        try {
+          network = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_PUT);
+          network.writeString(iIndexName);
+          if (iKey instanceof OCompositeKey)
+            iKey = ((OCompositeKey) iKey).getKeys();
+          network.writeBytes(new ODocument().field("key", iKey).toStream());
+          network.writeRID(iValue.getIdentity());
+        } finally {
+          endRequest(network);
+        }
+
+        try {
+          beginResponse(network);
+        } finally {
+          endResponse(network);
+        }
+
+      } catch (Exception e) {
+        handleException(network, "Error on index put for key: " + iKey, e);
+
+      }
+    } while (true);
+  }
+
+  public boolean indexRemove(final String iIndexName, Object iKey) {
+    if (iIndexName == null || iIndexName.isEmpty())
+      throw new IllegalArgumentException("Index name is mandatory");
+
+    OChannelBinaryAsynchClient network = null;
+    do {
+      try {
+
+        try {
+          network = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_REMOVE);
+          network.writeString(iIndexName);
+          if (iKey instanceof OCompositeKey)
+            iKey = ((OCompositeKey) iKey).getKeys();
+          network.writeBytes(new ODocument().field("key", iKey).toStream());
+        } finally {
+          endRequest(network);
+        }
+
+        try {
+          beginResponse(network);
+
+          return network.readBoolean();
+
+        } finally {
+          endResponse(network);
+        }
+
+      } catch (Exception e) {
+        handleException(network, "Error on index remove for key: " + iKey, e);
+
       }
     } while (true);
   }
@@ -1082,54 +1184,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 }
               }
             } else {
-              final byte type = network.readByte();
-              switch (type) {
-              case 'n':
-                result = null;
-                break;
-
-              case 'r':
-                result = OChannelBinaryProtocol.readIdentifiable(network);
-                if (result instanceof ORecord)
-                  database.getLocalCache().updateRecord((ORecord) result);
-                break;
-
-              case 'l':
-                final int tot = network.readInt();
-                final Collection<OIdentifiable> list = new ArrayList<OIdentifiable>(tot);
-                for (int i = 0; i < tot; ++i) {
-                  final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
-                  if (resultItem instanceof ORecord)
-                    database.getLocalCache().updateRecord((ORecord) resultItem);
-                  list.add(resultItem);
-                }
-                result = list;
-                break;
-
-              case 'a':
-                final String value = new String(network.readBytes());
-                result = ORecordSerializerStringAbstract.fieldTypeFromStream(null, ORecordSerializerStringAbstract.getType(value),
-                    value);
-                break;
-
-              default:
-                OLogManager.instance().warn(this, "Received unexpected result from query: %d", type);
-              }
-
-              if (network.getSrvProtocolVersion() >= 17) {
-                // LOAD THE FETCHED RECORDS IN CACHE
-                byte status;
-                while ((status = network.readByte()) > 0) {
-                  final ORecord record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
-                  if (record != null && status == 2)
-                    // PUT IN THE CLIENT LOCAL CACHE
-                    database.getLocalCache().updateRecord(record);
-                }
-              }
+              result = readSynchResult(network, database);
               if (live) {
-                ODocument doc = ((List<ODocument>) result).get(0);
-                Integer token = doc.field("token");
-                Boolean unsubscribe = doc.field("unsubscribe");
+                final ODocument doc = ((List<ODocument>) result).get(0);
+                final Integer token = doc.field("token");
+                final Boolean unsubscribe = doc.field("unsubscribe");
                 if (token != null) {
                   if (Boolean.TRUE.equals(unsubscribe)) {
                     this.asynchEventListener.unregisterLiveListener(token);
@@ -1159,6 +1218,58 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } finally {
       if (iCommand.getResultListener() != null && !live)
         iCommand.getResultListener().end();
+    }
+
+    return result;
+  }
+
+  protected Object readSynchResult(final OChannelBinaryAsynchClient network, final ODatabaseDocument database) throws IOException {
+
+    final Object result;
+
+    final byte type = network.readByte();
+    switch (type) {
+    case 'n':
+      result = null;
+      break;
+
+    case 'r':
+      result = OChannelBinaryProtocol.readIdentifiable(network);
+      if (result instanceof ORecord)
+        database.getLocalCache().updateRecord((ORecord) result);
+      break;
+
+    case 'l':
+      final int tot = network.readInt();
+      final Collection<OIdentifiable> list = new ArrayList<OIdentifiable>(tot);
+      for (int i = 0; i < tot; ++i) {
+        final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
+        if (resultItem instanceof ORecord)
+          database.getLocalCache().updateRecord((ORecord) resultItem);
+        list.add(resultItem);
+      }
+      result = list;
+      break;
+
+    case 'a':
+      final String value = new String(network.readBytes());
+      result = ORecordSerializerStringAbstract.fieldTypeFromStream(null, ORecordSerializerStringAbstract.getType(value), value);
+      break;
+
+    default:
+      OLogManager.instance().warn(this, "Received unexpected result from query: %d", type);
+      result = null;
+    }
+
+    if (network.getSrvProtocolVersion() >= 17) {
+      // LOAD THE FETCHED RECORDS IN CACHE
+      byte status;
+      while ((status = network.readByte()) > 0) {
+        final ORecord record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
+        if (record != null && status == 2)
+          // PUT IN THE CLIENT LOCAL CACHE
+          database.getLocalCache().updateRecord(record);
+      }
     }
 
     return result;
