@@ -109,7 +109,7 @@ public class OBonsaiTreeRepair {
   }
 
   private List<ODocument> regenerateRidBag(ODocument docOne, String fieldNameOne, ODatabaseDocumentTx db) {
-    OImmutableClass clazzOne = ODocumentInternal.getImmutableSchemaClass(docOne);
+    OClass clazzOne = ODocumentInternal.getImmutableSchemaClass(docOne);
     OProperty prop = clazzOne.getProperty(fieldNameOne);
     String className = null;
     if (prop != null) {

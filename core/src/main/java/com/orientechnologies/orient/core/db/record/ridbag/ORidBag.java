@@ -342,6 +342,10 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     delegate.setOwner(owner);
   }
 
+  public ORidBagDelegate getDelegate() {
+    return delegate;
+  }
+
   /**
    * Temporary id of collection to track changes in remote mode.
    * 
@@ -436,17 +440,6 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     final OSBTreeRidBag treeBag = new OSBTreeRidBag();
     treeBag.setCollectionPointer(pointer);
     delegate = treeBag;
-  }
-
-  public void debugPrint(PrintStream writer) throws IOException {
-    if (delegate instanceof OSBTreeRidBag) {
-      writer.append("tree [\n");
-      ((OSBTreeRidBag) delegate).debugPrint(writer);
-      writer.append("]\n");
-    } else {
-      writer.append(delegate.toString());
-      writer.append("\n");
-    }
   }
 
 }
