@@ -540,7 +540,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       return;
 
     final String indexName = channel.readString();
-    Object key = new ODocument().fromStream(channel.readBytes()).field("key");
+
+    ODocument document = new ODocument();
+    fillRecord(new ORecordId(), channel.readBytes(), OVersionFactory.instance().createVersion(), document, connection.database);
+    Object key = document.field("key");
     final String fetchPlan = channel.readString();
     final OIndex<?> index = connection.database.getMetadata().getIndexManager().getIndex(indexName);
     if (index == null)
@@ -558,7 +561,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     beginResponse();
     try {
       sendOk(clientTxId);
-      serializeValue(listener, result);
+
+
+      serializeValue(listener, result,true);
 
       if (connection.data.protocolVersion >= 17 && listener instanceof OSyncCommandResultListener) {
         // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
@@ -1322,7 +1327,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         // SYNCHRONOUS
         sendOk(clientTxId);
 
-        serializeValue(listener, result);
+        serializeValue(listener, result,false);
 
         if (connection.data.protocolVersion >= 17 && listener instanceof OSyncCommandResultListener) {
           // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
@@ -1343,13 +1348,16 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
-  public void serializeValue(final OAbstractCommandResultListener listener, final Object result) throws IOException {
+  public void serializeValue(final OAbstractCommandResultListener listener, Object result,boolean load) throws IOException {
     if (result == null) {
       // NULL VALUE
       channel.writeByte((byte) 'n');
     } else if (result instanceof OIdentifiable) {
       // RECORD
       channel.writeByte((byte) 'r');
+      if(load &&  result instanceof ORecordId)
+        result = ((ORecordId) result).getRecord();
+
       if (listener != null)
         listener.result(result);
       writeIdentifiable((OIdentifiable) result);
@@ -1366,8 +1374,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       channel.writeInt(OMultiValue.getSize(result));
       for (Object o : OMultiValue.getMultiValueIterable(result)) {
         try {
+          if(load &&  o instanceof ORecordId)
+            o = ((ORecordId) o).getRecord();
           if (listener != null)
             listener.result(o);
+
           writeIdentifiable((OIdentifiable) o);
         } catch (Exception e) {
           OLogManager.instance().warn(this, "Cannot serialize record: " + o);
