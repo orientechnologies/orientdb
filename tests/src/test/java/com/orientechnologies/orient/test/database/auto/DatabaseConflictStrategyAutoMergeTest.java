@@ -1,23 +1,31 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+
+import java.util.ArrayList;
+
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.conflict.OAutoMergeRecordConflictStrategy;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-
-import static org.testng.Assert.assertEquals;
 
 public class DatabaseConflictStrategyAutoMergeTest {
 
   private static final String CLIENT_ORIENT_URL_MAIN = "memory:testAutoMerge";
 
+  private static final int    NUM_OF_LOOP_ITERATIONS = 50;
   private static Object       LOCK                   = new Object();
   private ArrayList<Object>   verticeIds             = new ArrayList<Object>();
   private volatile Throwable  exceptionInThread;
+  private Object              parentV1Id;
+  private Object              parentV2Id;
 
   @Test
   public void testAutoMerge() throws Throwable {
@@ -55,43 +63,79 @@ public class DatabaseConflictStrategyAutoMergeTest {
   }
 
   private void dbClient1() {
-    sleep(1000);
+    sleep(500);
 
     synchronized (LOCK) {
       OrientBaseGraph graph = new OrientGraph(CLIENT_ORIENT_URL_MAIN);
-      ArrayList<OrientVertex> cachedVertices = new ArrayList<OrientVertex>();
       try {
+        // Create 2 parent vertices.
+        OrientVertex parentV1 = graph.addVertex("vertextype1", (String) null);
+        graph.commit();
+        assertEquals(1, parentV1.getRecord().getVersion());
+        parentV1Id = parentV1.getId();
+
+        OrientVertex parentV2 = graph.addVertex("vertextype2", (String) null);
+        graph.commit();
+        assertEquals(1, parentV2.getRecord().getVersion());
+        parentV2Id = parentV2.getId();
+
         // Create vertices.
-        for (int i = 0; i < 10; i++) {
-          OrientVertex v = graph.addVertex("vertextype", (String) null);
-          graph.commit();
-          assertEquals(1, v.getRecord().getVersion());
-          verticeIds.add(v.getId());
-          cachedVertices.add(v);
-        }
-        pause();
+        for (int i = 0; i < NUM_OF_LOOP_ITERATIONS; i++) {
+          pause();
 
-        for (OrientVertex cachedVertex : cachedVertices) {
-          cachedVertex.setProperty("p2", "v2");
+          if (exceptionInThread != null)
+            break;
+          sleep(100);
+          OrientVertex vertex = graph.addVertex("vertextype3", (String) null);
           graph.commit();
+          assertEquals(1, vertex.getRecord().getVersion());
 
-          cachedVertex.reload();
-          assertEquals("v1", cachedVertex.getProperty("p1"));
-          assertEquals("v2", cachedVertex.getProperty("p2"));
-          assertEquals(3, cachedVertex.getRecord().getVersion());
+          vertex.setProperty("num", i);
+          graph.commit();
+          assertEquals(2, vertex.getRecord().getVersion());
+
+          parentV1.addEdge("edgetype1", vertex);
+          graph.commit();
+          assertNotNull(parentV1.getProperty("cnt"));
+          boolean edge1Exists = false;
+          for (Edge e : parentV1.getEdges(Direction.OUT, "edgetype1")) {
+            if (e.getVertex(Direction.IN).equals(vertex)) {
+              edge1Exists = true;
+              break;
+            }
+          }
+          assertTrue(edge1Exists);
+          boolean edge2Exists = false;
+          for (Edge e : vertex.getEdges(Direction.IN, "edgetype1")) {
+            if (e.getVertex(Direction.OUT).equals(parentV1)) {
+              edge2Exists = true;
+              break;
+            }
+          }
+          assertTrue(edge2Exists);
+          assertNotNull(vertex.getProperty("num"));
+
+          parentV2.addEdge("edgetype2", vertex);
+          graph.commit();
+          assertNotNull(parentV2.getProperty("cnt"));
+          edge1Exists = false;
+          for (Edge e : parentV2.getEdges(Direction.OUT, "edgetype2")) {
+            if (e.getVertex(Direction.IN).equals(vertex)) {
+              edge1Exists = true;
+              break;
+            }
+          }
+          assertTrue(edge1Exists);
+          edge2Exists = false;
+          for (Edge e : vertex.getEdges(Direction.IN, "edgetype2")) {
+            if (e.getVertex(Direction.OUT).equals(parentV2)) {
+              edge2Exists = true;
+              break;
+            }
+          }
+          assertTrue(edge2Exists);
+          assertNotNull(vertex.getProperty("num"));
         }
-        /*
-         * pause();
-         * 
-         * OrientVertex previousVertex = null; for (OrientVertex cachedVertex: cachedVertices) { if (previousVertex == null) {
-         * previousVertex = cachedVertex; } else { OrientEdge e = (OrientEdge) previousVertex.addEdge("edgetype", cachedVertex);
-         * graph.commit(); assertEquals(5, previousVertex.getRecord().getVersion()); assertEquals(5,
-         * cachedVertex.getRecord().getVersion()); assertEquals("v1", previousVertex.getProperty("p1")); assertEquals("v2",
-         * previousVertex.getProperty("p2")); assertTrue(previousVertex.getEdges(Direction.OUT, "edgetype").iterator().hasNext());
-         * assertTrue(cachedVertex.getEdges(Direction.IN, "edgetype").iterator().hasNext()); assertEquals("v1",
-         * cachedVertex.getProperty("p1")); assertEquals("v2", cachedVertex.getProperty("p2")); assertEquals(1,
-         * e.getRecord().getVersion()); } }
-         */
       } catch (Throwable e) {
         if (exceptionInThread == null) {
           exceptionInThread = e;
@@ -106,31 +150,30 @@ public class DatabaseConflictStrategyAutoMergeTest {
   private void dbClient2() {
     synchronized (LOCK) {
       OrientBaseGraph graph = new OrientGraph(CLIENT_ORIENT_URL_MAIN);
-      ArrayList<OrientVertex> cachedVertices = new ArrayList<OrientVertex>();
+      OrientVertex parentV1 = null;
+      OrientVertex parentV2 = null;
+      int countPropValue = 0;
       try {
-        pause();
+        for (int i = 0; i < NUM_OF_LOOP_ITERATIONS; i++) {
+          pause();
 
-        for (int i = 0; i < verticeIds.size(); i++) {
-          OrientVertex v = graph.getVertex(verticeIds.get(i));
-          assertEquals(1, v.getRecord().getVersion());
-          cachedVertices.add(v);
-
-          v.setProperty("p1", "v1");
+          if (exceptionInThread != null)
+            break;
+          // Let's give it some time for asynchronous replication.
+          sleep(500);
+          countPropValue++;
+          if (parentV1 == null) {
+            parentV1 = graph.getVertex(parentV1Id);
+          }
+          parentV1.setProperty("cnt", countPropValue);
           graph.commit();
-          assertEquals(2, v.getRecord().getVersion());
-        }
-        pause();
 
-        /*
-         * OrientVertex previousVertex = null; for (OrientVertex cachedVertex: cachedVertices) { if (previousVertex == null) {
-         * previousVertex = cachedVertex; } else { OrientEdge e = (OrientEdge) previousVertex.addEdge("edgetype", cachedVertex);
-         * graph.commit(); assertEquals(4, previousVertex.getRecord().getVersion()); assertEquals(4,
-         * cachedVertex.getRecord().getVersion()); assertEquals("v1", previousVertex.getProperty("p1")); assertEquals("v2",
-         * previousVertex.getProperty("p2")); assertTrue(previousVertex.getEdges(Direction.OUT, "edgetype").iterator().hasNext());
-         * assertTrue(cachedVertex.getEdges(Direction.IN, "edgetype").iterator().hasNext()); assertEquals("v1",
-         * cachedVertex.getProperty("p1")); assertEquals("v2", cachedVertex.getProperty("p2")); assertEquals(1,
-         * e.getRecord().getVersion()); previousVertex = cachedVertex; } } pause();
-         */
+          if (parentV2 == null) {
+            parentV2 = graph.getVertex(parentV2Id);
+          }
+          parentV2.setProperty("cnt", countPropValue);
+          graph.commit();
+        }
       } catch (Throwable e) {
         if (exceptionInThread == null) {
           exceptionInThread = e;
