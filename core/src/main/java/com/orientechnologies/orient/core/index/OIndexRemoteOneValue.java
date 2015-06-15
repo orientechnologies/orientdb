@@ -19,6 +19,11 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -27,12 +32,6 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 /**
  * Proxied single value index.
@@ -49,7 +48,12 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
   }
 
   public OIdentifiable get(final Object iKey) {
-    return (OIdentifiable) ((OStorageProxy) getDatabase().getStorage()).indexGet(name, iKey, null);
+    final OCommandRequest cmd = formatCommand(QUERY_GET, name);
+    final List<OIdentifiable> result = getDatabase().command(cmd).execute(iKey);
+    if (result != null && !result.isEmpty())
+      return ((OIdentifiable) ((ODocument) result.get(0).getRecord()).field("rid")).getIdentity();
+    return null;
+    // return (OIdentifiable) ((OStorageProxy) getDatabase().getStorage()).indexGet(name, iKey, null);
   }
 
   public Iterator<Entry<Object, OIdentifiable>> iterator() {

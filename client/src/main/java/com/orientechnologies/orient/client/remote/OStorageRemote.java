@@ -1240,15 +1240,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       break;
 
     case 'l':
+    case 's':
       final int tot = network.readInt();
-      final Collection<OIdentifiable> list = new ArrayList<OIdentifiable>(tot);
+      final Collection<OIdentifiable> coll = type == 's' ? new HashSet<OIdentifiable>(tot) : new ArrayList<OIdentifiable>(tot);
       for (int i = 0; i < tot; ++i) {
         final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
         if (resultItem instanceof ORecord)
           database.getLocalCache().updateRecord((ORecord) resultItem);
-        list.add(resultItem);
+        coll.add(resultItem);
       }
-      result = list;
+      result = coll;
       break;
 
     case 'a':

@@ -1361,7 +1361,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         listener.result(doc);
       writeIdentifiable(doc);
     } else if (OMultiValue.isMultiValue(result)) {
-      channel.writeByte((byte) 'l');
+      final byte collectionType = result instanceof Set ? (byte) 's' : (byte) 'l';
+      channel.writeByte(collectionType);
       channel.writeInt(OMultiValue.getSize(result));
       for (Object o : OMultiValue.getMultiValueIterable(result)) {
         try {
