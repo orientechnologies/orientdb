@@ -19,11 +19,12 @@
  */
 package com.orientechnologies.orient.core.metadata;
 
+import java.io.IOException;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OGlobalRecordCache;
-import com.orientechnologies.orient.core.cache.OGlobalRecordNoCache;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -47,9 +48,6 @@ import com.orientechnologies.orient.core.schedule.OSchedulerListenerImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerProxy;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
-import java.io.IOException;
-import java.util.concurrent.Callable;
-
 public class OMetadataDefault implements OMetadataInternal {
   public static final String            CLUSTER_INTERNAL_NAME     = "internal";
   public static final String            CLUSTER_INDEX_NAME        = "index";
@@ -62,8 +60,6 @@ public class OMetadataDefault implements OMetadataInternal {
   protected OIndexManagerProxy          indexManager;
   protected OFunctionLibraryProxy       functionLibrary;
   protected OSchedulerListenerProxy     scheduler;
-  protected OGlobalRecordCache          globalCache;
-
   protected static final OProfilerMBean PROFILER                  = Orient.instance().getProfiler();
 
   private OImmutableSchema              immutableSchema           = null;
@@ -218,12 +214,6 @@ public class OMetadataDefault implements OMetadataInternal {
             return instance;
           }
         }), database);
-
-    globalCache = database.getStorage().getResource(OGlobalRecordCache.class.getSimpleName(), new Callable<OGlobalRecordCache>() {
-      public OGlobalRecordCache call() {
-        return new OGlobalRecordNoCache();
-      }
-    });
   }
 
   /**
@@ -248,37 +238,17 @@ public class OMetadataDefault implements OMetadataInternal {
       schema.close();
     if (security != null)
       security.close(false);
-    if (globalCache != null)
-      globalCache.clear();
-  }
-
-  @Override
-  public OFunctionLibrary getFunctionLibrary() {
-    return functionLibrary;
-  }
-
-  @Override
-  public OSchedulerListener getSchedulerListener() {
-    return scheduler;
-  }
-
-  @Override
-  public OGlobalRecordCache getGlobalCache() {
-    return globalCache;
-  }
-
-  @Override
-  public void replaceGlobalCache(final OGlobalRecordCache iGlobalCache) {
-    getDatabase().getStorage().removeResource(OGlobalRecordCache.class.getSimpleName());
-    globalCache = getDatabase().getStorage().getResource(OGlobalRecordCache.class.getSimpleName(),
-        new Callable<OGlobalRecordCache>() {
-          public OGlobalRecordCache call() {
-            return iGlobalCache;
-          }
-        });
   }
 
   protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+
+  public OFunctionLibrary getFunctionLibrary() {
+    return functionLibrary;
+  }
+
+  public OSchedulerListener getSchedulerListener() {
+    return scheduler;
   }
 }
