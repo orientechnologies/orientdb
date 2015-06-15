@@ -96,13 +96,12 @@ public class ODocumentFieldWalker {
         if (fieldWalker.goDeeper(fieldType, linkedType, fieldValue)) {
           if (fieldValue instanceof Map)
             walkMap((Map) fieldValue, fieldType, fieldWalker, walked);
-          else if (OMultiValue.isIterable(fieldValue))
-            walkIterable(OMultiValue.getMultiValueIterable(fieldValue), fieldType, fieldWalker, walked);
           else if (fieldValue instanceof ODocument) {
             final ODocument doc = (ODocument) fieldValue;
             if (OType.EMBEDDED.equals(fieldType) || doc.isEmbedded())
               walkDocument((ODocument) fieldValue, fieldWalker);
-          }
+          } else if (OMultiValue.isIterable(fieldValue))
+            walkIterable(OMultiValue.getMultiValueIterable(fieldValue), fieldType, fieldWalker, walked);
         }
       }
 
