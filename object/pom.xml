@@ -120,6 +120,7 @@
         <import.package>*</import.package>
         <export.package>com.orientechnologies.orient.object.*</export.package>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<argLine></argLine>
     </properties>
     <repositories>
         <repository>

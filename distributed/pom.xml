@@ -42,6 +42,7 @@
         <osgi.import>com.hazelcast.*;resolution:=optional,*</osgi.import>
         <osgi.export>com.orientechnologies.orient.server.hazelcast.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<argLine></argLine>
     </properties>
 
     <profiles>

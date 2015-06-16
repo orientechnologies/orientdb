@@ -44,6 +44,7 @@
         </osgi.export>
         <jna.version>4.0.0</jna.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<argLine></argLine>
     </properties>
 
     <profiles>

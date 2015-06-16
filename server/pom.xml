@@ -45,6 +45,7 @@
         </osgi.import>
         <osgi.export>com.orientechnologies.orient.server.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<argLine></argLine>
     </properties>
 
     <dependencies>
