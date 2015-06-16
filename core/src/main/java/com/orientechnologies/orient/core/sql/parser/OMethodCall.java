@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.*;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+
 public class OMethodCall extends SimpleNode {
 
   static Set<String>          bidirectionalMethods = new HashSet<String>(Arrays.asList(new String[] { "out", "in", "both", "outE",
@@ -53,6 +55,19 @@ public class OMethodCall extends SimpleNode {
 
   public boolean isBidirectional() {
     return bidirectionalMethods.contains(methodName);
+  }
+
+  public Object execute(Object targetObjects, OCommandContext ctx) {
+    // TODO implement this
+    return null;
+  }
+
+  public Object executeReverse(Object targetObjects, OCommandContext ctx) {
+    if (!isBidirectional()) {
+      throw new UnsupportedOperationException();
+    }
+    // TODO implement this
+    return null;
   }
 }
 /* JavaCC - OriginalChecksum=da95662da21ceb8dee3ad88c0d980413 (do not edit this line) */

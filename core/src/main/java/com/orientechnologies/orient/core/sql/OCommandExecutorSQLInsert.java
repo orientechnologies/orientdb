@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * SQL INSERT command.
- * 
+ *
  * @author Luca Garulli
  * @author Johann Sorel (Geomatys)
  */
@@ -69,113 +69,99 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLInsert parse(final OCommandRequest iRequest) {
-    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
+    final ODatabaseDocument database = getDatabase();
 
-    String queryText = textRequest.getText();
-    String originalQuery = queryText;
-    try {
-      // System.out.println("NEW PARSER FROM: " + queryText);
-      queryText = preParse(queryText, iRequest);
-      // System.out.println("NEW PARSER   TO: " + queryText);
-      textRequest.setText(queryText);
+    init((OCommandRequestText) iRequest);
 
-      final ODatabaseDocument database = getDatabase();
+    className = null;
+    newRecords = null;
+    content = null;
 
-      init((OCommandRequestText) iRequest);
+    if (parserTextUpperCase.endsWith(KEYWORD_UNSAFE)) {
+      unsafe = true;
+      parserText = parserText.substring(0, parserText.length() - KEYWORD_UNSAFE.length() - 1);
+      parserTextUpperCase = parserTextUpperCase.substring(0, parserTextUpperCase.length() - KEYWORD_UNSAFE.length() - 1);
+    }
 
-      className = null;
-      newRecords = null;
-      content = null;
+    parserRequiredKeyword("INSERT");
+    parserRequiredKeyword("INTO");
 
-      if (parserTextUpperCase.endsWith(KEYWORD_UNSAFE)) {
-        unsafe = true;
-        parserText = parserText.substring(0, parserText.length() - KEYWORD_UNSAFE.length() - 1);
-        parserTextUpperCase = parserTextUpperCase.substring(0, parserTextUpperCase.length() - KEYWORD_UNSAFE.length() - 1);
-      }
+    String subjectName = parserRequiredWord(true, "Invalid subject name. Expected cluster, class or index");
+    if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX))
+      // CLUSTER
+      clusterName = subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length());
 
-      parserRequiredKeyword("INSERT");
-      parserRequiredKeyword("INTO");
+    else if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX))
+      // INDEX
+      indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
 
-      String subjectName = parserRequiredWord(true, "Invalid subject name. Expected cluster, class or index");
-      if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX))
-        // CLUSTER
-        clusterName = subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length());
+    else {
+      // CLASS
+      if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
+        subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
 
-      else if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX))
-        // INDEX
-        indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
+      final OClass cls = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName);
+      if (cls == null)
+        throwParsingException("Class " + subjectName + " not found in database");
 
-      else {
-        // CLASS
-        if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
-          subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
+      if (!unsafe && cls.isSubClassOf("E"))
+        // FOUND EDGE
+        throw new OCommandExecutionException(
+            "'INSERT' command cannot create Edges. Use 'CREATE EDGE' command instead, or apply the 'UNSAFE' keyword to force it");
 
-        final OClass cls = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName);
-        if (cls == null)
-          throwParsingException("Class " + subjectName + " not found in database");
+      className = cls.getName();
+      clazz = database.getMetadata().getSchema().getClass(className);
+      if (clazz == null)
+        throw new OQueryParsingException("Class '" + className + "' was not found");
+    }
 
-        if (!unsafe && cls.isSubClassOf("E"))
-          // FOUND EDGE
-          throw new OCommandExecutionException(
-              "'INSERT' command cannot create Edges. Use 'CREATE EDGE' command instead, or apply the 'UNSAFE' keyword to force it");
+    parserSkipWhiteSpaces();
+    if (parserIsEnded())
+      throwSyntaxErrorException("Set of fields is missed. Example: (name, surname) or SET name = 'Bill'");
 
-        className = cls.getName();
-        clazz = database.getMetadata().getSchema().getClass(className);
-        if (clazz == null)
-          throw new OQueryParsingException("Class '" + className + "' was not found");
-      }
+    final String temp = parseOptionalWord(true);
+    if (temp.equals("CLUSTER")) {
+      clusterName = parserRequiredWord(false);
 
       parserSkipWhiteSpaces();
       if (parserIsEnded())
         throwSyntaxErrorException("Set of fields is missed. Example: (name, surname) or SET name = 'Bill'");
+    } else
+      parserGoBack();
 
-      final String temp = parseOptionalWord(true);
-      if (temp.equals("CLUSTER")) {
-        clusterName = parserRequiredWord(false);
+    newRecords = new ArrayList<Map<String, Object>>();
+    Boolean sourceClauseProcessed = false;
+    if (parserGetCurrentChar() == '(') {
+      parseValues();
+      parserNextWord(true, " \r\n");
+      sourceClauseProcessed = true;
+    } else {
+      parserNextWord(true, " ,\r\n");
 
-        parserSkipWhiteSpaces();
-        if (parserIsEnded())
-          throwSyntaxErrorException("Set of fields is missed. Example: (name, surname) or SET name = 'Bill'");
-      } else
-        parserGoBack();
-
-      newRecords = new ArrayList<Map<String, Object>>();
-      Boolean sourceClauseProcessed = false;
-      if (parserGetCurrentChar() == '(') {
-        parseValues();
-        parserNextWord(true, " \r\n");
+      if (parserGetLastWord().equals(KEYWORD_CONTENT)) {
+        newRecords = null;
+        parseContent();
         sourceClauseProcessed = true;
-      } else {
-        parserNextWord(true, " ,\r\n");
-
-        if (parserGetLastWord().equals(KEYWORD_CONTENT)) {
-          newRecords = null;
-          parseContent();
-          sourceClauseProcessed = true;
-        } else if (parserGetLastWord().equals(KEYWORD_SET)) {
-          final LinkedHashMap<String, Object> fields = new LinkedHashMap<String, Object>();
-          newRecords.add(fields);
-          parseSetFields(clazz, fields);
-          sourceClauseProcessed = true;
-        }
+      } else if (parserGetLastWord().equals(KEYWORD_SET)) {
+        final LinkedHashMap<String, Object> fields = new LinkedHashMap<String, Object>();
+        newRecords.add(fields);
+        parseSetFields(clazz, fields);
+        sourceClauseProcessed = true;
       }
-      if (sourceClauseProcessed)
-        parserNextWord(true, " \r\n");
-      // it has to be processed before KEYWORD_FROM in order to not be taken as part of SELECT
-      if (parserGetLastWord().equals(KEYWORD_RETURN)) {
-        parseReturn(!sourceClauseProcessed);
-        parserNextWord(true, " \r\n");
-      }
+    }
+    if (sourceClauseProcessed)
+      parserNextWord(true, " \r\n");
+    // it has to be processed before KEYWORD_FROM in order to not be taken as part of SELECT
+    if (parserGetLastWord().equals(KEYWORD_RETURN)) {
+      parseReturn(!sourceClauseProcessed);
+      parserNextWord(true, " \r\n");
+    }
 
-      if (!sourceClauseProcessed) {
-        if (parserGetLastWord().equals(KEYWORD_FROM)) {
-          newRecords = null;
-          subQuery = new OSQLAsynchQuery<OIdentifiable>(parserText.substring(parserGetCurrentPosition()), this);
-        }
+    if (!sourceClauseProcessed) {
+      if (parserGetLastWord().equals(KEYWORD_FROM)) {
+        newRecords = null;
+        subQuery = new OSQLAsynchQuery<OIdentifiable>(parserText.substring(parserGetCurrentPosition()), this);
       }
-
-    } finally {
-      textRequest.setText(originalQuery);
     }
 
     return this;

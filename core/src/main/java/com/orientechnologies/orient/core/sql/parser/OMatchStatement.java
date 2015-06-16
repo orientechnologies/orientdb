@@ -27,13 +27,29 @@ import java.util.*;
 public class OMatchStatement extends OStatement implements OCommandExecutor {
 
   class MatchContext {
-    String                root;
-    Map<String, Iterable> candidates = new HashMap<String, Iterable>();
-    Map<String, ORid>     matched    = new HashMap<String, ORid>();
+    String                     root;
+    Map<String, Iterable>      candidates   = new HashMap<String, Iterable>();
+    Map<String, OIdentifiable> matched      = new HashMap<String, OIdentifiable>();
+    Map<PatternEdge, Boolean>  matchedEdges = new IdentityHashMap<PatternEdge, Boolean>();
+
+    public MatchContext copy(String alias, OIdentifiable value) {
+      MatchContext result = new MatchContext();
+      result.root = alias;
+
+      result.candidates.putAll(candidates);
+      result.candidates.remove(alias);
+
+      result.matched.putAll(matched);
+      result.matched.put(alias, value);
+
+      result.matchedEdges.putAll(matchedEdges);
+      return result;
+    }
   }
 
   class Pattern {
     Map<String, PatternNode> aliasToNode = new HashMap<String, PatternNode>();
+    int                      numOfEdges  = 0;
 
     void addExpression(OMatchExpression expression) {
       PatternNode originNode = getOrCreateNode(expression.origin);
@@ -41,7 +57,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor {
       for (OMatchPathItem item : expression.items) {
         String nextAlias = item.filter.getAlias();
         PatternNode nextNode = getOrCreateNode(item.filter);
-        originNode.addEdge(item, nextNode);
+        // TODO DIRECTION!
+
+        numOfEdges += originNode.addEdge(item, nextNode);
         originNode = nextNode;
       }
     }
@@ -59,6 +77,10 @@ public class OMatchStatement extends OStatement implements OCommandExecutor {
     PatternNode get(String alias) {
       return aliasToNode.get(alias);
     }
+
+    int getNumOfEdges() {
+      return numOfEdges;
+    }
   }
 
   class PatternNode {
@@ -66,13 +88,14 @@ public class OMatchStatement extends OStatement implements OCommandExecutor {
     Set<PatternEdge> out = new HashSet<PatternEdge>();
     Set<PatternEdge> in  = new HashSet<PatternEdge>();
 
-    void addEdge(OMatchPathItem item, PatternNode to) {
+    int addEdge(OMatchPathItem item, PatternNode to) {
       PatternEdge edge = new PatternEdge();
       edge.item = item;
       edge.out = this;
       edge.in = to;
       this.out.add(edge);
       to.in.add(edge);
+      return 1;
     }
   }
 
@@ -170,26 +193,176 @@ public class OMatchStatement extends OStatement implements OCommandExecutor {
       return new OResultSet();// some aliases do not match on any classes
     }
 
-    return calculateMatch(estimatedRootEntries, new MatchContext(), aliasClasses, aliasFilters);
+    return calculateMatch(estimatedRootEntries, new MatchContext(), aliasClasses, aliasFilters, this.context);
   }
 
   private OResultSet calculateMatch(Map<String, Long> estimatedRootEntries, MatchContext matchContext,
-      Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters) {
+      Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, OCommandContext iCommandContext) {
     OResultSet result = new OResultSet();
-    calculateMatch(estimatedRootEntries, matchContext, aliasClasses, aliasFilters, result);
+    calculateMatch(pattern, estimatedRootEntries, matchContext, aliasClasses, aliasFilters, result, iCommandContext);
     return result;
   }
 
-  private void calculateMatch(Map<String, Long> estimatedRootEntries, MatchContext matchContext, Map<String, String> aliasClasses,
-      Map<String, OWhereClause> aliasFilters, OResultSet result) {
-    String nextAlias = getNextAlias(estimatedRootEntries, matchContext);
-    if (nextAlias == null) {
+  private void calculateMatch(Pattern pattern, Map<String, Long> estimatedRootEntries, MatchContext matchContext,
+      Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, OResultSet result, OCommandContext iCommandContext) {
+
+    long threshold = 5;
+
+    List<MatchContext> activeContexts = new LinkedList<MatchContext>();
+
+    MatchContext rootContext = new MatchContext();
+
+    String smallestAlias = null;
+    Long smallestAmount = Long.MAX_VALUE;
+    boolean rootFound = false;
+    // find starting nodes with few entries
+    for (Map.Entry<String, Long> entryPoint : estimatedRootEntries.entrySet()) {
+      if (entryPoint.getValue() < threshold) {
+        String nextAlias = entryPoint.getKey();
+        Iterable<OIdentifiable> matches = query(aliasClasses.get(nextAlias), aliasFilters.get(nextAlias));
+        if (!matches.iterator().hasNext()) {
+          return;
+        }
+        rootContext.candidates.put(nextAlias, matches);
+        long thisAmount;
+        if (matches instanceof Collection) {
+          thisAmount = (long) ((Collection) matches).size();
+        } else {
+          thisAmount = estimatedRootEntries.get(nextAlias);
+        }
+        if (thisAmount <= smallestAmount) {
+          smallestAlias = nextAlias;
+          smallestAmount = thisAmount;
+        }
+        rootFound = true;
+      }
+    }
+    // no nodes under threshold, guess the smallest one
+    if (!rootFound) {
+      String nextAlias = getNextAlias(estimatedRootEntries, matchContext);
+      Iterable<OIdentifiable> matches = query(aliasClasses.get(nextAlias), aliasFilters.get(nextAlias));
+      if (!matches.iterator().hasNext()) {
+        return;
+      }
+      smallestAlias = nextAlias;
+      rootContext.candidates.put(nextAlias, matches);
+    }
+
+    Iterable<OIdentifiable> allCandidates = rootContext.candidates.get(smallestAlias);
+    for (OIdentifiable id : allCandidates) {
+      MatchContext childContext = rootContext.copy(smallestAlias, id);
+      activeContexts.add(childContext);
+    }
+
+    while (!activeContexts.isEmpty()) {
+      processContext(pattern, estimatedRootEntries, activeContexts.remove(0), aliasClasses, aliasFilters, result, iCommandContext);
+    }
+
+  }
+
+  private void processContext(Pattern pattern, Map<String, Long> estimatedRootEntries, MatchContext matchContext,
+      Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, OResultSet result, OCommandContext iCommandContext) {
+
+    List<MatchContext> childContexts = new ArrayList<MatchContext>();
+    if (pattern.getNumOfEdges() == matchContext.matchedEdges.size()) {
+      addResult(matchContext, result);
       return;
     }
-    // Iterable aliasMatches = reach()
-    // aliasMatches = query(aliasClasses.get(nextAlias), aliasFilters.get(nextAlias));
-    // TODO start from here!
+    PatternNode rootNode = pattern.get(matchContext.root);
+    Iterator<PatternEdge> edgeIterator = rootNode.out.iterator();
+    if (edgeIterator.hasNext()) {
+      PatternEdge outEdge = edgeIterator.next();
+      edgeIterator.remove();
+      if (!matchContext.matchedEdges.containsKey(outEdge)) {
 
+        Object rightValues = executeTraversal(matchContext, iCommandContext, outEdge);
+        if (!(rightValues instanceof Iterable)) {
+          rightValues = Collections.singleton(rightValues);
+        }
+        for (OIdentifiable rightValue : (Iterable<OIdentifiable>) rightValues) {
+          Iterable<OIdentifiable> prevMatchedRightValues = matchContext.candidates.get(outEdge.in.alias);
+
+          if (prevMatchedRightValues.iterator().hasNext()) {// just matching against known values
+            for (OIdentifiable id : prevMatchedRightValues) {
+              if (id.getIdentity().equals(rightValue.getIdentity())) {
+                MatchContext childContext = matchContext.copy(outEdge.in.alias, id);
+                if (edgeIterator.hasNext()) {
+                  childContext.root = rootNode.alias;
+                }
+                childContext.matchedEdges.put(outEdge, true);
+                childContexts.add(childContext);
+              }
+            }
+          } else {// searching for neighbors
+            OWhereClause where = aliasFilters.get(outEdge.in.alias);
+            if (where == null || where.matchesFilters(rightValue)) {
+              MatchContext childContext = matchContext.copy(outEdge.in.alias, rightValue.getIdentity());
+              if (edgeIterator.hasNext()) {
+                childContext.root = rootNode.alias;
+              }
+              childContext.matchedEdges.put(outEdge, true);
+              childContexts.add(childContext);
+            }
+          }
+        }
+      }
+    } else {
+      edgeIterator = rootNode.in.iterator();
+      while (edgeIterator.hasNext()) {
+        PatternEdge inEdge = edgeIterator.next();
+        while (!inEdge.item.isBidirectional()) {
+          continue;
+        }
+        edgeIterator.remove();
+        if (!matchContext.matchedEdges.containsKey(inEdge)) {
+          Object leftValues = inEdge.item.method.executeReverse(matchContext.matched.get(matchContext.root), iCommandContext);
+          if (!(leftValues instanceof Iterable)) {
+            leftValues = Collections.singleton(leftValues);
+          }
+          for (OIdentifiable leftValue : (Iterable<OIdentifiable>) leftValues) {
+            Iterable<OIdentifiable> prevMatchedRightValues = matchContext.candidates.get(inEdge.out.alias);
+
+            if (prevMatchedRightValues.iterator().hasNext()) {// just matching against known values
+              for (OIdentifiable id : prevMatchedRightValues) {
+                if (id.getIdentity().equals(leftValue.getIdentity())) {
+                  MatchContext childContext = matchContext.copy(inEdge.out.alias, id);
+                  if (edgeIterator.hasNext()) {
+                    childContext.root = rootNode.alias;
+                  }
+                  childContext.matchedEdges.put(inEdge, true);
+                  childContexts.add(childContext);
+                }
+              }
+            } else {// searching for neighbors
+              OWhereClause where = aliasFilters.get(inEdge.out.alias);
+              if (where == null || where.matchesFilters(leftValue)) {
+                MatchContext childContext = matchContext.copy(inEdge.out.alias, leftValue.getIdentity());
+                if (edgeIterator.hasNext()) {
+                  childContext.root = rootNode.alias;
+                }
+                childContext.matchedEdges.put(inEdge, true);
+                childContexts.add(childContext);
+              }
+            }
+          }
+        }
+        break;
+      }
+    }
+    while (!childContexts.isEmpty()) {
+      processContext(pattern, estimatedRootEntries, childContexts.remove(0), aliasClasses, aliasFilters, result, iCommandContext);
+    }
+
+    // TODO start from here!
+  }
+
+  private Object executeTraversal(MatchContext matchContext, OCommandContext iCommandContext,
+      PatternEdge outEdge) {
+    return outEdge.item.method.execute(matchContext.matched.get(matchContext.root), iCommandContext);
+  }
+
+  private void addResult(MatchContext matchContext, OResultSet result) {
+    // TODO implement this!
   }
 
   private Iterable<OIdentifiable> query(String className, OWhereClause oWhereClause) {
@@ -212,6 +385,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor {
 
   private String getNextAlias(Map<String, Long> estimatedRootEntries, MatchContext matchContext) {
     Map.Entry<String, Long> lowerValue = null;
+    String lastAlias = lowerValue.getKey();
     for (Map.Entry<String, Long> entry : estimatedRootEntries.entrySet()) {
       if (matchContext.matched.containsKey(entry.getKey())) {
         continue;
@@ -222,6 +396,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor {
         lowerValue = entry;
       }
     }
+
     return lowerValue.getKey();
   }
 
