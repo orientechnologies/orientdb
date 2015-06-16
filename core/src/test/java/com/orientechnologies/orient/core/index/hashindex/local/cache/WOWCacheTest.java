@@ -240,7 +240,7 @@ public class WOWCacheTest {
       Assert.assertEquals(dataTwo, dataOne);
     }
 
-    Thread.sleep(5000);
+    Thread.sleep(10000);
 
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataContent = pageData[i];

@@ -20,15 +20,12 @@
 
 package com.orientechnologies.orient.core.conflict;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSaveThreadLocal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -44,26 +41,17 @@ public class OAutoMergeRecordConflictStrategy extends OVersionRecordConflictStra
       final byte[] iRecordContent, final ORecordVersion iDatabaseVersion) {
 
     if (iRecordType == ODocument.RECORD_TYPE) {
-      // No need lock, is already inside a lock.
+      // No need lock, is already inside a lock. Use database to read temporary objects too
       OStorageOperationResult<ORawBuffer> res = storage.readRecord(rid, null, false, null);
       final ODocument storedRecord = new ODocument(rid).fromStream(res.getResult().getBuffer());
-      final ODocument newRecord = new ODocument(rid).fromStream(iRecordContent);
+
+      ODocument newRecord = (ODocument) ORecordSaveThreadLocal.getLast();
+      if (newRecord == null || !newRecord.getIdentity().equals(rid))
+        newRecord = new ODocument(rid).fromStream(iRecordContent);
 
       storedRecord.merge(newRecord, true, true);
 
       iDatabaseVersion.setCounter(Math.max(iDatabaseVersion.getCounter(), iRecordVersion.getCounter()) + 1);
-
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-
-      // UPDATE THE CACHE TO USE THIS RECORD
-      db.getLocalCache().updateRecord(storedRecord);
-
-      final OTransaction tx = db.getTransaction();
-      if (tx.isActive()) {
-        final ORecord txRecord = tx.getRecord(rid);
-        if (txRecord != null)
-          txRecord.fromStream(iRecordContent);
-      }
 
       return storedRecord.toStream();
     } else

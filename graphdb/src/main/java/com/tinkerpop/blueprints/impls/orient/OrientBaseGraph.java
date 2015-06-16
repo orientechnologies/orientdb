@@ -284,11 +284,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     final ThreadLocal<OrientBaseGraph> ag = activeGraph;
     if (ag != null)
-      ag.set(null);
+      ag.remove();
 
-    final ODatabaseRecordThreadLocal dbtl = ODatabaseRecordThreadLocal.INSTANCE;
-    if (dbtl != null)
-      dbtl.set(null);
   }
 
   /**
@@ -354,7 +351,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   protected static void checkForGraphSchema(final ODatabaseDocumentTx iDatabase) {
     final OSchema schema = iDatabase.getMetadata().getSchema();
 
-//    schema.getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+    // schema.getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
     final OClass vertexBaseClass = schema.getClass(OrientVertexType.CLASS_NAME);
     final OClass edgeBaseClass = schema.getClass(OrientEdgeType.CLASS_NAME);

@@ -3,6 +3,7 @@ package com.orientechnologies.orient.graph;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -212,10 +213,14 @@ public class TestGraphTransactionOnBatch {
    */
   @Test
   public void testReferToNotExistingVertex() {
-    db.command(
-        new OCommandScript("sql", "begin \n \n LET t2 = create vertex V set Mid = \"2\" \n"
-            + "LET t5 = select from V where Mid = '123456789' \n LET t3 = create edge E from $t5 to $t2 \n"
-            + "\n commit \n return [$t3] ")).execute();
+    try {
+      db.command(
+          new OCommandScript("sql", "begin \n \n LET t2 = create vertex V set Mid = \"2\" \n"
+              + "LET t5 = select from V where Mid = '123456789' \n LET t3 = create edge E from $t5 to $t2 \n"
+              + "\n commit \n return [$t3] ")).execute();
+      Assert.fail();
+    } catch (OCommandExecutionException e) {
+    }
     List<ODocument> res = db.query(new OSQLSynchQuery("select from E"));
     Assert.assertEquals(res.size(), 0);
   }

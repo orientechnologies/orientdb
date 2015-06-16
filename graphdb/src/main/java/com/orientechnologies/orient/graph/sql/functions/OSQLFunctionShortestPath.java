@@ -93,15 +93,14 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
         reverseDirection = Direction.OUT;
       }
 
-      Object edgeType = null;
+      String edgeType = null;
       if (iParams.length > 3) {
-        edgeType = iParams[3];
+        edgeType = iParams[3] == null ? null : "" + iParams[3];
       }
+      String[] edgeTypeParam = new String[] { edgeType };
 
-      final ArrayDeque<OrientVertex> queue1 = new ArrayDeque<OrientVertex>();
-      final ArrayDeque<OrientVertex> queue2 = new ArrayDeque<OrientVertex>();
-
-      final Set<ORID> visited = new HashSet<ORID>();
+      ArrayDeque<OrientVertex> queue1 = new ArrayDeque<OrientVertex>();
+      ArrayDeque<OrientVertex> queue2 = new ArrayDeque<OrientVertex>();
 
       final Set<ORID> leftVisited = new HashSet<ORID>();
       final Set<ORID> rightVisited = new HashSet<ORID>();
@@ -110,27 +109,30 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
       final Map<ORID, ORID> nexts = new HashMap<ORID, ORID>();
 
       queue1.add(sourceVertex);
-      visited.add(sourceVertex.getIdentity());
+      leftVisited.add(sourceVertex.getIdentity());
 
       queue2.add(destinationVertex);
-      visited.add(destinationVertex.getIdentity());
+      rightVisited.add(destinationVertex.getIdentity());
 
       OrientVertex current;
       OrientVertex reverseCurrent;
+
+
 
       while (true) {
         if (queue1.isEmpty() && queue2.isEmpty()) {
           break;
         }
 
-        if (!queue1.isEmpty()) {
+        ArrayDeque<OrientVertex> nextLevelQueue = new ArrayDeque<OrientVertex>();
+        while (!queue1.isEmpty()) {
           current = queue1.poll();
 
           Iterable<Vertex> neighbors;
           if (edgeType == null) {
             neighbors = current.getVertices(direction);
           } else {
-            neighbors = current.getVertices(direction, new String[] { "" + edgeType });
+            neighbors = current.getVertices(direction, edgeTypeParam);
           }
           for (Vertex neighbor : neighbors) {
             final OrientVertex v = (OrientVertex) neighbor;
@@ -140,25 +142,26 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
               previouses.put(neighborIdentity, current.getIdentity());
               return computePath(previouses, nexts, neighborIdentity);
             }
-            if (!visited.contains(neighborIdentity)) {
+            if (!leftVisited.contains(neighborIdentity)) {
               previouses.put(neighborIdentity, current.getIdentity());
 
-              queue1.offer(v);
-              visited.add(neighborIdentity);
+              nextLevelQueue.offer(v);
               leftVisited.add(neighborIdentity);
             }
 
           }
         }
+        queue1 = nextLevelQueue;
+        nextLevelQueue = new ArrayDeque<OrientVertex>();
 
-        if (!queue2.isEmpty()) {
+        while (!queue2.isEmpty()) {
           reverseCurrent = queue2.poll();
 
           Iterable<Vertex> neighbors;
           if (edgeType == null) {
             neighbors = reverseCurrent.getVertices(reverseDirection);
           } else {
-            neighbors = reverseCurrent.getVertices(reverseDirection, new String[] { "" + edgeType });
+            neighbors = reverseCurrent.getVertices(reverseDirection, edgeTypeParam);
           }
           for (Vertex neighbor : neighbors) {
             final OrientVertex v = (OrientVertex) neighbor;
@@ -168,17 +171,17 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
               nexts.put(neighborIdentity, reverseCurrent.getIdentity());
               return computePath(previouses, nexts, neighborIdentity);
             }
-            if (!visited.contains(neighborIdentity)) {
+            if (!rightVisited.contains(neighborIdentity)) {
 
               nexts.put(neighborIdentity, reverseCurrent.getIdentity());
 
-              queue2.offer(v);
-              visited.add(neighborIdentity);
+              nextLevelQueue.offer(v);
               rightVisited.add(neighborIdentity);
             }
 
           }
         }
+        queue2 = nextLevelQueue;
       }
       return new ArrayList<ORID>();
     } finally {
