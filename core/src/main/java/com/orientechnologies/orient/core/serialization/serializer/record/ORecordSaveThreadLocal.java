@@ -49,17 +49,14 @@ public class ORecordSaveThreadLocal extends ThreadLocal<ORecord> {
   }
 
   public static ORecord getLast() {
-    System.out.println("GET LAST" + INSTANCE.get());
     return INSTANCE.get();
   }
 
   public static void setLast(final ORecord document) {
-    System.out.println("SET LAST " + document);
     INSTANCE.set(document);
   }
 
   public static void removeLast() {
-    System.out.println("REMOVE LAST");
     INSTANCE.set(null);
   }
 }
