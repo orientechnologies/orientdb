@@ -69,4 +69,14 @@ public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, Wea
     else
       return value.get();
   }
+
+  @Override
+  public void shutdown() {
+    cache = new WeakHashMap<ORID, WeakReference<ORecord>>();
+  }
+
+  @Override
+  public void clear() {
+    cache = new WeakHashMap<ORID, WeakReference<ORecord>>();
+  }
 }

@@ -7,6 +7,7 @@ import java.util.Random;
 import java.util.concurrent.*;
 
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
+import com.orientechnologies.orient.core.id.ORecordId;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -25,16 +26,17 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
  */
 @Test
 public class LocalMTCreateDocumentSpeedTest {
-  private ODatabaseDocumentTx            database;
-  private Date                           date            = new Date();
-  private CountDownLatch                 latch           = new CountDownLatch(1);
-  private List<Future>                   futures;
-  private volatile boolean               stop            = false;
-  private ExecutorService                executorService = Executors.newCachedThreadPool();
+  private static final Random                   random          = new Random();
+  private ODatabaseDocumentTx                   database;
+  private Date                                  date            = new Date();
+  private CountDownLatch                        latch           = new CountDownLatch(1);
+  private List<Future>                          futures;
+  private volatile boolean                      stop            = false;
+  private ExecutorService                       executorService = Executors.newCachedThreadPool();
 
-  private final List<String>             users           = new ArrayList<String>();
+  private final List<String>                    users           = new ArrayList<String>();
 
-  private final OPartitionedDatabasePoolFactory poolFactory    = new OPartitionedDatabasePoolFactory();
+  private final OPartitionedDatabasePoolFactory poolFactory     = new OPartitionedDatabasePoolFactory();
 
   @BeforeClass
   public void init() {
@@ -49,7 +51,6 @@ public class LocalMTCreateDocumentSpeedTest {
     }
 
     database.create();
-    database.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 8);
 
     database.getMetadata().getSchema().createClass("Account");
 
@@ -60,26 +61,43 @@ public class LocalMTCreateDocumentSpeedTest {
     }
 
     futures = new ArrayList<Future>();
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 1; i++)
       futures.add(executorService.submit(new Saver()));
   }
 
   public void cycle() throws Exception {
-    long start = System.currentTimeMillis();
     latch.countDown();
 
     Thread.sleep(10 * 60 * 1000);
     stop = true;
 
+    System.out.println("Stop insertion");
     for (Future future : futures)
       future.get();
 
-    long end = System.currentTimeMillis();
+    futures.clear();
 
-    long sum = database.countClass("Account");
+    latch = new CountDownLatch(1);
 
-    System.out.println(sum / (end - start));
+    stop = false;
+    System.out.println("Start reading");
+    System.out.println("Doc count : " + database.countClass("Account"));
 
+    for (int i = 0; i < 8; i++)
+      futures.add(executorService.submit(new Reader(database.countClass("Account"), database.getMetadata().getSchema()
+          .getClass("Account").getDefaultClusterId())));
+
+    latch.countDown();
+
+    Thread.sleep(10 * 60 * 1000);
+
+    stop = true;
+
+    long sum = 0;
+    for (Future future : futures)
+      sum += (Long) future.get();
+
+    System.out.println("Speed : " + (sum / futures.size()) + " ns per document.");
   }
 
   @AfterClass
@@ -96,14 +114,14 @@ public class LocalMTCreateDocumentSpeedTest {
 
     @Override
     public Void call() throws Exception {
-			Random random = new Random();
+      Random random = new Random();
       latch.await();
 
       while (!stop) {
 
-				final String user = users.get(random.nextInt(users.size()));
+        final String user = users.get(random.nextInt(users.size()));
 
-				final OPartitionedDatabasePool pool = poolFactory.get(System.getProperty("url"), user, user);
+        final OPartitionedDatabasePool pool = poolFactory.get(System.getProperty("url"), user, user);
         final ODatabaseDocumentTx database = pool.acquire();
 
         ODocument record = new ODocument("Account");
@@ -118,6 +136,44 @@ public class LocalMTCreateDocumentSpeedTest {
       }
 
       return null;
+    }
+  }
+
+  private final class Reader implements Callable<Long> {
+
+    private final int   docCount;
+    private final int   clusterId;
+    public volatile int size;
+
+    public Reader(long docCount, int clusterId) {
+      this.docCount = (int) docCount;
+      this.clusterId = clusterId;
+    }
+
+    @Override
+    public Long call() throws Exception {
+
+      latch.await();
+      final OPartitionedDatabasePool pool = poolFactory.get(System.getProperty("url"), "admin", "admin");
+
+      final ODatabaseDocumentTx database = pool.acquire();
+
+      List<ODocument> result = new ArrayList<ODocument>();
+
+      long counter = 0;
+      long start = System.nanoTime();
+      while (!stop) {
+        result.add((ODocument) database.load(new ORecordId(clusterId, random.nextInt(docCount))));
+        counter++;
+        if (result.size() > 1000) {
+          size = result.size();
+          result.clear();
+        }
+      }
+      long end = System.nanoTime();
+
+      database.close();
+      return ((end - start) / counter);
     }
   }
 
