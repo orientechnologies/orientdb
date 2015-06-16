@@ -306,6 +306,14 @@ public class OSelectStatementTest {
   }
 
   @Test
+  public void testSpatial() {
+
+      checkRightSyntax("select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 0.5}]");
+    checkRightSyntax("select * from Place where [latitude,longitude] WITHIN [[51.507222,-0.1275],[55.507222,-0.1275]]");
+
+  }
+
+  @Test
   public void testSubConditions() {
     checkRightSyntax("SELECT @rid as rid, localName FROM Person WHERE ( 'milano' IN out('lives').localName OR 'roma' IN out('lives').localName ) ORDER BY age ASC");
   }
