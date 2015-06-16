@@ -1493,10 +1493,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   private void rewriteLinksInDocument(ODocument document) {
-    LinkConverter.INSTANCE.setExportImportHashTable(exportImportHashTable);
+    rewriteLinksInDocument(document, exportImportHashTable);
+    document.save();
+  }
+
+  protected static void rewriteLinksInDocument(ODocument document, OIndex<OIdentifiable> rewrite) {
+    LinkConverter.INSTANCE.setExportImportHashTable(rewrite);
     final LinksRewriter rewriter = new LinksRewriter();
     final ODocumentFieldWalker documentFieldWalker = new ODocumentFieldWalker();
     documentFieldWalker.walkDocument(document, rewriter);
-    document.save();
   }
 }
