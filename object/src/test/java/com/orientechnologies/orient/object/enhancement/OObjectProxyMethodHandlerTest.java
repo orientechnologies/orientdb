@@ -1,8 +1,12 @@
 package com.orientechnologies.orient.object.enhancement;
 
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
+import javax.persistence.CascadeType;
+import javax.persistence.OneToMany;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -10,18 +14,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * @author JN <a href="mailto:jn@brain-activit.com">Julian Neuhaus</a>
  * @since 18.08.2014
  */
 public class OObjectProxyMethodHandlerTest {
-  private OObjectDatabaseTx   databaseTx;
+  private OObjectDatabaseTx databaseTx;
 
   private Map<String, Object> fieldsAndThereDefaultValue;
 
@@ -47,6 +48,40 @@ public class OObjectProxyMethodHandlerTest {
   @AfterClass
   protected void tearDown() {
     databaseTx.drop();
+  }
+
+  @Test
+  public void reloadTestForMapsInTarget() {
+    EntityWithDifferentFieldTypes targetObject = this.databaseTx.newInstance(EntityWithDifferentFieldTypes.class);
+    EntityWithDifferentFieldTypes childObject = this.databaseTx.newInstance(EntityWithDifferentFieldTypes.class);
+
+    Map<String, String> map = new HashMap<String, String>();
+    map.put("key", "value");
+
+    targetObject.setStringStringMap(map);
+    Map<String, String> map2 = new HashMap<String, String>();
+    map2.put("key", "value");
+
+    Map<String, String> map3 = childObject.getStringStringMap();
+    map2.put("key", "value");
+
+    targetObject.getListOfEntityWithDifferentFieldTypes().add(childObject);
+
+    targetObject = this.databaseTx.save(targetObject);
+
+    for (String key : targetObject.getStringStringMap().keySet()) {
+      assertTrue(key.equals("key"));
+    }
+    targetObject.getStringStringMap().put("key2", "value2");
+
+    childObject.getStringStringMap().put("key3", "value3");
+    targetObject = this.databaseTx.save(targetObject);
+    //        targetObject = this.databaseTx.load(targetObject);
+
+    targetObject.getStringStringMap().get("key");
+    targetObject.getStringStringMap2().get("key2");
+
+    targetObject.getStringStringMap2().put("key3", "value3");
   }
 
   @Test
@@ -166,16 +201,19 @@ public class OObjectProxyMethodHandlerTest {
   }
 
   public class EntityWithDifferentFieldTypes {
-    private byte                                byteField;
-    private short                               shortField;
-    private int                                 intField;
-    private long                                longField;
-    private float                               floatField;
-    private double                              doubleField;
-    private String                              stringField;
-    private boolean                             booleanField;
-    private EntityWithDifferentFieldTypes       objectField;
+    private byte                          byteField;
+    private short                         shortField;
+    private int                           intField;
+    private long                          longField;
+    private float                         floatField;
+    private double                        doubleField;
+    private String                        stringField;
+    private boolean                       booleanField;
+    private EntityWithDifferentFieldTypes objectField;
+    private Map<String, String>           stringStringMap  = new HashMap<String, String>();
+    private Map<String, String>           stringStringMap2 = new HashMap<String, String>();
 
+    @OneToMany(cascade = CascadeType.ALL)
     private List<EntityWithDifferentFieldTypes> listOfEntityWithDifferentFieldTypes;
 
     public EntityWithDifferentFieldTypes() {
@@ -261,6 +299,22 @@ public class OObjectProxyMethodHandlerTest {
 
     public void setListOfEntityWithDifferentFieldTypes(List<EntityWithDifferentFieldTypes> listOfEntityWithDifferentFieldTypes) {
       this.listOfEntityWithDifferentFieldTypes = listOfEntityWithDifferentFieldTypes;
+    }
+
+    public Map<String, String> getStringStringMap() {
+      return stringStringMap;
+    }
+
+    public void setStringStringMap(Map<String, String> stringStringMap) {
+      this.stringStringMap = stringStringMap;
+    }
+
+    public Map<String, String> getStringStringMap2() {
+      return stringStringMap2;
+    }
+
+    public void setStringStringMap2(Map<String, String> stringStringMap2) {
+      this.stringStringMap2 = stringStringMap2;
     }
   }
 }
