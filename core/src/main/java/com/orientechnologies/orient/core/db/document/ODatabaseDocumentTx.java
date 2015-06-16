@@ -20,13 +20,6 @@
 
 package com.orientechnologies.orient.core.db.document;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -90,6 +83,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSaveThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
@@ -115,6 +109,13 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
@@ -1765,6 +1766,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           "Cannot create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
 
     final Set<OIndex<?>> lockedIndexes = new HashSet<OIndex<?>>();
+
     record.setInternalStatus(ORecordElement.STATUS.MARSHALLING);
     try {
       if (record instanceof ODocument)
@@ -1842,6 +1844,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         else if (!record.isDirty())
           return (RET) record;
 
+        ORecordSaveThreadLocal.setLast(record);
         try {
           // SAVE IT
           boolean updateContent = ORecordInternal.isContentChanged(record);
@@ -1886,7 +1889,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       } finally {
         callbackHookFinalize(record, callTriggers, wasNew, stream);
         ORecordSerializationContext.pullContext();
-        ((OMetadataInternal) getMetadata()).clearThreadLocalSchemaSnapshot();
+        getMetadata().clearThreadLocalSchemaSnapshot();
+        ORecordSaveThreadLocal.removeLast();
       }
 
       if (stream != null && stream.length > 0 && !operationResult.isMoved())
@@ -2429,6 +2433,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     doc = (ODocument) currentTx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback,
         iRecordUpdatedCallback);
+
     return (RET) doc;
   }
 

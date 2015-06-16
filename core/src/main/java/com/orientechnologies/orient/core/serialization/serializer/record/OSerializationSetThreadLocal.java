@@ -72,10 +72,10 @@ public class OSerializationSetThreadLocal extends ThreadLocal<Map<ODocument, Boo
   public static boolean checkAndAdd(final ODocument document) {
     final Map<ODocument, Boolean> iMarshalledRecords = INSTANCE.get();
     // CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
-    if (iMarshalledRecords.containsKey(document)) {
+    if (iMarshalledRecords.containsKey(document))
       return false;
-    } else
-      iMarshalledRecords.put(document, Boolean.FALSE);
+
+    iMarshalledRecords.put(document, Boolean.FALSE);
     return true;
   }
 

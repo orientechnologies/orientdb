@@ -646,8 +646,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public ODocument reload(final String fetchPlan, final boolean ignoreCache) {
     super.reload(fetchPlan, ignoreCache);
     if (!_lazyLoad) {
-      checkForFields();
       checkForLoading();
+      checkForFields();
     }
     return this;
   }
@@ -1387,8 +1387,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     super.fromStream(iRecordBuffer);
 
     if (!_lazyLoad) {
-      checkForFields();
       checkForLoading();
+      checkForFields();
     }
 
     return this;
@@ -1401,6 +1401,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    *          name of field to check
    */
   public OType fieldType(final String iFieldName) {
+    checkForLoading();
     checkForFields(iFieldName);
 
     ODocumentEntry entry = _fields.get(iFieldName);
