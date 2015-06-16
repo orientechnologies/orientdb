@@ -287,6 +287,10 @@ public class Orient extends OListenerManger<OOrientListener> {
         shutdownHook.cancel();
         shutdownHook = null;
       }
+      if (signalHandler != null) {
+        signalHandler.cancel();
+        signalHandler = null;
+      }
 
       if (threadGroup != null)
         // STOP ALL THE PENDING THREADS
@@ -631,6 +635,10 @@ public class Orient extends OListenerManger<OOrientListener> {
     if (shutdownHook != null) {
       shutdownHook.cancel();
       shutdownHook = null;
+    }
+    if (signalHandler != null) {
+      signalHandler.cancel();
+      signalHandler = null;
     }
   }
 
