@@ -19,6 +19,27 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.text.ParseException;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.zip.GZIPInputStream;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -66,26 +87,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Import data from a file into a database.
@@ -845,6 +846,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                 jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
             }
             jsonReader.readNext(OJSONReader.END_OBJECT);
+          } else if (value.equals("\"customFields\"")) {
+            Map<String, String> customFields = importCustomFields();
+            for (Entry<String, String> entry : customFields.entrySet()) {
+              cls.setCustom(entry.getKey(), entry.getValue());
+            }
           } else if (value.equals("\"cluster-selection\"")) {
             // @SINCE 1.7
             cls.setClusterSelection(jsonReader.readString(OJSONReader.NEXT_IN_OBJECT));
