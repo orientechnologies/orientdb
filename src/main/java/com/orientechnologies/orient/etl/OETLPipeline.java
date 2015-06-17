@@ -76,6 +76,8 @@ public class OETLPipeline {
   }
 
   public ODatabaseDocumentTx getDocumentDatabase() {
+    if (db != null)
+      db.activateOnCurrentThread();
     return db;
   }
 
@@ -85,6 +87,8 @@ public class OETLPipeline {
   }
 
   public OrientBaseGraph getGraphDatabase() {
+    if (graph != null)
+      graph.makeActive();
     return graph;
   }
 
