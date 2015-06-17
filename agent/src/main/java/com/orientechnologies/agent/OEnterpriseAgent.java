@@ -17,19 +17,21 @@
  */
 package com.orientechnologies.agent;
 
+import com.orientechnologies.agent.hook.OAuditingHook;
 import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -140,12 +142,12 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
    */
   @Override
   public void onOpen(final ODatabaseInternal iDatabase) {
-    // final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
-    //
-    // // REGISTER AUDITING
-    // final ODocument auditingCfg = new ODocument();
-    // final OAuditingHook auditing = new OAuditingHook(auditingCfg);
-    // iDatabase.registerHook(auditing);
+    final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
+
+    // REGISTER AUDITING
+    final ODocument auditingCfg = new ODocument();
+    final OAuditingHook auditing = new OAuditingHook(auditingCfg);
+    iDatabase.registerHook(auditing);
   }
 
   @Override
@@ -224,7 +226,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     System.out.printf("\n\n********************************************************************");
     System.out.printf("\n*                 ORIENTDB  -  ENTERPRISE EDITION                  *");
     System.out.printf("\n*                                                                  *");
-    System.out.printf("\n*            " + OConstants.COPYRIGHT + "           *");
+//    System.out.printf("\n*            " + OConstants.COPYRIGHT + "           *");
     System.out.printf("\n********************************************************************");
 
     Orient

@@ -7,16 +7,16 @@
                 <parameter value="50" name="graph.pool.max"/>
             </parameters>
         </handler>
-        <!--<handler class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">-->
-            <!--<parameters>-->
-                <!--<parameter value="local1" name="nodeName"/>-->
-                <!--<parameter value="true" name="enabled"/>-->
-                <!--<parameter value="${ORIENTDB_HOME}/config/default-distributed-db-config.json" name="configuration.db.default"/>-->
-                <!--<parameter value="${ORIENTDB_HOME}/config/hazelcast.xml" name="configuration.hazelcast"/>-->
-                <!--<parameter value="com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver" name="conflict.resolver.impl"/>-->
-                <!--<parameter value="com.orientechnologies.orient.server.hazelcast.sharding.strategy.ORoundRobinPartitioninStrategy" name="sharding.strategy.round-robin"/>-->
-            <!--</parameters>-->
-        <!--</handler>-->
+        <handler class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
+            <parameters>
+                <parameter value="local1" name="nodeName"/>
+                <parameter value="true" name="enabled"/>
+                <parameter value="${ORIENTDB_HOME}/config/default-distributed-db-config.json" name="configuration.db.default"/>
+                <parameter value="${ORIENTDB_HOME}/config/hazelcast.xml" name="configuration.hazelcast"/>
+                <parameter value="com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver" name="conflict.resolver.impl"/>
+                <parameter value="com.orientechnologies.orient.server.hazelcast.sharding.strategy.ORoundRobinPartitioninStrategy" name="sharding.strategy.round-robin"/>
+            </parameters>
+        </handler>
         <handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
             <parameters>
                 <parameter value="false" name="enabled"/>
