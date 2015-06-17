@@ -1,27 +1,23 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.metadata.function;
-
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -35,6 +31,10 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Stored function. It contains language and code to execute as a function. The execute() takes parameters. The function is
  * state-less, so can be used by different threads.
@@ -42,15 +42,15 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  * @author Luca Garulli
  * 
  */
-public class OFunction extends ODocumentWrapper{
+public class OFunction extends ODocumentWrapper {
   public static final String CLASS_NAME = "OFunction";
 
   /**
    * Creates a new function.
    */
   public OFunction() {
-	  super(CLASS_NAME);
-	  setLanguage("SQL");
+    super(CLASS_NAME);
+    setLanguage("SQL");
   }
 
   /**
@@ -70,7 +70,7 @@ public class OFunction extends ODocumentWrapper{
    *          RID of the function to load
    */
   public OFunction(final ORecordId iRid) {
-	  super(iRid);
+    super(iRid);
   }
 
   public String getName() {
@@ -142,6 +142,24 @@ public class OFunction extends ODocumentWrapper{
           args.put(params.get(i), argValue);
         else
           args.put("param" + i, argValue);
+      }
+    }
+
+    return command.executeInContext(iContext, args);
+  }
+
+  public Object executeInContext(final OCommandContext iContext, final Map<String, Object> iArgs) {
+    final OCommandExecutorFunction command = new OCommandExecutorFunction();
+    command.parse(new OCommandFunction(getName()));
+
+    // CONVERT PARAMETERS IN A MAP
+    final Map<Object, Object> args = new LinkedHashMap<Object, Object>();
+
+    if (iArgs.size() > 0) {
+      // PRESERVE THE ORDER FOR PARAMETERS (ARE USED AS POSITIONAL)
+      final List<String> params = getParameters();
+      for (String p : params) {
+        args.put(p, iArgs.get(p));
       }
     }
 
