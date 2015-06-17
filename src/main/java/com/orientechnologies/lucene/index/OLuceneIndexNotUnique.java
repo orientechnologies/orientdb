@@ -35,9 +35,10 @@ import java.util.Set;
 
 public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneIndex {
 
-  public OLuceneIndexNotUnique(String typeId, String algorithm, OLuceneIndexEngine engine, String valueContainerAlgorithm,
+  public OLuceneIndexNotUnique(String name,String typeId, String algorithm, OLuceneIndexEngine engine, String valueContainerAlgorithm,
       ODocument metadata) {
     super(typeId, algorithm, engine, valueContainerAlgorithm, metadata);
+
     engine.setIndexMetadata(metadata);
   }
 
@@ -46,6 +47,7 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
       Set<String> clustersToIndex, boolean rebuild, OProgressListener progressListener) {
     OLuceneIndexEngine engine = (OLuceneIndexEngine) indexEngine;
     engine.setManagedIndex(this);
+    engine.setIndexName(name);
     return super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener);
   }
 
@@ -191,7 +193,7 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
   }
 
   @Override
-  protected Object getCollatingValue(Object key) {
+  public Object getCollatingValue(Object key) {
     return key;
   }
 

@@ -21,11 +21,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
 
-  public OLuceneSpatialIndex(String typeId, String algorithm, OLuceneIndexEngine engine, String valueContainerAlgorithm,
-      ODocument metadata) {
-    super(typeId, algorithm, engine, valueContainerAlgorithm, metadata);
+  public OLuceneSpatialIndex(String name, String typeId, String algorithm, OLuceneIndexEngine engine,
+      String valueContainerAlgorithm, ODocument metadata) {
+    super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata);
   }
-
-
 
 }

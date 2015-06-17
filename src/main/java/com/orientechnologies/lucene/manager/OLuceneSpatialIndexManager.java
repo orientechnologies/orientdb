@@ -62,202 +62,202 @@ import java.util.Set;
 
 public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
 
-    private final OShapeFactory factory;
-    private SpatialContext ctx;
-    private SpatialStrategy strategy;
+  private final OShapeFactory factory;
+  private SpatialContext      ctx;
+  private SpatialStrategy     strategy;
 
-    public OLuceneSpatialIndexManager(OShapeFactory factory) {
-        super();
-        this.ctx = SpatialContext.GEO;
-        this.factory = factory;
-        SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 11);
-        this.strategy = new RecursivePrefixTreeStrategy(grid, "location");
+  public OLuceneSpatialIndexManager(OShapeFactory factory) {
+    super();
+    this.ctx = SpatialContext.GEO;
+    this.factory = factory;
+    SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 11);
+    this.strategy = new RecursivePrefixTreeStrategy(grid, "location");
+  }
+
+  @Override
+  public IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException {
+    Analyzer analyzer = getAnalyzer(metadata);
+    Version version = getLuceneVersion(metadata);
+    IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
+    iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+    return new IndexWriter(directory, iwc);
+  }
+
+  @Override
+  public IndexWriter createIndexWriter(Directory directory, ODocument metadata) throws IOException {
+    Analyzer analyzer = getAnalyzer(metadata);
+    Version version = getLuceneVersion(metadata);
+    IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
+    iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+    return new IndexWriter(directory, iwc);
+  }
+
+  @Override
+  public void init() {
+
+  }
+
+  @Override
+  public void deleteWithoutLoad(String indexName) {
+
+  }
+
+  @Override
+  public boolean contains(Object key) {
+    return false;
+  }
+
+  @Override
+  public boolean remove(Object key) {
+    return false;
+  }
+
+  @Override
+  public ORID getIdentity() {
+    return null;
+  }
+
+  @Override
+  public Object get(Object key) {
+    try {
+      if (key instanceof OSpatialCompositeKey) {
+        final OSpatialCompositeKey newKey = (OSpatialCompositeKey) key;
+
+        final SpatialOperation strategy = newKey.getOperation() != null ? newKey.getOperation() : SpatialOperation.Intersects;
+
+        if (SpatialOperation.Intersects.equals(strategy))
+          return searchIntersect(newKey, newKey.getMaxDistance(), newKey.getContext());
+        else if (SpatialOperation.IsWithin.equals(strategy))
+          return searchWithin(newKey, newKey.getContext());
+
+      } else if (key instanceof OCompositeKey)
+        return searchIntersect((OCompositeKey) key, 0, null);
+
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error on getting entry against Lucene index", e);
     }
 
-    @Override
-    public IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException {
-        Analyzer analyzer = getAnalyzer(metadata);
-        Version version = getLuceneVersion(metadata);
-        IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
-        iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-        return new IndexWriter(directory, iwc);
-    }
+    return null;
+  }
 
-    @Override
-    public IndexWriter createIndexWriter(Directory directory, ODocument metadata) throws IOException {
-        Analyzer analyzer = getAnalyzer(metadata);
-        Version version = getLuceneVersion(metadata);
-        IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
-        iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-        return new IndexWriter(directory, iwc);
-    }
+  public Object searchIntersect(OCompositeKey key, double distance, OCommandContext context) throws IOException {
 
-    @Override
-    public void init() {
+    double lat = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(0), Double.class)).doubleValue();
+    double lng = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(1), Double.class)).doubleValue();
+    SpatialOperation operation = SpatialOperation.Intersects;
 
-    }
+    Point p = ctx.makePoint(lng, lat);
+    SpatialArgs args = new SpatialArgs(operation, ctx.makeCircle(lng, lat,
+        DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM)));
+    Filter filter = strategy.makeFilter(args);
+    IndexSearcher searcher = getSearcher();
+    ValueSource valueSource = strategy.makeDistanceValueSource(p);
+    Sort distSort = new Sort(valueSource.getSortField(false)).rewrite(searcher);
 
-    @Override
-    public void deleteWithoutLoad(String indexName) {
+    return new LuceneResultSet(this,
+        new SpatialQueryContext(context, searcher, new MatchAllDocsQuery(), filter, distSort).setSpatialArgs(args));
+  }
 
-    }
+  @Override
+  public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document doc, ScoreDoc score) {
 
-    @Override
-    public boolean contains(Object key) {
-        return false;
-    }
-
-    @Override
-    public boolean remove(Object key) {
-        return false;
-    }
-
-    @Override
-    public ORID getIdentity() {
-        return null;
-    }
-
-    @Override
-    public Object get(Object key) {
-        try {
-            if (key instanceof OSpatialCompositeKey) {
-                final OSpatialCompositeKey newKey = (OSpatialCompositeKey) key;
-
-                final SpatialOperation strategy = newKey.getOperation() != null ? newKey.getOperation() : SpatialOperation.Intersects;
-
-                if (SpatialOperation.Intersects.equals(strategy))
-                    return searchIntersect(newKey, newKey.getMaxDistance(), newKey.getContext());
-                else if (SpatialOperation.IsWithin.equals(strategy))
-                    return searchWithin(newKey, newKey.getContext());
-
-            } else if (key instanceof OCompositeKey)
-                return searchIntersect((OCompositeKey) key, 0, null);
-
-        } catch (IOException e) {
-            OLogManager.instance().error(this, "Error on getting entry against Lucene index", e);
+    SpatialQueryContext spatialContext = (SpatialQueryContext) queryContext;
+    if (spatialContext.spatialArgs != null) {
+      Point docPoint = (Point) ctx.readShape(doc.get(strategy.getFieldName()));
+      double docDistDEG = ctx.getDistCalc().distance(spatialContext.spatialArgs.getShape().getCenter(), docPoint);
+      final double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
+      recordId.setContext(new HashMap<String, Object>() {
+        {
+          put("distance", docDistInKM);
         }
+      });
+    }
+  }
 
-        return null;
+  public Object searchWithin(OSpatialCompositeKey key, OCommandContext context) throws IOException {
+
+    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+
+    Shape shape = factory.makeShape(key, ctx);
+    if (shape == null)
+      return null;
+    SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, shape);
+    IndexSearcher searcher = getSearcher();
+
+    Filter filter = strategy.makeFilter(args);
+
+    return new LuceneResultSet(this, new SpatialQueryContext(context, searcher, new MatchAllDocsQuery(), filter));
+  }
+
+  @Override
+  public void put(Object key, Object value) {
+
+    OCompositeKey compositeKey = (OCompositeKey) key;
+    if (key instanceof OCompositeKey) {
+    }
+    Set<OIdentifiable> container = (Set<OIdentifiable>) value;
+    for (OIdentifiable oIdentifiable : container) {
+      addDocument(newGeoDocument(oIdentifiable, factory.makeShape(compositeKey, ctx)));
+    }
+  }
+
+  @Override
+  public Object getFirstKey() {
+    return null;
+  }
+
+  @Override
+  public Object getLastKey() {
+    return null;
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      boolean ascSortOrder, ValuesTransformer transformer) {
+    return null;
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return null;
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return null;
+  }
+
+  @Override
+  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
+    return null;
+  }
+
+  @Override
+  public OIndexKeyCursor keyCursor() {
+    return null;
+  }
+
+  @Override
+  public boolean hasRangeQuerySupport() {
+    return false;
+  }
+
+  private Document newGeoDocument(OIdentifiable oIdentifiable, Shape shape) {
+
+    FieldType ft = new FieldType();
+    ft.setIndexed(true);
+    ft.setStored(true);
+
+    Document doc = new Document();
+
+    doc.add(OLuceneIndexType.createField(RID, oIdentifiable, oIdentifiable.getIdentity().toString(), Field.Store.YES,
+        Field.Index.NOT_ANALYZED_NO_NORMS));
+    for (IndexableField f : strategy.createIndexableFields(shape)) {
+      doc.add(f);
     }
 
-    public Object searchIntersect(OCompositeKey key, double distance, OCommandContext context) throws IOException {
+    doc.add(new StoredField(strategy.getFieldName(), ctx.toString(shape)));
 
-        double lat = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(0), Double.class)).doubleValue();
-        double lng = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(1), Double.class)).doubleValue();
-        SpatialOperation operation = SpatialOperation.Intersects;
-        Point p = ctx.makePoint(lng, lat);
-        SpatialArgs args = new SpatialArgs(operation, ctx.makeCircle(lng, lat,
-                DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM)));
-        Filter filter = strategy.makeFilter(args);
-        IndexSearcher searcher = getSearcher();
-        ValueSource valueSource = strategy.makeDistanceValueSource(p);
-        Sort distSort = new Sort(valueSource.getSortField(false)).rewrite(searcher);
-
-        return new LuceneResultSet(this, new SpatialQueryContext(context, searcher, new MatchAllDocsQuery(), filter, distSort).setSpatialArgs(args));
-    }
-
-    @Override
-    public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document doc, ScoreDoc score) {
-
-        SpatialQueryContext spatialContext = (SpatialQueryContext) queryContext;
-        if (spatialContext.spatialArgs != null) {
-            Point docPoint = (Point) ctx.readShape(doc.get(strategy.getFieldName()));
-            double docDistDEG = ctx.getDistCalc().distance(spatialContext.spatialArgs.getShape().getCenter(), docPoint);
-            final double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
-            recordId.setContext(new HashMap<String, Object>() {
-                {
-                    put("distance", docDistInKM);
-                }
-            });
-        }
-    }
-
-    public Object searchWithin(OSpatialCompositeKey key, OCommandContext context) throws IOException {
-
-        Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-
-        Shape shape = factory.makeShape(key, ctx);
-        if (shape == null)
-            return null;
-        SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, shape);
-        IndexSearcher searcher = getSearcher();
-
-
-        Filter filter = strategy.makeFilter(args);
-
-
-        return new LuceneResultSet(this, new SpatialQueryContext(context, searcher, new MatchAllDocsQuery(), filter));
-    }
-
-    @Override
-    public void put(Object key, Object value) {
-
-        OCompositeKey compositeKey = (OCompositeKey) key;
-        if (key instanceof OCompositeKey) {
-        }
-        Set<OIdentifiable> container = (Set<OIdentifiable>) value;
-        for (OIdentifiable oIdentifiable : container) {
-            addDocument(newGeoDocument(oIdentifiable, factory.makeShape(compositeKey, ctx)));
-        }
-    }
-
-    @Override
-    public Object getFirstKey() {
-        return null;
-    }
-
-    @Override
-    public Object getLastKey() {
-        return null;
-    }
-
-    @Override
-    public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-                                              boolean ascSortOrder, ValuesTransformer transformer) {
-        return null;
-    }
-
-    @Override
-    public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-        return null;
-    }
-
-    @Override
-    public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-        return null;
-    }
-
-    @Override
-    public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
-        return null;
-    }
-
-    @Override
-    public OIndexKeyCursor keyCursor() {
-        return null;
-    }
-
-    @Override
-    public boolean hasRangeQuerySupport() {
-        return false;
-    }
-
-    private Document newGeoDocument(OIdentifiable oIdentifiable, Shape shape) {
-
-        FieldType ft = new FieldType();
-        ft.setIndexed(true);
-        ft.setStored(true);
-
-        Document doc = new Document();
-
-        doc.add(OLuceneIndexType.createField(RID, oIdentifiable, oIdentifiable.getIdentity().toString(), Field.Store.YES,
-                Field.Index.NOT_ANALYZED_NO_NORMS));
-        for (IndexableField f : strategy.createIndexableFields(shape)) {
-            doc.add(f);
-        }
-
-        doc.add(new StoredField(strategy.getFieldName(), ctx.toString(shape)));
-
-        return doc;
-    }
+    return doc;
+  }
 }

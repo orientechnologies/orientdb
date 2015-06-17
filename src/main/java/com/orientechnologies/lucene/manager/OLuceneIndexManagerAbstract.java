@@ -84,12 +84,12 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   }
 
   @Override
-  public void create(String indexName, OIndexDefinition indexDefinition, String clusterIndexName,
+  public void create(OIndexDefinition indexDefinition, String clusterIndexName,
       OStreamSerializer valueSerializer, boolean isAutomatic) {
 
   }
 
-  public void createIndex(String indexName, OIndexDefinition indexDefinition, String clusterIndexName,
+  public void createIndex(OIndexDefinition indexDefinition, String clusterIndexName,
       OStreamSerializer valueSerializer, boolean isAutomatic, ODocument metadata) {
     // PREVENT EXCEPTION
     if (mgrWriter == null)
@@ -441,5 +441,9 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   @Override
   public int getVersion() {
     return 0;
+  }
+
+  public void setIndexName(String indexName) {
+    this.indexName = indexName;
   }
 }

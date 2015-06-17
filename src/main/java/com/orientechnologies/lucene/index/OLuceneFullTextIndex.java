@@ -22,9 +22,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OLuceneFullTextIndex extends OLuceneIndexNotUnique implements OLuceneIndex {
 
-  public OLuceneFullTextIndex(String typeId, String algorithm, OLuceneIndexEngine indexEngine, String valueContainerAlgorithm,
-      ODocument metadata) {
-    super(typeId, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+  public OLuceneFullTextIndex(String name, String typeId, String algorithm, OLuceneIndexEngine indexEngine,
+      String valueContainerAlgorithm, ODocument metadata) {
+    super(name, typeId, algorithm, indexEngine, valueContainerAlgorithm, metadata);
     indexEngine.setIndexMetadata(metadata);
   }
 

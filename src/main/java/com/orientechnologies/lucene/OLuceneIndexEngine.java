@@ -54,10 +54,10 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public void create(String indexName, OIndexDefinition indexDefinition, String clusterIndexName,
-      OStreamSerializer valueSerializer, boolean isAutomatic) {
+  public void create(OIndexDefinition indexDefinition, String clusterIndexName, OStreamSerializer valueSerializer,
+      boolean isAutomatic) {
 
-    lucene.createIndex(indexName, indexDefinition, clusterIndexName, valueSerializer, isAutomatic, indexMetadata);
+    lucene.createIndex(indexDefinition, clusterIndexName, valueSerializer, isAutomatic, indexMetadata);
 
   }
 
@@ -182,7 +182,7 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 
   public void setManagedIndex(OIndex index) {
@@ -203,5 +203,9 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
   public IndexSearcher searcher() throws IOException {
     return lucene.getSearcher();
+  }
+
+  public void setIndexName(String indexName) {
+    lucene.setIndexName(indexName);
   }
 }
