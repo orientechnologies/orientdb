@@ -18,23 +18,21 @@
  */
 package org.apache.tinkerpop.gremlin.orientdb.structure;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.tinkerpop.gremlin.structure.*;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
+
 import org.apache.commons.lang.NotImplementedException;
-import java.util.Set;
 
 /**
  * @author Michael Pollmeier (http://michaelpollmeier.com)
  */
 public final class OrientVertex extends OrientElement implements Vertex {
-    // protected OIdentifiable rawElement;
-    // protected OrientGraph graph;
+
+    protected OrientVertex self = this;
 
     public OrientVertex(final OrientGraph graph, final OIdentifiable rawElement) {
         super(graph, rawElement);
@@ -61,7 +59,66 @@ public final class OrientVertex extends OrientElement implements Vertex {
     }
 
     public <V> Iterator<VertexProperty<V>> properties(final String... propertyKeys) {
-        throw new NotImplementedException();
+        ODocument raw = rawElement.getRecord();
+        Map<String, Object> properties = raw.toMap();
+
+        //TODO: filter by propertyKeys ;)
+
+        return new Iterator<VertexProperty<V>>() {
+            Iterator<Map.Entry<String, Object>> itty = properties.entrySet().iterator();
+
+            @Override
+            public boolean hasNext() {
+                return itty.hasNext();
+            }
+
+            @Override
+            public VertexProperty<V> next() {
+                Map.Entry<String, Object> entry = itty.next();
+
+                return new VertexProperty<V>() {
+                    @Override
+                    public Vertex element() {
+                        return self;
+                    }
+
+                    @Override
+                    public <U> Iterator<Property<U>> properties(String... propertyKeys) {
+                        throw new NotImplementedException();
+                    }
+
+                    @Override
+                    public Object id() {
+                        throw new NotImplementedException();
+                    }
+
+                    @Override
+                    public <V> Property<V> property(String key, V value) {
+                        return null;
+                    }
+
+                    @Override
+                    public String key() {
+                        return entry.getKey();
+                    }
+
+                    @Override
+                    public V value() throws NoSuchElementException {
+                        return (V) entry.getValue();
+                    }
+
+                    @Override
+                    public boolean isPresent() {
+                        return true;
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new NotImplementedException();
+                    }
+                };
+            }
+        };
     }
 
     @Override
