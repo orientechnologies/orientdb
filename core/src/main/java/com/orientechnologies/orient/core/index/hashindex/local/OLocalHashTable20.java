@@ -100,7 +100,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
   private final String                   metadataConfigurationFileExtension;
   private final String                   treeStateFileExtension;
-  private final String                   bucketFileExtension;
+
 
   public static final int                HASH_CODE_SIZE      = 64;
   public static final int                MAX_LEVEL_DEPTH     = 8;
@@ -131,11 +131,10 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
   public OLocalHashTable20(String name, String metadataConfigurationFileExtension, String treeStateFileExtension,
       String bucketFileExtension, String nullBucketFileExtension, OHashFunction<K> keyHashFunction, boolean durableInNonTxMode,
       OAbstractPaginatedStorage abstractPaginatedStorage) {
-    super(abstractPaginatedStorage, name);
+    super(abstractPaginatedStorage, name, bucketFileExtension);
 
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
-    this.bucketFileExtension = bucketFileExtension;
     this.keyHashFunction = keyHashFunction;
     this.nullBucketFileExtension = nullBucketFileExtension;
     this.durableInNonTxMode = durableInNonTxMode;
@@ -160,9 +159,9 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
         this.keyTypes = keyTypes;
         this.nullKeyIsSupported = nullKeyIsSupported;
 
-        this.directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
+        this.directory = new OHashTableDirectory(treeStateFileExtension, getName(), durableInNonTxMode, storage);
 
-        fileStateId = addFile(atomicOperation, name + metadataConfigurationFileExtension);
+        fileStateId = addFile(atomicOperation, getName() + metadataConfigurationFileExtension);
 
         directory.create();
 
@@ -187,7 +186,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
         initHashTreeState(atomicOperation);
 
         if (nullKeyIsSupported)
-          nullBucketFileId = addFile(atomicOperation, name + nullBucketFileExtension);
+          nullBucketFileId = addFile(atomicOperation, getName() + nullBucketFileExtension);
 
         endAtomicOperation(false);
       } catch (IOException e) {
@@ -324,7 +323,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
   private void createFileMetadata(int fileLevel, OHashIndexFileLevelMetadataPage page, OAtomicOperation atomicOperation)
       throws IOException {
-    final String fileName = name + fileLevel + bucketFileExtension;
+    final String fileName = getName() + fileLevel + getExtension();
     final long fileId = addFile(atomicOperation, fileName);
 
     page.setFileMetadata(fileLevel, fileId, 0, -1);
@@ -664,8 +663,6 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
     try {
       this.keyTypes = keyTypes;
       this.nullKeyIsSupported = nullKeyIsSupported;
-
-      this.name = name;
 
       OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 

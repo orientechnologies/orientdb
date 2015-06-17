@@ -43,7 +43,7 @@ public class OClusterPositionMap extends ODurableComponent {
   private boolean            useWal;
 
   public OClusterPositionMap(OAbstractPaginatedStorage storage, String name, boolean useWal) {
-    super(storage, name);
+    super(storage, name, DEF_EXTENSION);
 
     acquireExclusiveLock();
     try {
@@ -66,7 +66,7 @@ public class OClusterPositionMap extends ODurableComponent {
     acquireExclusiveLock();
     try {
       OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-      fileId = openFile(atomicOperation, name + DEF_EXTENSION);
+      fileId = openFile(atomicOperation, getFullName());
     } finally {
       releaseExclusiveLock();
     }
@@ -77,7 +77,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
     acquireExclusiveLock();
     try {
-      fileId = addFile(atomicOperation, name + DEF_EXTENSION);
+      fileId = addFile(atomicOperation, getFullName());
       endAtomicOperation(false);
     } catch (IOException ioe) {
       endAtomicOperation(true);
@@ -152,8 +152,8 @@ public class OClusterPositionMap extends ODurableComponent {
     startAtomicOperation();
     acquireExclusiveLock();
     try {
-      writeCache.renameFile(fileId, this.name + DEF_EXTENSION, newName + DEF_EXTENSION);
-      name = newName;
+      writeCache.renameFile(fileId, getFullName(), newName + getExtension());
+      setName(newName);
       endAtomicOperation(false);
     } catch (IOException ioe) {
       endAtomicOperation(true);

@@ -61,12 +61,18 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected final OAbstractPaginatedStorage storage;
   protected final OReadCache                readCache;
   protected final OWriteCache               writeCache;
-  protected volatile String                 name;
 
-  public ODurableComponent(OAbstractPaginatedStorage storage, String name) {
+  private volatile String                   name;
+  private volatile String                   fullName;
+
+  protected final String                    extension;
+
+  public ODurableComponent(OAbstractPaginatedStorage storage, String name, String extension) {
     super(true);
 
+    this.extension = extension;
     this.storage = storage;
+    this.fullName = name + extension;
     this.name = name;
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
     this.readCache = storage.getReadCache();
@@ -76,6 +82,19 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   public String getName() {
     return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+    this.fullName = name + extension;
+  }
+
+  public String getFullName() {
+    return fullName;
+  }
+
+  public String getExtension() {
+    return extension;
   }
 
   @Override

@@ -43,7 +43,6 @@ public class OHashTableDirectory extends ODurableComponent {
 
   public static final int                 BINARY_LEVEL_SIZE = LEVEL_SIZE * ITEM_SIZE + 3 * OByteSerializer.BYTE_SIZE;
 
-  private final String                    defaultExtension;
 
   private long                            fileId;
 
@@ -53,8 +52,7 @@ public class OHashTableDirectory extends ODurableComponent {
   private final OAbstractPaginatedStorage storage;
 
   public OHashTableDirectory(String defaultExtension, String name, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
-    super(storage, name);
-    this.defaultExtension = defaultExtension;
+    super(storage, name, defaultExtension);
     this.durableInNonTxMode = durableInNonTxMode;
     this.storage = storage;
     this.firstEntryIndex = 0;
@@ -65,7 +63,7 @@ public class OHashTableDirectory extends ODurableComponent {
     acquireExclusiveLock();
     try {
 
-      fileId = addFile(atomicOperation, name + defaultExtension);
+      fileId = addFile(atomicOperation, getFullName());
       init();
       endAtomicOperation(false);
     } catch (IOException e) {
@@ -118,7 +116,7 @@ public class OHashTableDirectory extends ODurableComponent {
     try {
       OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-      fileId = openFile(atomicOperation, name + defaultExtension);
+      fileId = openFile(atomicOperation, getFullName());
       final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
 
       for (int i = 0; i < filledUpTo; i++) {
@@ -163,8 +161,8 @@ public class OHashTableDirectory extends ODurableComponent {
     final OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      if (isFileExists(atomicOperation, name + defaultExtension)) {
-        fileId = openFile(atomicOperation, name + defaultExtension);
+      if (isFileExists(atomicOperation, getFullName())) {
+        fileId = openFile(atomicOperation, getFullName());
         deleteFile(atomicOperation, fileId);
       }
 

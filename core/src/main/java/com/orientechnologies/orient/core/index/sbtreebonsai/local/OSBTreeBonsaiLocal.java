@@ -75,7 +75,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   private final Comparator<? super K>           comparator            = ODefaultComparator.INSTANCE;
 
-  private final String                          dataFileExtension;
 
   private volatile long                         fileId                = -1;
 
@@ -85,10 +84,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   private final boolean                         durableInNonTxMode;
 
   public OSBTreeBonsaiLocal(String name, String dataFileExtension, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
-    super(storage, name);
+    super(storage, name, dataFileExtension);
 
-    this.name = name;
-    this.dataFileExtension = dataFileExtension;
     this.durableInNonTxMode = durableInNonTxMode;
   }
 
@@ -105,20 +102,20 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       this.keySerializer = keySerializer;
       this.valueSerializer = valueSerializer;
 
-      if (isFileExists(atomicOperation, name + dataFileExtension))
-        this.fileId = openFile(atomicOperation, name + dataFileExtension);
+      if (isFileExists(atomicOperation, getFullName()))
+        this.fileId = openFile(atomicOperation, getFullName());
       else
-        this.fileId = addFile(atomicOperation, name + dataFileExtension);
+        this.fileId = addFile(atomicOperation, getFullName());
 
       initAfterCreate(atomicOperation);
 
       endAtomicOperation(false);
     } catch (IOException e) {
       rollback();
-      throw new OSBTreeException("Error creation of sbtree with name" + name, e);
+      throw new OSBTreeException("Error creation of sbtree with name" + getName(), e);
     } catch (Exception e) {
       rollback();
-      throw new OSBTreeException("Error creation of sbtree with name" + name, e);
+      throw new OSBTreeException("Error creation of sbtree with name" + getName(), e);
     } finally {
       lock.unlock();
     }
@@ -203,7 +200,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         lock.unlock();
       }
     } catch (IOException e) {
-      throw new OSBTreeException("Error during retrieving  of sbtree with name " + name, e);
+      throw new OSBTreeException("Error during retrieving  of sbtree with name " + getName(), e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -285,7 +282,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       readCache.closeFile(fileId, flush, writeCache);
     } catch (IOException e) {
-      throw new OSBTreeException("Error during close of index " + name, e);
+      throw new OSBTreeException("Error during close of index " + getName(), e);
     } finally {
       lock.unlock();
     }
@@ -335,7 +332,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     } catch (Throwable e) {
       rollback();
 
-      throw new OSBTreeException("Error during clear of sbtree with name " + name, e);
+      throw new OSBTreeException("Error during clear of sbtree with name " + getName(), e);
     } finally {
       lock.unlock();
     }
@@ -432,7 +429,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     } catch (Throwable e) {
       rollback();
 
-      throw new OSBTreeException("Error during delete of sbtree with name " + name, e);
+      throw new OSBTreeException("Error during delete of sbtree with name " + getName(), e);
     } finally {
       lock.unlock();
     }
@@ -445,7 +442,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
       final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-      this.fileId = openFile(atomicOperation, name + dataFileExtension);
+      this.fileId = openFile(atomicOperation, getFullName());
 
       OCacheEntry rootCacheEntry = loadPage(atomicOperation, this.fileId, this.rootBucketPointer.getPageIndex(), false);
 
@@ -503,7 +500,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         lock.unlock();
       }
     } catch (IOException e) {
-      throw new OSBTreeException("Error during retrieving of size of index " + name);
+      throw new OSBTreeException("Error during retrieving of size of index " + getName());
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -550,7 +547,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     } catch (Throwable e) {
       rollback();
 
-      throw new OSBTreeException("Error during removing key " + key + " from sbtree " + name, e);
+      throw new OSBTreeException("Error during removing key " + key + " from sbtree " + getName(), e);
     } finally {
       lock.unlock();
     }
@@ -634,7 +631,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         lock.unlock();
       }
     } catch (IOException ioe) {
-      throw new OSBTreeException("Error during fetch of minor values for key " + key + " in sbtree " + name);
+      throw new OSBTreeException("Error during fetch of minor values for key " + key + " in sbtree " + getName());
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -711,7 +708,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         lock.unlock();
       }
     } catch (IOException ioe) {
-      throw new OSBTreeException("Error during fetch of major values for key " + key + " in sbtree " + name);
+      throw new OSBTreeException("Error during fetch of major values for key " + key + " in sbtree " + getName());
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -804,7 +801,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         lock.unlock();
       }
     } catch (IOException e) {
-      throw new OSBTreeException("Error during finding first key in sbtree [" + name + "]");
+      throw new OSBTreeException("Error during finding first key in sbtree [" + getName() + "]");
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -880,7 +877,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         lock.unlock();
       }
     } catch (IOException e) {
-      throw new OSBTreeException("Error during finding first key in sbtree [" + name + "]");
+      throw new OSBTreeException("Error during finding first key in sbtree [" + getName() + "]");
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -951,7 +948,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         lock.unlock();
       }
     } catch (IOException ioe) {
-      throw new OSBTreeException("Error during fetch of values between key " + keyFrom + " and key " + keyTo + " in sbtree " + name);
+      throw new OSBTreeException("Error during fetch of values between key " + keyFrom + " and key " + keyTo + " in sbtree "
+          + getName());
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }

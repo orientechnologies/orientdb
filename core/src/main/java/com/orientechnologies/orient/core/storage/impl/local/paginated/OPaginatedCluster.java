@@ -101,7 +101,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   public OPaginatedCluster(String name, OAbstractPaginatedStorage storage) {
-    super(storage, name);
+    super(storage, name, ".pcl");
     useCRC32 = OGlobalConfiguration.STORAGE_USE_CRC32_FOR_EACH_RECORD.getValueAsBoolean();
   }
 
@@ -150,7 +150,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       acquireSharedLock();
       try {
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-        return isFileExists(atomicOperation, name + DEF_EXTENSION);
+        return isFileExists(atomicOperation, getFullName());
       } finally {
         releaseSharedLock();
       }
@@ -166,7 +166,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       OAtomicOperation atomicOperation = startAtomicOperation();
       acquireExclusiveLock();
       try {
-        fileId = addFile(atomicOperation, name + DEF_EXTENSION);
+        fileId = addFile(atomicOperation, getFullName());
 
         initCusterState(atomicOperation);
 
@@ -180,7 +180,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         endAtomicOperation(false);
       } catch (Throwable e) {
         endAtomicOperation(true);
-        throw new OStorageException("Error during creation of cluster with name " + name, e);
+        throw new OStorageException("Error during creation of cluster with name " + getName(), e);
       } finally {
         releaseExclusiveLock();
       }
@@ -196,7 +196,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       acquireExclusiveLock();
       try {
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-        fileId = openFile(atomicOperation, name + DEF_EXTENSION);
+        fileId = openFile(atomicOperation, getFullName());
 
         OCacheEntry pinnedStateEntry = loadPage(atomicOperation, fileId, 0, false);
         try {
@@ -257,7 +257,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       } catch (Exception e) {
         endAtomicOperation(true);
 
-        throw new OStorageException("Error during deletion of cluset " + name, e);
+        throw new OStorageException("Error during deletion of cluset " + getName(), e);
       } finally {
         releaseExclusiveLock();
       }
@@ -1051,7 +1051,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         releaseSharedLock();
       }
     } catch (IOException ioe) {
-      throw new OStorageException("Error during retrieval of size of " + name + " cluster.");
+      throw new OStorageException("Error during retrieval of size of " + getName() + " cluster.");
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -1293,10 +1293,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
     storageLocal = storage;
 
-    name = config.getName();
     this.id = config.getId();
 
-    clusterPositionMap = new OClusterPositionMap(storage, name, this.config.useWal);
+    clusterPositionMap = new OClusterPositionMap(storage, getName(), this.config.useWal);
   }
 
   private void setCompressionInternal(String stringValue) {
@@ -1349,12 +1348,14 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   private void setNameInternal(String newName) throws IOException {
-    writeCache.renameFile(fileId, this.name + DEF_EXTENSION, newName + DEF_EXTENSION);
+
+    writeCache.renameFile(fileId, getFullName(), newName + getExtension());
     clusterPositionMap.rename(newName);
 
     config.name = newName;
-    storageLocal.renameCluster(name, newName);
-    name = newName;
+    storageLocal.renameCluster(getName(), newName);
+    setName(newName);
+
     storageLocal.getConfiguration().update();
   }
 
@@ -1499,7 +1500,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           if (realFreePageIndex != freePageIndex) {
             OLogManager.instance().warn(this,
                 "Page in file %s with index %d was placed in wrong free list, this error will be fixed automatically.",
-                name + DEF_EXTENSION, pageIndex);
+                getFullName(), pageIndex);
 
             updateFreePagesIndex(freePageIndex, pageIndex, atomicOperation);
             continue;
