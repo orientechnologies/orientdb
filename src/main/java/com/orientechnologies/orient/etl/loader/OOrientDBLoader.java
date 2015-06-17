@@ -211,6 +211,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
             + "{useLightweightEdges:{optional:true,description:'Enable/Disable LightweightEdges in Graphs. Default is false'}},"
             + "{standardElementConstraints:{optional:true,description:'Enable/Disable Standard Blueprints constraints on names. Default is true'}},"
             + "{cluster:{optional:true,description:'Cluster name where to store the new record'}},"
+            + "{settings:{optional:true,description:'OrientDB settings as a map'}},"
             + "{classes:{optional:true,description:'Classes used. It assure the classes exist or in case create them'}},"
             + "{indexes:{optional:true,description:'Indexes used. It assure the indexes exist or in case create them'}}],"
             + "input:['OrientVertex','ODocument']}");
@@ -251,6 +252,16 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     className = iConfiguration.field("class");
     indexes = iConfiguration.field("indexes");
     classes = iConfiguration.field("classes");
+
+    if (iConfiguration.containsField("settings")) {
+      final ODocument settings = (ODocument) iConfiguration.field("settings");
+      settings.setAllowChainedAccess(false);
+      for (String s : settings.fieldNames()) {
+        final OGlobalConfiguration v = OGlobalConfiguration.findByKey(s);
+        if (v != null)
+          v.setValue(settings.field(s));
+      }
+    }
 
     if (!wal)
       OGlobalConfiguration.USE_WAL.setValue(wal);
