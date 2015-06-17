@@ -53,6 +53,7 @@
         </osgi.export>
         <blueprints.version>2.6.0</blueprints.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<argLine></argLine>
     </properties>
 
     <dependencies>
@@ -134,6 +135,7 @@
                         -Dstorage.makeFullCheckpointAfterOpen=false
                         -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
                         -Dstorage.configuration.syncOnUpdate=false -Ddb.makeFullCheckpointOnIndexChange=false -Ddb.makeFullCheckpointOnSchemaChange=false
+                        ${argLine}
                     </argLine>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>

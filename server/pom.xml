@@ -45,6 +45,7 @@
         </osgi.import>
         <osgi.export>com.orientechnologies.orient.server.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<argLine></argLine>
     </properties>
 
     <dependencies>
@@ -92,7 +93,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire.version}</version>
                 <configuration>
-                    <argLine>-ea -Xmx2048m</argLine>
+                    <argLine>-ea -Xmx2048m ${argLine}</argLine>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
                     </systemPropertyVariables>

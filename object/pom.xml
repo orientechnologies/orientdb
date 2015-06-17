@@ -98,6 +98,7 @@
                     <argLine>-ea -Xmx2048m -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterOpen=false
                         -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
                         -Dstorage.configuration.syncOnUpdate=false -Ddb.makeFullCheckpointOnIndexChange=false -Ddb.makeFullCheckpointOnSchemaChange=false
+                        ${argLine}
                     </argLine>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
@@ -119,6 +120,7 @@
         <import.package>*</import.package>
         <export.package>com.orientechnologies.orient.object.*</export.package>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<argLine></argLine>
     </properties>
     <repositories>
         <repository>

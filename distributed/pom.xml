@@ -42,6 +42,7 @@
         <osgi.import>com.hazelcast.*;resolution:=optional,*</osgi.import>
         <osgi.export>com.orientechnologies.orient.server.hazelcast.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<argLine></argLine>
     </properties>
 
     <profiles>
@@ -126,7 +127,7 @@
                 <configuration>
                     <argLine>-ea -Xmx2048m -Dindex.flushAfterCreate=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterOpen=false
                         -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
-                        -Dstorage.configuration.syncOnUpdate=false -Ddb.makeFullCheckpointOnIndexChange=false -Ddb.makeFullCheckpointOnSchemaChange=false
+                        -Dstorage.configuration.syncOnUpdate=false -Ddb.makeFullCheckpointOnIndexChange=false -Ddb.makeFullCheckpointOnSchemaChange=false ${argLine}
                     </argLine>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
