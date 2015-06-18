@@ -13,9 +13,7 @@ import org.apache.tinkerpop.gremlin.structure.io.Io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -62,9 +60,15 @@ public final class OrientGraph implements Graph {
         OrientGraph graph = this;
 
         Iterator<ORecord> itty = new ORecordIteratorClass<ORecord>(database, database, elementClass, polymorphic);
-        Stream<ORecord> stream = asStream(itty);
+        Stream<Vertex> stream = asStream(itty).map(r -> toVertex(r));
 
-        return stream.map(r -> toVertex(r)).iterator();
+        if (vertexIds.length > 0) {
+            //TODO: use an index for the lookup instead of scanning all vertices!
+            HashSet<Object> vertexIdsSet = new HashSet<Object>(Arrays.asList(vertexIds));
+            stream = stream.filter(v -> vertexIdsSet.contains(v.id()));
+        }
+
+        return stream.iterator();
     }
 
     private Vertex toVertex(ORecord record) {
