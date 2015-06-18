@@ -58,18 +58,15 @@ public final class OrientGraph implements Graph {
         boolean polymorphic = true;
         // String iClassName = OrientVertexType.CLASS_NAME;
         String elementClass = "V";
-        OrientGraph graph = this;
 
-        Iterator<ORecord> itty = new ORecordIteratorClass<ORecord>(database, database, elementClass, polymorphic);
-        Stream<Vertex> stream = asStream(itty).map(r -> toVertex(r));
-
-        if (vertexIds.length > 0) {
-            //TODO: use an index for the lookup instead of scanning all vertices!
-            HashSet<Object> vertexIdsSet = new HashSet<Object>(Arrays.asList(vertexIds));
-            stream = stream.filter(v -> vertexIdsSet.contains(v.id()) || vertexIdsSet.contains(v.id().toString()));
+        if (vertexIds.length == 0) {
+            // return all vertices as stream
+            Iterator<ORecord> itty = new ORecordIteratorClass<>(database, database, elementClass, polymorphic);
+            return asStream(itty).map(r -> toVertex(r)).iterator();
+        } else {
+            Stream<ORecordId> ids = Stream.of(vertexIds).map(v -> new ORecordId(v.toString()));
+            return ids.map(id -> (Vertex) new OrientVertex(this, id)).iterator();
         }
-
-        return stream.iterator();
     }
 
     private Vertex toVertex(ORecord record) {
@@ -122,5 +119,6 @@ public final class OrientGraph implements Graph {
 
     @Override
     public void close() throws Exception {
+        throw new NotImplementedException();
     }
 }
