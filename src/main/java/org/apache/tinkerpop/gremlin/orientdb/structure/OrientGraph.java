@@ -1,5 +1,6 @@
 package org.apache.tinkerpop.gremlin.orientdb.structure;
 
+import com.orientechnologies.orient.core.id.ORecordId;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
@@ -65,7 +66,7 @@ public final class OrientGraph implements Graph {
         if (vertexIds.length > 0) {
             //TODO: use an index for the lookup instead of scanning all vertices!
             HashSet<Object> vertexIdsSet = new HashSet<Object>(Arrays.asList(vertexIds));
-            stream = stream.filter(v -> vertexIdsSet.contains(v.id()));
+            stream = stream.filter(v -> vertexIdsSet.contains(v.id()) || vertexIdsSet.contains(v.id().toString()));
         }
 
         return stream.iterator();
