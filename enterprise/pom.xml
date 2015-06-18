@@ -38,7 +38,7 @@
     <name>OrientDB Enterprise</name>
 
     <properties>
-        <osgi.import>*</osgi.import>
+        <osgi.import>com.orientechnologies.orient.core.storage,*</osgi.import>
         <osgi.export>com.orientechnologies.orient.enterprise.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
