@@ -70,6 +70,7 @@ public class OrientJdbcConnection implements Connection {
 
   public void close() throws SQLException {
     status = ODatabase.STATUS.CLOSED;
+    database.activateOnCurrentThread();
     database.close();
   }
 

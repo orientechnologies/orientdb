@@ -1,17 +1,16 @@
 package com.orientechnologies.orient.jdbc;
 
-import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createSchemaDB;
-import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
-import static java.lang.Class.forName;
-
-import java.sql.DriverManager;
-import java.util.Properties;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import java.sql.DriverManager;
+import java.util.Properties;
+
+import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createSchemaDB;
+import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
+import static java.lang.Class.forName;
 
 public abstract class OrientJdbcBaseTest {
 
@@ -35,7 +34,6 @@ public abstract class OrientJdbcBaseTest {
       db.open(username, password);
       if (!db.isClosed())
         db.drop();
-      db.close();
     }
 
     db.create();
@@ -53,8 +51,9 @@ public abstract class OrientJdbcBaseTest {
 
   @After
   public void closeConnection() throws Exception {
-    if (conn != null && !conn.isClosed())
+    if (conn != null && !conn.isClosed()) {
       conn.close();
+    }
   }
 
 }
