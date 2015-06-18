@@ -33,7 +33,7 @@ public class OrientTokenHandlerTest {
     }
   }
 
-  @Test
+  @Test(enabled = false)
   public void testWebTokenCreationValidation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OrientTokenHandlerTest.class.getSimpleName());
     db.create();

@@ -130,12 +130,13 @@ public class OAtomicOperationsManager {
       return;
 
     assert durableComponent.getName() != null;
+    assert durableComponent.getFullName() != null;
 
-    if (operation.containsInLockedObjects(durableComponent.getName()))
+    if (operation.containsInLockedObjects(durableComponent.getFullName()))
       return;
 
-    lockManager.acquireLock(this, durableComponent.getName(), OLockManager.LOCK.EXCLUSIVE);
-    operation.addLockedObject(durableComponent.getName());
+    lockManager.acquireLock(this, durableComponent.getFullName(), OLockManager.LOCK.EXCLUSIVE);
+    operation.addLockedObject(durableComponent.getFullName());
   }
 
   public void acquireReadLock(ODurableComponent durableComponent) {
@@ -143,7 +144,9 @@ public class OAtomicOperationsManager {
       return;
 
     assert durableComponent.getName() != null;
-    lockManager.acquireLock(this, durableComponent.getName(), OLockManager.LOCK.SHARED);
+    assert durableComponent.getFullName() != null;
+
+    lockManager.acquireLock(this, durableComponent.getFullName(), OLockManager.LOCK.SHARED);
   }
 
   public void releaseReadLock(ODurableComponent durableComponent) {
@@ -151,6 +154,8 @@ public class OAtomicOperationsManager {
       return;
 
     assert durableComponent.getName() != null;
-    lockManager.releaseLock(this, durableComponent.getName(), OLockManager.LOCK.SHARED);
+    assert durableComponent.getFullName() != null;
+
+    lockManager.releaseLock(this, durableComponent.getFullName(), OLockManager.LOCK.SHARED);
   }
 }

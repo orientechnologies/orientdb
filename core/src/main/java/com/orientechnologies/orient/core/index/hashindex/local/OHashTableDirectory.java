@@ -46,7 +46,6 @@ public class OHashTableDirectory extends ODurableComponent {
 
   public static final int                 BINARY_LEVEL_SIZE = LEVEL_SIZE * ITEM_SIZE + 3 * OByteSerializer.BYTE_SIZE;
 
-  private final String                    defaultExtension;
 
   private long                            fileId;
 
@@ -57,8 +56,7 @@ public class OHashTableDirectory extends ODurableComponent {
   private final ODiskCache                diskCache;
 
   public OHashTableDirectory(String defaultExtension, String name, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
-    super(storage, name);
-    this.defaultExtension = defaultExtension;
+    super(storage, name, defaultExtension);
     this.durableInNonTxMode = durableInNonTxMode;
     this.storage = storage;
     this.firstEntryIndex = 0;
@@ -70,7 +68,7 @@ public class OHashTableDirectory extends ODurableComponent {
     acquireExclusiveLock();
     try {
 
-      fileId = addFile(atomicOperation, name + defaultExtension, diskCache);
+      fileId = addFile(atomicOperation, getFullName(), diskCache);
       init();
       endAtomicOperation(false);
     } catch (IOException e) {
@@ -123,7 +121,7 @@ public class OHashTableDirectory extends ODurableComponent {
     try {
       OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-      fileId = openFile(atomicOperation, name + defaultExtension, diskCache);
+      fileId = openFile(atomicOperation, getFullName(), diskCache);
       final int filledUpTo = (int) getFilledUpTo(atomicOperation, diskCache, fileId);
 
       for (int i = 0; i < filledUpTo; i++) {
@@ -168,8 +166,8 @@ public class OHashTableDirectory extends ODurableComponent {
     final OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      if (isFileExists(atomicOperation, name + defaultExtension, diskCache)) {
-        fileId = openFile(atomicOperation, name + defaultExtension, diskCache);
+      if (isFileExists(atomicOperation, getFullName(), diskCache)) {
+        fileId = openFile(atomicOperation, getFullName(), diskCache);
         deleteFile(atomicOperation, fileId, diskCache);
       }
 
