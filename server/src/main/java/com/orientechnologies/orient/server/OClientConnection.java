@@ -19,15 +19,17 @@
  */
 package com.orientechnologies.orient.server;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OClientConnection {
   public final int                         id;
@@ -35,8 +37,9 @@ public class OClientConnection {
   public volatile ONetworkProtocol         protocol;
   public volatile ODatabaseDocumentTx      database;
   public volatile OServerUserConfiguration serverUser;
+  private AtomicBoolean                    inUse = new AtomicBoolean(false);
 
-  public ONetworkProtocolData              data = new ONetworkProtocolData();
+  public ONetworkProtocolData              data  = new ONetworkProtocolData();
 
   public OClientConnection(final int id, final ONetworkProtocol protocol) throws IOException {
     this.id = id;
@@ -53,6 +56,15 @@ public class OClientConnection {
 
       database = null;
     }
+  }
+
+  public void acquire() {
+    if (!inUse.compareAndSet(false, true))
+      throw new ONetworkProtocolException("Error on reusing the same session by multiple connections");
+  }
+
+  public void release() {
+    inUse.set(false);
   }
 
   @Override
