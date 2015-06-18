@@ -19,9 +19,17 @@ public class OMatchPathItem extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public boolean isBidirectional(){
+  public boolean isBidirectional() {
     return method.isBidirectional();
   }
 
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append(method.toString());
+    if (filter != null) {
+      result.append(filter.toString());
+    }
+    return result.toString();
+  }
 }
 /* JavaCC - OriginalChecksum=ffe8e0ffde583d7b21c9084eff6a8944 (do not edit this line) */

@@ -21,5 +21,15 @@ public class OMatchExpression extends SimpleNode {
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
+
+  @Override
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append(origin.toString());
+    for (OMatchPathItem item : items) {
+      result.append(item.toString());
+    }
+    return result.toString();
+  }
 }
 /* JavaCC - OriginalChecksum=73491fb653c32baf66997290db29f370 (do not edit this line) */

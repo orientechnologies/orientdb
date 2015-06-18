@@ -23,5 +23,32 @@ public class OMatchFilterItem extends SimpleNode {
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
+
+  @Override
+  public String toString() {
+    if (className != null) {
+      return "class: " + className;
+    }
+    if (classNames != null) {
+      return "classes: " + className;
+    }
+
+    if (alias != null) {
+      return "as: " + alias;
+    }
+
+    if (minDepth != null) {
+      return "mindepth: " + minDepth;
+    }
+
+    if (maxDepth != null) {
+      return "maxdepth: " + maxDepth;
+    }
+
+    if (filter != null) {
+      return "where: (" + filter + ")";
+    }
+    return null;
+  }
 }
 /* JavaCC - OriginalChecksum=74bf4765509f102180cac29f2295031e (do not edit this line) */

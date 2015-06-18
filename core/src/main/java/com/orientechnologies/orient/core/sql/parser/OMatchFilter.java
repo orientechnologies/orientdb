@@ -72,5 +72,21 @@ public class OMatchFilter extends SimpleNode {
     }
     return null;
   }
+
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append("{");
+    boolean first = true;
+    for (OMatchFilterItem item : items) {
+      if (!first) {
+        result.append(", ");
+      }
+      result.append(item.toString());
+      first = false;
+    }
+    result.append("}");
+    return result.toString();
+  }
+
 }
 /* JavaCC - OriginalChecksum=6b099371c69e0d0c1c106fc96b3072de (do not edit this line) */
