@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 
 public final class OrientVertex extends OrientElement implements Vertex {
 
-    protected OrientVertex self = this;
+    protected OrientVertex vertex = this;
 
     public OrientVertex(final OrientGraph graph, final OIdentifiable rawElement) {
         super(graph, rawElement);
@@ -28,75 +28,16 @@ public final class OrientVertex extends OrientElement implements Vertex {
         throw new NotImplementedException();
     }
 
-    public <V> VertexProperty<V> property(
-        final VertexProperty.Cardinality cardinality,
-        final String key,
-        final V value,
-        final Object... keyValues) {
-        throw new NotImplementedException();
-    }
-
     public <V> Iterator<VertexProperty<V>> properties(final String... propertyKeys) {
         ODocument raw = rawElement.getRecord();
         Map<String, Object> properties = raw.toMap();
+        HashSet<String> keys = new HashSet<>(Arrays.asList(propertyKeys));
 
-        //TODO: filter by propertyKeys ;)
+        Stream<Map.Entry<String, Object>> entries = StreamUtils.asStream(properties.entrySet().iterator());
+        if (keys.size() > 0) entries = entries.filter(entry -> keys.contains(entry));
 
-        return new Iterator<VertexProperty<V>>() {
-            Iterator<Map.Entry<String, Object>> itty = properties.entrySet().iterator();
-
-            @Override
-            public boolean hasNext() {
-                return itty.hasNext();
-            }
-
-            @Override
-            public VertexProperty<V> next() {
-                Map.Entry<String, Object> entry = itty.next();
-
-                return new VertexProperty<V>() {
-                    @Override
-                    public Vertex element() {
-                        return self;
-                    }
-
-                    @Override
-                    public <U> Iterator<Property<U>> properties(String... propertyKeys) {
-                        throw new NotImplementedException();
-                    }
-
-                    @Override
-                    public Object id() {
-                        throw new NotImplementedException();
-                    }
-
-                    @Override
-                    public <V> Property<V> property(String key, V value) {
-                        return null;
-                    }
-
-                    @Override
-                    public String key() {
-                        return entry.getKey();
-                    }
-
-                    @Override
-                    public V value() throws NoSuchElementException {
-                        return (V) entry.getValue();
-                    }
-
-                    @Override
-                    public boolean isPresent() {
-                        return true;
-                    }
-
-                    @Override
-                    public void remove() {
-                        throw new NotImplementedException();
-                    }
-                };
-            }
-        };
+        Stream<VertexProperty<V>> propertyStream = entries.map(entry -> new OrientVertexProperty<>(entry.getKey(), (V) entry.getValue(), vertex));
+        return propertyStream.iterator();
     }
 
     @Override
@@ -106,6 +47,15 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
     @Override
     public <V> VertexProperty<V> property(String key, V value, Object... keyValues) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public <V> VertexProperty<V> property(
+            final VertexProperty.Cardinality cardinality,
+            final String key,
+            final V value,
+            final Object... keyValues) {
         throw new NotImplementedException();
     }
 
