@@ -14,7 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -22,6 +25,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+
+import static org.apache.tinkerpop.gremlin.orientdb.structure.StreamUtils.asStream;
 
 
 public final class OrientGraph implements Graph {
@@ -56,52 +61,38 @@ public final class OrientGraph implements Graph {
         String elementClass = "V";
         OrientGraph graph = this;
 
-        // return new OrientElementScanIterable<Vertex>(this, iClassName, iPolymorphic);
-        return new Iterator<Vertex>() {
+        Iterator<ORecord> itty = new ORecordIteratorClass<ORecord>(database, database, elementClass, polymorphic);
+        Stream<ORecord> stream = asStream(itty);
 
-            private final Iterator<ORecord> itty =
-                new ORecordIteratorClass<ORecord>(database, database, elementClass, polymorphic);
+        return stream.map(r -> toVertex(r)).iterator();
+    }
 
-            @Override
-            public boolean hasNext() {
-                return itty.hasNext();
-            }
+    private Vertex toVertex(ORecord record) {
+        // taken mostly from old blueprints driver, could be done nicer I believe
+        OrientElement currentElement = null;
 
-            @Override
-            public Vertex next() {
-                OrientElement currentElement = null;
+        if (record == null) throw new NoSuchElementException();
 
-              if (!hasNext()) throw new NoSuchElementException();
-              Object current = itty.next();
-              if (current == null) throw new NoSuchElementException();
+        if (record instanceof OIdentifiable)
+            record = record.getRecord();
 
-              if (current instanceof OIdentifiable)
-                current = ((OIdentifiable) current).getRecord();
+        if (record instanceof ODocument) {
+            final ODocument currentDocument = (ODocument) record;
 
-              if (current instanceof ODocument) {
-                final ODocument currentDocument = (ODocument) current;
+            if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED)
+                currentDocument.load();
 
-                if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED)
-                  currentDocument.load();
+            if (ODocumentInternal.getImmutableSchemaClass(currentDocument) == null)
+                throw new IllegalArgumentException(
+                    "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
 
-                if (ODocumentInternal.getImmutableSchemaClass(currentDocument) == null)
-                  throw new IllegalArgumentException(
-                      "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
+            // if (ODocumentInternal.getImmutableSchemaClass(currentDocument).isSubClassOf(graph.getEdgeBaseType()))
+            //   currentElement = new OrientEdge(graph, currentDocument);
+            // else
+            currentElement = new OrientVertex(this, currentDocument);
+        }
 
-                // if (ODocumentInternal.getImmutableSchemaClass(currentDocument).isSubClassOf(graph.getEdgeBaseType()))
-                //   currentElement = new OrientEdge(graph, currentDocument);
-                // else
-                  currentElement = new OrientVertex(graph, currentDocument);
-              }
-
-              return (Vertex) currentElement;
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
+        return (Vertex) currentElement;
     }
 
     @Override
