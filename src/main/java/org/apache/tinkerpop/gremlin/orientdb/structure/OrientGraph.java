@@ -24,9 +24,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 
-/**
- * @author Michael Pollmeier (http://michaelpollmeier.com)
- */
 public final class OrientGraph implements Graph {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(OrientGraph.class);

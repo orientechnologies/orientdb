@@ -6,12 +6,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.*;
-
 import org.apache.commons.lang.NotImplementedException;
 
-/**
- * @author Michael Pollmeier (http://michaelpollmeier.com)
- */
+
 public class OrientElement implements Element {
     protected OIdentifiable rawElement;
     protected OrientGraph graph;

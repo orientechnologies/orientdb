@@ -3,9 +3,7 @@ package org.apache.tinkerpop.gremlin.orientdb.structure;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
-/**
- * @author Michael Pollmeier (http://michaelpollmeier.com)
- */
+
 public final class OrientGraphFactory {
     public OrientGraph open(String url, String user, String password) {
         return new OrientGraph(getDatabase(url, user, password));

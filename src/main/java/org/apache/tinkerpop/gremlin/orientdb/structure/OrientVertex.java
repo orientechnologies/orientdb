@@ -7,9 +7,7 @@ import org.apache.commons.lang.NotImplementedException;
 import java.util.*;
 import java.util.stream.Stream;
 
-/**
- * @author Michael Pollmeier (http://michaelpollmeier.com)
- */
+
 public final class OrientVertex extends OrientElement implements Vertex {
 
     protected OrientVertex self = this;
