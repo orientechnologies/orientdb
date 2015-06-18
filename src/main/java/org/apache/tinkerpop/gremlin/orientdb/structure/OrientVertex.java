@@ -19,13 +19,11 @@
 package org.apache.tinkerpop.gremlin.orientdb.structure;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.apache.tinkerpop.gremlin.structure.*;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
-import java.util.*;
-
+import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.commons.lang.NotImplementedException;
+import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author Michael Pollmeier (http://michaelpollmeier.com)
@@ -123,6 +121,11 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
     @Override
     public <V> VertexProperty<V> property(final String key, final V value) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public <V> VertexProperty<V> property(String key, V value, Object... keyValues) {
         throw new NotImplementedException();
     }
 
