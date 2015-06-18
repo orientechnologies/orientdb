@@ -2,17 +2,23 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import java.util.*;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.method.OSQLMethod;
+
+import java.util.*;
 
 public class OMethodCall extends SimpleNode {
 
-  static Set<String>          bidirectionalMethods = new HashSet<String>(Arrays.asList(new String[] { "out", "in", "both", "outE",
-      "outV", "inE", "inV", "bothE", "bothV"      }));
+  static Set<String>          graphMethods = new HashSet<String>(Arrays.asList(new String[] { "out", "in", "both", "outE", "outV",
+      "inE", "inV", "bothE", "bothV"      }));
 
   protected OIdentifier       methodName;
-  protected List<OExpression> params               = new ArrayList<OExpression>();
+  protected List<OExpression> params       = new ArrayList<OExpression>();
 
   public OMethodCall(int id) {
     super(id);
@@ -22,7 +28,9 @@ public class OMethodCall extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor. *
+   */
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -54,11 +62,27 @@ public class OMethodCall extends SimpleNode {
   }
 
   public boolean isBidirectional() {
-    return bidirectionalMethods.contains(methodName);
+    return graphMethods.contains(methodName);
   }
 
   public Object execute(Object targetObjects, OCommandContext ctx) {
-    // TODO implement this
+    return execute(targetObjects, ctx, methodName.getValue());
+  }
+
+  private Object execute(Object targetObjects, OCommandContext ctx, String name) {
+    List<Object> paramValues = new ArrayList<Object>();
+    for (OExpression expr : this.params) {
+      paramValues.add(expr.execute((OIdentifiable) ctx.getVariable("$current"), ctx));
+    }
+    if (graphMethods.contains(name)) {
+      OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
+      return function.execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null, paramValues.toArray(), ctx);
+
+    }
+    OSQLMethod method = OSQLEngine.getMethod(name);
+    if (method == null) {
+      // TODO implement this
+    }
     return null;
   }
 
@@ -66,8 +90,33 @@ public class OMethodCall extends SimpleNode {
     if (!isBidirectional()) {
       throw new UnsupportedOperationException();
     }
-    // TODO implement this
-    return null;
+
+    String straightName = methodName.getValue();
+    if (straightName.equals("out")) {
+      return execute(targetObjects, ctx, "in");
+    }
+    if (straightName.equals("in")) {
+      return execute(targetObjects, ctx, "out");
+    }
+    if (straightName.equals("outE")) {
+      return execute(targetObjects, ctx, "outV");
+    }
+    if (straightName.equals("inE")) {
+      return execute(targetObjects, ctx, "inV");
+    }
+    if (straightName.equals("outV")) {
+      return execute(targetObjects, ctx, "outE");
+    }
+    if (straightName.equals("inV")) {
+      return execute(targetObjects, ctx, "inE");
+    }
+
+    return execute(targetObjects, ctx, straightName);
   }
+
+  public static ODatabaseDocumentInternal getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+
 }
 /* JavaCC - OriginalChecksum=da95662da21ceb8dee3ad88c0d980413 (do not edit this line) */

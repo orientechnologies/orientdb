@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.Map;
 
 public class OExpression extends SimpleNode {
@@ -33,6 +36,25 @@ public class OExpression extends SimpleNode {
       return null;// TODO
     } else if (value instanceof OMathExpression) {
       return ((OMathExpression) value).createExecutorFilter();
+    } else if (value instanceof OJson) {
+      return null;// TODO
+    } else if (value instanceof String) {
+      return value;
+    } else if (value instanceof Number) {
+      return value;
+    }
+
+    return value;
+
+  }
+
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    if (value instanceof ORid) {
+      return null;// TODO
+    } else if (value instanceof OInputParameter) {
+      return null;// TODO
+    } else if (value instanceof OMathExpression) {
+      return null;// TODO ((OMathExpression) value).execute();
     } else if (value instanceof OJson) {
       return null;// TODO
     } else if (value instanceof String) {

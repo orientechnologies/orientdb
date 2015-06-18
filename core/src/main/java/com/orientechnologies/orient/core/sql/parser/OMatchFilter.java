@@ -65,6 +65,8 @@ public class OMatchFilter extends SimpleNode {
       if (item.className != null) {
         if (item.className.value instanceof String)
           return (String) item.className.value;
+        else
+          return item.className.value.toString();
         // TODO evaluate expression
       }
     }
