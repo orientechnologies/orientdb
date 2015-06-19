@@ -40,4 +40,9 @@ public class OrientProperty<V> implements Property<V> {
     public void remove() {
         throw new NotImplementedException();
     }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + key + "=" + value + "]";
+    }
 }
