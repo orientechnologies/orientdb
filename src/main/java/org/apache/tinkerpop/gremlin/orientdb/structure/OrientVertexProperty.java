@@ -6,43 +6,13 @@ import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
-public class OrientVertexProperty<V> implements VertexProperty<V> {
-
-    private String key;
-    private V value;
-    private Vertex vertex;
+public class OrientVertexProperty<V> extends OrientProperty<V> implements VertexProperty<V> {
+    protected Vertex vertex;
 
     public OrientVertexProperty(String key, V value, Vertex vertex) {
-        this.key = key;
-        this.value = value;
+        super(key, value, vertex);
         this.vertex = vertex;
-    }
-
-    @Override
-    public String key() {
-        return key;
-    }
-
-    @Override
-    public V value() throws NoSuchElementException {
-        return value;
-    }
-
-    @Override
-    public boolean isPresent() {
-        return true;
-    }
-
-    @Override
-    public Vertex element() {
-        return vertex;
-    }
-
-    @Override
-    public void remove() {
-        throw new NotImplementedException();
     }
 
     @Override
@@ -58,5 +28,10 @@ public class OrientVertexProperty<V> implements VertexProperty<V> {
     @Override
     public <U> Iterator<Property<U>> properties(String... propertyKeys) {
         throw new NotImplementedException();
+    }
+
+    @Override
+    public Vertex element() {
+        return vertex;
     }
 }

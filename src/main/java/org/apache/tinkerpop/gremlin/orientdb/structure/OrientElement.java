@@ -6,13 +6,14 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.*;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang.NotImplementedException;
 
 
 public class OrientElement implements Element {
     protected OIdentifiable rawElement;
     protected OrientGraph graph;
-    protected OrientElement element = this;
 
     public OrientElement(final OrientGraph graph, final OIdentifiable rawElement) {
         this.graph = graph;
@@ -37,8 +38,8 @@ public class OrientElement implements Element {
             doc.field(key, value);
             doc.save();
         }
-        //TODO return the property
-        return null;
+
+        return new OrientProperty<>(key, value, this);
     }
 
     public void remove() {
@@ -48,49 +49,13 @@ public class OrientElement implements Element {
     public <V> Iterator<? extends Property<V>> properties(final String... propertyKeys) {
         ODocument raw = rawElement.getRecord();
         Map<String, Object> properties = raw.toMap();
+        HashSet<String> keys = new HashSet<>(Arrays.asList(propertyKeys));
 
-        //TODO: filter by propertyKeys ;)
+        Stream<Map.Entry<String, Object>> entries = StreamUtils.asStream(properties.entrySet().iterator());
+        if (keys.size() > 0) entries = entries.filter(entry -> keys.contains(entry));
 
-        return new Iterator<Property<V>>() {
-            Iterator<Map.Entry<String, Object>> itty = properties.entrySet().iterator();
-
-            @Override
-            public boolean hasNext() {
-                return itty.hasNext();
-            }
-
-            @Override
-            public Property<V> next() {
-                Map.Entry<String, Object> entry = itty.next();
-
-                return new Property<V>() {
-                    @Override
-                    public String key() {
-                        return entry.getKey();
-                    }
-
-                    @Override
-                    public V value() throws NoSuchElementException {
-                        return (V) entry.getValue();
-                    }
-
-                    @Override
-                    public boolean isPresent() {
-                        return true;
-                    }
-
-                    @Override
-                    public Element element() {
-                        return element;
-                    }
-
-                    @Override
-                    public void remove() {
-                        throw new NotImplementedException();
-                    }
-                };
-            }
-        };
+        Stream<OrientProperty<V>> propertyStream = entries.map(entry -> new OrientProperty<>(entry.getKey(), (V) entry.getValue(), this));
+        return propertyStream.iterator();
     }
 
 }
