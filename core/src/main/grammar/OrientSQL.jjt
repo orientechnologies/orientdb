@@ -1864,6 +1864,8 @@ OFromItem FromItem():
     	|*/
     	jjtThis.cluster = Cluster()
     	|
+    	jjtThis.clusterList = ClusterList()
+    	|
     	jjtThis.index = IndexIdentifier()
     	|
         jjtThis.metadata = MetadataIdentifier()
@@ -1896,6 +1898,20 @@ OCluster Cluster():
 {
     (
 	    cName = <CLUSTER_IDENTIFIER> {jjtThis.clusterName = cName.image.split(":")[1];}
+	)
+    { return jjtThis; }
+}
+
+OClusterList ClusterList():
+{ OIdentifier lastIdentifier; }
+{
+    (
+	     <CLUSTER> <COLON> <LBRACKET>
+	     [
+	        lastIdentifier = Identifier() { jjtThis.clusters.add(lastIdentifier); }
+	        ( <COMMA> lastIdentifier = Identifier() { jjtThis.clusters.add(lastIdentifier); } )*
+	     ]
+	     <RBRACKET>
 	)
     { return jjtThis; }
 }
