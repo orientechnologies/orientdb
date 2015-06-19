@@ -28,7 +28,7 @@ public class OrientProperty<V> implements Property<V> {
 
     @Override
     public boolean isPresent() {
-        return true;
+        return value != null;
     }
 
     @Override
