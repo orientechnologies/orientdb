@@ -259,6 +259,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         return wrapped.command(iCommand);
 
       case REPLICATE: {
+        if (exec.isLocalExecution())
+          // LOCAL NODE, AVOID TO DISTRIBUTE IT
+          return wrapped.command(iCommand);
+
         // REPLICATE IT, GET ALL THE INVOLVED NODES
         final Collection<String> involvedClusters = exec.getInvolvedClusters();
         final Collection<String> nodes;
@@ -278,29 +282,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           // / NO NODE TO REPLICATE
           return null;
 
-        boolean executeLocally = false;
-        if (exec.isIdempotent()) {
-          // IDEMPOTENT: CHECK IF CAN WORK LOCALLY ONLY
-          int maxReadQuorum;
-          if (involvedClusters.isEmpty())
-            maxReadQuorum = dbCfg.getReadQuorum(null);
-          else {
-            maxReadQuorum = 0;
-            for (String cl : involvedClusters)
-              maxReadQuorum = Math.max(maxReadQuorum, dbCfg.getReadQuorum(cl));
-          }
-
-          if (nodes.size() == 1 && nodes.iterator().next().equals(localNodeName) && maxReadQuorum <= 1)
-            executeLocally = true;
-
-        } else if (nodes.size() == 1 && nodes.iterator().next().equals(localNodeName))
-          executeLocally = true;
-
-        if (executeLocally)
+        if (executeLocally(localNodeName, dbCfg, exec, involvedClusters, nodes))
           // LOCAL NODE, AVOID TO DISTRIBUTE IT
           return wrapped.command(iCommand);
 
-        // TODO: OPTIMIZE FILTERING BY CHANGING TARGET PER CLUSTER INSTEAD OF LEAVING CLASS
+        // if( involvedClusters.size() > 1 )
+
         result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
 
         if (exec.involveSchema())
@@ -414,6 +401,28 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       // UNREACHABLE
       return null;
     }
+  }
+
+  protected boolean executeLocally(String localNodeName, ODistributedConfiguration dbCfg, OCommandExecutor exec,
+      Collection<String> involvedClusters, Collection<String> nodes) {
+    boolean executeLocally = false;
+    if (exec.isIdempotent()) {
+      // IDEMPOTENT: CHECK IF CAN WORK LOCALLY ONLY
+      int maxReadQuorum;
+      if (involvedClusters.isEmpty())
+        maxReadQuorum = dbCfg.getReadQuorum(null);
+      else {
+        maxReadQuorum = 0;
+        for (String cl : involvedClusters)
+          maxReadQuorum = Math.max(maxReadQuorum, dbCfg.getReadQuorum(cl));
+      }
+
+      if (nodes.size() == 1 && nodes.iterator().next().equals(localNodeName) && maxReadQuorum <= 1)
+        executeLocally = true;
+
+    } else if (nodes.size() == 1 && nodes.iterator().next().equals(localNodeName))
+      executeLocally = true;
+    return executeLocally;
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRecordId, final byte[] iContent,

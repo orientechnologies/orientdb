@@ -637,15 +637,23 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return new ORID[] { beginRange, endRange };
   }
 
-  public void setRequest(OSQLAsynchQuery<ODocument> request) {
+  public Iterator<? extends OIdentifiable> getTarget() {
+    return target;
+  }
+
+  public void setTarget(final Iterator<? extends OIdentifiable> target) {
+    this.target = target;
+  }
+
+  public void setRequest(final OSQLAsynchQuery<ODocument> request) {
     this.request = request;
   }
 
-  public void setParsedTarget(OSQLTarget parsedTarget) {
+  public void setParsedTarget(final OSQLTarget parsedTarget) {
     this.parsedTarget = parsedTarget;
   }
 
-  public void setCompiledFilter(OSQLFilter compiledFilter) {
+  public void setCompiledFilter(final OSQLFilter compiledFilter) {
     this.compiledFilter = compiledFilter;
   }
 }
