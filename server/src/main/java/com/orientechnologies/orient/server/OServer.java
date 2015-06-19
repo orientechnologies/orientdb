@@ -253,17 +253,17 @@ public class OServer {
         networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
             l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
 
-      registerPlugins();
-
-      for (OServerLifecycleListener l : lifecycleListeners)
-        l.onAfterActivate();
-
       try {
         loadStorages();
         loadUsers();
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error on reading server configuration", e, OConfigurationException.class);
       }
+      
+      registerPlugins();
+
+      for (OServerLifecycleListener l : lifecycleListeners)
+        l.onAfterActivate();
 
       OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is active.");
     } catch (ClassNotFoundException e) {
