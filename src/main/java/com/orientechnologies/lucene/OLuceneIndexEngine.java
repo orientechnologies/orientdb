@@ -28,15 +28,17 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
 
   private final String                  indexType;
+  private final String                  indexName;
   protected OLuceneIndexManagerAbstract lucene;
   protected OIndex                      indexManaged;
   private ODocument                     indexMetadata;
 
-  public OLuceneIndexEngine(OLuceneIndexManagerAbstract delegate, String indexType) {
+  public OLuceneIndexEngine(OLuceneIndexManagerAbstract delegate, String indexName, String indexType) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
 
     this.lucene = delegate;
+    this.indexName = indexName;
     this.indexType = indexType;
   }
 
@@ -51,10 +53,10 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public void create(String indexName, OIndexDefinition indexDefinition, String clusterIndexName,
-      OStreamSerializer valueSerializer, boolean isAutomatic) {
+  public void create(OIndexDefinition indexDefinition, String clusterIndexName, OStreamSerializer valueSerializer,
+      boolean isAutomatic) {
 
-    lucene.createIndex(indexName, indexDefinition, clusterIndexName, valueSerializer, isAutomatic, indexMetadata);
+    lucene.createIndex(indexName,indexDefinition, clusterIndexName, valueSerializer, isAutomatic, indexMetadata);
 
   }
 

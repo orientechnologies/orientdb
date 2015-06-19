@@ -186,7 +186,7 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
     }
 
     @Override
-    protected Object getCollatingValue(Object key) {
+    public Object getCollatingValue(Object key) {
         return key;
     }
 

@@ -55,30 +55,43 @@ public class OLuceneIndexFactory implements OIndexFactory {
   public OLuceneIndexFactory() {
   }
 
-  @Override
+  public int getLastVersion() {
+    return 0;
+  }
+
   public Set<String> getTypes() {
     return TYPES;
   }
 
-  @Override
   public Set<String> getAlgorithms() {
     return ALGORITHMS;
   }
 
+<<<<<<< HEAD
   @Override
-  public OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal oDatabaseRecord, String indexType, String algorithm,
+  public OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
+    return createIndex(name, database, indexType, algorithm, valueContainerAlgorithm, metadata);
+=======
+  public OIndexInternal<?> createIndex(ODatabaseDocumentInternal oDatabaseRecord, String indexType, String algorithm,
+      String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
+    return createLuceneIndex(oDatabaseRecord, indexType, valueContainerAlgorithm, metadata);
+>>>>>>> da4069c6e0e303955c9d7fe52eb5044efca7b801
+  }
+
+  protected OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal oDatabaseRecord, String indexType,
+      String algorithm, String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException {
     return createLuceneIndex(name, oDatabaseRecord, indexType, valueContainerAlgorithm, metadata);
   }
 
   private OIndexInternal<?> createLuceneIndex(String name, ODatabaseDocumentInternal oDatabaseRecord, String indexType,
       String valueContainerAlgorithm, ODocument metadata) {
     if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OLuceneFullTextIndex(indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
-          new OLuceneFullTextIndexManager(), name, indexType), valueContainerAlgorithm, metadata);
+      return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
+          new OLuceneFullTextIndexManager(), indexType), valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.SPATIAL.toString().equals(indexType)) {
-      return new OLuceneSpatialIndex(indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
-          new OLuceneSpatialIndexManager(new OShapeFactoryImpl()), name, indexType), valueContainerAlgorithm, metadata);
+      return new OLuceneSpatialIndex(name, indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
+          new OLuceneSpatialIndexManager(new OShapeFactoryImpl()), indexType), valueContainerAlgorithm, metadata);
     }
     throw new OConfigurationException("Unsupported type : " + indexType);
   }
