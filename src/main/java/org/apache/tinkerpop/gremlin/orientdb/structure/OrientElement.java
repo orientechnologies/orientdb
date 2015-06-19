@@ -1,5 +1,7 @@
 package org.apache.tinkerpop.gremlin.orientdb.structure;
 
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import org.apache.tinkerpop.gremlin.structure.*;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -33,12 +35,12 @@ public class OrientElement implements Element {
     }
 
     public <V> Property<V> property(final String key, final V value) {
-        if (rawElement instanceof ODocument) {
-            ODocument doc = (ODocument) rawElement;
-            doc.field(key, value);
-            doc.save();
-        }
+        if (!(rawElement instanceof ODocument))
+            rawElement = new ODocument(rawElement.getIdentity());
 
+        ODocument doc = (ODocument) rawElement;
+        doc.field(key, value);
+        doc.save();
         return new OrientProperty<>(key, value, this);
     }
 
@@ -47,8 +49,11 @@ public class OrientElement implements Element {
     }
 
     public <V> Iterator<? extends Property<V>> properties(final String... propertyKeys) {
-        ODocument raw = rawElement.getRecord();
-        Map<String, Object> properties = raw.toMap();
+        ODocument record = rawElement.getRecord();
+        if (record == null)
+            record = new ODocument();
+
+        Map<String, Object> properties = record.toMap();
         HashSet<String> keys = new HashSet<>(Arrays.asList(propertyKeys));
 
         Stream<Map.Entry<String, Object>> entries = StreamUtils.asStream(properties.entrySet().iterator());
