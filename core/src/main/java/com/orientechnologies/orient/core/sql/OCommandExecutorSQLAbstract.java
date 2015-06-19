@@ -155,7 +155,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     for (String clazz : iClassNames) {
       final OClass cls = ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClass(clazz);
       if (cls != null)
-        for (int clId : cls.getClusterIds()) {
+        for (int clId : cls.getPolymorphicClusterIds()) {
           // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
           if (clId > -1 && checkClusterAccess(db, db.getClusterNameById(clId)))
             clusters.add(db.getClusterNameById(clId).toLowerCase());
