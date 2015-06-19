@@ -57,7 +57,8 @@ public class OrientElement implements Element {
         HashSet<String> keys = new HashSet<>(Arrays.asList(propertyKeys));
 
         Stream<Map.Entry<String, Object>> entries = StreamUtils.asStream(properties.entrySet().iterator());
-        if (keys.size() > 0) entries = entries.filter(entry -> keys.contains(entry));
+        if (keys.size() > 0) {
+            entries = entries.filter(entry -> keys.contains(entry.getKey()));
 
         Stream<OrientProperty<V>> propertyStream = entries.map(entry -> new OrientProperty<>(entry.getKey(), (V) entry.getValue(), this));
         return propertyStream.iterator();
