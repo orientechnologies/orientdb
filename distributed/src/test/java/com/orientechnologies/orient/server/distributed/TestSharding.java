@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.server.distributed;
 
+import junit.framework.Assert;
+
+import org.junit.Test;
+
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Direction;
@@ -12,8 +16,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import junit.framework.Assert;
-import org.junit.Test;
 
 public class TestSharding extends AbstractServerClusterTest {
 
@@ -229,8 +231,8 @@ public class TestSharding extends AbstractServerClusterTest {
           for (OrientVertex v : result) {
             System.out.println("select sum(amount) from ( select from Client ) -> " + v.getRecord());
 
-            // Assert.assertEquals("Returned wrong sum of amount on server " + server, (Long) totalAmount, (Long)
-            // v.getProperty("sum"));
+            Assert
+                .assertEquals("Returned wrong sum of amount on server " + server, (Long) totalAmount, (Long) v.getProperty("sum"));
 
             count++;
           }

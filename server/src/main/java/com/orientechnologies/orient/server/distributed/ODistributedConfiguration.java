@@ -213,12 +213,12 @@ public class ODistributedConfiguration {
    * @param iLocalNode
    *          Local node name
    */
-  public Collection<String> getOneServerPerCluster(Collection<String> iClusterNames, final String iLocalNode) {
+  public Map<String, Collection<String>> getServerClusterMap(Collection<String> iClusterNames, final String iLocalNode) {
     synchronized (configuration) {
       if (iClusterNames == null || iClusterNames.isEmpty())
         iClusterNames = Collections.singleton("*");
 
-      final Set<String> servers = new HashSet<String>(iClusterNames.size());
+      final Map<String, Collection<String>> servers = new HashMap<String, Collection<String>>(iClusterNames.size());
 
       // TRY TO SEE IF IT CAN BE EXECUTED ON LOCAL NODE ONLY
       boolean canUseLocalNode = true;
@@ -231,8 +231,8 @@ public class ODistributedConfiguration {
       }
 
       if (canUseLocalNode) {
-        // USE LOCAL ODE ONLY (MUCH FASTER)
-        servers.add(iLocalNode);
+        // USE LOCAL NODE ONLY (MUCH FASTER)
+        servers.put(iLocalNode, iClusterNames);
         return servers;
       }
 
@@ -240,16 +240,16 @@ public class ODistributedConfiguration {
         final List<String> serverList = getClusterConfiguration(iClusterNames.iterator().next()).field("servers");
 
         // PICK THE FIRST ONE
-        servers.add(serverList.get(0));
+        servers.put(serverList.get(0), iClusterNames);
         return servers;
       }
 
       // GROUP BY SERVER WITH THE NUMBER OF CLUSTERS
-      final Map<String, Set<String>> serverMap = new HashMap<String, Set<String>>();
+      final Map<String, Collection<String>> serverMap = new HashMap<String, Collection<String>>();
       for (String p : iClusterNames) {
         final List<String> serverList = getClusterConfiguration(p).field("servers");
         for (String s : serverList) {
-          Set<String> clustersInServer = serverMap.get(s);
+          Collection<String> clustersInServer = serverMap.get(s);
           if (clustersInServer == null) {
             clustersInServer = new HashSet<String>();
             serverMap.put(s, clustersInServer);
@@ -258,11 +258,9 @@ public class ODistributedConfiguration {
         }
       }
 
-      if (serverMap.size() == 1) {
+      if (serverMap.size() == 1)
         // RETURN THE ONLY SERVER INVOLVED
-        servers.add(serverMap.keySet().iterator().next());
-        return servers;
-      }
+        return serverMap;
 
       // ORDER BY NUMBER OF CLUSTERS
       final List<String> orderedServers = new ArrayList<String>(serverMap.keySet());
@@ -274,14 +272,23 @@ public class ODistributedConfiguration {
       });
 
       // BROWSER ORDERED SERVER MAP PUTTING THE MINIMUM SERVER TO COVER ALL THE CLUSTERS
-      final Set<String> missingClusters = new HashSet<String>(iClusterNames);
+      final Set<String> remainingClusters = new HashSet<String>(iClusterNames); // KEEPS THE REMAINING CLUSTER TO ADD IN FINAL
+                                                                                // RESULT
+      final Set<String> includedClusters = new HashSet<String>(iClusterNames.size()); // KEEPS THE COLLECTION OF ALREADY INCLUDED
+                                                                                      // CLUSTERS
       for (String s : orderedServers) {
-        final Set<String> clusters = serverMap.get(s);
+        final Collection<String> clusters = serverMap.get(s);
 
-        servers.add(s);
-        missingClusters.removeAll(clusters);
+        if (!servers.isEmpty()) {
+          // FILTER CLUSTER LIST AVOIDING TO REPEAT CLUSTERS ALREADY INCLUDED ON PREVIOUS NODES
+          clusters.removeAll(includedClusters);
+        }
 
-        if (missingClusters.isEmpty())
+        servers.put(s, clusters);
+        remainingClusters.removeAll(clusters);
+        includedClusters.addAll(clusters);
+
+        if (remainingClusters.isEmpty())
           // FOUND ALL CLUSTERS
           break;
       }

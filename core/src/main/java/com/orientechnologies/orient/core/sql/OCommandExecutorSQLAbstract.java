@@ -205,8 +205,8 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   }
 
   protected boolean checkClusterAccess(final ODatabaseDocument db, final String iClusterName) {
-    return db.getUser() != null
-        && db.getUser().checkIfAllowed(ORule.ResourceGeneric.CLUSTER, iClusterName, getSecurityOperationType()) != null;
+    return db.getUser() == null
+        || db.getUser().checkIfAllowed(ORule.ResourceGeneric.CLUSTER, iClusterName, getSecurityOperationType()) != null;
   }
 
   protected void bindDefaultContextVariables() {
