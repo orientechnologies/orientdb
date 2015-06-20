@@ -40,7 +40,6 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   protected int[]   clusterIds;
   protected int     currentClusterIdx;
   protected ORecord currentRecord;
-
   protected ORID    beginRange;
   protected ORID    endRange;
 
@@ -355,6 +354,14 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     }
 
     return this;
+  }
+
+  public ORID getBeginRange() {
+    return beginRange;
+  }
+
+  public ORID getEndRange() {
+    return endRange;
   }
 
   @Override

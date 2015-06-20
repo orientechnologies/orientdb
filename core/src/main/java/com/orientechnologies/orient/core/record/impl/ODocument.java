@@ -1491,26 +1491,30 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public ODocument undo() {
     if (!_trackingChanges)
       throw new OConfigurationException("Cannot undo the document because tracking of changes is disabled");
-    Iterator<Entry<String, ODocumentEntry>> vals = _fields.entrySet().iterator();
-    while (vals.hasNext()) {
-      Entry<String, ODocumentEntry> next = vals.next();
-      if (next.getValue().isCreated()) {
-        vals.remove();
-      } else if (next.getValue().isChanged()) {
-        next.getValue().value = next.getValue().original;
-        next.getValue().setChanged(false);
-        next.getValue().original = null;
-        next.getValue().setExist(true);
+
+    if (_fields != null) {
+      Iterator<Entry<String, ODocumentEntry>> vals = _fields.entrySet().iterator();
+      while (vals.hasNext()) {
+        Entry<String, ODocumentEntry> next = vals.next();
+        if (next.getValue().isCreated()) {
+          vals.remove();
+        } else if (next.getValue().isChanged()) {
+          next.getValue().value = next.getValue().original;
+          next.getValue().setChanged(false);
+          next.getValue().original = null;
+          next.getValue().setExist(true);
+        }
       }
+      _fieldSize = _fields.size();
     }
-    _fieldSize = _fields.size();
 
     return this;
   }
 
-  public ODocument undo(String field) {
+  public ODocument undo(final String field) {
     if (!_trackingChanges)
       throw new OConfigurationException("Cannot undo the document because tracking of changes is disabled");
+
     if (_fields != null) {
       final ODocumentEntry value = _fields.get(field);
       if (value.created) {
