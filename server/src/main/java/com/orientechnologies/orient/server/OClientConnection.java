@@ -19,15 +19,17 @@
  */
 package com.orientechnologies.orient.server;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class OClientConnection {
   public final int                         id;
@@ -35,6 +37,7 @@ public class OClientConnection {
   public volatile ONetworkProtocol         protocol;
   public volatile ODatabaseDocumentTx      database;
   public volatile OServerUserConfiguration serverUser;
+  private Lock                             lock = new ReentrantLock();
 
   public ONetworkProtocolData              data = new ONetworkProtocolData();
 
@@ -53,6 +56,20 @@ public class OClientConnection {
 
       database = null;
     }
+  }
+
+  /**
+   * Acquires the connection. This is fundamental to manage concurrent requests using the same session id.
+   */
+  public void acquire() {
+    lock.lock();
+  }
+
+  /**
+   * Releases an acquired connection.
+   */
+  public void release() {
+    lock.unlock();
   }
 
   @Override

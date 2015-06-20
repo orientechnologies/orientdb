@@ -25,13 +25,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Distributed configuration. It uses an ODocument object to store the configuration. Every changes increment the field "version".
@@ -211,53 +205,95 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns one server per cluster involved.
+   * Returns the list of servers that can managed a list of clusters. The algorithm makes its best to involve the less servers as it
+   * can.
    * 
    * @param iClusterNames
    *          Set of cluster names to find
    * @param iLocalNode
    *          Local node name
    */
-  public Collection<String> getOneServerPerCluster(Collection<String> iClusterNames, final String iLocalNode) {
+  public Map<String, Collection<String>> getServerClusterMap(Collection<String> iClusterNames, final String iLocalNode) {
     synchronized (configuration) {
       if (iClusterNames == null || iClusterNames.isEmpty())
         iClusterNames = Collections.singleton("*");
 
-      final Set<String> partitions = new HashSet<String>(iClusterNames.size());
+      final Map<String, Collection<String>> servers = new HashMap<String, Collection<String>>(iClusterNames.size());
+
+      // TRY TO SEE IF IT CAN BE EXECUTED ON LOCAL NODE ONLY
+      boolean canUseLocalNode = true;
       for (String p : iClusterNames) {
         final List<String> serverList = getClusterConfiguration(p).field("servers");
-        if (serverList != null) {
-          boolean found = false;
-          // CHECK IF THE LOCAL NODE IS INVOLVED: IF YES PREFER LOCAL EXECUTION
-          for (String s : serverList)
-            if (s.equals(iLocalNode)) {
-              // FOUND: JUST USE THIS AND CONTINUE WITH THE NEXT PARTITION
-              partitions.add(s);
-              found = true;
-              break;
-            }
-
-          if (!found)
-            // CHECK IF A NODE IS ALREADY IN THE RESULT SET
-            for (String s : serverList)
-              if (partitions.contains(s)) {
-                // ALREADY CONTAINED, REUSE IT
-                found = true;
-                break;
-              }
-
-          if (!found)
-            // TODO: DON'T JUST PUT THE FIRST NODE, BUT THE NODE WITH MORE CHANCE TO HAVE OTHER NODES TOO
-
-            // PUT THE FIRST NODE IN THE LIST
-            for (String s : serverList)
-              if (!s.equals(NEW_NODE_TAG)) {
-                partitions.add(s);
-                break;
-              }
+        if (serverList != null && !serverList.contains(iLocalNode)) {
+          canUseLocalNode = false;
+          break;
         }
       }
-      return partitions;
+
+      if (canUseLocalNode) {
+        // USE LOCAL NODE ONLY (MUCH FASTER)
+        servers.put(iLocalNode, iClusterNames);
+        return servers;
+      }
+
+      if (iClusterNames.size() == 1) {
+        final List<String> serverList = getClusterConfiguration(iClusterNames.iterator().next()).field("servers");
+
+        // PICK THE FIRST ONE
+        servers.put(serverList.get(0), iClusterNames);
+        return servers;
+      }
+
+      // GROUP BY SERVER WITH THE NUMBER OF CLUSTERS
+      final Map<String, Collection<String>> serverMap = new HashMap<String, Collection<String>>();
+      for (String p : iClusterNames) {
+        final List<String> serverList = getClusterConfiguration(p).field("servers");
+        for (String s : serverList) {
+          Collection<String> clustersInServer = serverMap.get(s);
+          if (clustersInServer == null) {
+            clustersInServer = new HashSet<String>();
+            serverMap.put(s, clustersInServer);
+          }
+          clustersInServer.add(p);
+        }
+      }
+
+      if (serverMap.size() == 1)
+        // RETURN THE ONLY SERVER INVOLVED
+        return serverMap;
+
+      // ORDER BY NUMBER OF CLUSTERS
+      final List<String> orderedServers = new ArrayList<String>(serverMap.keySet());
+      Collections.sort(orderedServers, new Comparator<String>() {
+        @Override
+        public int compare(final String o1, final String o2) {
+          return ((Integer) serverMap.get(o2).size()).compareTo((Integer) serverMap.get(o1).size());
+        }
+      });
+
+      // BROWSER ORDERED SERVER MAP PUTTING THE MINIMUM SERVER TO COVER ALL THE CLUSTERS
+      final Set<String> remainingClusters = new HashSet<String>(iClusterNames); // KEEPS THE REMAINING CLUSTER TO ADD IN FINAL
+                                                                                // RESULT
+      final Set<String> includedClusters = new HashSet<String>(iClusterNames.size()); // KEEPS THE COLLECTION OF ALREADY INCLUDED
+                                                                                      // CLUSTERS
+      for (String s : orderedServers) {
+        final Collection<String> clusters = serverMap.get(s);
+
+        if (!servers.isEmpty()) {
+          // FILTER CLUSTER LIST AVOIDING TO REPEAT CLUSTERS ALREADY INCLUDED ON PREVIOUS NODES
+          clusters.removeAll(includedClusters);
+        }
+
+        servers.put(s, clusters);
+        remainingClusters.removeAll(clusters);
+        includedClusters.addAll(clusters);
+
+        if (remainingClusters.isEmpty())
+          // FOUND ALL CLUSTERS
+          break;
+      }
+
+      return servers;
     }
   }
 

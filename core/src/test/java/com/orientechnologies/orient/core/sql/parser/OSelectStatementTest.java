@@ -308,7 +308,7 @@ public class OSelectStatementTest {
   @Test
   public void testSpatial() {
 
-      checkRightSyntax("select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 0.5}]");
+    checkRightSyntax("select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 0.5}]");
     checkRightSyntax("select * from Place where [latitude,longitude] WITHIN [[51.507222,-0.1275],[55.507222,-0.1275]]");
 
   }
@@ -330,6 +330,11 @@ public class OSelectStatementTest {
     checkRightSyntax("insert into test content {\"node_id\": \"MFmqvmht//sYYWB8=\"}");
     checkRightSyntax("insert into test content { \"node_id\": \"MFmqvmht\\/\\/GYsYYWB8=\"}");
 
+  }
+
+  @Test()
+  public void testClusterList() {
+    checkRightSyntax("select from cluster:[foo,bar]");
   }
 
   @Test

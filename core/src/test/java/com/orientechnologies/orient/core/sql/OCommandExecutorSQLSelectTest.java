@@ -85,6 +85,14 @@ public class OCommandExecutorSQLSelectTest {
 
     db.command(new OCommandSQL("CREATE class TestFromInSquare")).execute();
     db.command(new OCommandSQL("insert into TestFromInSquare set tags = {' from ':'foo',' to ':'bar'}")).execute();
+
+    db.command(new OCommandSQL("CREATE class TestMultipleClusters")).execute();
+    db.command(new OCommandSQL("alter class TestMultipleClusters addcluster testmultipleclusters1 ")).execute();
+    db.command(new OCommandSQL("alter class TestMultipleClusters addcluster testmultipleclusters2 ")).execute();
+    db.command(new OCommandSQL("insert into cluster:testmultipleclusters set name = 'aaa'")).execute();
+    db.command(new OCommandSQL("insert into cluster:testmultipleclusters1 set name = 'foo'")).execute();
+    db.command(new OCommandSQL("insert into cluster:testmultipleclusters2 set name = 'bar'")).execute();
+
   }
 
   @AfterClass
@@ -431,6 +439,18 @@ public class OCommandExecutorSQLSelectTest {
       String coll = doc.field("coll");
       assertTrue(coll.startsWith(name));
     }
+  }
+
+  @Test
+  public void testMultipleClusters() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from cluster:[testmultipleclusters1]")).execute();
+
+    assertEquals(qResult.size(), 1);
+
+    qResult = db.command(new OCommandSQL("select from cluster:[testmultipleclusters1, testmultipleclusters2]")).execute();
+
+    assertEquals(qResult.size(), 2);
+
   }
 
   @Test
