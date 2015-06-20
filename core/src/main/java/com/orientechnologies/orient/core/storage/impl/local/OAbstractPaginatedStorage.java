@@ -2318,7 +2318,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         lsn = writeAheadLog.next(lsn);
       }
-    } catch (OWALPageBrokenException e) {
+    } catch (Exception e) {
       OLogManager.instance().error(this,
           "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.");
     }
