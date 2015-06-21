@@ -1088,8 +1088,30 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
+  public String getFileName() {
+    atomicOperationsManager.acquireReadLock(this);
+    try {
+      acquireSharedLock();
+      try {
+        return writeCache.fileNameById(fileId);
+      } finally {
+        releaseSharedLock();
+      }
+    } finally {
+      atomicOperationsManager.releaseReadLock(this);
+    }
+  }
+
+  @Override
   public int getId() {
     return id;
+  }
+
+  /**
+   * Returns the fileId used in WriteCache.
+   */
+  public long getFileId() {
+    return fileId;
   }
 
   @Override

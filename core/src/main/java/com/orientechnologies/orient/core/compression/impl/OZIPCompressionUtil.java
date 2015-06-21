@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.compression.impl;
 
@@ -38,6 +38,8 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
+ * Compression Utility.
+ * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OZIPCompressionUtil {
@@ -108,11 +110,11 @@ public class OZIPCompressionUtil {
     return s == -1 ? null : name.substring(0, s);
   }
 
-  private static int addFolder(ZipOutputStream zos, String folderName, String baseFolderName, final String[] iSkipFileExtensions,
+  private static int addFolder(ZipOutputStream zos, String path, String baseFolderName, final String[] iSkipFileExtensions,
       final OCommandOutputListener iOutput) throws IOException {
     int total = 0;
 
-    File f = new File(folderName);
+    File f = new File(path);
     if (f.exists()) {
       if (f.isDirectory()) {
         File f2[] = f.listFiles();
@@ -122,50 +124,66 @@ public class OZIPCompressionUtil {
       } else {
         // add file
         // extract the relative name for entry purpose
-        String entryName = folderName.substring(baseFolderName.length() + 1, folderName.length());
+        String entryName = path.substring(baseFolderName.length() + 1, path.length());
 
         if (iSkipFileExtensions != null)
           for (String skip : iSkipFileExtensions)
             if (entryName.endsWith(skip))
               return 0;
 
-        final long begin = System.currentTimeMillis();
-
-        if (iOutput != null)
-          iOutput.onMessage("\n- Compressing file " + entryName + "...");
-
-        ZipEntry ze = new ZipEntry(entryName);
-        zos.putNextEntry(ze);
-        try {
-          FileInputStream in = new FileInputStream(folderName);
-          try {
-            OIOUtils.copyStream(in, zos, -1);
-          } finally {
-            in.close();
-          }
-        } catch (IOException e) {
-          if (iOutput != null)
-            iOutput.onMessage("error: " + e);
-
-          OLogManager.instance().error(OZIPCompression.class, "Cannot compress file: %s", e, folderName);
-          throw e;
-        } finally {
-          zos.closeEntry();
-        }
-
-        if (iOutput != null) {
-          final long ratio = ze.getSize() > 0 ? 100 - (ze.getCompressedSize() * 100 / ze.getSize()) : 0;
-
-          iOutput.onMessage("ok size=" + OFileUtils.getSizeAsString(ze.getSize()) + " compressedSize=" + ze.getCompressedSize()
-              + " ratio=" + ratio + "%% elapsed=" + OIOUtils.getTimeAsString(System.currentTimeMillis() - begin) + "");
-        }
+        addFile(zos, path, entryName, iOutput);
 
         total++;
-
       }
     } else {
-      throw new IllegalArgumentException("Directory " + folderName + " not found");
+      throw new IllegalArgumentException("Directory " + path + " not found");
     }
     return total;
+  }
+
+  public static void compressFile(final String folderName, final String entryName, final OutputStream output,
+      final OCommandOutputListener iOutput, final int compressionLevel) throws IOException {
+    final ZipOutputStream zos = new ZipOutputStream(output);
+    zos.setComment("OrientDB Backup executed on " + new Date());
+    try {
+      zos.setLevel(compressionLevel);
+      addFile(zos, folderName + "/" + entryName, entryName, iOutput);
+    } finally {
+      zos.close();
+    }
+  }
+
+  private static void addFile(final ZipOutputStream zos, final String folderName, final String entryName,
+      final OCommandOutputListener iOutput) throws IOException {
+    final long begin = System.currentTimeMillis();
+
+    if (iOutput != null)
+      iOutput.onMessage("\n- Compressing file " + entryName + "...");
+
+    final ZipEntry ze = new ZipEntry(entryName);
+    zos.putNextEntry(ze);
+    try {
+      final FileInputStream in = new FileInputStream(folderName);
+      try {
+        OIOUtils.copyStream(in, zos, -1);
+      } finally {
+        in.close();
+      }
+    } catch (IOException e) {
+      if (iOutput != null)
+        iOutput.onMessage("error: " + e);
+
+      OLogManager.instance().error(OZIPCompression.class, "Cannot compress file: %s", e, folderName);
+      throw e;
+    } finally {
+      zos.closeEntry();
+    }
+
+    if (iOutput != null) {
+      final long ratio = ze.getSize() > 0 ? 100 - (ze.getCompressedSize() * 100 / ze.getSize()) : 0;
+
+      iOutput.onMessage("ok size=" + OFileUtils.getSizeAsString(ze.getSize()) + " compressedSize=" + ze.getCompressedSize()
+          + " ratio=" + ratio + "%% elapsed=" + OIOUtils.getTimeAsString(System.currentTimeMillis() - begin) + "");
+    }
   }
 }

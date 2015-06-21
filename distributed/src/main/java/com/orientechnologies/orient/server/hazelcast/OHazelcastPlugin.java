@@ -59,7 +59,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
-import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
+import com.orientechnologies.orient.server.distributed.task.OSyncDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
 import java.io.File;
@@ -833,7 +833,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return getHazelcastInstance().getMap("orientdb");
   }
 
-  public boolean installDatabase(boolean iStartup, final String databaseName, ODocument config) {
+  public boolean installDatabase(boolean iStartup, final String databaseName, final ODocument config) {
 
     final Boolean hotAlignment = config.field("hotAlignment");
     final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
@@ -895,10 +895,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     ODistributedServerLog.warn(this, getLocalNodeName(), firstNode.toString(), DIRECTION.OUT,
         "requesting deploy of database '%s' on local server...", databaseName);
 
-    final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, firstNode, new ODeployDatabaseTask(
-        null), EXECUTION_MODE.RESPONSE);
+    final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, firstNode, new OSyncDatabaseTask(
+        OSyncDatabaseTask.MODE.FULL_REPLACE), EXECUTION_MODE.RESPONSE);
 
-    ODistributedServerLog.warn(this, getLocalNodeName(), firstNode.toString(), DIRECTION.OUT, "deploy returned: %s", results);
+    ODistributedServerLog.debug(this, getLocalNodeName(), firstNode.toString(), DIRECTION.OUT, "deploy returned: %s", results);
 
     // EXTRACT THE REAL RESULT
     for (Entry<String, Object> r : results.entrySet()) {
