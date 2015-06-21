@@ -65,7 +65,8 @@ public final class OrientGraph implements Graph {
             return asStream(itty).map(r -> toVertex(r)).iterator();
         } else {
             Stream<ORecordId> ids = Stream.of(vertexIds).map(v -> new ORecordId(v.toString()));
-            return ids.map(id -> (Vertex) new OrientVertex(this, id)).iterator();
+            Stream<ORecord> records = ids.filter(id -> id.isValid()).map(id -> (ORecord)id.getRecord()).filter(r -> r != null);
+            return records.map(record -> (Vertex) new OrientVertex(this, record)).iterator();
         }
     }
 

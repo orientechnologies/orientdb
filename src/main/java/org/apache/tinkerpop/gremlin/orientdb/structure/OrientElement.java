@@ -18,6 +18,8 @@ public class OrientElement implements Element {
     protected OrientGraph graph;
 
     public OrientElement(final OrientGraph graph, final OIdentifiable rawElement) {
+        if (rawElement == null)
+            throw new IllegalArgumentException("rawElement must not be null!");
         this.graph = graph;
         this.rawElement = rawElement;
     }
@@ -59,6 +61,7 @@ public class OrientElement implements Element {
         Stream<Map.Entry<String, Object>> entries = StreamUtils.asStream(properties.entrySet().iterator());
         if (keys.size() > 0) {
             entries = entries.filter(entry -> keys.contains(entry.getKey()));
+        }
 
         Stream<OrientProperty<V>> propertyStream = entries.map(entry -> new OrientProperty<>(entry.getKey(), (V) entry.getValue(), this));
         return propertyStream.iterator();
