@@ -1,7 +1,32 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.util.MersenneTwisterFast;
+import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,34 +40,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.util.MersenneTwisterFast;
-import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Andrey Lomakin
@@ -122,23 +121,23 @@ public class LocalPaginatedClusterTest {
   public void beforeMethod() throws IOException {
     paginatedCluster.truncate();
   }
-
-  public void testDeleteRecordAndAddNewOnItsPlace() throws IOException {
-    byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
-    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
-    recordVersion.increment();
-    recordVersion.increment();
-
-    OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
-    Assert.assertEquals(physicalPosition.clusterPosition, 0);
-    paginatedCluster.deleteRecord(physicalPosition.clusterPosition);
-
-    physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
-    Assert.assertEquals(physicalPosition.clusterPosition, 1);
-
-    recordVersion.increment();
-    Assert.assertEquals(physicalPosition.recordVersion, recordVersion);
-  }
+//
+//  public void testDeleteRecordAndAddNewOnItsPlace() throws IOException {
+//    byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
+//    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+//    recordVersion.increment();
+//    recordVersion.increment();
+//
+//    OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
+//    Assert.assertEquals(physicalPosition.clusterPosition, 0);
+//    paginatedCluster.deleteRecord(physicalPosition.clusterPosition);
+//
+//    physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
+//    Assert.assertEquals(physicalPosition.clusterPosition, 1);
+//
+//    recordVersion.increment();
+//    Assert.assertEquals(physicalPosition.recordVersion, recordVersion);
+//  }
 
   public void testAddOneSmallRecord() throws IOException {
     byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
