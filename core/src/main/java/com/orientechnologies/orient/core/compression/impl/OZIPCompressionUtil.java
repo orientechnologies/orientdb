@@ -153,6 +153,19 @@ public class OZIPCompressionUtil {
     }
   }
 
+  public static void compressFiles(final String folderName, final String[] entryNames, final OutputStream output,
+      final OCommandOutputListener iOutput, final int compressionLevel) throws IOException {
+    final ZipOutputStream zos = new ZipOutputStream(output);
+    zos.setComment("OrientDB Backup executed on " + new Date());
+    try {
+      zos.setLevel(compressionLevel);
+      for (String entryName : entryNames)
+        addFile(zos, folderName + "/" + entryName, entryName, iOutput);
+    } finally {
+      zos.close();
+    }
+  }
+
   private static void addFile(final ZipOutputStream zos, final String folderName, final String entryName,
       final OCommandOutputListener iOutput) throws IOException {
     final long begin = System.currentTimeMillis();

@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
@@ -127,7 +128,12 @@ public class OSyncClusterTask extends OAbstractReplicatedTask implements OComman
                 final String fileName = cluster.getFileName();
 
                 final String dbPath = iServer.getDatabaseDirectory() + databaseName;
-                OZIPCompressionUtil.compressFile(dbPath, fileName, fileOutputStream, null,
+
+                final String[] fileNames = new String[] { fileName,
+                    fileName.substring(0, fileName.length() - 4) + OClusterPositionMap.DEF_EXTENSION };
+
+                // COPY PCL AND CPM FILE
+                OZIPCompressionUtil.compressFiles(dbPath, fileNames, fileOutputStream, null,
                     OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger());
 
               } finally {

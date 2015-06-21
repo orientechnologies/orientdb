@@ -20,9 +20,11 @@
 package com.orientechnologies.orient.server.distributed.sql;
 
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -43,6 +45,8 @@ import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTa
 import com.orientechnologies.orient.server.distributed.task.OSyncClusterTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collections;
@@ -132,8 +136,15 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
 
       FileOutputStream out = null;
       try {
+        final File tempFile = new File(Orient.getTempPath() + "/backup_" + database.getName() + "_" + clusterName + "_toInstall.zip");
+        if (tempFile.exists())
+          tempFile.delete();
+        else
+          tempFile.getParentFile().mkdirs();
+        tempFile.createNewFile();
+
         long fileSize = 0;
-        out = new FileOutputStream(dbPath + "/" + fileName, false);
+        out = new FileOutputStream(tempFile, false);
         for (Map.Entry<String, Object> r : results.entrySet()) {
           final Object value = r.getValue();
 
@@ -166,6 +177,9 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
             }
           }
         }
+
+        OZIPCompressionUtil.uncompressDirectory(new FileInputStream(tempFile), dbPath, null);
+
         return String.format("Cluster correctly replaced, transferred %d bytes", fileSize);
 
       } catch (Exception e) {
