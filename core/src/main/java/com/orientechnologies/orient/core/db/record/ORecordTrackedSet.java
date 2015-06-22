@@ -73,7 +73,10 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
 
     map.put(e, ENTRY_REMOVAL);
     setDirty();
-
+    
+    if (e instanceof ORecord)
+      ORecordInternal.setDirtyManager((ORecord) e, ORecordInternal.getDirtyManager(sourceRecord));
+    
     if (e instanceof ODocument)
       ODocumentInternal.addOwner((ODocument) e, this);
 

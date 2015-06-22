@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.record.OIdentityChangeListener;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 
@@ -127,6 +128,8 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       return false;
     if (e instanceof ORecord && e.getIdentity().isNew()) {
       ORecordInternal.addIdentityChangeListener((ORecord) e, this);
+      ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(sourceRecord);
+      ORecordInternal.setDirtyManager((ORecord) e, dirtyManager);
       map.put(e, e);
     } else if (!e.getIdentity().isPersistent()) {
       // record id is not fixed yet, so we need to be able to watch for id changes, so get the record for this id to be able to do
@@ -135,6 +138,8 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       if (record == null)
         throw new IllegalArgumentException("Record with id " + e.getIdentity() + " has not be found");
       ORecordInternal.addIdentityChangeListener(record, this);
+      ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(sourceRecord);
+      ORecordInternal.setDirtyManager(record, dirtyManager);
       map.put(e, record);
     } else
       map.put(e, ENTRY_REMOVAL);
@@ -148,11 +153,16 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
 
   public void convertLinks2Records() {
     final Iterator<Entry<OIdentifiable, Object>> all = map.entrySet().iterator();
+    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(sourceRecord);
     while (all.hasNext()) {
       Entry<OIdentifiable, Object> entry = all.next();
       if (entry.getValue() == ENTRY_REMOVAL) {
         try {
-          entry.setValue(entry.getKey().getRecord());
+          ORecord record = entry.getKey().getRecord();
+
+          ORecordInternal.setDirtyManager(record, dirtyManager);
+
+          entry.setValue(record);
         } catch (ORecordNotFoundException e) {
           // IGNORE THIS
         }

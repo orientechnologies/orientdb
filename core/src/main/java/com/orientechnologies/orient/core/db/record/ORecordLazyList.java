@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.collection.OLazyIteratorListWrapper;
@@ -34,6 +35,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -166,29 +168,34 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
   @Override
   public boolean add(OIdentifiable e) {
-    if (e != null)
+    if (e != null) {
+      if (e instanceof ORecord)
+        ORecordInternal.setDirtyManager((ORecord) e, ORecordInternal.getDirtyManager(sourceRecord));
       if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
           .getValueAsBoolean()) && e.getIdentity().isPersistent() && (e instanceof ODocument && !((ODocument) e).isDirty()))
         // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
         e = e.getIdentity();
       else
         contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
-
+    }
     lazyLoad(true);
     return super.add(e);
   }
 
   @Override
   public void add(int index, OIdentifiable e) {
-    if (e != null)
+    if (e != null) {
+      if (e instanceof ORecord)
+        ORecordInternal.setDirtyManager((ORecord) e, ORecordInternal.getDirtyManager(sourceRecord));
       if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
           .getValueAsBoolean()) && e.getIdentity().isPersistent() && (e instanceof ODocument && !((ODocument) e).isDirty()))
         // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
         e = e.getIdentity();
       else
         contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
-
+    }
     lazyLoad(true);
+
     super.add(index, e);
   }
 
@@ -196,14 +203,17 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
   public OIdentifiable set(int index, OIdentifiable e) {
     lazyLoad(true);
 
-    if (e != null)
-      if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
-          .getValueAsBoolean()) && e.getIdentity().isPersistent() && (e instanceof ODocument && !((ODocument) e).isDirty()))
-        // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
-        e = e.getIdentity();
-      else
-        contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
-
+    if (e != null) {
+      if (e instanceof ORecord)
+        ORecordInternal.setDirtyManager((ORecord) e, ORecordInternal.getDirtyManager(sourceRecord));
+      if (e != null)
+        if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
+            .getValueAsBoolean()) && e.getIdentity().isPersistent() && (e instanceof ODocument && !((ODocument) e).isDirty()))
+          // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
+          e = e.getIdentity();
+        else
+          contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
+    }
     return super.set(index, e);
   }
 
@@ -480,9 +490,12 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     if (o != null && o instanceof ORecordId) {
       final ORecordId rid = (ORecordId) o;
 
+      ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(sourceRecord);
       marshalling = true;
       try {
-        super.set(iIndex, rid.getRecord());
+        ORecord record = rid.getRecord();
+        ORecordInternal.setDirtyManager(record, dirtyManager);
+        super.set(iIndex, record);
 
       } catch (ORecordNotFoundException e) {
         // IGNORE THIS

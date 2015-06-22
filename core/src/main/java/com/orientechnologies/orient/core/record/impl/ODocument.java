@@ -61,6 +61,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordListener;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -248,7 +249,7 @@ public class ODocument extends ORecordAbstract
 
       if (p.isNotNull() && fieldValue == null)
         // NULLITY
-        throw new OValidationException("The field '" + p.getFullName() + "' cannot be null, record: " + iRecord);
+        throw new OValidationException("The field 'value" + p.getFullName() + "' cannot be null, record: " + iRecord);
 
       if (fieldValue != null && p.getRegexp() != null && p.getType().equals(OType.STRING)) {
         // REGEXP
@@ -791,6 +792,8 @@ public class ODocument extends ORecordAbstract
       RET newValue = (RET) getDatabase().load((ORID) value);
       if (newValue != null) {
         value = newValue;
+        ORecordInternal.setDirtyManager((ORecord) value, this.getDirtyManager());
+
         if (!iFieldName.contains(".")) {
           ODocumentEntry entry = _fields.get(iFieldName);
           removeCollectionChangeListener(entry, entry.value);
@@ -1047,10 +1050,15 @@ public class ODocument extends ORecordAbstract
     }
 
     if (iPropertyValue != null) {
-      if (OType.EMBEDDED.equals(fieldType) && iPropertyValue instanceof ODocument) {
-        final ODocument embeddedDocument = (ODocument) iPropertyValue;
-        ODocumentInternal.addOwner(embeddedDocument, this);
+      if (iPropertyValue instanceof ODocument) {
+        if (OType.EMBEDDED.equals(fieldType)) {
+          final ODocument embeddedDocument = (ODocument) iPropertyValue;
+          ODocumentInternal.addOwner(embeddedDocument, this);
+        } else {
+          ((ODocument) iPropertyValue).setDirtyManager(getDirtyManager());
+        }
       }
+
       if (iPropertyValue instanceof ORidBag) {
         final ORidBag ridBag = (ORidBag) iPropertyValue;
         ridBag.setOwner(null); // in order to avoid IllegalStateException when ridBag changes the owner (ODocument.merge)
@@ -1333,6 +1341,8 @@ public class ODocument extends ORecordAbstract
     // THIS IS IMPORTANT TO BE SURE THAT FIELDS ARE LOADED BEFORE IT'S TOO LATE AND THE RECORD _SOURCE IS NULL
     checkForFields();
 
+    if (!isDirty())
+      getDirtyManager().setDirty(this);
     super.setDirty();
 
     boolean addToChangedList = false;

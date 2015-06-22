@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
@@ -120,6 +121,14 @@ public class ORecordInternal {
 
   public static void setRecordSerializer(ORecord record, ORecordSerializer serializer) {
     ((ORecordAbstract) record)._recordFormat = serializer;
+  }
+
+  public static ODirtyManager getDirtyManager(ORecord record) {
+    return ((ORecordAbstract) record).getDirtyManager();
+  }
+
+  public static void setDirtyManager(ORecord record, ODirtyManager dirtyManager) {
+    ((ORecordAbstract) record).setDirtyManager(dirtyManager);
   }
 
 }

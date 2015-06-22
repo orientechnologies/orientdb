@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
@@ -60,6 +61,7 @@ public abstract class ORecordAbstract implements ORecord {
   protected transient Set<ORecordListener>       _listeners                 = null;
 
   private transient Set<OIdentityChangeListener> newIdentityChangeListeners = null;
+  private ODirtyManager                          _dirtyManager              = new ODirtyManager();
 
   public ORecordAbstract() {
   }
@@ -501,6 +503,20 @@ public abstract class ORecordAbstract implements ORecord {
 
   protected void clearSource() {
     this._source = null;
+  }
+
+  protected ODirtyManager getDirtyManager() {
+    if (this._dirtyManager == null) {
+      this._dirtyManager = new ODirtyManager();
+    }
+    return this._dirtyManager;
+  }
+
+  protected void setDirtyManager(ODirtyManager dirtyManager) {
+    if (this._dirtyManager == null)
+      this._dirtyManager = dirtyManager;
+    else
+      dirtyManager.merge(this._dirtyManager);
   }
 
 }
