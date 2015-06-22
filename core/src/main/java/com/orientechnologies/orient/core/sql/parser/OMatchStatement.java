@@ -546,7 +546,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       if (!schema.existsClass(className)) {
         throw new OCommandExecutionException("class not defined: " + className);
       }
-      OClass oClass = schema.getClass(alias);
+      OClass oClass = schema.getClass(className);
       long upperBound;
       OWhereClause filter = aliasFilters.get(alias);
       if (filter != null) {
