@@ -1,22 +1,29 @@
 package com.orientechnologies.website.controller;
 
 import com.jayway.restassured.RestAssured;
+import com.jayway.restassured.response.Response;
+import com.jayway.restassured.specification.RequestSpecification;
 import com.orientechnologies.website.Application;
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.model.schema.dto.Issue;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.model.schema.dto.Repository;
 import com.orientechnologies.website.repository.IssueRepository;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
+import com.orientechnologies.website.repository.UserRepository;
+import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.RepositoryService;
 import com.orientechnologies.website.services.impl.OrganizationServiceImpl;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,9 +33,13 @@ import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
+import org.testng.Assert;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
 
@@ -41,50 +52,67 @@ import static com.jayway.restassured.RestAssured.given;
 @SpringApplicationConfiguration(classes = Application.class)
 @WebAppConfiguration
 @IntegrationTest("server.port:0")
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class GithubEventControllerTest {
 
+  public static Organization test;
+  public static boolean      setup = false;
+  static {
+    test = new Organization();
+    test.setName("romeshell");
+  }
   @Autowired
-  OrganizationRepository repository;
+  OrganizationRepository     repository;
 
   @Autowired
-  RepositoryRepository   repoRepository;
+  RepositoryRepository       repoRepository;
   @Autowired
-  IssueRepository        issueRepository;
+  IssueRepository            issueRepository;
   @Autowired
-  RepositoryService      repositoryService;
+  RepositoryService          repositoryService;
 
   @Autowired
-  OrganizationService    organizationService;
+  IssueService               issueService;
   @Autowired
-  OrientDBFactory        dbFactory;
+  UserRepository             userRepository;
+  @Autowired
+  OrganizationService        organizationService;
+  @Autowired
+  OrientDBFactory            dbFactory;
   @Value("${local.server.port}")
-  int                    port;
+  int                        port;
 
   @Before
   public void setUp() {
 
-    // OSiteSchema.fillSchema(dbFactory.getGraphtNoTx().getRawGraph());
+    if (!setup) {
 
-    Organization test = new Organization();
-    test.setName("romeshell");
-    test = repository.save(test);
-    Repository repo = repositoryService.createRepo("gnome-shell-extension-aam", null);
+      OUser user = new OUser();
+      user.setName("maggiolo00");
+      user.setToken("testToken");
+      user = userRepository.save(user);
+      test = repository.save(test);
+      Repository repo = repositoryService.createRepo("gnome-shell-extension-aam", null);
 
-    try {
-      OrganizationServiceImpl impl = getTargetObject(organizationService, OrganizationServiceImpl.class);
-      impl.createHasRepoRelationship(test, repo);
-    } catch (Exception e) {
-      e.printStackTrace();
+      try {
+        OrganizationServiceImpl impl = getTargetObject(organizationService, OrganizationServiceImpl.class);
+        impl.createHasRepoRelationship(test, repo);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      Issue issue = new Issue();
+      issue.setNumber(1);
+      issue.setTitle("test");
+      issue.setState("open");
+      issue.setUser(user);
+
+      issue = issueRepository.save(issue);
+      repositoryService.createIssue(repo, issue);
+      issueService.changeUser(issue, user);
+      dbFactory.getGraph().commit();
+      RestAssured.port = port;
     }
-    Issue issue = new Issue();
-    issue.setNumber(1);
-    issue.setTitle("test");
-    issue.setState("open");
-
-    issue = issueRepository.save(issue);
-    repositoryService.createIssue(repo, issue);
-    dbFactory.getGraph().commit();
-    RestAssured.port = port;
+    setup = true;
   }
 
   @SuppressWarnings({ "unchecked" })
@@ -98,39 +126,192 @@ public class GithubEventControllerTest {
 
   @After
   public void deInit() {
-    dbFactory.getGraph().drop();
+    // dbFactory.getGraph().drop();
   }
 
   @Test
-  public void testAssign() {
+  public void test1Assign() {
 
     InputStream stream = ClassLoader.getSystemResourceAsStream("assigne.json");
-    InputStream stream2 = ClassLoader.getSystemResourceAsStream("assigne.json");
     try {
       String content = IOUtils.toString(stream);
-      String content1 = IOUtils.toString(stream2);
       given().body(content).when().post("/api/v1/github/events");
-      given().body(content1).when().post("/api/v1/github/events");
 
-      given().body(content).when().post("/api/v1/github/events");
-      given().body(content1).when().post("/api/v1/github/events");
-
-      Thread.sleep(5000);
+      Thread.sleep(1000);
     } catch (IOException e) {
       e.printStackTrace();
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    // when().get("/org/{name}", test.getName()).then().statusCode(HttpStatus.OK.value()).body("name", Matchers.is(test.getName()))
-    // .body("id", Matchers.not(Matchers.isEmptyOrNullString())).body("codename", Matchers.is(test.getId()));
+
+    Response response = header().get("/api/v1/repos/{name}/gnome-shell-extension-aam/issues/1", test.getName());
+
+    Assert.assertEquals(response.statusCode(), 200);
+
+    Issue issue = response.getBody().as(Issue.class);
+
+    Assert.assertEquals(issue.getUser().getName(), "maggiolo00");
 
   }
 
-  // @Test
-  // public void testUnAssign() {
-  //
-  // // when().get("/org/{name}", test.getName()).then().statusCode(HttpStatus.OK.value()).body("name", Matchers.is(test.getName()))
-  // // .body("id", Matchers.not(Matchers.isEmptyOrNullString())).body("codename", Matchers.is(test.getId()));
-  //
-  // }
+  @Test
+  public void test2UnAssign() {
+
+    InputStream stream = ClassLoader.getSystemResourceAsStream("unassigned.json");
+    try {
+      String content = IOUtils.toString(stream);
+      given().body(content).when().post("/api/v1/github/events");
+
+      Thread.sleep(1000);
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+
+    Response response = header().get("/api/v1/repos/{name}/gnome-shell-extension-aam/issues/1", test.getName());
+
+    Assert.assertEquals(response.statusCode(), 200);
+
+    Issue issue = response.getBody().as(Issue.class);
+
+    Assert.assertNull(issue.getUser());
+
+  }
+
+  @Test
+  public void test3Label() {
+
+    InputStream stream = ClassLoader.getSystemResourceAsStream("label.json");
+    try {
+      String content = IOUtils.toString(stream);
+      given().body(content).when().post("/api/v1/github/events");
+
+      Thread.sleep(1000);
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+
+    Response response = header().get("/api/v1/repos/{name}/gnome-shell-extension-aam/issues/1", test.getName());
+
+    Assert.assertEquals(response.statusCode(), 200);
+
+    Issue issue = response.getBody().as(Issue.class);
+
+    Assert.assertEquals(issue.getLabels().size(), 1);
+  }
+
+  @Test
+  public void test4UnLabel() {
+
+    InputStream stream = ClassLoader.getSystemResourceAsStream("unlabel.json");
+    try {
+      String content = IOUtils.toString(stream);
+      given().body(content).when().post("/api/v1/github/events");
+
+      Thread.sleep(1000);
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+
+    Response response = header().get("/api/v1/repos/{name}/gnome-shell-extension-aam/issues/1", test.getName());
+
+    Assert.assertEquals(response.statusCode(), 200);
+
+    Issue issue = response.getBody().as(Issue.class);
+
+    Assert.assertEquals(issue.getLabels().size(), 0);
+  }
+
+  @Test
+  public void test5Closed() {
+
+    InputStream stream = ClassLoader.getSystemResourceAsStream("closed.json");
+    try {
+      String content = IOUtils.toString(stream);
+      given().body(content).when().post("/api/v1/github/events");
+
+      Thread.sleep(1000);
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+
+    Response response = header().get("/api/v1/repos/{name}/gnome-shell-extension-aam/issues/1", test.getName());
+
+    Assert.assertEquals(response.statusCode(), 200);
+
+    Issue issue = response.getBody().as(Issue.class);
+
+    Assert.assertEquals(issue.getState(), "CLOSED");
+  }
+
+  @Test
+  public void test5Reopened() {
+
+    InputStream stream = ClassLoader.getSystemResourceAsStream("reopened.json");
+    try {
+      String content = IOUtils.toString(stream);
+      given().body(content).when().post("/api/v1/github/events");
+
+      Thread.sleep(1000);
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+
+    Response response = header().get("/api/v1/repos/{name}/gnome-shell-extension-aam/issues/1", test.getName());
+
+    Assert.assertEquals(response.statusCode(), 200);
+
+    Issue issue = response.getBody().as(Issue.class);
+
+    Assert.assertEquals(issue.getState(), "OPEN");
+  }
+
+  @Test
+  public void test5Comment() {
+
+    InputStream stream = ClassLoader.getSystemResourceAsStream("comment.json");
+    try {
+      String content = IOUtils.toString(stream);
+      given().body(content).when().post("/api/v1/github/events");
+
+      Thread.sleep(1000);
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+
+    Response response = header().get("/api/v1/repos/{name}/gnome-shell-extension-aam/issues/1", test.getName());
+
+    Assert.assertEquals(response.statusCode(), 200);
+
+    Issue issue = response.getBody().as(Issue.class);
+
+    Assert.assertEquals(issue.getComments().longValue(), 1);
+  }
+
+  @Test
+  public void test6Events() {
+
+    Response response = header().get("/api/v1/repos/{name}/gnome-shell-extension-aam/issues/1/events", test.getName());
+
+    Assert.assertEquals(response.statusCode(), 200);
+
+    List<Map> events = Arrays.asList(response.getBody().as(Map[].class));
+
+    Assert.assertEquals(events.size(), 7);
+  }
+
+  public static RequestSpecification header() {
+    return given().header("X-AUTH-TOKEN", "testToken").given().contentType("application/json");
+  }
 }

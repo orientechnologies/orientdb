@@ -53,7 +53,7 @@ public class GitHubCommentedEvent implements GithubCommentEvent {
     Comment comment = commentRepository.findByIssueAndCommentId(issueDto, gComment.getId());
 
     try {
-      Thread.sleep(10000);
+      Thread.sleep(1000);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }

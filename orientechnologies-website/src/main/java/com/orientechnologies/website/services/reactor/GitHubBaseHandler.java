@@ -3,7 +3,9 @@ package com.orientechnologies.website.services.reactor;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.services.reactor.event.GithubEvent;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,6 +17,8 @@ import java.util.Set;
 
 public abstract class GitHubBaseHandler<T> implements GitHubHandler<T> {
 
+  @Autowired
+  OrientDBFactory                    factory;
   protected Map<String, GithubEvent> events = new HashMap<String, GithubEvent>();
 
   public Set<String> handleWhat() {
@@ -25,6 +29,7 @@ public abstract class GitHubBaseHandler<T> implements GitHubHandler<T> {
 
     String action = payload.field("action");
     GithubEvent evt = events.get(action);
+
     if (evt != null) {
       for (int r = 0; r < 10; ++r) {
         try {
@@ -33,7 +38,8 @@ public abstract class GitHubBaseHandler<T> implements GitHubHandler<T> {
         } catch (ONeedRetryException retry) {
           OLogManager.instance().error(this, " Retried %s event ", action);
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error handling %s event with payload %s", action, payload.toJSON());
+          OLogManager.instance().error(this, "Error handling %s event", action);
+          e.printStackTrace();
         }
       }
     }
