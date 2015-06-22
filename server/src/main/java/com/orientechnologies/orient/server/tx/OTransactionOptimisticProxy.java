@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.tx;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -49,6 +45,15 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   private final Map<ORID, ORecordOperation> tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
@@ -104,7 +109,10 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           break;
 
         case ORecordOperation.DELETED:
-          ORecordInternal.fill(entry.getRecord(), rid, channel.readVersion(), null, false);
+          // LOAD RECORD TO BE SURE IT HASN'T BEEN DELETED BEFORE + PROVIDE CONTENT FOR ANY HOOK
+          final ORecord rec = rid.getRecord();
+          ORecordInternal.setVersion(rec, channel.readVersion().getCounter());
+          entry.setRecord(rec);
           break;
 
         default:

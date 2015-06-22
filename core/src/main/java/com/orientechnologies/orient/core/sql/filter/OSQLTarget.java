@@ -50,18 +50,18 @@ import java.util.Map;
  * 
  */
 public class OSQLTarget extends OBaseParser {
-  protected final boolean                        empty;
-  protected final OCommandContext                context;
-  protected String                               targetVariable;
-  protected OCommandExecutorSQLResultsetDelegate targetQuery;
-  protected Iterable<? extends OIdentifiable>    targetRecords;
-  protected Map<String, String>                  targetClusters;
-  protected Map<OClass, String>                  targetClasses;
+  protected final boolean                     empty;
+  protected final OCommandContext             context;
+  protected String                            targetVariable;
+  protected String                            targetQuery;
+  protected Iterable<? extends OIdentifiable> targetRecords;
+  protected Map<String, String>               targetClusters;
+  protected Map<OClass, String>               targetClasses;
 
-  protected String                               targetIndex;
+  protected String                            targetIndex;
 
-  protected String                               targetIndexValues;
-  protected boolean                              targetIndexValuesAsc;
+  protected String                            targetIndexValues;
+  protected boolean                           targetIndexValuesAsc;
 
   public OSQLTarget(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
     super();
@@ -109,7 +109,7 @@ public class OSQLTarget extends OBaseParser {
     return targetRecords;
   }
 
-  public OCommandExecutorSQLResultsetDelegate getTargetQuery() {
+  public String getTargetQuery() {
     return targetQuery;
   }
 
@@ -186,7 +186,7 @@ public class OSQLTarget extends OBaseParser {
         throw new OCommandSQLParsingException("Sub-query cannot be iterated because doesn't implement the Iterable interface: "
             + subCommand);
 
-      targetQuery = executor;
+      targetQuery = subText.toString();
       targetRecords = (Iterable<? extends OIdentifiable>) executor;
 
     } else if (c == OStringSerializerHelper.LIST_BEGIN) {

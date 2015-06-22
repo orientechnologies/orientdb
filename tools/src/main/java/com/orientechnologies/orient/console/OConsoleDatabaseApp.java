@@ -66,12 +66,10 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ridbag.OBonsaiTreeRepair;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -1498,14 +1496,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\nRepairing database...");
 
     boolean verbose = iOptions != null && iOptions.contains("-v");
-    boolean fix_ridbags = iOptions != null && iOptions.contains("--fix-ridbags");
+
 
     long fixedLinks = 0l;
     long modifiedDocuments = 0l;
     long errors = 0l;
 
     try {
-      if (!fix_ridbags) {
+
         message("\n- Fixing dirty links...");
         for (String clusterName : currentDatabase.getClusterNames()) {
           for (ORecord rec : currentDatabase.browseCluster(clusterName)) {
@@ -1564,28 +1562,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         message("Done! Fixed links: " + fixedLinks + ", modified documents: " + modifiedDocuments);
 
         message("\nRepair database complete (" + errors + " errors)");
-      } else if (fix_ridbags) {
-        if (!currentDatabase.getURL().startsWith("plocal")) {
-          message("\n fix-ridbags can be run only on plocal connection \n");
-          return;
-        }
-
-        boolean lightweight = false;
-        final List<OStorageEntryConfiguration> custom = (List<OStorageEntryConfiguration>) currentDatabase.get(ATTRIBUTES.CUSTOM);
-        for (OStorageEntryConfiguration c : custom) {
-          if (c.name.equals("useLightweightEdges") && Boolean.TRUE.equals(Boolean.parseBoolean(c.value))) {
-            lightweight = true;
-          }
-        }
-        if (!lightweight) {
-          message("\n- Fixing ridbags ... \n");
-          OBonsaiTreeRepair repairer = new OBonsaiTreeRepair();
-          message(repairer.repairDatabaseRidbags(currentDatabase));
-        } else {
-          message("cannot execute fix ridbags on a db with ligthweight edges");
-        }
-      }
-
     } catch (Exception e) {
       printError(e);
     }

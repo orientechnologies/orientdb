@@ -780,12 +780,15 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     if (user != null) {
       try {
-        for (Object target : iResourcesSpecific) {
-          if (target != null) {
-            user.allow(iResourceGeneric, target.toString(), iOperation);
-          } else
-            user.allow(iResourceGeneric, null, iOperation);
-        }
+        if (iResourcesSpecific.length != 0) {
+          for (Object target : iResourcesSpecific) {
+            if (target != null) {
+              user.allow(iResourceGeneric, target.toString(), iOperation);
+            } else
+              user.allow(iResourceGeneric, null, iOperation);
+          }
+        } else
+          user.allow(iResourceGeneric, null, iOperation);
       } catch (OSecurityAccessException e) {
         if (OLogManager.instance().isDebugEnabled())
           OLogManager.instance().debug(this,

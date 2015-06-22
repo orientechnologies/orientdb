@@ -1161,7 +1161,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     try {
       if (!database.isClosed() && commitTx) {
-        final OStorage storage = database.getStorage();
+        final OStorage storage = database.getStorage().getUnderlying();
         if (storage instanceof OAbstractPaginatedStorage) {
           if (((OAbstractPaginatedStorage) storage).getWALInstance() != null)
             database.commit();

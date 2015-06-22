@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.index.ONullOutputListener;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser.STATUSES;
@@ -217,7 +218,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public OUser getUser(final ORID iRecordId) {
-    if( iRecordId == null )
+    if (iRecordId == null)
       return null;
 
     ODocument result;
@@ -251,8 +252,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public boolean dropUser(final String iUserName) {
-    final Number removed = getDatabase().<OCommandRequest> command(
-        new OCommandSQL("delete from OUser where name = ?")).execute(iUserName);
+    final Number removed = getDatabase().<OCommandRequest> command(new OCommandSQL("delete from OUser where name = ?")).execute(
+        iUserName);
 
     return removed != null && removed.intValue() > 0;
   }
@@ -357,51 +358,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
     if (identityClass == null)
       identityClass = database.getMetadata().getSchema().createAbstractClass(IDENTITY_CLASSNAME);
 
-    OClass roleClass = database.getMetadata().getSchema().getClass("ORole");
-    if (roleClass == null)
-      roleClass = database.getMetadata().getSchema().createClass("ORole", identityClass);
-    else if (!roleClass.getSuperClasses().contains(identityClass))
-      // MIGRATE AUTOMATICALLY TO 1.2.0
-      roleClass.setSuperClasses(Arrays.asList(identityClass));
+    OClass roleClass = createOrUpdateORoleClass(database, identityClass);
 
-    if (!roleClass.existsProperty("name")) {
-      roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setCollate("ci");
-      roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
-    } else {
-      final OProperty name = roleClass.getProperty("name");
-      if (name.getAllIndexes().isEmpty())
-        roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
-    }
-
-    if (!roleClass.existsProperty("mode"))
-      roleClass.createProperty("mode", OType.BYTE);
-
-    if (!roleClass.existsProperty("rules"))
-      roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
-    if (!roleClass.existsProperty("inheritedRole"))
-      roleClass.createProperty("inheritedRole", OType.LINK, roleClass);
-
-    OClass userClass = database.getMetadata().getSchema().getClass("OUser");
-    if (userClass == null)
-      userClass = database.getMetadata().getSchema().createClass("OUser", identityClass);
-    else if (!userClass.getSuperClasses().contains(identityClass))
-      // MIGRATE AUTOMATICALLY TO 1.2.0
-      userClass.setSuperClasses(Arrays.asList(identityClass));
-
-    if (!userClass.existsProperty("name")) {
-      userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setCollate("ci");
-      userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
-    } else {
-      final OProperty name = userClass.getProperty("name");
-      if (name.getAllIndexes().isEmpty())
-        userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
-    }
-    if (!userClass.existsProperty("password"))
-      userClass.createProperty("password", OType.STRING).setMandatory(true).setNotNull(true);
-    if (!userClass.existsProperty("roles"))
-      userClass.createProperty("roles", OType.LINKSET, roleClass);
-    if (!userClass.existsProperty("status"))
-      userClass.createProperty("status", OType.STRING).setMandatory(true).setNotNull(true);
+    createOrUpdateOUserClass(database, identityClass, roleClass);
 
     // CREATE ROLES AND USERS
     ORole adminRole = getRole(ORole.ADMIN, false);
@@ -415,23 +374,88 @@ public class OSecurityShared implements OSecurity, OCloseable {
       adminUser = createUser(OUser.ADMIN, OUser.ADMIN, adminRole);
 
     // SINCE 1.2.0
-    OClass restrictedClass = database.getMetadata().getSchema().getClass(RESTRICTED_CLASSNAME);
-    if (restrictedClass == null)
-      restrictedClass = database.getMetadata().getSchema().createAbstractClass(RESTRICTED_CLASSNAME);
-    if (!restrictedClass.existsProperty(ALLOW_ALL_FIELD))
-      restrictedClass.createProperty(ALLOW_ALL_FIELD, OType.LINKSET, database.getMetadata().getSchema()
-          .getClass(IDENTITY_CLASSNAME));
-    if (!restrictedClass.existsProperty(ALLOW_READ_FIELD))
-      restrictedClass.createProperty(ALLOW_READ_FIELD, OType.LINKSET,
-          database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME));
-    if (!restrictedClass.existsProperty(ALLOW_UPDATE_FIELD))
-      restrictedClass.createProperty(ALLOW_UPDATE_FIELD, OType.LINKSET,
-          database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME));
-    if (!restrictedClass.existsProperty(ALLOW_DELETE_FIELD))
-      restrictedClass.createProperty(ALLOW_DELETE_FIELD, OType.LINKSET,
-          database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME));
+    createOrUpdateORestrictedClass(database);
 
     return adminUser;
+  }
+
+  private void createOrUpdateORestrictedClass(final ODatabaseDocument database) {
+    OClass restrictedClass = database.getMetadata().getSchema().getClass(RESTRICTED_CLASSNAME);
+    boolean checkData = true;
+    if (restrictedClass == null) {
+      restrictedClass = database.getMetadata().getSchema().createAbstractClass(RESTRICTED_CLASSNAME);
+      checkData = false;
+    }
+    if (!restrictedClass.existsProperty(ALLOW_ALL_FIELD))
+      ((OClassImpl) restrictedClass).createProperty(ALLOW_ALL_FIELD, OType.LINKSET,
+          database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME), checkData);
+    if (!restrictedClass.existsProperty(ALLOW_READ_FIELD))
+      ((OClassImpl) restrictedClass).createProperty(ALLOW_READ_FIELD, OType.LINKSET,
+          database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME), checkData);
+    if (!restrictedClass.existsProperty(ALLOW_UPDATE_FIELD))
+      ((OClassImpl) restrictedClass).createProperty(ALLOW_UPDATE_FIELD, OType.LINKSET,
+          database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME), checkData);
+    if (!restrictedClass.existsProperty(ALLOW_DELETE_FIELD))
+      ((OClassImpl) restrictedClass).createProperty(ALLOW_DELETE_FIELD, OType.LINKSET,
+          database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME), checkData);
+  }
+
+  private void createOrUpdateOUserClass(final ODatabaseDocument database, OClass identityClass, OClass roleClass) {
+    boolean checkData = true;
+    OClass userClass = database.getMetadata().getSchema().getClass("OUser");
+    if (userClass == null) {
+      userClass = database.getMetadata().getSchema().createClass("OUser", identityClass);
+      checkData = false;
+    } else if (!userClass.getSuperClasses().contains(identityClass))
+      // MIGRATE AUTOMATICALLY TO 1.2.0
+      userClass.setSuperClasses(Arrays.asList(identityClass));
+
+    if (!userClass.existsProperty("name")) {
+      ((OClassImpl) userClass).createProperty("name", OType.STRING, (OType) null, checkData).setMandatory(true).setNotNull(true)
+          .setCollate("ci");
+      userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+    } else {
+      final OProperty name = userClass.getProperty("name");
+      if (name.getAllIndexes().isEmpty())
+        userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+    }
+    if (!userClass.existsProperty("password"))
+      ((OClassImpl) userClass).createProperty("password", OType.STRING, (OType) null, checkData).setMandatory(true)
+          .setNotNull(true);
+    if (!userClass.existsProperty("roles"))
+      ((OClassImpl) userClass).createProperty("roles", OType.LINKSET, roleClass, checkData);
+    if (!userClass.existsProperty("status"))
+      ((OClassImpl) userClass).createProperty("status", OType.STRING, (OType) null, checkData).setMandatory(true).setNotNull(true);
+  }
+
+  private OClass createOrUpdateORoleClass(final ODatabaseDocument database, OClass identityClass) {
+    OClass roleClass = database.getMetadata().getSchema().getClass("ORole");
+    boolean checkData = true;
+    if (roleClass == null) {
+      roleClass = database.getMetadata().getSchema().createClass("ORole", identityClass);
+      checkData = false;
+    } else if (!roleClass.getSuperClasses().contains(identityClass))
+      // MIGRATE AUTOMATICALLY TO 1.2.0
+      roleClass.setSuperClasses(Arrays.asList(identityClass));
+
+    if (!roleClass.existsProperty("name")) {
+      ((OClassImpl) roleClass).createProperty("name", OType.STRING, (OType) null, checkData).setMandatory(true).setNotNull(true)
+          .setCollate("ci");
+      roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+    } else {
+      final OProperty name = roleClass.getProperty("name");
+      if (name.getAllIndexes().isEmpty())
+        roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+    }
+
+    if (!roleClass.existsProperty("mode"))
+      ((OClassImpl) roleClass).createProperty("mode", OType.BYTE, (OType) null, checkData);
+
+    if (!roleClass.existsProperty("rules"))
+      ((OClassImpl) roleClass).createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE, checkData);
+    if (!roleClass.existsProperty("inheritedRole"))
+      ((OClassImpl) roleClass).createProperty("inheritedRole", OType.LINK, roleClass, checkData);
+    return roleClass;
   }
 
   public void close(boolean onDelete) {
@@ -490,8 +514,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
       return null;
 
     List<ODocument> result = getDatabase().<OCommandRequest> command(
-        new OSQLSynchQuery<ODocument>("select from OUser where name = ? limit 1").setFetchPlan("roles:1"))
-        .execute(iUserName);
+        new OSQLSynchQuery<ODocument>("select from OUser where name = ? limit 1").setFetchPlan("roles:1")).execute(iUserName);
 
     if (result != null && !result.isEmpty())
       return new OUser(result.get(0));

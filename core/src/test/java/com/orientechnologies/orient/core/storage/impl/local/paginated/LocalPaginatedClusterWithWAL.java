@@ -1,7 +1,35 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,21 +37,8 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.orient.core.config.*;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
-import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Andrey Lomakin
@@ -210,12 +225,12 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     assertFileRestoreFromWAL();
   }
 
-  @Override
-  public void testDeleteRecordAndAddNewOnItsPlace() throws IOException {
-    super.testDeleteRecordAndAddNewOnItsPlace();
-
-    assertFileRestoreFromWAL();
-  }
+//  @Override
+//  public void testDeleteRecordAndAddNewOnItsPlace() throws IOException {
+//    super.testDeleteRecordAndAddNewOnItsPlace();
+//
+//    assertFileRestoreFromWAL();
+//  }
 
   @Override
   public void testAddManySmallRecords() throws IOException {

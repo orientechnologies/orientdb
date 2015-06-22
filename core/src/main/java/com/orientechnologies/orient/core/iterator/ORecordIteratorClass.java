@@ -122,6 +122,10 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
         && targetClass.isSuperClassOf(ODocumentInternal.getImmutableSchemaClass(((ODocument) record)));
   }
 
+  public OClass getTargetClass() {
+    return targetClass;
+  }
+
   @Override
   protected void config() {
     currentClusterIdx = 0; // START FROM THE FIRST CLUSTER
