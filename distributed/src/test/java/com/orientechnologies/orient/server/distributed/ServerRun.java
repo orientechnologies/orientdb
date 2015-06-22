@@ -96,6 +96,7 @@ public class ServerRun {
     server.setServerRootDirectory(getServerHome());
     server.startup(getClass().getClassLoader().getResourceAsStream(iServerConfigFile));
     server.activate();
+
     return server;
   }
 

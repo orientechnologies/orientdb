@@ -82,6 +82,7 @@ public class Orient extends OListenerManger<OOrientListener> {
                                                                                                                        .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientStartupListener>, Boolean>());
   private final Set<WeakHashSetValueHolder<OOrientShutdownListener>>                 weakShutdownListeners         = Collections
                                                                                                                        .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientShutdownListener>, Boolean>());
+
   static {
     instance.startup();
   }
