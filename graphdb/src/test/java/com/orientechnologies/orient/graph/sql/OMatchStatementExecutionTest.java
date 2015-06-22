@@ -63,10 +63,10 @@ public class OMatchStatementExecutionTest {
     List<ODocument> qResult = db
         .command(
             new OCommandSQL(
-                "select friend.name from (match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return $matches)"))
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return $matches)"))
         .execute();
-    assertEquals(qResult.get(0).field("name"), "n2");
-    assertEquals(qResult.size(), 1);
+    assertEquals(1, qResult.size());
+    assertEquals("n2", qResult.get(0).field("name"));
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {

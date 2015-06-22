@@ -2,12 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class OMathExpression extends SimpleNode {
-
 
   public enum Operator {
     PLUS, MINUS, STAR, SLASH, REM
@@ -25,13 +27,22 @@ public class OMathExpression extends SimpleNode {
   }
 
   public void replaceParameters(Map<Object, Object> params) {
-    if(childExpressions!=null){
-      for(OMathExpression expr:childExpressions){
+    if (childExpressions != null) {
+      for (OMathExpression expr : childExpressions) {
         expr.replaceParameters(params);
       }
     }
   }
 
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    if (childExpressions.size() == 0) {
+      return null;
+    }
+
+    OMathExpression nextExpression = childExpressions.get(0);
+    Object nextValue = nextExpression.execute(iCurrentRecord, ctx);
+    return null;
+  }
 
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {

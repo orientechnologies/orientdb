@@ -54,7 +54,8 @@ public class OExpression extends SimpleNode {
     } else if (value instanceof OInputParameter) {
       return null;// TODO
     } else if (value instanceof OMathExpression) {
-      return null;// TODO ((OMathExpression) value).execute();
+      return ((OMathExpression) value).execute(iCurrentRecord, ctx);
+//      return null;// TODO ((OMathExpression) value).execute();
     } else if (value instanceof OJson) {
       return null;// TODO
     } else if (value instanceof String) {

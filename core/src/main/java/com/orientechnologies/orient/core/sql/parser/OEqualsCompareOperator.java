@@ -18,7 +18,10 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
 
   @Override
   public boolean execute(Object left, Object right) {
-    return false;
+    if (left == null) {
+      return right == null;
+    }
+    return left.equals(right);// TODO type conversions
   }
 
   @Override

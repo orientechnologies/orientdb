@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -11,12 +12,14 @@ import java.util.Iterator;
 public class FilteredIterator implements Iterable<OIdentifiable>, Iterator<OIdentifiable> {
   private final OWhereClause      whereClause;
   private final Iterator<ORecord> baseIterator;
+  private final OCommandContext   context;
 
   private OIdentifiable           next;
 
-  public FilteredIterator(Iterable<ORecord> baseIterable, OWhereClause oWhereClause) {
+  public FilteredIterator(Iterable<ORecord> baseIterable, OWhereClause oWhereClause, OCommandContext ctx) {
     this.baseIterator = baseIterable.iterator();
     this.whereClause = oWhereClause;
+    this.context = ctx;
     fetchNext();
   }
 
@@ -38,7 +41,7 @@ public class FilteredIterator implements Iterable<OIdentifiable>, Iterator<OIden
       return;
     }
     OIdentifiable nextElement = baseIterator.next();
-    while (!whereClause.matchesFilters(nextElement)) {
+    while (!whereClause.matchesFilters(nextElement, context)) {
       if (!baseIterator.hasNext()) {
         return;
       }

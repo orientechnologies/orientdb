@@ -355,20 +355,21 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
                   childContext.root = rootNode.alias;
                 }
                 childContext.matchedEdges.put(outEdge, true);
-                if(!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext, request)){
+                if (!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext,
+                    request)) {
                   return false;
                 }
               }
             }
           } else {// searching for neighbors
             OWhereClause where = aliasFilters.get(outEdge.in.alias);
-            if (where == null || where.matchesFilters(rightValue)) {
+            if (where == null || where.matchesFilters(rightValue, iCommandContext)) {
               MatchContext childContext = matchContext.copy(outEdge.in.alias, rightValue.getIdentity());
               if (edgeIterator.hasNext()) {
                 childContext.root = rootNode.alias;
               }
               childContext.matchedEdges.put(outEdge, true);
-              if(!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext, request)){
+              if (!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
                 return false;
               }
             }
@@ -400,20 +401,21 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
                 }
                 childContext.matchedEdges.put(inEdge, true);
 
-                if(!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext, request)){
+                if (!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext,
+                    request)) {
                   return false;
                 }
               }
             }
           } else {// searching for neighbors
             OWhereClause where = aliasFilters.get(inEdge.out.alias);
-            if (where == null || where.matchesFilters(leftValue)) {
+            if (where == null || where.matchesFilters(leftValue, iCommandContext)) {
               MatchContext childContext = matchContext.copy(inEdge.out.alias, leftValue.getIdentity());
               if (edgeIterator.hasNext()) {
                 childContext.root = rootNode.alias;
               }
               childContext.matchedEdges.put(inEdge, true);
-              if(!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext, request)){
+              if (!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
                 return false;
               }
             }
@@ -422,16 +424,29 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
       break;
     }
-//
-//    while (!childContexts.isEmpty()) {
-//      processContext(pattern, estimatedRootEntries, childContexts.remove(0), aliasClasses, aliasFilters, iCommandContext, request);
-//    }
+    //
+    // while (!childContexts.isEmpty()) {
+    // processContext(pattern, estimatedRootEntries, childContexts.remove(0), aliasClasses, aliasFilters, iCommandContext, request);
+    // }
 
     return true;
   }
 
   private Object executeTraversal(MatchContext matchContext, OCommandContext iCommandContext, PatternEdge outEdge) {
-    return outEdge.item.method.execute(matchContext.matched.get(matchContext.root), iCommandContext);
+    Iterable<OIdentifiable> queryResult = (Iterable) outEdge.item.method.execute(matchContext.matched.get(matchContext.root),
+        iCommandContext);
+    if (outEdge.item.filter == null || outEdge.item.filter.getFilter() == null) {
+      return queryResult;
+    }
+    OWhereClause filter = outEdge.item.filter.getFilter();
+    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+
+    for (OIdentifiable origin : queryResult) {
+      if (filter.matchesFilters(origin, iCommandContext)) {
+        result.add(origin);
+      }
+    }
+    return result;
   }
 
   private void addResult(MatchContext matchContext, OSQLAsynchQuery<ODocument> request) {

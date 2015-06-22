@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.Map;
@@ -24,8 +25,8 @@ public class OParenthesisBlock extends OBooleanExpression {
   }
 
   @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
-    return subElement.evaluate(currentRecord);
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    return subElement.evaluate(currentRecord, ctx);
   }
 
   @Override public void replaceParameters(Map<Object, Object> params) {

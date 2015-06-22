@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.Map;
@@ -11,7 +12,7 @@ public abstract class OBooleanExpression extends SimpleNode {
 
   public static OBooleanExpression TRUE = new OBooleanExpression(0) {
     @Override
-    public boolean evaluate(OIdentifiable currentRecord) {
+    public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
       return true;
     }
 
@@ -27,7 +28,7 @@ public abstract class OBooleanExpression extends SimpleNode {
 
   public static OBooleanExpression FALSE = new OBooleanExpression(0) {
     @Override
-    public boolean evaluate(OIdentifiable currentRecord) {
+    public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
       return false;
     }
 
@@ -55,7 +56,7 @@ public abstract class OBooleanExpression extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public abstract boolean evaluate(OIdentifiable currentRecord);
+  public abstract boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx);
 
   public abstract void replaceParameters(Map<Object, Object> params);
 }

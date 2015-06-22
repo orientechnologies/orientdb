@@ -2,6 +2,10 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 public class OSuffixIdentifier extends SimpleNode {
 
   protected OIdentifier      identifier;
@@ -31,6 +35,19 @@ public class OSuffixIdentifier extends SimpleNode {
       return "*";
     }
     return super.toString();
+  }
+
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    if (star) {
+      return iCurrentRecord;
+    }
+    if (identifier != null) {
+      return ((ODocument) iCurrentRecord.getRecord()).field(identifier.getValue());
+    }
+    if (recordAttribute != null) {
+      return ((ODocument) iCurrentRecord.getRecord()).field(recordAttribute.name);
+    }
+    return null;
   }
 }
 /* JavaCC - OriginalChecksum=5d9be0188c7d6e2b67d691fb88a518f8 (do not edit this line) */
