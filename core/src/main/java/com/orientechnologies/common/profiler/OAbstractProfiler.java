@@ -349,7 +349,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
 
     for (String n : names) {
       final AtomicInteger v = tips.get(n);
-      buffer.append(String.format("\n%-100s | %10d |", n, v));
+      buffer.append(String.format("\n%-100s | %10d |", n, v.intValue()));
     }
 
     buffer.append(String.format("\n%100s +------------+", ""));

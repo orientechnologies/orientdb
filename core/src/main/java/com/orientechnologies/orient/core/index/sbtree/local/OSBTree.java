@@ -111,6 +111,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
   public void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes, int keySize,
       boolean nullPointerSupport) {
+    assert keySerializer != null;
     final OAtomicOperation atomicOperation;
     try {
       atomicOperation = startAtomicOperation();
@@ -125,8 +126,6 @@ public class OSBTree<K, V> extends ODurableComponent {
       this.keyTypes = keyTypes;
 
       this.keySerializer = keySerializer;
-      if (keySerializer == null)
-        System.out.println("sdf");
 
       this.valueSerializer = valueSerializer;
       this.nullPointerSupport = nullPointerSupport;

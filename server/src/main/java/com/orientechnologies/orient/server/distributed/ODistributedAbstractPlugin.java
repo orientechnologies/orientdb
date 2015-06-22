@@ -102,8 +102,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
         nodeName = param.value;
       else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
         setDefaultDatabaseConfigFile(param.value);
-      } else if (param.name.equalsIgnoreCase("conflict.resolver.impl")) {
-        // NOT USED ANYMORE
       }
     }
 
