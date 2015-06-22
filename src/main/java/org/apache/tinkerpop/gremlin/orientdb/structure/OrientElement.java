@@ -67,4 +67,7 @@ public class OrientElement implements Element {
         return propertyStream.iterator();
     }
 
+    public void save() {
+        ((ODocument)rawElement).save();
+    }
 }

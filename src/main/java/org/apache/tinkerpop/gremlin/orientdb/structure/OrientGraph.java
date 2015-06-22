@@ -39,7 +39,9 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Vertex addVertex(Object... keyValues) {
-        throw new NotImplementedException();
+        OrientVertex v = new OrientVertex(this);
+        v.save();
+        return v;
     }
 
     @Override
@@ -65,7 +67,7 @@ public final class OrientGraph implements Graph {
             return asStream(itty).map(r -> toVertex(r)).iterator();
         } else {
             Stream<ORecordId> ids = Stream.of(vertexIds).map(v -> new ORecordId(v.toString()));
-            Stream<ORecord> records = ids.filter(id -> id.isValid()).map(id -> (ORecord)id.getRecord()).filter(r -> r != null);
+            Stream<ORecord> records = ids.filter(id -> id.isValid()).map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
             return records.map(record -> (Vertex) new OrientVertex(this, record)).iterator();
         }
     }
