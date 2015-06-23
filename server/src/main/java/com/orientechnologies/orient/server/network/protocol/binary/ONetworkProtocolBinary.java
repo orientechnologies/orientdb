@@ -19,6 +19,18 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -93,18 +105,6 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -212,6 +212,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
 
     if (connection != null) {
+      connection.acquire();
+
       ODatabaseRecordThreadLocal.INSTANCE.set(connection.database);
       if (connection.database != null) {
         connection.data.lastDatabase = connection.database.getName();
@@ -260,6 +262,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       setDataCommandInfo("Listening");
       connection.data.commandDetail = "-";
+
+      connection.release();
     }
   }
 
@@ -674,7 +678,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         ODocument distributedCfg = null;
         if (plugin != null && plugin instanceof ODistributedServerManager)
           distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
-        
+
         channel.writeBytes(distributedCfg != null ? getRecordBytes(distributedCfg) : null);
 
         if (connection.data.protocolVersion >= 14)
