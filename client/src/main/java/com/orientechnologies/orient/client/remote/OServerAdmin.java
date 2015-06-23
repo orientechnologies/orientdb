@@ -594,7 +594,8 @@ public class OServerAdmin {
       } catch (OModificationOperationProhibitedException ompe) {
         retry = handleDBFreeze();
       } catch (IOException e) {
-        storage.getEngine().getConnectionManager().remove(network);
+        if (network != null)
+          storage.getEngine().getConnectionManager().remove(network);
         throw new OStorageException("Error on executing  '" + iActivity + "'", e);
       } catch (Exception e2) {
         if (network != null)

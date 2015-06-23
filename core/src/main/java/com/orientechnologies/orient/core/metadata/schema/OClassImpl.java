@@ -770,18 +770,30 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public OProperty createProperty(final String iPropertyName, final OType iType) {
-    return addProperty(iPropertyName, iType, null, null);
+    return addProperty(iPropertyName, iType, null, null, true);
   }
 
   public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass) {
     if (iLinkedClass == null)
       throw new OSchemaException("Missing linked class");
 
-    return addProperty(iPropertyName, iType, null, iLinkedClass);
+    return addProperty(iPropertyName, iType, null, iLinkedClass, true);
+  }
+
+  public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass,
+      boolean iChackExistingData) {
+    if (iLinkedClass == null)
+      throw new OSchemaException("Missing linked class");
+
+    return addProperty(iPropertyName, iType, null, iLinkedClass, iChackExistingData);
   }
 
   public OProperty createProperty(final String iPropertyName, final OType iType, final OType iLinkedType) {
-    return addProperty(iPropertyName, iType, iLinkedType, null);
+    return addProperty(iPropertyName, iType, iLinkedType, null, true);
+  }
+
+  public OProperty createProperty(final String iPropertyName, final OType iType, final OType iLinkedType, boolean iChackExistingData) {
+    return addProperty(iPropertyName, iType, iLinkedType, null, iChackExistingData);
   }
 
   @Override
@@ -1624,7 +1636,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       releaseSchemaWriteLock();
     }
 
-    if (prop != null)
+    if (prop != null && iCheckExistentRecords)
       fireDatabaseMigration(getDatabase(), name, type);
 
     return prop;
@@ -2232,7 +2244,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  private OProperty addProperty(final String propertyName, final OType type, final OType linkedType, final OClass linkedClass) {
+  private OProperty addProperty(final String propertyName, final OType type, final OType linkedType, final OClass linkedClass,
+      boolean iCheckExistentRecords) {
     if (type == null)
       throw new OSchemaException("Property type not defined.");
 
@@ -2276,6 +2289,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         cmd.append(linkedClass.getName());
       }
 
+      if (!iCheckExistentRecords)
+        cmd.append(" unsafe ");
+
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -2289,9 +2305,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
         database.command(commandSQL).execute();
 
-        property = addPropertyInternal(propertyName, type, linkedType, linkedClass, true);
+        property = addPropertyInternal(propertyName, type, linkedType, linkedClass, iCheckExistentRecords);
       } else
-        property = addPropertyInternal(propertyName, type, linkedType, linkedClass, true);
+        property = addPropertyInternal(propertyName, type, linkedType, linkedClass, iCheckExistentRecords);
 
     } finally {
       releaseSchemaWriteLock();

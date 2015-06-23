@@ -599,12 +599,7 @@ OStatement Statement():
 { OStatement result = null;}
 {
 	(
-	    LOOKAHEAD( SelectStatement() )
-		result = SelectStatement()
-		|
-		result = SelectWithoutTargetStatement()
-		|
-		result = TraverseStatement()
+	    result = QueryStatement()
         |
         LOOKAHEAD(2)
 		result = DeleteStatement()
@@ -635,6 +630,21 @@ OStatement Statement():
 		result = UpdateStatement()
 
 	) [ <SEMICOLON> ] { return result; }
+}
+
+OStatement QueryStatement():
+{
+ OStatement result;
+}
+{
+    (
+        LOOKAHEAD( SelectStatement() )
+        result = SelectStatement()
+        |
+        result = SelectWithoutTargetStatement()
+        |
+        result = TraverseStatement()
+    ){ return result; }
 }
 
 OSelectWithoutTargetStatement SelectWithoutTargetStatement():
@@ -1018,6 +1028,12 @@ OUpdateStatement UpdateStatement():
     		jjtThis.targetCluster = Cluster()
     		|
     		jjtThis.targetIndex = IndexIdentifier()
+    		|
+    		(
+    		    <LPAREN>
+    		    jjtThis.targetQuery = QueryStatement()
+    		    <RPAREN>
+    		)
     	)
     	( lastOperations = UpdateOperations() { jjtThis.operations.add(lastOperations); } )+
     	[ <UPSERT> { jjtThis.upsert = true; } ]

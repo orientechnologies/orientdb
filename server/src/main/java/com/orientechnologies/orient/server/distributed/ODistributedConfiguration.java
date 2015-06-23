@@ -19,13 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.*;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-
-import java.util.*;
 
 /**
  * Distributed configuration. It uses an ODocument object to store the configuration. Every changes increment the field "version".
@@ -205,7 +205,7 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns the list of servers that can managed a list of clusters. The algorithm makes its best to involve the less servers as it
+   * Returns the list of servers that can manage a list of clusters. The algorithm makes its best to involve the less servers as it
    * can.
    * 
    * @param iClusterNames
@@ -368,6 +368,22 @@ public class ODistributedConfiguration {
       }
       return Collections.EMPTY_LIST;
     }
+  }
+
+  /**
+   * Returns the set of clusters managed by a server.
+   * 
+   * @param iNodeName
+   *          Server name
+   */
+  public Set<String> getClustersOnServer(final String iNodeName) {
+    final Set<String> clusters = new HashSet<String>();
+    for (String cl : getClusterNames()) {
+      final List<String> servers = getServers(cl, null);
+      if (servers.contains(iNodeName))
+        clusters.add(cl);
+    }
+    return clusters;
   }
 
   /**

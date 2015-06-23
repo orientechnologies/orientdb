@@ -153,7 +153,7 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
     }
     ORecordOperation result = new ORecordOperation(iDocument, iType);
     synchronized (pendingOps) {
-      List<ORecordOperation> list = this.pendingOps.get(db.getStorage());
+      List<ORecordOperation> list = this.pendingOps.get(db);
       if (list == null) {
         list = new ArrayList<ORecordOperation>();
         this.pendingOps.put(db, list);

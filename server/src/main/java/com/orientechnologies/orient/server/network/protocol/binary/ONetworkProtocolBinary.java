@@ -182,7 +182,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         } catch (Exception e) {
           throw new OException("error on token parse", e);
         }
-        if (!this.token.getIsVerified()) {
+        if (this.token == null || !this.token.getIsVerified()) {
           throw new OSecurityException("The token provided is not a valid token, signature doesn't match");
         }
 
