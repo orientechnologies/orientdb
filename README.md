@@ -1,6 +1,6 @@
 ## OrientDB
 
-<img src="http://orientdb/oriendb-studio.png">
+<img src="http://orientdb.com/orientdb-studio_800px.png">
 
 ## What is OrientDB?
 
