@@ -50,7 +50,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
    * USE THIS AS RESPONSE TO REPORT A DELETED RECORD IN TX
    */
   public static final ORecordFlat                             DELETED_RECORD        = new ORecordFlat();
-  private final OOperationUnitId                              operationUnitId;
   protected Map<ORID, ORecord>                                temp2persistent       = new HashMap<ORID, ORecord>();
   protected Map<ORID, ORecordOperation>                       allEntries            = new HashMap<ORID, ORecordOperation>();
   protected Map<ORID, ORecordOperation>                       recordEntries         = new LinkedHashMap<ORID, ORecordOperation>();
@@ -83,7 +82,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   protected OTransactionRealAbstract(ODatabaseDocumentTx database, int id) {
     super(database);
     this.id = id;
-    this.operationUnitId = OOperationUnitId.generateId();
   }
 
   @Override
