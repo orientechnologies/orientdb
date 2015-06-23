@@ -128,18 +128,28 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     }
   }
 
+  public void deleteWithoutLoad(String indexName) {
+    internalDelete(indexName);
+  }
+
   public void delete() {
+    internalDelete(indexName);
+  }
+
+  protected void internalDelete(String indexName) {
     try {
-      if (mgrWriter.getIndexWriter() != null) {
+      if (mgrWriter != null && mgrWriter.getIndexWriter() != null) {
         closeIndex();
       }
       ODatabaseDocumentInternal database = getDatabase();
       final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
       if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
 
-        File f = new File(getIndexPath((OLocalPaginatedStorage) storageLocalAbstract));
+        OLocalPaginatedStorage localAbstract = (OLocalPaginatedStorage) storageLocalAbstract;
+
+        File f = new File(getIndexPath(localAbstract, indexName));
         OLuceneIndexUtils.deleteFolder(f);
-        f = new File(getIndexBasePath((OLocalPaginatedStorage) storageLocalAbstract));
+        f = new File(getIndexBasePath(localAbstract));
         OLuceneIndexUtils.deleteFolderIfEmpty(f);
       }
     } catch (IOException e) {
@@ -376,6 +386,10 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   }
 
   private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract) {
+    return getIndexPath(storageLocalAbstract, indexName);
+  }
+
+  private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract, String indexName) {
     return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR + File.separator + indexName;
   }
 

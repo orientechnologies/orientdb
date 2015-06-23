@@ -71,10 +71,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
     }
 
-    @Override
-    public void deleteWithoutLoad(String indexName) {
 
-    }
 
     @Override
     public boolean contains(Object key) {

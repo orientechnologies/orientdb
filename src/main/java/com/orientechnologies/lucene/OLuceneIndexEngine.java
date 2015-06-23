@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
 
   private final String                  indexType;
-  private final String                  indexName;
+  private String                  indexName;
   protected OLuceneIndexManagerAbstract lucene;
   protected OIndex                      indexManaged;
   private ODocument                     indexMetadata;
@@ -193,5 +193,9 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
   public void setRebuilding(boolean rebuilding) {
     lucene.setRebuilding(rebuilding);
+  }
+
+  public void setIndexName(String indexName) {
+    this.indexName = indexName;
   }
 }

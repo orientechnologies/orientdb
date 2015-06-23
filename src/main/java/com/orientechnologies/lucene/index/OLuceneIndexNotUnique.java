@@ -47,6 +47,7 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
                                     Set<String> clustersToIndex, boolean rebuild, OProgressListener progressListener) {
         OLuceneIndexEngine engine = (OLuceneIndexEngine) indexEngine;
         engine.setManagedIndex(this);
+        engine.setIndexName(name);
         return super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener);
     }
 
