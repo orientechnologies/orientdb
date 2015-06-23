@@ -85,7 +85,7 @@ public class GIssue extends GEntity {
     }
 
     public List<GComment> getComments() throws IOException {
-        Response response = github.REQUEST.uri().path(getBaseUrl() + "/comments").back().method("GET")
+        Response response = github.REQUEST.uri().path(getBaseUrl() + "/comments").queryParam("per_page", "100").back().method("GET")
                 .header("Authorization", String.format("token %s", github.token)).fetch();
 
 
@@ -116,7 +116,7 @@ public class GIssue extends GEntity {
     }
 
     public List<GEvent> getEvents() throws IOException {
-        String content = github.REQUEST.uri().path(getBaseUrl() + "/events").back().method("GET")
+        String content = github.REQUEST.uri().path(getBaseUrl() + "/events").queryParam("per_page", "100").back().method("GET")
                 .header("Authorization", String.format("token %s", github.token)).fetch().body();
         JSONArray array = new JSONArray(content);
 

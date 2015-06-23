@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 @PropertySource("classpath:github-${spring.profiles.active}.properties")
 public class GitHubConfiguration {
 
+  private boolean mock;
   private String clientId;
 
   private String loginUrl;
@@ -59,5 +60,14 @@ public class GitHubConfiguration {
 
   public void setClientSecret(String clientSecret) {
     this.clientSecret = clientSecret;
+  }
+
+
+  public void setMock(boolean mock) {
+    this.mock = mock;
+  }
+
+  public boolean isMock() {
+    return mock;
   }
 }

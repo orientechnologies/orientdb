@@ -4,6 +4,7 @@ import com.orientechnologies.website.configuration.AppConfig;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.IssueRepository;
+import com.orientechnologies.website.repository.OrganizationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.mail.SimpleMailMessage;
@@ -23,18 +24,21 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
 
   @Autowired
   @Lazy
-  protected JavaMailSenderImpl sender;
+  protected JavaMailSenderImpl     sender;
 
   @Autowired
-  protected AppConfig          config;
+  protected AppConfig              config;
 
   @Autowired
-  private IssueRepository      issueRepository;
+  private IssueRepository          issueRepository;
 
   @Autowired
-  private SpringTemplateEngine templateEngine;
+  private SpringTemplateEngine     templateEngine;
 
-  public static String         EVENT = "issue_created";
+  public static String             EVENT = "issue_created";
+
+  @Autowired
+  protected OrganizationRepository organizationRepository;
 
   @Override
   public String event() {
@@ -45,47 +49,53 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
   public void accept(Event<Issue> issueEvent) {
 
     Issue issue = issueEvent.getData();
-    Context context = new Context();
-    fillContextVariable(context, issue);
-    String htmlContent = templateEngine.process("newIssue.html", context);
 
-    OUser owner = issue.getScope() != null ? issue.getScope().getOwner() : null;
-    OUser user = issue.getUser();
+    issue = organizationRepository.findSingleOrganizationIssueByNumber(issue.getRepository().getOrganization().getName(),
+        issue.getIid());
 
-    Set<String> dests = new HashSet<String>();
-    List<OUser> members = issue.getScope() != null ? issue.getScope().getMembers() : new ArrayList<OUser>();
-    if (owner != null) {
-      boolean found = false;
-      for (OUser member : members) {
-        if (member.getName().equals(owner.getName())) {
-          found = true;
+    if (issue != null) {
+      Context context = new Context();
+      fillContextVariable(context, issue);
+      String htmlContent = templateEngine.process("newIssue.html", context);
+
+      OUser owner = issue.getScope() != null ? issue.getScope().getOwner() : null;
+      OUser user = issue.getUser();
+
+      Set<String> dests = new HashSet<String>();
+      List<OUser> members = issue.getScope() != null ? issue.getScope().getMembers() : new ArrayList<OUser>();
+      if (owner != null) {
+        boolean found = false;
+        for (OUser member : members) {
+          if (member.getName().equals(owner.getName())) {
+            found = true;
+          }
+        }
+        if (!found && !user.getName().equals(owner.getName())) {
+          members.add(owner);
         }
       }
-      if (!found && !user.getName().equals(owner.getName())) {
-        members.add(owner);
+
+      List<OUser> issueActors = null;
+      if (!Boolean.TRUE.equals(issue.getConfidential())) {
+        issueActors = issueRepository.findToNotifyActors(issue);
+        members.addAll(issueActors);
+        members.addAll(issueRepository.findToNotifyActorsWatching(issue));
+
+      } else {
+        issueActors = issueRepository.findToNotifyPrivateActors(issue);
+        members.addAll(issueActors);
       }
-    }
-
-    List<OUser> issueActors = null;
-    if (!Boolean.TRUE.equals(issue.getConfidential())) {
-      issueActors = issueRepository.findToNotifyActors(issue);
-      members.addAll(issueActors);
-      members.addAll(issueRepository.findToNotifyActorsWatching(issue));
-
-    } else {
-      issueActors = issueRepository.findToNotifyPrivateActors(issue);
-      members.addAll(issueActors);
-    }
-    String[] actorsEmail = getActorsEmail(owner, members, issueActors);
-    dests.addAll(Arrays.asList(actorsEmail));
-    if (dests.size() > 0) {
-      for (String actor : dests) {
-        SimpleMailMessage mailMessage = new SimpleMailMessage();
-        mailMessage.setTo(actor);
-        mailMessage.setFrom("prjhub@orientechnologies.com");
-        mailMessage.setSubject(issue.getTitle());
-        mailMessage.setText(htmlContent);
-        sender.send(mailMessage);
+      String[] actorsEmail = getActorsEmail(owner, members, issueActors);
+      dests.addAll(Arrays.asList(actorsEmail));
+      if (dests.size() > 0) {
+        for (String actor : dests) {
+          SimpleMailMessage mailMessage = new SimpleMailMessage();
+          mailMessage.setTo(actor);
+          mailMessage.setFrom("prjhub@orientechnologies.com");
+          mailMessage.setSubject(issue.getTitle());
+          mailMessage.setText(htmlContent);
+          sender.send(mailMessage);
+        }
       }
     }
   }
