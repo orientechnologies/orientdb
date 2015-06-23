@@ -217,7 +217,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public OUser getUser(final ORID iRecordId) {
-    if( iRecordId == null )
+    if (iRecordId == null)
       return null;
 
     ODocument result;
@@ -251,8 +251,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public boolean dropUser(final String iUserName) {
-    final Number removed = getDatabase().<OCommandRequest> command(
-        new OCommandSQL("delete from OUser where name = ?")).execute(iUserName);
+    final Number removed = getDatabase().<OCommandRequest> command(new OCommandSQL("delete from OUser where name = ?")).execute(
+        iUserName);
 
     return removed != null && removed.intValue() > 0;
   }
@@ -434,6 +434,11 @@ public class OSecurityShared implements OSecurity, OCloseable {
     return adminUser;
   }
 
+  @Override
+  public void close() {
+  }
+
+  @Override
   public void close(boolean onDelete) {
   }
 
@@ -490,8 +495,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
       return null;
 
     List<ODocument> result = getDatabase().<OCommandRequest> command(
-        new OSQLSynchQuery<ODocument>("select from OUser where name = ? limit 1").setFetchPlan("roles:1"))
-        .execute(iUserName);
+        new OSQLSynchQuery<ODocument>("select from OUser where name = ? limit 1").setFetchPlan("roles:1")).execute(iUserName);
 
     if (result != null && !result.isEmpty())
       return new OUser(result.get(0));

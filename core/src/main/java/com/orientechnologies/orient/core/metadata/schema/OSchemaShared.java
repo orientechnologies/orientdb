@@ -859,7 +859,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }
   }
 
-  public void close(boolean onDelete) {
+  @Override
+  public void close() {
     rwSpinLock.acquireWriteLock();
     try {
       classes.clear();
@@ -1252,21 +1253,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
     for (final OIndex<?> index : indexManager.getClassIndexes(cls.getName()))
       indexManager.dropIndex(index.getName());
-  }
-
-  private OClass cascadeCreate(final Class<?> javaClass) {
-    final OClassImpl cls = (OClassImpl) createClass(javaClass.getSimpleName());
-
-    final Class<?> javaSuperClass = javaClass.getSuperclass();
-    if (javaSuperClass != null && !javaSuperClass.getName().equals("java.lang.Object")
-        && !javaSuperClass.getName().startsWith("com.orientechnologies")) {
-      OClass superClass = classes.get(javaSuperClass.getSimpleName().toLowerCase());
-      if (superClass == null)
-        superClass = cascadeCreate(javaSuperClass);
-      cls.setSuperClass(superClass);
-    }
-
-    return cls;
   }
 
   private ODatabaseDocumentInternal getDatabase() {

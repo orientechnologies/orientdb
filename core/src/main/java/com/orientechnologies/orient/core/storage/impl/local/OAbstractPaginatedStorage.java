@@ -99,6 +99,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Andrey Lomakin
@@ -127,7 +128,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
                                                                                                              .instance()
                                                                                                              .getRecordConflictStrategy()
                                                                                                              .newInstanceOfDefaultClass();
-  private CopyOnWriteArrayList<OCluster>                      clusters                                   = new CopyOnWriteArrayList<OCluster>();
+  private List<OCluster>                                      clusters                                   = new ArrayList<OCluster>();
   private volatile int                                        defaultClusterId                           = -1;
   private volatile OAtomicOperationsManager                   atomicOperationsManager;
   private volatile boolean                                    wereDataRestoredAfterOpen                  = false;
@@ -391,6 +392,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     checkOpeness();
     lock.acquireExclusiveLock();
     try {
+      checkOpeness();
       makeFullCheckPointAfterClusterCreate = true;
     } finally {
       lock.releaseExclusiveLock();
@@ -401,6 +403,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     checkOpeness();
     lock.acquireExclusiveLock();
     try {
+
+      checkOpeness();
       makeFullCheckPointAfterClusterCreate = false;
     } finally {
       lock.releaseExclusiveLock();
@@ -411,6 +415,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     checkOpeness();
     lock.acquireSharedLock();
     try {
+      checkOpeness();
+
       return makeFullCheckPointAfterClusterCreate;
     } finally {
       lock.releaseSharedLock();
@@ -423,6 +429,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     lock.acquireExclusiveLock();
     try {
+      checkOpeness();
 
       makeStorageDirty();
       return doAddCluster(clusterName, true, parameters);
@@ -600,15 +607,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     // COUNT PHYSICAL CLUSTER IF ANY
     checkOpeness();
+    lock.acquireSharedLock();
+    try {
+      checkOpeness();
 
-    final OCluster cluster = clusters.get(clusterId);
-    if (cluster == null)
-      return 0;
+      final OCluster cluster = clusters.get(clusterId);
+      if (cluster == null)
+        return 0;
 
-    if (countTombstones)
-      return cluster.getEntries();
+      if (countTombstones)
+        return cluster.getEntries();
 
-    return cluster.getEntries() - cluster.getTombstonesCount();
+      return cluster.getEntries() - cluster.getTombstonesCount();
+    } finally {
+      lock.releaseSharedLock();
+    }
+
   }
 
   public long[] getClusterDataRange(final int iClusterId) {
@@ -616,12 +630,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       return new long[] { ORID.CLUSTER_POS_INVALID, ORID.CLUSTER_POS_INVALID };
 
     checkOpeness();
+    lock.acquireSharedLock();
     try {
+      checkOpeness();
+
       return clusters.get(iClusterId) != null ? new long[] { clusters.get(iClusterId).getFirstPosition(),
           clusters.get(iClusterId).getLastPosition() } : OCommonConst.EMPTY_LONG_ARRAY;
 
     } catch (IOException ioe) {
       throw new OStorageException("Can not retrieve information about data range", ioe);
+    } finally {
+      lock.releaseSharedLock();
     }
   }
 
@@ -635,18 +654,26 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     long tot = 0;
 
-    for (int iClusterId : iClusterIds) {
-      if (iClusterId >= clusters.size())
-        throw new OConfigurationException("Cluster id " + iClusterId + " was not found in database '" + name + "'");
+    lock.acquireSharedLock();
+    try {
+      checkOpeness();
 
-      if (iClusterId > -1) {
-        final OCluster c = clusters.get(iClusterId);
-        if (c != null)
-          tot += c.getEntries() - (countTombstones ? 0L : c.getTombstonesCount());
+      for (int iClusterId : iClusterIds) {
+        if (iClusterId >= clusters.size())
+          throw new OConfigurationException("Cluster id " + iClusterId + " was not found in database '" + name + "'");
+
+        if (iClusterId > -1) {
+          final OCluster c = clusters.get(iClusterId);
+          if (c != null)
+            tot += c.getEntries() - (countTombstones ? 0L : c.getTombstonesCount());
+        }
       }
-    }
 
-    return tot;
+      return tot;
+
+    } finally {
+      lock.releaseSharedLock();
+    }
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId rid, final byte[] content,
@@ -674,6 +701,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       try {
         lock.acquireSharedLock();
         try {
+          checkOpeness();
+
           return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, ppos);
         } finally {
           lock.releaseSharedLock();
@@ -699,6 +728,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       lock.acquireSharedLock();
       try {
+        checkOpeness();
+
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
         if (ppos == null)
           return null;
@@ -757,6 +788,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         try {
           lock.acquireSharedLock();
           try {
+            checkOpeness();
+
             // UPDATE IT
             return doUpdateRecord(rid, updateContent, content, version, recordType, callback, cluster);
           } finally {
@@ -813,6 +846,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         try {
           lock.acquireSharedLock();
           try {
+            checkOpeness();
+
             return doDeleteRecord(rid, version, cluster);
           } finally {
             lock.releaseSharedLock();
@@ -856,6 +891,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         try {
           lock.acquireSharedLock();
           try {
+            checkOpeness();
+
             return doHideMethod(rid, cluster);
           } finally {
             lock.releaseSharedLock();
@@ -889,7 +926,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   public Set<String> getClusterNames() {
     checkOpeness();
-    return new HashSet<String>(clusterMap.keySet());
+    lock.acquireSharedLock();
+    try {
+      checkOpeness();
+
+      return new HashSet<String>(clusterMap.keySet());
+    } finally {
+      lock.releaseSharedLock();
+    }
+
   }
 
   public int getClusterIdByName(final String clusterName) {
@@ -904,13 +949,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (Character.isDigit(clusterName.charAt(0)))
       return Integer.parseInt(clusterName);
 
-    // SEARCH IT BETWEEN PHYSICAL CLUSTERS
+    lock.acquireSharedLock();
+    try {
+      checkOpeness();
 
-    final OCluster segment = clusterMap.get(clusterName.toLowerCase());
-    if (segment != null)
-      return segment.getId();
+      // SEARCH IT BETWEEN PHYSICAL CLUSTERS
 
-    return -1;
+      final OCluster segment = clusterMap.get(clusterName.toLowerCase());
+      if (segment != null)
+        return segment.getId();
+
+      return -1;
+    } finally {
+      lock.releaseSharedLock();
+    }
+
   }
 
   public void commit(final OTransaction clientTx, Runnable callback) {
@@ -926,6 +979,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       try {
         lock.acquireExclusiveLock();
         try {
+
+          checkOpeness();
+
           if (writeAheadLog == null && clientTx.isUsingLog())
             throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
 
@@ -988,6 +1044,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       lock.acquireExclusiveLock();
       try {
+        checkOpeness();
+
         if (transaction.get() == null)
           return;
 
@@ -1027,6 +1085,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       lock.acquireSharedLock();
       try {
+        checkOpeness();
+
         if (writeAheadLog != null) {
           makeFullCheckpoint();
           return;
@@ -1057,7 +1117,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (iClusterId < 0 || iClusterId >= clusters.size())
       return null;
 
-    return clusters.get(iClusterId) != null ? clusters.get(iClusterId).getName() : null;
+    lock.acquireSharedLock();
+    try {
+      checkOpeness();
+
+      return clusters.get(iClusterId) != null ? clusters.get(iClusterId).getName() : null;
+    } finally {
+      lock.releaseSharedLock();
+    }
   }
 
   public int getDefaultClusterId() {
@@ -1266,6 +1333,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     lock.acquireSharedLock();
     try {
+      checkOpeness();
+
       final OCluster cluster = getClusterById(currentClusterId);
       return cluster.higherPositions(physicalPosition);
     } catch (IOException ioe) {
@@ -1284,6 +1353,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     lock.acquireSharedLock();
     try {
+      checkOpeness();
+
       final OCluster cluster = getClusterById(clusterId);
       return cluster.ceilingPositions(physicalPosition);
     } catch (IOException ioe) {
@@ -1302,6 +1373,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     lock.acquireSharedLock();
     try {
+      checkOpeness();
+
       final OCluster cluster = getClusterById(currentClusterId);
 
       return cluster.lowerPositions(physicalPosition);
@@ -1321,6 +1394,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     lock.acquireSharedLock();
     try {
+      checkOpeness();
+
       final OCluster cluster = getClusterById(clusterId);
 
       return cluster.floorPositions(physicalPosition);
@@ -1461,6 +1536,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         ORawBuffer buff;
         lock.acquireSharedLock();
         try {
+          checkOpeness();
+
           buff = doReadRecordIfNotLatest(cluster, rid, recordVersion);
           return buff;
         } finally {
@@ -1501,6 +1578,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         ORawBuffer buff;
         lock.acquireSharedLock();
         try {
+          checkOpeness();
+
           buff = doReadRecord(clusterSegment, rid);
           return buff;
         } finally {

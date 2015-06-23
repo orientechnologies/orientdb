@@ -19,10 +19,7 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import com.orientechnologies.common.concur.resource.OCloseable;
-import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
-import com.orientechnologies.common.concur.resource.OSharedResource;
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
+import com.orientechnologies.common.concur.resource.*;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -40,15 +37,17 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
-public abstract class OStorageAbstract extends OSharedContainerImpl implements OStorage {
+public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   protected final String                              url;
   protected final String                              mode;
   protected final OSharedResourceAdaptiveExternal     lock;
   protected volatile OStorageConfiguration            configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
   protected String                                    name;
-  protected AtomicLong                                version = new AtomicLong();
-  protected volatile STATUS                           status  = STATUS.CLOSED;
+  protected AtomicLong                                version         = new AtomicLong();
+  protected volatile STATUS                           status          = STATUS.CLOSED;
+
+  private final OSharedContainerImpl                  sharedContainer = new OSharedContainerImpl();
 
   public OStorageAbstract(final String name, final String iURL, final String mode, final int timeout) {
     if (OStringSerializerHelper.contains(name, '/'))
@@ -96,19 +95,22 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   }
 
   public void close(final boolean iForce, boolean onDelete) {
-    lock.acquireExclusiveLock();
-    try {
-      for (Object resource : sharedResources.values()) {
-        if (resource instanceof OSharedResource)
-          ((OSharedResource) resource).releaseExclusiveLock();
+    sharedContainer.clearResources();
+  }
 
-        if (resource instanceof OCloseable)
-          ((OCloseable) resource).close(onDelete);
-      }
-      sharedResources.clear();
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+  @Override
+  public boolean existsResource(String iName) {
+    return sharedContainer.existsResource(iName);
+  }
+
+  @Override
+  public <T> T removeResource(String iName) {
+    return sharedContainer.removeResource(iName);
+  }
+
+  @Override
+  public <T> T getResource(String iName, Callable<T> iCallback) {
+    return sharedContainer.getResource(iName, iCallback);
   }
 
   /**
@@ -180,7 +182,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     // CHECK FOR ORESTRICTED
     OMetadata metaData = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata();
     if (metaData != null) {
-      final Set<OClass> classes = ((OMetadataInternal)metaData).getImmutableSchemaSnapshot().getClassesRelyOnCluster(iClusterName);
+      final Set<OClass> classes = ((OMetadataInternal) metaData).getImmutableSchemaSnapshot().getClassesRelyOnCluster(iClusterName);
       for (OClass c : classes) {
         if (c.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME))
           throw new OSecurityException("Class " + c.getName()

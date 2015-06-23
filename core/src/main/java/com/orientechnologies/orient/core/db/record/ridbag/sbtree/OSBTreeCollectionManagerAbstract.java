@@ -155,7 +155,7 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
   }
 
   @Override
-  public void close(boolean onDelete) {
+  public void close() {
     treeCache.clear();
   }
 

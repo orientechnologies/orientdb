@@ -136,7 +136,6 @@ public class LocalPaginatedClusterTest {
     physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
     Assert.assertEquals(physicalPosition.clusterPosition, 1);
 
-    recordVersion.increment();
     Assert.assertEquals(physicalPosition.recordVersion, recordVersion);
   }
 
