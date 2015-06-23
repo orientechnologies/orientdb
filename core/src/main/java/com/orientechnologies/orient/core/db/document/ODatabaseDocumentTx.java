@@ -2550,6 +2550,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     try {
       currentTx.commit(force);
     } catch (RuntimeException e) {
+      OLogManager.instance().error(this, "Error on TX commit.", e);
+
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : browseListeners())
         try {
@@ -2557,6 +2559,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         } catch (Throwable t) {
           OLogManager.instance().error(this, "Error before tx rollback", t);
         }
+
       // ROLLBACK TX AT DB LEVEL
       currentTx.rollback(false, 0);
       getLocalCache().clear();
