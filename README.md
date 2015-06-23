@@ -1,19 +1,19 @@
 ## OrientDB
 
-<img src="http://www.orientechnologies.com/docs/last/images/Settings.png">
+<img src="http://orientdb/orientdb-studio_800px.png">
 
 ## What is OrientDB?
 
-**OrientDB** is an Open Source [NoSQL](http://en.wikipedia.org/wiki/NoSQL) DBMS with the features of both Document and Graph DBMSs. It's written in Java and it's amazingly fast: it can store 220,000 records per second on common hardware. Even for a Document based database the relationships are managed as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database) with direct connections among records. You can traverse parts of or entire trees and graphs of records in a few milliseconds. Supports schema-less, schema-full and schema-mixed modes. Has a strong security profiling system based on user and roles and supports [SQL](http://www.orientechnologies.com/docs/last/SQL.html) amongst the query languages. Thanks to the [SQL](http://www.orientechnologies.com/docs/last/SQL.html) layer it's straightforward to use for people skilled in the Relational world.
+**OrientDB** is an Open Source [NoSQL](http://en.wikipedia.org/wiki/NoSQL) DBMS with the features of both Document and Graph DBMSs. It's written in Java and it's amazingly fast: it can store 220,000 records per second on common hardware. Even for a Document based database the relationships are managed as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database) with direct connections among records. You can traverse parts of or entire trees and graphs of records in a few milliseconds. Supports schema-less, schema-full and schema-mixed modes. Has a strong security profiling system based on user and roles and supports [SQL](http://orientdb.com/docs/last/SQL.html) amongst the query languages. Thanks to the [SQL](http://orientdb.com/docs/last/SQL.html) layer it's straightforward to use for people skilled in the Relational world.
 
-[Get started with OrientDB](http://www.orientechnologies.com/getting-started/).
+[Get started with OrientDB](http://orientdb.com/getting-started/).
 
 [![Gitter chat](https://badges.gitter.im/orientechnologies/orientdb.png)](https://gitter.im/orientechnologies/orientdb)
 
 
 ## Is OrientDB a Relational DBMS?
 
-No. OrientDB adheres to the [NoSQL](http://en.wikipedia.org/wiki/NoSQL) movement even though it supports a subset of [SQL](http://www.orientechnologies.com/docs/last/SQL.html) as query language. In this way it's easy to start using it without having to learn too much new stuff. OrientDB is a [Document Database](http://en.wikipedia.org/wiki/Document-oriented_database) but has the best features of other DBMSs. For example relationships are handled as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database).
+No. OrientDB adheres to the [NoSQL](http://en.wikipedia.org/wiki/NoSQL) movement even though it supports a subset of [SQL](http://orientdb.com/docs/last/SQL.html) as query language. In this way it's easy to start using it without having to learn too much new stuff. OrientDB is a [Document Database](http://en.wikipedia.org/wiki/Document-oriented_database) but has the best features of other DBMSs. For example relationships are handled as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database).
 
 ## Scalability: the database is the bottleneck of most applications
 
@@ -25,7 +25,7 @@ OrientDB has been designed to be very fast. It inherits the best features and co
 
 ## How does it compare with other products?
 
-As Multi-Model DBMS, OrientDB could work as an extended Document Database and an extended Graph Database. Take a look at [OrientDB vs MongoDB](http://www.orientechnologies.com/orientdb-vs-mongodb/) for Document Databases and [OrientDB vs Neo4j](http://www.orientechnologies.com/orientdb-vs-neo4j/) to have a comparison with a popular Graph Database.
+As Multi-Model DBMS, OrientDB could work as an extended Document Database and an extended Graph Database. Take a look at [OrientDB vs MongoDB](http://orientdb.com/orientdb-vs-mongodb/) for Document Databases and [OrientDB vs Neo4j](http://orientdb.com/orientdb-vs-neo4j/) to have a comparison with a popular Graph Database.
 
 ## Are you looking for benchmarks?
 
@@ -33,18 +33,18 @@ Download the Benchmark PDF <a href="https://docs.google.com/viewer?a=v&pid=sites
 
 ## Easy to install and use
 
-Yes. OrientDB is totally written in [Java](http://en.wikipedia.org/wiki/Java_%28programming_language%29) and can run on any platform without configuration and installation. The full Server distribution is about 1Mb without the demo database. Do you develop with a language different than Java? No problem, look at the [Programming Language Binding](http://www.orientechnologies.com/docs/last/Programming-Language-Bindings.html).
+Yes. OrientDB is totally written in [Java](http://en.wikipedia.org/wiki/Java_%28programming_language%29) and can run on any platform without configuration and installation. The full Server distribution is about 1Mb without the demo database. Do you develop with a language different than Java? No problem, look at the [Programming Language Binding](http://orientdb.com/docs/last/Programming-Language-Bindings.html).
 
 ## Professional services
 
-OrientDB is free for any use (Apache 2 license). If you are in production don't miss the [professional support service](http://orientechnologies.com/support/). For courses and training look at the [on-line course catalog](http://orientechnologies.com/training/).
+OrientDB is free for any use (Apache 2 license). If you are in production don't miss the [professional support service](http://orientdb.com/support/). For courses and training look at the [on-line course catalog](http://orientdb.com/training/).
 
 ## Main References
-- [Documentation](http://www.orientechnologies.com/docs/last/)
-- For any questions visit the [OrientDB Community Group](http://www.orientechnologies.com/active-user-community/)
-- [Professional Support](www.orientechnologies.com/support/).
+- [Documentation](http://orientdb.com/docs/last/)
+- For any questions visit the [OrientDB Community Group](http://orientdb.com/active-user-community/)
+- [Professional Support](orientdb.com/support/).
 
-[Get started with OrientDB](http://www.orientechnologies.com/getting-started/).
+[Get started with OrientDB](http://orientdb.com/getting-started/).
 
 --------
 ### Sponsors
@@ -62,7 +62,7 @@ OrientDB is free for any use (Apache 2 license). If you are in production don't 
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
   })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-28543690-2', 'orientechnologies.com');
+  ga('create', 'UA-28543690-2', 'orientdb.com');
   ga('send', 'pageview');
 
 </script>
