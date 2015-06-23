@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
@@ -155,7 +156,13 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
         if (outsideOfTheRange(current))
           continue;
 
-        currentRecord = readCurrentRecord(record, 0);
+        try {
+          currentRecord = readCurrentRecord(record, 0);
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error during read of record.", e);
+
+          currentRecord = null;
+        }
 
         if (currentRecord != null)
           if (include(currentRecord))
