@@ -17,8 +17,6 @@ import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.stream.Stream;
@@ -28,7 +26,6 @@ import static org.apache.tinkerpop.gremlin.orientdb.structure.StreamUtils.asStre
 
 public final class OrientGraph implements Graph {
 
-//    public static final Logger LOGGER = LoggerFactory.getLogger(OrientGraph.class);
     protected ODatabaseDocumentTx database;
 
     public OrientGraph(ODatabaseDocumentTx iDatabase) {
