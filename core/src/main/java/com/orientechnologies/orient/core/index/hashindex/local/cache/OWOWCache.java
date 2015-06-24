@@ -245,8 +245,33 @@ public class OWOWCache {
       else
         fileClassic = files.get(fileId);
 
-      if (fileClassic == null)
-        throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
+      if (fileClassic == null) {
+        fileClassic = createFile(fileName);
+        if (!fileClassic.exists())
+          throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
+        else {
+          // workaround of bug in distributed storage https://github.com/orientechnologies/orientdb/issues/4439
+
+          OLogManager
+              .instance()
+              .error(
+                  this,
+                  "File "
+                      + fileName
+                      + " is not registered in 'file name - id' map but exists in file system, "
+                      + "probably you work in distributed storage. If it is not true, please create bug in bug tracker https://github.com/orientechnologies/orientdb/issues .");
+
+          if (fileId == null) {
+            ++fileCounter;
+            fileId = fileCounter;
+          } else
+            fileId = -fileId;
+
+          files.put(fileId, fileClassic);
+          nameIdMap.put(fileName, fileId);
+          writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+        }
+      }
 
       openFile(fileClassic);
 
