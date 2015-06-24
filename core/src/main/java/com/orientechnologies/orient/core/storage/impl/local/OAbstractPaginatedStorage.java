@@ -97,9 +97,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Andrey Lomakin
@@ -1296,7 +1294,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         oDatabaseListener.onBeforeCommand(iCommand, executor);
       }
 
-      Object result = executor.execute(iCommand.getParameters());
+      Object result = null;
+      if (iCommand.isCacheableResult() && executor.isIdempotent())
+        // TRY WITH COMMAND CACHE
+        result = db.getMetadata().getCommandCache().get(db.getUser(), iCommand.getText(), iCommand.getLimit());
+
+      if (result == null) {
+        result = executor.execute(iCommand.getParameters());
+
+        // CACHE THE COMMAND RESULT
+        if (result != null && iCommand.isCacheableResult() && executor.isIdempotent() && iCommand.getParameters() == null)
+          db.getMetadata()
+              .getCommandCache()
+              .put(db.getUser(), iCommand.getText(), result, iCommand.getLimit(), executor.getInvolvedClusters(),
+                  System.currentTimeMillis() - beginTime);
+      }
 
       // CALL AFTER COMMAND
       for (ODatabaseListener oDatabaseListener : listeners) {

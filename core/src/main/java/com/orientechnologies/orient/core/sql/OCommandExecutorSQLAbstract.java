@@ -187,7 +187,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
     final OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
     final OIndex<?> idx = metadata.getIndexManager().getIndex(iIndexName);
-    if (idx != null) {
+    if (idx != null && idx.getDefinition() != null ) {
       final String clazz = idx.getDefinition().getClassName();
 
       if (clazz != null) {

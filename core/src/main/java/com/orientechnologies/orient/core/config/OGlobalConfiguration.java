@@ -384,6 +384,17 @@ public enum OGlobalConfiguration {
   // COMMAND
   COMMAND_TIMEOUT("command.timeout", "Default timeout for commands expressed in milliseconds", Long.class, 0),
 
+  COMMAND_CACHE_ENABLED("command.cache.enabled", "Enable command cache", Boolean.class, false),
+
+  COMMAND_CACHE_EVICT_STRATEGY("command.cache.evictStrategy", "Command cache strategy between: [INVALIDATE_ALL,PER_CLUSTER]",
+      String.class, "PER_CLUSTER"),
+
+  COMMAND_CACHE_MIN_EXECUTION_TIME("command.cache.minExecutionTime", "Minimum execution time to consider caching result set",
+      Integer.class, 10),
+
+  COMMAND_CACHE_MAX_RESULSET_SIZE("command.cache.maxResultsetSize", "Maximum resultset time to consider caching result set",
+      Integer.class, 500),
+
   // QUERY
   QUERY_SCAN_THRESHOLD_TIP("query.scanThresholdTip",
       "If total number of records scanned in a query is major than this threshold a warning is given. Use 0 to disable it",
@@ -715,10 +726,7 @@ public enum OGlobalConfiguration {
         // LOW MEMORY: SET IT TO 256MB ONLY
         OLogManager
             .instance()
-            .warn(
-                null,
-                "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE="
-                    + O2QCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+            .warn(null, "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + O2QCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
         DISK_CACHE_SIZE.setValue(O2QCache.MIN_CACHE_SIZE);
       }
 

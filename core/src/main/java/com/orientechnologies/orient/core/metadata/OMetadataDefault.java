@@ -19,12 +19,11 @@
  */
 package com.orientechnologies.orient.core.metadata;
 
-import java.io.IOException;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OCommandCache;
+import com.orientechnologies.orient.core.cache.OUnboundedWeakCommandCache;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -48,6 +47,9 @@ import com.orientechnologies.orient.core.schedule.OSchedulerListenerImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerProxy;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
+import java.io.IOException;
+import java.util.concurrent.Callable;
+
 public class OMetadataDefault implements OMetadataInternal {
   public static final String            CLUSTER_INTERNAL_NAME     = "internal";
   public static final String            CLUSTER_INDEX_NAME        = "index";
@@ -60,6 +62,8 @@ public class OMetadataDefault implements OMetadataInternal {
   protected OIndexManagerProxy          indexManager;
   protected OFunctionLibraryProxy       functionLibrary;
   protected OSchedulerListenerProxy     scheduler;
+
+  protected OCommandCache               commandCache;
   protected static final OProfilerMBean PROFILER                  = Orient.instance().getProfiler();
 
   private OImmutableSchema              immutableSchema           = null;
@@ -96,6 +100,11 @@ public class OMetadataDefault implements OMetadataInternal {
 
   public OSchemaProxy getSchema() {
     return schema;
+  }
+
+  @Override
+  public OCommandCache getCommandCache() {
+    return commandCache;
   }
 
   @Override
@@ -184,6 +193,12 @@ public class OMetadataDefault implements OMetadataInternal {
           }
         }), database);
 
+    commandCache = database.getStorage().getResource(OCommandCache.class.getSimpleName(), new Callable<OCommandCache>() {
+      public OCommandCache call() {
+        return new OUnboundedWeakCommandCache(database.getName());
+      }
+    });
+
     final Class<? extends OSecurity> securityClass = (Class<? extends OSecurity>) database.getProperty(ODatabase.OPTIONS.SECURITY
         .toString());
     if (securityClass != null)
@@ -228,6 +243,8 @@ public class OMetadataDefault implements OMetadataInternal {
       security.load();
     if (functionLibrary != null)
       functionLibrary.load();
+    if (commandCache != null)
+      commandCache.clear();
   }
 
   /**
@@ -238,6 +255,8 @@ public class OMetadataDefault implements OMetadataInternal {
       schema.close();
     if (security != null)
       security.close(false);
+    if (commandCache != null)
+      commandCache.clear();
   }
 
   protected ODatabaseDocumentInternal getDatabase() {

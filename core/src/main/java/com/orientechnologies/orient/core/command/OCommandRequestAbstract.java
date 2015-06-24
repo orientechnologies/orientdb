@@ -23,9 +23,12 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Text based Command Request abstract class.
@@ -43,6 +46,7 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
   protected Map<Object, Object>    parameters;
   protected String                 fetchPlan       = null;
   protected boolean                useCache        = false;
+  protected boolean                cacheableResult = false;
   protected OCommandContext        context;
 
   private final Set<String>        nodesToExclude  = new HashSet<String>();
@@ -125,6 +129,16 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 
   public void setUseCache(boolean useCache) {
     this.useCache = useCache;
+  }
+
+  @Override
+  public boolean isCacheableResult() {
+    return cacheableResult;
+  }
+
+  @Override
+  public void setCacheableResult(final boolean iValue) {
+    cacheableResult = iValue;
   }
 
   @Override
