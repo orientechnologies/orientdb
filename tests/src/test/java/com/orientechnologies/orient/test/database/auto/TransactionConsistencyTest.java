@@ -490,9 +490,9 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
       // just show what is there
       List<ODocument> result = graph.getRawGraph().query(new OSQLSynchQuery<ODocument>("select * from Foo"));
 
-      for (ODocument d : result) {
-        System.out.println("Vertex: " + d);
-      }
+      // for (ODocument d : result) {
+      // System.out.println("Vertex: " + d);
+      // }
 
       // remove those foos in a transaction
       // Step 3a
@@ -519,9 +519,9 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
       // just show what is there
       result = graph.getRawGraph().query(new OSQLSynchQuery<ODocument>("select * from Foo"));
 
-      for (ODocument d : result) {
-        System.out.println("Vertex: " + d);
-      }
+      // for (ODocument d : result) {
+      // System.out.println("Vertex: " + d);
+      // }
 
     } finally {
       graph.shutdown();
@@ -608,8 +608,8 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     Assert.assertNotNull(result1);
     Assert.assertEquals(result1.size(), cnt);
     // System.out.println("Before transaction commit");
-    for (ODocument d : result1)
-      System.out.println(d);
+    // for (ODocument d : result1)
+    // System.out.println(d);
 
     try {
       database.begin();
@@ -658,8 +658,8 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     final List<ODocument> result2 = database.command(new OCommandSQL("select from TRPerson")).execute();
     Assert.assertNotNull(result2);
     // System.out.println("After transaction commit failure/rollback");
-    for (ODocument d : result2)
-      System.out.println(d);
+    // for (ODocument d : result2)
+    // System.out.println(d);
     Assert.assertEquals(result2.size(), cnt);
 
     // System.out.println("**************************TransactionRollbackConstistencyTest***************************************");
