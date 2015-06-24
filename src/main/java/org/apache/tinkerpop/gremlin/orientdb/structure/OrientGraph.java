@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -19,6 +20,9 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.stream.Stream;
@@ -127,4 +131,24 @@ public final class OrientGraph implements Graph {
     public void close() throws Exception {
         throw new NotImplementedException();
     }
+
+    public void createVertexClass(final String className) {
+        createClass(className, "V");
+    }
+
+    public void createEdgeClass(final String className) {
+        createClass(className, "E");
+    }
+
+    public void createClass(final String className, final String superClassName) {
+//        makeActive();
+        OClass cls = database.getMetadata().getSchema().getClass(superClassName);
+        createClass(className, cls);
+    }
+
+    public void createClass(final String className, final OClass superClass) {
+//        makeActive();
+        database.getMetadata().getSchema().createClass(className, superClass);
+    }
+
 }
