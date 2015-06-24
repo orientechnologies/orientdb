@@ -1256,7 +1256,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   protected HazelcastInstance configureHazelcast() throws FileNotFoundException {
-    return Hazelcast.newHazelcastInstance(new FileSystemXmlConfig(hazelcastConfigFile));
+    FileSystemXmlConfig config = new FileSystemXmlConfig(hazelcastConfigFile);
+    config.setClassLoader(this.getClass().getClassLoader());
+    return Hazelcast.newHazelcastInstance(config);
   }
 
   /**
