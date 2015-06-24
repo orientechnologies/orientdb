@@ -1,15 +1,10 @@
 package org.apache.tinkerpop.gremlin.orientdb.structure;
 
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
 import org.apache.tinkerpop.gremlin.structure.*;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.*;
 import java.util.stream.Stream;
-
 import org.apache.commons.lang.NotImplementedException;
 
 
@@ -22,6 +17,15 @@ public class OrientElement implements Element {
             throw new IllegalArgumentException("rawElement must not be null!");
         this.graph = graph;
         this.rawElement = rawElement;
+    }
+
+    public OrientElement(OrientGraph graph, String className) {
+        this(graph, createRawElement(graph, className));
+    }
+
+    private static ODocument createRawElement(OrientGraph graph, String className) {
+        graph.createVertexClass(className);
+        return new ODocument(className);
     }
 
     public Object id() {

@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -17,6 +18,8 @@ import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
+
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.stream.Stream;
@@ -34,13 +37,22 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Vertex addVertex(Object... keyValues) {
-        OrientVertex v = new OrientVertex(this);
-        v.save();
-        return v;
+        ElementHelper.legalPropertyKeyValueArray(keyValues);
+        if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
+
+        String label = ElementHelper.getLabelValue(keyValues).orElse("V");
+        OrientVertex vertex = new OrientVertex(this, label);
+        ElementHelper.attachProperties(vertex, keyValues);
+
+        vertex.save();
+        return vertex;
     }
 
     public Object executeSql(String sql) {
         OCommandRequest command = database.command(new OCommandSQL(sql));
+        return command.execute();
+    }
+    public Object executeCommand(OCommandRequest command) {
         return command.execute();
     }
 
@@ -135,13 +147,20 @@ public final class OrientGraph implements Graph {
 
     public void createClass(final String className, final String superClassName) {
 //        makeActive();
-        OClass cls = database.getMetadata().getSchema().getClass(superClassName);
-        createClass(className, cls);
+        OClass superClass = database.getMetadata().getSchema().getClass(superClassName);
+        createClass(className, superClass);
     }
 
     public void createClass(final String className, final OClass superClass) {
 //        makeActive();
-        database.getMetadata().getSchema().createClass(className, superClass);
+        OSchemaProxy schema = database.getMetadata().getSchema();
+        if (schema.getClass(className) == null) {
+            schema.createClass(className, superClass);
+        }
+    }
+
+    public ODatabaseDocumentTx getRawDatabase() {
+        return database;
     }
 
 }
