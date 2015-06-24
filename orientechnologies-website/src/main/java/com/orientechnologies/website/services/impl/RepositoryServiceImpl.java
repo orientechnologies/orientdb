@@ -2,6 +2,7 @@ package com.orientechnologies.website.services.impl;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.configuration.GitHubConfiguration;
 import com.orientechnologies.website.daemon.IssueAlignDaemon;
 import com.orientechnologies.website.events.EventManager;
 import com.orientechnologies.website.events.IssueCreatedEvent;
@@ -72,6 +73,9 @@ public class RepositoryServiceImpl implements RepositoryService {
 
   @Autowired
   protected OSecurityManager       securityManager;
+
+  @Autowired
+  protected GitHubConfiguration gitHubConfiguration;
 
   @PostConstruct
   protected void init() {

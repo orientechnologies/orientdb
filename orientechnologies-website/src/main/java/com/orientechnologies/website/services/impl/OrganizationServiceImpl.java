@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.configuration.GitHubConfiguration;
 import com.orientechnologies.website.events.ChatMessageEditEvent;
 import com.orientechnologies.website.events.ChatMessageSentEvent;
 import com.orientechnologies.website.events.EventManager;
@@ -99,6 +100,9 @@ public class OrganizationServiceImpl implements OrganizationService {
   @Autowired
   private TopicService           topicService;
 
+  @Autowired
+  private GitHubConfiguration    gitHubConfiguration;
+
   @Override
   public void addMember(String org, String username) throws ServiceException {
 
@@ -110,7 +114,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
       try {
 
-        GitHub gitHub = new GitHub(token);
+        GitHub gitHub = new GitHub(token, gitHubConfiguration);
 
         GOrganization gOrganization = gitHub.organization(org);
 
@@ -154,7 +158,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     // TODO see http://stackoverflow.com/questions/20144295/github-api-v3-determine-if-user-is-an-owner-of-an-organization
 
     try {
-      GitHub github = new GitHub(token);
+      GitHub github = new GitHub(token, gitHubConfiguration);
       GOrganization organization = github.organization(name);
       Organization org = createOrganization(organization.getLogin(), organization.getName());
       createMembership(org, developerAuthentication.getUser());
@@ -225,7 +229,7 @@ public class OrganizationServiceImpl implements OrganizationService {
       try {
 
         Repository r = null;
-        GitHub github = new GitHub(token);
+        GitHub github = new GitHub(token, gitHubConfiguration);
 
         GRepo repository = github.repo(org + '/' + repo);
 

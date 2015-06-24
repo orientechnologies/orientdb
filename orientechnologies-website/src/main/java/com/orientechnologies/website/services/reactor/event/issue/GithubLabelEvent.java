@@ -62,11 +62,7 @@ public class GithubLabelEvent implements GithubIssueEvent {
       Integer issueNumber = issue.field(OIssue.NUMBER.toString());
 
       Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+
 
       Label l = repositoryRepository.findLabelsByRepoAndName(repoName, label1.getName());
       if (l == null) {
@@ -96,7 +92,7 @@ public class GithubLabelEvent implements GithubIssueEvent {
   protected OUser findUser(ODocument payload) {
     ODocument sender = payload.field("sender");
     String login = sender.field("login");
-    Integer id = sender.field("id");
+    Number id = sender.field("id");
     return userRepository.findUserOrCreateByLogin(login, id.longValue());
   }
 }

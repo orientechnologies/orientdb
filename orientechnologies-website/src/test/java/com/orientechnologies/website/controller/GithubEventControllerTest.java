@@ -64,6 +64,7 @@ public class GithubEventControllerTest {
   @Autowired
   OrganizationRepository     repository;
 
+
   @Autowired
   RepositoryRepository       repoRepository;
   @Autowired

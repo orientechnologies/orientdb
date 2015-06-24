@@ -629,6 +629,16 @@ angular.module('webappApp')
         refreshEvents();
       })
     });
+
+    //$scope.pollIssue = function () {
+    //  $timeout(function () {
+    //    Organization.all("issues").one(number).get().then(function (data) {
+    //      $scope.issuePolled = data.plain();
+    //
+    //      if($)
+    //    })
+    //  }, 2000);
+    //}
   });
 
 angular.module('webappApp')

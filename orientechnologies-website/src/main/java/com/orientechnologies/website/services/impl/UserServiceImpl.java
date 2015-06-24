@@ -2,6 +2,7 @@ package com.orientechnologies.website.services.impl;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.configuration.GitHubConfiguration;
 import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.github.GUser;
 import com.orientechnologies.website.github.GitHub;
@@ -45,12 +46,15 @@ public class UserServiceImpl implements UserService {
   @Autowired
   private RepositoryRepository  repositoryRepository;
 
+  @Autowired
+  protected GitHubConfiguration gitHubConfiguration;
+
   @Transactional
   @Override
   public void initUser(String token) {
 
     try {
-      GitHub github = new GitHub(token);
+      GitHub github = new GitHub(token, gitHubConfiguration);
       GUser self = github.user();
       OUser user = userRepository.findUserByLogin(self.getLogin());
       String email = self.getEmail();

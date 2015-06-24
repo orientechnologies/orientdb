@@ -4,6 +4,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.configuration.GitHubConfiguration;
 import com.orientechnologies.website.events.*;
 import com.orientechnologies.website.github.GIssue;
 import com.orientechnologies.website.github.GRepo;
@@ -45,6 +46,8 @@ public class IssueServiceImpl implements IssueService {
   @Autowired
   private OrientDBFactory        dbFactory;
 
+  @Autowired
+  protected GitHubConfiguration    gitHubConfiguration;
   @Autowired
   protected CommentRepository    commentRepository;
 
@@ -218,7 +221,7 @@ public class IssueServiceImpl implements IssueService {
       }
     } else {
       if (removeLabelRelationship(issue, l) != null) {
-        OLogManager.instance().error(this, "Current Actor : [%s]" , actor);
+        OLogManager.instance().info(this, "Current Actor : [%s]", actor);
         githubIssueService.removeLabel(issue, label, actor, remote);
       }
     }
@@ -570,7 +573,7 @@ public class IssueServiceImpl implements IssueService {
   public Issue synchIssue(Issue issue, OUser user) {
 
     String token = user != null ? user.getToken() : SecurityHelper.currentToken();
-    GitHub github = new GitHub(token);
+    GitHub github = new GitHub(token, gitHubConfiguration);
 
     ODocument doc = new ODocument();
     String iPropertyValue = issue.getRepository().getOrganization().getName() + "/" + issue.getRepository().getName();
@@ -592,7 +595,7 @@ public class IssueServiceImpl implements IssueService {
   @Override
   public Issue conditionalSynchIssue(Issue issue, OUser user) {
     String token = user != null ? user.getToken() : SecurityHelper.currentToken();
-    GitHub github = new GitHub(token);
+    GitHub github = new GitHub(token, gitHubConfiguration);
 
     ODocument doc = new ODocument();
     String iPropertyValue = issue.getRepository().getOrganization().getName() + "/" + issue.getRepository().getName();

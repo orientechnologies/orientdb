@@ -32,7 +32,7 @@ public class IssueServiceGithub implements IssueService {
 
   @Override
   public Comment createNewCommentOnIssue(Issue issue, Comment comment) {
-    GitHub github = new GitHub(SecurityHelper.currentToken());
+    GitHub github = new GitHub(SecurityHelper.currentToken(), issueService.gitHubConfiguration);
 
     ODocument doc = new ODocument();
 
@@ -80,7 +80,7 @@ public class IssueServiceGithub implements IssueService {
     } else {
       token = SecurityHelper.currentToken();
     }
-    GitHub github = new GitHub(token);
+    GitHub github = new GitHub(token, issueService.gitHubConfiguration);
 
     ODocument doc = new ODocument();
 
@@ -110,7 +110,7 @@ public class IssueServiceGithub implements IssueService {
 
     String token = actor != null ? actor.getToken() : SecurityHelper.currentToken();
 
-    GitHub github = new GitHub(token);
+    GitHub github = new GitHub(token, issueService.gitHubConfiguration);
 
     ODocument doc = new ODocument();
 
@@ -197,7 +197,7 @@ public class IssueServiceGithub implements IssueService {
   @Override
   public Comment patchComment(Issue issue, String commentUUID, Comment comment) {
 
-    GitHub github = new GitHub(SecurityHelper.currentToken());
+    GitHub github = new GitHub(SecurityHelper.currentToken(), issueService.gitHubConfiguration);
 
     ODocument doc = new ODocument();
 
@@ -218,7 +218,7 @@ public class IssueServiceGithub implements IssueService {
 
   @Override
   public Comment deleteComment(Issue issue, String commentUUID, Comment comment) {
-    GitHub github = new GitHub(SecurityHelper.currentToken());
+    GitHub github = new GitHub(SecurityHelper.currentToken(), issueService.gitHubConfiguration);
 
     ODocument doc = new ODocument();
 
@@ -256,7 +256,7 @@ public class IssueServiceGithub implements IssueService {
   public GIssue isChanged(Issue issue, OUser user) {
 
     String token = user != null ? user.getToken() : SecurityHelper.currentToken();
-    GitHub github = new GitHub(token);
+    GitHub github = new GitHub(token, issueService.gitHubConfiguration);
 
     ODocument doc = new ODocument();
     String iPropertyValue = issue.getRepository().getOrganization().getName() + "/" + issue.getRepository().getName();

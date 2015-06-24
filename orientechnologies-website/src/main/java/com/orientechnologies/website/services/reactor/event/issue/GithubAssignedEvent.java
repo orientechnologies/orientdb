@@ -59,7 +59,7 @@ public class GithubAssignedEvent implements GithubIssueEvent {
   protected OUser findUser(ODocument payload, String field) {
     ODocument sender = payload.field(field);
     String login = sender.field("login");
-    Integer id = sender.field("id");
+    Number id = sender.field("id");
     return userRepository.findUserOrCreateByLogin(login, id.longValue());
   }
 }

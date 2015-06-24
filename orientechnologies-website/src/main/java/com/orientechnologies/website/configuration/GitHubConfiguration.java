@@ -12,15 +12,19 @@ import org.springframework.stereotype.Component;
 @PropertySource("classpath:github-${spring.profiles.active}.properties")
 public class GitHubConfiguration {
 
-  private boolean mock;
-  private String clientId;
+  int             port = 8080;
 
-  private String loginUrl;
-  private String clientSecret;
+  private boolean mock = false;
+  private String  clientId;
 
-  private String authorizeRedirect;
+  private String  loginUrl;
+  private String  clientSecret;
 
-  private String accessRedirect;
+  private String  authorizeRedirect;
+
+  private String  accessRedirect;
+
+  private String  api;
 
   public String getAuthorizeRedirect() {
     return authorizeRedirect;
@@ -62,12 +66,29 @@ public class GitHubConfiguration {
     this.clientSecret = clientSecret;
   }
 
-
   public void setMock(boolean mock) {
     this.mock = mock;
   }
 
   public boolean isMock() {
     return mock;
+  }
+
+  public String getApi() {
+    if (mock) {
+      return api.replace("${port}", "" + port);
+    } else {
+      return api;
+    }
+
+  }
+
+  public void setPort(int port) {
+    this.port = port;
+  }
+
+  public void setApi(String api) {
+    this.api = api;
+
   }
 }

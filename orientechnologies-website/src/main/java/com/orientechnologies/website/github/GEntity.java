@@ -1,5 +1,6 @@
 package com.orientechnologies.website.github;
 
+import com.jcabi.http.Request;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.text.ParseException;
@@ -43,5 +44,8 @@ public abstract class GEntity {
     return doc != null ? new GUser(github, this, doc.toJSON()) : null;
   }
 
+  protected Request header(Request req) {
+    return req.header("Authorization", String.format("token %s", github.token)).header("Content-Type", "application/json");
+  }
 
 }

@@ -174,11 +174,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!--<dependency>-->
-        <!--<groupId>org.springframework.data</groupId>-->
-        <!--<artifactId>spring-data-commons</artifactId>-->
-        <!--<version>1.7.0.RELEASE</version>-->
-        <!--</dependency>-->
+
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-server</artifactId>

@@ -2,6 +2,7 @@ package com.orientechnologies.website.github;
 
 import com.jcabi.http.Request;
 import com.jcabi.http.request.ApacheRequest;
+import com.orientechnologies.website.configuration.GitHubConfiguration;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -22,14 +23,16 @@ public class GitHub {
    * The time zone we're in.
    */
   public static final TimeZone TIMEZONE   = TimeZone.getTimeZone("UTC");
-  protected static String      API        = "https://api.github.com";
+  protected String             API        = "https://api.github.com";
 
-  protected static Request     REQUEST    = new ApacheRequest(API);
+  protected Request            REQUEST;
 
   protected String             token;
 
-  public GitHub(String token) {
+  public GitHub(String token, GitHubConfiguration configuration) {
     this.token = token;
+    API = configuration.getApi();
+    REQUEST = new ApacheRequest(API);
   }
 
   public GOrganization organization(String org) throws IOException {

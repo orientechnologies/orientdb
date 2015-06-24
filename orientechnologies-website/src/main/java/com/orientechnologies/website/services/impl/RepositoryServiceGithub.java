@@ -40,7 +40,7 @@ public class RepositoryServiceGithub implements RepositoryService {
   @Override
   public Issue openIssue(Repository repository, final IssueDTO issue) {
 
-    GitHub github = new GitHub(SecurityHelper.currentToken());
+    GitHub github = new GitHub(SecurityHelper.currentToken(), repositoryService.gitHubConfiguration);
 
     ODocument doc = new ODocument();
 
@@ -93,7 +93,7 @@ public class RepositoryServiceGithub implements RepositoryService {
   public Issue patchIssue(Issue original, OUser user, IssueDTO patch) {
 
     String token = user != null ? user.getToken() : SecurityHelper.currentToken();
-    GitHub github = new GitHub(token);
+    GitHub github = new GitHub(token, repositoryService.gitHubConfiguration);
     ODocument doc = new ODocument();
 
     String iPropertyValue = original.getRepository().getOrganization().getName() + "/" + original.getRepository().getName();

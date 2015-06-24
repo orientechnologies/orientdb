@@ -1,6 +1,7 @@
 package com.orientechnologies.website.daemon;
 
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.configuration.GitHubConfiguration;
 import com.orientechnologies.website.github.GIssueState;
 import com.orientechnologies.website.github.GRepo;
 import com.orientechnologies.website.github.GitHub;
@@ -39,6 +40,9 @@ public class IssueAlignDaemon {
   @Autowired
   private GitHubIssueImporter    issueImporter;
 
+  @Autowired
+  private GitHubConfiguration    gitHubConfiguration;
+
   @Scheduled(fixedDelay = 60 * 1000)
   public void alignIssues() {
 
@@ -66,16 +70,16 @@ public class IssueAlignDaemon {
   @Scheduled(cron = "0 30 23 * * ?")
   public void importIssues() {
 
-//    OrientGraph db = dbFactory.getGraph();
-//
-//    ORecordIteratorClass<ODocument> oDocuments = db.getRawGraph().browseClass(Repository.class.getSimpleName());
-//
-//    ExecutorService executor = Executors.newSingleThreadExecutor();
-//    while (oDocuments.hasNext()) {
-//      ODocument doc = oDocuments.next();
-//      Repository repo = ORepository.NAME.fromDoc(doc, db);
-//      importRepository(executor, repo);
-//    }
+    // OrientGraph db = dbFactory.getGraph();
+    //
+    // ORecordIteratorClass<ODocument> oDocuments = db.getRawGraph().browseClass(Repository.class.getSimpleName());
+    //
+    // ExecutorService executor = Executors.newSingleThreadExecutor();
+    // while (oDocuments.hasNext()) {
+    // ODocument doc = oDocuments.next();
+    // Repository repo = ORepository.NAME.fromDoc(doc, db);
+    // importRepository(executor, repo);
+    // }
 
   }
 
@@ -83,7 +87,7 @@ public class IssueAlignDaemon {
     List<OUser> bots = organizationRepository.findBots(repo.getOrganization().getName());
     if (bots.size() > 0) {
       OUser next = bots.iterator().next();
-      GitHub github = new GitHub(next.getToken());
+      GitHub github = new GitHub(next.getToken(), gitHubConfiguration);
       try {
         GRepo repository = github.repo(repo.getOrganization().getName() + '/' + repo.getName());
         GitHubIssueImporter.GitHubIssueMessage gitHubIssueMessage = new GitHubIssueImporter.GitHubIssueMessage(repository);

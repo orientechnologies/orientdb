@@ -149,15 +149,16 @@ public class GRepo extends GEntity {
   }
 
   public GIssue openIssue(String content) throws IOException {
-    String res = GitHub.REQUEST.uri().path(getBaseUrl() + "/issues").back().body().set(content).back().method("POST")
-        .header("Authorization", String.format("token %s", github.token)).fetch().body();
+    String res = header(github.REQUEST.uri().path(getBaseUrl() + "/issues").back().body().set(content).back().method("POST"))
+        .fetch().body();
     return new GIssue(github, this, res);
 
   }
 
   public List<GLabel> changeIssueLabels(Integer number, String content) throws IOException {
-    String res = GitHub.REQUEST.uri().path(getBaseUrl() + "/issues/" + number + "/labels").back().body().set(content).back()
-        .method("POST").header("Authorization", String.format("token %s", github.token)).fetch().body();
+    String res = header(
+        github.REQUEST.uri().path(getBaseUrl() + "/issues/" + number + "/labels").back().body().set(content).back().method("POST"))
+        .fetch().body();
     JSONArray array = new JSONArray(res);
     List<GLabel> issues = new ArrayList<GLabel>();
     String tmp;
@@ -172,28 +173,29 @@ public class GRepo extends GEntity {
   }
 
   public void removeIssueLabel(Integer number, String label) throws IOException {
-    String res = GitHub.REQUEST.uri().path(getBaseUrl() + "/issues/" + number + "/labels/" + label).back().method("DELETE")
+    String res = github.REQUEST.uri().path(getBaseUrl() + "/issues/" + number + "/labels/" + label).back().method("DELETE")
         .header("Authorization", String.format("token %s", github.token)).fetch().body();
 
   }
 
   public GComment commentIssue(Integer number, String content) throws IOException {
-    String res = GitHub.REQUEST.uri().path(getBaseUrl() + "/issues/" + number + "/comments").back().body().set(content).back()
+    String res = github.REQUEST.uri().path(getBaseUrl() + "/issues/" + number + "/comments").back().body().set(content).back()
         .method("POST").header("Authorization", String.format("token %s", github.token)).fetch().body();
     return new GComment(github, this, res);
 
   }
 
   public GComment patchComment(Integer number, Integer commentId, String content) throws IOException {
-    String res = GitHub.REQUEST.uri().path(getBaseUrl() + "/issues/comments/" + commentId).back().body().set(content).back()
+    String res = github.REQUEST.uri().path(getBaseUrl() + "/issues/comments/" + commentId).back().body().set(content).back()
         .method("PATCH").header("Authorization", String.format("token %s", github.token)).fetch().body();
     return new GComment(github, this, res);
 
   }
 
   public GIssue patchIssue(Integer number, String content) throws IOException {
-    String res = GitHub.REQUEST.uri().path(getBaseUrl() + "/issues/" + number).back().body().set(content).back().method("PATCH")
-        .header("Authorization", String.format("token %s", github.token)).fetch().body();
+    String res = header(
+        github.REQUEST.uri().path(getBaseUrl() + "/issues/" + number).back().body().set(content).back().method("PATCH")).fetch()
+        .body();
     return new GIssue(github, this, res);
 
   }
@@ -232,7 +234,7 @@ public class GRepo extends GEntity {
   }
 
   public void deleteComment(Integer number, Integer commentId, String value) throws IOException {
-    String res = GitHub.REQUEST.uri().path(getBaseUrl() + "/issues/comments/" + commentId).back().method("DELETE")
+    String res = github.REQUEST.uri().path(getBaseUrl() + "/issues/comments/" + commentId).back().method("DELETE")
         .header("Authorization", String.format("token %s", github.token)).fetch().body();
 
   }
