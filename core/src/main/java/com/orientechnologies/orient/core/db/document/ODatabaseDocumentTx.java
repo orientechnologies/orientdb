@@ -1596,7 +1596,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     checkIfActive();
 
     if (currentTx.isActive())
-      throw new ODatabaseException("This operation can be executed only in non tx mode");
+      throw new ODatabaseException("This operation can be executed only in non transaction mode");
 
     return executeHideRecord(rid, OPERATION_MODE.SYNCHRONOUS);
   }
@@ -2550,14 +2550,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     try {
       currentTx.commit(force);
     } catch (RuntimeException e) {
-      OLogManager.instance().error(this, "Error on TX commit.", e);
+      OLogManager.instance().debug(this, "Error on transaction commit", e);
 
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : browseListeners())
         try {
           listener.onBeforeTxRollback(this);
         } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error before tx rollback", t);
+          OLogManager.instance().error(this, "Error before transaction rollback", t);
         }
 
       // ROLLBACK TX AT DB LEVEL
@@ -2570,7 +2570,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         try {
           listener.onAfterTxRollback(this);
         } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error after tx rollback", t);
+          OLogManager.instance().error(this, "Error after transaction rollback", t);
         }
       throw e;
     }
@@ -2614,7 +2614,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         try {
           listener.onBeforeTxRollback(this);
         } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error before tx rollback", t);
+          OLogManager.instance().error(this, "Error before transactional rollback", t);
         }
 
       currentTx.rollback(force, -1);
@@ -2624,7 +2624,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         try {
           listener.onAfterTxRollback(this);
         } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error after tx rollback", t);
+          OLogManager.instance().error(this, "Error after transaction rollback", t);
         }
     }
 
