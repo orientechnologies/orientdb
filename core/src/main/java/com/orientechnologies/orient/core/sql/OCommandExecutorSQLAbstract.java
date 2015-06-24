@@ -233,7 +233,6 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
         return result.toString();
       } catch (ParseException e) {
-        e.printStackTrace();// TODO remove this
         throwParsingException(e.getMessage());
       }
       return "ERROR!";
