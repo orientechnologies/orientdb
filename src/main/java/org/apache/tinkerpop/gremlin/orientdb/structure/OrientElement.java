@@ -29,7 +29,7 @@ public class OrientElement implements Element {
     }
 
     public String label() {
-        throw new NotImplementedException();
+        return getRawDocument().getClassName();
     }
 
     public Graph graph() {
@@ -37,10 +37,7 @@ public class OrientElement implements Element {
     }
 
     public <V> Property<V> property(final String key, final V value) {
-        if (!(rawElement instanceof ODocument))
-            rawElement = new ODocument(rawElement.getIdentity());
-
-        ODocument doc = (ODocument) rawElement;
+        ODocument doc = getRawDocument();
         doc.field(key, value);
         doc.save();
         return new OrientProperty<>(key, value, this);
@@ -69,5 +66,16 @@ public class OrientElement implements Element {
 
     public void save() {
         ((ODocument)rawElement).save();
+    }
+
+    protected ODocument getRawDocument() {
+        if (!(rawElement instanceof ODocument))
+            rawElement = new ODocument(rawElement.getIdentity());
+        return (ODocument) rawElement;
+    }
+
+    @Override
+    public String toString() {
+        return label() + "[" + id() + "]";
     }
 }

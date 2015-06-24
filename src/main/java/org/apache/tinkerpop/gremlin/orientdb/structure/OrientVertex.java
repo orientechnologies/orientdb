@@ -56,9 +56,4 @@ public final class OrientVertex extends OrientElement implements Vertex {
             final Object... keyValues) {
         throw new NotImplementedException();
     }
-
-    public String toString() {
-        // final String clsName = rawElement.getClassName();
-        return "v[" + id() + "]";
-    }
 }
