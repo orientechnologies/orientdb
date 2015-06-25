@@ -88,10 +88,7 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 
   @Override
   public OIdentifiable put(final Object key, OIdentifiable value) {
-    if (value instanceof ORecord) {
-      ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(sourceRecord);
-      ORecordInternal.setDirtyManager((ORecord) value, dirtyManager);
-    }
+    ORecordInternal.track(sourceRecord, value);
     if (status == MULTIVALUE_CONTENT_TYPE.ALL_RIDS && value instanceof ORecord && !value.getIdentity().isNew())
       // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
       value = value.getIdentity();

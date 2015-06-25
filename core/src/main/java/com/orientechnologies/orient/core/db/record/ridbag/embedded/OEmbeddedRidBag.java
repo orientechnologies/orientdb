@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 
 public class OEmbeddedRidBag implements ORidBagDelegate {
@@ -155,6 +156,14 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     }
 
     this.owner = owner;
+    if (this.owner != null) {
+      for (int i = 0; i < entriesLength; i++) {
+        final Object entry = entries[i];
+        if (entry instanceof OIdentifiable) {
+          ORecordInternal.track(this.owner, (OIdentifiable) entry);
+        }
+      }
+    }
   }
 
   @Override
@@ -450,6 +459,8 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
         System.arraycopy(oldEntries, 0, entries, 0, oldEntries.length);
       }
     }
+    if (this.owner != null)
+      ORecordInternal.track(this.owner, identifiable);
 
     entries[entriesLength] = identifiable;
     entriesLength++;

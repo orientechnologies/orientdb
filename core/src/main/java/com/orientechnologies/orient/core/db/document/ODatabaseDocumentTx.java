@@ -1800,6 +1800,50 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
+  public static void saveNew(ODocument document, ODatabaseDocumentTx tx, ODirtyManager manager) {
+    LinkedList<ODocument> path = new LinkedList<ODocument>();
+    ORecord next = document;
+    do {
+      if (next instanceof ODocument) {
+        path.push((ODocument) next);
+        ORecord nextToInspect = null;
+        List<OIdentifiable> toSave = manager.getPointed(document);
+        if (toSave != null) {
+          for (OIdentifiable oIdentifiable : toSave) {
+            if (oIdentifiable.getIdentity().isNew()) {
+              if (oIdentifiable instanceof ORecord)
+                nextToInspect = (ORecord) oIdentifiable;
+              else
+                nextToInspect = oIdentifiable.getRecord();
+              break;
+            }
+          }
+        }
+        if (nextToInspect != null) {
+          if (path.contains(nextToInspect)) {
+            // this is wrong, here we should do empty record save here
+            OSerializationSetThreadLocal.checkAndAdd((ODocument) nextToInspect);
+            tx.save(nextToInspect);
+            // path.
+            path.pollFirst();
+            next = path.pollFirst();
+          } else
+            next = nextToInspect;
+        } else {
+          // this is wrong, here we go a real save
+          tx.save(next);
+          path.pollFirst();
+          next = path.pollFirst();
+        }
+
+      } else {
+        // this is wrong, here we go a real save
+        tx.save(next);
+        next = path.pollFirst();
+      }
+    } while (next != null);
+  }
+
   /**
    * This method is internal, it can be subject to signature change or be removed, do not use.
    *
@@ -1817,8 +1861,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     dirtyManager.cleanForSave();
     if (newRecord != null) {
       for (ORecord rec : newRecord) {
-        if (!rec.equals(orignal))
-          this.save(rec);
+        if (rec.getIdentity().isNew() && rec instanceof ODocument) {
+          saveNew((ODocument) rec, this, dirtyManager);
+        }
       }
     }
     if (updatedRecord != null) {

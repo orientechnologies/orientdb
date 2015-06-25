@@ -128,8 +128,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       return false;
     if (e instanceof ORecord && e.getIdentity().isNew()) {
       ORecordInternal.addIdentityChangeListener((ORecord) e, this);
-      ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(sourceRecord);
-      ORecordInternal.setDirtyManager((ORecord) e, dirtyManager);
+      ORecordInternal.track(sourceRecord, e);
       map.put(e, e);
     } else if (!e.getIdentity().isPersistent()) {
       // record id is not fixed yet, so we need to be able to watch for id changes, so get the record for this id to be able to do
@@ -138,8 +137,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       if (record == null)
         throw new IllegalArgumentException("Record with id " + e.getIdentity() + " has not be found");
       ORecordInternal.addIdentityChangeListener(record, this);
-      ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(sourceRecord);
-      ORecordInternal.setDirtyManager(record, dirtyManager);
+      ORecordInternal.track(sourceRecord, e);
       map.put(e, record);
     } else
       map.put(e, ENTRY_REMOVAL);

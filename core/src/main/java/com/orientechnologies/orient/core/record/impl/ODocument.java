@@ -38,7 +38,19 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.ODetachable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -1054,9 +1066,10 @@ public class ODocument extends ORecordAbstract
         if (OType.EMBEDDED.equals(fieldType)) {
           final ODocument embeddedDocument = (ODocument) iPropertyValue;
           ODocumentInternal.addOwner(embeddedDocument, this);
-        } else {
-          ((ODocument) iPropertyValue).setDirtyManager(getDirtyManager());
         }
+      }
+      if (iPropertyValue instanceof OIdentifiable) {
+        track((OIdentifiable) iPropertyValue);
       }
 
       if (iPropertyValue instanceof ORidBag) {

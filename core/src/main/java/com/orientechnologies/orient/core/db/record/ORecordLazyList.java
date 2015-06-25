@@ -169,8 +169,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
   @Override
   public boolean add(OIdentifiable e) {
     if (e != null) {
-      if (e instanceof ORecord)
-        ORecordInternal.setDirtyManager((ORecord) e, ORecordInternal.getDirtyManager(sourceRecord));
+      ORecordInternal.track(sourceRecord, e);
       if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
           .getValueAsBoolean()) && e.getIdentity().isPersistent() && (e instanceof ODocument && !((ODocument) e).isDirty()))
         // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
@@ -185,8 +184,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
   @Override
   public void add(int index, OIdentifiable e) {
     if (e != null) {
-      if (e instanceof ORecord)
-        ORecordInternal.setDirtyManager((ORecord) e, ORecordInternal.getDirtyManager(sourceRecord));
+      ORecordInternal.track(sourceRecord, e);
       if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
           .getValueAsBoolean()) && e.getIdentity().isPersistent() && (e instanceof ODocument && !((ODocument) e).isDirty()))
         // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
@@ -204,8 +202,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     lazyLoad(true);
 
     if (e != null) {
-      if (e instanceof ORecord)
-        ORecordInternal.setDirtyManager((ORecord) e, ORecordInternal.getDirtyManager(sourceRecord));
+      ORecordInternal.track(sourceRecord, e);
       if (e != null)
         if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
             .getValueAsBoolean()) && e.getIdentity().isPersistent() && (e instanceof ODocument && !((ODocument) e).isDirty()))

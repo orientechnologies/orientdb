@@ -684,7 +684,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   private int writeOptimizedLink(BytesContainer bytes, OIdentifiable link) {
     link = recursiveLinkSave(link);
-    assert link.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link";
+    assert link.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "+ link.getIdentity();
     int pos = OVarIntSerializer.write(bytes, link.getIdentity().getClusterId());
     OVarIntSerializer.write(bytes, link.getIdentity().getClusterPosition());
     return pos;

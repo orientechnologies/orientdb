@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.record;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
@@ -129,6 +130,10 @@ public class ORecordInternal {
 
   public static void setDirtyManager(ORecord record, ODirtyManager dirtyManager) {
     ((ORecordAbstract) record).setDirtyManager(dirtyManager);
+  }
+
+  public static void track(ORecord pointer, OIdentifiable pointed) {
+    ((ORecordAbstract) pointer).track(pointed);
   }
 
 }

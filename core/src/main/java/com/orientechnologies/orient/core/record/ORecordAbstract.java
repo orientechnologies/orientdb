@@ -61,7 +61,7 @@ public abstract class ORecordAbstract implements ORecord {
   protected transient Set<ORecordListener>       _listeners                 = null;
 
   private transient Set<OIdentityChangeListener> newIdentityChangeListeners = null;
-  private ODirtyManager                          _dirtyManager              = new ODirtyManager();
+  protected ODirtyManager                        _dirtyManager;
 
   public ORecordAbstract() {
   }
@@ -508,15 +508,23 @@ public abstract class ORecordAbstract implements ORecord {
   protected ODirtyManager getDirtyManager() {
     if (this._dirtyManager == null) {
       this._dirtyManager = new ODirtyManager();
+      if (this.getIdentity().isNew() && getOwner() == null)
+        this._dirtyManager.setDirty(this);
     }
     return this._dirtyManager;
   }
 
   protected void setDirtyManager(ODirtyManager dirtyManager) {
-    if (this._dirtyManager == null)
-      this._dirtyManager = dirtyManager;
-    else
+    if (this._dirtyManager != null) {
       dirtyManager.merge(this._dirtyManager);
+    }
+    this._dirtyManager = dirtyManager;
+    if (this.getIdentity().isNew() && getOwner() == null)
+      this._dirtyManager.setDirty(this);
+  }
+
+  protected void track(OIdentifiable id) {
+    this.getDirtyManager().track(this, id);
   }
 
 }
