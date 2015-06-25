@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
@@ -35,7 +36,13 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Shortest path algorithm to find the shortest path from one node to another node in a directed graph.
@@ -117,8 +124,6 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
       OrientVertex current;
       OrientVertex reverseCurrent;
 
-
-
       while (true) {
         if (queue1.isEmpty() && queue2.isEmpty()) {
           break;
@@ -126,6 +131,12 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
         ArrayDeque<OrientVertex> nextLevelQueue = new ArrayDeque<OrientVertex>();
         while (!queue1.isEmpty()) {
+          if (Thread.interrupted())
+            throw new OCommandExecutionException("The shortestPath() function has been interrupted");
+
+          if (!iContext.checkTimeout())
+            break;
+
           current = queue1.poll();
 
           Iterable<Vertex> neighbors;
