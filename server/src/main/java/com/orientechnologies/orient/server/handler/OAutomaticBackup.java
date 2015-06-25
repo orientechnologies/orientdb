@@ -73,7 +73,7 @@ public class OAutomaticBackup extends OServerPluginAbstract {
           return;
       } else if (param.name.equalsIgnoreCase("delay"))
         delay = OIOUtils.getTimeAsMillisecs(param.value);
-      else if (param.name.equalsIgnoreCase("firsttime")) {
+      else if (param.name.equalsIgnoreCase("firstTime")) {
         try {
           firstTime = OIOUtils.getTodayWithTime(param.value);
         } catch (ParseException e) {
