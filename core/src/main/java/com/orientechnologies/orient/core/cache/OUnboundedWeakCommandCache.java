@@ -20,11 +20,13 @@
 
 package com.orientechnologies.orient.core.cache;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 
 import java.lang.ref.WeakReference;
@@ -116,21 +118,36 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
 
     final String key = getKey(iUser, queryText, iLimit);
 
-    final WeakReference<OCachedResult> value;
+    Object result;
+
     lock.lock();
     try {
-      value = cache.get(key);
+      final WeakReference<OCachedResult> value = cache.get(key);
+
+      result = get(value);
+
+      if (result != null)
+        // SERIALIZE ALL THE RECORDS IN LOCK TO AVOID CONCURRENT ACCESS. ONCE SERIALIZED CAN ARE THREAD-SAFE
+        if (result instanceof ORecord)
+          ((ORecord) result).toStream();
+        else if (OMultiValue.isMultiValue(result)) {
+          for (Object rc : OMultiValue.getMultiValueIterable(result)) {
+            if (rc != null && rc instanceof ORecord) {
+              ((ORecord) rc).toStream();
+            }
+          }
+        }
+
     } finally {
       lock.unlock();
     }
-
-    final Object result = get(value);
 
     final OProfilerMBean profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {
       // UPDATE PROFILER
       if (result != null) {
         profiler.updateCounter(profiler.getDatabaseMetric(databaseName, "queryCache.hit"), "Results returned by Query Cache", +1);
+
       } else {
         profiler.updateCounter(profiler.getDatabaseMetric(databaseName, "queryCache.miss"), "Results not returned by Query Cache",
             +1);
