@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -191,12 +192,12 @@ public class OClassTrigger extends ODocumentHookAbstract {
     final OClass clz = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (clz != null && clz.isSubClassOf(CLASSNAME)) {
       OFunction func = null;
-      String fieldName = clz.getCustom(attr);
+      String fieldName = ((OImmutableClass) clz).getCustom(attr);
       OClass superClz = clz.getSuperClass();
       while (fieldName == null || fieldName.length() == 0) {
         if (superClz == null || superClz.getName().equals(CLASSNAME))
           break;
-        fieldName = superClz.getCustom(attr);
+        fieldName = ((OImmutableClass) superClz).getCustom(attr);
         superClz = superClz.getSuperClass();
       }
       if (fieldName != null && fieldName.length() > 0) {
@@ -219,6 +220,8 @@ public class OClassTrigger extends ODocumentHookAbstract {
           }
         }
       } else {
+        if(attr.equals(ONAFTER_DELETE))
+          iDocument.setInternalStatus(ORecordElement.STATUS.LOADED);
         final Object funcProp = iDocument.field(attr);
         if (funcProp != null) {
           final String funcName = funcProp instanceof ODocument ? (String) ((ODocument) funcProp).field("name") : funcProp
@@ -241,7 +244,8 @@ public class OClassTrigger extends ODocumentHookAbstract {
     if (clzName == null || methodName == null)
       return null;
     try {
-      Class clz = ClassLoader.getSystemClassLoader().loadClass(clzName);
+      //Class clz = ClassLoader.getSystemClassLoader().loadClass(clzName);
+      Class clz = Class.forName(clzName);
       Method method = clz.getMethod(methodName, ODocument.class);
       return new Object[] { clz, method };
     } catch (Exception ex) {
