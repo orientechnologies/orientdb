@@ -230,7 +230,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       OClientConnectionManager.instance().disconnect(connection.id);
 
       if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Connection shutdowned");
+        OLogManager.instance().debug(this, "Connection closed");
     }
   }
 

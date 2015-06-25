@@ -32,6 +32,10 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
  */
 public class OJSONFetchListener implements OFetchListener {
 
+  public boolean requireFieldProcessing() {
+    return true;
+  }
+  
   public void processStandardField(final ODocument iRecord, final Object iFieldValue, final String iFieldName,
       final OFetchContext iContext, final Object iusObject, final String iFormat) {
     try {

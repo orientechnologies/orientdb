@@ -277,6 +277,9 @@ public class OFetchHelper {
     if (record == null)
       return;
 
+    if (!iListener.requireFieldProcessing())
+      return;
+
     Object fieldValue;
 
     iContext.onBeforeFetch(record);
