@@ -67,7 +67,13 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.IllegalFormatException;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
@@ -726,6 +732,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     cmdManager.registerCommand(new OServerCommandPostImportRecords());
     cmdManager.registerCommand(new OServerCommandPostProperty());
     cmdManager.registerCommand(new OServerCommandPostConnection());
+    cmdManager.registerCommand(new OServerCommandPostServer());
     cmdManager.registerCommand(new OServerCommandPostStudio());
     cmdManager.registerCommand(new OServerCommandPutDocument());
     cmdManager.registerCommand(new OServerCommandPutIndex());

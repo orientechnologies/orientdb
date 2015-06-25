@@ -105,7 +105,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final int                                        writeCacheMaxSize;
   private final int                                        cacheMaxSize;
 
-  private int                                              fileCounter           = 0;
+  private int                                              fileCounter           = 1;
 
   private PagedKey                                         lastPageKey           = new PagedKey(0, -1);
   private PagedKey                                         lastWritePageKey      = new PagedKey(0, -1);
@@ -1010,7 +1010,16 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     for (Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
       if (nameIdEntry.getValue() >= 0 && !files.containsKey(nameIdEntry.getValue())) {
         OFileClassic fileClassic = createFile(nameIdEntry.getKey());
-        files.put(nameIdEntry.getValue(), fileClassic);
+
+        if (fileClassic.exists())
+          files.put(nameIdEntry.getValue(), fileClassic);
+        else {
+          final Integer fileId = nameIdMap.get(nameIdEntry.getKey());
+
+          if (fileId != null && fileId > 0) {
+            nameIdMap.put(nameIdEntry.getKey(), -fileId);
+          }
+        }
       }
     }
   }
