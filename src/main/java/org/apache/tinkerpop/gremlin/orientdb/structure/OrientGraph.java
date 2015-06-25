@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -40,7 +41,7 @@ public final class OrientGraph implements Graph {
         ElementHelper.legalPropertyKeyValueArray(keyValues);
         if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
 
-        String label = ElementHelper.getLabelValue(keyValues).orElse("V");
+        String label = ElementHelper.getLabelValue(keyValues).orElse(OImmutableClass.VERTEX_CLASS_NAME);
         OrientVertex vertex = new OrientVertex(this, label);
         ElementHelper.attachProperties(vertex, keyValues);
 
@@ -68,10 +69,8 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Iterator<Vertex> vertices(Object... vertexIds) {
-        //TODO: limit on vertexIds
         boolean polymorphic = true;
-        // String iClassName = OrientVertexType.CLASS_NAME;
-        String elementClass = "V";
+        String elementClass = OImmutableClass.VERTEX_CLASS_NAME;
 
         if (vertexIds.length == 0) {
             // return all vertices as stream
@@ -138,11 +137,11 @@ public final class OrientGraph implements Graph {
     }
 
     public void createVertexClass(final String className) {
-        createClass(className, "V");
+        createClass(className, OImmutableClass.VERTEX_CLASS_NAME);
     }
 
     public void createEdgeClass(final String className) {
-        createClass(className, "E");
+        createClass(className, OImmutableClass.EDGE_CLASS_NAME);
     }
 
     public void createClass(final String className, final String superClassName) {

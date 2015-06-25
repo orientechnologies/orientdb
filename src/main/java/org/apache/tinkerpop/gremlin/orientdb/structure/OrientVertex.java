@@ -1,6 +1,7 @@
 package org.apache.tinkerpop.gremlin.orientdb.structure;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.structure.*;
 
@@ -60,7 +61,8 @@ public final class OrientVertex extends OrientElement implements Vertex {
     public String toString() {
         String labelPart = "";
 
-        if(!label().equals("V")) labelPart = "(" + label() + ")";
+        if(!label().equals(OImmutableClass.VERTEX_CLASS_NAME))
+            labelPart = "(" + label() + ")";
         return "v" + labelPart + "[" + id() + "]";
     }
 }
