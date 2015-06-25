@@ -55,4 +55,12 @@ public final class OrientVertex extends OrientElement implements Vertex {
             final Object... keyValues) {
         throw new NotImplementedException();
     }
+
+    @Override
+    public String toString() {
+        String labelPart = "";
+
+        if(!label().equals("V")) labelPart = "(" + label() + ")";
+        return "v" + labelPart + "[" + id() + "]";
+    }
 }

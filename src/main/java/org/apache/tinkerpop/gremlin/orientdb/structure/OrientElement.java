@@ -77,9 +77,4 @@ public class OrientElement implements Element {
             rawElement = new ODocument(rawElement.getIdentity());
         return (ODocument) rawElement;
     }
-
-    @Override
-    public String toString() {
-        return label() + "[" + id() + "]";
-    }
 }
