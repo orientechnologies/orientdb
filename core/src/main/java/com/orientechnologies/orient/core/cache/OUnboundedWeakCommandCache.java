@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OAdaptiveLock;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -29,14 +30,12 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 
-import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.WeakHashMap;
 
 /**
- * Command cache implementation that uses Weak pointers to avoid overloading Java Heap.
+ * Command cache implementation that uses Soft references to avoid overloading Java Heap.
  * 
  * @author Luca Garulli
  */
@@ -56,7 +55,8 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
     }
   }
 
-  private class OCommandCacheImpl extends WeakHashMap<String, WeakReference<OCachedResult>> {
+  private class OCommandCacheImpl extends OSoftHashMap<String, OCachedResult> {
+
   }
 
   public enum STRATEGY {
@@ -118,25 +118,29 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
 
     final String key = getKey(iUser, queryText, iLimit);
 
-    Object result;
+    OCachedResult result;
 
     lock.lock();
     try {
-      final WeakReference<OCachedResult> value = cache.get(key);
+      result = cache.get(key);
 
-      result = get(value);
-
-      if (result != null)
+      if (result != null) {
         // SERIALIZE ALL THE RECORDS IN LOCK TO AVOID CONCURRENT ACCESS. ONCE SERIALIZED CAN ARE THREAD-SAFE
-        if (result instanceof ORecord)
-          ((ORecord) result).toStream();
-        else if (OMultiValue.isMultiValue(result)) {
-          for (Object rc : OMultiValue.getMultiValueIterable(result)) {
+        int resultsetSize = 1;
+
+        if (result.result instanceof ORecord)
+          ((ORecord) result.result).toStream();
+        else if (OMultiValue.isMultiValue(result.result)) {
+          resultsetSize = OMultiValue.getSize(result.result);
+          for (Object rc : OMultiValue.getMultiValueIterable(result.result)) {
             if (rc != null && rc instanceof ORecord) {
               ((ORecord) rc).toStream();
             }
           }
         }
+
+        OLogManager.instance().debug(this, "Reused cached resultset size=%d", resultsetSize);
+      }
 
     } finally {
       lock.unlock();
@@ -153,13 +157,14 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
             +1);
       }
     }
-    return result;
+
+    return result != null ? result.result : null;
   }
 
   @Override
   public void put(final OSecurityUser iUser, final String queryText, final Object iResult, final int iLimit,
       Set<String> iInvolvedClusters, final long iExecutionTime) {
-    if (queryText == null || iResult == null || iInvolvedClusters == null || iInvolvedClusters.isEmpty())
+    if (queryText == null || iResult == null)
       // SKIP IT
       return;
 
@@ -170,18 +175,26 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
       // TOO FAST: AVOIDING CACHING IT
       return;
 
-    if (iResult instanceof OResultSet && ((OResultSet) iResult).size() > maxResultsetSize)
-      // TOO BIG RESULTSET, SKIP IT
-      return;
+    int resultsetSize = 1;
+    if (iResult instanceof OResultSet) {
+      resultsetSize = ((OResultSet) iResult).size();
+
+      if (resultsetSize > maxResultsetSize)
+        // TOO BIG RESULTSET, SKIP IT
+        return;
+    }
 
     if (evictStrategy != STRATEGY.PER_CLUSTER)
       iInvolvedClusters = null;
 
     final String key = getKey(iUser, queryText, iLimit);
-    final WeakReference<OCachedResult> value = new WeakReference<OCachedResult>(new OCachedResult(iResult, iInvolvedClusters));
+    final OCachedResult value = new OCachedResult(iResult, iInvolvedClusters);
 
     lock.lock();
     try {
+
+      OLogManager.instance().debug(this, "Storing resultset in cache size=%d", resultsetSize);
+
       cache.put(key, value);
     } finally {
       lock.unlock();
@@ -233,24 +246,24 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
       return;
 
     if (evictStrategy == STRATEGY.INVALIDATE_ALL) {
+      OLogManager.instance().debug(this, "Invalidate all cached results (%d)  ", size());
       clear();
       return;
     }
 
     lock.lock();
     try {
-      for (Iterator<Map.Entry<String, WeakReference<OCachedResult>>> it = cache.entrySet().iterator(); it.hasNext();) {
-        final WeakReference<OCachedResult> pointer = it.next().getValue();
-        if (pointer != null) {
-          final OCachedResult cached = pointer.get();
-          if (cached != null) {
-            if (cached.involvedClusters.contains(iCluster)) {
-              cached.clear();
-              it.remove();
-            }
+      int evicted = 0;
+      for (Iterator<Map.Entry<String, OCachedResult>> it = cache.entrySet().iterator(); it.hasNext();) {
+        final OCachedResult cached = it.next().getValue();
+        if (cached != null) {
+          if (cached.involvedClusters == null || cached.involvedClusters.isEmpty() || cached.involvedClusters.contains(iCluster)) {
+            cached.clear();
+            it.remove();
           }
         }
       }
+      OLogManager.instance().debug(this, "Invalidate %d cached results associated to the cluster '%s'", evicted, iCluster);
     } finally {
       lock.unlock();
     }
@@ -288,14 +301,5 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
       return "<nouser>." + queryText + "." + iLimit;
 
     return iUser + "." + queryText + "." + iLimit;
-  }
-
-  protected Object get(final WeakReference<OCachedResult> value) {
-    if (value != null) {
-      final OCachedResult cached = value.get();
-      if (cached != null)
-        return cached.result;
-    }
-    return null;
   }
 }

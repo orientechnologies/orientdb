@@ -1303,7 +1303,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         result = executor.execute(iCommand.getParameters());
 
         // CACHE THE COMMAND RESULT
-        if (result != null && iCommand.isCacheableResult() && executor.isIdempotent() && iCommand.getParameters() == null)
+        if (result != null && iCommand.isCacheableResult() && executor.isIdempotent()
+            && (iCommand.getParameters() == null || iCommand.getParameters().isEmpty()))
           db.getMetadata()
               .getCommandCache()
               .put(db.getUser(), iCommand.getText(), result, iCommand.getLimit(), executor.getInvolvedClusters(),
