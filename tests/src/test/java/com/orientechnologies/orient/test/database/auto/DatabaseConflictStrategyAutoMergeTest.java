@@ -92,7 +92,7 @@ public class DatabaseConflictStrategyAutoMergeTest {
 
           parentV1.addEdge("edgetype1", vertex);
           graph.commit();
-          assertNotNull(parentV1.getProperty("cnt"));
+          assertNotNull(parentV1.getProperty("cnt"), "record " + parentV1.getIdentity() + " has no 'cnt' property");
           boolean edge1Exists = false;
           for (Edge e : parentV1.getEdges(Direction.OUT, "edgetype1")) {
             if (e.getVertex(Direction.IN).equals(vertex)) {
