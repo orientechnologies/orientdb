@@ -94,6 +94,7 @@ public class ODatabaseFactory {
           instances.size());
 
       for (ODatabase<?> db : new HashSet<ODatabase<?>>(instances.keySet())) {
+        db.activateOnCurrentThread();
         if (db != null && !db.isClosed()) {
           db.close();
         }
