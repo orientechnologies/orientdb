@@ -9,13 +9,11 @@ import com.orientechnologies.website.configuration.GitHubConfiguration;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
 import com.orientechnologies.website.model.schema.dto.web.hateoas.ScopeDTO;
-import com.orientechnologies.website.repository.IssueRepository;
-import com.orientechnologies.website.repository.OrganizationRepository;
-import com.orientechnologies.website.repository.RepositoryRepository;
-import com.orientechnologies.website.repository.UserRepository;
+import com.orientechnologies.website.repository.*;
 import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.RepositoryService;
+import com.orientechnologies.website.services.impl.IssueServiceImpl;
 import com.orientechnologies.website.services.impl.OrganizationServiceImpl;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -49,9 +47,13 @@ import static com.jayway.restassured.RestAssured.given;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class GithubMockTest {
 
+  public static final int    MILLIS = 2000;
   public static boolean      dbInit = false;
 
   public static Organization test;
+  public static OUser        bot;
+  public static OUser        user;
+  public static OUser        normalUser;
   public static Scope        scope;
   public static boolean      setup  = false;
   static {
@@ -78,6 +80,9 @@ public class GithubMockTest {
   IssueService               issueService;
   @Autowired
   UserRepository             userRepository;
+
+  @Autowired
+  LabelRepository            labelRepository;
   @Autowired
   OrganizationService        organizationService;
   @Autowired
@@ -88,20 +93,30 @@ public class GithubMockTest {
 
     if (!dbInit) {
       gitHubConfiguration.setPort(port);
-      OUser user = new OUser();
+      user = new OUser();
       user.setName("maggiolo00");
       user.setToken("testToken");
       user.setId(1l);
       user = userRepository.save(user);
 
-      OUser bot = new OUser();
+      bot = new OUser();
       bot.setName("testBot");
       bot.setToken("testBot");
       bot.setId(2l);
-      bot = userRepository.save(user);
+      bot = userRepository.save(bot);
+
+      normalUser = new OUser();
+      normalUser.setName("testNormal");
+      normalUser.setToken("testNormal");
+      normalUser.setId(3l);
+      normalUser = userRepository.save(normalUser);
       test = repository.save(test);
 
+      organizationService.createMembership(test, user);
       Repository repo = repositoryService.createRepo("gnome-shell-extension-aam", null);
+
+      // createLabel("bug", repo);
+      // createLabel("waiting reply", repo);
 
       try {
         OrganizationServiceImpl impl = getTargetObject(organizationService, OrganizationServiceImpl.class);
@@ -127,6 +142,15 @@ public class GithubMockTest {
     }
   }
 
+  protected void createLabel(String name, Repository repo) {
+    Label label = new Label();
+    label.setName(name);
+
+    label = labelRepository.save(label);
+    repositoryService.addLabel(repo, label);
+
+  }
+
   @Test
   public void test1OpenIssue() {
 
@@ -135,7 +159,7 @@ public class GithubMockTest {
     issueDTO.setBody("Error");
     issueDTO.setType("bug");
     issueDTO.setScope(scope.getNumber());
-    Response post = header().body(issueDTO).when().post("/api/v1/orgs/romeshell/issues");
+    Response post = header(user.getToken()).body(issueDTO).when().post("/api/v1/orgs/romeshell/issues");
 
     Assert.assertEquals(post.statusCode(), 200);
     Issue as = post.as(Issue.class);
@@ -146,12 +170,12 @@ public class GithubMockTest {
     Assert.assertEquals(as.getBody(), issueDTO.getBody());
 
     try {
-      Thread.sleep(5000);
+      Thread.sleep(MILLIS);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
 
-    Response get = header().get("/api/v1/orgs/romeshell/issues/" + as.getIid());
+    Response get = header(user.getToken()).get("/api/v1/orgs/romeshell/issues/" + as.getIid());
 
     as = get.as(Issue.class);
     Assert.assertNotNull(as.getIid());
@@ -163,7 +187,7 @@ public class GithubMockTest {
     Assert.assertEquals(as.getLabels().size(), 1);
     Assert.assertEquals(as.getLabels().iterator().next().getName(), "bug");
 
-    get = header().get("/api/v1/repos/romeshell/gnome-shell-extension-aam/issues/" + as.getIid() + "/events");
+    get = header(user.getToken()).get("/api/v1/repos/romeshell/gnome-shell-extension-aam/issues/" + as.getIid() + "/events");
 
     List<Map> events = Arrays.asList(get.getBody().as(Map[].class));
 
@@ -180,29 +204,119 @@ public class GithubMockTest {
       }
     };
 
-    Response patch = header().body(params).when().patch("/api/v1/repos/romeshell/gnome-shell-extension-aam/issues/1");
+    Response patch = header(user.getToken()).body(params).when()
+        .patch("/api/v1/repos/romeshell/gnome-shell-extension-aam/issues/1");
 
     Issue as = patch.as(Issue.class);
 
     Assert.assertEquals(patch.statusCode(), 200);
 
     try {
-      Thread.sleep(5000);
+      Thread.sleep(MILLIS);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    Response get = header().get("/api/v1/orgs/romeshell/issues/" + as.getIid());
+    Response get = header(user.getToken()).get("/api/v1/orgs/romeshell/issues/" + as.getIid());
     as = get.as(Issue.class);
     Assert.assertNotNull(as.getAssignee());
     Assert.assertEquals(as.getAssignee().getName(), "maggiolo00");
 
-
-    get = header().get("/api/v1/repos/romeshell/gnome-shell-extension-aam/issues/" + as.getIid() + "/events");
+    get = header(user.getToken()).get("/api/v1/repos/romeshell/gnome-shell-extension-aam/issues/" + as.getIid() + "/events");
 
     List<Map> events = Arrays.asList(get.getBody().as(Map[].class));
 
     // scoped + label + assigne
     Assert.assertEquals(events.size(), 3);
+  }
+
+  @Test
+  public void test3Comment() {
+
+    Comment comment = new Comment();
+    comment.setBody("Test");
+
+    Response c = header(user.getToken()).body(comment).when()
+        .post("/api/v1/repos/romeshell/gnome-shell-extension-aam/issues/1/comments");
+
+    try {
+      Thread.sleep(MILLIS);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    Assert.assertEquals(c.statusCode(), 200);
+    Comment posted = c.as(Comment.class);
+    Assert.assertEquals(posted.getBody(), comment.getBody());
+    Assert.assertNotNull(posted.getCommentId());
+    Assert.assertNotNull(posted.getCreatedAt());
+    Response get = header(user.getToken()).get("/api/v1/repos/romeshell/gnome-shell-extension-aam/issues/1/events");
+
+    List<Map> events = Arrays.asList(get.getBody().as(Map[].class));
+
+    // scoped + label + assigne + comment
+    Assert.assertEquals(events.size(), 4);
+  }
+
+  @Test
+  public void test4Label() {
+
+    List<String> labels = new ArrayList<String>() {
+      {
+        add(IssueServiceImpl.WAIT_FOR_REPLY);
+      }
+    };
+
+    Response c = header(user.getToken()).body(labels).when()
+        .post("/api/v1/repos/romeshell/gnome-shell-extension-aam/issues/1/labels");
+
+    try {
+      Thread.sleep(MILLIS);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    Assert.assertEquals(c.statusCode(), 200);
+
+    Response get = header(user.getToken()).get("/api/v1/orgs/romeshell/issues/1");
+    Issue as = get.as(Issue.class);
+
+    Assert.assertEquals(as.getLabels().size(), 2);
+    get = header(user.getToken()).get("/api/v1/repos/romeshell/gnome-shell-extension-aam/issues/1/events");
+
+    List<Map> events = Arrays.asList(get.getBody().as(Map[].class));
+
+    // scoped + label + assigne + comment + label
+    Assert.assertEquals(events.size(), 5);
+  }
+
+  @Test
+  public void test4userComment() {
+
+    Comment comment = new Comment();
+    comment.setBody("Test");
+
+    Response c = header(normalUser.getToken()).body(comment).when()
+        .post("/api/v1/repos/romeshell/gnome-shell-extension-aam/issues/1/comments");
+
+    try {
+      Thread.sleep(MILLIS);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    Assert.assertEquals(c.statusCode(), 200);
+    Comment posted = c.as(Comment.class);
+    Assert.assertEquals(posted.getBody(), comment.getBody());
+    Assert.assertNotNull(posted.getCommentId());
+    Assert.assertNotNull(posted.getCreatedAt());
+    Response get = header(user.getToken()).get("/api/v1/repos/romeshell/gnome-shell-extension-aam/issues/1/events");
+
+    List<Map> events = Arrays.asList(get.getBody().as(Map[].class));
+
+    // scoped + label + assigne + comment + label + comment + remove wait for reply
+    Assert.assertEquals(events.size(), 7);
+
+    get = header(user.getToken()).get("/api/v1/orgs/romeshell/issues/1");
+    Issue as = get.as(Issue.class);
+
+    Assert.assertEquals(as.getLabels().size(), 1);
   }
 
   @SuppressWarnings({ "unchecked" })
@@ -214,7 +328,7 @@ public class GithubMockTest {
     }
   }
 
-  public static RequestSpecification header() {
-    return given().header("X-AUTH-TOKEN", "testToken").given().contentType("application/json");
+  public static RequestSpecification header(String token) {
+    return given().header("X-AUTH-TOKEN", token).given().contentType("application/json");
   }
 }

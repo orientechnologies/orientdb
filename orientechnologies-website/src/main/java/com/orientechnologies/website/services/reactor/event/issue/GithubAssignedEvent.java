@@ -62,4 +62,10 @@ public class GithubAssignedEvent implements GithubIssueEvent {
     Number id = sender.field("id");
     return userRepository.findUserOrCreateByLogin(login, id.longValue());
   }
+
+  @Override
+  public String formantPayload(ODocument payload) {
+    ODocument sender = payload.field("assignee");
+    return sender.field("login");
+  }
 }

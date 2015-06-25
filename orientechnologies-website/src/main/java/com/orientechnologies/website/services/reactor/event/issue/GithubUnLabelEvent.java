@@ -56,7 +56,13 @@ public class GithubUnLabelEvent implements GithubIssueEvent {
   protected OUser findUser(ODocument payload) {
     ODocument sender = payload.field("sender");
     String login = sender.field("login");
-    Integer id = sender.field("id");
+    Number id = sender.field("id");
     return userRepository.findUserOrCreateByLogin(login, id.longValue());
+  }
+
+  @Override
+  public String formantPayload(ODocument payload) {
+    ODocument label = payload.field("label");
+    return label.field("name");
   }
 }

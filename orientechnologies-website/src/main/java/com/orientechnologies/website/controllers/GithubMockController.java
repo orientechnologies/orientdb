@@ -2,10 +2,12 @@ package com.orientechnologies.website.controllers;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.configuration.ApiVersion;
+import com.orientechnologies.website.model.schema.dto.Comment;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.Label;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
+import com.orientechnologies.website.model.schema.dto.web.MockComment;
 import com.orientechnologies.website.model.schema.dto.web.MockIssueDTO;
 import com.orientechnologies.website.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +47,34 @@ public class GithubMockController {
     issue.setUpdatedAt(new Date());
 
     return issue;
+  }
+
+  @RequestMapping(value = "/repos/{owner}/{repo}/issues/{number}/labels/{labelName}", method = RequestMethod.DELETE, consumes = {
+      "application/json", "application/octet-stream" })
+  public List<Label> deleteLabel(@PathVariable("owner") final String owner, @PathVariable("repo") final String repo,
+      @PathVariable("number") final Integer number, @PathVariable("labelName") final String label,
+      @RequestHeader(value = "Authorization") String auth) {
+
+    List<Label> labels1 = new ArrayList<Label>();
+
+    final OUser byGithubToken = userRepository.findByGithubToken(auth.replace("token ", ""));
+    final Label l = new Label();
+    l.setName(label);
+    labels1.add(l);
+    runInThread(new Runnable() {
+      @Override
+      public void run() {
+        ODocument doc = new ODocument();
+        doc.field("action", "unlabeled");
+        doc.field("label", new ODocument().field("name", label));
+        doc.field("organization", new ODocument().field("login", owner));
+        doc.field("repository", new ODocument().field("name", repo));
+        doc.field("issue", new ODocument().field("number", number));
+        doc.field("sender", new ODocument().field("login", byGithubToken.getName()).field("id", byGithubToken.getId()));
+        reactor.notify(doc.field("action"), Event.wrap(doc));
+      }
+    });
+    return labels1;
   }
 
   @RequestMapping(value = "/repos/{owner}/{repo}/issues/{number}/labels", method = RequestMethod.POST, consumes = {
@@ -103,6 +133,22 @@ public class GithubMockController {
       });
     }
     return issue;
+  }
+
+  @RequestMapping(value = "/repos/{owner}/{repo}/issues/{number}/comments", method = RequestMethod.POST, consumes = {
+      "application/json", "application/octet-stream" })
+  public Comment postIssueComment(@PathVariable("owner") final String owner, @PathVariable("repo") final String repo,
+      @PathVariable("number") final Integer number, @RequestBody MockComment comment,
+      @RequestHeader(value = "Authorization") String auth) {
+
+    final OUser byGithubToken = userRepository.findByGithubToken(auth.replace("token ", ""));
+
+    comment.setCommentId(1);
+    comment.setCreatedAt(new Date());
+    comment.setUpdatedAt(new Date());
+
+    return comment;
+
   }
 
   public void runInThread(final Runnable runnable) {

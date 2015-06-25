@@ -1,7 +1,6 @@
 package com.orientechnologies.website.model.schema.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Date;
 
@@ -10,15 +9,16 @@ import java.util.Date;
  */
 public class Comment extends Event {
 
-  private String      id;
-  private String      uuid;
-  private Integer     commentId;
-  private String      body;
-  private OUser       user;
+  private String  id;
+  private String  uuid;
+  private Integer commentId;
+  private String  body;
+  private OUser   user;
 
   @JsonIgnore
-  protected ODocument internal;
-  private Date        updatedAt;
+  private Issue   owner;
+
+  private Date    updatedAt;
 
   public Integer getCommentId() {
     return commentId;
@@ -68,11 +68,11 @@ public class Comment extends Event {
     return uuid;
   }
 
-  public void setInternal(ODocument internal) {
-    this.internal = internal;
+  public void setOwner(Issue owner) {
+    this.owner = owner;
   }
 
-  public ODocument getInternal() {
-    return internal;
+  public Issue getOwner() {
+    return owner;
   }
 }

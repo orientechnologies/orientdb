@@ -1,6 +1,8 @@
 package com.orientechnologies.website.events;
 
+import com.orientechnologies.website.configuration.AppConfig;
 import com.orientechnologies.website.model.schema.dto.Comment;
+import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.CommentRepository;
 import com.orientechnologies.website.repository.IssueRepository;
@@ -11,11 +13,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring4.SpringTemplateEngine;
-
 import reactor.event.Event;
-
-import com.orientechnologies.website.configuration.AppConfig;
-import com.orientechnologies.website.model.schema.dto.Issue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,8 +49,8 @@ public class IssueCommentedEvent extends EventInternal<Comment> {
   public void accept(Event<Comment> issueEvent) {
 
     Comment comment = issueEvent.getData();
-    Comment committed = commentRepository.reload(comment);
-    Issue issue = commentRepository.findIssueByComment(committed);
+
+    Issue issue = comment.getOwner();
     Context context = new Context();
 
     fillContextVariable(context, issue, comment);
@@ -70,7 +68,7 @@ public class IssueCommentedEvent extends EventInternal<Comment> {
       actorsInIssue = issueRepository.findToNotifyPrivateActors(issue);
       involvedActors.addAll(actorsInIssue);
     }
-    String[] actors = getActorsEmail(owner, involvedActors,actorsInIssue);
+    String[] actors = getActorsEmail(owner, involvedActors, actorsInIssue);
     if (actors.length > 0) {
       for (String actor : actors) {
         SimpleMailMessage mailMessage = new SimpleMailMessage();

@@ -13,6 +13,4 @@ public interface CommentRepository extends BaseRepository<Comment> {
 
   public Issue findIssueByComment(Comment comment);
 
-  public Comment reload(Comment event);
-
 }

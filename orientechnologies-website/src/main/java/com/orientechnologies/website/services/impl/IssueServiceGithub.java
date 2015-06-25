@@ -53,8 +53,9 @@ public class IssueServiceGithub implements IssueService {
       persistentComment.setCreatedAt(gComment.getCreatedAt());
       persistentComment.setUpdatedAt(gComment.getUpdatedAt());
       persistentComment = issueService.commentRepository.save(persistentComment);
-      issueService.eventManager.pushInternalEvent(IssueCommentedEvent.EVENT, persistentComment);
       issueService.commentIssue(issue, persistentComment);
+      persistentComment.setOwner(issue);
+      issueService.eventManager.pushInternalEvent(IssueCommentedEvent.EVENT, persistentComment);
       return persistentComment;
     } catch (IOException e) {
 
@@ -93,7 +94,8 @@ public class IssueServiceGithub implements IssueService {
       repo.changeIssueLabels(issue.getNumber(), value);
 
       OUser current = SecurityHelper.currentUser();
-      if (actor != null && !actor.getUsername().equals(current.getUsername())) {
+      if (actor != null && !actor.getUsername().equals(current.getUsername())
+          && issueService.securityManager.isCurrentSupport(issue.getRepository().getOrganization().getName())) {
         for (String label : labels) {
           Label l = issueService.repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
           issueService.eventService.fireEvent(issue, SecurityHelper.currentUser(), "labeled", null, l);
@@ -120,7 +122,8 @@ public class IssueServiceGithub implements IssueService {
       GRepo repo = github.repo(iPropertyValue, doc.toJSON());
       repo.removeIssueLabel(issue.getNumber(), label);
       OUser current = SecurityHelper.currentUser();
-      if (actor != null && !actor.getUsername().equals(current.getUsername())) {
+      if (actor != null && !actor.getUsername().equals(current.getUsername())
+          && issueService.securityManager.isCurrentSupport(issue.getRepository().getOrganization().getName())) {
         Label l = issueService.repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
         issueService.eventService.fireEvent(issue, SecurityHelper.currentUser(), "unlabeled", null, l);
       }

@@ -12,6 +12,7 @@ public class Label {
   private String name;
   private String color;
 
+
   public String getId() {
     return id;
   }

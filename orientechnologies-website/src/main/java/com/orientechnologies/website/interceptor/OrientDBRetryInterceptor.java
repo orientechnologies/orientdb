@@ -41,7 +41,7 @@ public class OrientDBRetryInterceptor implements Ordered {
    * @throws Throwable
    *           any other things the wrapped call throws will pass through
    */
-  @Around("@annotation(retryingTransaction)")
+  @Around("@annotation( retryingTransaction )")
   public Object performOperation(ProceedingJoinPoint pjp, RetryingTransaction retryingTransaction) throws Throwable {
     Class exceptionClass = retryingTransaction.exception();
     int retries = retryingTransaction.retries();

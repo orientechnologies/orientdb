@@ -56,4 +56,9 @@ public class GithubUnAssignedEvent implements GithubIssueEvent {
     Integer id = sender.field("id");
     return userRepository.findUserOrCreateByLogin(login, id.longValue());
   }
+
+  @Override
+  public String formantPayload(ODocument payload) {
+    return null;
+  }
 }

@@ -76,4 +76,9 @@ public class GitHubCommentedEvent implements GithubCommentEvent {
   public String handleWhat() {
     return "created";
   }
+
+  @Override
+  public String formantPayload(ODocument payload) {
+    return null;
+  }
 }

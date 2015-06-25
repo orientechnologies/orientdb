@@ -4,7 +4,9 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.annotation.RetryingTransaction;
 import com.orientechnologies.website.services.reactor.event.GithubEvent;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
@@ -25,23 +27,42 @@ public abstract class GitHubBaseHandler<T> implements GitHubHandler<T> {
     return events.keySet();
   }
 
-  public void fireEvent(ODocument payload) {
+  public void fireEvent(final ODocument payload) {
 
-    String action = payload.field("action");
-    GithubEvent evt = events.get(action);
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        OrientGraph graph = factory.getGraph();
+        String action = payload.field("action");
+        GithubEvent evt = events.get(action);
 
-    if (evt != null) {
-      for (int r = 0; r < 10; ++r) {
         try {
-          evt.handle(action, payload);
-          break;
-        } catch (ONeedRetryException retry) {
-          OLogManager.instance().error(this, " Retried %s event ", action);
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error handling %s event", action);
-          e.printStackTrace();
+          if (evt != null) {
+            for (int r = 0; r < 10; ++r) {
+              try {
+                test();
+                evt.handle(action, payload);
+                break;
+              } catch (ONeedRetryException retry) {
+                OLogManager.instance().error(this, " Retried %s event with payload : %s", action, evt.formantPayload(payload));
+              } catch (Exception e) {
+                OLogManager.instance()
+                    .error(this, "Error handling %s event with payload : %s", action, evt.formantPayload(payload));
+                e.printStackTrace();
+              }
+            }
+          }
+        } finally {
+          if (graph != null)
+            graph.shutdown();
         }
       }
-    }
+    }).start();
+
+  }
+
+  @RetryingTransaction(exception = ONeedRetryException.class, retries = 5)
+  protected void test() {
+
   }
 }

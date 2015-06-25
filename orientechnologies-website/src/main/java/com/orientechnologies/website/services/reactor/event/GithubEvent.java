@@ -16,4 +16,7 @@ public interface GithubEvent {
   public void handle(String evt, ODocument payload);
 
   public String handleWhat();
+
+
+  public String formantPayload(ODocument payload);
 }

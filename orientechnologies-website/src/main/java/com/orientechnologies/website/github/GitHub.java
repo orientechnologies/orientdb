@@ -64,7 +64,7 @@ public class GitHub {
    * 
    * @return Date format
    */
-  protected static DateFormat format() {
+  public static DateFormat format() {
     final DateFormat fmt = new SimpleDateFormat(FORMAT_ISO, Locale.ENGLISH);
     fmt.setTimeZone(TIMEZONE);
     return fmt;

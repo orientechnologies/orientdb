@@ -41,13 +41,13 @@ import java.util.List;
 @Service
 public class IssueServiceImpl implements IssueService {
 
-  private static String          WAIT_FOR_REPLY = "waiting reply";
-  private static String          IN_PROGRESS    = "in progress";
+  public static String          WAIT_FOR_REPLY = "waiting reply";
+  public static String          IN_PROGRESS    = "in progress";
   @Autowired
   private OrientDBFactory        dbFactory;
 
   @Autowired
-  protected GitHubConfiguration    gitHubConfiguration;
+  protected GitHubConfiguration  gitHubConfiguration;
   @Autowired
   protected CommentRepository    commentRepository;
 
@@ -124,6 +124,7 @@ public class IssueServiceImpl implements IssueService {
       comment = commentRepository.save(comment);
       commentIssue(issue, comment);
 
+      comment.setOwner(issue);
       eventManager.pushInternalEvent(IssueCommentedEvent.EVENT, comment);
       return comment;
     } else {
@@ -220,9 +221,11 @@ public class IssueServiceImpl implements IssueService {
         }
       }
     } else {
-      if (removeLabelRelationship(issue, l) != null) {
-        OLogManager.instance().info(this, "Current Actor : [%s]", actor);
-        githubIssueService.removeLabel(issue, label, actor, remote);
+      if (l != null) {
+        if (removeLabelRelationship(issue, l) != null) {
+          OLogManager.instance().info(this, "Current Actor : [%s]", actor);
+          githubIssueService.removeLabel(issue, label, actor, remote);
+        }
       }
     }
   }

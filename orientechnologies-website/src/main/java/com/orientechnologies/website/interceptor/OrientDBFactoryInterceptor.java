@@ -19,10 +19,8 @@ public class OrientDBFactoryInterceptor extends HandlerInterceptorAdapter {
 
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-    // OrientGraph graph = factory.getGraph();
-    //
-    // graph.begin();
-    // ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());
+
+    
     return super.preHandle(request, response, handler);
   }
 

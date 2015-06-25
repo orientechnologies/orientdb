@@ -173,14 +173,15 @@ public class GRepo extends GEntity {
   }
 
   public void removeIssueLabel(Integer number, String label) throws IOException {
-    String res = github.REQUEST.uri().path(getBaseUrl() + "/issues/" + number + "/labels/" + label).back().method("DELETE")
-        .header("Authorization", String.format("token %s", github.token)).fetch().body();
+    String res = header(github.REQUEST.uri().path(getBaseUrl() + "/issues/" + number + "/labels/" + label).back().method("DELETE"))
+        .fetch().body();
 
   }
 
   public GComment commentIssue(Integer number, String content) throws IOException {
-    String res = github.REQUEST.uri().path(getBaseUrl() + "/issues/" + number + "/comments").back().body().set(content).back()
-        .method("POST").header("Authorization", String.format("token %s", github.token)).fetch().body();
+    String res = header(
+        github.REQUEST.uri().path(getBaseUrl() + "/issues/" + number + "/comments").back().body().set(content).back()
+            .method("POST")).fetch().body();
     return new GComment(github, this, res);
 
   }

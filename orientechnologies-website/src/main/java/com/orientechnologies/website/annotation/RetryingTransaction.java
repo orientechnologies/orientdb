@@ -6,7 +6,8 @@ import java.lang.annotation.*;
  * Annotation that indicates an operation should be retried if the specified exception is encountered.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.TYPE})
+@Inherited
 @Documented
 public @interface RetryingTransaction {
 

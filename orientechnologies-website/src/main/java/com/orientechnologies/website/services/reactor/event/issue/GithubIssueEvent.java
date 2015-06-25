@@ -8,4 +8,5 @@ import com.orientechnologies.website.services.reactor.event.GithubEvent;
 
 public interface GithubIssueEvent extends GithubEvent {
 
+
 }
