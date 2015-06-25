@@ -89,7 +89,7 @@ public class OAutomaticBackup extends OServerPluginAbstract {
           excludeDatabases.add(db);
       else if (param.name.equalsIgnoreCase("target.fileName"))
         targetFileName = param.value;
-      else if (param.name.equalsIgnoreCase("buffer"))
+      else if (param.name.equalsIgnoreCase("bufferSize"))
         bufferSize = Integer.parseInt(param.value);
       else if (param.name.equalsIgnoreCase("compressionLevel"))
         compressionLevel = Integer.parseInt(param.value);
