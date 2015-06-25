@@ -4,9 +4,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.structure.*;
-
 import java.util.Iterator;
-
 
 public final class OrientVertex extends OrientElement implements Vertex {
 

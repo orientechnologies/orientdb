@@ -15,14 +15,12 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Transaction;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static org.apache.tinkerpop.gremlin.orientdb.structure.StreamUtils.asStream;
@@ -69,51 +67,45 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Iterator<Vertex> vertices(Object... vertexIds) {
-        boolean polymorphic = true;
-        String elementClass = OImmutableClass.VERTEX_CLASS_NAME;
-
-        if (vertexIds.length == 0) {
-            // return all vertices as stream
-            Iterator<ORecord> itty = new ORecordIteratorClass<>(database, database, elementClass, polymorphic);
-            return asStream(itty).map(r -> toVertex(r)).iterator();
-        } else {
-            Stream<ORecordId> ids = Stream.of(vertexIds).map(v -> new ORecordId(v.toString()));
-            Stream<ORecord> records = ids.filter(id -> id.isValid()).map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
-            return records.map(record -> (Vertex) new OrientVertex(this, record)).iterator();
-        }
-    }
-
-    private Vertex toVertex(ORecord record) {
-        // taken mostly from old blueprints driver, could be done nicer I believe
-        OrientElement currentElement = null;
-
-        if (record == null) throw new NoSuchElementException();
-
-        if (record instanceof OIdentifiable)
-            record = record.getRecord();
-
-        if (record instanceof ODocument) {
-            final ODocument currentDocument = (ODocument) record;
-
-            if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED)
-                currentDocument.load();
-
-            if (ODocumentInternal.getImmutableSchemaClass(currentDocument) == null)
-                throw new IllegalArgumentException(
-                    "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
-
-            // if (ODocumentInternal.getImmutableSchemaClass(currentDocument).isSubClassOf(graph.getEdgeBaseType()))
-            //   currentElement = new OrientEdge(graph, currentDocument);
-            // else
-            currentElement = new OrientVertex(this, currentDocument);
-        }
-
-        return (Vertex) currentElement;
+        return elements(
+                OImmutableClass.VERTEX_CLASS_NAME,
+                r -> new OrientVertex(this, getRawDocument(r)),
+                vertexIds);
     }
 
     @Override
     public Iterator<Edge> edges(Object... edgeIds) {
-        throw new NotImplementedException();
+        return elements(
+                OImmutableClass.EDGE_CLASS_NAME,
+                r -> new OrientEdge(this, getRawDocument(r)),
+                edgeIds);
+    }
+
+
+    protected <A extends Element> Iterator<A> elements(String elementClass, Function<ORecord, A> toA, Object... elementIds) {
+        boolean polymorphic = true;
+        if (elementIds.length == 0) {
+            // return all vertices as stream
+            Iterator<ORecord> itty = new ORecordIteratorClass<>(database, database, elementClass, polymorphic);
+            return asStream(itty).map(toA).iterator();
+        } else {
+            Stream<ORecordId> ids = Stream.of(elementIds).map(v -> new ORecordId(v.toString()));
+            Stream<ORecord> records = ids.filter(id -> id.isValid()).map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
+            return records.map(toA).iterator();
+        }
+    }
+
+    protected ODocument getRawDocument(ORecord record) {
+        if (record == null) throw new NoSuchElementException();
+        if (record instanceof OIdentifiable)
+            record = record.getRecord();
+        ODocument currentDocument = (ODocument) record;
+        if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED)
+            currentDocument.load();
+        if (ODocumentInternal.getImmutableSchemaClass(currentDocument) == null)
+            throw new IllegalArgumentException(
+                "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
+        return currentDocument;
     }
 
     @Override
