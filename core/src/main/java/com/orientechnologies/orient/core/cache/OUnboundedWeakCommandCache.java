@@ -61,14 +61,16 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
     INVALIDATE_ALL, PER_CLUSTER
   }
 
-  private final String databaseName;
-  private volatile boolean           enable           = OGlobalConfiguration.COMMAND_CACHE_ENABLED.getValueAsBoolean();
-  private          OCommandCacheImpl cache            = new OCommandCacheImpl();
-  private          int               minExecutionTime = OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.getValueAsInteger();
-  private          int               maxResultsetSize = OGlobalConfiguration.COMMAND_CACHE_MAX_RESULSET_SIZE.getValueAsInteger();
-  private          STRATEGY          strategy         = STRATEGY.valueOf(OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY.getValueAsString());
+  private final String      databaseName;
+  private volatile boolean  enable           = OGlobalConfiguration.COMMAND_CACHE_ENABLED.getValueAsBoolean();
+  private OCommandCacheImpl cache            = new OCommandCacheImpl();
+  private int               minExecutionTime = OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.getValueAsInteger();
+  private int               maxResultsetSize = OGlobalConfiguration.COMMAND_CACHE_MAX_RESULSET_SIZE.getValueAsInteger();
 
-  private OAdaptiveLock lock = new OAdaptiveLock(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
+  private STRATEGY          evictStrategy    = STRATEGY.valueOf(OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY
+                                                 .getValueAsString());
+
+  private OAdaptiveLock     lock             = new OAdaptiveLock(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
 
   public OUnboundedWeakCommandCache(final String iDatabaseName) {
     databaseName = iDatabaseName;
@@ -130,14 +132,16 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
       if (result != null) {
         profiler.updateCounter(profiler.getDatabaseMetric(databaseName, "queryCache.hit"), "Results returned by Query Cache", +1);
       } else {
-        profiler.updateCounter(profiler.getDatabaseMetric(databaseName, "queryCache.miss"), "Results not returned by Query Cache", +1);
+        profiler.updateCounter(profiler.getDatabaseMetric(databaseName, "queryCache.miss"), "Results not returned by Query Cache",
+            +1);
       }
     }
     return result;
   }
 
   @Override
-  public void put(final OSecurityUser iUser, final String queryText, final Object iResult, final int iLimit, Set<String> iInvolvedClusters, final long iExecutionTime) {
+  public void put(final OSecurityUser iUser, final String queryText, final Object iResult, final int iLimit,
+      Set<String> iInvolvedClusters, final long iExecutionTime) {
     if (queryText == null || iResult == null || iInvolvedClusters == null || iInvolvedClusters.isEmpty())
       // SKIP IT
       return;
@@ -145,15 +149,15 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
     if (!enable)
       return;
 
-    if (iExecutionTime<minExecutionTime)
+    if (iExecutionTime < minExecutionTime)
       // TOO FAST: AVOIDING CACHING IT
       return;
 
-    if (iResult instanceof OResultSet && ((OResultSet) iResult).size()>maxResultsetSize)
+    if (iResult instanceof OResultSet && ((OResultSet) iResult).size() > maxResultsetSize)
       // TOO BIG RESULTSET, SKIP IT
       return;
 
-    if (strategy != STRATEGY.PER_CLUSTER)
+    if (evictStrategy != STRATEGY.PER_CLUSTER)
       iInvolvedClusters = null;
 
     final String key = getKey(iUser, queryText, iLimit);
@@ -208,7 +212,10 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
 
   @Override
   public void invalidateResultsOfCluster(final String iCluster) {
-    if (strategy == STRATEGY.INVALIDATE_ALL) {
+    if (!enable)
+      return;
+
+    if (evictStrategy == STRATEGY.INVALIDATE_ALL) {
       clear();
       return;
     }
@@ -247,6 +254,15 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
 
   public OUnboundedWeakCommandCache setMaxResultsetSize(final int maxResultsetSize) {
     this.maxResultsetSize = maxResultsetSize;
+    return this;
+  }
+
+  public STRATEGY getEvictStrategy() {
+    return evictStrategy;
+  }
+
+  public OUnboundedWeakCommandCache setEvictStrategy(final STRATEGY evictStrategy) {
+    this.evictStrategy = evictStrategy;
     return this;
   }
 

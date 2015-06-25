@@ -20,49 +20,50 @@
 package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
+import com.orientechnologies.orient.core.record.ORecord;
 
 /**
  * Hook that takes care to invalidate query cache as soon any change happen on database.
  * 
  * @author Luca Garulli
  */
-public class OCommandCacheHook extends ODocumentHookAbstract {
+public class OCommandCacheHook extends ORecordHookAbstract {
 
-  private final OCommandCache cmdCache;
+  private final OCommandCache       cmdCache;
+  private final ODatabaseDocumentTx database;
 
   public OCommandCacheHook(final ODatabaseDocumentTx iDatabase) {
-    super(iDatabase);
-    cmdCache = database.getMetadata().getCommandCache().isEnabled() ? database.getMetadata().getCommandCache() : null;
+    database = iDatabase;
+    cmdCache = iDatabase.getMetadata().getCommandCache().isEnabled() ? iDatabase.getMetadata().getCommandCache() : null;
   }
 
   @Override
-  public void onRecordAfterCreate(final ODocument iDocument) {
+  public void onRecordAfterCreate(final ORecord iRecord) {
     if (cmdCache == null)
       return;
 
-    invalidateCache(iDocument);
+    invalidateCache(iRecord);
   }
 
   @Override
-  public void onRecordAfterUpdate(final ODocument iDocument) {
+  public void onRecordAfterUpdate(final ORecord iRecord) {
     if (cmdCache == null)
       return;
 
-    invalidateCache(iDocument);
+    invalidateCache(iRecord);
   }
 
   @Override
-  public void onRecordAfterDelete(final ODocument iDocument) {
+  public void onRecordAfterDelete(final ORecord iRecord) {
     if (cmdCache == null)
       return;
 
-    invalidateCache(iDocument);
+    invalidateCache(iRecord);
   }
 
-  protected void invalidateCache(final ODocument iDocument) {
-    cmdCache.invalidateResultsOfCluster(database.getClusterNameById(iDocument.getIdentity().getClusterId()));
+  protected void invalidateCache(final ORecord iRecord) {
+    cmdCache.invalidateResultsOfCluster(database.getClusterNameById(iRecord.getIdentity().getClusterId()));
   }
 
   @Override
