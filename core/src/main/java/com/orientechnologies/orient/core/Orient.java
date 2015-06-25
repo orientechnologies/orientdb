@@ -268,6 +268,14 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       OLogManager.instance().debug(this, "Orient Engine is shutting down...");
 
+      if (threadGroup != null)
+        // STOP ALL THE PENDING THREADS
+        threadGroup.interrupt();
+
+      if (databaseFactory != null)
+        // CLOSE ALL DATABASES
+        databaseFactory.shutdown();
+
       closeAllStorages();
 
       // SHUTDOWN ENGINES
@@ -275,18 +283,10 @@ public class Orient extends OListenerManger<OOrientListener> {
         engine.shutdown();
       engines.clear();
 
-      if (databaseFactory != null)
-        // CLOSE ALL DATABASES
-        databaseFactory.shutdown();
-
       if (shutdownHook != null) {
         shutdownHook.cancel();
         shutdownHook = null;
       }
-
-      if (threadGroup != null)
-        // STOP ALL THE PENDING THREADS
-        threadGroup.interrupt();
 
       timer.cancel();
       timer = null;
