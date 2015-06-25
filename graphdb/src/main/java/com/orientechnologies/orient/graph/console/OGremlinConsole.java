@@ -131,10 +131,11 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
   @ConsoleCommand(description = "Repair database structure")
   public void repairDatabase(@ConsoleParameter(name = "options", description = "Options: -v", optional = true) String iOptions)
       throws IOException {
-    super.repairDatabase(iOptions);
-
+    checkForDatabase();
     boolean fix_ridbags = iOptions != null && iOptions.contains("--fix-ridbags");
-    if (fix_ridbags) {
+    if (!fix_ridbags)
+      super.repairDatabase(iOptions);
+    else {
       if (!currentDatabase.getURL().startsWith("plocal")) {
         message("\n fix-ridbags can be run only on plocal connection \n");
         return;

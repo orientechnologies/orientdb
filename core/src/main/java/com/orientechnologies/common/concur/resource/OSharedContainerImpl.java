@@ -101,7 +101,7 @@ public class OSharedContainerImpl implements OSharedContainer {
         try {
           closeable.close();
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Exception when resource is closed.", e);
+          OLogManager.instance().debug(this, "Exception while resource is closed.", e);
         }
       }
     }
