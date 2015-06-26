@@ -2261,8 +2261,11 @@ public class ODocument extends ORecordAbstract
    * Internal.
    */
   protected void addOwner(final ORecordElement iOwner) {
-    if (_owners == null)
+    if (_owners == null) {
       _owners = new ArrayList<WeakReference<ORecordElement>>();
+      if (_dirtyManager != null && this.getIdentity().isNew())
+        _dirtyManager.removeNew(this);
+    }
 
     boolean found = false;
     for (WeakReference<ORecordElement> _owner : _owners) {
@@ -2303,9 +2306,14 @@ public class ODocument extends ORecordAbstract
 
     for (Map.Entry<String, ODocumentEntry> fieldEntry : _fields.entrySet()) {
       final Object fieldValue = fieldEntry.getValue().value;
-      if (!(fieldValue instanceof Collection<?>) && !(fieldValue instanceof Map<?, ?>))
+      if (!(fieldValue instanceof Collection<?>) && !(fieldValue instanceof Map<?, ?>) && !(fieldValue instanceof ODocument))
         continue;
       if (addCollectionChangeListener(fieldEntry.getValue())) {
+        continue;
+      }
+
+      if (fieldValue instanceof ODocument && fieldValue != this) {
+        ((ODocument) fieldValue).convertAllMultiValuesToTrackedVersions();
         continue;
       }
 
@@ -2353,6 +2361,12 @@ public class ODocument extends ORecordAbstract
       if (newValue != null) {
         addCollectionChangeListener(fieldEntry.getValue());
         fieldEntry.getValue().value = newValue;
+      }
+      if (fieldType.equals(OType.EMBEDDEDLIST) || fieldType.equals(OType.EMBEDDEDSET)) {
+        for (Object cur : (Collection<Object>) newValue) {
+          if (cur instanceof ODocument)
+            ((ODocument) cur).convertAllMultiValuesToTrackedVersions();
+        }
       }
     }
 

@@ -148,4 +148,9 @@ public class ODirtyManager {
       return null;
     return references.get(rec);
   }
+
+  public void removeNew(ODocument oDocument) {
+    if (this.newRecord != null)
+      this.newRecord.remove(oDocument);
+  }
 }

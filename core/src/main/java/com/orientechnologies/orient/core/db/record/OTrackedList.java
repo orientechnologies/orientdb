@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.db.record;
 
 import java.io.Serializable;
@@ -30,6 +30,7 @@ import java.util.WeakHashMap;
 
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
@@ -115,8 +116,10 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   }
 
   private void addOwnerToEmbeddedDoc(T e) {
-    if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
+    if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid()) {
       ODocumentInternal.addOwner((ODocument) e, this);
+      ORecordInternal.track(sourceRecord, (ODocument) e);
+    }
   }
 
   @Override
@@ -140,16 +143,16 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     return false;
   }
 
-	@Override
-	public boolean removeAll(Collection<?> c) {
-		boolean removed = false;
-		for (Object o : c)
-		  removed = removed | remove(o);
+  @Override
+  public boolean removeAll(Collection<?> c) {
+    boolean removed = false;
+    for (Object o : c)
+      removed = removed | remove(o);
 
-		return removed;
-	}
+    return removed;
+  }
 
-	@Override
+  @Override
   public void clear() {
     final List<T> origValues;
     if (changeListeners.isEmpty())
