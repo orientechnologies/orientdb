@@ -18,9 +18,11 @@ import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
@@ -28,6 +30,7 @@ import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
 public final class OrientGraph implements Graph {
 
+    protected Logger log = Logger.getLogger(getClass().getSimpleName());
     protected ODatabaseDocumentTx database;
 
     public OrientGraph(ODatabaseDocumentTx iDatabase) {
@@ -139,6 +142,10 @@ public final class OrientGraph implements Graph {
     public void createClass(final String className, final String superClassName) {
 //        makeActive();
         OClass superClass = database.getMetadata().getSchema().getClass(superClassName);
+        if (superClass == null) {
+            Collection<OClass> allClasses = database.getMetadata().getSchema().getClasses();
+            throw new IllegalArgumentException("unable to find class " + superClassName + ". Available classes: " + allClasses);
+        }
         createClass(className, superClass);
     }
 
@@ -146,6 +153,7 @@ public final class OrientGraph implements Graph {
 //        makeActive();
         OSchemaProxy schema = database.getMetadata().getSchema();
         if (schema.getClass(className) == null) {
+            log.info("creating class '" + className + "' as subclass of '" + superClass + "'");
             schema.createClass(className, superClass);
         }
     }
