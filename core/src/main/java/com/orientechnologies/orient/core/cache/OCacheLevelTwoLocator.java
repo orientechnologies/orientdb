@@ -25,5 +25,5 @@ package com.orientechnologies.orient.core.cache;
  * @since 05.07.13
  */
 public interface OCacheLevelTwoLocator {
-  public OCache primaryCache(final String storageName);
+  public ORecordCache primaryCache(final String storageName);
 }

@@ -7,17 +7,17 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.AbstractMap;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Soft References Map inspired by the code published by Dr. Heinz M. Kabutz on http://www.javaspecialists.eu/archive/Issue015.html.
  */
-public class OSoftHashMap<K, V> extends AbstractMap<K, V> implements Serializable {
-  private final Map<K, SoftReference<V>> hashCodes     = new HashMap<K, SoftReference<V>>();
-  private final Map<SoftReference<V>, K> reverseLookup = new HashMap<SoftReference<V>, K>();
+public class OSoftRefsHashMap<K, V> extends AbstractMap<K, V> implements Serializable {
+  private final Map<K, SoftReference<V>> hashCodes     = new ConcurrentHashMap<K, SoftReference<V>>();
+  private final Map<SoftReference<V>, K> reverseLookup = new ConcurrentHashMap<SoftReference<V>, K>();
   private final ReferenceQueue<V>        refQueue      = new ReferenceQueue<V>();
 
   public V get(Object key) {

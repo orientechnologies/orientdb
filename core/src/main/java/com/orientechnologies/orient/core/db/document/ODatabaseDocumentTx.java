@@ -32,7 +32,6 @@ import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OCacheLevelOneLocatorImpl;
 import com.orientechnologies.orient.core.cache.OCommandCacheHook;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -187,7 +186,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       unmodifiableHooks = Collections.unmodifiableMap(hooks);
 
       recordType = ODocument.RECORD_TYPE;
-      localCache = new OLocalRecordCache(new OCacheLevelOneLocatorImpl());
+      localCache = new OLocalRecordCache();
 
       mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
       validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();

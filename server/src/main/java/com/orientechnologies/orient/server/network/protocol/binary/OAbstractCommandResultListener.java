@@ -64,6 +64,9 @@ public abstract class OAbstractCommandResultListener implements OCommandResultLi
 
   @Override
   public Object getResult() {
+    if (wrappedResultListener != null)
+      return wrappedResultListener.getResult();
+
     return null;
   }
 }

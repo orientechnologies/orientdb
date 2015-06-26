@@ -49,13 +49,13 @@ public interface OCommandCache {
   /**
    * Enables cache.
    */
-  OUnboundedWeakCommandCache enable();
+  OCommandCacheSoftRefs enable();
 
   /**
    * Disables cache. None of query methods will cause effect on cache in disabled state. Only cache info methods available at that
    * state.
    */
-  OUnboundedWeakCommandCache disable();
+  OCommandCacheSoftRefs disable();
 
   /**
    * Looks up for query result in cache.
@@ -75,7 +75,7 @@ public interface OCommandCache {
   /**
    * Remove all results from the cache.
    */
-  OUnboundedWeakCommandCache clear();
+  OCommandCacheSoftRefs clear();
 
   /**
    * Total number of stored queries.

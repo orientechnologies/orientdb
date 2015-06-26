@@ -23,7 +23,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
-import com.orientechnologies.orient.core.cache.OUnboundedWeakCommandCache;
+import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -195,7 +195,7 @@ public class OMetadataDefault implements OMetadataInternal {
 
     commandCache = database.getStorage().getResource(OCommandCache.class.getSimpleName(), new Callable<OCommandCache>() {
       public OCommandCache call() {
-        return new OUnboundedWeakCommandCache(database.getName());
+        return new OCommandCacheSoftRefs(database.getName());
       }
     });
 

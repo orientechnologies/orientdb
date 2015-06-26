@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
@@ -39,7 +38,7 @@ import java.util.Set;
  * 
  * @author Luca Garulli
  */
-public class OUnboundedWeakCommandCache implements OCommandCache {
+public class OCommandCacheSoftRefs implements OCommandCache {
   private static class OCachedResult {
     Object      result;
     Set<String> involvedClusters;
@@ -55,7 +54,7 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
     }
   }
 
-  private class OCommandCacheImpl extends OSoftHashMap<String, OCachedResult> {
+  private class OCommandCacheImplRefs extends OSoftRefsHashMap<String, OCachedResult> {
 
   }
 
@@ -63,18 +62,15 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
     INVALIDATE_ALL, PER_CLUSTER
   }
 
-  private final String      databaseName;
-  private volatile boolean  enable           = OGlobalConfiguration.COMMAND_CACHE_ENABLED.getValueAsBoolean();
-  private OCommandCacheImpl cache            = new OCommandCacheImpl();
-  private int               minExecutionTime = OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.getValueAsInteger();
-  private int               maxResultsetSize = OGlobalConfiguration.COMMAND_CACHE_MAX_RESULSET_SIZE.getValueAsInteger();
+  private final String databaseName;
+  private volatile boolean               enable           = OGlobalConfiguration.COMMAND_CACHE_ENABLED.getValueAsBoolean();
+  private          OCommandCacheImplRefs cache            = new OCommandCacheImplRefs();
+  private          int                   minExecutionTime = OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.getValueAsInteger();
+  private          int                   maxResultsetSize = OGlobalConfiguration.COMMAND_CACHE_MAX_RESULSET_SIZE.getValueAsInteger();
 
-  private STRATEGY          evictStrategy    = STRATEGY.valueOf(OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY
-                                                 .getValueAsString());
+  private STRATEGY evictStrategy = STRATEGY.valueOf(OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY.getValueAsString());
 
-  private OAdaptiveLock     lock             = new OAdaptiveLock(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
-
-  public OUnboundedWeakCommandCache(final String iDatabaseName) {
+  public OCommandCacheSoftRefs(final String iDatabaseName) {
     databaseName = iDatabaseName;
   }
 
@@ -84,14 +80,7 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
 
   @Override
   public void shutdown() {
-    lock.lock();
-    try {
-
-      cache = new OCommandCacheImpl();
-
-    } finally {
-      lock.unlock();
-    }
+    cache = new OCommandCacheImplRefs();
   }
 
   @Override
@@ -100,13 +89,13 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
   }
 
   @Override
-  public OUnboundedWeakCommandCache enable() {
+  public OCommandCacheSoftRefs enable() {
     enable = true;
     return this;
   }
 
   @Override
-  public OUnboundedWeakCommandCache disable() {
+  public OCommandCacheSoftRefs disable() {
     enable = false;
     return this;
   }
@@ -120,30 +109,24 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
 
     OCachedResult result;
 
-    lock.lock();
-    try {
-      result = cache.get(key);
+    result = cache.get(key);
 
-      if (result != null) {
-        // SERIALIZE ALL THE RECORDS IN LOCK TO AVOID CONCURRENT ACCESS. ONCE SERIALIZED CAN ARE THREAD-SAFE
-        int resultsetSize = 1;
+    if (result != null) {
+      // SERIALIZE ALL THE RECORDS IN LOCK TO AVOID CONCURRENT ACCESS. ONCE SERIALIZED CAN ARE THREAD-SAFE
+      int resultsetSize = 1;
 
-        if (result.result instanceof ORecord)
-          ((ORecord) result.result).toStream();
-        else if (OMultiValue.isMultiValue(result.result)) {
-          resultsetSize = OMultiValue.getSize(result.result);
-          for (Object rc : OMultiValue.getMultiValueIterable(result.result)) {
-            if (rc != null && rc instanceof ORecord) {
-              ((ORecord) rc).toStream();
-            }
+      if (result.result instanceof ORecord)
+        ((ORecord) result.result).toStream();
+      else if (OMultiValue.isMultiValue(result.result)) {
+        resultsetSize = OMultiValue.getSize(result.result);
+        for (Object rc : OMultiValue.getMultiValueIterable(result.result)) {
+          if (rc != null && rc instanceof ORecord) {
+            ((ORecord) rc).toStream();
           }
         }
-
-        OLogManager.instance().debug(this, "Reused cached resultset size=%d", resultsetSize);
       }
 
-    } finally {
-      lock.unlock();
+      OLogManager.instance().debug(this, "Reused cached resultset size=%d", resultsetSize);
     }
 
     final OProfilerMBean profiler = Orient.instance().getProfiler();
@@ -153,8 +136,7 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
         profiler.updateCounter(profiler.getDatabaseMetric(databaseName, "queryCache.hit"), "Results returned by Query Cache", +1);
 
       } else {
-        profiler.updateCounter(profiler.getDatabaseMetric(databaseName, "queryCache.miss"), "Results not returned by Query Cache",
-            +1);
+        profiler.updateCounter(profiler.getDatabaseMetric(databaseName, "queryCache.miss"), "Results not returned by Query Cache", +1);
       }
     }
 
@@ -162,8 +144,7 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
   }
 
   @Override
-  public void put(final OSecurityUser iUser, final String queryText, final Object iResult, final int iLimit,
-      Set<String> iInvolvedClusters, final long iExecutionTime) {
+  public void put(final OSecurityUser iUser, final String queryText, final Object iResult, final int iLimit, Set<String> iInvolvedClusters, final long iExecutionTime) {
     if (queryText == null || iResult == null)
       // SKIP IT
       return;
@@ -190,15 +171,9 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
     final String key = getKey(iUser, queryText, iLimit);
     final OCachedResult value = new OCachedResult(iResult, iInvolvedClusters);
 
-    lock.lock();
-    try {
+    OLogManager.instance().debug(this, "Storing resultset in cache size=%d", resultsetSize);
 
-      OLogManager.instance().debug(this, "Storing resultset in cache size=%d", resultsetSize);
-
-      cache.put(key, value);
-    } finally {
-      lock.unlock();
-    }
+    cache.put(key, value);
   }
 
   @Override
@@ -208,41 +183,26 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
 
     final String key = getKey(iUser, queryText, iLimit);
 
-    lock.lock();
-    try {
-      cache.remove(key);
-    } finally {
-      lock.unlock();
-    }
+    cache.remove(key);
   }
 
   @Override
-  public OUnboundedWeakCommandCache clear() {
-    lock.lock();
-    try {
-
-      cache = new OCommandCacheImpl();
-
-    } finally {
-      lock.unlock();
-    }
+  public OCommandCacheSoftRefs clear() {
+    cache = new OCommandCacheImplRefs();
     return this;
   }
 
   @Override
   public int size() {
-    lock.lock();
-    try {
-      return cache.size();
-
-    } finally {
-      lock.unlock();
-    }
+    return cache.size();
   }
 
   @Override
   public void invalidateResultsOfCluster(final String iCluster) {
     if (!enable)
+      return;
+
+    if( cache.size() == 0 )
       return;
 
     if (evictStrategy == STRATEGY.INVALIDATE_ALL) {
@@ -251,32 +211,26 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
       return;
     }
 
-    lock.lock();
-    try {
-      int evicted = 0;
-      for (Iterator<Map.Entry<String, OCachedResult>> it = cache.entrySet().iterator(); it.hasNext();) {
-        final OCachedResult cached = it.next().getValue();
-        if (cached != null) {
-          if (cached.involvedClusters == null || cached.involvedClusters.isEmpty() || cached.involvedClusters.contains(iCluster)) {
-            cached.clear();
-            it.remove();
-          }
+    int evicted = 0;
+    for (Iterator<Map.Entry<String, OCachedResult>> it = cache.entrySet().iterator(); it.hasNext();) {
+      final OCachedResult cached = it.next().getValue();
+      if (cached != null) {
+        if (cached.involvedClusters == null || cached.involvedClusters.isEmpty() || cached.involvedClusters.contains(iCluster)) {
+          cached.clear();
+          it.remove();
         }
       }
-
-      if (evicted > 0)
-        OLogManager.instance().debug(this, "Invalidate %d cached results associated to the cluster '%s'", evicted, iCluster);
-
-    } finally {
-      lock.unlock();
     }
+
+    if (evicted > 0)
+      OLogManager.instance().debug(this, "Invalidate %d cached results associated to the cluster '%s'", evicted, iCluster);
   }
 
   public int getMinExecutionTime() {
     return minExecutionTime;
   }
 
-  public OUnboundedWeakCommandCache setMinExecutionTime(final int minExecutionTime) {
+  public OCommandCacheSoftRefs setMinExecutionTime(final int minExecutionTime) {
     this.minExecutionTime = minExecutionTime;
     return this;
   }
@@ -286,7 +240,7 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
     return maxResultsetSize;
   }
 
-  public OUnboundedWeakCommandCache setMaxResultsetSize(final int maxResultsetSize) {
+  public OCommandCacheSoftRefs setMaxResultsetSize(final int maxResultsetSize) {
     this.maxResultsetSize = maxResultsetSize;
     return this;
   }
@@ -295,7 +249,7 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
     return evictStrategy;
   }
 
-  public OUnboundedWeakCommandCache setEvictStrategy(final STRATEGY evictStrategy) {
+  public OCommandCacheSoftRefs setEvictStrategy(final STRATEGY evictStrategy) {
     this.evictStrategy = evictStrategy;
     return this;
   }

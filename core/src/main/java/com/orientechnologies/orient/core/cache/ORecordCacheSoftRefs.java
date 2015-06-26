@@ -21,59 +21,49 @@
 package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.orient.core.id.ORID;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
+import com.orientechnologies.orient.core.record.ORecord;
 
 /**
- * @author Artem Orobets (enisher-at-gmail.com)
+ * Cache implementation that uses Soft References.
+ * 
+ * @author Luca Garulli (l.garulli-at-orientdb.com)
  */
-public abstract class OAbstractMapCache<T extends Map<ORID, ?>> implements ORecordCache {
-  protected T     cache;
+public class ORecordCacheSoftRefs extends OAbstractMapCache<OSoftRefsHashMap<ORID, ORecord>> implements ORecordCache {
 
-  private boolean enabled = true;
-
-  public OAbstractMapCache(T cache) {
-    this.cache = cache;
+  public ORecordCacheSoftRefs() {
+    super(new OSoftRefsHashMap<ORID, ORecord>());
   }
 
   @Override
-  public void startup() {
+  public ORecord get(final ORID rid) {
+    if (!isEnabled())
+      return null;
+
+    return cache.get(rid);
+  }
+
+  @Override
+  public ORecord put(final ORecord record) {
+    if (!isEnabled())
+      return null;
+    return cache.put(record.getIdentity(), record);
+  }
+
+  @Override
+  public ORecord remove(final ORID rid) {
+    if (!isEnabled())
+      return null;
+    return cache.remove(rid);
   }
 
   @Override
   public void shutdown() {
-    cache.clear();
+    clear();
   }
 
   @Override
   public void clear() {
     cache.clear();
-  }
-
-  @Override
-  public int size() {
-    return cache.size();
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return enabled;
-  }
-
-  @Override
-  public boolean disable() {
-    return enabled = false;
-  }
-
-  @Override
-  public boolean enable() {
-    return enabled = true;
-  }
-
-  @Override
-  public Collection<ORID> keys() {
-    return new ArrayList<ORID>(cache.keySet());
+    cache = new OSoftRefsHashMap<ORID, ORecord>();
   }
 }
