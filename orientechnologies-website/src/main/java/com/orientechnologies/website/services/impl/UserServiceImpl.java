@@ -205,7 +205,7 @@ public class UserServiceImpl implements UserService {
   @Override
   public void profileIssue(OUser current, Issue issue, String organization) {
 
-    if (!isMember(current, organization) && !isSupport(current, organization)) {
+    if (!isMember(current, organization) && !isSupport(current, organization) && !isCurrentClient(current, issue, organization)) {
       blankInfo(issue.getUser());
       blankClientInfo(issue);
     } else {
@@ -216,6 +216,16 @@ public class UserServiceImpl implements UserService {
         issue.getUser().setClientId(client.getClientId());
       }
     }
+  }
+
+  private boolean isCurrentClient(OUser current, Issue issue, String organization) {
+    Client client1 = getClient(current, organization);
+    return (issue.getClient() != null && client1 != null) ? issue.getClient().getClientId() == client1.getClientId() : false;
+  }
+
+  private boolean isCurrentClient(String organization, String organization1) {
+
+    return false;
   }
 
   private void blankClientInfo(Issue issue) {

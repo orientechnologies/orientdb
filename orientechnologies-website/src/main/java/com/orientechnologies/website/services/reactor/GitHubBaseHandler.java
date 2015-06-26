@@ -46,9 +46,9 @@ public abstract class GitHubBaseHandler<T> implements GitHubHandler<T> {
               } catch (ONeedRetryException retry) {
                 OLogManager.instance().error(this, " Retried %s event with payload : %s", action, evt.formantPayload(payload));
               } catch (Exception e) {
-                OLogManager.instance()
-                    .error(this, "Error handling %s event with payload : %s", action, evt.formantPayload(payload));
-                e.printStackTrace();
+                OLogManager.instance().error(this, "Error handling %s event with payload : (%s)", e, action,
+                    evt.formantPayload(payload));
+                break;
               }
             }
           }

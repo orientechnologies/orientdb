@@ -41,8 +41,8 @@ import java.util.List;
 @Service
 public class IssueServiceImpl implements IssueService {
 
-  public static String          WAIT_FOR_REPLY = "waiting reply";
-  public static String          IN_PROGRESS    = "in progress";
+  public static String           WAIT_FOR_REPLY = "waiting reply";
+  public static String           IN_PROGRESS    = "in progress";
   @Autowired
   private OrientDBFactory        dbFactory;
 
@@ -95,6 +95,7 @@ public class IssueServiceImpl implements IssueService {
     createCommentRelationship(issue, comment);
 
     if (!bot) {
+
       if (issue.getClient() != null) {
         Client client = userService.getClient(comment.getUser(), issue.getRepository().getOrganization().getName());
         if (client != null && client.getClientId() == issue.getClient().getClientId() && issue.getDueTime() == null) {
@@ -103,11 +104,12 @@ public class IssueServiceImpl implements IssueService {
           issue = issueRepository.save(issue);
           removeLabel(issue, WAIT_FOR_REPLY, securityManager.bot(issue.getRepository().getOrganization().getName()),
               !Boolean.TRUE.equals(issue.getConfidential()));
-
         }
       } else {
-        removeLabel(issue, WAIT_FOR_REPLY, securityManager.bot(issue.getRepository().getOrganization().getName()),
-            !Boolean.TRUE.equals(issue.getConfidential()));
+        if (issue.getUser().getName().equals(comment.getUser().getUsername())) {
+          removeLabel(issue, WAIT_FOR_REPLY, securityManager.bot(issue.getRepository().getOrganization().getName()),
+              !Boolean.TRUE.equals(issue.getConfidential()));
+        }
       }
     }
   }
@@ -163,7 +165,7 @@ public class IssueServiceImpl implements IssueService {
         lbs.add(l);
         if (isStopSla(l.getName())) {
           if (issue.getClient() != null)
-            removeSlaCounting(issue);
+            removeSlaCounting(issue, actor);
         }
       }
 
@@ -192,14 +194,14 @@ public class IssueServiceImpl implements IssueService {
     fireEvent(issue, e);
   }
 
-  private void removeSlaCounting(Issue issue) {
+  private void removeSlaCounting(Issue issue, OUser actor) {
     issue.setDueTime(null);
     issueRepository.save(issue);
     IssueEventInternal e = new IssueEventInternal();
     e.setCreatedAt(new Date());
     e.setEvent("slaStopped");
     e.setPriority(issue.getPriority());
-    e.setActor(SecurityHelper.currentUser());
+    e.setActor(actor != null ? actor : SecurityHelper.currentUser());
     e.setSecret(true);
     e.setTime(issue.getDueTime());
     e = (IssueEventInternal) eventRepository.save(e);
@@ -564,7 +566,7 @@ public class IssueServiceImpl implements IssueService {
       } else {
         eventManager.pushInternalEvent(IssueClosedEvent.EVENT, e);
         if (issue.getClient() != null)
-          removeSlaCounting(issue);
+          removeSlaCounting(issue, actor);
       }
     }
 

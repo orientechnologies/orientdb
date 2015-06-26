@@ -438,7 +438,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
   }
 
-  private void createContractRelationship(Organization organization, Contract contract) {
+  public void createContractRelationship(Organization organization, Contract contract) {
 
     OrientGraph graph = dbFactory.getGraph();
 
@@ -447,7 +447,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     orgVertex.addEdge(HasContract.class.getSimpleName(), devVertex);
   }
 
-  private void createContractClientRelationship(Client client, Contract contract, Date from, Date to) {
+  public void createContractClientRelationship(Client client, Contract contract, Date from, Date to) {
 
     OrientGraph graph = dbFactory.getGraph();
     OrientVertex orgVertex = graph.getVertex(new ORecordId(client.getId()));
@@ -565,7 +565,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
   }
 
-  private void createClientRelationship(Organization organization, Client client) {
+  public void createClientRelationship(Organization organization, Client client) {
     OrientGraph graph = dbFactory.getGraph();
 
     OrientVertex orgVertex = graph.getVertex(new ORecordId(organization.getId()));
@@ -575,7 +575,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
   }
 
-  private void createClientMembership(Client client, OUser user) {
+  public void createClientMembership(Client client, OUser user) {
     OrientGraph graph = dbFactory.getGraph();
 
     OrientVertex orgVertex = graph.getVertex(new ORecordId(client.getId()));

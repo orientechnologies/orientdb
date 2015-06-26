@@ -53,6 +53,7 @@ public class OSiteSchema {
     addEdgeClass(HasSla.class);
     addEdgeClass(HasTopic.class);
     addEdgeClass(HasComment.class);
+    addEdgeClass(HasContract.class);
 
   }
 

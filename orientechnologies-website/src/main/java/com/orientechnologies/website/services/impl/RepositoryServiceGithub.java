@@ -70,8 +70,8 @@ public class RepositoryServiceGithub implements RepositoryService {
       repositoryService.handleEnvironment(repository, i, issue.getEnvironment());
       repositoryService.handleScope(repository, i, issue.getScope());
       repositoryService.handleVersion(repository, i, issue.getVersion());
-      repositoryService.handlePriority(repository, i, issue.getPriority());
       repositoryService.handleClient(repository, i, issue.getClient());
+      repositoryService.handlePriority(repository, i, issue.getPriority());
       Issue issue1 = repositoryService.issueRepository.save(i);
       repositoryService.eventManager.pushInternalEvent(IssueCreatedEvent.EVENT, issue1);
       List<OUser> bots = repositoryService.organizationRepo.findBots(repository.getOrganization().getName());

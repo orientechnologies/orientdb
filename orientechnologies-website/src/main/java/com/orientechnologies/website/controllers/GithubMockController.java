@@ -111,7 +111,8 @@ public class GithubMockController {
   @RequestMapping(value = "/repos/{owner}/{repo}/issues/{number}", method = RequestMethod.PATCH, consumes = { "application/json",
       "application/octet-stream" })
   public IssueDTO patchIssue(@PathVariable("owner") final String owner, @PathVariable("repo") final String repo,
-      @PathVariable("number") final Integer number, @RequestBody IssueDTO issue, @RequestHeader(value = "Authorization") String auth) {
+      @PathVariable("number") final Integer number, @RequestBody final IssueDTO issue,
+      @RequestHeader(value = "Authorization") String auth) {
 
     final OUser byGithubToken = userRepository.findByGithubToken(auth.replace("token ", ""));
 
@@ -127,6 +128,22 @@ public class GithubMockController {
           doc.field("organization", new ODocument().field("login", owner));
           doc.field("repository", new ODocument().field("name", repo));
           doc.field("issue", new ODocument().field("number", number));
+          doc.field("sender", new ODocument().field("login", byGithubToken.getName()).field("id", byGithubToken.getId()));
+          reactor.notify(doc.field("action"), Event.wrap(doc));
+        }
+      });
+    }
+    if (issue.getState() != null) {
+
+      runInThread(new Runnable() {
+        @Override
+        public void run() {
+          ODocument doc = new ODocument();
+          String event = issue.getState().equalsIgnoreCase("CLOSED") ? "closed" : "reopened";
+          doc.field("action", event);
+          doc.field("organization", new ODocument().field("login", owner));
+          doc.field("repository", new ODocument().field("name", repo));
+          doc.field("issue", new ODocument().field("number", number).field("state", issue.getState()));
           doc.field("sender", new ODocument().field("login", byGithubToken.getName()).field("id", byGithubToken.getId()));
           reactor.notify(doc.field("action"), Event.wrap(doc));
         }
