@@ -569,7 +569,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       }
 
       channel.socket.setSoTimeout(socketTimeout);
-      connection.data.lastCommandReceived = Orient.instance().getProfiler().startChrono();
+      connection.data.lastCommandReceived = System.currentTimeMillis();
 
       requestContent.setLength(0);
       request.isMultipart = false;

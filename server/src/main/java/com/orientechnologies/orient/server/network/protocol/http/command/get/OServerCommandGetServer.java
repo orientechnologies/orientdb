@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.Collection;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -32,6 +28,10 @@ import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Collection;
 
 public class OServerCommandGetServer extends OServerCommandGetConnections {
   private static final String[] NAMES = { "GET|server" };
@@ -94,6 +94,7 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
       writeField(json, 2, "type", s.getClass().getSimpleName());
       writeField(json, 2, "path",
           s instanceof OLocalPaginatedStorage ? ((OLocalPaginatedStorage) s).getStoragePath().replace('\\', '/') : "");
+      writeField(json, 2, "activeUsers", s instanceof OLocalPaginatedStorage ? s.getUsers() : 1);
       json.endObject(2);
     }
     json.endCollection(1, false);
