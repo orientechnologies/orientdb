@@ -2396,33 +2396,25 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
               // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
               if (schemaClass.isAbstract())
                 throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
-
-              iClusterName = getClusterNameById(schemaClass.getClusterForNewInstance(doc));
+              clusterId = schemaClass.getClusterForNewInstance(doc);
+              iClusterName = getClusterNameById(clusterId);
             } else {
-              iClusterName = getClusterNameById(storage.getDefaultClusterId());
+              clusterId = storage.getDefaultClusterId();
+              iClusterName = getClusterNameById(clusterId);
             }
           }
-        }
-
-        if (iClusterName != null) {
+        } else {
           clusterId = getClusterIdByName(iClusterName);
           if (clusterId == -1)
             throw new IllegalArgumentException("Cluster name '" + iClusterName + "' is not configured");
         }
       }
 
-      final int[] clusterIds;
-      if (schemaClass != null && clusterId > -1) {
-        // CHECK IF THE CLUSTER IS PART OF THE CONFIGURED CLUSTERS
-        clusterIds = schemaClass.getClusterIds();
-        int i = 0;
-        for (; i < clusterIds.length; ++i)
-          if (clusterIds[i] == clusterId)
-            break;
-
-        if (i == clusterIds.length)
-          throw new IllegalArgumentException("Cluster name '" + iClusterName + "' (id=" + clusterId
-              + ") is not configured to store the class '" + doc.getClassName() + "', valid are " + Arrays.toString(clusterIds));
+      // CHECK IF THE CLUSTER IS PART OF THE CONFIGURED CLUSTERS
+      if (schemaClass != null && clusterId > -1 && !schemaClass.hasClusterId(clusterId)) {
+        throw new IllegalArgumentException("Cluster name '" + iClusterName + "' (id=" + clusterId
+            + ") is not configured to store the class '" + doc.getClassName() + "', valid are "
+            + Arrays.toString(schemaClass.getClusterIds()));
       }
 
       // SET BACK THE CLUSTER ID
