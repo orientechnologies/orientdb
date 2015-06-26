@@ -61,4 +61,9 @@ public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OComm
   public void end() {
   }
 
+  @Override
+  public Object getResult() {
+    return null;
+  }
+
 }

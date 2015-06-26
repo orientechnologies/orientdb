@@ -1423,7 +1423,17 @@ public class SQLSelectTest extends AbstractSelectTest {
           public void end() {
             endTwoCalled.set(true);
           }
+
+          @Override
+          public Object getResult() {
+            return null;
+          }
         })).execute();
+      }
+
+      @Override
+      public Object getResult() {
+        return null;
       }
     })).execute();
 
@@ -1472,7 +1482,17 @@ public class SQLSelectTest extends AbstractSelectTest {
           public void end() {
             endTwoCalled.set(true);
           }
+
+          @Override
+          public Object getResult() {
+            return null;
+          }
         })).execute();
+      }
+
+      @Override
+      public Object getResult() {
+        return null;
       }
     })).execute();
 

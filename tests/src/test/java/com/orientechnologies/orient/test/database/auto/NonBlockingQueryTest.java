@@ -68,6 +68,11 @@ public class NonBlockingQueryTest extends DocumentDBBaseTest {
       public void end() {
 
       }
+
+      @Override
+      public Object getResult() {
+        return null;
+      }
     }));
     Assert.assertFalse(counter.get() == 1000);
     try {

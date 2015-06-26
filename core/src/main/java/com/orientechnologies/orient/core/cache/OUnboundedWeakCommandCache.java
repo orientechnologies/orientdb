@@ -263,7 +263,10 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
           }
         }
       }
-      OLogManager.instance().debug(this, "Invalidate %d cached results associated to the cluster '%s'", evicted, iCluster);
+
+      if (evicted > 0)
+        OLogManager.instance().debug(this, "Invalidate %d cached results associated to the cluster '%s'", evicted, iCluster);
+
     } finally {
       lock.unlock();
     }
@@ -278,6 +281,7 @@ public class OUnboundedWeakCommandCache implements OCommandCache {
     return this;
   }
 
+  @Override
   public int getMaxResultsetSize() {
     return maxResultsetSize;
   }

@@ -56,14 +56,13 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
   private final ONetworkProtocolBinary protocol;
   private final AtomicBoolean          empty       = new AtomicBoolean(true);
   private final int                    txId;
-  private final OCommandResultListener resultListener;
   private final Set<ORID>              alreadySent = new HashSet<ORID>();
 
   public OLiveCommandResultListener(final ONetworkProtocolBinary iNetworkProtocolBinary, final int txId,
-      OCommandResultListener resultListener) {
+      OCommandResultListener wrappedResultListener) {
+    super(wrappedResultListener);
     this.protocol = iNetworkProtocolBinary;
     this.txId = txId;
-    this.resultListener = resultListener;
   }
 
   @Override
@@ -100,13 +99,6 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     }
 
     return true;
-  }
-
-  @Override
-  public void end() {
-    super.end();
-    if (resultListener != null)
-      resultListener.end();
   }
 
   public boolean isEmpty() {
@@ -163,5 +155,4 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     out.writeInt(bytes.length);
     out.write(bytes);
   }
-
 }

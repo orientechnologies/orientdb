@@ -701,8 +701,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       fieldValue = getBlock(parserRequiredWord(false, "Value expected", " =><,\r\n"));
 
       // INSERT TRANSFORMED FIELD VALUE
-      putEntries.put(fieldName, new OPair<String, Object>((String) getFieldValueCountingParameters(fieldKey),
-          getFieldValueCountingParameters(fieldValue)));
+      putEntries.put(fieldName, new OPair<String, Object>((String) getFieldValueCountingParameters(fieldKey), getFieldValueCountingParameters(fieldValue)));
       parserSkipWhiteSpaces();
     }
 
@@ -764,4 +763,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.WRITE;
   }
-}
+
+  @Override
+  public Object getResult() {
+    return null;
+  }}

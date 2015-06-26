@@ -19,6 +19,19 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -33,7 +46,9 @@ import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -97,18 +112,6 @@ import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
-
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
   protected Boolean           tokenBased;
@@ -171,8 +174,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         connection = OClientConnectionManager.instance().connect(this);
 
-        if (connection != null)
+        if (connection != null) {
           connection.data.protocolVersion = protocolId;
+          connection.data.sessionId = clientTxId;
+        }
       }
     } else {
       if (requestType != OChannelBinaryProtocol.REQUEST_CONNECT && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
@@ -554,7 +559,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       throw new OException("index with name '" + indexName + "' not found");
 
     key = index.getDefinition().createValue(key);
-    OAbstractCommandResultListener listener = new OSyncCommandResultListener();
+    OAbstractCommandResultListener listener = new OSyncCommandResultListener(null);
 
     if (!isConnectionAlive())
       return;
@@ -1288,17 +1293,50 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     try {
       connection.data.command = command;
       OAbstractCommandResultListener listener = null;
-
       OLiveCommandResultListener liveListener = null;
+
+      OCommandResultListener cmdResultListener = command.getResultListener();
+
       if (live) {
-        liveListener = new OLiveCommandResultListener(this, clientTxId, command.getResultListener());
-        listener = new OSyncCommandResultListener();
+        liveListener = new OLiveCommandResultListener(this, clientTxId, cmdResultListener);
+        listener = new OSyncCommandResultListener(null);
         command.setResultListener(liveListener);
       } else if (asynch) {
-        listener = new OAsyncCommandResultListener(this, clientTxId, command.getResultListener());
+        // IF COMMAND CACHE IS ENABLED, RESULT MUST BE COLLECTED
+        final OCommandCache cmdCache = connection.database.getMetadata().getCommandCache();
+        if (cmdCache.isEnabled() && cmdResultListener == null)
+          // CREATE E COLLECTOR OF RESULT IN RAM TO CACHE THE RESULT
+          cmdResultListener = new OAbstractCommandResultListener(null) {
+            private List<ORecord> collector = new ArrayList<ORecord>();
+
+            @Override
+            public boolean isEmpty() {
+              return collector != null && collector.isEmpty();
+            }
+
+            @Override
+            public boolean result(Object iRecord) {
+              if (collector != null) {
+                if (collector.size() > cmdCache.getMaxResultsetSize()) {
+                  // TOO MANY RESULTS: STOP COLLECTING IT BECAUSE THEY WOULD NEVER CACHED
+                  collector = null;
+                } else if (iRecord != null && iRecord instanceof ORecord)
+                  collector.add((ORecord) iRecord);
+              }
+              return true;
+            }
+
+            @Override
+            public Object getResult() {
+              return collector;
+            }
+          };
+
+        listener = new OAsyncCommandResultListener(this, clientTxId, cmdResultListener);
         command.setResultListener(listener);
-      } else
-        listener = new OSyncCommandResultListener();
+      } else {
+        listener = new OSyncCommandResultListener(null);
+      }
 
       final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
 

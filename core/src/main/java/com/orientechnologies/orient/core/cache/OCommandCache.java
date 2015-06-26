@@ -19,9 +19,9 @@
  */
 package com.orientechnologies.orient.core.cache;
 
-import java.util.Set;
-
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+
+import java.util.Set;
 
 /**
  * Generic query cache interface.
@@ -91,4 +91,6 @@ public interface OCommandCache {
    *          Cluster name
    */
   void invalidateResultsOfCluster(final String iCluster);
+
+  int getMaxResultsetSize();
 }

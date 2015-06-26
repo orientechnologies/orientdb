@@ -422,4 +422,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     return QUORUM_TYPE.WRITE;
   }
 
+  @Override
+  public Object getResult() {
+    return null;
+  }
 }

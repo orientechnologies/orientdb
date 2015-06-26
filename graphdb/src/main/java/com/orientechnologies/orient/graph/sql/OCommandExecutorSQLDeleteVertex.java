@@ -306,4 +306,8 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     return result;
   }
 
+  @Override
+  public Object getResult() {
+    return null;
+  }
 }
