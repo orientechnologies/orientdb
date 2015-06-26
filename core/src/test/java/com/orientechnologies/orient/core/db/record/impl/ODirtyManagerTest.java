@@ -220,4 +220,42 @@ public class ODirtyManagerTest {
     assertTrue(manager.getPointed(doc).contains(link));
   }
 
+  @Test
+  public void testDoubleCollectionEmbedded() {
+    ODocument doc = new ODocument();
+    doc.field("test", "ddd");
+    List<ODocument> lst = new ArrayList<ODocument>();
+    ODocument embeddedInList = new ODocument();
+    ODocument link = new ODocument();
+    embeddedInList.field("link", link);
+    lst.add(embeddedInList);
+    Set<Object> set = new HashSet<Object>();
+    set.add(lst);
+    doc.field("set", set, OType.EMBEDDEDSET);
+    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
+    ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
+    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(1, manager.getPointed(doc).size());
+    assertTrue(manager.getPointed(doc).contains(link));
+  }
+
+  @Test
+  public void testDoubleMapEmbedded() {
+    ODocument doc = new ODocument();
+    doc.field("test", "ddd");
+    List<ODocument> lst = new ArrayList<ODocument>();
+    ODocument embeddedInList = new ODocument();
+    ODocument link = new ODocument();
+    embeddedInList.field("link", link);
+    lst.add(embeddedInList);
+    Map<String, Object> set = new HashMap<String, Object>();
+    set.put("some", lst);
+    doc.field("set", set, OType.EMBEDDEDMAP);
+    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
+    ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
+    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(1, manager.getPointed(doc).size());
+    assertTrue(manager.getPointed(doc).contains(link));
+  }
+
 }

@@ -2303,7 +2303,6 @@ public class ODocument extends ORecordAbstract
   protected void convertAllMultiValuesToTrackedVersions() {
     if (_fields == null)
       return;
-
     for (Map.Entry<String, ODocumentEntry> fieldEntry : _fields.entrySet()) {
       final Object fieldValue = fieldEntry.getValue().value;
       if (!(fieldValue instanceof Collection<?>) && !(fieldValue instanceof Map<?, ?>) && !(fieldValue instanceof ODocument))
@@ -2312,7 +2311,7 @@ public class ODocument extends ORecordAbstract
         continue;
       }
 
-      if (fieldValue instanceof ODocument && fieldValue != this) {
+      if (fieldValue instanceof ODocument && ((ODocument) fieldValue).isEmbedded()) {
         ((ODocument) fieldValue).convertAllMultiValuesToTrackedVersions();
         continue;
       }
@@ -2331,12 +2330,16 @@ public class ODocument extends ORecordAbstract
       Object newValue = null;
       switch (fieldType) {
       case EMBEDDEDLIST:
-        if (fieldValue instanceof List<?>)
-          newValue = new OTrackedList<Object>(this, (List<?>) fieldValue, null);
+        if (fieldValue instanceof List<?>) {
+          newValue = new OTrackedList<Object>(this);
+          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
+        }
         break;
       case EMBEDDEDSET:
-        if (fieldValue instanceof Set<?>)
-          newValue = new OTrackedSet<Object>(this, (Set<OIdentifiable>) fieldValue, null);
+        if (fieldValue instanceof Set<?>) {
+          newValue = new OTrackedSet<Object>(this);
+          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
+        }
         break;
       case EMBEDDEDMAP:
         if (fieldValue instanceof Map<?, ?>)
@@ -2370,6 +2373,49 @@ public class ODocument extends ORecordAbstract
       }
     }
 
+  }
+
+  private void fillTrackedCollection(Collection<Object> dest, Collection<Object> source) {
+    for (Object cur : source) {
+      if (cur instanceof ODocument)
+        ((ODocument) cur).convertAllMultiValuesToTrackedVersions();
+      else if (cur instanceof List) {
+        List<Object> newList = new OTrackedList<Object>(this);
+        fillTrackedCollection(newList, (Collection<Object>) cur);
+        cur = newList;
+      } else if (cur instanceof Set) {
+        Set<Object> newSet = new OTrackedSet<Object>(this);
+        fillTrackedCollection(newSet, (Collection<Object>) cur);
+        cur = newSet;
+      } else if (cur instanceof Map) {
+        Map<Object, Object> newMap = new OTrackedMap<Object>(this);
+        fillTrackedMap(newMap, (Map<Object, Object>) cur);
+        cur = newMap;
+      }
+      dest.add(cur);
+    }
+  }
+
+  private void fillTrackedMap(Map<Object, Object> dest, Map<Object, Object> source) {
+    for (Entry<Object, Object> cur : source.entrySet()) {
+      Object value = cur.getValue();
+      if (value instanceof ODocument)
+        ((ODocument) value).convertAllMultiValuesToTrackedVersions();
+      else if (cur.getValue() instanceof List) {
+        List<Object> newList = new OTrackedList<Object>(this);
+        fillTrackedCollection(newList, (Collection<Object>) value);
+        value = newList;
+      } else if (value instanceof Set) {
+        Set<Object> newSet = new OTrackedSet<Object>(this);
+        fillTrackedCollection(newSet, (Collection<Object>) value);
+        value = newSet;
+      } else if (value instanceof Map) {
+        Map<Object, Object> newMap = new OTrackedMap<Object>(this);
+        fillTrackedMap(newMap, (Map<Object, Object>) value);
+        value = newMap;
+      }
+      dest.put(cur.getKey(), value);
+    }
   }
 
   protected void internalReset() {
