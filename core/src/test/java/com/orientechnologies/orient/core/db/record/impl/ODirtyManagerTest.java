@@ -240,6 +240,27 @@ public class ODirtyManagerTest {
   }
 
   @Test
+  public void testDoubleCollectionDocumentEmbedded() {
+    ODocument doc = new ODocument();
+    doc.field("test", "ddd");
+    List<ODocument> lst = new ArrayList<ODocument>();
+    ODocument embeddedInList = new ODocument();
+    ODocument link = new ODocument();
+    ODocument embInDoc = new ODocument();
+    embInDoc.field("link", link);
+    embeddedInList.field("some", embInDoc, OType.EMBEDDED);
+    lst.add(embeddedInList);
+    Set<Object> set = new HashSet<Object>();
+    set.add(lst);
+    doc.field("set", set, OType.EMBEDDEDSET);
+    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
+    ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
+    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(1, manager.getPointed(doc).size());
+    assertTrue(manager.getPointed(doc).contains(link));
+  }
+
+  @Test
   public void testDoubleMapEmbedded() {
     ODocument doc = new ODocument();
     doc.field("test", "ddd");

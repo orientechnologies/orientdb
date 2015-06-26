@@ -487,11 +487,11 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     if (o != null && o instanceof ORecordId) {
       final ORecordId rid = (ORecordId) o;
 
-      ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(sourceRecord);
       marshalling = true;
       try {
         ORecord record = rid.getRecord();
-        ORecordInternal.setDirtyManager(record, dirtyManager);
+        if (record != null)
+          ORecordInternal.track(sourceRecord, record);
         super.set(iIndex, record);
 
       } catch (ORecordNotFoundException e) {

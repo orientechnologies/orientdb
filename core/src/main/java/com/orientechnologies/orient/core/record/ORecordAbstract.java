@@ -279,7 +279,7 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   public ORecordAbstract save(final String iClusterName) {
-    return save(iClusterName, false);
+    return save(iClusterName);
   }
 
   public ORecordAbstract save(boolean forceCreate) {

@@ -19,6 +19,11 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -30,14 +35,14 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * No operation transaction.
@@ -157,8 +162,29 @@ public class OTransactionNoTx extends OTransactionAbstract {
   public ORecord saveRecord(final ORecord iRecord, final String iClusterName, final OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     try {
+
+      ORecord orignal = iRecord;
+      ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(orignal);
+      Set<ORecord> newRecord = dirtyManager.getNewRecord();
+      Set<ORecord> updatedRecord = dirtyManager.getUpdateRecord();
+      dirtyManager.cleanForSave();
+      if (newRecord != null) {
+        for (ORecord rec : newRecord) {
+          if (rec.getIdentity().isNew() && rec instanceof ODocument) {
+            saveNew((ODocument) rec, dirtyManager);
+          }
+        }
+      }
+      if (updatedRecord != null) {
+        for (ORecord rec : updatedRecord) {
+          if (!rec.equals(orignal))
+            database.executeSaveRecord(rec, null, rec.getRecordVersion(), true, iMode, iForceCreate, iRecordCreatedCallback,
+                iRecordUpdatedCallback);
+        }
+      }
+
       return database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), true, iMode, iForceCreate,
-          iRecordCreatedCallback, null);
+          iRecordCreatedCallback, iRecordUpdatedCallback);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
@@ -169,6 +195,51 @@ public class OTransactionNoTx extends OTransactionAbstract {
         throw (RuntimeException) e;
       throw new OException(e);
     }
+  }
+
+  public void saveNew(ODocument document, ODirtyManager manager) {
+    LinkedList<ODocument> path = new LinkedList<ODocument>();
+    ORecord next = document;
+    do {
+      if (next instanceof ODocument) {
+        path.push((ODocument) next);
+        ORecord nextToInspect = null;
+        List<OIdentifiable> toSave = manager.getPointed(document);
+        if (toSave != null) {
+          for (OIdentifiable oIdentifiable : toSave) {
+            if (oIdentifiable.getIdentity().isNew()) {
+              if (oIdentifiable instanceof ORecord)
+                nextToInspect = (ORecord) oIdentifiable;
+              else
+                nextToInspect = oIdentifiable.getRecord();
+              break;
+            }
+          }
+        }
+        if (nextToInspect != null) {
+          if (path.contains(nextToInspect)) {
+            // this is wrong, here we should do empty record save here
+            OSerializationSetThreadLocal.checkAndAdd((ODocument) nextToInspect);
+            database.executeSaveRecord(nextToInspect, null, nextToInspect.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS,
+                false, null, null);
+            // path.
+            path.pollFirst();
+            next = path.pollFirst();
+          } else
+            next = nextToInspect;
+        } else {
+          // this is wrong, here we go a real save
+          database.executeSaveRecord(next, null, next.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+          path.pollFirst();
+          next = path.pollFirst();
+        }
+
+      } else {
+        // this is wrong, here we go a real save
+        database.executeSaveRecord(next, null, next.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+        next = path.pollFirst();
+      }
+    } while (next != null);
   }
 
   @Override

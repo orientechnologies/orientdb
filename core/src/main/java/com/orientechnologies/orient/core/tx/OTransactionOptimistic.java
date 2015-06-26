@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -358,6 +359,23 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     if (iRecord == null)
       return null;
+
+    ORecord orignal = iRecord;
+    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(orignal);
+    Set<ORecord> newRecord = dirtyManager.getNewRecord();
+    Set<ORecord> updatedRecord = dirtyManager.getUpdateRecord();
+    dirtyManager.cleanForSave();
+    if (newRecord != null) {
+      for (ORecord rec : newRecord) {
+        addRecord(rec, ORecordOperation.CREATED, null);
+      }
+    }
+    if (updatedRecord != null) {
+      for (ORecord rec : updatedRecord) {
+        addRecord(rec, ORecordOperation.UPDATED, null);
+      }
+    }
+    
     final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED
         : ORecordOperation.CREATED;
     addRecord(iRecord, operation, iClusterName);
