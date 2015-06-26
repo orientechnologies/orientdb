@@ -1,4 +1,4 @@
-package org.apache.tinkerpop.gremlin.orientdb.structure;
+package org.apache.tinkerpop.gremlin.orientdb;
 
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.Vertex;

@@ -1,4 +1,4 @@
-package org.apache.tinkerpop.gremlin.orientdb.structure;
+package org.apache.tinkerpop.gremlin.orientdb;
 
 import java.util.Iterator;
 import java.util.stream.Stream;

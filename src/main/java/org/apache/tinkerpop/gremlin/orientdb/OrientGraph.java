@@ -1,4 +1,4 @@
-package org.apache.tinkerpop.gremlin.orientdb.structure;
+package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -23,7 +23,7 @@ import java.util.NoSuchElementException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static org.apache.tinkerpop.gremlin.orientdb.structure.StreamUtils.asStream;
+import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
 
 public final class OrientGraph implements Graph {

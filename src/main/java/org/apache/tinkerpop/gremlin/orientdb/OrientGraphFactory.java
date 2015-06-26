@@ -1,4 +1,4 @@
-package org.apache.tinkerpop.gremlin.orientdb.structure;
+package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
