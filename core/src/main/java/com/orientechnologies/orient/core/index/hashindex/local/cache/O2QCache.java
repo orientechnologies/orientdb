@@ -804,7 +804,7 @@ public class O2QCache implements OReadCache {
 
   @Override
   public long getUsedMemory() {
-    return (am.size() + a1in.size()) * (2 * ODurablePage.PAGE_PADDING + pageSize);
+    return ((long) (am.size() + a1in.size())) * (2 * ODurablePage.PAGE_PADDING + pageSize);
   }
 
   private OCacheEntry remove(long fileId, long pageIndex) {
