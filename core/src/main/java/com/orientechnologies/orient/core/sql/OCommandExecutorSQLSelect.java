@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.collection.OSortedMultiIterator;
@@ -42,6 +36,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -56,6 +51,8 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -89,6 +86,12 @@ import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -1375,6 +1378,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     final long startFetching = System.currentTimeMillis();
 
+    // CHECK TO ACTIVATE AUTOMATIC PARALLEL EXECUTION
+    if (iTarget instanceof ORecordIteratorClusters) {
+      final int[] clusterIds = ((ORecordIteratorClusters) iTarget).getClusterIds();
+      if (clusterIds.length > 1) {
+        final long totalRecords = getDatabase().getStorage().count(clusterIds);
+        if (totalRecords > OGlobalConfiguration.QUERY_PARALLEL_MINIMUM_RECORDS.getValueAsLong()) {
+          // ACTIVATE PARALLEL
+          parallel = true;
+          OLogManager.instance().debug(this, "Activated parallel query automatically. clusterIds=%d, totalRecords=%d",
+              clusterIds.length, totalRecords);
+        }
+      }
+    }
+
     try {
       if (parallel) {
         parallelExec(iTarget);
@@ -1435,6 +1452,70 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final int cores = Runtime.getRuntime().availableProcessors();
     OLogManager.instance().debug(this, "Parallel query against %d threads", cores);
 
+    if (iTarget instanceof ORecordIteratorClusters && ((ORecordIteratorClusters) iTarget).getClusterIds().length > 1)
+      execParallelWithMultipleThreads((ORecordIteratorClusters) iTarget, (ODatabaseDocumentTx) db);
+    else
+      execParallelWithPool(iTarget, db);
+
+    if (OLogManager.instance().isDebugEnabled()) {
+      OLogManager.instance().debug(this, "Parallel query '%s' completed", parserText);
+    }
+  }
+
+  private void execParallelWithMultipleThreads(final ORecordIteratorClusters iTarget, final ODatabaseDocumentTx db) {
+    final int[] clusterIds = iTarget.getClusterIds();
+
+    OLogManager.instance().debug(this, "Executing parallel query with strategy one thread per cluster. clusterIds=%d",
+        clusterIds.length);
+
+    final List<Integer> iterators = new ArrayList<Integer>();
+    for (int i = 0; i < clusterIds.length; ++i)
+      if (db.getStorage().getClusterById(clusterIds[i]).getEntries() > 0)
+        iterators.add(clusterIds[i]);
+
+    // CREATE ONE THREAD PER CLUSTER
+    final int threadNumber = iterators.size();
+
+    final Thread[] threads = new Thread[threadNumber];
+    for (int i = 0; i < threadNumber; ++i) {
+      final int current = i;
+
+      threads[i] = new Thread(new Runnable() {
+        @Override
+        public void run() {
+          final ODatabaseDocumentTx localDatabase = db.copy();
+          try {
+            final ORecordIteratorCluster it = new ORecordIteratorCluster(localDatabase, localDatabase, iterators.get(current), true);
+
+            while (it.hasNext()) {
+              final ORecord next = it.next();
+
+              if (next == null)
+                break;
+
+              if (!executeSearchRecord(next))
+                break;
+            }
+          } finally {
+            localDatabase.close();
+          }
+        }
+      });
+      threads[i].start();
+    }
+
+    // WAIT ALL THE THREADS COMPLETED
+    for (int i = 0; i < threadNumber; ++i) {
+      try {
+        threads[i].join();
+      } catch (InterruptedException e) {
+      }
+    }
+  }
+
+  private void execParallelWithPool(Iterator<? extends OIdentifiable> iTarget, final ODatabaseDocumentInternal db) {
+    OLogManager.instance().debug(this, "Executing parallel query with strategy thread pool");
+
     executing = true;
     final List<Future<?>> jobs = new ArrayList<Future<?>>();
 
@@ -1480,10 +1561,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on executing parallel query: %s", e, parserText);
-    }
-
-    if (OLogManager.instance().isDebugEnabled()) {
-      OLogManager.instance().debug(this, "Parallel query '%s' completed", parserText);
     }
   }
 

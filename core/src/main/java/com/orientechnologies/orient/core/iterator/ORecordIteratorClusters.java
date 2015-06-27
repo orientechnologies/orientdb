@@ -371,6 +371,10 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     return endRange;
   }
 
+  public int[] getClusterIds() {
+    return clusterIds;
+  }
+
   @Override
   public String toString() {
     return String.format("ORecordIteratorCluster.clusters(%s).currentRecord(%s).range(%s-%s)", Arrays.toString(clusterIds),

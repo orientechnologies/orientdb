@@ -400,6 +400,9 @@ public enum OGlobalConfiguration {
       Integer.class, 500),
 
   // QUERY
+  QUERY_PARALLEL_MINIMUM_RECORDS("query.parallelMinimumRecords",
+      "Minimum number of records to activate parallel query automatically", Long.class, 300000),
+
   QUERY_SCAN_THRESHOLD_TIP("query.scanThresholdTip",
       "If total number of records scanned in a query is major than this threshold a warning is given. Use 0 to disable it",
       Long.class, 50000),
