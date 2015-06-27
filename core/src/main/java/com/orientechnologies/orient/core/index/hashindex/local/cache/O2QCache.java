@@ -746,14 +746,12 @@ public class O2QCache implements OReadCache {
           try {
             pageLock = pageLockManager.acquireExclusiveLock(new PageKey(removedEntry.fileId, removedEntry.pageIndex));
             try {
-              if (a1out.get(removedEntry.fileId, removedEntry.pageIndex) == null)
+              if (a1out.remove(removedEntry.fileId, removedEntry.pageIndex) == null)
                 continue;
 
               assert removedEntry.usagesCount == 0;
               assert removedEntry.dataPointer == null;
               assert !removedEntry.isDirty;
-
-              a1out.remove(removedEntry.fileId, removedEntry.pageIndex);
 
               Set<Long> pageEntries = filePages.get(removedEntry.fileId);
               pageEntries.remove(removedEntry.pageIndex);
