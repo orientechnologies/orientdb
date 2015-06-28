@@ -69,7 +69,6 @@ public final class OrientVertex extends OrientElement implements Vertex {
         return "v" + labelPart + "[" + id() + "]";
     }
 
-
     @Override
     public Edge addEdge(String label, Vertex inVertex, Object... keyValues) {
         if (inVertex == null)

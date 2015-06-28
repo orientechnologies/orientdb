@@ -1,6 +1,7 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import org.apache.tinkerpop.gremlin.structure.*;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -26,5 +27,14 @@ public class OrientEdge extends OrientElement implements Edge {
 //        return StreamUtils.asStream(properties).map(p ->
 //                        (Property<V>) new OrientProperty<>( p.key(), p.value(), (Element) p.element())
 //        ).iterator();
+    }
+
+    @Override
+    public String toString() {
+        String labelPart = "";
+
+        if(!label().equals(OImmutableClass.EDGE_CLASS_NAME))
+            labelPart = "(" + label() + ")";
+        return "e" + labelPart + "[" + id() + "]";
     }
 }
