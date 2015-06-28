@@ -470,7 +470,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     }
   }
 
-  public void TtestOfflineCluster() {
+  public void testOfflineCluster() {
     database.command(new OCommandSQL("create class TestOffline")).execute();
     database.command(new OCommandSQL("insert into TestOffline set status = 'offline'")).execute();
 

@@ -1369,7 +1369,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     storageLocal.getConfiguration().update();
   }
 
-  private void setNameInternal(String newName) throws IOException {
+  private void setNameInternal(final String newName) throws IOException {
 
     writeCache.renameFile(fileId, getFullName(), newName + getExtension());
     clusterPositionMap.rename(newName);

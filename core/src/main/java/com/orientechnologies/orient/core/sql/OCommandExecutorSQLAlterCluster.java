@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -38,6 +31,13 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * SQL ALTER PROPERTY command: Changes an attribute of an existent property in the target class.
@@ -130,7 +130,11 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
 
     Object result;
     try {
-      if (attribute == ATTRIBUTES.STATUS && OStorageClusterConfiguration.STATUS.OFFLINE.toString().equals(value))
+      if (attribute == ATTRIBUTES.STATUS && OStorageClusterConfiguration.STATUS.OFFLINE.toString().equalsIgnoreCase(value))
+        // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
+        getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
+
+      if (attribute == ATTRIBUTES.NAME)
         // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
         getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
 
