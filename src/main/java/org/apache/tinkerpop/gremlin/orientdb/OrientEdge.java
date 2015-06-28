@@ -22,11 +22,10 @@ public class OrientEdge extends OrientElement implements Edge {
     }
 
     public <V> Iterator<Property<V>> properties(final String... propertyKeys) {
-        throw new NotImplementedException();
-//        Iterator<? extends Property<V>> properties = super.properties(propertyKeys);
-//        return StreamUtils.asStream(properties).map(p ->
-//                        (Property<V>) new OrientProperty<>( p.key(), p.value(), (Element) p.element())
-//        ).iterator();
+        Iterator<? extends Property<V>> properties = super.properties(propertyKeys);
+        return StreamUtils.asStream(properties).map(p ->
+            (Property<V>) new OrientProperty<>(p.key(), p.value(), p.element())
+        ).iterator();
     }
 
     @Override
