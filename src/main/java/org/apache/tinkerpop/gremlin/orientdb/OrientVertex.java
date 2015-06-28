@@ -16,6 +16,8 @@ import java.util.Collection;
 import java.util.Iterator;
 
 public final class OrientVertex extends OrientElement implements Vertex {
+    public static final String CONNECTION_OUT_PREFIX = OrientGraphUtils.CONNECTION_OUT + "_";
+    public static final String CONNECTION_IN_PREFIX  = OrientGraphUtils.CONNECTION_IN + "_";
 
     public OrientVertex(final OrientGraph graph, final OIdentifiable rawElement) {
         super(graph, rawElement);
@@ -143,21 +145,21 @@ public final class OrientVertex extends OrientElement implements Vertex {
         return edge;
     }
 
-    public static String getConnectionFieldName(final Direction iDirection, final String iClassName) {
+    public String getConnectionFieldName(final Direction iDirection, final String iClassName) {
         if (iDirection == null || iDirection == Direction.BOTH)
             throw new IllegalArgumentException("Direction not valid");
 
-        // TODO: removed support for VertexFieldsForEdgeLabels here
+        // TODO: removed support for nonVertexFieldsForEdgeLabels here
 //        if (useVertexFieldsForEdgeLabels) {
-//            // PREFIX "out_" or "in_" TO THE FIELD NAME
-//            final String prefix = iDirection == Direction.OUT ? CONNECTION_OUT_PREFIX : CONNECTION_IN_PREFIX;
-//            if (iClassName == null || iClassName.isEmpty() || iClassName.equals(OrientEdgeType.CLASS_NAME))
-//                return prefix;
-//
-//            return prefix + iClassName;
+            // PREFIX "out_" or "in_" TO THE FIELD NAME
+            final String prefix = iDirection == Direction.OUT ? CONNECTION_OUT_PREFIX : CONNECTION_IN_PREFIX;
+            if (iClassName == null || iClassName.isEmpty() || iClassName.equals(OImmutableClass.EDGE_CLASS_NAME))
+                return prefix;
+
+            return prefix + iClassName;
 //        } else
             // "out" or "in"
-        return iDirection == Direction.OUT ? OrientGraphUtils.CONNECTION_OUT : OrientGraphUtils.CONNECTION_IN;
+//            return iDirection == Direction.OUT ? OrientGraphUtils.CONNECTION_OUT : OrientGraphUtils.CONNECTION_IN;
     }
 
     // this ugly code was copied from the TP2 implementation
