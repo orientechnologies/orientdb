@@ -118,6 +118,11 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract imp
   }
 
   @Override
+  public boolean isCacheable() {
+    return delegate.isCacheable();
+  }
+
+  @Override
   public QUORUM_TYPE getQuorumType() {
     if (delegate instanceof OCommandDistributedReplicateRequest)
       return ((OCommandDistributedReplicateRequest) delegate).getQuorumType();

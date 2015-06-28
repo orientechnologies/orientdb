@@ -377,8 +377,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       OPageDataVerificationError[] pageErrors = writeCache.checkStoredPages(verbose ? listener : null);
 
-      listener.onMessage("Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. "
-          + (pageErrors.length > 0 ? pageErrors.length + " with errors." : " without errors."));
+      listener.onMessage("Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. " + (pageErrors.length>0 ? pageErrors.length + " with errors." : " without errors."));
 
       return pageErrors.length == 0;
     } finally {
@@ -1295,7 +1294,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       Object result = null;
-      if (iCommand.isCacheableResult() && executor.isIdempotent())
+      if (iCommand.isCacheableResult() && executor.isCacheable())
         // TRY WITH COMMAND CACHE
         result = db.getMetadata().getCommandCache().get(db.getUser(), iCommand.getText(), iCommand.getLimit());
 
@@ -1303,7 +1302,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         result = executor.execute(iCommand.getParameters());
 
         // CACHE THE COMMAND RESULT
-        if (result != null && iCommand.isCacheableResult() && executor.isIdempotent()
+        if (result != null && iCommand.isCacheableResult() && executor.isCacheable()
             && (iCommand.getParameters() == null || iCommand.getParameters().isEmpty()))
           db.getMetadata()
               .getCommandCache()
@@ -1863,8 +1862,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   private void addDefaultClusters() throws IOException {
-    final String storageCompression = getConfiguration().getContextConfiguration().getValueAsString(
-        OGlobalConfiguration.STORAGE_COMPRESSION_METHOD);
+    final String storageCompression = getConfiguration().getContextConfiguration().getValueAsString(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD);
 
     final String stgConflictStrategy = getConflictStrategy().getName();
 

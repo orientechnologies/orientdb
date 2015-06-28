@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import java.util.Collections;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -31,6 +26,11 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+
+import java.util.Collections;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Abstract implementation of Executor Command interface.
@@ -140,6 +140,11 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
 
   @Override
   public boolean isLocalExecution() {
+    return false;
+  }
+
+  @Override
+  public boolean isCacheable() {
     return false;
   }
 }

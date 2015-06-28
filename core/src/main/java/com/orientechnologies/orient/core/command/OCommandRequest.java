@@ -27,13 +27,13 @@ import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEG
  * @author Luca Garulli
  */
 public interface OCommandRequest {
-  public <RET> RET execute(Object... iArgs);
+  <RET> RET execute(Object... iArgs);
 
   /**
    * Returns the limit of result set. -1 means no limits.
    * 
    */
-  public int getLimit();
+  int getLimit();
 
   /**
    * Sets the maximum items the command can returns. -1 means no limits.
@@ -42,40 +42,40 @@ public interface OCommandRequest {
    *          -1 = no limit. 1 to N to limit the result set.
    * @return
    */
-  public OCommandRequest setLimit(int iLimit);
+  OCommandRequest setLimit(int iLimit);
 
   /**
    * Returns the command timeout. 0 means no timeout.
    * 
    * @return
    */
-  public long getTimeoutTime();
+  long getTimeoutTime();
 
   /**
    * Returns the command timeout strategy between the defined ones.
    * 
    * @return
    */
-  public TIMEOUT_STRATEGY getTimeoutStrategy();
+  TIMEOUT_STRATEGY getTimeoutStrategy();
 
   /**
    * Sets the command timeout. When the command execution time is major than the timeout the command returns
    * 
    * @param timeout
    */
-  public void setTimeout(long timeout, TIMEOUT_STRATEGY strategy);
+  void setTimeout(long timeout, TIMEOUT_STRATEGY strategy);
 
   /**
    * Returns true if the command doesn't change the database, otherwise false.
    */
-  public boolean isIdempotent();
+  boolean isIdempotent();
 
   /**
    * Returns the fetch plan if any
    * 
    * @return Fetch plan as unique string or null if it was not defined.
    */
-  public String getFetchPlan();
+  String getFetchPlan();
 
   /**
    * Set the fetch plan. The format is:
@@ -101,11 +101,11 @@ public interface OCommandRequest {
    * @param iFetchPlan
    * @return
    */
-  public <RET extends OCommandRequest> RET setFetchPlan(String iFetchPlan);
+  <RET extends OCommandRequest> RET setFetchPlan(String iFetchPlan);
 
-  public void setUseCache(boolean iUseCache);
+  void setUseCache(boolean iUseCache);
 
-  public OCommandContext getContext();
+  OCommandContext getContext();
 
-  public OCommandRequest setContext(final OCommandContext iContext);
+  OCommandRequest setContext(final OCommandContext iContext);
 }
