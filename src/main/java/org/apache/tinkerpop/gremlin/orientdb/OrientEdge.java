@@ -2,6 +2,7 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.tinkerpop.gremlin.structure.*;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -13,7 +14,12 @@ public class OrientEdge extends OrientElement implements Edge {
     }
 
     public OrientEdge(OrientGraph graph, String className) {
-        super(graph, className);
+        super(graph, createRawElement(graph, className));
+    }
+
+    protected static ODocument createRawElement(OrientGraph graph, String className) {
+        graph.createEdgeClass(className);
+        return new ODocument(className);
     }
 
     @Override

@@ -19,15 +19,6 @@ public class OrientElement implements Element {
         this.rawElement = rawElement;
     }
 
-    public OrientElement(OrientGraph graph, String className) {
-        this(graph, createRawElement(graph, className));
-    }
-
-    private static ODocument createRawElement(OrientGraph graph, String className) {
-        graph.createVertexClass(className);
-        return new ODocument(className);
-    }
-
     public Object id() {
         return rawElement.getIdentity();
     }

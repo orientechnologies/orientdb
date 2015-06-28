@@ -22,7 +22,12 @@ public final class OrientVertex extends OrientElement implements Vertex {
     }
 
     public OrientVertex(OrientGraph graph, String className) {
-        super(graph, className);
+        super(graph, createRawElement(graph, className));
+    }
+
+    protected static ODocument createRawElement(OrientGraph graph, String className) {
+        graph.createVertexClass(className);
+        return new ODocument(className);
     }
 
     public Iterator<Edge> edges(final Direction direction, final String... edgeLabels) {
