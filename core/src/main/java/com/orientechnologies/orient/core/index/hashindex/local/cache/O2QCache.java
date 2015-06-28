@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
@@ -730,6 +731,9 @@ public class O2QCache implements OReadCache {
 
               removedFromAInEntry.dataPointer.decrementReadersReferrer();
               removedFromAInEntry.dataPointer = null;
+
+              if (OLogManager.instance().isDebugEnabled())
+                OLogManager.instance().debug(this, "Moving page in disk cache from a1in to a1out area: %s", removedFromAInEntry);
 
               a1out.putToMRU(removedFromAInEntry);
             } finally {

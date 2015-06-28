@@ -43,9 +43,17 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
-import java.io.*;
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -1103,12 +1111,22 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       lastLsn = new OLogSequenceNumber(-1, -1);
 
     if (fileClassic.getFilledUpTo() >= endPosition) {
-      fileClassic.read(startPosition, content, content.length - 2 * PAGE_PADDING, PAGE_PADDING);
+      final int length = content.length - 2 * PAGE_PADDING;
+
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Loading page from disk: file=%s, offset=%d, size=%d", fileClassic.getName(),
+            startPosition, length);
+
+      fileClassic.read(startPosition, content, length, PAGE_PADDING);
       final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
 
       dataPointer = new OCachePointer(pointer, lastLsn, fileId, pageIndex);
     } else if (addNewPages) {
       final int space = (int) (endPosition - fileClassic.getFilledUpTo());
+
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Allocation space to disk: file=%s, space=%d", fileClassic, space);
+
       fileClassic.allocateSpace(space);
 
       addAllocatedSpace(space);
