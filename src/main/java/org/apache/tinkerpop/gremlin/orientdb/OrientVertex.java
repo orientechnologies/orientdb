@@ -123,10 +123,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
 //        if (settings.isKeepInMemoryReferences())
 //            edge.getRecord().fields(OrientBaseGraph.CONNECTION_OUT, rawElement.getIdentity(), OrientBaseGraph.CONNECTION_IN, inDocument.getIdentity());
 //        else
-        getRawDocument().fields(OrientGraphUtils.CONNECTION_OUT, rawElement, OrientGraphUtils.CONNECTION_IN, inDocument);
-
-        OIdentifiable from = edge.getRawDocument();
-        OIdentifiable to = edge.getRawDocument();
+        edge.getRawDocument().fields(OrientGraphUtils.CONNECTION_OUT, rawElement, OrientGraphUtils.CONNECTION_IN, inDocument);
 
         //TODO: support inMemoryReferences
 //        if (settings.isKeepInMemoryReferences()) {
@@ -135,8 +132,8 @@ public final class OrientVertex extends OrientElement implements Vertex {
 //            to = to.getIdentity();
 //        }
 
-        createLink(outDocument, to, outFieldName);
-        createLink(inDocument, from, inFieldName);
+        createLink(outDocument, edge.getRawElement(), outFieldName);
+        createLink(inDocument, edge.getRawElement(), inFieldName);
 
         //TODO: support clusters
 //      edge.save(iClusterName);
