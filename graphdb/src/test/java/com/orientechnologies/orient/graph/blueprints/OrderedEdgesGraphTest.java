@@ -44,37 +44,44 @@ public class OrderedEdgesGraphTest {
 
   @Test
   public void testEdgeOrder() {
-
-    OrientVertex loadedPerson = graph.getVertex(mainPerson.getId());
-    graph.setUseLightweightEdges(true);
-    int i = 1;
-    for (Edge e : loadedPerson.getEdges(Direction.OUT)) {
-      assertEquals(e.getVertex(Direction.IN).getProperty("index"), i++);
+    try {
+      OrientVertex loadedPerson = graph.getVertex(mainPerson.getId());
+      graph.setUseLightweightEdges(true);
+      int i = 1;
+      for (Edge e : loadedPerson.getEdges(Direction.OUT)) {
+        assertEquals(e.getVertex(Direction.IN).getProperty("index"), i++);
+      }
+    } finally {
+      graph.shutdown();
     }
-
-    graph.shutdown();
 
   }
 
   @Test
   public void testReplacePosition() {
+    OrientVertex loadedPerson;
+    List<ODocument> edges;
+    try {
+      loadedPerson = graph.getVertex(mainPerson.getId());
+      graph.setUseLightweightEdges(true);
+      int i = 1;
+      edges = loadedPerson.getRecord().field("out_Knows");
 
-    OrientVertex loadedPerson = graph.getVertex(mainPerson.getId());
-    graph.setUseLightweightEdges(true);
-    int i = 1;
-    List<ODocument> edges = loadedPerson.getRecord().field("out_Knows");
-
-    ODocument edge10 = edges.remove(9);
-    edges.add(edge10);
-
-    graph.shutdown();
+      ODocument edge10 = edges.remove(9);
+      edges.add(edge10);
+    } finally {
+      graph.shutdown();
+    }
 
     graph = new OrientGraph(DB_URL);
-    graph.setUseLightweightEdges(true);
-    loadedPerson = graph.getVertex(mainPerson.getId());
-    edges = loadedPerson.getRecord().field("out_Knows");
-    assertEquals(graph.getVertex(edges.get(9)).getProperty("index"), 11);
-    assertEquals(graph.getVertex(edges.get(99)).getProperty("index"), 10);
-    graph.shutdown();
+    try {
+      graph.setUseLightweightEdges(true);
+      loadedPerson = graph.getVertex(mainPerson.getId());
+      edges = loadedPerson.getRecord().field("out_Knows");
+      assertEquals(graph.getVertex(edges.get(9)).getProperty("index"), 11);
+      assertEquals(graph.getVertex(edges.get(99)).getProperty("index"), 10);
+    } finally {
+      graph.shutdown();
+    }
   }
 }
