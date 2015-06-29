@@ -1,18 +1,20 @@
 package com.orientechnologies.orient.server.distributed;
 
+import junit.framework.Assert;
+
+import org.junit.Ignore;
+
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import junit.framework.Assert;
-import org.junit.Test;
 
 public class TestShardingManualSync extends AbstractServerClusterTest {
 
   protected final static int SERVERS = 2;
 
-  @Test
+  @Ignore
   public void test() throws Exception {
     init(SERVERS);
     prepare(true);
@@ -22,7 +24,7 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
 
   @Override
   protected String getDatabaseName() {
-    return "sharding";
+    return "sharding-manual-synch";
   }
 
   @Override
@@ -38,7 +40,7 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
     OrientGraphNoTx graphNoTxEurope = localFactoryEurope.getNoTx();
     try {
       final OrientVertexType clientType = graphNoTxEurope.createVertexType("Client");
-      for (int i = 1; i<serverInstance.size(); ++i) {
+      for (int i = 1; i < serverInstance.size(); ++i) {
         final String serverName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
         clientType.addCluster("client_" + serverName);
       }

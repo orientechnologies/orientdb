@@ -837,30 +837,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public boolean installDatabase(boolean iStartup, final String databaseName, final ODocument config) {
 
     final Boolean hotAlignment = config.field("hotAlignment");
-    final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
+    final boolean backupDatabase = iStartup && hotAlignment != null && !hotAlignment;
 
     final Set<String> configuredDatabases = serverInstance.getAvailableStorageNames().keySet();
     if (configuredDatabases.contains(databaseName)) {
-      if (iStartup && hotAlignment != null && !hotAlignment) {
-        Orient.instance().unregisterStorageByName(databaseName);
-
-        // MOVE DIRECTORY TO ../backup/databases/<db-name>
-        final String backupPath = serverInstance.getDatabaseDirectory() + "/" + BACKUP_DIR + "/" + databaseName;
-        final File f = new File(BACKUP_DIR);
-        if (f.exists())
-          OFileUtils.deleteRecursively(new File(backupPath));
-        else
-          f.mkdirs();
-
-        // MOVE THE DATABASE ON CURRENT NODE
-        ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "moving existent database '%s' in '%s' to '%s' and get a fresh copy from a remote node...", databaseName, dbPath,
-            backupPath);
-
-        final File oldDirectory = new File(dbPath);
-        oldDirectory.renameTo(new File(backupPath));
-
-      } else
+      if (!backupDatabase)
         // HOT ALIGNMENT RUNNING, DON'T INSTALL THE DB FROM SCRATCH BUT RATHER LET TO THE NODE TO ALIGN BY READING THE QUEUE
         return false;
     }
@@ -901,6 +882,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     ODistributedServerLog.debug(this, getLocalNodeName(), firstNode.toString(), DIRECTION.OUT, "deploy returned: %s", results);
 
+    final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
+
     // EXTRACT THE REAL RESULT
     for (Entry<String, Object> r : results.entrySet()) {
       final Object value = r.getValue();
@@ -911,6 +894,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         ODistributedServerLog.error(this, getLocalNodeName(), r.getKey(), DIRECTION.IN, "error on installing database %s in %s",
             (Exception) value, databaseName, dbPath);
       } else if (value instanceof ODistributedDatabaseChunk) {
+        if (backupDatabase)
+          backupCurrentDatabase(databaseName);
 
         final Set<String> toSyncClusters = installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, cfg, r.getKey(),
             (ODistributedDatabaseChunk) value);
@@ -929,6 +914,28 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     throw new ODistributedException("No response received from remote nodes for auto-deploy of database");
 
+  }
+
+  protected void backupCurrentDatabase(final String iDatabaseName) {
+    Orient.instance().unregisterStorageByName(iDatabaseName);
+
+    // MOVE DIRECTORY TO ../backup/databases/<db-name>
+    final String backupPath = serverInstance.getDatabaseDirectory() + "/" + BACKUP_DIR + "/" + iDatabaseName;
+    final File f = new File(BACKUP_DIR);
+    if (f.exists())
+      OFileUtils.deleteRecursively(new File(backupPath));
+    else
+      f.mkdirs();
+
+    final String dbPath = serverInstance.getDatabaseDirectory() + iDatabaseName;
+
+    // MOVE THE DATABASE ON CURRENT NODE
+    ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
+        "moving existent database '%s' in '%s' to '%s' and get a fresh copy from a remote node...", iDatabaseName, dbPath,
+        backupPath);
+
+    final File oldDirectory = new File(dbPath);
+    oldDirectory.renameTo(new File(backupPath));
   }
 
   /**
