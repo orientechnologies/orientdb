@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -87,17 +86,13 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
-import javax.swing.text.DateFormatter;
 import java.io.*;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -2395,7 +2390,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           OLogManager.instance().info(this, "%d operations were processed, current LSN is %s last LSN is %s", recordsProcessed,
               lsn, writeAheadLog.end());
 
-          // throw new Exception("test");
         }
 
         lsn = writeAheadLog.next(lsn);
@@ -2441,47 +2435,52 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       final FileOutputStream archiveOutputStream = new FileOutputStream(archiveFile);
-      final ZipOutputStream archiveZipOutputStream = new ZipOutputStream(archiveOutputStream);
+      final ZipOutputStream archiveZipOutputStream = new ZipOutputStream(new BufferedOutputStream(archiveOutputStream));
 
       final ZipEntry metadataEntry = new ZipEntry(metadataName);
 
       archiveZipOutputStream.putNextEntry(metadataEntry);
 
       final PrintWriter metadataFileWriter = new PrintWriter(archiveZipOutputStream);
-      metadataFileWriter.append("Storage name : ").append(getName()).append("\n");
-      metadataFileWriter.append("Date : ").append(strDate).append("\n");
-      metadataFileWriter.append("Stacktrace : \n");
+      metadataFileWriter.append("Storage name : ").append(getName()).append("\r\n");
+      metadataFileWriter.append("Date : ").append(strDate).append("\r\n");
+      metadataFileWriter.append("Stacktrace : \r\n");
       e.printStackTrace(metadataFileWriter);
       metadataFileWriter.flush();
       archiveZipOutputStream.closeEntry();
 
-      final List<String> walPaths = ((ODiskWriteAheadLog) writeAheadLog).getFiles();
+      final List<String> walPaths = ((ODiskWriteAheadLog) writeAheadLog).getWalFiles();
       for (String walSegment : walPaths) {
-        final File walFile = new File(walSegment);
-        final ZipEntry walZipEntry = new ZipEntry(walFile.getName());
-        archiveZipOutputStream.putNextEntry(walZipEntry);
-
-        final FileInputStream walInputStream = new FileInputStream(walFile);
-        final BufferedInputStream walBufferedInputStream = new BufferedInputStream(walInputStream);
-        final BufferedOutputStream walBufferedOutputStream = new BufferedOutputStream(archiveOutputStream);
-
-        final byte[] buffer = new byte[1024];
-        int readBytes = 0;
-
-        while ((readBytes = walBufferedInputStream.read(buffer)) > -1) {
-          walBufferedOutputStream.write(buffer, 0, readBytes);
-        }
-
-        walInputStream.close();
-        walBufferedOutputStream.flush();
-        archiveZipOutputStream.closeEntry();
+        archiveEntry(archiveZipOutputStream, walSegment);
       }
+
+      archiveEntry(archiveZipOutputStream, ((ODiskWriteAheadLog) writeAheadLog).getWMRFile());
 
       archiveZipOutputStream.close();
     } catch (Exception ioe) {
       OLogManager.instance().error(this, "Error during WAL backup.", ioe);
     }
 
+  }
+
+  private void archiveEntry(ZipOutputStream archiveZipOutputStream, String walSegment) throws IOException {
+    final File walFile = new File(walSegment);
+    final ZipEntry walZipEntry = new ZipEntry(walFile.getName());
+    archiveZipOutputStream.putNextEntry(walZipEntry);
+
+    final FileInputStream walInputStream = new FileInputStream(walFile);
+    final BufferedInputStream walBufferedInputStream = new BufferedInputStream(walInputStream);
+
+    final byte[] buffer = new byte[1024];
+    int readBytes = 0;
+
+    while ((readBytes = walBufferedInputStream.read(buffer)) > -1) {
+      archiveZipOutputStream.write(buffer, 0, readBytes);
+    }
+
+    walBufferedInputStream.close();
+
+    archiveZipOutputStream.closeEntry();
   }
 
   protected void restoreAtomicUnit(List<OWALRecord> atomicUnit, OModifiableBoolean atLeastOnePageUpdate) throws IOException {

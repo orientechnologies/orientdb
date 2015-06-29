@@ -923,7 +923,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
-  public List<String> getFiles() {
+  public List<String> getWalFiles() {
     final ArrayList<String> result = new ArrayList<String>();
     syncObject.lock();
     try {
@@ -935,6 +935,15 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
 
     return result;
+  }
+
+  public String getWMRFile() {
+    syncObject.lock();
+    try {
+      return masterRecordFile.getAbsolutePath();
+    } finally {
+      syncObject.unlock();
+    }
   }
 
   public void truncate() throws IOException {
