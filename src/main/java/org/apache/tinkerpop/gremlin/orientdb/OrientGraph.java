@@ -162,7 +162,6 @@ public final class OrientGraph implements Graph {
         return database;
     }
 
-
     /**
      * Returns the persistent class for type iTypeName as OrientEdgeType instance.
      *

@@ -17,7 +17,7 @@ public class OrientSampleTest {
     @Test
     public void labelTest() {
         // remote/local work, memory doesn't
-        String graphUri = "memor?y:test";
+        String graphUri = "memory:test";
 //        String graphUri = "plocal:target/graph" + Math.random();
 //        String graphUri = "remote:localhost/test";
 //        OrientGraph graph = new OrientGraphFactory(graphUri, "root", "root").getTx();
@@ -41,6 +41,7 @@ public class OrientSampleTest {
 //        Collection<OClass> subclasses = clazz.getSubclasses();
 //        System.out.println("Subclasses of vertex: " + subclasses.size());
 //        subclasses.forEach(c -> System.out.println(c));
+        System.out.println("blub");
     }
 
 }

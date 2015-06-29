@@ -63,7 +63,7 @@ public class OrientElement implements Element {
         ((ODocument)rawElement).save();
     }
 
-    protected ODocument getRawDocument() {
+    public ODocument getRawDocument() {
         if (!(rawElement instanceof ODocument))
             rawElement = new ODocument(rawElement.getIdentity());
         return (ODocument) rawElement;
