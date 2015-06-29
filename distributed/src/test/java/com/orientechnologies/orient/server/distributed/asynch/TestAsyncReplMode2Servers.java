@@ -17,7 +17,7 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
 
   @Override
   protected String getDatabaseName() {
-    return "TestAsyncReplMode";
+    return "TestAsyncReplMode2Servers";
   }
 
   protected void dbClient1() {
