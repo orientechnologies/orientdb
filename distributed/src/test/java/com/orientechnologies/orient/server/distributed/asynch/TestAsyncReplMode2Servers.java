@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -7,12 +8,12 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
 
-  private static final int NUM_OF_LOOP_ITERATIONS = 3;
-  private static final int NUM_OF_RETRIES         = 3;
-  private static final String CNT_PROP_NAME       = "cnt";
+  private static final int    NUM_OF_LOOP_ITERATIONS = 3;
+  private static final int    NUM_OF_RETRIES         = 3;
+  private static final String CNT_PROP_NAME          = "cnt";
 
-  private Object parentV1Id;
-  private Object parentV2Id;
+  private Object              parentV1Id;
+  private Object              parentV2Id;
 
   @Override
   protected String getDatabaseName() {
@@ -20,6 +21,8 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
   }
 
   protected void dbClient1() {
+    OGlobalConfiguration.LOG_CONSOLE_LEVEL.setValue("FINEST");
+
     synchronized (LOCK) {
       OrientBaseGraph graph = new OrientGraph(getRemoteURL());
       try {
@@ -44,6 +47,7 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
             try {
               parentV1.setProperty(CNT_PROP_NAME, ++countPropValue);
               graph.commit();
+              System.out.println("Committing parentV1" + parentV1.getRecord()+"...");
               break;
             } catch (OConcurrentModificationException c) {
               graph.rollback();
@@ -55,6 +59,7 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
             try {
               parentV2.setProperty(CNT_PROP_NAME, countPropValue);
               graph.commit();
+              System.out.println("Committing parentV2" + parentV2.getRecord() + "...");
               break;
             } catch (OConcurrentModificationException c) {
               graph.rollback();
@@ -96,8 +101,8 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
 
           parentV1.reload();
           parentV2.reload();
-          assertEquals(++countPropValue, parentV1.getProperty(CNT_PROP_NAME));
-          assertEquals(countPropValue, parentV2.getProperty(CNT_PROP_NAME));
+          assertEquals("parentV1 (" + parentV1.getRecord() + ")", ++countPropValue, parentV1.getProperty(CNT_PROP_NAME));
+          assertEquals("parentV2 (" + parentV2.getRecord() + ")", countPropValue, parentV2.getProperty(CNT_PROP_NAME));
         }
       } catch (Throwable e) {
         if (exceptionInThread == null) {

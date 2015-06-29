@@ -20,6 +20,19 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
@@ -85,21 +98,6 @@ import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Andrey Lomakin
@@ -1685,6 +1683,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (callback != null)
         callback.call(rid, ppos.clusterPosition);
 
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Created record %s v.%s size=%d bytes", rid, recordVersion, content.length);
+
       return new OStorageOperationResult<OPhysicalPosition>(ppos);
     } catch (IOException ioe) {
       try {
@@ -1747,6 +1748,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (callback != null)
         callback.call(rid, ppos.recordVersion);
 
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Updated record %s v.%s size=%d", rid, ppos.recordVersion, content.length);
+
       if (contentModified)
         return new OStorageOperationResult<ORecordVersion>(ppos.recordVersion, content, false);
       else
@@ -1792,6 +1796,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         return new OStorageOperationResult<Boolean>(false);
       }
 
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Deleted record %s v.%s", rid, version);
+
       return new OStorageOperationResult<Boolean>(true);
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", ioe);
@@ -1834,6 +1841,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       ORawBuffer buff;
       buff = clusterSegment.readRecord(rid.clusterPosition);
+
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Read record %s v.%s size=%d bytes", rid, buff.version,
+            buff.buffer != null ? buff.buffer.length : 0);
+
       return buff;
     } catch (IOException e) {
       throw new OStorageException("Error during read of record with rid = " + rid, e);
