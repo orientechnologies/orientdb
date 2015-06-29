@@ -19,82 +19,81 @@
  */
 package com.orientechnologies.common.profiler;
 
-import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
-import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.common.util.OService;
-
 import java.io.PrintStream;
 import java.util.Date;
 import java.util.Map;
 
+import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
+import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.common.util.OService;
+
 public interface OProfilerMBean extends OService {
 
-  public enum METRIC_TYPE {
+  enum METRIC_TYPE {
     CHRONO, COUNTER, STAT, SIZE, ENABLED, TEXT
   }
 
-  public void updateCounter(String iStatName, String iDescription, long iPlus);
+  void updateCounter(String iStatName, String iDescription, long iPlus);
 
-  public void updateCounter(String iStatName, String iDescription, long iPlus, String iDictionary);
+  void updateCounter(String iStatName, String iDescription, long iPlus, String iDictionary);
 
-  public long getCounter(String iStatName);
+  long getCounter(String iStatName);
 
-  public String dump();
+  String dump();
 
-  public String dumpCounters();
+  String dumpCounters();
 
-  public OProfilerEntry getChrono(String string);
+  OProfilerEntry getChrono(String string);
 
-  public long startChrono();
+  long startChrono();
 
-  public long stopChrono(String iName, String iDescription, long iStartTime);
+  long stopChrono(String iName, String iDescription, long iStartTime);
 
-  public long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary);
+  long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary);
 
-  public long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload);
+  long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload);
 
-  public long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload, String user);
+  long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload, String user);
 
-  public String dumpChronos();
+  String dumpChronos();
 
-  public String[] getCountersAsString();
+  String[] getCountersAsString();
 
-  public String[] getChronosAsString();
+  String[] getChronosAsString();
 
-  public Date getLastReset();
+  Date getLastReset();
 
-  public boolean isRecording();
+  boolean isRecording();
 
-  public boolean startRecording();
+  boolean startRecording();
 
-  public boolean stopRecording();
+  boolean stopRecording();
 
-  public void unregisterHookValue(String string);
+  void unregisterHookValue(String string);
 
-  public void configure(String string);
+  void configure(String string);
 
-  public void setAutoDump(int iNewValue);
+  void setAutoDump(int iNewValue);
 
-  public String metadataToJSON();
+  String metadataToJSON();
 
-  public Map<String, OPair<String, METRIC_TYPE>> getMetadata();
+  Map<String, OPair<String, METRIC_TYPE>> getMetadata();
 
-  public void registerHookValue(String iName, String iDescription, METRIC_TYPE iType, OProfilerHookValue iHookValue);
+  void registerHookValue(String iName, String iDescription, METRIC_TYPE iType, OProfilerHookValue iHookValue);
 
-  public void registerHookValue(String iName, String iDescription, METRIC_TYPE iType, OProfilerHookValue iHookValue,
-      String iMetadataName);
+  void registerHookValue(String iName, String iDescription, METRIC_TYPE iType, OProfilerHookValue iHookValue, String iMetadataName);
 
-  public String getSystemMetric(String iMetricName);
+  String getSystemMetric(String iMetricName);
 
-  public String getProcessMetric(String iName);
+  String getProcessMetric(String iName);
 
-  public String getDatabaseMetric(String databaseName, String iName);
+  String getDatabaseMetric(String databaseName, String iName);
 
-  public String toJSON(String command, String iPar1);
+  String toJSON(String command, String iPar1);
 
-  public void resetRealtime(String iText);
+  void resetRealtime(String iText);
 
-  public void dump(PrintStream out);
+  void dump(PrintStream out);
 
-  public int reportTip(String iMessage);
+  int reportTip(String iMessage);
 }
