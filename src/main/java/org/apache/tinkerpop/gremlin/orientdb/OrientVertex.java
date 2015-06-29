@@ -1,7 +1,10 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
@@ -14,6 +17,8 @@ import org.apache.tinkerpop.gremlin.structure.*;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Stream;
 
 public final class OrientVertex extends OrientElement implements Vertex {
     public static final String CONNECTION_OUT_PREFIX = OrientGraphUtils.CONNECTION_OUT + "_";
@@ -30,10 +35,6 @@ public final class OrientVertex extends OrientElement implements Vertex {
     protected static ODocument createRawElement(OrientGraph graph, String className) {
         graph.createVertexClass(className);
         return new ODocument(className);
-    }
-
-    public Iterator<Edge> edges(final Direction direction, final String... edgeLabels) {
-        throw new NotImplementedException();
     }
 
     public Iterator<Vertex> vertices(final Direction direction, final String... edgeLabels) {
@@ -228,6 +229,181 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
         return out;
     }
+
+    public Iterator<Edge> edges(final Direction direction, String... edgeLabels) {
+        final ODocument doc = getRawDocument();
+
+//        edgeLabels = OrientGraphUtils.getEdgeClassNames(graph, edgeLabels);
+//        edgeLabels = (String[]) Stream.of(edgeLabels).map(OrientGraphUtils::encodeClassName).toArray();
+
+        final OMultiCollectionIterator<Edge> iterable = new OMultiCollectionIterator<Edge>().setEmbedded(true);
+        for (String fieldName : doc.fieldNames()) {
+            final OPair<Direction, String> connection = getConnection(direction, fieldName, edgeLabels);
+            if (connection == null)
+                // SKIP THIS FIELD
+                continue;
+
+            final Object fieldValue = doc.field(fieldName);
+            if (fieldValue != null) {
+                final OrientVertex iDestination = null;
+                final OIdentifiable destinationVId = null;
+
+                if (fieldValue instanceof OIdentifiable) {
+                    addSingleEdge(doc, iterable, fieldName, connection, fieldValue, destinationVId, edgeLabels);
+
+                } else if (fieldValue instanceof Collection<?>) {
+                    Collection<?> coll = (Collection<?>) fieldValue;
+
+                    if (coll.size() == 1) {
+                        // SINGLE ITEM: AVOID CALLING ITERATOR
+                        if (coll instanceof ORecordLazyMultiValue)
+                            addSingleEdge(doc, iterable, fieldName, connection, ((ORecordLazyMultiValue) coll).rawIterator().next(), destinationVId, edgeLabels);
+                        else if (coll instanceof List<?>)
+                            addSingleEdge(doc, iterable, fieldName, connection, ((List<?>) coll).get(0), destinationVId, edgeLabels);
+                        else
+                            addSingleEdge(doc, iterable, fieldName, connection, coll.iterator().next(), destinationVId, edgeLabels);
+                    } else {
+                        // CREATE LAZY Iterable AGAINST COLLECTION FIELD
+                        if (coll instanceof ORecordLazyMultiValue) {
+                            iterable.add(new OrientEdgeIterator(this, iDestination, ((ORecordLazyMultiValue) coll).rawIterator(), connection, edgeLabels, ((ORecordLazyMultiValue) coll).size()));
+                        } else
+                            iterable.add(new OrientEdgeIterator(this, iDestination, coll.iterator(), connection, edgeLabels, -1));
+                    }
+                } else if (fieldValue instanceof ORidBag) {
+                    iterable.add(new OrientEdgeIterator(this, iDestination, ((ORidBag) fieldValue).rawIterator(), connection, edgeLabels, ((ORidBag) fieldValue).size()));
+                }
+            }
+        }
+        return iterable;
+    }
+
+    /**
+     * Determines if a field is a connections or not.
+     *
+     * @param iDirection  Direction to check
+     * @param iFieldName  Field name
+     * @param iClassNames Optional array of class names
+     * @return The found direction if any
+     */
+    protected OPair<Direction, String> getConnection(final Direction iDirection, final String iFieldName, String... iClassNames) {
+        if (iClassNames != null && iClassNames.length == 1 && iClassNames[0].equalsIgnoreCase("E"))
+            // DEFAULT CLASS, TREAT IT AS NO CLASS/LABEL
+            iClassNames = null;
+
+        if (iDirection == Direction.OUT || iDirection == Direction.BOTH) {
+            // FIELDS THAT STARTS WITH "out_"
+            if (iFieldName.startsWith(CONNECTION_OUT_PREFIX)) {
+                if (iClassNames == null || iClassNames.length == 0)
+                    return new OPair<Direction, String>(Direction.OUT, getConnectionClass(Direction.OUT, iFieldName));
+
+                // CHECK AGAINST ALL THE CLASS NAMES
+                for (String clsName : iClassNames) {
+                    clsName = OrientGraphUtils.encodeClassName(clsName);
+
+                    if (iFieldName.equals(CONNECTION_OUT_PREFIX + clsName))
+                        return new OPair<Direction, String>(Direction.OUT, clsName);
+
+                    // GO DOWN THROUGH THE INHERITANCE TREE
+                    OrientEdgeType type = graph.getEdgeType(clsName);
+                    if (type != null) {
+                        for (OClass subType : type.getAllSubclasses()) {
+                            clsName = subType.getName();
+
+                            if (iFieldName.equals(CONNECTION_OUT_PREFIX + clsName))
+                                return new OPair<Direction, String>(Direction.OUT, clsName);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (iDirection == Direction.IN || iDirection == Direction.BOTH) {
+            // FIELDS THAT STARTS WITH "in_"
+            if (iFieldName.startsWith(CONNECTION_IN_PREFIX)) {
+                if (iClassNames == null || iClassNames.length == 0)
+                    return new OPair<Direction, String>(Direction.IN, getConnectionClass(Direction.IN, iFieldName));
+
+                // CHECK AGAINST ALL THE CLASS NAMES
+                for (String clsName : iClassNames) {
+
+                    if (iFieldName.equals(CONNECTION_IN_PREFIX + clsName))
+                        return new OPair<Direction, String>(Direction.IN, clsName);
+
+                    // GO DOWN THROUGH THE INHERITANCE TREE
+                    OrientEdgeType type = graph.getEdgeType(clsName);
+                    if (type != null) {
+                        for (OClass subType : type.getAllSubclasses()) {
+                            clsName = subType.getName();
+
+                            if (iFieldName.equals(CONNECTION_IN_PREFIX + clsName))
+                                return new OPair<Direction, String>(Direction.IN, clsName);
+                        }
+                    }
+                }
+            }
+        }
+
+        // NOT FOUND
+        return null;
+    }
+
+    /**
+     * Used to extract the class name from the vertex's field.
+     *
+     * @param iDirection Direction of connection
+     * @param iFieldName Full field name
+     * @return Class of the connection if any
+     */
+    public String getConnectionClass(final Direction iDirection, final String iFieldName) {
+        if (iDirection == Direction.OUT) {
+            if (iFieldName.length()>CONNECTION_OUT_PREFIX.length())
+                return iFieldName.substring(CONNECTION_OUT_PREFIX.length());
+        } else if (iDirection == Direction.IN) {
+            if (iFieldName.length()>CONNECTION_IN_PREFIX.length())
+                return iFieldName.substring(CONNECTION_IN_PREFIX.length());
+        }
+        return OrientEdgeType.CLASS_NAME;
+    }
+
+    protected void addSingleEdge(final ODocument doc, final OMultiCollectionIterator<Edge> iterable, String fieldName, final OPair<Direction, String> connection, final Object fieldValue, final OIdentifiable iTargetVertex, final String[] iLabels) {
+        final OrientEdge toAdd = getEdge(graph, doc, fieldName, connection, fieldValue, iTargetVertex, iLabels);
+        iterable.add(toAdd);
+    }
+
+    protected static OrientEdge getEdge(final OrientGraph graph, final ODocument doc, String fieldName, final OPair<Direction, String> connection, final Object fieldValue, final OIdentifiable iTargetVertex, final String[] iLabels) {
+        final OrientEdge toAdd;
+
+        final ODocument fieldRecord = ((OIdentifiable) fieldValue).getRecord();
+        if (fieldRecord == null)
+            return null;
+
+        OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(fieldRecord);
+        if (immutableClass.isVertexType()) {
+            if (iTargetVertex != null && !iTargetVertex.equals(fieldValue))
+                return null;
+
+            // DIRECT VERTEX, CREATE A DUMMY EDGE BETWEEN VERTICES
+            if (connection.getKey() == Direction.OUT)
+                toAdd = new OrientEdge(graph, doc, fieldRecord, connection.getValue());
+            else
+                toAdd = new OrientEdge(graph, fieldRecord, doc, connection.getValue());
+
+        } else if (immutableClass.isEdgeType()) {
+            // EDGE
+            if (iTargetVertex != null) {
+                Object targetVertex = OrientEdge.getConnection(fieldRecord, connection.getKey().opposite());
+
+                if (!iTargetVertex.equals(targetVertex))
+                    return null;
+            }
+
+            toAdd = new OrientEdge(graph, fieldRecord);
+        } else
+            throw new IllegalStateException("Invalid content found in " + fieldName + " field: " + fieldRecord);
+
+        return toAdd;
+    }
+
 
 
 }

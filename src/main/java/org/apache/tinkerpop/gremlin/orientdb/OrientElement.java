@@ -68,4 +68,12 @@ public class OrientElement implements Element {
             rawElement = new ODocument(rawElement.getIdentity());
         return (ODocument) rawElement;
     }
+
+    public OrientGraph getGraph() {
+        return graph;
+    }
+
+    public OIdentifiable getRawElement() {
+        return rawElement;
+    }
 }

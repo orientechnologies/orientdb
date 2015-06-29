@@ -38,4 +38,14 @@ public class OrientGraphUtils {
         }
     }
 
+//    public static void getEdgeClassNames(final OrientGraph graph, final String... iLabels) {
+//        for (int i = 0; i < iLabels.length; ++i) {
+//            final OrientEdgeType edgeType = graph.getEdgeType(iLabels[i]);
+//            if (edgeType != null)
+//                // OVERWRITE CLASS NAME BECAUSE ATTRIBUTES ARE CASE SENSITIVE
+//                iLabels[i] = edgeType.getName();
+//        }
+//    }
+
+
 }

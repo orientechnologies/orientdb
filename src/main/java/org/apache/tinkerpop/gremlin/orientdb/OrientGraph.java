@@ -162,4 +162,21 @@ public final class OrientGraph implements Graph {
         return database;
     }
 
+
+    /**
+     * Returns the persistent class for type iTypeName as OrientEdgeType instance.
+     *
+     * @param iTypeName
+     *          Edge class name
+     */
+    public final OrientEdgeType getEdgeType(final String iTypeName) {
+        final OClass cls = getRawDatabase().getMetadata().getSchema().getClass(iTypeName);
+        if (cls == null)
+            return null;
+
+        OrientEdgeType.checkType(cls);
+        return new OrientEdgeType(this, cls);
+    }
+
+
 }
