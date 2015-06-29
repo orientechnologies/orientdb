@@ -1847,12 +1847,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  private ORawBuffer doReadRecord(OCluster clusterSegment, ORecordId rid) {
+  private ORawBuffer doReadRecord(final OCluster clusterSegment, final ORecordId rid) {
     try {
       ORawBuffer buff;
       buff = clusterSegment.readRecord(rid.clusterPosition);
 
-      if (OLogManager.instance().isDebugEnabled())
+      if (buff != null && OLogManager.instance().isDebugEnabled())
         OLogManager.instance().debug(this, "Read record %s v.%s size=%d bytes", rid, buff.version,
             buff.buffer != null ? buff.buffer.length : 0);
 
@@ -1862,7 +1862,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  private ORawBuffer doReadRecordIfNotLatest(OCluster cluster, ORecordId rid, ORecordVersion recordVersion)
+  private ORawBuffer doReadRecordIfNotLatest(final OCluster cluster, final ORecordId rid, final ORecordVersion recordVersion)
       throws ORecordNotFoundException {
     try {
       return cluster.readRecordIfVersionIsNotLatest(rid.clusterPosition, recordVersion);
