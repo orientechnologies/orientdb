@@ -44,7 +44,7 @@ public class IndexCrashRestoreMultiValue {
 
   @BeforeClass
   public void beforeClass() throws Exception {
-		OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+    OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(1000000);
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
     OGlobalConfiguration.FILE_LOCK.setValue(false);
 
@@ -71,11 +71,14 @@ public class IndexCrashRestoreMultiValue {
 
   @AfterClass
   public void afterClass() {
-    testDocumentTx.drop();
-    baseDocumentTx.drop();
-
-    Assert.assertTrue(new File(buildDir, "plugins").delete());
-    Assert.assertTrue(buildDir.delete());
+    // ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
+    // testDocumentTx.drop();
+    //
+    // ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+    // baseDocumentTx.drop();
+    //
+    // Assert.assertTrue(new File(buildDir, "plugins").delete());
+    // Assert.assertTrue(buildDir.delete());
   }
 
   @BeforeMethod
@@ -95,7 +98,7 @@ public class IndexCrashRestoreMultiValue {
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
-		  OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+      OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(100000000);
 
       OServer server = OServerMain.create();
       server
@@ -122,7 +125,7 @@ public class IndexCrashRestoreMultiValue {
     Thread.sleep(300000);
 
     System.out.println("Wait for process to destroy");
-    // process.destroyForcibly();
+    process.destroyForcibly();
 
     process.waitFor();
     System.out.println("Process was destroyed");
@@ -237,10 +240,21 @@ public class IndexCrashRestoreMultiValue {
           }
 
         }
+      } catch (Exception e) {
+
       } finally {
-        baseDB.close();
-        testDB.close();
+        try {
+          baseDB.close();
+        } catch (Exception e) {
+        }
+
+        try {
+          testDB.close();
+        } catch (Exception e) {
+        }
       }
+
+      return null;
     }
   }
 }

@@ -45,31 +45,31 @@ import java.util.concurrent.locks.Lock;
  * @since 7/24/13
  */
 public class O2QCache implements OReadCache {
-  public static final int                             MIN_CACHE_SIZE             = 256;
+  public static final int                              MIN_CACHE_SIZE             = 256;
 
-  private static final int                            MAX_CACHE_OVERFLOW         = Runtime.getRuntime().availableProcessors() * 8;
+  private static final int                             MAX_CACHE_OVERFLOW         = Runtime.getRuntime().availableProcessors() * 8;
 
-  private final int                                   maxSize;
-  private final int                                   K_IN;
-  private final int                                   K_OUT;
+  private final int                                    maxSize;
+  private final int                                    K_IN;
+  private final int                                    K_OUT;
 
-  private final LRUList                               am;
-  private final LRUList                               a1out;
-  private final LRUList                               a1in;
+  private final LRUList                                am;
+  private final LRUList                                a1out;
+  private final LRUList                                a1in;
 
-  private final int                                   pageSize;
+  private final int                                    pageSize;
 
   /**
    * Contains all pages in cache for given file.
    */
-  private final ConcurrentMap<Long, Set<Long>>        filePages;
+  private final ConcurrentMap<Long, Set<Long>>         filePages;
 
-  private final OReadersWriterSpinLock                cacheLock                  = new OReadersWriterSpinLock();
-  private final ONewLockManager                       fileLockManager            = new ONewLockManager(true);
-  private final ONewLockManager<PageKey>              pageLockManager            = new ONewLockManager<PageKey>();
-  private final NavigableMap<PinnedPage, OCacheEntry> pinnedPages                = new ConcurrentSkipListMap<PinnedPage, OCacheEntry>();
+  private final OReadersWriterSpinLock                 cacheLock                  = new OReadersWriterSpinLock();
+  private final ONewLockManager                        fileLockManager            = new ONewLockManager(true);
+  private final ONewLockManager<PageKey>               pageLockManager            = new ONewLockManager<PageKey>();
+  private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages                = new ConcurrentHashMap<PinnedPage, OCacheEntry>();
 
-  private final AtomicBoolean                         coldPagesRemovalInProgress = new AtomicBoolean();
+  private final AtomicBoolean                          coldPagesRemovalInProgress = new AtomicBoolean();
 
   public O2QCache(final long readCacheMaxMemory, final int pageSize, final boolean checkMinSize) {
     cacheLock.acquireWriteLock();

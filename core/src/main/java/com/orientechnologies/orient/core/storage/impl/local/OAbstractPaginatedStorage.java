@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -86,20 +87,19 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import javax.swing.text.DateFormatter;
+import java.io.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin
@@ -303,7 +303,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       makeStorageDirty();
 
-      atomicOperationsManager.startAtomicOperation(null);
+      atomicOperationsManager.startAtomicOperation((String) null);
     } finally {
       lock.releaseSharedLock();
     }
@@ -1613,7 +1613,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     transaction.set(new OStorageTransaction(clientTx));
     try {
-      atomicOperationsManager.startAtomicOperation(null);
+      atomicOperationsManager.startAtomicOperation((String) null);
     } catch (RuntimeException e) {
       transaction.set(null);
       throw e;
@@ -1655,7 +1655,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         recordVersion = OVersionFactory.instance().createVersion();
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation(null);
+      atomicOperationsManager.startAtomicOperation((String) null);
       try {
         ppos = cluster.createRecord(content, recordVersion, recordType);
         rid.clusterPosition = ppos.clusterPosition;
@@ -1723,7 +1723,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation(null);
+      atomicOperationsManager.startAtomicOperation((String) null);
       try {
         if (updateContent)
           cluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
@@ -1778,7 +1778,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation(null);
+      atomicOperationsManager.startAtomicOperation((String) null);
       try {
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
@@ -1808,7 +1808,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         return new OStorageOperationResult<Boolean>(false);
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation(null);
+      atomicOperationsManager.startAtomicOperation((String) null);
       try {
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
@@ -2391,18 +2391,97 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         recordsProcessed++;
 
-        if (reportInterval > 0 && recordsProcessed % reportInterval == 0)
+        if (reportInterval > 0 && recordsProcessed % reportInterval == 0) {
           OLogManager.instance().info(this, "%d operations were processed, current LSN is %s last LSN is %s", recordsProcessed,
               lsn, writeAheadLog.end());
 
+          // throw new Exception("test");
+        }
+
         lsn = writeAheadLog.next(lsn);
       }
-    } catch (Exception e) {
+    } catch (OWALPageBrokenException e) {
       OLogManager.instance().error(this,
           "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.");
+    } catch (Exception e) {
+      OLogManager
+          .instance()
+          .error(
+              this,
+              "Data restore was paused because of exception. The rest of changes will be rolled back and WAL files will be backed up."
+                  + " Please report issue about this exception to bug tracker and provide WAL files which are backed up in 'wal_backup' directory.");
+      backUpWAL(e);
     }
 
     return atLeastOnePageUpdate.getValue();
+  }
+
+  private void backUpWAL(Exception e) {
+    try {
+      final File rootDir = new File(configuration.getDirectory());
+      final File backUpDir = new File(rootDir, "wal_backup");
+      if (!backUpDir.exists()) {
+        final boolean created = backUpDir.mkdir();
+        if (!created) {
+          OLogManager.instance().error(this, "Can not create directory for backup files " + backUpDir.getAbsolutePath());
+          return;
+        }
+      }
+
+      final Date date = new Date();
+      final SimpleDateFormat dateFormat = new SimpleDateFormat("dd_MM_yy_HH_mm_ss");
+      final String strDate = dateFormat.format(date);
+      final String archiveName = "wal_backup_" + strDate + ".zip";
+      final String metadataName = "wal_metadata_" + strDate + ".txt";
+
+      final File archiveFile = new File(backUpDir, archiveName);
+      if (!archiveFile.createNewFile()) {
+        OLogManager.instance().error(this, "Can not create backup file " + archiveFile.getAbsolutePath());
+        return;
+      }
+
+      final FileOutputStream archiveOutputStream = new FileOutputStream(archiveFile);
+      final ZipOutputStream archiveZipOutputStream = new ZipOutputStream(archiveOutputStream);
+
+      final ZipEntry metadataEntry = new ZipEntry(metadataName);
+
+      archiveZipOutputStream.putNextEntry(metadataEntry);
+
+      final PrintWriter metadataFileWriter = new PrintWriter(archiveZipOutputStream);
+      metadataFileWriter.append("Storage name : ").append(getName()).append("\n");
+      metadataFileWriter.append("Date : ").append(strDate).append("\n");
+      metadataFileWriter.append("Stacktrace : \n");
+      e.printStackTrace(metadataFileWriter);
+      metadataFileWriter.flush();
+      archiveZipOutputStream.closeEntry();
+
+      final List<String> walPaths = ((ODiskWriteAheadLog) writeAheadLog).getFiles();
+      for (String walSegment : walPaths) {
+        final File walFile = new File(walSegment);
+        final ZipEntry walZipEntry = new ZipEntry(walFile.getName());
+        archiveZipOutputStream.putNextEntry(walZipEntry);
+
+        final FileInputStream walInputStream = new FileInputStream(walFile);
+        final BufferedInputStream walBufferedInputStream = new BufferedInputStream(walInputStream);
+        final BufferedOutputStream walBufferedOutputStream = new BufferedOutputStream(archiveOutputStream);
+
+        final byte[] buffer = new byte[1024];
+        int readBytes = 0;
+
+        while ((readBytes = walBufferedInputStream.read(buffer)) > -1) {
+          walBufferedOutputStream.write(buffer, 0, readBytes);
+        }
+
+        walInputStream.close();
+        walBufferedOutputStream.flush();
+        archiveZipOutputStream.closeEntry();
+      }
+
+      archiveZipOutputStream.close();
+    } catch (Exception ioe) {
+      OLogManager.instance().error(this, "Error during WAL backup.", ioe);
+    }
+
   }
 
   protected void restoreAtomicUnit(List<OWALRecord> atomicUnit, OModifiableBoolean atLeastOnePageUpdate) throws IOException {

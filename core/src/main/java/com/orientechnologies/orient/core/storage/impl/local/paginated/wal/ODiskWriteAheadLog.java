@@ -923,6 +923,20 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
+  public List<String> getFiles() {
+    final ArrayList<String> result = new ArrayList<String>();
+    syncObject.lock();
+    try {
+      for (LogSegment segment : logSegments) {
+        result.add(segment.getPath());
+      }
+    } finally {
+      syncObject.unlock();
+    }
+
+    return result;
+  }
+
   public void truncate() throws IOException {
     syncObject.lock();
     try {
