@@ -18,11 +18,13 @@ import org.apache.tinkerpop.gremlin.structure.*;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 public final class OrientVertex extends OrientElement implements Vertex {
     public static final String CONNECTION_OUT_PREFIX = OrientGraphUtils.CONNECTION_OUT + "_";
     public static final String CONNECTION_IN_PREFIX  = OrientGraphUtils.CONNECTION_IN + "_";
+    protected Logger log = Logger.getLogger(getClass().getSimpleName());
 
     public OrientVertex(final OrientGraph graph, final OIdentifiable rawElement) {
         super(graph, rawElement);
@@ -37,8 +39,50 @@ public final class OrientVertex extends OrientElement implements Vertex {
         return new ODocument(className);
     }
 
-    public Iterator<Vertex> vertices(final Direction direction, final String... edgeLabels) {
-        throw new NotImplementedException();
+    public Iterator<Vertex> vertices(final Direction direction, final String... labels) {
+//        OrientGraphUtils.getEdgeClassNames(getGraph(), labels);
+//        labels = (String[]) Stream.of(labels).map(OrientGraphUtils::encodeClassName).toArray();
+
+        final ODocument doc = getRawDocument();
+
+        final OMultiCollectionIterator<Vertex> iterable = new OMultiCollectionIterator<>();
+        for (String fieldName : doc.fieldNames()) {
+            final OPair<Direction, String> connection = getConnection(direction, fieldName, labels);
+            if (connection == null)
+                // SKIP THIS FIELD
+                continue;
+
+            final Object fieldValue = doc.field(fieldName);
+            if (fieldValue != null)
+                if (fieldValue instanceof OIdentifiable) {
+                    addSingleVertex(doc, iterable, fieldName, connection, fieldValue, labels);
+
+                } else if (fieldValue instanceof Collection<?>) {
+                    Collection<?> coll = (Collection<?>) fieldValue;
+
+                    if (coll.size() == 1) {
+                        // SINGLE ITEM: AVOID CALLING ITERATOR
+                        if (coll instanceof ORecordLazyMultiValue)
+                            addSingleVertex(doc, iterable, fieldName, connection, ((ORecordLazyMultiValue) coll).rawIterator().next(), labels);
+                        else if (coll instanceof List<?>)
+                            addSingleVertex(doc, iterable, fieldName, connection, ((List<?>) coll).get(0), labels);
+                        else
+                            addSingleVertex(doc, iterable, fieldName, connection, coll.iterator().next(), labels);
+                    } else {
+                        // CREATE LAZY Iterable AGAINST COLLECTION FIELD
+                        if (coll instanceof ORecordLazyMultiValue)
+                            iterable.add(new OrientVertexIterator(this, ((ORecordLazyMultiValue) coll).rawIterator(), connection, labels, ((ORecordLazyMultiValue) coll).size()));
+                        else
+                            iterable.add(new OrientVertexIterator(this, coll.iterator(), connection, labels, -1));
+                    }
+                } else if (fieldValue instanceof ORidBag) {
+                    iterable.add(new OrientVertexIterator(this, ((ORidBag) fieldValue).rawIterator(), connection, labels, -1));
+                }
+        }
+
+        return iterable;
+
+
     }
 
     public <V> Iterator<VertexProperty<V>> properties(final String... propertyKeys) {
@@ -401,6 +445,37 @@ public final class OrientVertex extends OrientElement implements Vertex {
         return toAdd;
     }
 
+
+    private void addSingleVertex(final ODocument doc, final OMultiCollectionIterator<Vertex> iterable, String fieldName, final OPair<Direction, String> connection, final Object fieldValue, final String[] iLabels) {
+        final OrientVertex toAdd;
+
+        final ODocument fieldRecord = ((OIdentifiable) fieldValue).getRecord();
+        OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(fieldRecord);
+        if (immutableClass.isVertexType()) {
+            // DIRECT VERTEX
+            toAdd = new OrientVertex(graph, fieldRecord);
+        } else if (immutableClass.isEdgeType()) {
+            // EDGE
+//            if (settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(fieldRecord), iLabels)) {
+                final OIdentifiable vertexDoc = OrientEdge.getConnection(fieldRecord, connection.getKey().opposite());
+                if (vertexDoc == null) {
+                    fieldRecord.reload();
+                    if (vertexDoc == null) {
+                        log.warning("Cannot load edge " + fieldRecord + " to get the " + connection.getKey().opposite() + " vertex");
+                        return;
+                    }
+                }
+
+                toAdd = new OrientVertex(graph, vertexDoc);
+//            } else
+//                toAdd = null;
+        } else
+            throw new IllegalStateException("Invalid content found in " + fieldName + " field: " + fieldRecord);
+
+        if (toAdd != null)
+            // ADD THE VERTEX
+            iterable.add(toAdd);
+    }
 
 
 }
