@@ -223,12 +223,18 @@ public class OConcurrentResultSet<T> implements OResultSet<T> {
 
   @Override
   public Object[] toArray() {
-    throw new UnsupportedOperationException();
+    waitForCompletion();
+    synchronized (wrapped) {
+      return wrapped.toArray();
+    }
   }
 
   @Override
   public <T1> T1[] toArray(T1[] a) {
-    throw new UnsupportedOperationException();
+    waitForCompletion();
+    synchronized (wrapped) {
+      return wrapped.toArray(a);
+    }
   }
 
   public boolean add(final T t) {
