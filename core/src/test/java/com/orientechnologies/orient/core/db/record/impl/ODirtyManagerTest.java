@@ -12,6 +12,8 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -163,7 +165,7 @@ public class ODirtyManagerTest {
   }
 
   @Test
-  public void testRidBagOther() {
+  public void testRidBag() {
     ODocument doc = new ODocument();
     doc.field("test", "ddd");
     ORidBag bag = new ORidBag();
@@ -269,9 +271,69 @@ public class ODirtyManagerTest {
     ODocument link = new ODocument();
     embeddedInList.field("link", link);
     lst.add(embeddedInList);
-    Map<String, Object> set = new HashMap<String, Object>();
-    set.put("some", lst);
-    doc.field("set", set, OType.EMBEDDEDMAP);
+    Map<String, Object> map = new HashMap<String, Object>();
+    map.put("some", lst);
+    doc.field("set", map, OType.EMBEDDEDMAP);
+    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
+    ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
+    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(1, manager.getPointed(doc).size());
+    assertTrue(manager.getPointed(doc).contains(link));
+  }
+
+  @Test
+  public void testLinkSet() {
+    ODocument doc = new ODocument();
+    doc.field("test", "ddd");
+    Set<ODocument> set = new HashSet<ODocument>();
+    ODocument link = new ODocument();
+    set.add(link);
+    doc.field("set", set);
+    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
+    ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
+    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(1, manager.getPointed(doc).size());
+    assertTrue(manager.getPointed(doc).contains(link));
+  }
+
+  @Test
+  public void testLinkSetNoConvert() {
+    ODocument doc = new ODocument();
+    doc.field("test", "ddd");
+    Set<OIdentifiable> set = new ORecordLazySet(doc);
+    ODocument link = new ODocument();
+    set.add(link);
+    doc.field("set", set);
+    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
+    ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
+    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(1, manager.getPointed(doc).size());
+    assertTrue(manager.getPointed(doc).contains(link));
+  }
+
+  @Test
+  public void testLinkList() {
+    ODocument doc = new ODocument();
+    doc.field("test", "ddd");
+    List<ODocument> list = new ArrayList<ODocument>();
+    ODocument link = new ODocument();
+    list.add(link);
+    doc.field("list", list);
+    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
+    ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
+    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(1, manager.getPointed(doc).size());
+    assertTrue(manager.getPointed(doc).contains(link));
+  }
+
+  @Test
+  public void testLinkMap() {
+    ODocument doc = new ODocument();
+    doc.field("test", "ddd");
+    Map<String, ODocument> map = new HashMap<String, ODocument>();
+    ODocument link = new ODocument();
+    map.put("bla", link);
+    doc.field("map", map);
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
     assertEquals(2, manager.getNewRecord().size());

@@ -65,6 +65,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.xml.validation.Schema;
+
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static AtomicInteger txSerial = new AtomicInteger();
 
@@ -367,19 +369,41 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     dirtyManager.cleanForSave();
     if (newRecord != null) {
       for (ORecord rec : newRecord) {
-        addRecord(rec, ORecordOperation.CREATED, null);
+        addRecord(rec, ORecordOperation.CREATED, getClusterName(rec));
       }
     }
     if (updatedRecord != null) {
       for (ORecord rec : updatedRecord) {
-        addRecord(rec, ORecordOperation.UPDATED, null);
+        addRecord(rec, ORecordOperation.UPDATED, getClusterName(rec));
       }
     }
-    
+
     final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED
         : ORecordOperation.CREATED;
     addRecord(iRecord, operation, iClusterName);
     return iRecord;
+  }
+
+  private String getClusterName(ORecord record) {
+    int clusterId = record.getIdentity().getClusterId();
+    if (clusterId == ORID.CLUSTER_ID_INVALID) {
+      // COMPUTE THE CLUSTER ID
+      OClass schemaClass = null;
+      if (record instanceof ODocument)
+        schemaClass = ODocumentInternal.getImmutableSchemaClass((ODocument) record);
+      if (schemaClass != null) {
+        // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
+        if (schemaClass.isAbstract())
+          throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
+        clusterId = schemaClass.getClusterForNewInstance((ODocument) record);
+        return database.getClusterNameById(clusterId);
+      } else {
+        return database.getClusterNameById(database.getStorage().getDefaultClusterId());
+      }
+
+    } else {
+      return database.getClusterNameById(clusterId);
+    }
   }
 
   @Override

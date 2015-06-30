@@ -61,6 +61,7 @@ import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketP
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
@@ -541,6 +542,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
 
     this.owner = owner;
+    if (this.owner != null) {
+      for (OIdentifiable entry : newEntries.keySet()) {
+        ORecordInternal.track(this.owner, entry);
+      }
+    }
   }
 
   public Iterator<OIdentifiable> iterator() {

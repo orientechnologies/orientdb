@@ -75,7 +75,7 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OReset
       try {
         final ORecord rec = ((ORecordId) value).getRecord();
         if (sourceRecord != null)
-          ORecordInternal.setDirtyManager(rec, ORecordInternal.getDirtyManager(sourceRecord));
+          ORecordInternal.track(sourceRecord, rec);
         if (underlying instanceof OLazyIterator<?>)
           ((OLazyIterator<OIdentifiable>) underlying).update(rec);
         value = rec;

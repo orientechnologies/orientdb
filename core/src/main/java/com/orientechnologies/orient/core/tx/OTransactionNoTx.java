@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -198,13 +199,13 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   public void saveNew(ODocument document, ODirtyManager manager) {
+    List<ODocument> toResave = new ArrayList<ODocument>();
     LinkedList<ODocument> path = new LinkedList<ODocument>();
     ORecord next = document;
     do {
       if (next instanceof ODocument) {
-        path.push((ODocument) next);
         ORecord nextToInspect = null;
-        List<OIdentifiable> toSave = manager.getPointed(document);
+        List<OIdentifiable> toSave = manager.getPointed(next);
         if (toSave != null) {
           for (OIdentifiable oIdentifiable : toSave) {
             if (oIdentifiable.getIdentity().isNew()) {
@@ -222,15 +223,15 @@ public class OTransactionNoTx extends OTransactionAbstract {
             OSerializationSetThreadLocal.checkAndAdd((ODocument) nextToInspect);
             database.executeSaveRecord(nextToInspect, null, nextToInspect.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS,
                 false, null, null);
-            // path.
-            path.pollFirst();
-            next = path.pollFirst();
-          } else
+            OSerializationSetThreadLocal.removeCheck((ODocument) nextToInspect);
+            toResave.add((ODocument) nextToInspect);
+          } else {
+            path.push((ODocument) next);
             next = nextToInspect;
+          }
         } else {
           // this is wrong, here we go a real save
           database.executeSaveRecord(next, null, next.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null, null);
-          path.pollFirst();
           next = path.pollFirst();
         }
 
@@ -240,6 +241,10 @@ public class OTransactionNoTx extends OTransactionAbstract {
         next = path.pollFirst();
       }
     } while (next != null);
+    for (ODocument op : toResave) {
+      op.setDirty();
+      database.executeSaveRecord(op, null, op.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+    }
   }
 
   @Override

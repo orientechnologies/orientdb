@@ -1,11 +1,11 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -15,10 +15,10 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 
 public class ODirtyManager {
 
-  private ODirtyManager                           overrider;
-  private Map<OIdentifiable, List<OIdentifiable>> references;
-  private Set<ORecord>                            newRecord;
-  private Set<ORecord>                            updateRecord;
+  private ODirtyManager                       overrider;
+  private Map<ODocument, List<OIdentifiable>> references;
+  private Set<ORecord>                        newRecord;
+  private Set<ORecord>                        updateRecord;
 
   public void setDirty(ORecord record) {
     if (overrider != null)
@@ -26,11 +26,11 @@ public class ODirtyManager {
     else {
       if (record.getIdentity().isNew()) {
         if (newRecord == null)
-          newRecord = new HashSet<ORecord>();
+          newRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
         newRecord.add(record);
       } else {
         if (updateRecord == null)
-          updateRecord = new HashSet<ORecord>();
+          updateRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
         updateRecord.add(record);
       }
     }
@@ -48,7 +48,7 @@ public class ODirtyManager {
     return updateRecord;
   }
 
-  public Map<OIdentifiable, List<OIdentifiable>> getReferences() {
+  public Map<ODocument, List<OIdentifiable>> getReferences() {
     if (overrider != null)
       return overrider.getReferences();
     return references;
@@ -65,18 +65,24 @@ public class ODirtyManager {
       return;
     if (toMerge.getNewRecord() != null) {
       if (newRecord == null)
-        newRecord = new HashSet<ORecord>();
+        newRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
       this.newRecord.addAll(toMerge.getNewRecord());
     }
     if (toMerge.getUpdateRecord() != null) {
       if (updateRecord == null)
-        updateRecord = new HashSet<ORecord>();
+        updateRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
       this.updateRecord.addAll(toMerge.getUpdateRecord());
     }
     if (toMerge.getReferences() != null) {
       if (references == null)
-        references = new HashMap<OIdentifiable, List<OIdentifiable>>();
-      this.references.putAll(toMerge.getReferences());
+        references = new IdentityHashMap<ODocument, List<OIdentifiable>>();
+      for (Entry<ODocument, List<OIdentifiable>> entry : toMerge.getReferences().entrySet()) {
+        List<OIdentifiable> refs = references.get(entry.getKey());
+        if (refs == null)
+          references.put(entry.getKey(), entry.getValue());
+        else
+          refs.addAll(entry.getValue());
+      }
     }
     toMerge.override(this);
   }
@@ -98,24 +104,24 @@ public class ODirtyManager {
     if (pointed.getIdentity().isNew() && pointing.getIdentity().isNew()) {
       if (!(pointed instanceof ODocument) || !((ODocument) pointed).isEmbedded()) {
         if (references == null) {
-          references = new IdentityHashMap<OIdentifiable, List<OIdentifiable>>();
+          references = new IdentityHashMap<ODocument, List<OIdentifiable>>();
         }
         List<OIdentifiable> refs = references.get(pointing);
         if (refs == null) {
           refs = new ArrayList<OIdentifiable>();
-          references.put(pointing, refs);
+          references.put((ODocument) pointing, refs);
         }
         refs.add(pointed);
       } else if (pointed instanceof ODocument) {
         List<OIdentifiable> point = ORecordInternal.getDirtyManager((ORecord) pointed).getPointed((ORecord) pointed);
         if (point != null && point.size() > 0) {
           if (references == null) {
-            references = new IdentityHashMap<OIdentifiable, List<OIdentifiable>>();
+            references = new IdentityHashMap<ODocument, List<OIdentifiable>>();
           }
           List<OIdentifiable> refs = references.get(pointing);
           if (refs == null) {
             refs = new ArrayList<OIdentifiable>();
-            references.put(pointing, refs);
+            references.put((ODocument) pointing, refs);
           }
           for (OIdentifiable embPoint : point) {
             refs.add(embPoint);
@@ -134,8 +140,12 @@ public class ODirtyManager {
       return;
     if (this.overrider != null)
       this.overrider.override(oDirtyManager);
-    else
+    else {
       this.overrider = oDirtyManager;
+      this.newRecord = null;
+      this.updateRecord = null;
+      this.references = null;
+    }
   }
 
   public void cleanForSave() {
@@ -144,12 +154,17 @@ public class ODirtyManager {
   }
 
   public List<OIdentifiable> getPointed(ORecord rec) {
+    if (overrider != null)
+      return overrider.getPointed(rec);
+
     if (references == null)
       return null;
     return references.get(rec);
   }
 
   public void removeNew(ODocument oDocument) {
+    if (overrider != null)
+      this.overrider.removeNew(oDocument);
     if (this.newRecord != null)
       this.newRecord.remove(oDocument);
   }

@@ -118,15 +118,17 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   private void addOwnerToEmbeddedDoc(T e) {
     if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid()) {
       ODocumentInternal.addOwner((ODocument) e, this);
-      ORecordInternal.track(sourceRecord, (ODocument) e);
     }
+    if (e instanceof ODocument)
+      ORecordInternal.track(sourceRecord, (ODocument) e);
   }
 
   @Override
   public T remove(int index) {
     final T oldValue = super.remove(index);
-    if (oldValue instanceof ODocument)
+    if (oldValue instanceof ODocument) {
       ODocumentInternal.removeOwner((ODocument) oldValue, this);
+    }
 
     fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, index, null,
         oldValue));
