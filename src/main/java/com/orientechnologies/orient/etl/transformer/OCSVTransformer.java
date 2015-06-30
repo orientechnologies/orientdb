@@ -18,19 +18,18 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
-
-import sun.misc.FloatConsts;
-
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.etl.OETLProcessor;
+import sun.misc.FloatConsts;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OCSVTransformer extends OAbstractTransformer {
   private char         separator          = ',';
@@ -42,6 +41,7 @@ public class OCSVTransformer extends OAbstractTransformer {
   private long         line               = -1;
   private String       nullValue;
   private Character    stringCharacter    = '"';
+  private boolean      unicode            = true;
 
   @Override
   public ODocument getConfiguration() {
@@ -49,7 +49,8 @@ public class OCSVTransformer extends OAbstractTransformer {
         + ",{separator:{optional:true,description:'Column separator'}},"
         + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
         + "{columns:{optional:true,description:'Columns array containing names, and optionally type after :'}},"
-        + "{nullValue:{optional:true,description:'value to consider as NULL. Default is not declared'}},"
+        + "{nullValue:{optional:true,description:'Value to consider as NULL. Default is not declared'}},"
+        + "{unicode:{optional:true,description:'Support unicode values as \\u<code>'}},"
         + "{stringCharacter:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
         + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
         + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}}"
@@ -84,6 +85,8 @@ public class OCSVTransformer extends OAbstractTransformer {
       skipTo = ((Number) iConfiguration.field("skipTo")).longValue();
     if (iConfiguration.containsField("nullValue"))
       nullValue = iConfiguration.field("nullValue");
+    if (iConfiguration.containsField("unicode"))
+      unicode = iConfiguration.field("unicode");
     if (iConfiguration.containsField("stringCharacter")) {
       final String value = iConfiguration.field("stringCharacter").toString();
       if (value.isEmpty())
@@ -106,7 +109,7 @@ public class OCSVTransformer extends OAbstractTransformer {
     log(OETLProcessor.LOG_LEVELS.DEBUG, "parsing=%s", input);
 
     final List<String> fields = OStringSerializerHelper.smartSplit(input.toString(), new char[] { separator }, 0, -1, false, false,
-        false, false);
+        false, false, unicode);
 
     if (!isColumnNamesCorrect(fields))
       return null;
