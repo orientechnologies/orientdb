@@ -38,7 +38,14 @@ import com.orientechnologies.orient.core.serialization.serializer.string.OString
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public abstract class OStringSerializerHelper {
   public static final char   RECORD_SEPARATOR        = ',';
@@ -183,8 +190,15 @@ public abstract class OStringSerializerHelper {
   }
 
   public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
-      final boolean iStringSeparatorExtended, boolean iConsiderBraces, boolean iConsiderSets, boolean considerBags,
-      final char... iJumpChars) {
+      final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
+      final boolean iConsiderBags, final char... iJumpChars) {
+    return smartSplit(iSource, iRecordSeparator, beginIndex, endIndex, iStringSeparatorExtended, iConsiderBraces, iConsiderSets,
+        iConsiderBags, true, iJumpChars);
+  }
+
+  public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
+      final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
+      final boolean iConsiderBags, boolean iUnicode, final char... iJumpChars) {
     final StringBuilder buffer = new StringBuilder(128);
     final ArrayList<String> parts = new ArrayList<String>();
 
@@ -192,7 +206,7 @@ public abstract class OStringSerializerHelper {
       final char[] source = iSource.toCharArray();
 
       while ((beginIndex = parse(source, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended, iConsiderBraces,
-          iConsiderSets, -1, considerBags, iJumpChars)) > -1) {
+          iConsiderSets, -1, iConsiderBags, iUnicode, iJumpChars)) > -1) {
         parts.add(buffer.toString());
         buffer.setLength(0);
       }
@@ -216,7 +230,7 @@ public abstract class OStringSerializerHelper {
       final char[] source = iSource.toCharArray();
 
       while ((beginIndex = parse(source, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended, iConsiderBraces,
-          iConsiderSets, startSeparatorAt, considerBags, iJumpChars)) > -1) {
+          iConsiderSets, startSeparatorAt, considerBags, true, iJumpChars)) > -1) {
 
         if (beginIndex > -1) {
           final char lastSeparator = source[beginIndex - 1];
@@ -260,12 +274,12 @@ public abstract class OStringSerializerHelper {
       final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
       final int iMinPosSeparatorAreValid, boolean considerBags, final char... iJumpChars) {
     return parse(iSource.toCharArray(), iBuffer, beginIndex, endIndex, iSeparator, iStringSeparatorExtended, iConsiderBraces,
-        iConsiderSets, iMinPosSeparatorAreValid, considerBags, iJumpChars);
+        iConsiderSets, iMinPosSeparatorAreValid, considerBags, true, iJumpChars);
   }
 
   public static int parse(final char[] iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
       final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
-      final int iMinPosSeparatorAreValid, boolean considerBags, final char... iJumpChars) {
+      final int iMinPosSeparatorAreValid, boolean considerBags, final boolean iUnicode, final char... iJumpChars) {
     if (beginIndex < 0)
       return beginIndex;
 
@@ -391,7 +405,7 @@ public abstract class OStringSerializerHelper {
       if (c == '\\' && !encodeMode) {
         // ESCAPE CHARS
         final char nextChar = iSource[i + 1];
-        if (nextChar == 'u') {
+        if (nextChar == 'u' && iUnicode) {
           i = OStringParser.readUnicode(iSource, i + 2, iBuffer);
           continue;
         } else if (nextChar == 'n') {
