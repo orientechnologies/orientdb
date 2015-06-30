@@ -19,6 +19,11 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.Serializable;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
@@ -33,11 +38,11 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -48,11 +53,6 @@ import com.orientechnologies.orient.server.distributed.task.OResurrectRecordTask
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
-
-import java.io.Serializable;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -160,14 +160,18 @@ public class ODistributedWorker extends Thread {
           ODistributedAbstractPlugin.REPLICATOR_USER);
       database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
           replicatorUser.password);
-      database.reload();
+
+      // AVOID RELOADING DB INFORMATION BECAUSE OF DEADLOCKS
+      // database.reload();
 
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
       final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
           ODistributedAbstractPlugin.REPLICATOR_USER);
       database.open(replicatorUser.name, replicatorUser.password);
-      database.reload();
+
+      // AVOID RELOADING DB INFORMATION BECAUSE OF DEADLOCKS
+      // database.reload();
     }
   }
 
