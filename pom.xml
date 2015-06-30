@@ -6,12 +6,26 @@
     <artifactId>orientdb-gremlin</artifactId>
     <version>3.0.0.M1</version>
     <name>Apache TinkerPop :: OrientDB Gremlin</name>
+    <description>TinkerPop3 driver for OrientDB</description>
+    <url>https://github.com/mpollmeier/orientdb-gremlin/</url>
+    <developers>
+        <developer>
+            <name>Michael Pollmeier</name>
+            <email>michael@michaelpollmeier.com</email>
+            <url>http://michaelpollmeier.com</url>
+        </developer>
+    </developers>
     <licenses>
         <license>
             <name>Apache 2</name>
             <url>http://www.opensource.org/licenses/Apache-2.0</url>
         </license>
     </licenses>
+    <scm>
+        <connection>scm:git:git@github.com:mpollmeier/orientdb-gremlin.git</connection>
+        <developerConnection>scm:git:git@github.com:mpollmeier/orientdb-gremlin.git</developerConnection>
+        <url>https://github.com/mpollmeier/orientdb-gremlin/</url>
+    </scm>
     <dependencies>
         <dependency>
             <groupId>org.apache.tinkerpop</groupId>
