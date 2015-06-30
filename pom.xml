@@ -6,6 +6,12 @@
     <artifactId>orientdb-gremlin</artifactId>
     <version>3.0.0.M1</version>
     <name>Apache TinkerPop :: OrientDB Gremlin</name>
+    <licenses>
+        <license>
+            <name>Apache 2</name>
+            <url>http://www.opensource.org/licenses/Apache-2.0</url>
+        </license>
+    </licenses>
     <dependencies>
         <dependency>
             <groupId>org.apache.tinkerpop</groupId>
