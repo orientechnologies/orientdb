@@ -20,29 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
@@ -108,6 +85,30 @@ import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin
@@ -1304,17 +1305,36 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         oDatabaseListener.onBeforeCommand(iCommand, executor);
       }
 
+      boolean foundInCache = false;
       Object result = null;
-      if (iCommand.isCacheableResult() && executor.isCacheable())
+      if (iCommand.isCacheableResult() && executor.isCacheable()) {
         // TRY WITH COMMAND CACHE
         result = db.getMetadata().getCommandCache().get(db.getUser(), iCommand.getText(), iCommand.getLimit());
 
-      if (result == null) {
+        if (result != null) {
+          foundInCache = true;
+
+          if (iCommand.getResultListener() != null) {
+            // INVOKE THE LISTENER IF ANY
+            if (result instanceof Collection) {
+              for (Object o : (Collection) result)
+                iCommand.getResultListener().result(o);
+            } else
+              iCommand.getResultListener().result(result);
+
+            // RESET THE RESULT TO AVOID TO SEND IT TWICE
+            result = null;
+          }
+        }
+      }
+
+      if (!foundInCache) {
+        // EXECUTE THE COMMAND
         result = executor.execute(iCommand.getParameters());
 
-        // CACHE THE COMMAND RESULT
         if (result != null && iCommand.isCacheableResult() && executor.isCacheable()
             && (iCommand.getParameters() == null || iCommand.getParameters().isEmpty()))
+          // CACHE THE COMMAND RESULT
           db.getMetadata()
               .getCommandCache()
               .put(db.getUser(), iCommand.getText(), result, iCommand.getLimit(), executor.getInvolvedClusters(),

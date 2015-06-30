@@ -109,17 +109,23 @@ public class OConcurrentResultSet<T> implements OResultSet<T> {
 
   @Override
   public ListIterator<T> listIterator() {
-    throw new UnsupportedOperationException();
+    synchronized (wrapped) {
+      return wrapped.listIterator();
+    }
   }
 
   @Override
   public ListIterator<T> listIterator(int index) {
-    throw new UnsupportedOperationException();
+    synchronized (wrapped) {
+      return wrapped.listIterator(index);
+    }
   }
 
   @Override
   public List<T> subList(int fromIndex, int toIndex) {
-    throw new UnsupportedOperationException();
+    synchronized (wrapped) {
+      return wrapped.subList(fromIndex, toIndex);
+    }
   }
 
   @Override
@@ -329,6 +335,11 @@ public class OConcurrentResultSet<T> implements OResultSet<T> {
     synchronized (wrapped) {
       return wrapped.equals(obj);
     }
+  }
+
+  @Override
+  public String toString() {
+    return "size=" + wrapped.size();
   }
 
   protected void waitForCompletion() {

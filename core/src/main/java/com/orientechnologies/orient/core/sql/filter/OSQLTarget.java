@@ -273,7 +273,8 @@ public class OSQLTarget extends OBaseParser {
 
           final OClass cls = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(subjectName);
           if (cls == null)
-            throw new OCommandExecutionException("Class '" + subjectName + "' was not found in current database");
+            throw new OCommandExecutionException("Class '" + subjectName + "' was not found in database '"
+                + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + "'");
 
           targetClasses.put(cls, alias);
         }
