@@ -619,7 +619,7 @@ public abstract class OAbstractFile implements OFile {
           accessFile = new RandomAccessFile(osFile, mode);
           break;
         } catch (FileNotFoundException e) {
-          if (i == OPEN_DELAY_RETRY)
+          if (i == OPEN_RETRY_MAX - 1)
             throw e;
 
           // TRY TO RE-CREATE THE DIRECTORY (THIS HAPPENS ON WINDOWS AFTER A DELETE IS PENDING, USUALLY WHEN REOPEN THE DB VERY

@@ -244,12 +244,27 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
   @Override
   public boolean lockRecord(final ORID iRecord, final String iNodeName) {
-    return lockManager.putIfAbsent(iRecord, iNodeName) == null;
+    final boolean locked = lockManager.putIfAbsent(iRecord, iNodeName) == null;
+
+    if (ODistributedServerLog.isDebugEnabled())
+      if (locked)
+        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "Distributed transaction: locked record %s in database '%s' owned by server '%s'", iRecord, databaseName, iNodeName);
+      else
+        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "Distributed transaction: cannot lock record %s in database '%s' owned by server '%s'", iRecord, databaseName,
+            iNodeName);
+
+    return locked;
   }
 
   @Override
   public void unlockRecord(final ORID iRecord) {
     lockManager.remove(iRecord);
+
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "Distributed transaction: unlocked record %s in database '%s'", iRecord, databaseName);
   }
 
   @Override
@@ -267,8 +282,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "Unlocked %d locks in database '%s' owned by server '%s'", databaseName, iNodeName);
-
+          "Distributed transaction: unlocked %d locks in database '%s' owned by server '%s'", unlocked, databaseName, iNodeName);
   }
 
   public OHazelcastDistributedDatabase setWaitForMessage(final long iMessageId) {

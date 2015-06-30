@@ -105,7 +105,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final int                                        writeCacheMaxSize;
   private final int                                        cacheMaxSize;
 
-  private int                                              fileCounter           = 0;
+  private int                                              fileCounter           = 1;
 
   private PagedKey                                         lastPageKey           = new PagedKey(0, -1);
   private PagedKey                                         lastWritePageKey      = new PagedKey(0, -1);
@@ -275,8 +275,33 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       else
         fileClassic = files.get(fileId);
 
-      if (fileClassic == null)
-        throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
+      if (fileClassic == null) {
+        fileClassic = createFile(fileName);
+        if (!fileClassic.exists())
+          throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
+        else {
+          // workaround of bug in distributed storage https://github.com/orientechnologies/orientdb/issues/4439
+
+          OLogManager
+              .instance()
+              .error(
+                  this,
+                  "File "
+                      + fileName
+                      + " is not registered in 'file name - id' map but exists in file system, "
+                      + "probably you work in distributed storage. If it is not true, please create bug in bug tracker https://github.com/orientechnologies/orientdb/issues .");
+
+          if (fileId == null) {
+            ++fileCounter;
+            fileId = fileCounter;
+          } else
+            fileId = -fileId;
+
+          files.put(fileId, fileClassic);
+          nameIdMap.put(fileName, fileId);
+          writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+        }
+      }
 
       openFile(fileClassic);
 
@@ -985,7 +1010,16 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     for (Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
       if (nameIdEntry.getValue() >= 0 && !files.containsKey(nameIdEntry.getValue())) {
         OFileClassic fileClassic = createFile(nameIdEntry.getKey());
-        files.put(nameIdEntry.getValue(), fileClassic);
+
+        if (fileClassic.exists())
+          files.put(nameIdEntry.getValue(), fileClassic);
+        else {
+          final Integer fileId = nameIdMap.get(nameIdEntry.getKey());
+
+          if (fileId != null && fileId > 0) {
+            nameIdMap.put(nameIdEntry.getKey(), -fileId);
+          }
+        }
       }
     }
   }

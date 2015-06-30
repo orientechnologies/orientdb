@@ -20,7 +20,6 @@
 
 package com.orientechnologies.common.profiler;
 
-import java.io.PrintStream;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -94,16 +93,6 @@ public class OProfiler extends OAbstractProfiler {
   }
 
   @Override
-  public String dump() {
-    return super.dump();
-  }
-
-  @Override
-  public void dump(final PrintStream out) {
-    dumpEnvironment(out);
-  }
-
-  @Override
   public String dumpCounters() {
     return null;
   }
@@ -156,10 +145,6 @@ public class OProfiler extends OAbstractProfiler {
   @Override
   public Date getLastReset() {
     return null;
-  }
-
-  @Override
-  public void setAutoDump(int iNewValue) {
   }
 
   @Override

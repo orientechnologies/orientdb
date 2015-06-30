@@ -70,6 +70,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   public ODurableComponent(OAbstractPaginatedStorage storage, String name, String extension) {
     super(true);
 
+    assert name != null;
     this.extension = extension;
     this.storage = storage;
     this.fullName = name + extension;

@@ -28,10 +28,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
@@ -112,6 +109,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   }
 
   public void begin() {
+    if (txStartCounter < 0)
+      throw new OTransactionException("Invalid value of TX counter.");
+
     if (txStartCounter == 0)
       status = TXSTATUS.BEGUN;
 
@@ -135,6 +135,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   @Override
   public void commit(final boolean force) {
     checkTransaction();
+
+    if (txStartCounter < 0)
+      throw new OStorageException("Invalid value of tx counter");
 
     if (force)
       txStartCounter = 0;
@@ -160,6 +163,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   @Override
   public void rollback(boolean force, int commitLevelDiff) {
+    if (txStartCounter < 0)
+      throw new OStorageException("Invalid value of TX counter");
+
     checkTransaction();
 
     txStartCounter += commitLevelDiff;

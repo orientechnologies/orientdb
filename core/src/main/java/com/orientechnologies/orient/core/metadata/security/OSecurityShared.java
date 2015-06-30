@@ -458,6 +458,11 @@ public class OSecurityShared implements OSecurity, OCloseable {
     return roleClass;
   }
 
+  @Override
+  public void close() {
+  }
+
+  @Override
   public void close(boolean onDelete) {
   }
 

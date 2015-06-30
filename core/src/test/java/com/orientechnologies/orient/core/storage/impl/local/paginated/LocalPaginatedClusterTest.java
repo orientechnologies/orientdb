@@ -121,23 +121,22 @@ public class LocalPaginatedClusterTest {
   public void beforeMethod() throws IOException {
     paginatedCluster.truncate();
   }
-//
-//  public void testDeleteRecordAndAddNewOnItsPlace() throws IOException {
-//    byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
-//    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
-//    recordVersion.increment();
-//    recordVersion.increment();
-//
-//    OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
-//    Assert.assertEquals(physicalPosition.clusterPosition, 0);
-//    paginatedCluster.deleteRecord(physicalPosition.clusterPosition);
-//
-//    physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
-//    Assert.assertEquals(physicalPosition.clusterPosition, 1);
-//
-//    recordVersion.increment();
-//    Assert.assertEquals(physicalPosition.recordVersion, recordVersion);
-//  }
+
+  public void testDeleteRecordAndAddNewOnItsPlace() throws IOException {
+    byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
+    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+    recordVersion.increment();
+    recordVersion.increment();
+
+    OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
+    Assert.assertEquals(physicalPosition.clusterPosition, 0);
+    paginatedCluster.deleteRecord(physicalPosition.clusterPosition);
+
+    physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
+    Assert.assertEquals(physicalPosition.clusterPosition, 1);
+
+    Assert.assertEquals(physicalPosition.recordVersion, recordVersion);
+  }
 
   public void testAddOneSmallRecord() throws IOException {
     byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };

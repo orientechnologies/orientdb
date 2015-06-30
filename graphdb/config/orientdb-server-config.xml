@@ -49,6 +49,7 @@
             <parameters>
                 <parameter name="enabled" value="false"/>
                 <parameter name="delay" value="4h"/>
+                <parameter name="firstTime" value="23:00:00"/>
                 <parameter name="target.directory" value="backup"/>
                 <parameter name="target.fileName" value="${DBNAME}-${DATE:yyyyMMddHHmmss}.zip"/>
                 <parameter name="compressionLevel" value="9"/>

@@ -44,7 +44,7 @@ public abstract class OAbstractCommandResultListener implements OCommandResultLi
   }
 
   public void setFetchPlan(final String iText) {
-    fetchPlan = iText != null ? OFetchHelper.buildFetchPlan(iText) : null;
+    fetchPlan = OFetchHelper.buildFetchPlan(iText);
   }
 
   protected void fetchRecord(final Object iRecord, final OFetchListener iFetchListener) {

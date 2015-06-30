@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -105,7 +104,11 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.CLUSTER, "sync", ORole.PERMISSION_UPDATE);
 
-    final OServer serverInstance = OServerMain.server();
+    final String dbUrl = database.getURL();
+
+    final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
+    final OServer serverInstance = OServer.getInstanceByPath(path);
+
     final OHazelcastPlugin dManager = (OHazelcastPlugin) serverInstance.getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
@@ -133,9 +136,16 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
 
     final OAbstractPaginatedStorage stg = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
     final OPaginatedCluster cluster = (OPaginatedCluster) stg.getClusterByName(clusterName);
-    stg.getWriteCache().close(cluster.getFileId(), false);
 
-    return replaceCluster(dManager, serverInstance, databaseName, clusterName);
+    stg.freeze(true, cluster.getId());
+    try {
+
+      stg.getWriteCache().close(cluster.getFileId(), false);
+
+      return replaceCluster(dManager, serverInstance, databaseName, clusterName);
+    } finally {
+      stg.release(cluster.getId());
+    }
   }
 
   public static Object replaceCluster(final OHazelcastPlugin dManager, final OServer serverInstance, final String databaseName,

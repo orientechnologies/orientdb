@@ -269,7 +269,7 @@ public class OConsoleApplication {
         }
       }
     } finally {
-      commandStream.close(false);
+      commandStream.close();
     }
     return true;
   }

@@ -266,26 +266,10 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   }
 
-  public void close(boolean onDelete) {
+  @Override
+  public void close() {
     acquireExclusiveLock();
     try {
-      if (!onDelete) {
-        flush();
-        for (final OIndex<?> idx : indexes.values()) {
-          OIndexInternal<?> indexInternal = idx.getInternal();
-          if (indexInternal != null) {
-            indexInternal.close();
-          }
-        }
-      } else {
-        for (final OIndex<?> idx : indexes.values()) {
-          OIndexInternal<?> indexInternal = idx.getInternal();
-          if (indexInternal != null) {
-            indexInternal.delete();
-          }
-        }
-      }
-
       clearMetadata();
     } finally {
       releaseExclusiveLock();
