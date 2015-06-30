@@ -549,7 +549,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     }
 
     private OIndexInternal<?> createIndex(ODocument idx) {
-      final String indexName = doc.field(OIndexInternal.CONFIG_NAME);
+      final String indexName = idx.field(OIndexInternal.CONFIG_NAME);
       final String indexType = idx.field(OIndexInternal.CONFIG_TYPE);
       String algorithm = idx.field(OIndexInternal.ALGORITHM);
       String valueContainerAlgorithm = idx.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM);

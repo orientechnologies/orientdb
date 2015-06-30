@@ -29,8 +29,10 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.sun.org.apache.xpath.internal.operations.*;
 
 import java.io.IOException;
+import java.lang.String;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -69,6 +71,13 @@ public class OAtomicOperationsManager {
   }
 
   public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent) throws IOException {
+    if (durableComponent != null)
+      return startAtomicOperation(durableComponent.getFullName());
+
+    return startAtomicOperation((String) null);
+  }
+
+  public OAtomicOperation startAtomicOperation(String fullName) throws IOException {
     if (writeAheadLog == null)
       return null;
 
@@ -76,8 +85,8 @@ public class OAtomicOperationsManager {
     if (operation != null) {
       operation.incrementCounter();
 
-      if (durableComponent != null)
-        acquireExclusiveLockTillOperationComplete(durableComponent);
+      if (fullName != null)
+        acquireExclusiveLockTillOperationComplete(fullName);
 
       return operation;
     }
@@ -96,8 +105,8 @@ public class OAtomicOperationsManager {
     if (storage.getStorageTransaction() == null)
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
 
-    if (durableComponent != null)
-      acquireExclusiveLockTillOperationComplete(durableComponent);
+    if (fullName != null)
+      acquireExclusiveLockTillOperationComplete(fullName);
 
     return operation;
   }
@@ -136,19 +145,16 @@ public class OAtomicOperationsManager {
     return operation;
   }
 
-  private void acquireExclusiveLockTillOperationComplete(ODurableComponent durableComponent) {
+  private void acquireExclusiveLockTillOperationComplete(String fullName) {
     final OAtomicOperation operation = currentOperation.get();
     if (operation == null)
       return;
 
-    assert durableComponent.getName() != null;
-    assert durableComponent.getFullName() != null;
-
-    if (operation.containsInLockedObjects(durableComponent.getFullName()))
+    if (operation.containsInLockedObjects(fullName))
       return;
 
-    lockManager.acquireLock(this, durableComponent.getFullName(), OLockManager.LOCK.EXCLUSIVE);
-    operation.addLockedObject(durableComponent.getFullName());
+    lockManager.acquireLock(this, fullName, OLockManager.LOCK.EXCLUSIVE);
+    operation.addLockedObject(fullName);
   }
 
   public void acquireReadLock(ODurableComponent durableComponent) {
