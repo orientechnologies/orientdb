@@ -935,6 +935,8 @@ public abstract class OStringSerializerHelper {
     List<Character> nestedStack = new LinkedList<Character>();
 
     for (int i = iBeginOffset; i < iText.length(); i++) {
+
+      char prevChar = i < 1 ? '\n' : iText.charAt(i - 1);
       char lastChar = iText.charAt(i);
       if (lastQuote != null) {
         if (lastQuote.equals(lastChar)) {
@@ -967,18 +969,20 @@ public abstract class OStringSerializerHelper {
         continue;
       }
 
-      for (String s : iToSearch) {
-        if (iText.length() < i + s.length()) {
-          continue;
-        }
-
-        if (iText.substring(i, i + s.length()).equalsIgnoreCase(s)) {
-          if (iText.length() == (i + s.length())) {
-            return i;
+      if (prevChar == ' ' || prevChar == '\n' || prevChar == '\t') {
+        for (String s : iToSearch) {
+          if (iText.length() < i + s.length()) {
+            continue;
           }
-          char nextChar = iText.charAt(i + s.length());
-          if (nextChar == ' ' || nextChar == '\n' || nextChar == '\t') {
-            return i;
+
+          if (iText.substring(i, i + s.length()).equalsIgnoreCase(s)) {
+            if (iText.length() == (i + s.length())) {
+              return i;
+            }
+            char nextChar = iText.charAt(i + s.length());
+            if (nextChar == ' ' || nextChar == '\n' || nextChar == '\t') {
+              return i;
+            }
           }
         }
       }
