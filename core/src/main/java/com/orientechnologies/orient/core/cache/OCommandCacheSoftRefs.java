@@ -62,13 +62,14 @@ public class OCommandCacheSoftRefs implements OCommandCache {
     INVALIDATE_ALL, PER_CLUSTER
   }
 
-  private final String databaseName;
-  private volatile boolean               enable           = OGlobalConfiguration.COMMAND_CACHE_ENABLED.getValueAsBoolean();
-  private          OCommandCacheImplRefs cache            = new OCommandCacheImplRefs();
-  private          int                   minExecutionTime = OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.getValueAsInteger();
-  private          int                   maxResultsetSize = OGlobalConfiguration.COMMAND_CACHE_MAX_RESULSET_SIZE.getValueAsInteger();
+  private final String          databaseName;
+  private volatile boolean      enable           = OGlobalConfiguration.COMMAND_CACHE_ENABLED.getValueAsBoolean();
+  private OCommandCacheImplRefs cache            = new OCommandCacheImplRefs();
+  private int                   minExecutionTime = OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.getValueAsInteger();
+  private int                   maxResultsetSize = OGlobalConfiguration.COMMAND_CACHE_MAX_RESULSET_SIZE.getValueAsInteger();
 
-  private STRATEGY evictStrategy = STRATEGY.valueOf(OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY.getValueAsString());
+  private STRATEGY              evictStrategy    = STRATEGY.valueOf(OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY
+                                                     .getValueAsString());
 
   public OCommandCacheSoftRefs(final String iDatabaseName) {
     databaseName = iDatabaseName;
@@ -136,7 +137,8 @@ public class OCommandCacheSoftRefs implements OCommandCache {
         profiler.updateCounter(profiler.getDatabaseMetric(databaseName, "queryCache.hit"), "Results returned by Query Cache", +1);
 
       } else {
-        profiler.updateCounter(profiler.getDatabaseMetric(databaseName, "queryCache.miss"), "Results not returned by Query Cache", +1);
+        profiler.updateCounter(profiler.getDatabaseMetric(databaseName, "queryCache.miss"), "Results not returned by Query Cache",
+            +1);
       }
     }
 
@@ -144,7 +146,8 @@ public class OCommandCacheSoftRefs implements OCommandCache {
   }
 
   @Override
-  public void put(final OSecurityUser iUser, final String queryText, final Object iResult, final int iLimit, Set<String> iInvolvedClusters, final long iExecutionTime) {
+  public void put(final OSecurityUser iUser, final String queryText, final Object iResult, final int iLimit,
+      Set<String> iInvolvedClusters, final long iExecutionTime) {
     if (queryText == null || iResult == null)
       // SKIP IT
       return;
@@ -202,7 +205,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
     if (!enable)
       return;
 
-    if( cache.size() == 0 )
+    if (cache.size() == 0)
       return;
 
     if (evictStrategy == STRATEGY.INVALIDATE_ALL) {
@@ -245,6 +248,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
     return this;
   }
 
+  @Override
   public STRATEGY getEvictStrategy() {
     return evictStrategy;
   }

@@ -237,32 +237,40 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return true;
   }
 
-  protected Object getResult() {
-    if (tempResult != null) {
-      int fetched = 0;
-
-      for (Object d : tempResult)
-        if (d != null) {
-          if (!(d instanceof OIdentifiable))
-            // NON-DOCUMENT AS RESULT, COMES FROM EXPAND? CREATE A DOCUMENT AT THE FLY
-            d = new ODocument().field("value", d);
-          else if (!(d instanceof ORID || d instanceof ORecord))
-            d = ((OIdentifiable) d).getRecord();
-
-          if (limit > -1 && fetched >= limit)
-            break;
-
-          if (!request.getResultListener().result(d))
-            break;
-
-          ++fetched;
-        }
-    }
-
+  protected Object getResultInstance() {
     if (request instanceof OSQLSynchQuery)
       return ((OSQLSynchQuery<ODocument>) request).getResult();
 
     return request.getResultListener().getResult();
+  }
+
+  protected Object getResult() {
+    try {
+      if (tempResult != null) {
+        int fetched = 0;
+
+        for (Object d : tempResult)
+          if (d != null) {
+            if (!(d instanceof OIdentifiable))
+              // NON-DOCUMENT AS RESULT, COMES FROM EXPAND? CREATE A DOCUMENT AT THE FLY
+              d = new ODocument().field("value", d);
+            else if (!(d instanceof ORID || d instanceof ORecord))
+              d = ((OIdentifiable) d).getRecord();
+
+            if (limit > -1 && fetched >= limit)
+              break;
+
+            if (!request.getResultListener().result(d))
+              break;
+
+            ++fetched;
+          }
+      }
+
+      return getResultInstance();
+    } finally {
+      request.getResultListener().end();
+    }
   }
 
   protected boolean handleResult(final OIdentifiable iRecord) {

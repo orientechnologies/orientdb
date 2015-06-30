@@ -40,7 +40,7 @@ import java.util.Map;
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> implements OCommandResultListener, Iterable<T> {
-  private final OResultSet<T> result              = new OResultSet<T>();
+  private final OResultSet<T> result              = new OConcurrentResultSet<T>();
   private ORID                nextPageRID;
   private Map<Object, Object> previousQueryParams = new HashMap<Object, Object>();
 

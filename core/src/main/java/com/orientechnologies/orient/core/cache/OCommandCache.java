@@ -93,4 +93,6 @@ public interface OCommandCache {
   void invalidateResultsOfCluster(final String iCluster);
 
   int getMaxResultsetSize();
+
+  OCommandCacheSoftRefs.STRATEGY getEvictStrategy();
 }

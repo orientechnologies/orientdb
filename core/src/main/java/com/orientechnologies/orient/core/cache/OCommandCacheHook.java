@@ -63,7 +63,10 @@ public class OCommandCacheHook extends ORecordHookAbstract {
   }
 
   protected void invalidateCache(final ORecord iRecord) {
-    cmdCache.invalidateResultsOfCluster(database.getClusterNameById(iRecord.getIdentity().getClusterId()));
+    if (cmdCache.getEvictStrategy() == OCommandCacheSoftRefs.STRATEGY.PER_CLUSTER)
+      cmdCache.invalidateResultsOfCluster(database.getClusterNameById(iRecord.getIdentity().getClusterId()));
+    else
+      cmdCache.invalidateResultsOfCluster(null);
   }
 
   @Override

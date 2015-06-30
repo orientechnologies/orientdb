@@ -19,6 +19,18 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -76,6 +88,10 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
+import com.orientechnologies.orient.core.sql.query.OConcurrentResultSet;
+import com.orientechnologies.orient.core.sql.query.OResultSet;
+import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
@@ -98,19 +114,6 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -1283,9 +1286,18 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
       ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
     }
-    final OCommandRequestText command = (OCommandRequestText) OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel
-        .readBytes());
+    OCommandRequestText command = (OCommandRequestText) OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel.readBytes());
     ONetworkThreadLocalSerializer.setNetworkSerializer(null);
+
+    if (asynch && command instanceof OSQLSynchQuery) {
+      // CONVERT IT IN ASYNCHRONOUS QUERY
+      final OSQLAsynchQuery asynchQuery = new OSQLAsynchQuery(command.getText());
+      asynchQuery.setFetchPlan(command.getFetchPlan());
+      asynchQuery.setLimit(command.getLimit());
+      asynchQuery.setTimeout(command.getTimeoutTime(), command.getTimeoutStrategy());
+      asynchQuery.setUseCache(((OSQLSynchQuery) command).isUseCache());
+      command = asynchQuery;
+    }
 
     connection.data.commandDetail = command.getText();
 
@@ -1304,10 +1316,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       } else if (asynch) {
         // IF COMMAND CACHE IS ENABLED, RESULT MUST BE COLLECTED
         final OCommandCache cmdCache = connection.database.getMetadata().getCommandCache();
-        if (cmdCache.isEnabled() && cmdResultListener == null)
+        if (cmdCache.isEnabled())
           // CREATE E COLLECTOR OF RESULT IN RAM TO CACHE THE RESULT
-          cmdResultListener = new OAbstractCommandResultListener(null) {
-            private List<ORecord> collector = new ArrayList<ORecord>();
+          cmdResultListener = new OAbstractCommandResultListener(cmdResultListener) {
+            private OResultSet collector = new OConcurrentResultSet<ORecord>();
 
             @Override
             public boolean isEmpty() {
@@ -1317,11 +1329,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             @Override
             public boolean result(final Object iRecord) {
               if (collector != null) {
-                if (collector.size() > cmdCache.getMaxResultsetSize()) {
+                if (collector.currentSize() > cmdCache.getMaxResultsetSize()) {
                   // TOO MANY RESULTS: STOP COLLECTING IT BECAUSE THEY WOULD NEVER CACHED
                   collector = null;
                 } else if (iRecord != null && iRecord instanceof ORecord)
-                  collector.add((ORecord) iRecord);
+                  collector.add(iRecord);
               }
               return true;
             }
@@ -1329,6 +1341,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             @Override
             public Object getResult() {
               return collector;
+            }
+
+            @Override
+            public void end() {
+              collector.setCompleted();
             }
           };
 

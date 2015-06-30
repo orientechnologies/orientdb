@@ -1438,7 +1438,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private void parallelExec(final Iterator<? extends OIdentifiable> iTarget) {
-    final OResultSet result = (OResultSet) getResult();
+    final OResultSet result = (OResultSet) getResultInstance();
 
     // BROWSE ALL THE RECORDS ON CURRENT THREAD BUT DELEGATE UNMARSHALLING AND FILTER TO A THREAD POOL
     final ODatabaseDocumentInternal db = getDatabase();
@@ -1449,8 +1449,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
 
-    final int cores = Runtime.getRuntime().availableProcessors();
-    OLogManager.instance().debug(this, "Parallel query against %d threads", cores);
+
 
     if (iTarget instanceof ORecordIteratorClusters && ((ORecordIteratorClusters) iTarget).getClusterIds().length > 1)
       execParallelWithMultipleThreads((ORecordIteratorClusters) iTarget, (ODatabaseDocumentTx) db);
@@ -1465,9 +1464,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private void execParallelWithMultipleThreads(final ORecordIteratorClusters iTarget, final ODatabaseDocumentTx db) {
     final int[] clusterIds = iTarget.getClusterIds();
 
-    OLogManager.instance().debug(this, "Executing parallel query with strategy one thread per cluster. clusterIds=%d",
-        clusterIds.length);
-
     final List<Integer> iterators = new ArrayList<Integer>();
     for (int i = 0; i < clusterIds.length; ++i)
       if (db.getStorage().getClusterById(clusterIds[i]).getEntries() > 0)
@@ -1475,6 +1471,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     // CREATE ONE THREAD PER CLUSTER
     final int threadNumber = iterators.size();
+
+    OLogManager.instance().debug(this, "Executing parallel query with strategy one thread per cluster. clusterIds=%d, threads=%d",
+        clusterIds.length, threadNumber);
 
     final Thread[] threads = new Thread[threadNumber];
     for (int i = 0; i < threadNumber; ++i) {
@@ -1514,7 +1513,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private void execParallelWithPool(Iterator<? extends OIdentifiable> iTarget, final ODatabaseDocumentInternal db) {
-    OLogManager.instance().debug(this, "Executing parallel query with strategy thread pool");
+    final int cores = Runtime.getRuntime().availableProcessors();
+
+    OLogManager.instance().debug(this, "Executing parallel query with strategy thread pool=%d", cores);
 
     executing = true;
     final List<Future<?>> jobs = new ArrayList<Future<?>>();
