@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.server.OClientConnection;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -36,15 +45,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.server.OClientConnection;
-
 /**
  * Maintains information about current HTTP response.
  *
@@ -55,7 +55,7 @@ public class OHttpResponse {
   public static final char[]   URL_SEPARATOR     = { '/' };
   private static final Charset utf8              = Charset.forName("utf8");
   public final String          httpVersion;
-  private final OutputStream   out;
+  private OutputStream         out;
   public String                headers;
   public String[]              additionalHeaders;
   public String                characterSet;
@@ -360,8 +360,7 @@ public class OHttpResponse {
     else
       socket = connection.protocol.getChannel().socket;
     if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
-      OLogManager.instance().debug(this, "[OHttpResponse] found and removed pending closed channel %d (%s)", connection,
-          socket);
+      OLogManager.instance().debug(this, "[OHttpResponse] found and removed pending closed channel %d (%s)", connection, socket);
       throw new IOException("Connection is closed ");
     }
 
@@ -525,9 +524,12 @@ public class OHttpResponse {
   }
 
   public void flush() throws IOException {
-    out.flush();
-    if (!keepAlive) {
-      out.close();
+    if (out != null) {
+      out.flush();
+      if (!keepAlive) {
+        out.close();
+        out = null;
+      }
     }
   }
 

@@ -143,56 +143,62 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     final long begin = System.currentTimeMillis();
 
-    boolean isChain;
-    do {
-      isChain = false;
-      final String command;
-      if (request.url.length() < 2) {
-        command = "";
-      } else {
-        command = request.url.substring(1);
-      }
-
-      final String commandString = getCommandString(command);
-
-      final OServerCommand cmd = (OServerCommand) cmdManager.getCommand(commandString);
-      Map<String, String> requestParams = cmdManager.extractUrlTokens(commandString);
-      if (requestParams != null) {
-        if (request.parameters == null) {
-          request.parameters = new HashMap<String, String>();
+    try {
+      boolean isChain;
+      do {
+        isChain = false;
+        final String command;
+        if (request.url.length() < 2) {
+          command = "";
+        } else {
+          command = request.url.substring(1);
         }
-        for (Map.Entry<String, String> entry : requestParams.entrySet()) {
-          request.parameters.put(entry.getKey(), URLDecoder.decode(entry.getValue(), "UTF-8"));
-        }
-      }
 
-      if (cmd != null)
-        try {
-          if (cmd.beforeExecute(request, response))
-            try {
-              // EXECUTE THE COMMAND
-              isChain = cmd.execute(request, response);
-            } finally {
-              cmd.afterExecute(request, response);
-            }
+        final String commandString = getCommandString(command);
 
-        } catch (Exception e) {
-          handleError(e);
+        final OServerCommand cmd = (OServerCommand) cmdManager.getCommand(commandString);
+        Map<String, String> requestParams = cmdManager.extractUrlTokens(commandString);
+        if (requestParams != null) {
+          if (request.parameters == null) {
+            request.parameters = new HashMap<String, String>();
+          }
+          for (Map.Entry<String, String> entry : requestParams.entrySet()) {
+            request.parameters.put(entry.getKey(), URLDecoder.decode(entry.getValue(), "UTF-8"));
+          }
         }
-      else {
-        try {
-          OLogManager.instance().warn(
-              this,
-              "->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + request.httpMethod + "."
-                  + URLDecoder.decode(command, "UTF-8"));
 
-          sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, OHttpUtils.STATUS_INVALIDMETHOD_DESCRIPTION, null,
-              OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: " + command, request.keepAlive);
-        } catch (IOException e1) {
-          sendShutdown();
+        if (cmd != null)
+          try {
+            if (cmd.beforeExecute(request, response))
+              try {
+                // EXECUTE THE COMMAND
+                isChain = cmd.execute(request, response);
+              } finally {
+                cmd.afterExecute(request, response);
+              }
+
+          } catch (Exception e) {
+            handleError(e);
+          }
+        else {
+          try {
+            OLogManager.instance().warn(
+                this,
+                "->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + request.httpMethod + "."
+                    + URLDecoder.decode(command, "UTF-8"));
+
+            sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, OHttpUtils.STATUS_INVALIDMETHOD_DESCRIPTION, null,
+                OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: " + command, request.keepAlive);
+          } catch (IOException e1) {
+            sendShutdown();
+          }
         }
-      }
-    } while (isChain);
+      } while (isChain);
+    } finally {
+      if (response != null)
+        response.flush();
+      response = null;
+    }
 
     connection.data.lastCommandInfo = connection.data.commandInfo;
     connection.data.lastCommandDetail = connection.data.commandDetail;
