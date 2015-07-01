@@ -1151,7 +1151,7 @@ public class JSONTest extends DocumentDBBaseTest {
   @Test
   public void testScientificNotation() {
     ODocument doc = new ODocument();
-    doc.fromJSON("{'number1': -9.2741500e-31, 'number2': -741800E+290}");
+    doc.fromJSON("{'number1': -9.2741500e-31, 'number2': 741800E+290}");
    	  
     double number1 = doc.field("number1");
     Assert.assertEquals(number1, -9.27415E-31);
