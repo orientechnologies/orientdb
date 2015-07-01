@@ -637,6 +637,9 @@ public class Orient extends OListenerManger<OOrientListener> {
       shutdownHook.cancel();
       shutdownHook = null;
     }
+  }
+
+  public void removeSignalHandler() {
     if (signalHandler != null) {
       signalHandler.cancel();
       signalHandler = null;
