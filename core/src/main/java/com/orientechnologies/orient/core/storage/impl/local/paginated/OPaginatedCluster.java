@@ -217,7 +217,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   public void replaceFile(File file) throws IOException {
-    externalModificationLock.releaseModificationLock();
+    externalModificationLock.requestModificationLock();
     try {
       acquireExclusiveLock();
       try {
@@ -228,7 +228,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         OFileUtils.copyFile(file, newFile);
 
-        final long newFileId = readCache.addFile(newFileName, writeCache);
+        final long newFileId = readCache.openFile(newFileName, writeCache);
         readCache.deleteFile(fileId, writeCache);
         fileId = newFileId;
         writeCache.renameFile(fileId, newFileName, getFullName());

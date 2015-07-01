@@ -134,18 +134,7 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
   public static Object replaceCluster(final OHazelcastPlugin dManager, final ODatabaseDocumentInternal database,
       final OServer serverInstance, final String databaseName, final String clusterName) throws IOException {
 
-    final OAbstractPaginatedStorage stg = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
-    final OPaginatedCluster cluster = (OPaginatedCluster) stg.getClusterByName(clusterName);
-
-    stg.freeze(true, cluster.getId());
-    try {
-
-      stg.getWriteCache().close(cluster.getFileId(), false);
-
-      return replaceCluster(dManager, serverInstance, databaseName, clusterName);
-    } finally {
-      stg.release(cluster.getId());
-    }
+    return replaceCluster(dManager, serverInstance, databaseName, clusterName);
   }
 
   public static Object replaceCluster(final OHazelcastPlugin dManager, final OServer serverInstance, final String databaseName,
@@ -209,7 +198,21 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
         }
       }
 
-      OZIPCompressionUtil.uncompressDirectory(new FileInputStream(tempFile), dbPath, null);
+      final String tempDirectoryPath = Orient.getTempPath() + "/backup_" + databaseName + "_" + clusterName + "_toInstall";
+      final File tempDirectory = new File(tempDirectoryPath);
+      tempDirectory.mkdirs();
+
+      OZIPCompressionUtil.uncompressDirectory(new FileInputStream(tempFile), tempDirectory.getAbsolutePath(), null);
+
+      final OAbstractPaginatedStorage stg = (OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying();
+
+      final OPaginatedCluster cluster = (OPaginatedCluster) stg.getClusterByName(clusterName);
+
+      final File tempClusterFile = new File(tempDirectoryPath + "/" + clusterName + OPaginatedCluster.DEF_EXTENSION);
+
+      cluster.replaceFile(tempClusterFile);
+
+      getDatabase().getLocalCache().invalidate();
 
       return String.format("Cluster correctly replaced, transferred %d bytes", fileSize);
 
