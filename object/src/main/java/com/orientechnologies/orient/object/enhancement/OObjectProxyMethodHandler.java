@@ -519,7 +519,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         doc.field(f.getName(), doc.field(f.getName()), type);
       Map<Object, OIdentifiable> docMap = doc.field(f.getName(), type);
       if (docMap == null) {
-        docMap = new ORecordLazyMap(doc);
+        if (OType.EMBEDDEDMAP == type)
+          docMap = new OTrackedMap<OIdentifiable>(doc);
+        else
+          docMap = new ORecordLazyMap(doc);
         setDocFieldValue(f.getName(), docMap, type);
       }
       value = new OObjectLazyMap(self, docMap, value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
@@ -558,7 +561,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         OType type = embedded ? OType.EMBEDDEDLIST : OType.LINKLIST;
         List<OIdentifiable> docList = doc.field(f.getName(), type);
         if (docList == null) {
-          docList = new ORecordLazyList(doc);
+          if (embedded)
+            docList = new OTrackedList<OIdentifiable>(doc);
+          else
+            docList = new ORecordLazyList(doc);
           setDocFieldValue(f.getName(), docList, type);
         } else if (isFieldUpdate) {
           docList.clear();
@@ -569,7 +575,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         OType type = embedded ? OType.EMBEDDEDSET : OType.LINKSET;
         Set<OIdentifiable> docSet = doc.field(f.getName(), type);
         if (docSet == null) {
-          docSet = new ORecordLazySet(doc);
+          if (embedded)
+            docSet = new OTrackedSet<OIdentifiable>(doc);
+          else
+            docSet = new ORecordLazySet(doc);
           setDocFieldValue(f.getName(), docSet, type);
         } else if (isFieldUpdate) {
           docSet.clear();
