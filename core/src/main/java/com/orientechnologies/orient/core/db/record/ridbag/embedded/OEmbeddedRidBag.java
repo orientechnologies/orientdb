@@ -370,20 +370,6 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   @Override
   public int serialize(byte[] stream, int offset, UUID ownerUuid) {
-    for (int i = 0; i < entriesLength; i++) {
-      final Object entry = entries[i];
-
-      if (entry instanceof OIdentifiable) {
-        final OIdentifiable identifiable = (OIdentifiable) entry;
-        if (identifiable instanceof ORecord) {
-          final ORecord record = (ORecord) identifiable;
-          if (record.isDirty() || record.getIdentity().isNew()) {
-            record.save();
-          }
-        }
-      }
-    }
-
     if (!deserialized) {
       System.arraycopy(serializedContent, 0, stream, offset, serializedContent.length);
 

@@ -781,16 +781,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   @Override
   public int serialize(byte[] stream, int offset, UUID ownerUuid) {
-    for (OIdentifiable identifiable : changes.keySet()) {
-      if (identifiable instanceof ORecord) {
-        final ORID identity = identifiable.getIdentity();
-        final ORecord record = (ORecord) identifiable;
-        if (identity.isNew() || record.isDirty()) {
-          record.save();
-        }
-      }
-    }
-
     for (Map.Entry<OIdentifiable, OModifiableInteger> entry : newEntries.entrySet()) {
       OIdentifiable identifiable = entry.getKey();
       assert identifiable instanceof ORecord;

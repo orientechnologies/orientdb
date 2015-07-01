@@ -1128,7 +1128,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               }
             }
             for (ORecordOperation txEntry : tmpEntries) {
-              if (txEntry.type == ORecordOperation.UPDATED)
+              if (txEntry.type != ORecordOperation.CREATED)
                 // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
                 commitEntry(clientTx, txEntry);
             }
