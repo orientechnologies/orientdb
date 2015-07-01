@@ -23,10 +23,10 @@ public class OrientSampleTest {
         OrientGraph graph = new OrientGraphFactory(graphUri, "root", "root").getTx();
 
         OrientVertex v1 = (OrientVertex) graph.addVertex();
-        OrientVertex v2 = (OrientVertex) graph.addVertex();
-        OrientEdge e = (OrientEdge) v1.addEdge("label1", v2);
-
-        System.out.println(e);
+//        OrientVertex v2 = (OrientVertex) graph.addVertex();
+//        OrientEdge e = (OrientEdge) v1.addEdge("label1", v2);
+//
+//        System.out.println(graph.vertices(v1.id()).next());
 
 //        OClass clazz = v1.getRawDocument().getSchemaClass();
 //        Collection<OClass> subclasses = clazz.getSubclasses();

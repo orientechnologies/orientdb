@@ -92,10 +92,15 @@ public final class OrientGraph implements Graph {
             Iterator<ORecord> itty = new ORecordIteratorClass<>(database, database, elementClass, polymorphic);
             return asStream(itty).map(toA).iterator();
         } else {
-            Stream<ORecordId> ids = Stream.of(elementIds).map(v -> new ORecordId(v.toString()));
+            Stream<ORecordId> ids = Stream.of(elementIds).map(OrientGraph::createRecordId);
             Stream<ORecord> records = ids.filter(id -> id.isValid()).map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
             return records.map(toA).iterator();
         }
+    }
+
+    protected static ORecordId createRecordId(Object id) {
+        if (!(id instanceof String)) throw new IllegalArgumentException("Orient IDs have to be a String - you provided a " + id.getClass());
+        return new ORecordId((String)id);
     }
 
     protected ODocument getRawDocument(ORecord record) {
