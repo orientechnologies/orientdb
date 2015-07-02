@@ -142,7 +142,7 @@ public class SBTreeWAL extends SBTreeTest {
     actualAtomicOperationsManager = new OAtomicOperationsManager(actualStorage);
 
     actualWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
-        writeAheadLog, 100, 1648L * 1024 * 1024, actualStorage, true, 10);
+        writeAheadLog, 100, 1648L * 1024 * 1024, 2 * 1648L * 1024 * 1024, actualStorage, true, 10);
 
     actualReadCache = new O2QCache(1648L * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true);
 
@@ -154,8 +154,8 @@ public class SBTreeWAL extends SBTreeTest {
 
     when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", true, ".nbt", actualStorage);
-    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
+    sbTree = new OSBTree<Integer, OIdentifiable>("actualSBTree", ".sbt", true, ".nbt", actualStorage);
+    sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
   }
 
   private void createExpectedSBTree() {
@@ -180,7 +180,7 @@ public class SBTreeWAL extends SBTreeTest {
     when(expectedStorage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(expectedStorageConfiguration));
 
     expectedWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
-        writeAheadLog, 100, 1648L * 1024 * 1024, expectedStorage, true, 20);
+        writeAheadLog, 100, 1648L * 1024 * 1024, 400L * 1024 * 1024 * 1024 + 1648L * 1024 * 1024, expectedStorage, true, 20);
     expectedReadCache = new O2QCache(400L * 1024 * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false);
 
@@ -196,8 +196,8 @@ public class SBTreeWAL extends SBTreeTest {
 
     when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", true, ".nbt", expectedStorage);
-    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
+    expectedSBTree = new OSBTree<Integer, OIdentifiable>("expectedSBTree", ".sbt", true, ".nbt", expectedStorage);
+    expectedSBTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
   }
 
   @Override

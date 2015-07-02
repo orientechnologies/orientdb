@@ -11,7 +11,8 @@ public class OFromItem extends SimpleNode {
 
   protected List<ORid>          rids;
   protected OCluster            cluster;
-//  protected OIdentifier         className;
+  protected OClusterList        clusterList;
+  // protected OIdentifier className;
   protected OIndexIdentifier    index;
   protected OMetadataIdentifier metadata;
   protected OStatement          statement;
@@ -56,8 +57,10 @@ public class OFromItem extends SimpleNode {
       }
     } else if (cluster != null) {
       return cluster.toString();
-//    } else if (className != null) {
-//      return className.getValue();
+      // } else if (className != null) {
+      // return className.getValue();
+    } else if (clusterList != null) {
+      return clusterList.toString();
     } else if (metadata != null) {
       return metadata.toString();
     } else if (statement != null) {

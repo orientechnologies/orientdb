@@ -1,15 +1,12 @@
 package com.orientechnologies.orient.server.distributed;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import junit.framework.Assert;
+import org.junit.Test;
 
 public class TestDistributeConfigSerialization extends AbstractServerClusterTest {
 
@@ -26,6 +23,7 @@ public class TestDistributeConfigSerialization extends AbstractServerClusterTest
       db.setSerializer(new ORecordSerializerSchemaAware2CSV());
       db.create();
       db.getMetadata().getSchema().createClass("TestMessaging");
+      db.activateOnCurrentThread();
       db.save(new ODocument("TestMessaging").field("test", "test"));
       db.query(new OSQLSynchQuery("select from TestMessaging "));
       db.close();

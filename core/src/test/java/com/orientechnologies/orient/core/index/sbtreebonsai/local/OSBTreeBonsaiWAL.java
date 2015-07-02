@@ -122,7 +122,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
     writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, actualStorage);
 
     actualWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
-        writeAheadLog, 100, 1648L * 1024 * 1024, actualStorage, false, 1);
+        writeAheadLog, 100, 1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, actualStorage, false, 1);
 
     actualReadCache = new O2QCache(400L * 1024 * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
         false);
@@ -138,8 +138,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".sbt", true, actualStorage);
-    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
+    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>("actualSBTree", ".sbt", true, actualStorage);
+    sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
   }
 
   private void createExpectedSBTree() {
@@ -163,7 +163,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
       expectedStorageDirFile.mkdirs();
 
     expectedWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
-        writeAheadLog, 100, 1648L * 1024 * 1024, expectedStorage, false, 2);
+        writeAheadLog, 100, 1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, expectedStorage, false, 2);
     expectedReadCache = new O2QCache(400L * 1024 * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false);
 
@@ -180,8 +180,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".sbt", true, expectedStorage);
-    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
+    expectedSBTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>("expectedSBTree", ".sbt", true, expectedStorage);
+    expectedSBTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
   }
 
   @Override

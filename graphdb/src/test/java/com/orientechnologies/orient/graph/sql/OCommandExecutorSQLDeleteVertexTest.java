@@ -24,7 +24,11 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -51,25 +55,23 @@ public class OCommandExecutorSQLDeleteVertexTest {
 
     final OSchema schema = db.getMetadata().getSchema();
     schema.createClass("User", schema.getClass("V"));
-
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
+    db.activateOnCurrentThread();
     db.drop();
-
     db = null;
   }
 
   @Before
   public void setUp() throws Exception {
     db.getMetadata().getSchema().getClass("User").truncate();
-
   }
 
   @Test
   public void testDeteleVertexLimit() throws Exception {
-    //for issue #4148
+    // for issue #4148
 
     for (int i = 0; i < 10; i++) {
       db.command(new OCommandSQL("create vertex User set name = 'foo" + i + "'")).execute();

@@ -158,7 +158,7 @@ public class ODFACommandStream implements OCommandStream {
   }
 
   @Override
-  public void close(boolean onDelete) {
+  public void close() {
     try {
       reader.close();
     } catch (IOException e) {

@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
@@ -54,7 +55,13 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
+import com.orientechnologies.orient.core.index.OIndexes;
+import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -841,6 +848,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                 jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
             }
             jsonReader.readNext(OJSONReader.END_OBJECT);
+          } else if (value.equals("\"customFields\"")) {
+            Map<String, String> customFields = importCustomFields();
+            for (Entry<String, String> entry : customFields.entrySet()) {
+              cls.setCustom(entry.getKey(), entry.getValue());
+            }
           } else if (value.equals("\"cluster-selection\"")) {
             // @SINCE 1.7
             cls.setClusterSelection(jsonReader.readString(OJSONReader.NEXT_IN_OBJECT));
@@ -1493,10 +1505,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   private void rewriteLinksInDocument(ODocument document) {
-    LinkConverter.INSTANCE.setExportImportHashTable(exportImportHashTable);
+    rewriteLinksInDocument(document, exportImportHashTable);
+    document.save();
+  }
+
+  protected static void rewriteLinksInDocument(ODocument document, OIndex<OIdentifiable> rewrite) {
+    LinkConverter.INSTANCE.setExportImportHashTable(rewrite);
     final LinksRewriter rewriter = new LinksRewriter();
     final ODocumentFieldWalker documentFieldWalker = new ODocumentFieldWalker();
     documentFieldWalker.walkDocument(document, rewriter);
-    document.save();
   }
 }

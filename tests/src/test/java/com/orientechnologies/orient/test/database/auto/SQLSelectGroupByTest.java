@@ -70,7 +70,7 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select count(*) from Account group by location"))
         .execute();
 
-    Assert.assertTrue(result.size() > 1);
+    Assert.assertTrue(result.size()>1);
   }
 
   @Test
@@ -101,24 +101,30 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
   @Test
   public void queryGroupByAndWithNulls() {
     // INSERT WITH NO LOCATION (AS NULL)
-    database.command(new OCommandSQL("insert into Account set testNull = true")).execute();
-    database.command(new OCommandSQL("insert into Account set location = 'Rome'")).execute();
-    database.command(new OCommandSQL("insert into Account set location = 'Austin'")).execute();
-    database.command(new OCommandSQL("insert into Account set location = 'Austin'")).execute();
+    database.command(new OCommandSQL("create class GroupByTest extends V")).execute();
+    try {
+      database.command(new OCommandSQL("insert into GroupByTest set testNull = true")).execute();
+      database.command(new OCommandSQL("insert into GroupByTest set location = 'Rome'")).execute();
+      database.command(new OCommandSQL("insert into GroupByTest set location = 'Austin'")).execute();
+      database.command(new OCommandSQL("insert into GroupByTest set location = 'Austin'")).execute();
 
-    final List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("select location, count(*) from Account group by location")).execute();
+      final List<ODocument> result = database.command(
+          new OSQLSynchQuery<ODocument>("select location, count(*) from GroupByTest group by location")).execute();
 
-    Assert.assertTrue(result.size() > 1);
+      Assert.assertTrue(result.size() > 1);
 
-    boolean foundNullGroup = false;
-    for (ODocument d : result) {
-      if (d.field("location") == null) {
-        Assert.assertFalse(foundNullGroup);
-        foundNullGroup = true;
+      boolean foundNullGroup = false;
+      for (ODocument d : result) {
+        if (d.field("location") == null) {
+          Assert.assertFalse(foundNullGroup);
+          foundNullGroup = true;
+        }
       }
-    }
 
-    Assert.assertTrue(foundNullGroup);
+      Assert.assertTrue(foundNullGroup);
+    } finally {
+      database.command(new OCommandSQL("delete vertex GroupByTest")).execute();
+      database.command(new OCommandSQL("drop class GroupByTest UNSAFE")).execute();
+    }
   }
 }

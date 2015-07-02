@@ -1,14 +1,13 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Iterator;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.Iterator;
 
 public class OrientDeleteEdgeTest {
 
@@ -29,21 +28,21 @@ public class OrientDeleteEdgeTest {
       }
 
       ODocument docPlayer = player.getRecord();
-      Iterable<OIdentifiable> out = docPlayer.field("out_plays");
+      Iterable<OIdentifiable> out = docPlayer.field("out_Plays");
       Assert.assertFalse(out.iterator().hasNext());
 
       ODocument docTeam = team.getRecord();
-      Iterable<OIdentifiable> in = docTeam.field("in_plays");
+      Iterable<OIdentifiable> in = docTeam.field("in_Plays");
       Assert.assertFalse(in.iterator().hasNext());
 
       graph.getRawGraph().getLocalCache().clear();
 
       docPlayer = graph.getRawGraph().load(docPlayer.getIdentity());
-      out = docPlayer.field("out_plays");
+      out = docPlayer.field("out_Plays");
       Assert.assertFalse(out.iterator().hasNext());
 
       docTeam = graph.getRawGraph().load(docTeam.getIdentity());
-      in = docTeam.field("in_plays");
+      in = docTeam.field("in_Plays");
       Assert.assertFalse(in.iterator().hasNext());
     } finally {
       graph.drop();

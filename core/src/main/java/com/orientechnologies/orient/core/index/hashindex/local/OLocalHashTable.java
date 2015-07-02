@@ -5,7 +5,6 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -82,15 +81,12 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
   private final String                              metadataConfigurationFileExtension;
   private final String                              treeStateFileExtension;
-  private final String                              bucketFileExtension;
 
   public static final int                           HASH_CODE_SIZE      = 64;
   public static final int                           MAX_LEVEL_DEPTH     = 8;
   public static final int                           MAX_LEVEL_SIZE      = 1 << MAX_LEVEL_DEPTH;
 
   public static final int                           LEVEL_MASK          = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
-
-  private String                                    name;
 
   private final OHashFunction<K>                    keyHashFunction;
 
@@ -113,14 +109,13 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
   private final boolean                             durableInNonTxMode;
 
-  public OLocalHashTable(String metadataConfigurationFileExtension, String treeStateFileExtension, String bucketFileExtension,
-      String nullBucketFileExtension, OHashFunction<K> keyHashFunction, boolean durableInNonTxMode,
+  public OLocalHashTable(String name, String metadataConfigurationFileExtension, String treeStateFileExtension,
+      String bucketFileExtension, String nullBucketFileExtension, OHashFunction<K> keyHashFunction, boolean durableInNonTxMode,
       OAbstractPaginatedStorage abstractPaginatedStorage) {
-    super(abstractPaginatedStorage);
+    super(abstractPaginatedStorage, name, bucketFileExtension);
 
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
-    this.bucketFileExtension = bucketFileExtension;
     this.keyHashFunction = keyHashFunction;
     this.nullBucketFileExtension = nullBucketFileExtension;
     this.durableInNonTxMode = durableInNonTxMode;
@@ -129,7 +124,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
+  public void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
       boolean nullKeyIsSupported) {
     final OAtomicOperation atomicOperation;
     try {
@@ -144,11 +139,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
         this.keyTypes = keyTypes;
         this.nullKeyIsSupported = nullKeyIsSupported;
-        this.name = name;
 
-        this.directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
+        this.directory = new OHashTableDirectory(treeStateFileExtension, getName(), durableInNonTxMode, storage);
 
-        fileStateId = addFile(atomicOperation, name + metadataConfigurationFileExtension);
+        fileStateId = addFile(atomicOperation, getName() + metadataConfigurationFileExtension);
 
         directory.create();
 
@@ -166,7 +160,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           releasePage(atomicOperation, hashStateEntry);
         }
 
-        final String fileName = name + bucketFileExtension;
+        final String fileName = getFullName();
         fileId = addFile(atomicOperation, fileName);
 
         setKeySerializer(keySerializer);
@@ -175,7 +169,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         initHashTreeState(atomicOperation);
 
         if (nullKeyIsSupported)
-          nullBucketFileId = addFile(atomicOperation, name + nullBucketFileExtension);
+          nullBucketFileId = addFile(atomicOperation, getName() + nullBucketFileExtension);
 
         endAtomicOperation(false);
       } catch (IOException e) {
@@ -621,8 +615,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       this.keyTypes = keyTypes;
       this.nullKeyIsSupported = nullKeyIsSupported;
 
-      this.name = name;
-
       OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
       fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension);
@@ -647,7 +639,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       if (nullKeyIsSupported)
         nullBucketFileId = openFile(atomicOperation, name + nullBucketFileExtension);
 
-      fileId = openFile(atomicOperation, name + bucketFileExtension);
+      fileId = openFile(atomicOperation, getFullName());
     } catch (IOException e) {
       throw new OIndexException("Exception during hash table loading", e);
     } finally {
@@ -680,8 +672,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         deleteFile(atomicOperation, nullBucketId);
       }
 
-      if (isFileExists(atomicOperation, name + bucketFileExtension)) {
-        final long fileId = openFile(atomicOperation, name + bucketFileExtension);
+      if (isFileExists(atomicOperation, getFullName())) {
+        final long fileId = openFile(atomicOperation, getFullName());
         deleteFile(atomicOperation, fileId);
       }
 

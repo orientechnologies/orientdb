@@ -26,18 +26,8 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
@@ -48,19 +38,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODetachable;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -91,6 +69,8 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -105,7 +85,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   protected static final String[]                         EMPTY_STRINGS           = new String[] {};
   private static final long                               serialVersionUID        = 1L;
   protected int                                           _fieldSize;
+
   protected Map<String, ODocumentEntry>                   _fields;
+
   protected boolean                                       _trackingChanges        = true;
   protected boolean                                       _ordered                = true;
   protected boolean                                       _lazyLoad               = true;
@@ -482,18 +464,19 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
           + " but the value is the RecordID " + fieldValue);
     else if (fieldValue instanceof OIdentifiable) {
-      if (((OIdentifiable) fieldValue).getIdentity().isValid())
+      final OIdentifiable embedded = (OIdentifiable) fieldValue;
+      if (embedded.getIdentity().isValid())
         throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
             + " but the value is a document with the valid RecordID " + fieldValue);
 
       final OClass embeddedClass = p.getLinkedClass();
       if (embeddedClass != null) {
-        final ORecord rec = ((OIdentifiable) fieldValue).getRecord();
-        if (!(rec instanceof ODocument))
+        final ORecord embeddedRecord = embedded.getRecord();
+        if (!(embeddedRecord instanceof ODocument))
           throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
               + " with linked class '" + embeddedClass + "' but the record was not a document");
 
-        final ODocument doc = (ODocument) rec;
+        final ODocument doc = (ODocument) embeddedRecord;
         if (doc.getImmutableSchemaClass() == null)
           throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
               + " with linked class '" + embeddedClass + "' but the record has no class");
@@ -502,6 +485,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
           throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
               + " with linked class '" + embeddedClass + "' but the record is of class '" + doc.getImmutableSchemaClass().getName()
               + "' that is not a subclass of that");
+
+        doc.validate();
       }
 
     } else
@@ -661,8 +646,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public ODocument reload(final String fetchPlan, final boolean ignoreCache) {
     super.reload(fetchPlan, ignoreCache);
     if (!_lazyLoad) {
-      checkForFields();
       checkForLoading();
+      checkForFields();
     }
     return this;
   }
@@ -1339,7 +1324,37 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     // THIS IS IMPORTANT TO BE SURE THAT FIELDS ARE LOADED BEFORE IT'S TOO LATE AND THE RECORD _SOURCE IS NULL
     checkForFields();
 
-    return super.setDirty();
+    super.setDirty();
+
+    boolean addToChangedList = false;
+
+    ORecordElement owner;
+    if (!isEmbedded())
+      owner = this;
+    else {
+      owner = getOwner();
+      while (owner != null && owner.getOwner() != null) {
+        owner = owner.getOwner();
+      }
+    }
+
+    if (owner instanceof ODocument && ((ODocument) owner).isTrackingChanges() && ((ODocument) owner).getIdentity().isPersistent())
+      addToChangedList = true;
+
+    if (addToChangedList) {
+      final ODatabaseDocument database = getDatabaseIfDefined();
+
+      if (database != null) {
+        final OTransaction transaction = database.getTransaction();
+
+        if (transaction instanceof OTransactionOptimistic) {
+          OTransactionOptimistic transactionOptimistic = (OTransactionOptimistic) transaction;
+          transactionOptimistic.addChangedDocument(this);
+        }
+      }
+    }
+
+    return this;
   }
 
   @Override
@@ -1372,8 +1387,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     super.fromStream(iRecordBuffer);
 
     if (!_lazyLoad) {
-      checkForFields();
       checkForLoading();
+      checkForFields();
     }
 
     return this;
@@ -1386,6 +1401,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    *          name of field to check
    */
   public OType fieldType(final String iFieldName) {
+    checkForLoading();
     checkForFields(iFieldName);
 
     ODocumentEntry entry = _fields.get(iFieldName);
@@ -1475,26 +1491,30 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public ODocument undo() {
     if (!_trackingChanges)
       throw new OConfigurationException("Cannot undo the document because tracking of changes is disabled");
-    Iterator<Entry<String, ODocumentEntry>> vals = _fields.entrySet().iterator();
-    while (vals.hasNext()) {
-      Entry<String, ODocumentEntry> next = vals.next();
-      if (next.getValue().isCreated()) {
-        vals.remove();
-      } else if (next.getValue().isChanged()) {
-        next.getValue().value = next.getValue().original;
-        next.getValue().setChanged(false);
-        next.getValue().original = null;
-        next.getValue().setExist(true);
+
+    if (_fields != null) {
+      Iterator<Entry<String, ODocumentEntry>> vals = _fields.entrySet().iterator();
+      while (vals.hasNext()) {
+        Entry<String, ODocumentEntry> next = vals.next();
+        if (next.getValue().isCreated()) {
+          vals.remove();
+        } else if (next.getValue().isChanged()) {
+          next.getValue().value = next.getValue().original;
+          next.getValue().setChanged(false);
+          next.getValue().original = null;
+          next.getValue().setExist(true);
+        }
       }
+      _fieldSize = _fields.size();
     }
-    _fieldSize = _fields.size();
 
     return this;
   }
 
-  public ODocument undo(String field) {
+  public ODocument undo(final String field) {
     if (!_trackingChanges)
       throw new OConfigurationException("Cannot undo the document because tracking of changes is disabled");
+
     if (_fields != null) {
       final ODocumentEntry value = _fields.get(field);
       if (value.created) {
@@ -1702,7 +1722,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       // EXTRACT REAL FIELD NAMES
       for (int i = 0; i < iFields.length; ++i) {
         final String f = iFields[i];
-        if (!f.startsWith("@")) {
+        if (f != null && !f.startsWith("@")) {
           int pos1 = f.indexOf('[');
           int pos2 = f.indexOf('.');
           if (pos1 > -1 || pos2 > -1) {
@@ -1742,14 +1762,16 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     if (iFields != null && iFields.length > 0) {
-      if (iFields[0].startsWith("@"))
-        // ATTRIBUTE
-        return true;
+      for (String field : iFields) {
+        if (field != null && field.startsWith("@"))
+          // ATTRIBUTE
+          return true;
+      }
 
       // PARTIAL UNMARSHALLING
       if (_fields != null && !_fields.isEmpty())
         for (String f : iFields)
-          if (_fields.containsKey(f))
+          if (f != null && _fields.containsKey(f))
             return true;
 
       // NO FIELDS FOUND

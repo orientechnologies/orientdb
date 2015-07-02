@@ -19,6 +19,33 @@
  */
 package com.orientechnologies.orient.console;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Scanner;
+import java.util.Set;
+
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -43,6 +70,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
@@ -64,9 +92,13 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializationDebug;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializationDebugProperty;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinaryDebug;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
@@ -75,20 +107,10 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPageDebug;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedClusterDebug;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected static final int    DEFAULT_WIDTH      = 150;
@@ -255,7 +277,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       final OStorage stg = Orient.instance().getStorage(currentDatabase.getURL());
 
-      currentDatabase.close();
+      if (!currentDatabase.isClosed())
+        currentDatabase.close();
 
       // FORCE CLOSING OF STORAGE: THIS CLEAN UP REMOTE CONNECTIONS
       if (stg != null)
@@ -1008,7 +1031,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Display a record as raw bytes")
-  public void displayRawRecord(@ConsoleParameter(name = "rid", description = "The record id to display") final String iRecordId) {
+  public void displayRawRecord(@ConsoleParameter(name = "rid", description = "The record id to display") final String iRecordId)
+      throws IOException {
     checkForDatabase();
 
     ORecordId rid;
@@ -1022,19 +1046,68 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         return;
     }
 
-    final ORawBuffer buffer = currentDatabase.getStorage().readRecord(rid, null, false, null).getResult();
+    ORecordId id = new ORecordId(rid);
+    OLocalPaginatedStorage storage = (OLocalPaginatedStorage) currentDatabase.getStorage();
+    OPaginatedCluster cluster = (OPaginatedCluster) storage.getClusterById(id.getClusterId());
+    if (cluster == null) {
+      message("\n cluster with id %i does not exist", id.getClusterId());
+      return;
+    }
+    OPaginatedClusterDebug debugInfo = cluster.readDebug(id.clusterPosition);
+    message("\n\nLOW LEVEL CLUSTER INFO");
+    message("\n cluster fieldId: %d", debugInfo.fileId);
+    message("\n cluster name: %s", cluster.getName());
 
-    if (buffer == null)
+    message("\n in cluster position: %d", debugInfo.clusterPosition);
+    message("\n empty: %b", debugInfo.empty);
+    message("\n contentSize: %d", debugInfo.contentSize);
+    message("\n n-pages: %d", debugInfo.pages.size());
+    message("\n\n +----------PAGE_ID---------------+------IN_PAGE_POSITION----------+---------IN_PAGE_SIZE-----------+----PAGE_CONTENT---->> ");
+    for (OClusterPageDebug page : debugInfo.pages) {
+      message("\n |%30d ", page.pageIndex);
+      message(" |%30d ", page.inPagePosition);
+      message(" |%30d ", page.inPageSize);
+      message(" |%s", OBase64Utils.encodeBytes(page.content));
+    }
+
+    ORawBuffer recored = cluster.readRecord(id.clusterPosition);
+    if (recored == null)
       throw new OException("The record has been deleted");
+    byte[] buff = recored.getBuffer();
+    ORecordSerializerBinaryDebug debugger = new ORecordSerializerBinaryDebug();
+    ORecordSerializationDebug deserializeDebug = debugger.deserializeDebug(buff, currentDatabase);
+    message("\n\nRECORD CONTENT INFO");
+    message("\n class name: %s", deserializeDebug.className);
+    message("\n fail on Reading: %b", deserializeDebug.readingFailure);
+    message("\n fail position: %d", deserializeDebug.failPosition);
+    if (deserializeDebug.readingException != null) {
+      StringWriter writer = new StringWriter();
+      deserializeDebug.readingException.printStackTrace(new PrintWriter(writer));
+      message("\n Exception On Reading: %s", writer.getBuffer().toString());
+    }
 
-    String content;
-    if (Integer.parseInt(properties.get("maxBinaryDisplay")) < buffer.buffer.length)
-      content = new String(Arrays.copyOf(buffer.buffer, Integer.parseInt(properties.get("maxBinaryDisplay"))));
-    else
-      content = new String(buffer.buffer);
+    message("\n number of properties : %d", deserializeDebug.properties.size());
+    message("\n\n PROPERTIES");
+    for (ORecordSerializationDebugProperty prop : deserializeDebug.properties) {
+      message("\n  property name: %s", prop.name);
+      message("\n  property type: %s", prop.type.name());
+      message("\n  property globlaId: %d", prop.globalId);
+      message("\n  fail on reading: %b", prop.faildToRead);
+      if (prop.faildToRead) {
+        message("\n  failed on reading position: %b", prop.failPosition);
+        StringWriter writer = new StringWriter();
+        prop.readingException.printStackTrace(new PrintWriter(writer));
+        message("\n  Exception on reading: %s", writer.getBuffer().toString());
+      } else {
+        if (prop.value instanceof ORidBag) {
+          message("\n  property value: ORidBug ");
+          ((ORidBag) prop.value).debugPrint(System.out);
+        } else
+          message("\n  property value: %s", prop.value != null ? prop.value.toString() : "null");
+      }
+      message("\n");
+    }
 
-    out.println("\nRaw record content. The size is " + buffer.buffer.length + " bytes, while settings force to print first "
-        + content.length() + " bytes:\n\n" + content);
   }
 
   @ConsoleCommand(aliases = { "status" }, description = "Display information about the database")
@@ -1424,71 +1497,71 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     boolean verbose = iOptions != null && iOptions.contains("-v");
 
+
     long fixedLinks = 0l;
     long modifiedDocuments = 0l;
     long errors = 0l;
 
-    message("\n- Fixing dirty links...");
     try {
-      for (String clusterName : currentDatabase.getClusterNames()) {
-        for (ORecord rec : currentDatabase.browseCluster(clusterName)) {
-          try {
-            if (rec instanceof ODocument) {
-              boolean changed = false;
 
-              final ODocument doc = (ODocument) rec;
-              for (String fieldName : doc.fieldNames()) {
-                final Object fieldValue = doc.rawField(fieldName);
+        message("\n- Fixing dirty links...");
+        for (String clusterName : currentDatabase.getClusterNames()) {
+          for (ORecord rec : currentDatabase.browseCluster(clusterName)) {
+            try {
+              if (rec instanceof ODocument) {
+                boolean changed = false;
 
-                if (fieldValue instanceof OIdentifiable) {
-                  if (fixLink(fieldValue)) {
-                    doc.field(fieldName, (OIdentifiable) null);
-                    fixedLinks++;
-                    changed = true;
-                    if (verbose)
-                      message("\n--- reset link " + ((OIdentifiable) fieldValue).getIdentity() + " in field '" + fieldName
-                          + "' (rid=" + doc.getIdentity() + ")");
-                  }
-                } else if (fieldValue instanceof Iterable<?>) {
-                  if (fieldValue instanceof ORecordLazyMultiValue)
-                    ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
+                final ODocument doc = (ODocument) rec;
+                for (String fieldName : doc.fieldNames()) {
+                  final Object fieldValue = doc.rawField(fieldName);
 
-                  final Iterator<Object> it = ((Iterable) fieldValue).iterator();
-                  for (int i = 0; it.hasNext(); ++i) {
-                    final Object v = it.next();
-                    if (fixLink(v)) {
-                      it.remove();
+                  if (fieldValue instanceof OIdentifiable) {
+                    if (fixLink(fieldValue)) {
+                      doc.field(fieldName, (OIdentifiable) null);
                       fixedLinks++;
                       changed = true;
                       if (verbose)
-                        message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as item " + i
-                            + " in collection of field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
+                        message("\n--- reset link " + ((OIdentifiable) fieldValue).getIdentity() + " in field '" + fieldName
+                            + "' (rid=" + doc.getIdentity() + ")");
+                    }
+                  } else if (fieldValue instanceof Iterable<?>) {
+                    if (fieldValue instanceof ORecordLazyMultiValue)
+                      ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
+
+                    final Iterator<Object> it = ((Iterable) fieldValue).iterator();
+                    for (int i = 0; it.hasNext(); ++i) {
+                      final Object v = it.next();
+                      if (fixLink(v)) {
+                        it.remove();
+                        fixedLinks++;
+                        changed = true;
+                        if (verbose)
+                          message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as item " + i
+                              + " in collection of field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
+                      }
                     }
                   }
                 }
-              }
 
-              if (changed) {
-                modifiedDocuments++;
-                doc.save();
+                if (changed) {
+                  modifiedDocuments++;
+                  doc.save();
 
-                if (verbose)
-                  message("\n-- updated document " + doc.getIdentity());
+                  if (verbose)
+                    message("\n-- updated document " + doc.getIdentity());
+                }
               }
+            } catch (Exception e) {
+              errors++;
             }
-          } catch (Exception e) {
-            errors++;
           }
         }
-      }
+        if (verbose)
+          message("\n");
 
-      if (verbose)
-        message("\n");
+        message("Done! Fixed links: " + fixedLinks + ", modified documents: " + modifiedDocuments);
 
-      message("Done! Fixed links: " + fixedLinks + ", modified documents: " + modifiedDocuments);
-
-      message("\nRepair database complete (" + errors + " errors)");
-
+        message("\nRepair database complete (" + errors + " errors)");
     } catch (Exception e) {
       printError(e);
     }
@@ -2276,10 +2349,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   private void browseRecords(final int limit, final OIdentifiableIterator<?> it) {
     final OTableFormatter tableFormatter = new OTableFormatter(this).setMaxWidthSize(getWindowSize());
 
-    currentResultSet = new ArrayList<OIdentifiable>();
+    setResultset(new ArrayList<OIdentifiable>());
     while (it.hasNext() && currentResultSet.size() <= limit)
       currentResultSet.add(it.next());
-    setResultset(currentResultSet);
 
     tableFormatter.writeRecords(currentResultSet, limit);
   }

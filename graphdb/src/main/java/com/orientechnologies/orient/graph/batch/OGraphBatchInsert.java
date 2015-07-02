@@ -124,6 +124,7 @@ public class OGraphBatchInsert {
         synchronized (runningThreads) {
           runningThreads.notifyAll();
         }
+        db.activateOnCurrentThread();
         db.close();
       }
     }
@@ -312,6 +313,7 @@ public class OGraphBatchInsert {
       }
 
     } finally {
+      db.activateOnCurrentThread();
       db.declareIntent(null);
       db.close();
       if (walActive)

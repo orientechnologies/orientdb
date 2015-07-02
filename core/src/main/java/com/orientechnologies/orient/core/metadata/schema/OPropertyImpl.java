@@ -96,7 +96,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   OPropertyImpl(final OClassImpl owner) {
-    document = new ODocument();
+    document = new ODocument().setTrackingChanges(false);
     this.owner = owner;
   }
 
@@ -682,7 +682,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     return this;
   }
 
-
   public String getRegexp() {
     acquireSchemaReadLock();
     try {
@@ -997,7 +996,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     try {
       if (this == obj)
         return true;
-      if (!OProperty.class.isAssignableFrom(obj.getClass()))
+      if (obj == null || !OProperty.class.isAssignableFrom(obj.getClass()))
         return false;
       OProperty other = (OProperty) obj;
       if (owner == null) {

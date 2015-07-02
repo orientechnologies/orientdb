@@ -39,16 +39,14 @@ import java.util.Arrays;
 public class OClusterPositionMap extends ODurableComponent {
   public static final String DEF_EXTENSION = ".cpm";
 
-  private String             name;
   private long               fileId;
   private boolean            useWal;
 
   public OClusterPositionMap(OAbstractPaginatedStorage storage, String name, boolean useWal) {
-    super(storage);
+    super(storage, name, DEF_EXTENSION);
 
     acquireExclusiveLock();
     try {
-      this.name = name;
       this.useWal = useWal;
     } finally {
       releaseExclusiveLock();
@@ -68,7 +66,7 @@ public class OClusterPositionMap extends ODurableComponent {
     acquireExclusiveLock();
     try {
       OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-      fileId = openFile(atomicOperation, name + DEF_EXTENSION);
+      fileId = openFile(atomicOperation, getFullName());
     } finally {
       releaseExclusiveLock();
     }
@@ -79,7 +77,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
     acquireExclusiveLock();
     try {
-      fileId = addFile(atomicOperation, name + DEF_EXTENSION);
+      fileId = addFile(atomicOperation, getFullName());
       endAtomicOperation(false);
     } catch (IOException ioe) {
       endAtomicOperation(true);
@@ -154,8 +152,8 @@ public class OClusterPositionMap extends ODurableComponent {
     startAtomicOperation();
     acquireExclusiveLock();
     try {
-      writeCache.renameFile(fileId, this.name + DEF_EXTENSION, newName + DEF_EXTENSION);
-      name = newName;
+      writeCache.renameFile(fileId, getFullName(), newName + getExtension());
+      setName(newName);
       endAtomicOperation(false);
     } catch (IOException ioe) {
       endAtomicOperation(true);

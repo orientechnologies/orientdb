@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
@@ -47,6 +40,13 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.lang.reflect.Array;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Helper class to manage documents.
@@ -1395,7 +1395,7 @@ public class ODocumentHelper {
   }
 
   public static <T> T makeDbCall(final ODatabaseDocumentInternal databaseRecord, final ODbRelatedCall<T> function) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(databaseRecord);
+    databaseRecord.activateOnCurrentThread();
     return function.call();
   }
 }

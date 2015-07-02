@@ -50,7 +50,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,6 +94,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected int                               resultCount;
   protected int                               serialTempRID      = 0;
   protected int                               skip               = 0;
+  protected boolean                           lazyIteration      = true;
 
   private static final class IndexValuesIterator implements Iterator<OIdentifiable> {
     private OIndexCursor  indexCursor;
@@ -169,9 +169,22 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return true;
   }
 
+  public boolean isLazyIteration() {
+    return lazyIteration;
+  }
+
+  public void setLazyIteration(final boolean lazyIteration) {
+    this.lazyIteration = lazyIteration;
+  }
+
   @Override
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.SHARDED;
+    return DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+  }
+
+  @Override
+  public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
+    return DISTRIBUTED_RESULT_MGMT.MERGE;
   }
 
   /**
@@ -197,7 +210,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       } else if (parsedTarget.getTargetClusters() != null)
         searchInClusters();
       else if (parsedTarget.getTargetRecords() != null) {
-        if (parsedTarget.getTargetRecords() instanceof OIterableRecordSource) {
+        if (!lazyIteration && parsedTarget.getTargetQuery() != null) {
+          // EXECUTE THE QUERY TO ALLOW DISTRIB EXECUTION
+          target = ((Iterable<? extends OIdentifiable>) getDatabase().command(new OCommandSQL(parsedTarget.getTargetQuery()))
+              .execute(iArgs)).iterator();
+        } else if (parsedTarget.getTargetRecords() instanceof OIterableRecordSource) {
           target = ((OIterableRecordSource) parsedTarget.getTargetRecords()).iterator(iArgs);
         } else {
           target = parsedTarget.getTargetRecords().iterator();
@@ -633,15 +650,23 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return new ORID[] { beginRange, endRange };
   }
 
-  public void setRequest(OSQLAsynchQuery<ODocument> request) {
+  public Iterator<? extends OIdentifiable> getTarget() {
+    return target;
+  }
+
+  public void setTarget(final Iterator<? extends OIdentifiable> target) {
+    this.target = target;
+  }
+
+  public void setRequest(final OSQLAsynchQuery<ODocument> request) {
     this.request = request;
   }
 
-  public void setParsedTarget(OSQLTarget parsedTarget) {
+  public void setParsedTarget(final OSQLTarget parsedTarget) {
     this.parsedTarget = parsedTarget;
   }
 
-  public void setCompiledFilter(OSQLFilter compiledFilter) {
+  public void setCompiledFilter(final OSQLFilter compiledFilter) {
     this.compiledFilter = compiledFilter;
   }
 }

@@ -47,6 +47,8 @@ public interface OIndexInternal<T> extends OIndex<T> {
   public static final String INDEX_VERSION             = "indexVersion";
   public static final String METADATA                  = "metadata";
 
+  public Object getCollatingValue(final Object key);
+
   /**
    * Loads the index giving the configuration.
    * 
@@ -140,7 +142,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * @param key
    *          Keys to lock.
    */
-  void lockKeysForUpdate(Object... key);
+  void lockKeysForUpdateNoTx(Object... key);
 
   /**
    * Applies exclusive lock on keys which prevents read/modification of this keys in following methods:
@@ -163,7 +165,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * @param keys
    *          Keys to lock.
    */
-  void lockKeysForUpdate(Collection<Object> keys);
+  void lockKeysForUpdateNoTx(Collection<Object> keys);
 
   /**
    * Release exclusive lock on keys which prevents read/modification of this keys in following methods:
@@ -180,7 +182,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * @param key
    *          Keys to unlock.
    */
-  void releaseKeysForUpdate(Object... key);
+  void releaseKeysForUpdateNoTx(Object... key);
 
   /**
    * Release exclusive lock on keys which prevents read/modification of this keys in following methods:
@@ -197,7 +199,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * @param keys
    *          Keys to unlock.
    */
-  void releaseKeysForUpdate(Collection<Object> keys);
+  void releaseKeysForUpdateNoTx(Collection<Object> keys);
 
   public IndexMetadata loadMetadata(ODocument iConfig);
 

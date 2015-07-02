@@ -82,6 +82,7 @@ public class Orient extends OListenerManger<OOrientListener> {
                                                                                                                        .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientStartupListener>, Boolean>());
   private final Set<WeakHashSetValueHolder<OOrientShutdownListener>>                 weakShutdownListeners         = Collections
                                                                                                                        .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientShutdownListener>, Boolean>());
+
   static {
     instance.startup();
   }
@@ -272,6 +273,10 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       OLogManager.instance().debug(this, "Orient Engine is shutting down...");
 
+      if (databaseFactory != null)
+        // CLOSE ALL DATABASES
+        databaseFactory.shutdown();
+
       closeAllStorages();
 
       // SHUTDOWN ENGINES
@@ -279,18 +284,18 @@ public class Orient extends OListenerManger<OOrientListener> {
         engine.shutdown();
       engines.clear();
 
-      if (databaseFactory != null)
-        // CLOSE ALL DATABASES
-        databaseFactory.shutdown();
-
+      if (threadGroup != null)
+        // STOP ALL THE PENDING THREADS
+        threadGroup.interrupt();
+      
       if (shutdownHook != null) {
         shutdownHook.cancel();
         shutdownHook = null;
       }
-
-      if (threadGroup != null)
-        // STOP ALL THE PENDING THREADS
-        threadGroup.interrupt();
+      if (signalHandler != null) {
+        signalHandler.cancel();
+        signalHandler = null;
+      }
 
       timer.cancel();
       timer = null;
@@ -631,6 +636,13 @@ public class Orient extends OListenerManger<OOrientListener> {
     if (shutdownHook != null) {
       shutdownHook.cancel();
       shutdownHook = null;
+    }
+  }
+
+  public void removeSignalHandler() {
+    if (signalHandler != null) {
+      signalHandler.cancel();
+      signalHandler = null;
     }
   }
 

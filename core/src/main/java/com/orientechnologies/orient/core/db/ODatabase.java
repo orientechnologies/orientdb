@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.io.Closeable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -40,12 +46,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.Closeable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
@@ -99,6 +99,17 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   <DB extends ODatabase> DB create(Map<OGlobalConfiguration, Object> iInitialSettings);
+
+  /**
+   * Activate current database instance on current thread. Call this method before using the database if you switch between multiple
+   * databas instances on the same thread or if you pass them across threads.
+   */
+  ODatabase activateOnCurrentThread();
+
+  /**
+   * Returns true if the current database instance is active on current thread, otherwise false.
+   */
+  boolean isActiveOnCurrentThread();
 
   /**
    * Reloads the database information like the cluster list.

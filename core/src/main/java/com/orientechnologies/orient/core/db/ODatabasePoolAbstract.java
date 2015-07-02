@@ -239,10 +239,6 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
       this.notifyEvictor(dbPooledName, iDatabase);
   }
 
-  public DB reuseResource(final String iKey, final DB iValue) {
-    return iValue;
-  }
-
   public Map<String, OReentrantResourcePool<String, DB>> getPools() {
     lock();
     try {
@@ -299,6 +295,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
           if (stg != null && stg.getStatus() == OStorage.STATUS.OPEN)
             try {
               OLogManager.instance().debug(this, "Closing pooled database '%s'...", db.getName());
+              db.activateOnCurrentThread();
               ((ODatabasePooled) db).forceClose();
               OLogManager.instance().debug(this, "OK", db.getName());
             } catch (Exception e) {

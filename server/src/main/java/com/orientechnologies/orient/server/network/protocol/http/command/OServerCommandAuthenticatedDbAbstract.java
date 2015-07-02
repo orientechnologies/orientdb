@@ -224,7 +224,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     } else {
       ORID currentUserId = iRequest.bearerToken.getUserId();
       if (currentUserId != null && localDatabase != null && localDatabase.getUser() != null) {
-        if (!currentUserId.equals(localDatabase.getUser().getDocument().getIdentity().toString())) {
+        if (!currentUserId.equals(localDatabase.getUser().getDocument().getIdentity())) {
           ODocument userDoc = localDatabase.load(currentUserId);
           localDatabase.setUser(new OUser(userDoc));
         }

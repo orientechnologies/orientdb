@@ -73,6 +73,11 @@ public class OCommandExecutorSQLExplain extends OCommandExecutorSQLDelegate {
 
   @Override
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.SHARDED;
+    return DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+  }
+
+  @Override
+  public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
+    return DISTRIBUTED_RESULT_MGMT.MERGE;
   }
 }

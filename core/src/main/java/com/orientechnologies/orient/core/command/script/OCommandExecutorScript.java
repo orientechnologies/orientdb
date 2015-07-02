@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * Executes Script Commands.
@@ -62,6 +63,7 @@ import java.util.Map;
  * 
  */
 public class OCommandExecutorScript extends OCommandExecutorAbstract implements OCommandDistributedReplicateRequest {
+  private static final int MAX_DELAY = 100;
   protected OCommandScript request;
 
   public OCommandExecutorScript() {
@@ -278,12 +280,16 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         if (retry >= maxRetry)
           throw e;
 
+        waitForNextRetry();
+
       } catch (ORecordDuplicatedException e) {
         // THIS CASE IS ON UPSERT
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
         if (retry >= maxRetry)
           throw e;
+
+        waitForNextRetry();
 
       } catch (ORecordNotFoundException e) {
         // THIS CASE IS ON UPSERT
@@ -297,10 +303,22 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         getDatabase().getLocalCache().clear();
         if (retry >= maxRetry)
           throw e;
+
+        waitForNextRetry();
       }
     }
 
     return lastResult;
+  }
+
+  /**
+   * Wait before to retry
+   */
+  protected void waitForNextRetry() {
+    try {
+      Thread.sleep(new Random().nextInt(MAX_DELAY - 1) + 1);
+    } catch (InterruptedException e) {
+    }
   }
 
   private Object executeCommand(final String lastCommand, final ODatabaseDocument db) {

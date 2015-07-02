@@ -166,12 +166,12 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 
   private Object internalLock(final RESOURCE_TYPE iResourceId) {
     final int hashCode = iResourceId.hashCode();
-    final int index = (hashCode >>> shift) & mask;
+    final int index = (hashCode ^ (hashCode >>> 16)) & mask;
     return locks[index];
   }
 
   private static int defaultConcurrency() {
-    return Runtime.getRuntime().availableProcessors() > DEFAULT_CONCURRENCY_LEVEL ? Runtime.getRuntime().availableProcessors()
+    return Runtime.getRuntime().availableProcessors() * 8 > DEFAULT_CONCURRENCY_LEVEL ? Runtime.getRuntime().availableProcessors() * 8
         : DEFAULT_CONCURRENCY_LEVEL;
   }
 }

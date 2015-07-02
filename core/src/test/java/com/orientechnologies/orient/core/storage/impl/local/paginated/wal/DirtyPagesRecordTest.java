@@ -7,6 +7,8 @@ import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+
 /**
  * @author Andrey Lomakin
  * @since 5/1/13
@@ -14,6 +16,8 @@ import org.testng.annotations.Test;
 @Test
 public class DirtyPagesRecordTest {
   public void testSerialization() {
+    // Temporary fix there is some other test that leave the db open.
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
     Set<ODirtyPage> dirtyPages = new HashSet<ODirtyPage>();
     Random rnd = new Random();
     for (int i = 0; i < 10; i++) {

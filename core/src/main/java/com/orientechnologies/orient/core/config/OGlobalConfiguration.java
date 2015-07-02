@@ -86,7 +86,7 @@ public enum OGlobalConfiguration {
       "Max time till page will be flushed from write cache in seconds", Long.class, 24 * 60 * 60),
 
   DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL("storage.diskCache.writeCachePageFlushInterval",
-      "Interval between flushing of pages from write cache in ms.", Integer.class, 100),
+      "Interval between flushing of pages from write cache in ms.", Integer.class, 25),
 
   DISK_WRITE_CACHE_FLUSH_WRITE_INACTIVITY_INTERVAL("storage.diskCache.writeCacheFlushInactivityInterval",
       "Interval between 2 writes to the disk cache,"
@@ -426,18 +426,13 @@ public enum OGlobalConfiguration {
 
   SERVER_CACHE_FILE_STATIC("server.cache.staticFile", "Cache static resources loading", Boolean.class, false),
 
-  SERVER_CACHE_INCREASE_ON_DEMAND("server.cache.2q.increaseOnDemand", "Increase 2q cache on demand", Boolean.class, true),
-
-  SERVER_CACHE_INCREASE_STEP("server.cache.2q.increaseStep",
-      "Increase 2q cache step in percent. Will only work if server.cache.2q.increaseOnDemand is true", Float.class, 0.1f),
-
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL(
       "server.log.dumpClientExceptionLevel",
       "Logs client exceptions. Use any level supported by Java java.util.logging.Level class: OFF, FINE, CONFIG, INFO, WARNING, SEVERE",
       Level.class, Level.SEVERE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
-      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.FALSE),
+      "Dumps the full stack trace of the exception to sent to the client", Boolean.class, Boolean.FALSE),
 
   // DISTRIBUTED
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout",
@@ -715,13 +710,20 @@ public enum OGlobalConfiguration {
 
         OLogManager.instance().info(null, "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB disk=%,dMB)", diskCacheInMB,
             jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024, freeSpaceInMB);
+
         DISK_CACHE_SIZE.setValue(diskCacheInMB);
       } else {
         // LOW MEMORY: SET IT TO 256MB ONLY
         OLogManager
             .instance()
-            .warn(null, "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + O2QCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+            .warn(
+                null,
+                "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE="
+                    + O2QCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
         DISK_CACHE_SIZE.setValue(O2QCache.MIN_CACHE_SIZE);
+
+        OLogManager.instance().info(null, "OrientDB config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB disk=%,dMB)", diskCacheInMB,
+            jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024, freeSpaceInMB);
       }
 
     } catch (NoSuchMethodException e) {

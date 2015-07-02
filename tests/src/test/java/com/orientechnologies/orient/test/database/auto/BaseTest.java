@@ -20,8 +20,9 @@ import java.io.IOException;
 public abstract class BaseTest<T extends ODatabase> {
   protected T      database;
   protected String url;
-  private boolean  dropDb = false;
+  private boolean  dropDb             = false;
   private String   storageType;
+  private boolean  autoManageDatabase = true;
 
   protected BaseTest() {
   }
@@ -93,6 +94,9 @@ public abstract class BaseTest<T extends ODatabase> {
 
   @AfterClass
   public void afterClass() throws Exception {
+    if( !autoManageDatabase )
+      return;
+
     if (dropDb) {
       if (database.isClosed())
         database.open("admin", "admin");
@@ -103,21 +107,31 @@ public abstract class BaseTest<T extends ODatabase> {
 
       ODatabaseHelper.dropDatabase(database, remoteStorageType);
     } else {
-      if (!database.isClosed())
+      if (!database.isClosed()) {
+        database.activateOnCurrentThread();
         database.close();
+      }
     }
   }
 
   @BeforeMethod
   public void beforeMethod() throws Exception {
+    if (!autoManageDatabase)
+      return;
+
     if (database.isClosed())
       database.open("admin", "admin");
   }
 
   @AfterMethod
   public void afterMethod() throws Exception {
-    if (!database.isClosed())
+    if (!autoManageDatabase)
+      return;
+
+    if (!database.isClosed()) {
+      database.activateOnCurrentThread();
       database.close();
+    }
   }
 
   protected abstract T createDatabaseInstance(String url);
@@ -175,5 +189,21 @@ public abstract class BaseTest<T extends ODatabase> {
     OClass animal = database.getMetadata().getSchema().createClass("Animal");
     animal.createProperty("races", OType.LINKSET, animalRace);
     animal.createProperty("name", OType.STRING);
+  }
+
+  protected boolean isAutoManageDatabase() {
+    return autoManageDatabase;
+  }
+
+  protected void setAutoManageDatabase(final boolean autoManageDatabase) {
+    this.autoManageDatabase = autoManageDatabase;
+  }
+
+  protected boolean isDropDb() {
+    return dropDb;
+  }
+
+  protected void setDropDb(final boolean dropDb) {
+    this.dropDb = dropDb;
   }
 }

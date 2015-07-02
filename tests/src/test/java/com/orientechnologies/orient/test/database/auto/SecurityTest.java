@@ -15,25 +15,23 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
 
 @Test(groups = "security")
 public class SecurityTest extends DocumentDBBaseTest {
@@ -139,5 +137,35 @@ public class SecurityTest extends DocumentDBBaseTest {
 
 			database.close();
 		}
+  }
+
+  @Test
+  public void testQuotedUserName(){
+    database.open("admin", "admin");
+
+    OSecurity security = database.getMetadata().getSecurity();
+
+    ORole adminRole = security.getRole("admin");
+    OUser newUser = security.createUser("user'quoted", "foobar", adminRole);
+
+    database.close();
+
+    database.open("user'quoted", "foobar");
+    database.close();
+
+    database.open("admin", "admin");
+    security = database.getMetadata().getSecurity();
+    OUser user = security.getUser("user'quoted");
+    Assert.assertNotNull(user);
+    security.dropUser(user.getName());
+
+    database.close();
+
+    try{
+      database.open("user'quoted", "foobar");
+      Assert.fail();
+    }catch(Exception e){
+
+    }
   }
 }

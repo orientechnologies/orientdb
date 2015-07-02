@@ -225,6 +225,14 @@ public class OSelectStatementTest {
   }
 
   @Test
+  public void testQuotedTargetName() {
+    checkRightSyntax("select from `edge`");
+    checkRightSyntax("select from `from`");
+    checkRightSyntax("select from `vertex`");
+    checkRightSyntax("select from `select`");
+  }
+
+  @Test
   public void testQuotedFieldName() {
     checkRightSyntax("select `foo` from City where country.@class = 'Country'");
 
@@ -298,6 +306,14 @@ public class OSelectStatementTest {
   }
 
   @Test
+  public void testSpatial() {
+
+    checkRightSyntax("select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 0.5}]");
+    checkRightSyntax("select * from Place where [latitude,longitude] WITHIN [[51.507222,-0.1275],[55.507222,-0.1275]]");
+
+  }
+
+  @Test
   public void testSubConditions() {
     checkRightSyntax("SELECT @rid as rid, localName FROM Person WHERE ( 'milano' IN out('lives').localName OR 'roma' IN out('lives').localName ) ORDER BY age ASC");
   }
@@ -314,6 +330,11 @@ public class OSelectStatementTest {
     checkRightSyntax("insert into test content {\"node_id\": \"MFmqvmht//sYYWB8=\"}");
     checkRightSyntax("insert into test content { \"node_id\": \"MFmqvmht\\/\\/GYsYYWB8=\"}");
 
+  }
+
+  @Test()
+  public void testClusterList() {
+    checkRightSyntax("select from cluster:[foo,bar]");
   }
 
   @Test

@@ -60,18 +60,29 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     key = getCollatingValue(key);
 
-    acquireSharedLock();
+    final ODatabase database = getDatabase();
+    final boolean txIsActive = database.getTransaction().isActive();
+
+    if (!txIsActive)
+      keyLockManager.acquireSharedLock(key);
     try {
 
-      final Set<OIdentifiable> values = indexEngine.get(key);
+      acquireSharedLock();
+      try {
 
-      if (values == null)
-        return Collections.emptySet();
+        final Set<OIdentifiable> values = indexEngine.get(key);
 
-      return new HashSet<OIdentifiable>(values);
+        if (values == null)
+          return Collections.emptySet();
 
+        return new HashSet<OIdentifiable>(values);
+
+      } finally {
+        releaseSharedLock();
+      }
     } finally {
-      releaseSharedLock();
+      if (!txIsActive)
+        keyLockManager.releaseSharedLock(key);
     }
   }
 
@@ -80,19 +91,29 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     key = getCollatingValue(key);
 
-    acquireSharedLock();
+    final ODatabase database = getDatabase();
+    final boolean txIsActive = database.getTransaction().isActive();
+    if (!txIsActive)
+      keyLockManager.acquireSharedLock(key);
     try {
+      acquireSharedLock();
+      try {
 
-      final Set<OIdentifiable> values = indexEngine.get(key);
+        final Set<OIdentifiable> values = indexEngine.get(key);
 
-      if (values == null)
-        return 0;
+        if (values == null)
+          return 0;
 
-      return values.size();
+        return values.size();
 
+      } finally {
+        releaseSharedLock();
+      }
     } finally {
-      releaseSharedLock();
+      if (!txIsActive)
+        keyLockManager.releaseSharedLock(key);
     }
+
   }
 
   public OIndexMultiValues put(Object key, final OIdentifiable iSingleValue) {
@@ -103,13 +124,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    if (!txIsActive)
+      keyLockManager.acquireExclusiveLock(key);
     try {
       modificationLock.requestModificationLock();
       try {
         checkForKeyType(key);
-        acquireExclusiveLock();
+        acquireSharedLock();
         startStorageAtomicOperation();
         try {
           Set<OIdentifiable> values = indexEngine.get(key);
@@ -140,14 +161,14 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           rollbackStorageAtomicOperation();
           throw new OIndexException("Error during insertion of key in index", e);
         } finally {
-          releaseExclusiveLock();
+          releaseSharedLock();
         }
       } finally {
         modificationLock.releaseModificationLock();
       }
     } finally {
-      if (txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      if (!txIsActive)
+        keyLockManager.releaseExclusiveLock(key);
     }
   }
 
@@ -160,13 +181,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    if (!txIsActive)
+      keyLockManager.acquireExclusiveLock(key);
 
     try {
       modificationLock.requestModificationLock();
       try {
-        acquireExclusiveLock();
+        acquireSharedLock();
         startStorageAtomicOperation();
         try {
 
@@ -179,8 +200,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
           if (value == null) {
             indexEngine.remove(key);
-          }
-          else if (values.remove(value)) {
+          } else if (values.remove(value)) {
             if (values.isEmpty())
               indexEngine.remove(key);
             else
@@ -197,14 +217,14 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           rollbackStorageAtomicOperation();
           throw new OIndexException("Error during removal of entry by key", e);
         } finally {
-          releaseExclusiveLock();
+          releaseSharedLock();
         }
       } finally {
         modificationLock.releaseModificationLock();
       }
     } finally {
-      if (txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      if (!txIsActive)
+        keyLockManager.releaseExclusiveLock(key);
     }
 
   }

@@ -9,7 +9,6 @@ import java.util.Map;
 
 public class OExpression extends SimpleNode {
 
-  protected Object  value;
   protected Boolean singleQuotes;
   protected Boolean doubleQuotes;
 

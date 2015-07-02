@@ -38,18 +38,17 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
  * @since 28.03.13
  */
 public class OEngineLocalPaginated extends OEngineAbstract {
-  public static final String     NAME            = "plocal";
+  public static final String NAME      = "plocal";
 
-  private final OWriteCacheIdGen writeCacheIdGen = new OSnowFlakeIdGen();
-  private final OReadCache       readCache       = new O2QCache(
-                                                     (long) (OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024 * ((100 - OGlobalConfiguration.DISK_WRITE_CACHE_PART
-                                                         .getValueAsInteger()) / 100.0)), OGlobalConfiguration.DISK_CACHE_PAGE_SIZE
-                                                         .getValueAsInteger() * 1024, true);
+  private final OReadCache   readCache = new O2QCache(
+                                           (long) (OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024 * ((100 - OGlobalConfiguration.DISK_WRITE_CACHE_PART
+                                               .getValueAsInteger()) / 100.0)), OGlobalConfiguration.DISK_CACHE_PAGE_SIZE
+                                               .getValueAsInteger() * 1024, true);
 
   public OStorage createStorage(final String dbName, final Map<String, String> configuration) {
     try {
       // GET THE STORAGE
-      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), writeCacheIdGen.nextId(), readCache);
+      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), readCache);
 
     } catch (Throwable t) {
       OLogManager.instance().error(this,

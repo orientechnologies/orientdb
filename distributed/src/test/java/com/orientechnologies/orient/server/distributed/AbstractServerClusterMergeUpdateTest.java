@@ -51,6 +51,7 @@ public abstract class AbstractServerClusterMergeUpdateTest  extends AbstractServ
 
     // Event #0: Create new document with value 2L, and version 1
     ODocument doc = new ODocument("Paper").field(FIELD_NAME, 2L);
+    db0.activateOnCurrentThread();
     db0.save(doc);
     ORID orid = doc.getIdentity().copy();
 
@@ -61,6 +62,7 @@ public abstract class AbstractServerClusterMergeUpdateTest  extends AbstractServ
     // Event #2: Node 1 starts a transaction, loads the document with
     // version 1 and value 2, updates it to value 4, and commit(v2)
     {
+      db1.activateOnCurrentThread();
       db1.begin();
       ODocument doc1 = db1.load(orid);
       doc1.field(FIELD_NAME, 4L);
@@ -79,6 +81,7 @@ public abstract class AbstractServerClusterMergeUpdateTest  extends AbstractServ
     }
 
     // Event #4: Node 0 update his document (v1, 2) to value 5(v2), and commit.
+    db0.activateOnCurrentThread();
     doc0.field(FIELD_NAME, 5L);
     db0.save(doc0);
 

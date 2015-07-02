@@ -11,6 +11,7 @@ public class OUpdateStatement extends OStatement {
   protected OIdentifier             targetClass;
   protected OCluster                targetCluster;
   protected OIndexIdentifier        targetIndex;
+  protected OStatement              targetQuery;
 
   protected List<OUpdateOperations> operations   = new ArrayList<OUpdateOperations>();
 
@@ -47,6 +48,10 @@ public class OUpdateStatement extends OStatement {
       result.append(targetCluster.toString());
     } else if (targetIndex != null) {
       result.append(targetIndex.toString());
+    } else if (targetQuery != null) {
+      result.append("(");
+      result.append(targetQuery.toString());
+      result.append(")");
     }
 
     for (OUpdateOperations ops : this.operations) {
@@ -90,6 +95,9 @@ public class OUpdateStatement extends OStatement {
   }
 
   public void replaceParameters(Map<Object, Object> params) {
+    if (this.targetQuery != null) {
+      targetQuery.replaceParameters(params);
+    }
     for (OUpdateOperations ops : operations) {
       ops.replaceParameters(params);
     }

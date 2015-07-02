@@ -209,10 +209,4 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
     if (intent != null)
       g.declareIntent(intent.copy());
   }
-
-  @Override
-  protected void finalize() throws Throwable {
-    close();
-    super.finalize();
-  }
 }

@@ -22,11 +22,10 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -42,6 +41,17 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
   @Parameters(value = "url")
   public SQLSelectProjectionsTest(@Optional String url) {
     super(url);
+  }
+
+  @BeforeClass
+  @Override
+  public void beforeClass() throws Exception {
+    super.beforeClass();
+
+    if( !database.getMetadata().getSchema().existsClass("V") )
+      database.getMetadata().getSchema().createClass("V");
+    if( !database.getMetadata().getSchema().existsClass("E") )
+      database.getMetadata().getSchema().createClass("E");
   }
 
   @Test

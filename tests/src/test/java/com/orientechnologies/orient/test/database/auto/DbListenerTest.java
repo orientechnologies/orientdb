@@ -200,9 +200,6 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(onCreate, curCreate + 1);
 
-    database.close();
-    Assert.assertEquals(onClose, curOnclose + 1);
-
     database.open("admin", "admin");
     Assert.assertEquals(onOpen, 1);
 
@@ -234,10 +231,11 @@ public class DbListenerTest extends DocumentDBBaseTest {
     if (!database.getURL().startsWith("remote:"))
       return;
 
-    database.close();
+    if (database.exists())
+      ODatabaseHelper.deleteDatabase(database, getStorageType());
+    ODatabaseHelper.createDatabase(database, url, getStorageType());
 
     database.registerListener(new DbListener());
-
     database.open("admin", "admin");
     Assert.assertEquals(onOpen, 1);
 
@@ -269,7 +267,6 @@ public class DbListenerTest extends DocumentDBBaseTest {
     if (database.exists())
       ODatabaseHelper.deleteDatabase(database, getStorageType());
     ODatabaseHelper.createDatabase(database, url, getStorageType());
-    database.close();
 
     final AtomicInteger recordedChanges = new AtomicInteger();
 
@@ -299,7 +296,6 @@ public class DbListenerTest extends DocumentDBBaseTest {
     if (database.exists())
       ODatabaseHelper.deleteDatabase(database, getStorageType());
     ODatabaseHelper.createDatabase(database, url, getStorageType());
-    database.close();
 
     database.open("admin", "admin");
     OrientGraph g = new OrientGraph(database);
@@ -327,7 +323,6 @@ public class DbListenerTest extends DocumentDBBaseTest {
     if (database.exists())
       ODatabaseHelper.deleteDatabase(database, getStorageType());
     ODatabaseHelper.createDatabase(database, url, getStorageType());
-    database.close();
 
     final AtomicInteger recordedChanges = new AtomicInteger();
 

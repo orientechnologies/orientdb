@@ -100,6 +100,18 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('foo', ['foo1', 'foo2'])")).execute();
     db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('bar', ['bar1', 'bar2'])")).execute();
 
+    db.command(new OCommandSQL("CREATE class edge")).execute();
+
+    db.command(new OCommandSQL("CREATE class TestFromInSquare")).execute();
+    db.command(new OCommandSQL("insert into TestFromInSquare set tags = {' from ':'foo',' to ':'bar'}")).execute();
+
+    db.command(new OCommandSQL("CREATE class TestMultipleClusters")).execute();
+    db.command(new OCommandSQL("alter class TestMultipleClusters addcluster testmultipleclusters1 ")).execute();
+    db.command(new OCommandSQL("alter class TestMultipleClusters addcluster testmultipleclusters2 ")).execute();
+    db.command(new OCommandSQL("insert into cluster:testmultipleclusters set name = 'aaa'")).execute();
+    db.command(new OCommandSQL("insert into cluster:testmultipleclusters1 set name = 'foo'")).execute();
+    db.command(new OCommandSQL("insert into cluster:testmultipleclusters2 set name = 'bar'")).execute();
+
   }
 
   @AfterClass
@@ -346,6 +358,19 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
+  public void testFromInSquareBrackets() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select tags[' from '] as a from TestFromInSquare")).execute();
+    assertEquals(qResult.size(), 1);
+    assertEquals(qResult.get(0).field("a"), "foo");
+  }
+
+  @Test
+  public void testNewline() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select\n1 as ACTIVE\nFROM foo")).execute();
+    assertEquals(qResult.size(), 5);
+  }
+
+  @Test
   public void testOrderByRid() {
     List<ODocument> qResult = db.command(new OCommandSQL("select from ridsorttest order by @rid ASC")).execute();
     assertTrue(qResult.size() > 0);
@@ -433,6 +458,26 @@ public class OCommandExecutorSQLSelectTest {
       String coll = doc.field("coll");
       assertTrue(coll.startsWith(name));
     }
+  }
+
+  @Test
+  public void testMultipleClusters() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from cluster:[testmultipleclusters1]")).execute();
+
+    assertEquals(qResult.size(), 1);
+
+    qResult = db.command(new OCommandSQL("select from cluster:[testmultipleclusters1, testmultipleclusters2]")).execute();
+
+    assertEquals(qResult.size(), 2);
+
+  }
+
+  @Test
+  public void testQuotedClassName() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from `edge`")).execute();
+
+    assertEquals(qResult.size(), 0);
+
   }
 
   @Test

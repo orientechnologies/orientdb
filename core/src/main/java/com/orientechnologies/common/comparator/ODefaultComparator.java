@@ -43,6 +43,11 @@ public class ODefaultComparator implements Comparator<Object> {
         return -1;
     } else if (objectTwo == null)
       return 1;
+
+    if (objectOne == objectTwo)
+      // FAST COMPARISON
+      return 0;
+
     if (objectOne instanceof Comparable)
       return ((Comparable<Object>) objectOne).compareTo(objectTwo);
 

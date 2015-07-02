@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -71,19 +72,27 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   @Override
   protected OSBTreeBonsaiLocal<OIdentifiable, Integer> createTree(int clusterId) {
 
-    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(DEFAULT_EXTENSION, true,
-        storage);
-    tree.create(FILE_NAME_PREFIX + clusterId, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
+    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(FILE_NAME_PREFIX + clusterId,
+        DEFAULT_EXTENSION, true, storage);
+    tree.create(OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
 
     return tree;
   }
 
   @Override
   protected OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer) {
-    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(DEFAULT_EXTENSION, true,
-        storage);
+    String fileName;
+    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+    if (atomicOperation == null) {
+      fileName = storage.getWriteCache().fileNameById(collectionPointer.getFileId());
+    } else {
+      fileName = atomicOperation.fileNameById(collectionPointer.getFileId());
+    }
 
-    tree.load(collectionPointer.getFileId(), collectionPointer.getRootPointer());
+    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(fileName.substring(0,
+        fileName.length() - DEFAULT_EXTENSION.length()), DEFAULT_EXTENSION, true, storage);
+
+    tree.load(collectionPointer.getRootPointer());
 
     return tree;
   }

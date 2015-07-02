@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.conflict;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSaveThreadLocal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
@@ -40,14 +41,17 @@ public class OAutoMergeRecordConflictStrategy extends OVersionRecordConflictStra
       final byte[] iRecordContent, final ORecordVersion iDatabaseVersion) {
 
     if (iRecordType == ODocument.RECORD_TYPE) {
-      // No need lock, is already inside a lock.
+      // No need lock, is already inside a lock. Use database to read temporary objects too
       OStorageOperationResult<ORawBuffer> res = storage.readRecord(rid, null, false, null);
       final ODocument storedRecord = new ODocument(rid).fromStream(res.getResult().getBuffer());
-      final ODocument newRecord = new ODocument(rid).fromStream(iRecordContent);
 
-      storedRecord.merge(newRecord, false, true);
+      ODocument newRecord = (ODocument) ORecordSaveThreadLocal.getLast();
+      if (newRecord == null || !newRecord.getIdentity().equals(rid))
+        newRecord = new ODocument(rid).fromStream(iRecordContent);
 
-      iDatabaseVersion.setCounter(Math.max(iDatabaseVersion.getCounter(), iRecordVersion.getCounter()));
+      storedRecord.merge(newRecord, true, true);
+
+      iDatabaseVersion.setCounter(Math.max(iDatabaseVersion.getCounter(), iRecordVersion.getCounter()) + 1);
 
       return storedRecord.toStream();
     } else

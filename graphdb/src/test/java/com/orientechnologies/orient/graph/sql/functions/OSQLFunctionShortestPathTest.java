@@ -2,24 +2,23 @@ package com.orientechnologies.orient.graph.sql.functions;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.id.ORID;
-import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
 public class OSQLFunctionShortestPathTest {
 
   private OrientGraph              graph;
-  private Vertex                   v1;
-  private Vertex                   v2;
-  private Vertex                   v3;
-  private Vertex                   v4;
+  private Map<Integer, Vertex>     vertices = new HashMap<Integer, Vertex>();
+
   private OSQLFunctionShortestPath function;
 
   @Before
@@ -37,44 +36,81 @@ public class OSQLFunctionShortestPathTest {
   private void setUpDatabase() {
     graph = new OrientGraph("memory:OSQLFunctionShortestPath");
 
-    v1 = graph.addVertex(null);
-    v2 = graph.addVertex(null);
-    v3 = graph.addVertex(null);
-    v4 = graph.addVertex(null);
+    vertices.put(1, graph.addVertex(null));
+    vertices.put(2, graph.addVertex(null));
+    vertices.put(3, graph.addVertex(null));
+    vertices.put(4, graph.addVertex(null));
 
-    v1.setProperty("node_id", "A");
-    v2.setProperty("node_id", "B");
-    v3.setProperty("node_id", "C");
-    v4.setProperty("node_id", "D");
+    vertices.get(1).setProperty("node_id", "A");
+    vertices.get(2).setProperty("node_id", "B");
+    vertices.get(3).setProperty("node_id", "C");
+    vertices.get(4).setProperty("node_id", "D");
 
-    Edge e1 = graph.addEdge(null, v1, v2, "Edge1");
-    Edge e2 = graph.addEdge(null, v2, v3, "Edge1");
-    Edge e3 = graph.addEdge(null, v1, v3, "Edge2");
-    Edge e4 = graph.addEdge(null, v3, v4, "Edge1");
+
+
+    graph.addEdge(null, vertices.get(1), vertices.get(2), "Edge1");
+    graph.addEdge(null, vertices.get(2), vertices.get(3), "Edge1");
+    graph.addEdge(null, vertices.get(3), vertices.get(1), "Edge2");
+    graph.addEdge(null, vertices.get(3), vertices.get(4), "Edge1");
+
+    for (int i = 5; i <= 20; i++) {
+      vertices.put(i, graph.addVertex(null));
+      vertices.get(i).setProperty("node_id", "V" + i);
+      graph.addEdge(null, vertices.get(i - 1), vertices.get(i), "Edge1");
+      if (i % 2 == 0) {
+        graph.addEdge(null, vertices.get(i - 2), vertices.get(i), "Edge1");
+      }
+    }
     graph.commit();
   }
 
   @Test
   public void testExecute() throws Exception {
-    final List<ORID> result = function.execute(null, null, null, new Object[] { v1, v4 }, new OBasicCommandContext());
+    final List<ORID> result = function.execute(null, null, null, new Object[] { vertices.get(1), vertices.get(4) },
+        new OBasicCommandContext());
 
     assertEquals(3, result.size());
-    assertEquals(v1.getId(), result.get(0));
-    assertEquals(v3.getId(), result.get(1));
-    assertEquals(v4.getId(), result.get(2));
+    assertEquals(vertices.get(1).getId(), result.get(0));
+    assertEquals(vertices.get(3).getId(), result.get(1));
+    assertEquals(vertices.get(4).getId(), result.get(2));
+  }
+
+  @Test
+  public void testExecuteOut() throws Exception {
+    final List<ORID> result = function.execute(null, null, null, new Object[] { vertices.get(1), vertices.get(4), "out", null },
+        new OBasicCommandContext());
+
+    assertEquals(4, result.size());
+    assertEquals(vertices.get(1).getId(), result.get(0));
+    assertEquals(vertices.get(2).getId(), result.get(1));
+    assertEquals(vertices.get(3).getId(), result.get(2));
+    assertEquals(vertices.get(4).getId(), result.get(3));
   }
 
   @Test
   public void testExecuteOnlyEdge1() throws Exception {
-    final List<ORID> result = function
-        .execute(null, null, null, new Object[] { v1, v4, null, "Edge1" }, new OBasicCommandContext());
+    final List<ORID> result = function.execute(null, null, null, new Object[] { vertices.get(1), vertices.get(4), null, "Edge1" },
+        new OBasicCommandContext());
 
     assertEquals(4, result.size());
-    assertEquals(v1.getId(), result.get(0));
-    assertEquals(v2.getId(), result.get(1));
-    assertEquals(v3.getId(), result.get(2));
-    assertEquals(v4.getId(), result.get(3));
+    assertEquals(vertices.get(1).getId(), result.get(0));
+    assertEquals(vertices.get(2).getId(), result.get(1));
+    assertEquals(vertices.get(3).getId(), result.get(2));
+    assertEquals(vertices.get(4).getId(), result.get(3));
   }
 
+  @Test
+  public void testLong() throws Exception {
+    final List<ORID> result = function.execute(null, null, null, new Object[] { vertices.get(1), vertices.get(20) },
+        new OBasicCommandContext());
+
+    assertEquals(11, result.size());
+    assertEquals(vertices.get(1).getId(), result.get(0));
+    assertEquals(vertices.get(3).getId(), result.get(1));
+    int next = 2;
+    for (int i = 4; i <= 20; i += 2) {
+      assertEquals(vertices.get(i).getId(), result.get(next++));
+    }
+  }
 
 }

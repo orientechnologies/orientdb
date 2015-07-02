@@ -19,6 +19,18 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -59,6 +71,7 @@ import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -75,6 +88,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
@@ -94,18 +108,6 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -180,7 +182,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         } catch (Exception e) {
           throw new OException("error on token parse", e);
         }
-        if (!this.token.getIsVerified()) {
+        if (this.token == null || !this.token.getIsVerified()) {
           throw new OSecurityException("The token provided is not a valid token, signature doesn't match");
         }
 
@@ -206,15 +208,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             connection.database = database;
           }
           if (connection.data.serverUser) {
-            connection.serverUser = server.serverLogin(connection.data.serverUsername, null, null);
+            connection.serverUser = server.getUser(connection.data.serverUsername);
           }
         }
       }
     }
 
     if (connection != null) {
-      ODatabaseRecordThreadLocal.INSTANCE.set(connection.database);
+      connection.acquire();
+
       if (connection.database != null) {
+        connection.database.activateOnCurrentThread();
         connection.data.lastDatabase = connection.database.getName();
         connection.data.lastUser = connection.database.getUser() != null ? connection.database.getUser().getName() : null;
       } else {
@@ -261,6 +265,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       setDataCommandInfo("Listening");
       connection.data.commandDetail = "-";
+
+      connection.release();
     }
   }
 
@@ -446,7 +452,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
         ridBagSize();
         break;
-
+      case OChannelBinaryProtocol.REQUEST_INDEX_GET:
+        indexGet();
+        break;
+      case OChannelBinaryProtocol.REQUEST_INDEX_PUT:
+        indexPut();
+        break;
+      case OChannelBinaryProtocol.REQUEST_INDEX_REMOVE:
+        indexRemove();
+        break;
       default:
         setDataCommandInfo("Command not supported");
         return false;
@@ -462,6 +476,115 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       throw e;
     }
+  }
+
+  private void indexPut() throws IOException {
+    setDataCommandInfo("Put an entry in an index");
+
+    if (!isConnectionAlive())
+      return;
+    final String indexName = channel.readString();
+    Object key = new ODocument().fromStream(channel.readBytes()).field("key");
+    final ORecordId value = channel.readRID();
+    final OIndex<?> index = connection.database.getMetadata().getIndexManager().getIndex(indexName);
+
+    if (index == null)
+      throw new OException("index with name '" + indexName + "' was not found");
+
+    key = index.getDefinition().createValue(key);
+
+    if (!isConnectionAlive())
+      return;
+
+    beginResponse();
+    try {
+      try {
+        index.put(key, value);
+        sendOk(clientTxId);
+      } catch (ORecordDuplicatedException ex) {
+        sendError(clientTxId, ex);
+      }
+    } finally {
+      connection.data.command = null;
+      endResponse();
+    }
+  }
+
+  private void indexRemove() throws IOException {
+    setDataCommandInfo("Remove an entry from index");
+
+    if (!isConnectionAlive())
+      return;
+    final String indexName = channel.readString();
+    Object key = new ODocument().fromStream(channel.readBytes()).field("key");
+    final OIndex<?> index = connection.database.getMetadata().getIndexManager().getIndex(indexName);
+    if (index == null)
+      throw new OException("index with name '" + indexName + "' not found");
+
+    key = index.getDefinition().createValue(key);
+
+    if (!isConnectionAlive())
+      return;
+
+    final boolean res = index.remove(key);
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      channel.writeBoolean(res);
+    } finally {
+      connection.data.command = null;
+      endResponse();
+    }
+  }
+
+  private void indexGet() throws IOException {
+    setDataCommandInfo("Retrieve an entry from index");
+
+    if (!isConnectionAlive())
+      return;
+
+    final String indexName = channel.readString();
+
+    ODocument document = new ODocument();
+    fillRecord(new ORecordId(), channel.readBytes(), OVersionFactory.instance().createVersion(), document, connection.database);
+    Object key = document.field("key");
+    final String fetchPlan = channel.readString();
+    final OIndex<?> index = connection.database.getMetadata().getIndexManager().getIndex(indexName);
+    if (index == null)
+      throw new OException("index with name '" + indexName + "' not found");
+
+    key = index.getDefinition().createValue(key);
+    OAbstractCommandResultListener listener = new OSyncCommandResultListener();
+
+    if (!isConnectionAlive())
+      return;
+
+    listener.setFetchPlan(fetchPlan);
+
+    Object result = index.get(key);
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+
+      serializeValue(listener, result, true);
+
+      if (connection.data.protocolVersion >= 17 && listener instanceof OSyncCommandResultListener) {
+        // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
+        for (ORecord rec : ((OSyncCommandResultListener) listener).getFetchedRecordsToSend()) {
+          channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
+          // ISN'T PART OF THE
+          // RESULT SET
+          writeIdentifiable(rec);
+        }
+
+        channel.writeByte((byte) 0); // NO MORE RECORDS
+      }
+
+    } finally {
+      connection.data.command = null;
+      endResponse();
+    }
+
   }
 
   protected void checkServerAccess(final String iResource) {
@@ -499,6 +622,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           }
 
           // SERVER AUTHENTICATED, BYPASS SECURITY
+          database.activateOnCurrentThread();
           database.resetInitialization();
           database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
           database.open(iUser, iPassword);
@@ -1206,41 +1330,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         // SYNCHRONOUS
         sendOk(clientTxId);
 
-        if (result == null) {
-          // NULL VALUE
-          channel.writeByte((byte) 'n');
-        } else if (result instanceof OIdentifiable) {
-          // RECORD
-          channel.writeByte((byte) 'r');
-          listener.result(result);
-          writeIdentifiable((OIdentifiable) result);
-        } else if (result instanceof ODocumentWrapper) {
-          // RECORD
-          channel.writeByte((byte) 'r');
-          final ODocument doc = ((ODocumentWrapper) result).getDocument();
-          listener.result(doc);
-          writeIdentifiable(doc);
-        } else if (OMultiValue.isMultiValue(result)) {
-          channel.writeByte((byte) 'l');
-          channel.writeInt(OMultiValue.getSize(result));
-          for (Object o : OMultiValue.getMultiValueIterable(result)) {
-            try {
-              listener.result(o);
-              writeIdentifiable((OIdentifiable) o);
-            } catch (Exception e) {
-              OLogManager.instance().warn(this, "Cannot serialize record: " + o);
-              // WRITE NULL RECORD TO AVOID BREAKING PROTOCOL
-              writeIdentifiable(null);
-            }
-          }
-        } else {
-          // ANY OTHER (INCLUDING LITERALS)
-          channel.writeByte((byte) 'a');
-          final StringBuilder value = new StringBuilder(64);
-          listener.result(result);
-          ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(result.getClass()), result);
-          channel.writeString(value.toString());
-        }
+        serializeValue(listener, result, false);
 
         if (connection.data.protocolVersion >= 17 && listener instanceof OSyncCommandResultListener) {
           // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
@@ -1258,6 +1348,55 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     } finally {
       connection.data.command = null;
       endResponse();
+    }
+  }
+
+  public void serializeValue(final OAbstractCommandResultListener listener, Object result, boolean load) throws IOException {
+    if (result == null) {
+      // NULL VALUE
+      channel.writeByte((byte) 'n');
+    } else if (result instanceof OIdentifiable) {
+      // RECORD
+      channel.writeByte((byte) 'r');
+      if (load && result instanceof ORecordId)
+        result = ((ORecordId) result).getRecord();
+
+      if (listener != null)
+        listener.result(result);
+      writeIdentifiable((OIdentifiable) result);
+    } else if (result instanceof ODocumentWrapper) {
+      // RECORD
+      channel.writeByte((byte) 'r');
+      final ODocument doc = ((ODocumentWrapper) result).getDocument();
+      if (listener != null)
+        listener.result(doc);
+      writeIdentifiable(doc);
+    } else if (OMultiValue.isMultiValue(result)) {
+      final byte collectionType = result instanceof Set ? (byte) 's' : (byte) 'l';
+      channel.writeByte(collectionType);
+      channel.writeInt(OMultiValue.getSize(result));
+      for (Object o : OMultiValue.getMultiValueIterable(result)) {
+        try {
+          if (load && o instanceof ORecordId)
+            o = ((ORecordId) o).getRecord();
+          if (listener != null)
+            listener.result(o);
+
+          writeIdentifiable((OIdentifiable) o);
+        } catch (Exception e) {
+          OLogManager.instance().warn(this, "Cannot serialize record: " + o);
+          // WRITE NULL RECORD TO AVOID BREAKING PROTOCOL
+          writeIdentifiable(null);
+        }
+      }
+    } else {
+      // ANY OTHER (INCLUDING LITERALS)
+      channel.writeByte((byte) 'a');
+      final StringBuilder value = new StringBuilder(64);
+      if (listener != null)
+        listener.result(result);
+      ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(result.getClass()), result);
+      channel.writeString(value.toString());
     }
   }
 
@@ -1616,8 +1755,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void endResponse() throws IOException {
     // resetting transaction state. Commands are stateless and connection should be cleared
     // otherwise reused connection (connections pool) may lead to unpredicted errors
-    if (connection != null && connection.database != null && connection.database.getTransaction() != null)
+    if (connection != null && connection.database != null && connection.database.activateOnCurrentThread().getTransaction() != null) {
+      connection.database.activateOnCurrentThread();
       connection.database.getTransaction().rollback();
+    }
     channel.flush();
     channel.releaseWriteLock();
   }

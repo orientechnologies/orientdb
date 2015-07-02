@@ -25,6 +25,7 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -89,8 +90,8 @@ public class FunctionsTest extends DocumentDBBaseTest {
 
     final int TOT = 1000;
     final int threadNum = OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger() * 3;
-//    System.out.println("Starting " + threadNum + " concurrent threads with scriptPool="
-//        + OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger() + " executing function for " + TOT + " times");
+    // System.out.println("Starting " + threadNum + " concurrent threads with scriptPool="
+    // + OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger() + " executing function for " + TOT + " times");
 
     final long startTime = System.currentTimeMillis();
 
@@ -121,10 +122,29 @@ public class FunctionsTest extends DocumentDBBaseTest {
       }
 
     Assert.assertEquals(counter.get(), (long) threadNum * TOT);
+  }
 
-    final long totalTime = System.currentTimeMillis() - startTime;
-//    System.out.println("Executed in " + totalTime + "ms: select+fun()=" + (totalTime / ((float) threadNum * TOT))
-//        + " select+fun()/sec=" + (1000 / (totalTime / ((float) threadNum * TOT))));
+  @Test
+  public void testFunctionDefinitionAndCallWithParams() {
+    database
+        .command(
+            new OCommandSQL(
+                "create function testParams \"return 'Hello ' + name + ' ' + surname + ' from ' + country;\" PARAMETERS [name,surname,country] LANGUAGE Javascript"))
+        .execute();
+
+    OResultSet<OIdentifiable> res1 = database.command(new OCommandSQL("select testParams('Jay', 'Miner', 'USA')")).execute();
+    Assert.assertNotNull(res1);
+    Assert.assertNotNull(res1.get(0));
+    Assert.assertEquals(((ODocument) res1.get(0)).field("testParams"), "Hello Jay Miner from USA");
+
+    final HashMap<String, Object> params = new HashMap<String, Object>();
+    params.put("name", "Jay");
+    params.put("surname", "Miner");
+    params.put("country", "USA");
+
+    Object result = database.getMetadata().getFunctionLibrary().getFunction("testParams").executeInContext(null, params);
+    Assert.assertEquals(result, "Hello Jay Miner from USA");
 
   }
+
 }

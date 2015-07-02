@@ -94,7 +94,7 @@ public class WOWCacheTest {
   }
 
   private void initBuffer() throws IOException {
-    wowCache = new OWOWCache(true, pageSize, 10000, writeAheadLog, 10, 100, storageLocal, false, 1);
+    wowCache = new OWOWCache(true, pageSize, 10000, writeAheadLog, 10, 100, 100, storageLocal, false, 1);
   }
 
   public void testLoadStore() throws IOException {
@@ -240,7 +240,7 @@ public class WOWCacheTest {
       Assert.assertEquals(dataTwo, dataOne);
     }
 
-    Thread.sleep(5000);
+    Thread.sleep(10000);
 
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataContent = pageData[i];

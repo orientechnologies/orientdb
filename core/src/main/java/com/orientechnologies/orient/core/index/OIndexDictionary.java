@@ -46,8 +46,8 @@ public class OIndexDictionary extends OIndexOneValue {
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    if (!txIsActive)
+      keyLockManager.acquireExclusiveLock(key);
 
     try {
       modificationLock.requestModificationLock();
@@ -66,8 +66,8 @@ public class OIndexDictionary extends OIndexOneValue {
         modificationLock.releaseModificationLock();
       }
     } finally {
-      if (txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      if (!txIsActive)
+        keyLockManager.releaseExclusiveLock(key);
     }
   }
 

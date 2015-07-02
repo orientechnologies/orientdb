@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.parser.OStringParser;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -29,7 +28,11 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -264,7 +267,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
    * Deletes the current record.
    */
   public boolean result(final Object iRecord) {
-    final ORecordAbstract record = (ORecordAbstract) iRecord;
+    final ORecordAbstract record = ((OIdentifiable) iRecord ).getRecord();
 
     try {
       if (record.getIdentity().isValid()) {
@@ -299,11 +302,6 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       if (lockStrategy.equalsIgnoreCase("RECORD"))
         ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseWriteLock(record.getIdentity());
     }
-  }
-
-  @Override
-  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return indexName != null || query != null ? DISTRIBUTED_EXECUTION_MODE.REPLICATE : DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
   public String getSyntax() {
@@ -358,5 +356,14 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.WRITE;
+  }
+
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return indexName != null || query != null ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+  }
+
+  public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
+    return getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.LOCAL ? DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS
+        : DISTRIBUTED_RESULT_MGMT.MERGE;
   }
 }

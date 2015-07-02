@@ -184,6 +184,10 @@ TOKEN:
 	|
 	< LUCENE: ( "l" | "L" ) ( "u" | "U" ) ( "c" | "C" ) ( "e" | "E" ) ( "n" | "N" ) ( "e" | "E" ) >
 	|
+	< NEAR: ( "n" | "N" ) ( "e" | "E" ) ( "a" | "A" ) ( "r" | "R" ) >
+	|
+	< WITHIN: ( "w" | "W" ) ( "i" | "I" ) ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "n" | "N" ) >
+	|
 	< UNWIND: ( "u" | "U" ) ( "n" | "N" ) ( "w" | "W" ) ( "i" | "I" ) ( "n" | "N" ) ( "d" | "D" ) >
 	|
 	< MAXDEPTH: ( "m" | "M" ) ( "a" | "A" ) ( "x" | "X" ) ( "d" | "D" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) >
@@ -480,6 +484,10 @@ OIdentifier Identifier():
     |
     token = <MINDEPTH>
     |
+    token = <NEAR>
+    |
+    token = <WITHIN>
+    |
     (
     //TODO REPLACE THIS WITH <QUOTED_IDENTIFIER>
         <BACKTICK>
@@ -515,6 +523,10 @@ OIdentifier Identifier():
             token = <TO>
             |
             token = <LUCENE>
+            |
+            token = <NEAR>
+            |
+            token = <WITHIN>
             //plus reserved keyworks
             |
             token = <FROM>
@@ -530,7 +542,10 @@ OIdentifier Identifier():
             token = <WHERE>
             |
             token = <INSERT>
-
+            |
+            token = <VERTEX>
+            |
+            token = <EDGE>
         )
         <BACKTICK>
     )
@@ -598,12 +613,7 @@ OStatement Statement():
 { OStatement result = null;}
 {
 	(
-	    LOOKAHEAD( SelectStatement() )
-		result = SelectStatement()
-		|
-		result = SelectWithoutTargetStatement()
-		|
-		result = TraverseStatement()
+	    result = QueryStatement()
         |
         LOOKAHEAD(2)
 		result = DeleteStatement()
@@ -636,6 +646,21 @@ OStatement Statement():
 		result = MatchStatement()
 
 	) [ <SEMICOLON> ] { return result; }
+}
+
+OStatement QueryStatement():
+{
+ OStatement result;
+}
+{
+    (
+        LOOKAHEAD( SelectStatement() )
+        result = SelectStatement()
+        |
+        result = SelectWithoutTargetStatement()
+        |
+        result = TraverseStatement()
+    ){ return result; }
 }
 
 OSelectWithoutTargetStatement SelectWithoutTargetStatement():
@@ -1040,6 +1065,12 @@ OUpdateStatement UpdateStatement():
     		jjtThis.targetCluster = Cluster()
     		|
     		jjtThis.targetIndex = IndexIdentifier()
+    		|
+    		(
+    		    <LPAREN>
+    		    jjtThis.targetQuery = QueryStatement()
+    		    <RPAREN>
+    		)
     	)
     	( lastOperations = UpdateOperations() { jjtThis.operations.add(lastOperations); } )+
     	[ <UPSERT> { jjtThis.upsert = true; } ]
@@ -1886,6 +1917,8 @@ OFromItem FromItem():
     	|*/
     	jjtThis.cluster = Cluster()
     	|
+    	jjtThis.clusterList = ClusterList()
+    	|
     	jjtThis.index = IndexIdentifier()
     	|
         jjtThis.metadata = MetadataIdentifier()
@@ -1920,6 +1953,20 @@ OCluster Cluster():
 {
     (
 	    cName = <CLUSTER_IDENTIFIER> {jjtThis.clusterName = cName.image.split(":")[1];}
+	)
+    { return jjtThis; }
+}
+
+OClusterList ClusterList():
+{ OIdentifier lastIdentifier; }
+{
+    (
+	     <CLUSTER> <COLON> <LBRACKET>
+	     [
+	        lastIdentifier = Identifier() { jjtThis.clusters.add(lastIdentifier); }
+	        ( <COMMA> lastIdentifier = Identifier() { jjtThis.clusters.add(lastIdentifier); } )*
+	     ]
+	     <RBRACKET>
 	)
     { return jjtThis; }
 }
@@ -2082,6 +2129,8 @@ OBinaryCompareOperator CompareOperator():
       | result = LikeOperator()
       | result = ContainsKeyOperator()
       | result = LuceneOperator()
+      | result = NearOperator()
+      | result = WithinOperator()
 ){return result;}
 }
 
@@ -2147,6 +2196,22 @@ OLuceneOperator LuceneOperator():
 {
 (
 	<LUCENE>
+){return jjtThis;}
+}
+
+ONearOperator NearOperator():
+{}
+{
+(
+	<NEAR>
+){return jjtThis;}
+}
+
+OWithinOperator WithinOperator():
+{}
+{
+(
+	<WITHIN>
 ){return jjtThis;}
 }
 

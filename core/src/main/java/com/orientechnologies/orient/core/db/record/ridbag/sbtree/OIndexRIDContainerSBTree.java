@@ -51,31 +51,39 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   protected static final OProfilerMBean              PROFILER             = Orient.instance().getProfiler();
 
   public OIndexRIDContainerSBTree(long fileId, boolean durableMode, OAbstractPaginatedStorage storage) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode, storage);
+    String fileName;
 
-    tree.create(fileId, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
+    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+    if (atomicOperation == null)
+      fileName = storage.getWriteCache().fileNameById(fileId);
+    else
+      fileName = atomicOperation.fileNameById(fileId);
+
+    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
+        INDEX_FILE_EXTENSION, durableMode, storage);
+
+    tree.create(OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
   }
 
   public OIndexRIDContainerSBTree(long fileId, OBonsaiBucketPointer rootPointer, boolean durableMode,
       OAbstractPaginatedStorage storage) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode, storage);
-    tree.load(fileId, rootPointer);
+    String fileName;
+
+    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+    if (atomicOperation == null)
+      fileName = storage.getWriteCache().fileNameById(fileId);
+    else
+      fileName = atomicOperation.fileNameById(fileId);
+
+    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
+        INDEX_FILE_EXTENSION, durableMode, storage);
+    tree.load(rootPointer);
   }
 
   public OIndexRIDContainerSBTree(String file, OBonsaiBucketPointer rootPointer, boolean durableMode,
       OAbstractPaginatedStorage storage) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode, storage);
-    final long fileId;
-    try {
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-      if (atomicOperation == null)
-        fileId = storage.getReadCache().openFile(file + INDEX_FILE_EXTENSION, storage.getWriteCache());
-      else
-        fileId = atomicOperation.openFile(file + INDEX_FILE_EXTENSION);
-    } catch (IOException e) {
-      throw new OSBTreeException("Exception during loading of sbtree " + file, e);
-    }
-    tree.load(fileId, rootPointer);
+    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(file, INDEX_FILE_EXTENSION, durableMode, storage);
+    tree.load(rootPointer);
   }
 
   public OBonsaiBucketPointer getRootPointer() {

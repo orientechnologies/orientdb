@@ -527,7 +527,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
     OSQLTarget target = new OSQLTarget(text, ctx, "where");
 
-    return target.getTargetQuery();
+    return (Iterable) target.getTargetRecords();
   }
 
   private Iterable<ORecord> fetchFromIndex(OClass schemaClass, OWhereClause oWhereClause) {
@@ -698,6 +698,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   @Override
   public String getSyntax() {
     return "MATCH <match-statement> [, <match-statement] RETURN <alias>[, <alias>]";
+  }
+
+  @Override
+  public boolean isLocalExecution() {
+    return false;
   }
 
   @Override

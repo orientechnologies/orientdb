@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.collection.OSortedMultiIterator;
@@ -83,12 +89,6 @@ import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
-
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -302,11 +302,18 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return this;
   }
 
+  @Override
+  public boolean isLocalExecution() {
+    // EXECUTE LOCALLY IF TARGET IS SUB-QUERY
+    return parsedTarget.getTargetQuery() != null;
+  }
+
   /**
    * Determine clusters that are used in select operation
    *
    * @return set of involved cluster names
    */
+  @Override
   public Set<String> getInvolvedClusters() {
 
     final Set<String> clusters = new HashSet<String>();
@@ -315,15 +322,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       final ODatabaseDocument db = getDatabase();
 
       if (parsedTarget.getTargetQuery() != null) {
+        // SUB-QUERY: EXECUTE IT LOCALLY
         // SUB QUERY, PROPAGATE THE CALL
-        final Set<String> clIds = parsedTarget.getTargetQuery().getInvolvedClusters();
-        for (String c : clIds)
-        // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
-        {
-          if (checkClusterAccess(db, c)) {
-            clusters.add(c);
-          }
-        }
+        // final Set<String> clIds = parsedTarget.getTargetQuery().getInvolvedClusters();
+        // for (String c : clIds)
+        // // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
+        // {
+        // if (checkClusterAccess(db, c)) {
+        // clusters.add(c);
+        // }
+        // }
 
       } else if (parsedTarget.getTargetRecords() != null) {
         // SINGLE RECORDS: BROWSE ALL (COULD BE EXPENSIVE).
@@ -844,8 +852,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (!parserOptionalKeyword(KEYWORD_SELECT))
       return -1;
 
-    int upperBound = OStringSerializerHelper.getLowerIndexOf(parserTextUpperCase, parserGetCurrentPosition(), KEYWORD_FROM_2FIND,
-        KEYWORD_LET_2FIND);
+    int upperBound = OStringSerializerHelper.getLowerIndexOfKeywords(parserTextUpperCase, parserGetCurrentPosition(), KEYWORD_FROM,
+        KEYWORD_LET);
     if (upperBound == -1)
       // UP TO THE END
       upperBound = parserText.length();

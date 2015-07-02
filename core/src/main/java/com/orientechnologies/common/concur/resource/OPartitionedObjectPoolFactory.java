@@ -17,6 +17,7 @@ import java.util.Iterator;
  * @since 15/12/14
  */
 public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract {
+  private volatile int                                                maxPartitions    = Runtime.getRuntime().availableProcessors() << 3;
   private volatile int                                                maxPoolSize      = 64;
   private boolean                                                     closed           = false;
 
@@ -32,11 +33,11 @@ public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract
                                                                                          }
                                                                                        };
 
-  public OPartitionedObjectPoolFactory(ObjectFactoryFactory<K, T> objectFactoryFactory) {
+  public OPartitionedObjectPoolFactory(final ObjectFactoryFactory<K, T> objectFactoryFactory) {
     this(objectFactoryFactory, 100);
   }
 
-  public OPartitionedObjectPoolFactory(ObjectFactoryFactory<K, T> objectFactoryFactory, int capacity) {
+  public OPartitionedObjectPoolFactory(final ObjectFactoryFactory<K, T> objectFactoryFactory, final int capacity) {
     this.objectFactoryFactory = objectFactoryFactory;
     poolStore = new ConcurrentLinkedHashMap.Builder<K, OPartitionedObjectPool<T>>().maximumWeightedCapacity(capacity)
         .listener(evictionListener).build();
@@ -49,20 +50,20 @@ public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract
     return maxPoolSize;
   }
 
-  public void setMaxPoolSize(int maxPoolSize) {
+  public void setMaxPoolSize(final int maxPoolSize) {
     checkForClose();
 
     this.maxPoolSize = maxPoolSize;
   }
 
-  public OPartitionedObjectPool<T> get(K key) {
+  public OPartitionedObjectPool<T> get(final K key) {
     checkForClose();
 
     OPartitionedObjectPool<T> pool = poolStore.get(key);
     if (pool != null)
       return pool;
 
-    pool = new OPartitionedObjectPool<T>(objectFactoryFactory.create(key), maxPoolSize);
+    pool = new OPartitionedObjectPool<T>(objectFactoryFactory.create(key), maxPoolSize, maxPartitions);
 
     final OPartitionedObjectPool<T> oldPool = poolStore.putIfAbsent(key, pool);
     if (oldPool != null) {
@@ -71,6 +72,14 @@ public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract
     }
 
     return pool;
+  }
+
+  public int getMaxPartitions() {
+    return maxPartitions;
+  }
+
+  public void setMaxPartitions(final int maxPartitions) {
+    this.maxPartitions = maxPartitions;
   }
 
   public Collection<OPartitionedObjectPool<T>> getPools() {

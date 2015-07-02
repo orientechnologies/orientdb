@@ -28,10 +28,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
@@ -54,11 +51,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -116,6 +109,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   }
 
   public void begin() {
+    if (txStartCounter < 0)
+      throw new OTransactionException("Invalid value of TX counter.");
+
     if (txStartCounter == 0)
       status = TXSTATUS.BEGUN;
 
@@ -132,13 +128,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   /**
    * The transaction is reentrant. If {@code begin()} has been called several times, the actual commit happens only after the same
    * amount of {@code commit()} calls
-   * 
+   *
    * @param force
    *          commit transaction even
    */
   @Override
   public void commit(final boolean force) {
     checkTransaction();
+
+    if (txStartCounter < 0)
+      throw new OStorageException("Invalid value of tx counter");
 
     if (force)
       txStartCounter = 0;
@@ -164,6 +163,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   @Override
   public void rollback(boolean force, int commitLevelDiff) {
+    if (txStartCounter < 0)
+      throw new OStorageException("Invalid value of TX counter");
+
     checkTransaction();
 
     txStartCounter += commitLevelDiff;
@@ -370,6 +372,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   public void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName) {
     checkTransaction();
 
+    if (iStatus != ORecordOperation.LOADED)
+      changedDocuments.remove(iRecord);
+
     try {
       switch (iStatus) {
       case ORecordOperation.CREATED: {
@@ -572,33 +577,35 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     status = TXSTATUS.COMMITTING;
 
-    if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
-        && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
-      database.getStorage().commit(this, null);
-    else {
-      List<OIndexAbstract<?>> lockedIndexes = acquireIndexLocks();
-      try {
-        final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
-        for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
-          indexes.put(index.getName(), index);
+    if (!recordEntries.isEmpty() || !indexEntries.isEmpty()) {
+      if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
+          && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
+        database.getStorage().commit(this, null);
+      else {
+        List<OIndexAbstract<?>> lockedIndexes = acquireIndexLocks();
+        try {
+          final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
+          for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
+            indexes.put(index.getName(), index);
 
-        final Runnable callback = new CommitIndexesCallback(indexes);
+          final Runnable callback = new CommitIndexesCallback(indexes);
 
-        final String storageType = database.getStorage().getUnderlying().getType();
+          final String storageType = database.getStorage().getUnderlying().getType();
 
-        if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
-          database.getStorage().commit(OTransactionOptimistic.this, callback);
-        else {
-          database.getStorage().callInLock(new Callable<Object>() {
-            @Override
-            public Object call() throws Exception {
-              database.getStorage().commit(OTransactionOptimistic.this, callback);
-              return null;
-            }
-          }, true);
+          if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
+            database.getStorage().commit(OTransactionOptimistic.this, callback);
+          else {
+            database.getStorage().callInLock(new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                database.getStorage().commit(OTransactionOptimistic.this, callback);
+                return null;
+              }
+            }, true);
+          }
+        } finally {
+          releaseIndexLocks(lockedIndexes);
         }
-      } finally {
-        releaseIndexLocks(lockedIndexes);
       }
     }
 

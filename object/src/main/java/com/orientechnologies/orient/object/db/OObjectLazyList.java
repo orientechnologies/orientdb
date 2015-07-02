@@ -125,13 +125,13 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
       record = (OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) element);
       if (orphanRemoval && record != null && sourceRecord != null)
         ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
-      recordList.add(record);
+      recordList.add(index, record);
     } else {
       element = (TYPE) OObjectEntitySerializer.serializeObject(element, getDatabase());
       record = (OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) element);
       if (orphanRemoval && record != null && sourceRecord != null)
         ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
-      recordList.add(record);
+      recordList.add(index, record);
     }
     super.add(index, element);
   }
@@ -386,7 +386,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
 
   /**
    * Convert the item requested.
-   * 
+   *
    * @param iIndex
    *          Position of the item to convert
    */

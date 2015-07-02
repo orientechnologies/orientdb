@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -47,7 +40,18 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.*;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL DELETE EDGE command.
@@ -64,8 +68,9 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
   private OCommandRequest    query;
   private OSQLFilter         compiledFilter;
   private OrientGraph        graph;
-  private OModifiableBoolean shutdownFlag = new OModifiableBoolean();
   private String             label;
+  private OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+  private boolean            txAlreadyBegun;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteEdge parse(final OCommandRequest iRequest) {
@@ -185,10 +190,12 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
     for (int r = 0; r < retry; ++r) {
       try {
+        txAlreadyBegun = getDatabase().getTransaction().isActive();
+        graph = OGraphCommandExecutorSQLFactory.getGraph(true, shutdownFlag);
 
         if (rids != null) {
           // REMOVE PUNCTUAL RID
-          OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+          OGraphCommandExecutorSQLFactory.runInTx(graph, new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
             @Override
             public Object call(OrientBaseGraph graph) {
               for (ORecordId rid : rids) {
@@ -201,11 +208,14 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
               return null;
             }
           });
+          // CLOSE PENDING TX
+          end();
+
         } else {
           // MULTIPLE EDGES
           final Set<OrientEdge> edges = new HashSet<OrientEdge>();
           if (query == null) {
-            OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+            OGraphCommandExecutorSQLFactory.runInTx(graph, new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
               @Override
               public Object call(OrientBaseGraph graph) {
                 Set<OIdentifiable> fromIds = null;
@@ -275,17 +285,13 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
                 return null;
               }
             });
-          } else {
-            graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
-            OGraphCommandExecutorSQLFactory.runInTx(graph, new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
-              @Override
-              public Object call(OrientBaseGraph graph) {
-                // TARGET IS A CLASS + OPTIONAL CONDITION
-                query.setContext(getContext());
-                return query.execute(iArgs);
-              }
-            });
 
+            // CLOSE PENDING TX
+            end();
+
+          } else {
+            query.setContext(getContext());
+            query.execute(iArgs);
           }
         }
 
@@ -339,8 +345,14 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
   @Override
   public void end() {
-    if (graph != null && shutdownFlag.getValue())
-      graph.shutdown(false);
+    if (graph != null) {
+      if (!txAlreadyBegun) {
+        graph.commit();
+
+        if (shutdownFlag.getValue())
+          graph.shutdown(false);
+      }
+    }
   }
 
   @Override
@@ -351,5 +363,14 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
   @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.WRITE;
+  }
+
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return query == null ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+  }
+
+  public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
+    return getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.LOCAL ? DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS
+        : DISTRIBUTED_RESULT_MGMT.MERGE;
   }
 }

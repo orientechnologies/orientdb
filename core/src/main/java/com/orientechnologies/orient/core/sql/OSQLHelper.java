@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
@@ -34,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -42,13 +35,12 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemAbstract;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
-import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+import com.orientechnologies.orient.core.sql.filter.*;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * SQL Helper class
@@ -159,7 +151,12 @@ public class OSQLHelper {
       else if (iValue.equalsIgnoreCase("false"))
         // BOOLEAN, FALSE
         fieldValue = Boolean.FALSE;
-      else {
+      else if (iValue.startsWith("date(")) {
+        final OSQLFunctionRuntime func = OSQLHelper.getFunction(null, iValue);
+        if (func != null) {
+          fieldValue = func.execute(null, null, null, iContext);
+        }
+      }else {
         final Object v = parseStringNumber(iValue);
         if (v != null)
           fieldValue = v;
@@ -311,8 +308,9 @@ public class OSQLHelper {
           fieldValue = ODatabaseRecordThreadLocal.INSTANCE.get().command(cmd).execute();
 
           // CHECK FOR CONVERSIONS
-          if (ODocumentInternal.getImmutableSchemaClass(iDocument) != null) {
-            final OProperty prop = ODocumentInternal.getImmutableSchemaClass(iDocument).getProperty(fieldName);
+          OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(iDocument);
+          if (immutableClass != null) {
+            final OProperty prop = immutableClass.getProperty(fieldName);
             if (prop != null) {
               if (prop.getType() == OType.LINK) {
                 if (OMultiValue.isMultiValue(fieldValue)) {

@@ -19,17 +19,16 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 /**
  * Contains the user settings about security and permissions roles.<br>
@@ -43,7 +42,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  * Mode = ALLOW (allow all but) or DENY (deny all but)
  */
 @SuppressWarnings("unchecked")
-public class ORole extends ODocumentWrapper implements OSecurityRole {
+public class ORole extends OIdentity implements OSecurityRole {
   public static final String                ADMIN             = "admin";
   public static final String                CLASS_NAME        = "ORole";
   public final static int                   PERMISSION_NONE   = 0;

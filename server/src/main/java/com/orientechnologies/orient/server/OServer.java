@@ -19,6 +19,27 @@
  */
 package com.orientechnologies.orient.server;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+
 import com.orientechnologies.common.console.DefaultConsoleReader;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.io.OFileUtils;
@@ -61,46 +82,6 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class OServer {
   private static final String                              ROOT_PASSWORD_VAR      = "ORIENTDB_ROOT_PASSWORD";
@@ -156,6 +137,14 @@ public class OServer {
 
   public static OServer getInstance(final String iServerId) {
     return distributedServers.get(iServerId);
+  }
+
+  public static OServer getInstanceByPath(final String iPath) {
+    for (Map.Entry<String, OServer> entry : distributedServers.entrySet()) {
+      if (iPath.startsWith(entry.getValue().getDatabaseDirectory()))
+        return entry.getValue();
+    }
+    return null;
   }
 
   public static void registerServerInstance(final String iServerId, final OServer iServer) {
@@ -273,17 +262,17 @@ public class OServer {
         networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
             l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
 
-      registerPlugins();
-
-      for (OServerLifecycleListener l : lifecycleListeners)
-        l.onAfterActivate();
-
       try {
         loadStorages();
         loadUsers();
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error on reading server configuration", e, OConfigurationException.class);
       }
+
+      registerPlugins();
+
+      for (OServerLifecycleListener l : lifecycleListeners)
+        l.onAfterActivate();
 
       OLogManager.instance().info(this, "OrientDB Server v" + OConstants.getVersion() + " is active.");
     } catch (ClassNotFoundException e) {
@@ -678,6 +667,7 @@ public class OServer {
           }
 
           // SERVER AUTHENTICATED, BYPASS SECURITY
+          database.activateOnCurrentThread();
           database.resetInitialization();
           database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
           database.open(user, password);
@@ -693,6 +683,8 @@ public class OServer {
   }
 
   public ODatabaseInternal openDatabase(final ODatabaseInternal database) {
+    database.activateOnCurrentThread();
+
     if (database.isClosed())
       if (database.getStorage() instanceof ODirectMemoryStorage)
         database.create();

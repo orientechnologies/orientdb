@@ -11,8 +11,7 @@ import java.util.Comparator;
  * Created by lomak_000 on 15.04.2015.
  */
 public interface OHashTable<K, V> {
-  void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
-      boolean nullKeyIsSupported);
+  void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes, boolean nullKeyIsSupported);
 
   OBinarySerializer<K> getKeySerializer();
 

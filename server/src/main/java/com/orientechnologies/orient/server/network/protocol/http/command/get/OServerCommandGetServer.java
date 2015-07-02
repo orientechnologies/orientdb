@@ -72,11 +72,15 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
 
   protected void writeProperties(final OJSONWriter json) throws IOException {
     json.beginCollection(2, true, "properties");
-    for (OServerEntryConfiguration entry : server.getConfiguration().properties) {
-      json.beginObject(3, true, null);
-      json.writeAttribute(4, false, "name", entry.name);
-      json.writeAttribute(4, false, "value", entry.value);
-      json.endObject(3, true);
+
+    OServerEntryConfiguration[] confProperties = server.getConfiguration().properties;
+    if (confProperties != null) {
+      for (OServerEntryConfiguration entry : confProperties) {
+        json.beginObject(3, true, null);
+        json.writeAttribute(4, false, "name", entry.name);
+        json.writeAttribute(4, false, "value", entry.value);
+        json.endObject(3, true);
+      }
     }
     json.endCollection(2, true);
   }
