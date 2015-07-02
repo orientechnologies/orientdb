@@ -19,13 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.*;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+
+import java.util.*;
 
 /**
  * Distributed configuration. It uses an ODocument object to store the configuration. Every changes increment the field "version".
@@ -38,7 +38,7 @@ public class ODistributedConfiguration {
   private ODocument          configuration;
 
   public enum ROLES {
-    MASTER, SLAVE
+    MASTER, REPLICA
   };
 
   public ODistributedConfiguration(final ODocument iConfiguration) {
@@ -432,7 +432,7 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns the default server role between MASTER (default) and SLAVE.
+   * Returns the default server role between MASTER (default) and REPLICA.
    */
   public ROLES getDefaultServerRole() {
     synchronized (configuration) {
@@ -451,7 +451,7 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns the server role between MASTER (default) and SLAVE.
+   * Returns the server role between MASTER (default) and REPLICA.
    */
   public ROLES getServerRole(final String iServerName) {
     synchronized (configuration) {
