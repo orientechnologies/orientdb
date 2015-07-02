@@ -674,6 +674,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (size >= 0)
       size++;
 
+    if (this.owner != null)
+      ORecordInternal.track(this.owner, identifiable);
+
     if (updateOwner && !changeListeners.isEmpty())
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
           identifiable, identifiable, null, false));
