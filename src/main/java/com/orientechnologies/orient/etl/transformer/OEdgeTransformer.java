@@ -47,7 +47,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
             + "{direction:{optional:true,description:'Direction between \'in\' and \'out\'. Default is \'out\''}},"
             + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
             + "{targetVertexFields:{optional:true,description:'Map of fields to set in target vertex. Use ${$input.<field>} to get input field values'}},"
-            + "{edgeFields:{optional:true,description:'Map of fields to set in edge. Use ${$input.<field>} to get input field values'}},"
+            + "{edgeFields:{optional:true,description:'Map of fields to set in edge. Use ${input.<field>} to get input field values'}},"
             + "{unresolvedVertexAction:{optional:true,description:'action when a unresolved vertices is found',values:"
             + stringArray2Json(ACTION.values()) + "}}]," + "input:['ODocument','OrientVertex'],output:'OrientVertex'}");
   }
