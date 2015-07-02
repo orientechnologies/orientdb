@@ -19,6 +19,22 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.lang.reflect.Array;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
@@ -26,8 +42,17 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
+import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -42,13 +67,6 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-
-import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Helper class to manage documents.
@@ -82,7 +100,8 @@ public class ODocumentHelper {
   }
 
   @SuppressWarnings("unchecked")
-  public static <RET> RET convertField(final ODocument iDocument, final String iFieldName, final Class<?> iFieldType, Object iValue) {
+  public static <RET> RET convertField(final ODocument iDocument, final String iFieldName, OType type, Object iValue) {
+    final Class<?> iFieldType = type.getDefaultJavaType();
     if (iFieldType == null)
       return (RET) iValue;
 
@@ -105,7 +124,7 @@ public class ODocumentHelper {
         // CONVERT IT TO SET
         final Collection<?> newValue;
 
-        if (iValue instanceof ORecordLazyList || iValue instanceof ORecordLazyMap)
+        if (type.isLink())
           newValue = new ORecordLazySet(iDocument);
         else
           newValue = new OTrackedSet<Object>(iDocument);
@@ -141,7 +160,7 @@ public class ODocumentHelper {
         // CONVERT IT TO LIST
         final Collection<?> newValue;
 
-        if (iValue instanceof OMVRBTreeRIDSet || iValue instanceof ORecordLazyMap || iValue instanceof ORecordLazySet)
+        if (type.isLink())
           newValue = new ORecordLazyList(iDocument);
         else
           newValue = new OTrackedList<Object>(iDocument);

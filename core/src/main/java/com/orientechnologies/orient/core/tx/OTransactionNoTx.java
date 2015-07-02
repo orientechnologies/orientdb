@@ -164,28 +164,36 @@ public class OTransactionNoTx extends OTransactionAbstract {
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     try {
 
-      ORecord orignal = iRecord;
-      ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(orignal);
+      ORecord toRet = null;
+      ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
       Set<ORecord> newRecord = dirtyManager.getNewRecord();
       Set<ORecord> updatedRecord = dirtyManager.getUpdateRecord();
       dirtyManager.cleanForSave();
       if (newRecord != null) {
         for (ORecord rec : newRecord) {
           if (rec.getIdentity().isNew() && rec instanceof ODocument) {
-            saveNew((ODocument) rec, dirtyManager);
+            ORecord ret = saveNew((ODocument) rec, dirtyManager, iRecord, iMode, iForceCreate, iRecordCreatedCallback,
+                iRecordUpdatedCallback);
+            if (ret != null)
+              toRet = ret;
           }
         }
       }
       if (updatedRecord != null) {
         for (ORecord rec : updatedRecord) {
-          if (!rec.equals(orignal))
-            database.executeSaveRecord(rec, null, rec.getRecordVersion(), true, iMode, iForceCreate, iRecordCreatedCallback,
-                iRecordUpdatedCallback);
+          if (rec == iRecord) {
+            toRet = database.executeSaveRecord(rec, null, rec.getRecordVersion(), true, iMode, iForceCreate,
+                iRecordCreatedCallback, iRecordUpdatedCallback);
+          } else
+            database.executeSaveRecord(rec, null, rec.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null, null);
         }
       }
 
-      return database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), true, iMode, iForceCreate,
-          iRecordCreatedCallback, iRecordUpdatedCallback);
+      if (toRet != null)
+        return toRet;
+      else
+        return database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), true, iMode, iForceCreate,
+            iRecordCreatedCallback, iRecordUpdatedCallback);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
@@ -198,7 +206,10 @@ public class OTransactionNoTx extends OTransactionAbstract {
     }
   }
 
-  public void saveNew(ODocument document, ODirtyManager manager) {
+  public ORecord saveNew(ODocument document, ODirtyManager manager, ORecord original, final OPERATION_MODE iMode,
+      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
+      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+    ORecord toRet = null;
     List<ODocument> toResave = new ArrayList<ODocument>();
     LinkedList<ODocument> path = new LinkedList<ODocument>();
     ORecord next = document;
@@ -219,10 +230,13 @@ public class OTransactionNoTx extends OTransactionAbstract {
         }
         if (nextToInspect != null) {
           if (path.contains(nextToInspect)) {
-            // this is wrong, here we should do empty record save here
             OSerializationSetThreadLocal.checkAndAdd((ODocument) nextToInspect);
-            database.executeSaveRecord(nextToInspect, null, nextToInspect.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS,
-                false, null, null);
+            if (nextToInspect == original)
+              toRet = database.executeSaveRecord(nextToInspect, null, nextToInspect.getRecordVersion(), true, iMode, iForceCreate,
+                  iRecordCreatedCallback, iRecordUpdatedCallback);
+            else
+              database.executeSaveRecord(nextToInspect, null, nextToInspect.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS,
+                  false, null, null);
             OSerializationSetThreadLocal.removeCheck((ODocument) nextToInspect);
             toResave.add((ODocument) nextToInspect);
           } else {
@@ -230,21 +244,28 @@ public class OTransactionNoTx extends OTransactionAbstract {
             next = nextToInspect;
           }
         } else {
-          // this is wrong, here we go a real save
-          database.executeSaveRecord(next, null, next.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+          if (next == original)
+            toRet = database.executeSaveRecord(next, null, next.getRecordVersion(), true, iMode, iForceCreate,
+                iRecordCreatedCallback, iRecordUpdatedCallback);
+          else
+            toRet = database.executeSaveRecord(next, null, next.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null,
+                null);
           next = path.pollFirst();
         }
 
       } else {
-        // this is wrong, here we go a real save
-        database.executeSaveRecord(next, null, next.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+        database.executeSaveRecord(next, null, next.getRecordVersion(), true, iMode, false, null, null);
         next = path.pollFirst();
       }
     } while (next != null);
     for (ODocument op : toResave) {
       op.setDirty();
-      database.executeSaveRecord(op, null, op.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+      ORecord ret = database
+          .executeSaveRecord(op, null, op.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+      if (op == original)
+        toRet = ret;
     }
+    return toRet;
   }
 
   @Override

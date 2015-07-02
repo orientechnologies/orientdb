@@ -165,7 +165,7 @@ public class ODirtyManager {
   public void removeNew(ODocument oDocument) {
     if (overrider != null)
       this.overrider.removeNew(oDocument);
-    if (this.newRecord != null)
+    else if (this.newRecord != null)
       this.newRecord.remove(oDocument);
   }
 }

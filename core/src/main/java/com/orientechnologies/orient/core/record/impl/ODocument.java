@@ -274,7 +274,7 @@ public class ODocument extends ORecordAbstract
       String defValue = p.getDefaultValue();
       if (defValue != null && defValue.length() > 0) {
         Object curFieldValue = OSQLHelper.parseDefaultValue(iRecord, defValue);
-        fieldValue = ODocumentHelper.convertField(iRecord, p.getName(), p.getType().getDefaultJavaType(), curFieldValue);
+        fieldValue = ODocumentHelper.convertField(iRecord, p.getName(), p.getType(), curFieldValue);
         iRecord.rawField(p.getName(), fieldValue, p.getType());
       } else {
         if (p.isMandatory()) {
@@ -832,7 +832,7 @@ public class ODocument extends ORecordAbstract
     RET value = this.rawField(iFieldName);
 
     if (value != null)
-      value = ODocumentHelper.convertField(this, iFieldName, iFieldType, value);
+      value = ODocumentHelper.convertField(this, iFieldName, OType.getTypeByClass(iFieldType), value);
 
     return value;
   }
@@ -863,11 +863,11 @@ public class ODocument extends ORecordAbstract
       else if (iFieldType == OType.DATE && value instanceof Long)
         newValue = new Date((Long) value);
       else if ((iFieldType == OType.EMBEDDEDSET || iFieldType == OType.LINKSET) && value instanceof List)
-        newValue = Collections.unmodifiableSet((Set<?>) ODocumentHelper.convertField(this, iFieldName, Set.class, value));
+        newValue = Collections.unmodifiableSet((Set<?>) ODocumentHelper.convertField(this, iFieldName, iFieldType, value));
       else if ((iFieldType == OType.EMBEDDEDLIST || iFieldType == OType.LINKLIST) && value instanceof Set)
-        newValue = Collections.unmodifiableList((List<?>) ODocumentHelper.convertField(this, iFieldName, List.class, value));
+        newValue = Collections.unmodifiableList((List<?>) ODocumentHelper.convertField(this, iFieldName, iFieldType, value));
       else if ((iFieldType == OType.EMBEDDEDMAP || iFieldType == OType.LINKMAP) && value instanceof Map)
-        newValue = Collections.unmodifiableMap((Map<?, ?>) ODocumentHelper.convertField(this, iFieldName, Map.class, value));
+        newValue = Collections.unmodifiableMap((Map<?, ?>) ODocumentHelper.convertField(this, iFieldName, iFieldType, value));
       else
         newValue = OType.convert(value, iFieldType.getDefaultJavaType());
 
@@ -1025,7 +1025,7 @@ public class ODocument extends ORecordAbstract
     }
     OType fieldType = deriveFieldType(iFieldName, entry, iFieldType);
     if (iPropertyValue != null && fieldType != null) {
-      iPropertyValue = ODocumentHelper.convertField(this, iFieldName, fieldType.getDefaultJavaType(), iPropertyValue);
+      iPropertyValue = ODocumentHelper.convertField(this, iFieldName, fieldType, iPropertyValue);
     } else if (iPropertyValue instanceof Enum)
       iPropertyValue = iPropertyValue.toString();
 
@@ -2342,34 +2342,35 @@ public class ODocument extends ORecordAbstract
         }
         break;
       case EMBEDDEDMAP:
-        if (fieldValue instanceof Map<?, ?>)
-          newValue = new OTrackedMap<OIdentifiable>(this, (Map<Object, OIdentifiable>) fieldValue, null);
+        if (fieldValue instanceof Map<?, ?>) {
+          newValue = new OTrackedMap<Object>(this);
+          fillTrackedMap((Map<Object, Object>) newValue, (Map<Object, Object>) fieldValue);
+        }
         break;
       case LINKLIST:
-        if (fieldValue instanceof List<?>)
-          newValue = new ORecordLazyList(this, (List<OIdentifiable>) fieldValue);
+        if (fieldValue instanceof List<?>) {
+          newValue = new ORecordLazySet(this);
+          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
+        }
         break;
       case LINKSET:
-        if (fieldValue instanceof Set<?>)
-          newValue = new ORecordLazySet(this, (Collection<OIdentifiable>) fieldValue);
+        if (fieldValue instanceof Set<?>) {
+          newValue = new ORecordLazyList(this);
+          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
+        }
         break;
       case LINKMAP:
-        if (fieldValue instanceof Map<?, ?>)
-          newValue = new ORecordLazyMap(this, (Map<Object, OIdentifiable>) fieldValue);
+        if (fieldValue instanceof Map<?, ?>) {
+          newValue = new ORecordLazyMap(this);
+          fillTrackedMap((Map<Object, Object>) newValue, (Map<Object, Object>) fieldValue);
+        }
         break;
       default:
         break;
       }
-
       if (newValue != null) {
         addCollectionChangeListener(fieldEntry.getValue());
         fieldEntry.getValue().value = newValue;
-      }
-      if (fieldType.equals(OType.EMBEDDEDLIST) || fieldType.equals(OType.EMBEDDEDSET)) {
-        for (Object cur : (Collection<Object>) newValue) {
-          if (cur instanceof ODocument)
-            ((ODocument) cur).convertAllMultiValuesToTrackedVersions();
-        }
       }
     }
 

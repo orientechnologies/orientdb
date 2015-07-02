@@ -303,7 +303,7 @@ public class ODirtyManagerTest {
     Set<OIdentifiable> set = new ORecordLazySet(doc);
     ODocument link = new ODocument();
     set.add(link);
-    doc.field("set", set);
+    doc.field("set", set, OType.LINKSET);
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
     assertEquals(2, manager.getNewRecord().size());
@@ -318,11 +318,14 @@ public class ODirtyManagerTest {
     List<ODocument> list = new ArrayList<ODocument>();
     ODocument link = new ODocument();
     list.add(link);
-    doc.field("list", list);
+    doc.field("list", list, OType.LINKLIST);
+    ODocument[] linkeds = new ODocument[] { new ODocument().field("name", "linked2"), new ODocument().field("name", "linked3") };
+    doc.field("linkeds", linkeds, OType.LINKLIST);
+
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(2, manager.getNewRecord().size());
-    assertEquals(1, manager.getPointed(doc).size());
+    assertEquals(4, manager.getNewRecord().size());
+    assertEquals(3, manager.getPointed(doc).size());
     assertTrue(manager.getPointed(doc).contains(link));
   }
 
@@ -333,7 +336,7 @@ public class ODirtyManagerTest {
     Map<String, ODocument> map = new HashMap<String, ODocument>();
     ODocument link = new ODocument();
     map.put("bla", link);
-    doc.field("map", map);
+    doc.field("map", map, OType.LINKMAP);
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
     assertEquals(2, manager.getNewRecord().size());
