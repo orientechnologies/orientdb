@@ -46,8 +46,6 @@ public class OSQLFunctionShortestPathTest {
     vertices.get(3).setProperty("node_id", "C");
     vertices.get(4).setProperty("node_id", "D");
 
-
-
     graph.addEdge(null, vertices.get(1), vertices.get(2), "Edge1");
     graph.addEdge(null, vertices.get(2), vertices.get(3), "Edge1");
     graph.addEdge(null, vertices.get(3), vertices.get(1), "Edge2");
@@ -97,6 +95,25 @@ public class OSQLFunctionShortestPathTest {
     assertEquals(vertices.get(2).getId(), result.get(1));
     assertEquals(vertices.get(3).getId(), result.get(2));
     assertEquals(vertices.get(4).getId(), result.get(3));
+  }
+
+  @Test
+  public void testDepth0() throws Exception {
+    final List<ORID> result = function.execute(null, null, null, new Object[] { vertices.get(20), vertices.get(20), null, null },
+        new OBasicCommandContext());
+
+    assertEquals(1, result.size());
+    assertEquals(vertices.get(20).getId(), result.get(0));
+  }
+
+  @Test
+  public void testDepth1() throws Exception {
+    final List<ORID> result = function.execute(null, null, null, new Object[] { vertices.get(19), vertices.get(20), "out", null },
+        new OBasicCommandContext());
+
+    assertEquals(2, result.size());
+    assertEquals(vertices.get(19).getId(), result.get(0));
+    assertEquals(vertices.get(20).getId(), result.get(1));
   }
 
   @Test
