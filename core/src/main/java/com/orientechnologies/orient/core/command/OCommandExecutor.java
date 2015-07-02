@@ -19,10 +19,10 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import com.orientechnologies.common.listener.OProgressListener;
-
 import java.util.Map;
 import java.util.Set;
+
+import com.orientechnologies.common.listener.OProgressListener;
 
 /**
  * Generic GOF command pattern implementation.
@@ -90,9 +90,4 @@ public interface OCommandExecutor {
   int getSecurityOperationType();
 
   boolean involveSchema();
-
-  /**
-   * Returns true if the command must be executed on local node on distributed configuration.
-   */
-  boolean isLocalExecution();
 }

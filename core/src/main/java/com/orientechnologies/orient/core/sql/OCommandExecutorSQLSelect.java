@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.collection.OSortedMultiIterator;
@@ -89,6 +83,12 @@ import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -302,12 +302,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return this;
   }
 
-  @Override
-  public boolean isLocalExecution() {
-    // EXECUTE LOCALLY IF TARGET IS SUB-QUERY
-    return parsedTarget.getTargetQuery() != null;
-  }
-
   /**
    * Determine clusters that are used in select operation
    *
@@ -321,17 +315,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (parsedTarget != null) {
       final ODatabaseDocument db = getDatabase();
 
-      if (parsedTarget.getTargetQuery() != null) {
+      if (parsedTarget.getTargetQuery() != null && parsedTarget.getTargetRecords() instanceof OCommandExecutorSQLResultsetDelegate) {
         // SUB-QUERY: EXECUTE IT LOCALLY
         // SUB QUERY, PROPAGATE THE CALL
-        // final Set<String> clIds = parsedTarget.getTargetQuery().getInvolvedClusters();
-        // for (String c : clIds)
-        // // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
-        // {
-        // if (checkClusterAccess(db, c)) {
-        // clusters.add(c);
-        // }
-        // }
+        final Set<String> clIds = ((OCommandExecutorSQLResultsetDelegate) parsedTarget.getTargetRecords()).getInvolvedClusters();
+        for (String c : clIds) {
+          // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
+          if (checkClusterAccess(db, c)) {
+            clusters.add(c);
+          }
+        }
 
       } else if (parsedTarget.getTargetRecords() != null) {
         // SINGLE RECORDS: BROWSE ALL (COULD BE EXPENSIVE).
@@ -352,9 +345,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         return getInvolvedClustersOfClusters(parsedTarget.getTargetClusters().keySet());
       }
 
-      if (parsedTarget.getTargetIndex() != null)
-      // EXTRACT THE CLASS NAME -> CLUSTERS FROM THE INDEX DEFINITION
-      {
+      if (parsedTarget.getTargetIndex() != null) {
+        // EXTRACT THE CLASS NAME -> CLUSTERS FROM THE INDEX DEFINITION
         return getInvolvedClustersOfIndex(parsedTarget.getTargetIndex());
       }
 
