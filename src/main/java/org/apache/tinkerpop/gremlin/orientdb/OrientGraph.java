@@ -1,8 +1,10 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -12,6 +14,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
@@ -27,14 +30,44 @@ import java.util.stream.Stream;
 
 import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
-
+@Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_STANDARD)
 public final class OrientGraph implements Graph {
+    public static String CONFIG_URL = "orient-url";
+    public static String CONFIG_USER = "orient-user";
+    public static String CONFIG_PASS = "orient-pass";
+    public static String CONFIG_CREATE = "orient-create";
+    public static String CONFIG_OPEN = "orient-open";
 
     protected Logger log = Logger.getLogger(getClass().getSimpleName());
     protected ODatabaseDocumentTx database;
 
-    public OrientGraph(ODatabaseDocumentTx iDatabase) {
-        this.database = iDatabase;
+    public static OrientGraph open(final Configuration configuration) {
+        return new OrientGraph(configuration);
+    }
+
+    public OrientGraph(Configuration config) {
+        this.database = getDatabase(
+            config.getString(CONFIG_URL),
+            config.getString(CONFIG_USER),
+            config.getString(CONFIG_PASS),
+            config.getBoolean(CONFIG_CREATE),
+            config.getBoolean(CONFIG_OPEN));
+    }
+
+    /**
+     * @param create
+     *          if true automatically creates database if database with given URL does not exist
+     * @param open
+     *          if true automatically opens the database
+     */
+    protected ODatabaseDocumentTx getDatabase(String url, String user, String password, boolean create, boolean open) {
+        final ODatabaseDocumentTx db = new ODatabaseFactory().createDatabase("graph", url);
+        if (!db.getURL().startsWith("remote:") && !db.exists()) {
+            if (create) db.create();
+            else if (open) throw new ODatabaseException("Database '" + url + "' not found");
+        } else if (open) db.open(user, password);
+
+        return db;
     }
 
     @Override
@@ -99,8 +132,12 @@ public final class OrientGraph implements Graph {
     }
 
     protected static ORecordId createRecordId(Object id) {
-        if (!(id instanceof String)) throw new IllegalArgumentException("Orient IDs have to be a String - you provided a " + id.getClass());
-        return new ORecordId((String)id);
+        if (id instanceof ORecordId)
+            return (ORecordId)id;
+        else if (id instanceof String)
+            return new ORecordId((String)id);
+        else
+            throw new IllegalArgumentException("Orient IDs have to be a String or ORecordId - you provided a " + id.getClass());
     }
 
     protected ODocument getRawDocument(ORecord record) {

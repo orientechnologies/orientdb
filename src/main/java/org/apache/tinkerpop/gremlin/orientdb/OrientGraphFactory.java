@@ -3,6 +3,9 @@ package org.apache.tinkerpop.gremlin.orientdb;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import org.apache.commons.configuration.BaseConfiguration;
+import org.apache.commons.configuration.Configuration;
+import org.apache.tinkerpop.gremlin.structure.Graph;
 
 
 public final class OrientGraphFactory {
@@ -23,33 +26,30 @@ public final class OrientGraphFactory {
         this.password = password;
     }
 
-    public OrientGraph getTx() {
-        return new OrientGraph(getDatabase(true, true));
-    }
-
     /**
      * @param create
      *          if true automatically creates database if database with given URL does not exist
      * @param open
      *          if true automatically opens the database
      */
-    public OrientGraph getTx(boolean create, boolean open) {
-        return new OrientGraph(getDatabase(create, open));
+    //TODO: allow to open with these properties
+    public OrientGraph getNoTx(boolean create, boolean open) {
+        return OrientGraph.open(getConfiguration(create, open));
     }
 
-    /**
-     * @param create
-     *          if true automatically creates database if database with given URL does not exist
-     * @param open
-     *          if true automatically opens the database
-     */
-    protected ODatabaseDocumentTx getDatabase(boolean create, boolean open) {
-        final ODatabaseDocumentTx db = new ODatabaseFactory().createDatabase("graph", url);
-        if (!db.getURL().startsWith("remote:") && !db.exists()) {
-            if (create) db.create();
-            else if (open) throw new ODatabaseException("Database '" + url + "' not found");
-        } else if (open) db.open(user, password);
-
-        return db;
+    public OrientGraph getNoTx() {
+        return getNoTx(true, true);
     }
+
+    protected Configuration getConfiguration(boolean create, boolean open) {
+        return new BaseConfiguration() {{
+            setProperty(Graph.GRAPH, OrientGraph.class.getName());
+            setProperty(OrientGraph.CONFIG_URL, url);
+            setProperty(OrientGraph.CONFIG_USER, user);
+            setProperty(OrientGraph.CONFIG_PASS, password);
+            setProperty(OrientGraph.CONFIG_CREATE, create);
+            setProperty(OrientGraph.CONFIG_OPEN, open);
+        }};
+    }
+
 }
