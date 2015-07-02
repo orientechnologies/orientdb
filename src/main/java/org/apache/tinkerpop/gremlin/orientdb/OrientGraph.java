@@ -155,7 +155,7 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Transaction tx() {
-        throw new NotImplementedException();
+        return new OrientTransaction();
     }
 
     @Override
