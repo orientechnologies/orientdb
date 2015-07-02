@@ -19,8 +19,8 @@ public class OrientSampleTest {
     @Test
     public void labelTest() {
 //        String graphUri = "memory:test";
-//        String graphUri = "plocal:target/graph" + Math.random();
-        String graphUri = "remote:localhost/test"; //missing dependency?
+        String graphUri = "plocal:target/graph" + Math.random();
+//        String graphUri = "remote:localhost/test";
         OrientGraph graph = new OrientGraphFactory(graphUri, "root", "root").getNoTx();
 
         OrientVertex v1 = (OrientVertex) graph.addVertex();

@@ -47,11 +47,11 @@ public final class OrientGraph implements Graph {
 
     public OrientGraph(Configuration config) {
         this.database = getDatabase(
-            config.getString(CONFIG_URL),
+            config.getString(CONFIG_URL, "memory:test-" + Math.random()),
             config.getString(CONFIG_USER),
             config.getString(CONFIG_PASS),
-            config.getBoolean(CONFIG_CREATE),
-            config.getBoolean(CONFIG_OPEN));
+            config.getBoolean(CONFIG_CREATE, true),
+            config.getBoolean(CONFIG_OPEN, true));
     }
 
     /**
@@ -170,7 +170,7 @@ public final class OrientGraph implements Graph {
 
     @Override
     public void close() throws Exception {
-        throw new NotImplementedException();
+        database.close();
     }
 
     public void createVertexClass(final String className) {
