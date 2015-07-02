@@ -69,6 +69,17 @@ public class OMatchStatementExecutionTest {
     assertEquals("n2", qResult.get(0).field("name"));
   }
 
+  @Test
+  public void testFriendsOfFriends() throws Exception {
+
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend').out('Friend'){as:friend} return $matches)"))
+        .execute();
+    assertEquals(1, qResult.size());
+    assertEquals("n4", qResult.get(0).field("name"));
+  }
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

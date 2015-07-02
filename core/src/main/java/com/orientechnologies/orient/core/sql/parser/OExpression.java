@@ -26,27 +26,6 @@ public class OExpression extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public Object createExecutorFilter() {
-
-    // TODO create an interface for this;
-
-    if (value instanceof ORid) {
-      return null;// TODO
-    } else if (value instanceof OInputParameter) {
-      return null;// TODO
-    } else if (value instanceof OMathExpression) {
-      return ((OMathExpression) value).createExecutorFilter();
-    } else if (value instanceof OJson) {
-      return null;// TODO
-    } else if (value instanceof String) {
-      return value;
-    } else if (value instanceof Number) {
-      return value;
-    }
-
-    return value;
-
-  }
 
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     if (value instanceof ORid) {

@@ -3,16 +3,8 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class OSelectStatement extends OStatement {
@@ -55,39 +47,7 @@ public class OSelectStatement extends OStatement {
 
   @Override
   public OCommandExecutorSQLAbstract buildExecutor(final OCommandRequest iRequest) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_READ);
-    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
-
-    OSQLAsynchQuery<ODocument> request;
-
-    if (iRequest instanceof OSQLSynchQuery) {
-      request = (OSQLSynchQuery<ODocument>) iRequest;
-    } else if (iRequest instanceof OSQLAsynchQuery) {
-      request = (OSQLAsynchQuery<ODocument>) iRequest;
-    } else {
-      // BUILD A QUERY OBJECT FROM THE COMMAND REQUEST
-      request = new OSQLSynchQuery<ODocument>(textRequest.getText());
-      if (textRequest.getResultListener() != null) {
-        request.setResultListener(textRequest.getResultListener());
-      }
-    }
-
-    OCommandExecutorSQLSelect result = new OCommandExecutorSQLSelect();
-    result.setRequest(request);
-
-    result.initContext();
-
-    result.setProjections(new LinkedHashMap<String, Object>());
-    result.setProjectionDefinition(new LinkedHashMap<String, String>());
-
-    if (this.projection != null && this.projection.getItems() != null) {
-      for (OProjectionItem item : projection.getItems()) {
-        result.getProjections().put(getAlias(item), item.getExpression().createExecutorFilter());
-        result.getProjectionDefinition().put(getAlias(item), item.toString());
-      }
-    }
-
-    return result;
+    return null;
   }
 
   private String getAlias(OProjectionItem item) {
