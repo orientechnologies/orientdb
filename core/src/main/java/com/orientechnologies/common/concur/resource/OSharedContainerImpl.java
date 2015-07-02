@@ -27,6 +27,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -76,16 +77,25 @@ public class OSharedContainerImpl implements OSharedContainer {
 
   public synchronized void clearResources() {
     final ExecutorService service = Executors.newSingleThreadExecutor(new CloseTaskFactory());
-    final List<OCloseable> resourcesToClose = new ArrayList<OCloseable>();
+    try {
+      final List<OCloseable> resourcesToClose = new ArrayList<OCloseable>();
 
-    for (Object resource : sharedResources.values()) {
-      if (resource instanceof OCloseable)
-        resourcesToClose.add(((OCloseable) resource));
+      for (Object resource : sharedResources.values()) {
+        if (resource instanceof OCloseable)
+          resourcesToClose.add(((OCloseable) resource));
+      }
+
+      sharedResources.clear();
+
+      service.submit(new CloseTask(resourcesToClose));
+    } finally {
+      service.shutdown();
+      try {
+        service.awaitTermination(1, TimeUnit.MINUTES);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
     }
-
-    sharedResources.clear();
-
-    service.submit(new CloseTask(resourcesToClose));
   }
 
   private static class CloseTask implements Runnable {
