@@ -195,8 +195,8 @@ public final class OrientGraph implements Graph {
 //        makeActive();
         OSchemaProxy schema = database.getMetadata().getSchema();
         if (schema.getClass(className) == null) {
-            log.info("creating class '" + className + "' as subclass of '" + superClass + "'");
             schema.createClass(className, superClass);
+            log.info("created class '" + className + "' as subclass of '" + superClass + "'");
         }
     }
 
