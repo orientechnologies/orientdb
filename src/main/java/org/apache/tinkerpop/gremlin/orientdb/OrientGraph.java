@@ -2,6 +2,8 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -48,10 +50,19 @@ public final class OrientGraph implements Graph {
     public OrientGraph(Configuration config) {
         this.database = getDatabase(
             config.getString(CONFIG_URL, "memory:test-" + Math.random()),
-            config.getString(CONFIG_USER),
-            config.getString(CONFIG_PASS),
+            config.getString(CONFIG_USER, "admin"),
+            config.getString(CONFIG_PASS, "admin"),
             config.getBoolean(CONFIG_CREATE, true),
             config.getBoolean(CONFIG_OPEN, true));
+        makeActive();
+    }
+
+    public void makeActive() {
+//        activeGraph.set(this);
+
+        final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+        if (database != null && tlDb != database)
+            ODatabaseRecordThreadLocal.INSTANCE.set(database);
     }
 
     /**
@@ -72,6 +83,7 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Vertex addVertex(Object... keyValues) {
+        makeActive();
         ElementHelper.legalPropertyKeyValueArray(keyValues);
         if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
 
@@ -84,6 +96,7 @@ public final class OrientGraph implements Graph {
     }
 
     public Object executeSql(String sql) {
+        makeActive();
         OCommandRequest command = database.command(new OCommandSQL(sql));
         return command.execute();
     }
@@ -103,6 +116,7 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Iterator<Vertex> vertices(Object... vertexIds) {
+        makeActive();
         return elements(
                 OImmutableClass.VERTEX_CLASS_NAME,
                 r -> new OrientVertex(this, getRawDocument(r)),
@@ -111,6 +125,7 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Iterator<Edge> edges(Object... edgeIds) {
+        makeActive();
         return elements(
                 OImmutableClass.EDGE_CLASS_NAME,
                 r -> new OrientEdge(this, getRawDocument(r)),
@@ -155,34 +170,40 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Transaction tx() {
+        makeActive();
         return new OrientTransaction();
     }
 
     @Override
     public Variables variables() {
+        makeActive();
         throw new NotImplementedException();
     }
 
     @Override
     public Configuration configuration() {
+        makeActive();
         throw new NotImplementedException();
     }
 
     @Override
     public void close() throws Exception {
+        makeActive();
         database.close();
     }
 
     public void createVertexClass(final String className) {
+        makeActive();
         createClass(className, OImmutableClass.VERTEX_CLASS_NAME);
     }
 
     public void createEdgeClass(final String className) {
+        makeActive();
         createClass(className, OImmutableClass.EDGE_CLASS_NAME);
     }
 
     public void createClass(final String className, final String superClassName) {
-//        makeActive();
+        makeActive();
         OClass superClass = database.getMetadata().getSchema().getClass(superClassName);
         if (superClass == null) {
             Collection<OClass> allClasses = database.getMetadata().getSchema().getClasses();
@@ -192,7 +213,7 @@ public final class OrientGraph implements Graph {
     }
 
     public void createClass(final String className, final OClass superClass) {
-//        makeActive();
+        makeActive();
         OSchemaProxy schema = database.getMetadata().getSchema();
         if (schema.getClass(className) == null) {
             schema.createClass(className, superClass);
@@ -201,6 +222,7 @@ public final class OrientGraph implements Graph {
     }
 
     public ODatabaseDocumentTx getRawDatabase() {
+        makeActive();
         return database;
     }
 
@@ -211,6 +233,7 @@ public final class OrientGraph implements Graph {
      *          Edge class name
      */
     public final OrientEdgeType getEdgeType(final String iTypeName) {
+        makeActive();
         final OClass cls = getRawDatabase().getMetadata().getSchema().getClass(iTypeName);
         if (cls == null)
             return null;
