@@ -197,6 +197,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   }
 
   @Override
+  public void onDrop(ODatabaseInternal iDatabase) {
+  }
+
+  @Override
   public void sendShutdown() {
     super.sendShutdown();
   }

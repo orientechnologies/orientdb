@@ -462,14 +462,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_DELETE);
 
-    callOnCloseListeners();
+    callOnDropListeners();
 
     if (metadata != null) {
       metadata.close();
       metadata = null;
     }
 
-    final Iterable<ODatabaseListener> tmpListeners = getListenersCopy();
     closeOnDelete();
 
     try {
@@ -478,13 +477,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       storage.delete();
       storage = null;
-
-      // WAKE UP LISTENERS
-      for (ODatabaseListener listener : tmpListeners)
-        try {
-          listener.onDelete(this);
-        } catch (Throwable t) {
-        }
 
       status = STATUS.CLOSED;
       ODatabaseRecordThreadLocal.INSTANCE.remove();
@@ -526,6 +518,20 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     for (ODatabaseListener listener : getListenersCopy())
       try {
         listener.onClose(getDatabaseOwner());
+      } catch (Throwable t) {
+        t.printStackTrace();
+      }
+  }
+
+  public void callOnDropListeners() {
+    // WAKE UP DB LIFECYCLE LISTENER
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+      it.next().onDrop(getDatabaseOwner());
+
+    // WAKE UP LISTENERS
+    for (ODatabaseListener listener : getListenersCopy())
+      try {
+        listener.onDelete(getDatabaseOwner());
       } catch (Throwable t) {
         t.printStackTrace();
       }
