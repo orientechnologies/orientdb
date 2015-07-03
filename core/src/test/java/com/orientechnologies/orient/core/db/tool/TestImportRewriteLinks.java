@@ -4,6 +4,7 @@ import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -14,6 +15,8 @@ public class TestImportRewriteLinks {
 
   @Test
   public void testNestedLinkRewrite() {
+    // Fx for remove dirty database in the thread local
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
     OIndex<OIdentifiable> mapper = Mockito.mock(OIndex.class);
     Mockito.when(mapper.get(new ORecordId(10, 4))).thenReturn(new ORecordId(10, 3));
 

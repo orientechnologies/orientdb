@@ -42,7 +42,13 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngineException;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -55,7 +61,12 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.*;
+import com.orientechnologies.orient.core.sql.filter.OFilterOptimizer;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
@@ -304,12 +315,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (parsedTarget != null) {
       final ODatabaseDocument db = getDatabase();
 
-      if (parsedTarget.getTargetQuery() != null) {
+      if (parsedTarget.getTargetQuery() != null && parsedTarget.getTargetRecords() instanceof OCommandExecutorSQLResultsetDelegate) {
+        // SUB-QUERY: EXECUTE IT LOCALLY
         // SUB QUERY, PROPAGATE THE CALL
-        final Set<String> clIds = parsedTarget.getTargetQuery().getInvolvedClusters();
-        for (String c : clIds)
-        // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
-        {
+        final Set<String> clIds = ((OCommandExecutorSQLResultsetDelegate) parsedTarget.getTargetRecords()).getInvolvedClusters();
+        for (String c : clIds) {
+          // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
           if (checkClusterAccess(db, c)) {
             clusters.add(c);
           }
@@ -334,9 +345,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         return getInvolvedClustersOfClusters(parsedTarget.getTargetClusters().keySet());
       }
 
-      if (parsedTarget.getTargetIndex() != null)
-      // EXTRACT THE CLASS NAME -> CLUSTERS FROM THE INDEX DEFINITION
-      {
+      if (parsedTarget.getTargetIndex() != null) {
+        // EXTRACT THE CLASS NAME -> CLUSTERS FROM THE INDEX DEFINITION
         return getInvolvedClustersOfIndex(parsedTarget.getTargetIndex());
       }
 

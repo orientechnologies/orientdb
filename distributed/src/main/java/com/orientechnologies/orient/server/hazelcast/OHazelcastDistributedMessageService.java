@@ -148,7 +148,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   /**
    * Composes the request queue name based on node name and database.
    */
-  protected static String getRequestQueueName(final String iNodeName, final String iDatabaseName) {
+  public static String getRequestQueueName(final String iNodeName, final String iDatabaseName) {
     final StringBuilder buffer = new StringBuilder(128);
     buffer.append(NODE_QUEUE_PREFIX);
     buffer.append(iNodeName);
@@ -414,7 +414,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   /**
    * Returns the queue. If not exists create and register it.
    */
-  protected <T> IQueue<T> getQueue(final String iQueueName) {
+  public <T> IQueue<T> getQueue(final String iQueueName) {
     // configureQueue(iQueueName, 0, 0);
     return manager.getHazelcastInstance().getQueue(iQueueName);
   }

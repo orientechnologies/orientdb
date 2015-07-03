@@ -19,6 +19,18 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -97,18 +109,6 @@ import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
-
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
   protected Boolean           tokenBased;
@@ -182,7 +182,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         } catch (Exception e) {
           throw new OException("error on token parse", e);
         }
-        if (!this.token.getIsVerified()) {
+        if (this.token == null || !this.token.getIsVerified()) {
           throw new OSecurityException("The token provided is not a valid token, signature doesn't match");
         }
 
@@ -215,6 +215,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
 
     if (connection != null) {
+      connection.acquire();
+
       if (connection.database != null) {
         connection.database.activateOnCurrentThread();
         connection.data.lastDatabase = connection.database.getName();
@@ -263,6 +265,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       setDataCommandInfo("Listening");
       connection.data.commandDetail = "-";
+
+      connection.release();
     }
   }
 
@@ -562,8 +566,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     try {
       sendOk(clientTxId);
 
-
-      serializeValue(listener, result,true);
+      serializeValue(listener, result, true);
 
       if (connection.data.protocolVersion >= 17 && listener instanceof OSyncCommandResultListener) {
         // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
@@ -1327,7 +1330,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         // SYNCHRONOUS
         sendOk(clientTxId);
 
-        serializeValue(listener, result,false);
+        serializeValue(listener, result, false);
 
         if (connection.data.protocolVersion >= 17 && listener instanceof OSyncCommandResultListener) {
           // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
@@ -1348,14 +1351,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
-  public void serializeValue(final OAbstractCommandResultListener listener, Object result,boolean load) throws IOException {
+  public void serializeValue(final OAbstractCommandResultListener listener, Object result, boolean load) throws IOException {
     if (result == null) {
       // NULL VALUE
       channel.writeByte((byte) 'n');
     } else if (result instanceof OIdentifiable) {
       // RECORD
       channel.writeByte((byte) 'r');
-      if(load &&  result instanceof ORecordId)
+      if (load && result instanceof ORecordId)
         result = ((ORecordId) result).getRecord();
 
       if (listener != null)
@@ -1374,7 +1377,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       channel.writeInt(OMultiValue.getSize(result));
       for (Object o : OMultiValue.getMultiValueIterable(result)) {
         try {
-          if(load &&  o instanceof ORecordId)
+          if (load && o instanceof ORecordId)
             o = ((ORecordId) o).getRecord();
           if (listener != null)
             listener.result(o);

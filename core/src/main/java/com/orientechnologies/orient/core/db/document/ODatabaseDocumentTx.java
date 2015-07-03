@@ -462,14 +462,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_DELETE);
 
-    callOnCloseListeners();
+    callOnDropListeners();
 
     if (metadata != null) {
       metadata.close();
       metadata = null;
     }
 
-    final Iterable<ODatabaseListener> tmpListeners = getListenersCopy();
     closeOnDelete();
 
     try {
@@ -478,13 +477,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       storage.delete();
       storage = null;
-
-      // WAKE UP LISTENERS
-      for (ODatabaseListener listener : tmpListeners)
-        try {
-          listener.onDelete(this);
-        } catch (Throwable t) {
-        }
 
       status = STATUS.CLOSED;
       ODatabaseRecordThreadLocal.INSTANCE.remove();
@@ -526,6 +518,20 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     for (ODatabaseListener listener : getListenersCopy())
       try {
         listener.onClose(getDatabaseOwner());
+      } catch (Throwable t) {
+        t.printStackTrace();
+      }
+  }
+
+  public void callOnDropListeners() {
+    // WAKE UP DB LIFECYCLE LISTENER
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+      it.next().onDrop(getDatabaseOwner());
+
+    // WAKE UP LISTENERS
+    for (ODatabaseListener listener : getListenersCopy())
+      try {
+        listener.onDelete(getDatabaseOwner());
       } catch (Throwable t) {
         t.printStackTrace();
       }
@@ -780,12 +786,15 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     if (user != null) {
       try {
-        for (Object target : iResourcesSpecific) {
-          if (target != null) {
-            user.allow(iResourceGeneric, target.toString(), iOperation);
-          } else
-            user.allow(iResourceGeneric, null, iOperation);
-        }
+        if (iResourcesSpecific.length != 0) {
+          for (Object target : iResourcesSpecific) {
+            if (target != null) {
+              user.allow(iResourceGeneric, target.toString(), iOperation);
+            } else
+              user.allow(iResourceGeneric, null, iOperation);
+          }
+        } else
+          user.allow(iResourceGeneric, null, iOperation);
       } catch (OSecurityAccessException e) {
         if (OLogManager.instance().isDebugEnabled())
           OLogManager.instance().debug(this,
@@ -1593,7 +1602,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     checkIfActive();
 
     if (currentTx.isActive())
-      throw new ODatabaseException("This operation can be executed only in non tx mode");
+      throw new ODatabaseException("This operation can be executed only in non transaction mode");
 
     return executeHideRecord(rid, OPERATION_MODE.SYNCHRONOUS);
   }
@@ -2393,33 +2402,25 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
               // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
               if (schemaClass.isAbstract())
                 throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
-
-              iClusterName = getClusterNameById(schemaClass.getClusterForNewInstance(doc));
+              clusterId = schemaClass.getClusterForNewInstance(doc);
+              iClusterName = getClusterNameById(clusterId);
             } else {
-              iClusterName = getClusterNameById(storage.getDefaultClusterId());
+              clusterId = storage.getDefaultClusterId();
+              iClusterName = getClusterNameById(clusterId);
             }
           }
-        }
-
-        if (iClusterName != null) {
+        } else {
           clusterId = getClusterIdByName(iClusterName);
           if (clusterId == -1)
             throw new IllegalArgumentException("Cluster name '" + iClusterName + "' is not configured");
         }
       }
 
-      final int[] clusterIds;
-      if (schemaClass != null && clusterId > -1) {
-        // CHECK IF THE CLUSTER IS PART OF THE CONFIGURED CLUSTERS
-        clusterIds = schemaClass.getClusterIds();
-        int i = 0;
-        for (; i < clusterIds.length; ++i)
-          if (clusterIds[i] == clusterId)
-            break;
-
-        if (i == clusterIds.length)
-          throw new IllegalArgumentException("Cluster name '" + iClusterName + "' (id=" + clusterId
-              + ") is not configured to store the class '" + doc.getClassName() + "', valid are " + Arrays.toString(clusterIds));
+      // CHECK IF THE CLUSTER IS PART OF THE CONFIGURED CLUSTERS
+      if (schemaClass != null && clusterId > -1 && !schemaClass.hasClusterId(clusterId)) {
+        throw new IllegalArgumentException("Cluster name '" + iClusterName + "' (id=" + clusterId
+            + ") is not configured to store the class '" + doc.getClassName() + "', valid are "
+            + Arrays.toString(schemaClass.getClusterIds()));
       }
 
       // SET BACK THE CLUSTER ID
@@ -2547,13 +2548,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     try {
       currentTx.commit(force);
     } catch (RuntimeException e) {
+      OLogManager.instance().debug(this, "Error on transaction commit", e);
+
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : browseListeners())
         try {
           listener.onBeforeTxRollback(this);
         } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error before tx rollback", t);
+          OLogManager.instance().error(this, "Error before transaction rollback", t);
         }
+
       // ROLLBACK TX AT DB LEVEL
       currentTx.rollback(false, 0);
       getLocalCache().clear();
@@ -2564,7 +2568,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         try {
           listener.onAfterTxRollback(this);
         } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error after tx rollback", t);
+          OLogManager.instance().error(this, "Error after transaction rollback", t);
         }
       throw e;
     }
@@ -2608,7 +2612,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         try {
           listener.onBeforeTxRollback(this);
         } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error before tx rollback", t);
+          OLogManager.instance().error(this, "Error before transactional rollback", t);
         }
 
       currentTx.rollback(force, -1);
@@ -2618,7 +2622,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         try {
           listener.onAfterTxRollback(this);
         } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error after tx rollback", t);
+          OLogManager.instance().error(this, "Error after transaction rollback", t);
         }
     }
 

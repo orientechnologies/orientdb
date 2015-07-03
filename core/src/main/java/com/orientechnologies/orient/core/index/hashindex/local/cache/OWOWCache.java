@@ -43,9 +43,17 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
-import java.io.*;
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -105,7 +113,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final int                                        writeCacheMaxSize;
   private final int                                        cacheMaxSize;
 
-  private int                                              fileCounter           = 0;
+  private int                                              fileCounter           = 1;
 
   private PagedKey                                         lastPageKey           = new PagedKey(0, -1);
   private PagedKey                                         lastWritePageKey      = new PagedKey(0, -1);
@@ -275,8 +283,33 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       else
         fileClassic = files.get(fileId);
 
-      if (fileClassic == null)
-        throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
+      if (fileClassic == null) {
+        fileClassic = createFile(fileName);
+        if (!fileClassic.exists())
+          throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
+        else {
+          // workaround of bug in distributed storage https://github.com/orientechnologies/orientdb/issues/4439
+
+          OLogManager
+              .instance()
+              .error(
+                  this,
+                  "File "
+                      + fileName
+                      + " is not registered in 'file name - id' map but exists in file system, "
+                      + "probably you work in distributed storage. If it is not true, please create bug in bug tracker https://github.com/orientechnologies/orientdb/issues .");
+
+          if (fileId == null) {
+            ++fileCounter;
+            fileId = fileCounter;
+          } else
+            fileId = -fileId;
+
+          files.put(fileId, fileClassic);
+          nameIdMap.put(fileName, fileId);
+          writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+        }
+      }
 
       openFile(fileClassic);
 
@@ -923,7 +956,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     return id;
   }
 
-  private void openFile(OFileClassic fileClassic) throws IOException {
+  private void openFile(final OFileClassic fileClassic) throws IOException {
     if (fileClassic.exists()) {
       if (!fileClassic.isOpen())
         fileClassic.open();
@@ -933,12 +966,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   }
 
-  private void addFile(OFileClassic fileClassic) throws IOException {
+  private void addFile(final OFileClassic fileClassic) throws IOException {
     if (!fileClassic.exists()) {
       fileClassic.create(-1);
       fileClassic.synch();
     } else {
-      throw new OStorageException("File " + fileClassic + " already exists.");
+      throw new OStorageException("File '" + fileClassic.getName() + "' already exists.");
     }
   }
 
@@ -947,7 +980,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       final File storagePath = new File(storageLocal.getStoragePath());
       if (!storagePath.exists())
         if (!storagePath.mkdirs())
-          throw new OStorageException("Can not create directories for the path " + storagePath);
+          throw new OStorageException("Cannot create directories for the path '" + storagePath + "'");
 
       nameIdMapHolderFile = new File(storagePath, NAME_ID_MAP);
 
@@ -985,7 +1018,16 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     for (Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
       if (nameIdEntry.getValue() >= 0 && !files.containsKey(nameIdEntry.getValue())) {
         OFileClassic fileClassic = createFile(nameIdEntry.getKey());
-        files.put(nameIdEntry.getValue(), fileClassic);
+
+        if (fileClassic.exists())
+          files.put(nameIdEntry.getValue(), fileClassic);
+        else {
+          final Integer fileId = nameIdMap.get(nameIdEntry.getKey());
+
+          if (fileId != null && fileId > 0) {
+            nameIdMap.put(nameIdEntry.getKey(), -fileId);
+          }
+        }
       }
     }
   }

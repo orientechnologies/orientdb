@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.zip.CRC32;
-
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -50,6 +42,15 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.zip.CRC32;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -207,6 +208,30 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         }
 
         clusterPositionMap.open();
+      } finally {
+        releaseExclusiveLock();
+      }
+    } finally {
+      externalModificationLock.releaseModificationLock();
+    }
+  }
+
+  public void replaceFile(File file) throws IOException {
+    externalModificationLock.requestModificationLock();
+    try {
+      acquireExclusiveLock();
+      try {
+        final String newFileName = file.getName() + "$temp";
+
+        final File rootDir = new File(storageLocal.getConfiguration().getDirectory());
+        final File newFile = new File(rootDir, newFileName);
+
+        OFileUtils.copyFile(file, newFile);
+
+        final long newFileId = readCache.openFile(newFileName, writeCache);
+        readCache.deleteFile(fileId, writeCache);
+        fileId = newFileId;
+        writeCache.renameFile(fileId, newFileName, getFullName());
       } finally {
         releaseExclusiveLock();
       }
@@ -1088,8 +1113,30 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
+  public String getFileName() {
+    atomicOperationsManager.acquireReadLock(this);
+    try {
+      acquireSharedLock();
+      try {
+        return writeCache.fileNameById(fileId);
+      } finally {
+        releaseSharedLock();
+      }
+    } finally {
+      atomicOperationsManager.releaseReadLock(this);
+    }
+  }
+
+  @Override
   public int getId() {
     return id;
+  }
+
+  /**
+   * Returns the fileId used in WriteCache.
+   */
+  public long getFileId() {
+    return fileId;
   }
 
   @Override
@@ -1448,7 +1495,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
       int initialFreeSpace = localPage.getFreeSpace();
 
-      position = localPage.appendRecord(recordVersion, entryContent, false);
+      position = localPage.appendRecord(recordVersion, entryContent, true);
       assert position >= 0;
 
       finalVersion = localPage.getRecordVersion(position);

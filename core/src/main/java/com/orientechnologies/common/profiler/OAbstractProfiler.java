@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
@@ -54,6 +55,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
   protected final ConcurrentHashMap<String, AtomicInteger> tips          = new ConcurrentHashMap<String, AtomicInteger>();
   protected final ConcurrentHashMap<String, Long>          tipsTimestamp = new ConcurrentHashMap<String, Long>();
   protected long                                           recordingFrom = -1;
+  protected TimerTask                                      autoDumpTask;
 
   public interface OProfilerHookValue {
     public Object getValue();
@@ -115,8 +117,13 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
     Orient.instance().registerWeakOrientStartupListener(this);
   }
 
-  public static void dumpEnvironment(final PrintStream out) {
+  public static String dumpEnvironment() {
+    final StringBuilder buffer = new StringBuilder();
+
     final Runtime runtime = Runtime.getRuntime();
+
+    final long freeSpaceInMB = new File(".").getFreeSpace();
+    final long totalSpaceInMB = new File(".").getTotalSpace();
 
     int stgs = 0;
     long diskCacheUsed = 0;
@@ -133,22 +140,27 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
       ObjectName osMBeanName = ObjectName.getInstance(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME);
       if (mbs.isInstanceOf(osMBeanName, "com.sun.management.OperatingSystemMXBean")) {
         final long osTotalMem = ((Number) mbs.getAttribute(osMBeanName, "TotalPhysicalMemorySize")).longValue();
-        final long osUsedMem = ((Number) mbs.getAttribute(osMBeanName, "FreePhysicalMemorySize")).longValue();
+        final long osUsedMem = osTotalMem - ((Number) mbs.getAttribute(osMBeanName, "FreePhysicalMemorySize")).longValue();
 
-        out.printf("OrientDB Memory profiler: Heap=%s of %s - DiskCache (%s dbs)=%s of %s - OS=%s of %s\n",
+        buffer.append(String.format(
+            "OrientDB Memory profiler: HEAP=%s of %s - DISKCACHE (%s dbs)=%s of %s - OS=%s of %s - FS=%s of %s",
             OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()),
             OFileUtils.getSizeAsString(runtime.maxMemory()), stgs, OFileUtils.getSizeAsString(diskCacheUsed),
             OFileUtils.getSizeAsString(diskCacheTotal), OFileUtils.getSizeAsString(osUsedMem),
-            OFileUtils.getSizeAsString(osTotalMem));
-        return;
+            OFileUtils.getSizeAsString(osTotalMem), OFileUtils.getSizeAsString(freeSpaceInMB),
+            OFileUtils.getSizeAsString(totalSpaceInMB)));
+        return buffer.toString();
       }
     } catch (Exception e) {
       // Nothing to do. Proceed with default output
     }
 
-    out.printf("OrientDB Memory profiler: Heap=%s of %s - DiskCache (%s dbs)=%s of %s\n",
+    buffer.append(String.format("OrientDB Memory profiler: Heap=%s of %s - DiskCache (%s dbs)=%s of %s - FS=%s of %s",
         OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()), OFileUtils.getSizeAsString(runtime.maxMemory()),
-        stgs, OFileUtils.getSizeAsString(diskCacheUsed), OFileUtils.getSizeAsString(diskCacheTotal));
+        stgs, OFileUtils.getSizeAsString(diskCacheUsed), OFileUtils.getSizeAsString(diskCacheTotal),
+        OFileUtils.getSizeAsString(freeSpaceInMB), OFileUtils.getSizeAsString(totalSpaceInMB)));
+
+    return buffer.toString();
   }
 
   @Override
@@ -213,7 +225,12 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
 
   @Override
   public String dump() {
-    return null;
+    return dumpEnvironment();
+  }
+
+  @Override
+  public void dump(final PrintStream out) {
+    out.println(dumpEnvironment());
   }
 
   @Override
@@ -262,7 +279,37 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
   }
 
   @Override
-  public void setAutoDump(int iNewValue) {
+  public void setAutoDump(final int iSeconds) {
+    if (autoDumpTask != null) {
+      // CANCEL ANY PREVIOUS RUNNING TASK
+      autoDumpTask.cancel();
+      autoDumpTask = null;
+    }
+
+    if (iSeconds > 0) {
+      OLogManager.instance().info(this, "Enabled auto dump of profiler every %d second(s)", iSeconds);
+
+      final int ms = iSeconds * 1000;
+
+      autoDumpTask = new TimerTask() {
+
+        @Override
+        public void run() {
+          final StringBuilder output = new StringBuilder();
+
+          output.append("\n*******************************************************************************************************************************************");
+          output.append("\nPROFILER AUTO DUMP OUTPUT (to disabled it set 'profiler.autoDump.interval' = 0):\n");
+          output.append(dump());
+          output.append("\n*******************************************************************************************************************************************");
+
+          OLogManager.instance().info(null, output.toString());
+        }
+      };
+
+      Orient.instance().scheduleTask(autoDumpTask, ms, ms);
+    } else
+      OLogManager.instance().info(this, "Auto dump of profiler disabled", iSeconds);
+
   }
 
   @Override
@@ -349,7 +396,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
 
     for (String n : names) {
       final AtomicInteger v = tips.get(n);
-      buffer.append(String.format("\n%-100s | %10d |", n, v));
+      buffer.append(String.format("\n%-100s | %10d |", n, v.intValue()));
     }
 
     buffer.append(String.format("\n%100s +------------+", ""));
@@ -367,5 +414,4 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
     if (iDescription != null && dictionary.putIfAbsent(iName, iDescription) == null)
       types.put(iName, iType);
   }
-
 }

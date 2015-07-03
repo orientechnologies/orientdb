@@ -27,7 +27,7 @@ public class OSBTreeCollectionManagerSharedTest extends DatabaseAbstractTest {
 
   @AfterMethod
   public void afterMethod() {
-    sbTreeCollectionManager.close(false);
+    sbTreeCollectionManager.close();
   }
 
   public void testEvictionAllReleased() {

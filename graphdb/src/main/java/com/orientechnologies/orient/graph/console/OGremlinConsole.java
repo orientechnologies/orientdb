@@ -20,12 +20,15 @@ import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.orientechnologies.orient.graph.migration.OGraphMigration;
+import com.tinkerpop.blueprints.impls.orient.OBonsaiTreeRepair;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 import java.io.IOException;
@@ -122,6 +125,25 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       }
     } else
       super.importDatabase(text);
+  }
+
+  @Override
+  @ConsoleCommand(description = "Repair database structure")
+  public void repairDatabase(@ConsoleParameter(name = "options", description = "Options: -v", optional = true) String iOptions)
+      throws IOException {
+    checkForDatabase();
+    boolean fix_ridbags = iOptions != null && iOptions.contains("--fix-ridbags");
+    if (!fix_ridbags)
+      super.repairDatabase(iOptions);
+    else {
+      if (!currentDatabase.getURL().startsWith("plocal")) {
+        message("\n fix-ridbags can be run only on plocal connection \n");
+        return;
+      }
+
+      OBonsaiTreeRepair repairer = new OBonsaiTreeRepair();
+      repairer.repairDatabaseRidbags(currentDatabase, this);
+    }
   }
 
   @ConsoleCommand(description = "Migrates graph from OMVRBTree to ORidBag")

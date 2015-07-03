@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.Serializable;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.TimeUnit;
-
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
@@ -53,6 +48,11 @@ import com.orientechnologies.orient.server.distributed.task.OResurrectRecordTask
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+
+import java.io.Serializable;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -101,7 +101,6 @@ public class ODistributedWorker extends Thread {
             queuedMsg, databaseName, lastMessageId);
 
         restoringMessages = false;
-        break;
       }
 
       String senderNode = null;
@@ -160,14 +159,18 @@ public class ODistributedWorker extends Thread {
           ODistributedAbstractPlugin.REPLICATOR_USER);
       database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
           replicatorUser.password);
-      database.reload();
+
+      // AVOID RELOADING DB INFORMATION BECAUSE OF DEADLOCKS
+      // database.reload();
 
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
       final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
           ODistributedAbstractPlugin.REPLICATOR_USER);
       database.open(replicatorUser.name, replicatorUser.password);
-      database.reload();
+
+      // AVOID RELOADING DB INFORMATION BECAUSE OF DEADLOCKS
+      // database.reload();
     }
   }
 

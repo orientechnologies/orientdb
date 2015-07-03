@@ -351,8 +351,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   protected static void checkForGraphSchema(final ODatabaseDocumentTx iDatabase) {
     final OSchema schema = iDatabase.getMetadata().getSchema();
 
-    // schema.getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
-
     final OClass vertexBaseClass = schema.getClass(OrientVertexType.CLASS_NAME);
     final OClass edgeBaseClass = schema.getClass(OrientEdgeType.CLASS_NAME);
 
@@ -1161,7 +1159,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     try {
       if (!database.isClosed() && commitTx) {
-        final OStorage storage = database.getStorage();
+        final OStorage storage = database.getStorage().getUnderlying();
         if (storage instanceof OAbstractPaginatedStorage) {
           if (((OAbstractPaginatedStorage) storage).getWALInstance() != null)
             database.commit();

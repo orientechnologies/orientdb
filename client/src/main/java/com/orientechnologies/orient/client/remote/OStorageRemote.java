@@ -663,9 +663,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (network.getSrvProtocolVersion() <= 27)
             buffer = new ORawBuffer(network.readBytes(), network.readVersion(), network.readByte());
           else {
-            byte type = network.readByte();
-            ORecordVersion recVersion = network.readVersion();
-            byte[] bytes = network.readBytes();
+            final byte type = network.readByte();
+            final ORecordVersion recVersion = network.readVersion();
+            final byte[] bytes = network.readBytes();
             buffer = new ORawBuffer(bytes, recVersion, type);
           }
 
@@ -2254,22 +2254,23 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     for (int i = 0; i < tot; ++i) {
       final OClusterRemote cluster = new OClusterRemote();
       String clusterName = network.readString();
-      if (clusterName != null)
-        clusterName = clusterName.toLowerCase();
       final int clusterId = network.readShort();
+      if (clusterName != null) {
+        clusterName = clusterName.toLowerCase();
 
-      if (network.getSrvProtocolVersion() < 24)
-        network.readString();
+        if (network.getSrvProtocolVersion() < 24)
+          network.readString();
 
-      final int dataSegmentId = network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24 ? (int) network
-          .readShort() : 0;
+        final int dataSegmentId = network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24 ? (int) network
+            .readShort() : 0;
 
-      cluster.configure(this, clusterId, clusterName);
+        cluster.configure(this, clusterId, clusterName);
 
-      if (clusterId >= clusters.length)
-        clusters = Arrays.copyOf(clusters, clusterId + 1);
-      clusters[clusterId] = cluster;
-      clusterMap.put(clusterName, cluster);
+        if (clusterId >= clusters.length)
+          clusters = Arrays.copyOf(clusters, clusterId + 1);
+        clusters[clusterId] = cluster;
+        clusterMap.put(clusterName, cluster);
+      }
     }
 
     defaultClusterId = clusterMap.get(CLUSTER_DEFAULT_NAME).getId();

@@ -321,11 +321,17 @@ public class OLogManager {
     }
 
     Logger log = Logger.getLogger(DEFAULT_LOG);
-    for (Handler h : log.getHandlers()) {
-      if (h.getClass().isAssignableFrom(iHandler)) {
-        h.setLevel(level);
-        break;
+    while (log != null) {
+      log.setLevel(level);
+
+      for (Handler h : log.getHandlers()) {
+        if (h.getClass().isAssignableFrom(iHandler)) {
+          h.setLevel(level);
+          break;
+        }
       }
+
+      log = log.getParent();
     }
 
     return level;

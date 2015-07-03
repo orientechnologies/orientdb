@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -62,16 +72,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -1491,26 +1491,30 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public ODocument undo() {
     if (!_trackingChanges)
       throw new OConfigurationException("Cannot undo the document because tracking of changes is disabled");
-    Iterator<Entry<String, ODocumentEntry>> vals = _fields.entrySet().iterator();
-    while (vals.hasNext()) {
-      Entry<String, ODocumentEntry> next = vals.next();
-      if (next.getValue().isCreated()) {
-        vals.remove();
-      } else if (next.getValue().isChanged()) {
-        next.getValue().value = next.getValue().original;
-        next.getValue().setChanged(false);
-        next.getValue().original = null;
-        next.getValue().setExist(true);
+
+    if (_fields != null) {
+      Iterator<Entry<String, ODocumentEntry>> vals = _fields.entrySet().iterator();
+      while (vals.hasNext()) {
+        Entry<String, ODocumentEntry> next = vals.next();
+        if (next.getValue().isCreated()) {
+          vals.remove();
+        } else if (next.getValue().isChanged()) {
+          next.getValue().value = next.getValue().original;
+          next.getValue().setChanged(false);
+          next.getValue().original = null;
+          next.getValue().setExist(true);
+        }
       }
+      _fieldSize = _fields.size();
     }
-    _fieldSize = _fields.size();
 
     return this;
   }
 
-  public ODocument undo(String field) {
+  public ODocument undo(final String field) {
     if (!_trackingChanges)
       throw new OConfigurationException("Cannot undo the document because tracking of changes is disabled");
+
     if (_fields != null) {
       final ODocumentEntry value = _fields.get(field);
       if (value.created) {
@@ -1718,7 +1722,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       // EXTRACT REAL FIELD NAMES
       for (int i = 0; i < iFields.length; ++i) {
         final String f = iFields[i];
-        if (!f.startsWith("@")) {
+        if (f != null && !f.startsWith("@")) {
           int pos1 = f.indexOf('[');
           int pos2 = f.indexOf('.');
           if (pos1 > -1 || pos2 > -1) {
@@ -1759,7 +1763,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     if (iFields != null && iFields.length > 0) {
       for (String field : iFields) {
-        if (field.startsWith("@"))
+        if (field != null && field.startsWith("@"))
           // ATTRIBUTE
           return true;
       }
@@ -1767,7 +1771,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       // PARTIAL UNMARSHALLING
       if (_fields != null && !_fields.isEmpty())
         for (String f : iFields)
-          if (_fields.containsKey(f))
+          if (f != null && _fields.containsKey(f))
             return true;
 
       // NO FIELDS FOUND

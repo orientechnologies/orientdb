@@ -20,15 +20,6 @@
 
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
-import com.orientechnologies.common.concur.lock.ONewLockManager;
-import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.NavigableMap;
@@ -40,36 +31,45 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
+import com.orientechnologies.common.concur.lock.ONewLockManager;
+import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+
 /**
  * @author Andrey Lomakin
  * @since 7/24/13
  */
 public class O2QCache implements OReadCache {
-  public static final int                             MIN_CACHE_SIZE             = 256;
+  public static final int                              MIN_CACHE_SIZE             = 256;
 
-  private static final int                            MAX_CACHE_OVERFLOW         = Runtime.getRuntime().availableProcessors() * 8;
+  private static final int                             MAX_CACHE_OVERFLOW         = Runtime.getRuntime().availableProcessors() * 8;
 
-  private final int                                   maxSize;
-  private final int                                   K_IN;
-  private final int                                   K_OUT;
+  private final int                                    maxSize;
+  private final int                                    K_IN;
+  private final int                                    K_OUT;
 
-  private final LRUList                               am;
-  private final LRUList                               a1out;
-  private final LRUList                               a1in;
+  private final LRUList                                am;
+  private final LRUList                                a1out;
+  private final LRUList                                a1in;
 
-  private final int                                   pageSize;
+  private final int                                    pageSize;
 
   /**
    * Contains all pages in cache for given file.
    */
-  private final ConcurrentMap<Long, Set<Long>>        filePages;
+  private final ConcurrentMap<Long, Set<Long>>         filePages;
 
-  private final OReadersWriterSpinLock                cacheLock                  = new OReadersWriterSpinLock();
-  private final ONewLockManager                       fileLockManager            = new ONewLockManager(true);
-  private final ONewLockManager<PageKey>              pageLockManager            = new ONewLockManager<PageKey>();
-  private final NavigableMap<PinnedPage, OCacheEntry> pinnedPages                = new ConcurrentSkipListMap<PinnedPage, OCacheEntry>();
+  private final OReadersWriterSpinLock                 cacheLock                  = new OReadersWriterSpinLock();
+  private final ONewLockManager                        fileLockManager            = new ONewLockManager(true);
+  private final ONewLockManager<PageKey>               pageLockManager            = new ONewLockManager<PageKey>();
+  private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages                = new ConcurrentHashMap<PinnedPage, OCacheEntry>();
 
-  private final AtomicBoolean                         coldPagesRemovalInProgress = new AtomicBoolean();
+  private final AtomicBoolean                          coldPagesRemovalInProgress = new AtomicBoolean();
 
   public O2QCache(final long readCacheMaxMemory, final int pageSize, final boolean checkMinSize) {
     cacheLock.acquireWriteLock();
@@ -746,14 +746,12 @@ public class O2QCache implements OReadCache {
           try {
             pageLock = pageLockManager.acquireExclusiveLock(new PageKey(removedEntry.fileId, removedEntry.pageIndex));
             try {
-              if (a1out.get(removedEntry.fileId, removedEntry.pageIndex) == null)
+              if (a1out.remove(removedEntry.fileId, removedEntry.pageIndex) == null)
                 continue;
 
               assert removedEntry.usagesCount == 0;
               assert removedEntry.dataPointer == null;
               assert !removedEntry.isDirty;
-
-              a1out.remove(removedEntry.fileId, removedEntry.pageIndex);
 
               Set<Long> pageEntries = filePages.get(removedEntry.fileId);
               pageEntries.remove(removedEntry.pageIndex);
@@ -806,7 +804,7 @@ public class O2QCache implements OReadCache {
 
   @Override
   public long getUsedMemory() {
-    return (am.size() + a1in.size()) * (2 * ODurablePage.PAGE_PADDING + pageSize);
+    return ((long) (am.size() + a1in.size())) * (2 * ODurablePage.PAGE_PADDING + pageSize);
   }
 
   private OCacheEntry remove(long fileId, long pageIndex) {

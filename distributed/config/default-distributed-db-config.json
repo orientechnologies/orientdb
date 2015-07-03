@@ -6,7 +6,7 @@
   "writeQuorum": 2,
   "failureAvailableNodesLessQuorum": false,
   "readYourWrites": true,
-  "roles": {
+  "servers": {
     "*": "master"
   },
   "clusters": {

@@ -164,6 +164,11 @@ public class OClusterRemote implements OCluster {
     return 0;
   }
 
+  @Override
+  public String getFileName() {
+    throw new UnsupportedOperationException("getFileName()");
+  }
+
   public int getId() {
     return id;
   }

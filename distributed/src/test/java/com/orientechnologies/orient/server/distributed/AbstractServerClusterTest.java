@@ -183,6 +183,7 @@ public abstract class AbstractServerClusterTest {
         onAfterDatabaseCreation(graph);
       } finally {
         graph.shutdown();
+        Orient.instance().closeAllStorages();
       }
     }
 

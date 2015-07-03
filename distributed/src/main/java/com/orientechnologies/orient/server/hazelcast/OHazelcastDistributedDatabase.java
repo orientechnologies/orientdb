@@ -212,7 +212,10 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(), databaseName);
     final IQueue<ODistributedRequest> requestQueue = msgService.getQueue(queueName);
 
-    unqueuePendingMessages(iRestoreMessages, iUnqueuePendingMessages, queueName, requestQueue);
+    final ODistributedWorker listenerThread = unqueuePendingMessages(iRestoreMessages, iUnqueuePendingMessages, queueName,
+        requestQueue);
+
+    workers.add(listenerThread);
 
     if (iCallback != null)
       try {
@@ -222,11 +225,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       }
 
     setOnline();
-
-    // CREATE 1 WORKER THREAD FOR INSERT (ONLY 1 TO MAINTAIN THE SEQUENCE OF REQUESTS)
-    ODistributedWorker listenerThread = new ODistributedWorker(this, requestQueue, databaseName, 0, false);
-    workers.add(listenerThread);
-    listenerThread.start();
 
     return this;
   }
@@ -244,12 +242,27 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
   @Override
   public boolean lockRecord(final ORID iRecord, final String iNodeName) {
-    return lockManager.putIfAbsent(iRecord, iNodeName) == null;
+    final boolean locked = lockManager.putIfAbsent(iRecord, iNodeName) == null;
+
+    if (ODistributedServerLog.isDebugEnabled())
+      if (locked)
+        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "Distributed transaction: locked record %s in database '%s' owned by server '%s'", iRecord, databaseName, iNodeName);
+      else
+        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "Distributed transaction: cannot lock record %s in database '%s' owned by server '%s'", iRecord, databaseName,
+            iNodeName);
+
+    return locked;
   }
 
   @Override
   public void unlockRecord(final ORID iRecord) {
     lockManager.remove(iRecord);
+
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "Distributed transaction: unlocked record %s in database '%s'", iRecord, databaseName);
   }
 
   @Override
@@ -267,8 +280,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "Unlocked %d locks in database '%s' owned by server '%s'", databaseName, iNodeName);
-
+          "Distributed transaction: unlocked %d locks in database '%s' owned by server '%s'", unlocked, databaseName, iNodeName);
   }
 
   public OHazelcastDistributedDatabase setWaitForMessage(final long iMessageId) {
@@ -284,7 +296,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       workers.get(i).shutdown();
   }
 
-  protected void unqueuePendingMessages(boolean iRestoreMessages, boolean iUnqueuePendingMessages, String queueName,
+  protected ODistributedWorker unqueuePendingMessages(boolean iRestoreMessages, boolean iUnqueuePendingMessages, String queueName,
       IQueue<ODistributedRequest> requestQueue) {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE, "listening for incoming requests on queue: %s",
@@ -298,14 +310,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final ODistributedWorker listenerThread = new ODistributedWorker(this, requestQueue, databaseName, 0, restoringMessages);
     listenerThread.initDatabaseInstance();
 
-    if (restoringMessages) {
-      // EXECUTES PENDING MSG ONLY BEFORE TO GO ONLINE
-      listenerThread.start();
-      try {
-        listenerThread.join();
-      } catch (InterruptedException e) {
-      }
-    }
+    listenerThread.start();
+
+    return listenerThread;
   }
 
   protected void checkForServerOnline(ODistributedRequest iRequest) throws ODistributedException {

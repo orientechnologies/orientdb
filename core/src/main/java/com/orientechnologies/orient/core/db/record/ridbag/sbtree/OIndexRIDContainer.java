@@ -80,7 +80,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying();
     try {
-      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName);
       final OReadCache readCache = storage.getReadCache();
       final OWriteCache writeCache = storage.getWriteCache();
 
@@ -90,12 +90,23 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
         return readCache.addFile(fileName, writeCache);
       } else {
-        if (atomicOperation.isFileExists(fileName))
-          return atomicOperation.openFile(fileName);
+        long fileId;
 
-        return atomicOperation.addFile(fileName);
+        if (atomicOperation.isFileExists(fileName))
+          fileId = atomicOperation.openFile(fileName);
+        else
+          fileId = atomicOperation.addFile(fileName);
+
+        storage.getAtomicOperationsManager().endAtomicOperation(false);
+        return fileId;
       }
     } catch (IOException e) {
+      try {
+        storage.getAtomicOperationsManager().endAtomicOperation(true);
+      } catch (IOException ioe) {
+        throw new OSBTreeException("Error of rollback of atomic operation");
+      }
+
       throw new OSBTreeException("Error creation of sbtree with name " + fileName, e);
     }
   }
@@ -233,8 +244,8 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
   private void convertToSbTree() {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, durableNonTxMode,
-        (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, durableNonTxMode, (OAbstractPaginatedStorage) db
+        .getStorage().getUnderlying());
 
     tree.addAll(underlying);
 
