@@ -16,7 +16,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
@@ -55,6 +54,11 @@ public final class OrientGraph implements Graph {
             config.getBoolean(CONFIG_CREATE, true),
             config.getBoolean(CONFIG_OPEN, true));
         makeActive();
+    }
+
+    @Override
+    public Features features() {
+        return ODBFeatures.OrientFeatures.INSTANCE;
     }
 
     public void makeActive() {

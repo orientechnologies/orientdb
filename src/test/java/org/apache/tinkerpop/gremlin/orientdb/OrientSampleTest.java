@@ -18,15 +18,15 @@ public class OrientSampleTest {
 
     @Test
     public void labelTest() {
-//        String graphUri = "memory:test";
-        String graphUri = "plocal:target/graph" + Math.random();
+        String graphUri = "memory:test";
+//        String graphUri = "plocal:target/graph" + Math.random();
 //        String graphUri = "remote:localhost/test";
         OrientGraph graph = new OrientGraphFactory(graphUri, "root", "root").getNoTx();
 
         OrientVertex v1 = (OrientVertex) graph.addVertex();
         OrientVertex v2 = (OrientVertex) graph.addVertex();
-//        OrientEdge e = (OrientEdge) v1.addEdge("label1", v2);
-//
+        OrientEdge e = (OrientEdge) v1.addEdge("label1", v2);
+
         Iterator<Vertex> vertices = graph.vertices();
         while (vertices.hasNext())
             System.out.println(vertices.next());

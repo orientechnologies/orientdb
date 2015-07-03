@@ -9,5 +9,5 @@ import org.junit.runner.RunWith;
 // TODO: get this test to work
 //@RunWith(StructureStandardSuite.class)
 //@GraphProviderClass(provider = OrientGraphProvider.class, graph = OrientGraph.class)
-//public class OrientGraphStructureStandardTest {
-//}
+public class OrientGraphStructureStandardTest {
+}
