@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OContainsValueOperator extends SimpleNode implements OBinaryCompareOperator {
   public OContainsValueOperator(int id) {
     super(id);
@@ -17,11 +19,17 @@ public class OContainsValueOperator extends SimpleNode implements OBinaryCompare
   }
 
   @Override
-  public boolean execute(Object left, Object right) {
+  public boolean execute(Object iLeft, Object iRight) {
+    if (iLeft instanceof Map<?, ?>) {
+      final Map<String, ?> map = (Map<String, ?>) iLeft;
+      return map.containsValue(iRight);
+    }
     return false;
+
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "CONTAINSVALUE";
   }
 

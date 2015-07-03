@@ -21,6 +21,9 @@ public class OInOperator extends SimpleNode implements OBinaryCompareOperator {
 
   @Override
   public boolean execute(Object left, Object right) {
+    if (left == null) {
+      return false;
+    }
     if (right instanceof Collection) {
       if (left instanceof Collection) {
         return ((Collection) right).containsAll((Collection) left);
