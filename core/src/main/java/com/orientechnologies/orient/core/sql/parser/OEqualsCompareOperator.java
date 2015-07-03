@@ -2,6 +2,12 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompareOperator {
   public OEqualsCompareOperator(int id) {
     super(id);
@@ -17,11 +23,50 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
   }
 
   @Override
-  public boolean execute(Object left, Object right) {
-    if (left == null) {
-      return right == null;
+  public boolean execute(Object iLeft, Object iRight) {
+    if (iLeft == null || iRight == null)
+      return false;
+
+    // RECORD & ORID
+    if (iLeft instanceof ORecord)
+      return comparesValues(iRight, (ORecord) iLeft, true);
+    else if (iRight instanceof ORecord)
+      return comparesValues(iLeft, (ORecord) iRight, true);
+
+    if (iLeft instanceof Number && iRight instanceof Number) {
+      Number[] couple = OType.castComparableNumber((Number) iLeft, (Number) iRight);
+      return couple[0].equals(couple[1]);
     }
-    return left.equals(right);// TODO type conversions
+    // ALL OTHER CASES
+    final Object right = OType.convert(iRight, iLeft.getClass());
+    if (right == null)
+      return false;
+    return iLeft.equals(right);
+  }
+
+  protected static boolean comparesValues(final Object iValue, final ORecord iRecord, final boolean iConsiderIn) {
+    // ORID && RECORD
+    final ORID other = ((ORecord) iRecord).getIdentity();
+
+    if (!other.isPersistent() && iRecord instanceof ODocument) {
+      // ODOCUMENT AS RESULT OF SUB-QUERY: GET THE FIRST FIELD IF ANY
+      final String[] firstFieldName = ((ODocument) iRecord).fieldNames();
+      if (firstFieldName.length > 0) {
+        Object fieldValue = ((ODocument) iRecord).field(firstFieldName[0]);
+        if (fieldValue != null) {
+          if (iConsiderIn && OMultiValue.isMultiValue(fieldValue)) {
+            for (Object o : OMultiValue.getMultiValueIterable(fieldValue)) {
+              if (o != null && o.equals(iValue))
+                return true;
+            }
+          }
+
+          return fieldValue.equals(iValue);
+        }
+      }
+      return false;
+    }
+    return other.equals(iValue);
   }
 
   @Override

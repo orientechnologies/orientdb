@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORecordId;
 
 import java.util.Map;
 
@@ -25,15 +26,14 @@ public class OExpression extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     if (value instanceof ORid) {
-      return null;// TODO
+      ORid v = (ORid) value;
+      return new ORecordId(v.cluster.getValue().intValue(), v.position.getValue().longValue());
     } else if (value instanceof OInputParameter) {
       return null;// TODO
     } else if (value instanceof OMathExpression) {
       return ((OMathExpression) value).execute(iCurrentRecord, ctx);
-//      return null;// TODO ((OMathExpression) value).execute();
     } else if (value instanceof OJson) {
       return null;// TODO
     } else if (value instanceof String) {

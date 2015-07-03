@@ -208,10 +208,12 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   @Override
   public Object execute(Map<Object, Object> iArgs) {
-    return execute(iArgs, this.request);
+    this.context.setInputParameters(iArgs);
+    return execute(this.request, this.context);
   }
 
-  public Object execute(Map<Object, Object> iArgs, OSQLAsynchQuery<ODocument> request) {
+  public Object execute(OSQLAsynchQuery<ODocument> request, OCommandContext context) {
+    Map<Object, Object> iArgs = context.getInputParameters();
     try {
       Map<String, OWhereClause> aliasFilters = new HashMap<String, OWhereClause>();
       Map<String, String> aliasClasses = new HashMap<String, String>();
@@ -224,7 +226,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         return new OResultSet();// some aliases do not match on any classes
       }
 
-      calculateMatch(estimatedRootEntries, new MatchContext(), aliasClasses, aliasFilters, this.context, request);
+      calculateMatch(estimatedRootEntries, new MatchContext(), aliasClasses, aliasFilters, context, request);
       return getResult(request);
     } finally {
 
@@ -458,6 +460,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   private void addResult(MatchContext matchContext, OSQLAsynchQuery<ODocument> request) {
     if (returnsMatches()) {
       ODocument doc = getDatabase().newInstance();
+      // TODO manage duplicates
       for (Map.Entry<String, OIdentifiable> entry : matchContext.matched.entrySet()) {
         if (isExplicitAlias(entry.getKey())) {
           doc.field(entry.getKey(), entry.getValue());
@@ -472,6 +475,16 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       ODocument doc = getDatabase().newInstance();
       for (Map.Entry<String, OIdentifiable> entry : matchContext.matched.entrySet()) {
         doc.field(entry.getKey(), entry.getValue());
+      }
+      Object result = getResult(request);
+
+      if (request.getResultListener() != null) {
+        request.getResultListener().result(doc);
+      }
+    } else {
+      ODocument doc = getDatabase().newInstance();
+      for (OIdentifier alias : returnItems) {
+        doc.field(alias.getValue(), matchContext.matched.get(alias.getValue()));
       }
       Object result = getResult(request);
 

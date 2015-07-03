@@ -3,8 +3,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 
 import java.util.Map;
@@ -30,9 +28,6 @@ public class OStatement extends SimpleNode {
     return null; // TODO make it abstract
   }
 
-  public static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
-  }
 
   public void replaceParameters(Map<Object, Object> params) {
 

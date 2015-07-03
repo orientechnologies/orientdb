@@ -45,6 +45,8 @@ public class OBasicCommandContext implements OCommandContext {
   protected OCommandContext                                                          child;
   protected Map<String, Object>                                                      variables;
 
+  protected Map<Object, Object>                                                      inputParameters;
+
   // MANAGES THE TIMEOUT
   private long                                                                       executionStartedOn;
   private long                                                                       timeoutMs;
@@ -276,4 +278,16 @@ public class OBasicCommandContext implements OCommandContext {
       variables = new HashMap<String, Object>();
   }
 
+  public Map<Object, Object> getInputParameters() {
+    if (inputParameters != null) {
+      return inputParameters;
+    }
+
+    return parent == null ? null : parent.getInputParameters();
+  }
+
+  public void setInputParameters(Map<Object, Object> inputParameters) {
+    this.inputParameters = inputParameters;
+
+  }
 }

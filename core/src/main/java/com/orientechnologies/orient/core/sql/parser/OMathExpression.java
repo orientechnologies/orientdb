@@ -196,7 +196,7 @@ public class OMathExpression extends SimpleNode {
       Object rightValue = childExpressions.get(i + 1).execute(iCurrentRecord, ctx);
       nextValue = apply(nextValue, nextOperator, rightValue);
     }
-    return null;
+    return nextValue;
   }
 
   /** Accept the visitor. **/
