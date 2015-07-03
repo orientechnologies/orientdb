@@ -111,13 +111,16 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
 
   @Override
   public void onClose(ODatabaseInternal iDatabase) {
-
     OAuditingHook oAuditingHook = hooks.get(iDatabase.getName());
     if (oAuditingHook != null) {
       iDatabase.unregisterHook(oAuditingHook);
       iDatabase.unregisterListener(oAuditingHook);
     }
+  }
 
+  @Override
+  public void onDrop(ODatabaseInternal iDatabase) {
+    onClose(iDatabase);
   }
 
   @Override
