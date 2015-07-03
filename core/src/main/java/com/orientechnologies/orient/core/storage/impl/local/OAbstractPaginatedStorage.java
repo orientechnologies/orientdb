@@ -2480,8 +2480,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             break;
           }
 
-          rec.getRecordVersion().copyFrom(doUpdateRecord(rid, ORecordInternal.isContentChanged(rec), stream, rec.getRecordVersion(),
-              ORecordInternal.getRecordType(rec), null, cluster).getResult());
+          OStorageOperationResult<ORecordVersion> updateRes = doUpdateRecord(rid, ORecordInternal.isContentChanged(rec), stream,
+              rec.getRecordVersion(), ORecordInternal.getRecordType(rec), null, cluster);
+          rec.getRecordVersion().copyFrom(updateRes.getResult());
+          if (updateRes.getModifiedRecordContent() != null) {
+            ORecordInternal.fill(rec, rid, updateRes.getResult(), updateRes.getModifiedRecordContent(), false);
+          }
           break;
         }
 

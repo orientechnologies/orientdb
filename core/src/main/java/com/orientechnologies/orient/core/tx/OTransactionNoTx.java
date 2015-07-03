@@ -172,8 +172,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
       if (newRecord != null) {
         for (ORecord rec : newRecord) {
           if (rec.getIdentity().isNew() && rec instanceof ODocument) {
-            ORecord ret = saveNew((ODocument) rec, dirtyManager, iRecord, iMode, iForceCreate, iRecordCreatedCallback,
-                iRecordUpdatedCallback);
+            ORecord ret = saveNew((ODocument) rec, dirtyManager, iClusterName, iRecord, iMode, iForceCreate,
+                iRecordCreatedCallback, iRecordUpdatedCallback);
             if (ret != null)
               toRet = ret;
           }
@@ -182,7 +182,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       if (updatedRecord != null) {
         for (ORecord rec : updatedRecord) {
           if (rec == iRecord) {
-            toRet = database.executeSaveRecord(rec, null, rec.getRecordVersion(), true, iMode, iForceCreate,
+            toRet = database.executeSaveRecord(rec, iClusterName, rec.getRecordVersion(), true, iMode, iForceCreate,
                 iRecordCreatedCallback, iRecordUpdatedCallback);
           } else
             database.executeSaveRecord(rec, null, rec.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null, null);
@@ -206,8 +206,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
     }
   }
 
-  public ORecord saveNew(ODocument document, ODirtyManager manager, ORecord original, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
+  public ORecord saveNew(ODocument document, ODirtyManager manager, String iClusterName, ORecord original,
+      final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     ORecord toRet = null;
     List<ODocument> toResave = new ArrayList<ODocument>();
@@ -232,8 +232,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
           if (path.contains(nextToInspect)) {
             OSerializationSetThreadLocal.checkAndAdd((ODocument) nextToInspect);
             if (nextToInspect == original)
-              toRet = database.executeSaveRecord(nextToInspect, null, nextToInspect.getRecordVersion(), true, iMode, iForceCreate,
-                  iRecordCreatedCallback, iRecordUpdatedCallback);
+              toRet = database.executeSaveRecord(nextToInspect, iClusterName, nextToInspect.getRecordVersion(), true, iMode,
+                  iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
             else
               database.executeSaveRecord(nextToInspect, null, nextToInspect.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS,
                   false, null, null);
@@ -245,7 +245,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
           }
         } else {
           if (next == original)
-            toRet = database.executeSaveRecord(next, null, next.getRecordVersion(), true, iMode, iForceCreate,
+            toRet = database.executeSaveRecord(next, iClusterName, next.getRecordVersion(), true, iMode, iForceCreate,
                 iRecordCreatedCallback, iRecordUpdatedCallback);
           else
             toRet = database.executeSaveRecord(next, null, next.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null,

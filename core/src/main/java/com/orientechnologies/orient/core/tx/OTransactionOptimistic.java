@@ -364,23 +364,33 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     boolean originalSaved = false;
     ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
-    Set<ORecord> newRecord = dirtyManager.getNewRecord();
-    Set<ORecord> updatedRecord = dirtyManager.getUpdateRecord();
-    dirtyManager.cleanForSave();
-    if (newRecord != null) {
-      for (ORecord rec : newRecord) {
-        addRecord(rec, ORecordOperation.CREATED, getClusterName(rec));
-        if (rec == iRecord)
-          originalSaved = true;
+    do {
+      Set<ORecord> newRecord = dirtyManager.getNewRecord();
+      Set<ORecord> updatedRecord = dirtyManager.getUpdateRecord();
+      dirtyManager.cleanForSave();
+      if (newRecord != null) {
+        for (ORecord rec : newRecord) {
+          if (rec instanceof ODocument)
+            ODocumentInternal.convertAllMultiValuesToTrackedVersions((ODocument) rec);
+          if (rec == iRecord) {
+            addRecord(rec, ORecordOperation.CREATED, iClusterName);
+            originalSaved = true;
+          } else
+            addRecord(rec, ORecordOperation.CREATED, getClusterName(rec));
+        }
       }
-    }
-    if (updatedRecord != null) {
-      for (ORecord rec : updatedRecord) {
-        addRecord(rec, ORecordOperation.UPDATED, getClusterName(rec));
-        if (rec == iRecord)
-          originalSaved = true;
+      if (updatedRecord != null) {
+        for (ORecord rec : updatedRecord) {
+          if (rec instanceof ODocument)
+            ODocumentInternal.convertAllMultiValuesToTrackedVersions((ODocument) rec);
+          if (rec == iRecord) {
+            addRecord(rec, ORecordOperation.UPDATED, iClusterName);
+            originalSaved = true;
+          } else
+            addRecord(rec, ORecordOperation.UPDATED, getClusterName(rec));
+        }
       }
-    }
+    } while (dirtyManager.getNewRecord() != null || dirtyManager.getUpdateRecord() != null);
 
     if (!originalSaved && iRecord.isDirty()) {
       final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED

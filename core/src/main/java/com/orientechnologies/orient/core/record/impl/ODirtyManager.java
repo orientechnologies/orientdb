@@ -36,6 +36,12 @@ public class ODirtyManager {
     }
   }
 
+  public ODirtyManager getReal() {
+    if (overrider != null)
+      return overrider.getReal();
+    return this;
+  }
+
   public Set<ORecord> getNewRecord() {
     if (overrider != null)
       return overrider.getNewRecord();
@@ -55,6 +61,7 @@ public class ODirtyManager {
   }
 
   public boolean isSame(ODirtyManager other) {
+    other = other.getReal();
     if (overrider != null)
       return overrider.isSame(other);
     return this == other;
@@ -96,9 +103,10 @@ public class ODirtyManager {
       if (((ODocument) pointing).isEmbedded()) {
 
         ORecordElement ele = pointing.getOwner();
-        while (!(ele instanceof ODocument) && ele != null && ((ODocument) pointing).isEmbedded())
+        while (!(ele instanceof ODocument) && ele != null && ele.getOwner() != null)
           ele = ele.getOwner();
-        pointing = (ORecord) ele;
+        if (ele != null)
+          pointing = (ORecord) ele;
       }
     }
     if (pointed.getIdentity().isNew() && pointing.getIdentity().isNew()) {
@@ -136,6 +144,7 @@ public class ODirtyManager {
   }
 
   private void override(ODirtyManager oDirtyManager) {
+    oDirtyManager = oDirtyManager.getReal();
     if (this == oDirtyManager)
       return;
     if (this.overrider != null)
@@ -149,8 +158,12 @@ public class ODirtyManager {
   }
 
   public void cleanForSave() {
-    this.newRecord = null;
-    this.updateRecord = null;
+    if (overrider != null)
+      overrider.cleanForSave();
+    else {
+      this.newRecord = null;
+      this.updateRecord = null;
+    }
   }
 
   public List<OIdentifiable> getPointed(ORecord rec) {

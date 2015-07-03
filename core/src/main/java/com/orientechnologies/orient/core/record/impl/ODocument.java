@@ -2348,26 +2348,21 @@ public class ODocument extends ORecordAbstract
         }
         break;
       case LINKLIST:
-        if (fieldValue instanceof List<?>) {
-          newValue = new ORecordLazySet(this);
-          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
-        }
+        if (fieldValue instanceof List<?>) 
+          newValue = new ORecordLazyList(this, (List<OIdentifiable>) fieldValue);
         break;
       case LINKSET:
-        if (fieldValue instanceof Set<?>) {
-          newValue = new ORecordLazyList(this);
-          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
-        }
+        if (fieldValue instanceof Set<?>) 
+          newValue = new ORecordLazySet(this, (Collection<OIdentifiable>) fieldValue);
         break;
       case LINKMAP:
-        if (fieldValue instanceof Map<?, ?>) {
-          newValue = new ORecordLazyMap(this);
-          fillTrackedMap((Map<Object, Object>) newValue, (Map<Object, Object>) fieldValue);
-        }
+        if (fieldValue instanceof Map<?, ?>) 
+          newValue = new ORecordLazyMap(this, (Map<Object, OIdentifiable>) fieldValue);
         break;
       default:
         break;
       }
+
       if (newValue != null) {
         addCollectionChangeListener(fieldEntry.getValue());
         fieldEntry.getValue().value = newValue;
