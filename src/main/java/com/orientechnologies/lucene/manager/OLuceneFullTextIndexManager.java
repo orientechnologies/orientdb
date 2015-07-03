@@ -16,6 +16,7 @@
 
 package com.orientechnologies.lucene.manager;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.lucene.collections.LuceneResultSet;
 import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
@@ -24,7 +25,11 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexEngineException;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -59,6 +64,8 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
     facetManager = new OLuceneFacetManager(this, metadata);
 
+    OLogManager.instance().debug(this, "Creating Lucene index in '%s'...", directory);
+
     return new IndexWriter(directory, iwc);
   }
 
@@ -68,6 +75,9 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     Version version = getLuceneVersion(metadata);
     IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.APPEND);
+
+    OLogManager.instance().debug(this, "Opening Lucene index in '%s'...", directory);
+
     return new IndexWriter(directory, iwc);
   }
 

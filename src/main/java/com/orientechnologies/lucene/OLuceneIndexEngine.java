@@ -63,9 +63,7 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
   @Override
   public void delete() {
-
     lucene.delete();
-
   }
 
   @Override
@@ -81,7 +79,6 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
   @Override
   public boolean contains(Object key) {
-
     return lucene.contains(key);
   }
 

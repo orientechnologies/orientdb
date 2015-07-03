@@ -16,24 +16,43 @@
 
 package com.orientechnologies.lucene.hook;
 
+import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
+import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.lucene.OLuceneIndex;
-import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-import java.util.*;
-
-import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
-import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
-
-public class OLuceneClassIndexManager extends ODocumentHookAbstract implements ODatabaseLifecycleListener {
+public class OLuceneClassIndexManager extends ODocumentHookAbstract {
 
   @Override
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
@@ -490,36 +509,6 @@ public class OLuceneClassIndexManager extends ODocumentHookAbstract implements O
       }
     }
     return iRecord;
-  }
-
-  @Override
-  public PRIORITY getPriority() {
-    return null;
-  }
-
-  @Override
-  public void onCreate(ODatabaseInternal iDatabase) {
-
-  }
-
-  @Override
-  public void onOpen(ODatabaseInternal iDatabase) {
-
-  }
-
-  @Override
-  public void onClose(ODatabaseInternal iDatabase) {
-
-  }
-
-  @Override
-  public void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {
-
-  }
-
-  @Override
-  public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
-
   }
 
   private ODatabaseDocumentInternal getDatabase() {

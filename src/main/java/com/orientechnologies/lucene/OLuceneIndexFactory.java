@@ -16,14 +16,19 @@
 
 package com.orientechnologies.lucene;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.lucene.index.OLuceneSpatialIndex;
 import com.orientechnologies.lucene.manager.OLuceneFullTextIndexManager;
 import com.orientechnologies.lucene.manager.OLuceneSpatialIndexManager;
 import com.orientechnologies.lucene.shape.OShapeFactoryImpl;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -33,7 +38,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class OLuceneIndexFactory implements OIndexFactory {
+public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
 
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
@@ -53,6 +58,7 @@ public class OLuceneIndexFactory implements OIndexFactory {
   }
 
   public OLuceneIndexFactory() {
+    Orient.instance().addDbLifecycleListener(this);
   }
 
   @Override
@@ -74,6 +80,51 @@ public class OLuceneIndexFactory implements OIndexFactory {
   public OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
     return createIndex(name, database, indexType, algorithm, valueContainerAlgorithm, metadata);
+  }
+
+  @Override
+  public PRIORITY getPriority() {
+    return PRIORITY.REGULAR;
+  }
+
+  @Override
+  public void onCreate(ODatabaseInternal iDatabase) {
+
+  }
+
+  @Override
+  public void onOpen(ODatabaseInternal iDatabase) {
+
+  }
+
+  @Override
+  public void onClose(ODatabaseInternal iDatabase) {
+
+  }
+
+  @Override
+  public void onDrop(final ODatabaseInternal iDatabase) {
+    try {
+      OLogManager.instance().debug(this, "Dropping Lucene indexes...");
+      for (OIndex idx : iDatabase.getMetadata().getIndexManager().getIndexes()) {
+        if (idx.getInternal() instanceof OLuceneIndex) {
+          OLogManager.instance().debug(this, "- index '%s'", idx.getName());
+          idx.delete();
+        }
+      }
+    } catch (Exception e) {
+      OLogManager.instance().warn(this, "Error on dropping Lucene indexes", e);
+    }
+  }
+
+  @Override
+  public void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {
+
+  }
+
+  @Override
+  public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
+
   }
 
   protected OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal oDatabaseRecord, String indexType,

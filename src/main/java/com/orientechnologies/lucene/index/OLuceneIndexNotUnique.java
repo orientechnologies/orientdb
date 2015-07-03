@@ -35,8 +35,8 @@ import java.util.Set;
 
 public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneIndex {
 
-  public OLuceneIndexNotUnique(String name,String typeId, String algorithm, OLuceneIndexEngine engine, String valueContainerAlgorithm,
-      ODocument metadata) {
+  public OLuceneIndexNotUnique(String name, String typeId, String algorithm, OLuceneIndexEngine engine,
+      String valueContainerAlgorithm, ODocument metadata) {
     super(typeId, algorithm, engine, valueContainerAlgorithm, metadata);
 
     engine.setIndexMetadata(metadata);
