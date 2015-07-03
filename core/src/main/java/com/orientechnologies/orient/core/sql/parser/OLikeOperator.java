@@ -2,8 +2,10 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OLikeOperator extends SimpleNode  implements OBinaryCompareOperator{
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.query.OQueryHelper;
+
+public class OLikeOperator extends SimpleNode implements OBinaryCompareOperator {
   public OLikeOperator(int id) {
     super(id);
   }
@@ -12,17 +14,21 @@ class OLikeOperator extends SimpleNode  implements OBinaryCompareOperator{
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean execute(Object left, Object right) {
-    return false;
+  @Override
+  public boolean execute(Object iLeft, Object iRight) {
+    if (OMultiValue.isMultiValue(iLeft) || OMultiValue.isMultiValue(iRight))
+      return false;
+
+    return OQueryHelper.like(iLeft.toString(), iRight.toString());
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "LIKE";
   }
 

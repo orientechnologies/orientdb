@@ -31,7 +31,7 @@ public class OExpression extends SimpleNode {
       ORid v = (ORid) value;
       return new ORecordId(v.cluster.getValue().intValue(), v.position.getValue().longValue());
     } else if (value instanceof OInputParameter) {
-      return null;// TODO
+      return ((OInputParameter) value).bindFromInputParams(ctx.getInputParameters());
     } else if (value instanceof OMathExpression) {
       return ((OMathExpression) value).execute(iCurrentRecord, ctx);
     } else if (value instanceof OJson) {

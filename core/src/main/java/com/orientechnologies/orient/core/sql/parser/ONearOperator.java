@@ -2,8 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class ONearOperator  extends SimpleNode implements OBinaryCompareOperator {
+public class ONearOperator extends SimpleNode implements OBinaryCompareOperator {
   public ONearOperator(int id) {
     super(id);
   }
@@ -12,7 +11,6 @@ class ONearOperator  extends SimpleNode implements OBinaryCompareOperator {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
@@ -20,7 +18,7 @@ class ONearOperator  extends SimpleNode implements OBinaryCompareOperator {
 
   @Override
   public boolean execute(Object left, Object right) {
-    return false;
+    throw new UnsupportedOperationException(toString() + " operator cannot be evaluated in this context");
   }
 
   @Override
