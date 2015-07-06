@@ -462,6 +462,25 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
+  public void testStarPosition() {
+    List<ODocument> result = db.query(new OSQLSynchQuery<Object>("select *, name as blabla from foo where name = 'a'"));
+
+    assertEquals(result.size(), 1);
+    assertEquals(result.get(0).field("blabla"), "a");
+
+    result = db.query(new OSQLSynchQuery<Object>("select name as blabla, * from foo where name = 'a'"));
+
+    assertEquals(result.size(), 1);
+    assertEquals(result.get(0).field("blabla"), "a");
+
+    result = db.query(new OSQLSynchQuery<Object>("select name as blabla, *, fff as zzz from foo where name = 'a'"));
+
+    assertEquals(result.size(), 1);
+    assertEquals(result.get(0).field("blabla"), "a");
+
+  }
+
+  @Test
   public void testQuotedClassName() {
     List<ODocument> qResult = db.command(new OCommandSQL("select from `edge`")).execute();
 
