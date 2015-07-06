@@ -781,8 +781,10 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
     var alias = $scope.property['alias'] == null || $scope.property['alias'] == '' ? null : $scope.property['alias'];
     sql = sql + abstract;
     var supercl = $scope.property['superclass'] != null ? ' extends ' + $scope.property['superclass'] : '';
-    var superClasses = $scope.property['superClasses'] != null ? ' extends ' + $filter('formatArray')($scope.property['superClasses']) : ''
+    var arrSuper = $scope.property['superClasses'];
+    var superClasses = (arrSuper != null && arrSuper.length > 0) ? ' extends ' + $filter('formatArray')($scope.property['superClasses']) : ''
     sql = sql + superClasses;
+
 
     CommandApi.queryText({
       database: $routeParams.database,

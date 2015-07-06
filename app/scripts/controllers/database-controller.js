@@ -154,7 +154,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     if ($scope.config.selectedRequestType == 'COMMAND') {
       queryBuffer = queryBuffer.replace(/\n/g, " ");
       queryBuffer = queryBuffer.replace(/\t/g, " ");
-      queryBuffer = queryBuffer.replace(/(\/\*([\s\S]*?)\*\/)|(\/\/(.*)$)/gm, '');
+      //queryBuffer = queryBuffer.replace(/(\/\*([\s\S]*?)\*\/)|(\/\/(.*)$)/gm, '');
     }
     if (queryBuffer.length != 0) {
       Spinner.start(function () {
