@@ -328,6 +328,7 @@ TOKEN :
 {
 
   < EQ: "=" >
+| < EQEQ: "==" >
 | < LT: "<" >
 | < GT: ">" >
 | < BANG: "!" >
@@ -2203,7 +2204,9 @@ OEqualsCompareOperator EqualsCompareOperator():
 {}
 {
 (
-	<EQ>
+	<EQ> { jjtThis.doubleEquals = false; }
+	|
+	<EQEQ> { jjtThis.doubleEquals = true; }
 ){return jjtThis;}
 }
 

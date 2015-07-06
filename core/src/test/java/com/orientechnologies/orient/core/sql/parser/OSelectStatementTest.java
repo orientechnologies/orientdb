@@ -320,8 +320,16 @@ public class OSelectStatementTest {
 
   @Test
   public void testRecordAttributes() {
+    //issue #4430
     checkRightSyntax("SELECT @this, @rid, @rid_id, @rid_pos, @version, @class, @type, @size, @fields, @raw from V");
     checkRightSyntax("SELECT @THIS, @RID, @RID_ID, @RID_POS, @VERSION, @CLASS, @TYPE, @SIZE, @FIELDS, @RAW from V");
+  }
+
+  @Test
+  public void testDoubleEquals() {
+    //issue #4413
+    checkRightSyntax("SELECT from V where name = 'foo'");
+    checkRightSyntax("SELECT from V where name == 'foo'");
   }
 
   @Test
