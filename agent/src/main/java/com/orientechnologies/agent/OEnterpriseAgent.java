@@ -134,7 +134,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
   @Override
   public PRIORITY getPriority() {
-    return null;
+    return PRIORITY.REGULAR;
   }
 
   /**
@@ -160,6 +160,11 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
    */
   @Override
   public void onClose(final ODatabaseInternal iDatabase) {
+  }
+
+  @Override
+  public void onDrop(ODatabaseInternal iDatabase) {
+
   }
 
   @Override
