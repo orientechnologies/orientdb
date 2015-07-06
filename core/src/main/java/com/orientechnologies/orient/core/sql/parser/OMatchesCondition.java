@@ -6,10 +6,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.Map;
 
-public
-class OMatchesCondition extends OBooleanExpression {
+public class OMatchesCondition extends OBooleanExpression {
   protected OExpression expression;
-  protected String right;
+  protected String      right;
 
   public OMatchesCondition(int id) {
     super(id);
@@ -19,18 +18,28 @@ class OMatchesCondition extends OBooleanExpression {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord) {
     return false;
   }
 
-  @Override public void replaceParameters(Map<Object, Object> params) {
+  @Override
+  public void replaceParameters(Map<Object, Object> params) {
     expression.replaceParameters(params);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append(expression.toString());
+    result.append(" MATCHES ");
+    result.append(right);
+    return result.toString();
   }
 }
 /* JavaCC - OriginalChecksum=68712f476e2e633c2bbfc34cb6c39356 (do not edit this line) */

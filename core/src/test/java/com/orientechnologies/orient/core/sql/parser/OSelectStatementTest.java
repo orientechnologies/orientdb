@@ -332,6 +332,13 @@ public class OSelectStatementTest {
     checkRightSyntax("SELECT from V where name == 'foo'");
   }
 
+
+  @Test
+  public void testMatches() {
+    checkRightSyntax("select from Person where name matches '(?i)(^\\\\Qname1\\\\E$)|(^\\\\Qname2\\\\E$)|(^\\\\Qname3\\\\E$)' and age=30");
+  }
+
+
   @Test
   // issue #3718
   public void testComplexTarget1() {

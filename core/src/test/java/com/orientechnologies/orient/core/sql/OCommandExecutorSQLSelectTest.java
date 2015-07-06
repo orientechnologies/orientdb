@@ -4,6 +4,7 @@ import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -451,6 +452,13 @@ public class OCommandExecutorSQLSelectTest {
 
     assertEquals(qResult.size(), 2);
 
+  }
+
+  @Test
+  public void testMatches() {
+    List<?> result = db.query(new OSQLSynchQuery<Object>(
+        "select from foo where name matches '(?i)(^\\\\Qa\\\\E$)|(^\\\\Qname2\\\\E$)|(^\\\\Qname3\\\\E$)' and bar = 1"));
+    assertEquals(result.size(), 1);
   }
 
   @Test
