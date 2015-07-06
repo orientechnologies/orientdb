@@ -18,21 +18,32 @@
  *
  */
 
-package com.orientechnologies.orient.core.index.hashindex.local.cache;
+package com.orientechnologies.orient.core.storage.cache.local;
+
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+
+import java.util.Iterator;
 
 /**
- * @author Andrey Lomakin
- * @since 7/24/13
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
-class PageGroup {
-  public final OCachePointer page;
+public interface LRUList extends Iterable<OCacheEntry> {
+  OCacheEntry get(long fileId, long pageIndex);
 
-  public volatile boolean    recencyBit;
-  public final long          creationTime;
+  OCacheEntry remove(long fileId, long pageIndex);
 
-  PageGroup(long creationTime, OCachePointer page) {
-    this.recencyBit = true;
-    this.creationTime = creationTime;
-    this.page = page;
-  }
+  void putToMRU(OCacheEntry cacheEntry);
+
+  void clear();
+
+  boolean contains(long fileId, long filePosition);
+
+  int size();
+
+  OCacheEntry removeLRU();
+
+  OCacheEntry getLRU();
+
+  @Override
+  Iterator<OCacheEntry> iterator();
 }

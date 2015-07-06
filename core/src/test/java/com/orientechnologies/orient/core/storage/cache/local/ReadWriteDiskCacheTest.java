@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.index.hashindex.local.cache;
+package com.orientechnologies.orient.core.storage.cache.local;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -7,7 +7,10 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.*;
+import com.orientechnologies.orient.core.storage.cache.local.LRUList;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -165,7 +168,7 @@ public class ReadWriteDiskCacheTest {
     for (int i = 0; i < 4; i++) {
       OCacheEntry entry = generateEntry(fileId, i, entries[i].getCachePointer().getDataPointer(), false, new OLogSequenceNumber(0,
           0));
-      Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
+      Assert.assertEquals(a1in.get(entry.getFileId(), entry.getPageIndex()), entry);
     }
 
     Assert.assertEquals(writeBuffer.getFilledUpTo(fileId), 4);
@@ -371,7 +374,7 @@ public class ReadWriteDiskCacheTest {
     for (int i = 0; i < 4; i++) {
       OCacheEntry entry = generateEntry(fileId, i, entries[i].getCachePointer().getDataPointer(), false, new OLogSequenceNumber(1,
           i));
-      Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
+      Assert.assertEquals(a1in.get(entry.getFileId(), entry.getPageIndex()), entry);
     }
 
     Assert.assertEquals(writeBuffer.getFilledUpTo(fileId), 4);
@@ -397,7 +400,7 @@ public class ReadWriteDiskCacheTest {
     OCacheEntry entry = generateEntry(fileId, 0, cacheEntry.getCachePointer().getDataPointer(), false, new OLogSequenceNumber(0, 0));
 
     Assert.assertEquals(a1in.size(), 1);
-    Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
+    Assert.assertEquals(a1in.get(entry.getFileId(), entry.getPageIndex()), entry);
   }
 
   public void testCloseFileShouldFlushData() throws Exception {
@@ -432,7 +435,7 @@ public class ReadWriteDiskCacheTest {
     for (int i = 0; i < 4; i++) {
       OCacheEntry entry = generateEntry(fileId, i, entries[i].getCachePointer().getDataPointer(), false, new OLogSequenceNumber(0,
           0));
-      Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
+      Assert.assertEquals(a1in.get(entry.getFileId(), entry.getPageIndex()), entry);
     }
 
     Assert.assertEquals(writeBuffer.getFilledUpTo(fileId), 4);
@@ -509,7 +512,7 @@ public class ReadWriteDiskCacheTest {
     for (int i = 0; i < 4; i++) {
       OCacheEntry entry = generateEntry(fileId, i, entries[i].getCachePointer().getDataPointer(), false, new OLogSequenceNumber(0,
           0));
-      Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
+      Assert.assertEquals(a1in.get(entry.getFileId(), entry.getPageIndex()), entry);
     }
 
     Assert.assertEquals(writeBuffer.getFilledUpTo(fileId), 4);
@@ -552,13 +555,13 @@ public class ReadWriteDiskCacheTest {
 
     for (int i = 0; i < 2; i++) {
       OCacheEntry entry = generateRemovedEntry(fileId, i);
-      Assert.assertEquals(a1out.get(entry.fileId, entry.pageIndex), entry);
+      Assert.assertEquals(a1out.get(entry.getFileId(), entry.getPageIndex()), entry);
     }
 
     for (int i = 2; i < 6; i++) {
       OCacheEntry entry = generateEntry(fileId, i, entries[i].getCachePointer().getDataPointer(), false, new OLogSequenceNumber(0,
           0));
-      Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
+      Assert.assertEquals(a1in.get(entry.getFileId(), entry.getPageIndex()), entry);
     }
 
     Assert.assertEquals(writeBuffer.getFilledUpTo(fileId), 6);
@@ -712,7 +715,6 @@ public class ReadWriteDiskCacheTest {
     Assert.assertEquals(4, pageErrors[1].pageIndex);
     Assert.assertEquals("readWriteDiskCacheTest.tst", pageErrors[1].fileName);
   }
-
 
   public void testFlushTillLSN() throws Exception {
     closeBufferAndDeleteFile();
