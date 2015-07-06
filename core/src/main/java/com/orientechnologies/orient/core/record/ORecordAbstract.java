@@ -405,6 +405,7 @@ public abstract class ORecordAbstract implements ORecord {
   protected void unsetDirty() {
     _contentChanged = false;
     _dirty = false;
+    _dirtyManager = null;
   }
 
   protected abstract byte getRecordType();
