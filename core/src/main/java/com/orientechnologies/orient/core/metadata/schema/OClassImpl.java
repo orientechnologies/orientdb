@@ -20,7 +20,17 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
@@ -583,6 +593,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public OClass setName(final String name) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(name);
+    if (wrongCharacter != null)
+      throw new OSchemaException("Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '"
+          + name + "'");
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
