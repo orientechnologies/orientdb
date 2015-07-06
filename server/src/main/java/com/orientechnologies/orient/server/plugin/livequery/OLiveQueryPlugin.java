@@ -109,6 +109,10 @@ public class OLiveQueryPlugin extends OServerPluginAbstract implements ODatabase
   }
 
   @Override
+  public void onDrop(ODatabaseInternal iDatabase) {
+  }
+
+  @Override
   public void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {
 
   }
