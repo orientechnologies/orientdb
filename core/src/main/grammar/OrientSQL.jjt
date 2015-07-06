@@ -2423,8 +2423,14 @@ OBooleanExpression MatchesCondition():
 {Token token;}
 {
     (
-    	jjtThis.expression = Expression() <MATCHES> token = <STRING_LITERAL> {jjtThis.right = token.image;}
+    	jjtThis.expression = Expression() <MATCHES>
+    	(
+    	    ( token = <STRING_LITERAL> {jjtThis.right = token.image;} )
+    	    |
+    	    ( token = <CHARACTER_LITERAL> {jjtThis.right = token.image;} )
+    	)
     )
+
     {return jjtThis;}
 }
 

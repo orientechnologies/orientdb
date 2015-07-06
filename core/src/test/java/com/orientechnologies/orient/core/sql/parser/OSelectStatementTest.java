@@ -335,6 +335,9 @@ public class OSelectStatementTest {
 
   @Test
   public void testMatches() {
+
+    checkRightSyntax("select from Person where name matches 'a'");
+
     checkRightSyntax("select from Person where name matches '(?i)(^\\\\Qname1\\\\E$)|(^\\\\Qname2\\\\E$)|(^\\\\Qname3\\\\E$)' and age=30");
   }
 
