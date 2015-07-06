@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.annotations.AfterClass;
@@ -100,6 +102,32 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("CREATE class TestParams")).execute();
     db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='foo'")).execute();
     db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='bar'")).execute();
+
+
+
+
+
+    ///*** from issue #2743
+    OSchema schema = db.getMetadata().getSchema();
+    if (!schema.existsClass("alphabet")) {
+      schema.createClass("alphabet");
+    }
+
+    ORecordIteratorClass<ODocument> iter = db.browseClass("alphabet");
+    while (iter.hasNext()) {
+      iter.next().delete();
+    }
+
+    // add 26 entries: { "letter": "A", "number": 0 }, ... { "letter": "Z", "number": 25 }
+
+    String rowModel = "{\"letter\": \"%s\", \"number\": %d}";
+    for (int i = 0; i < 26; ++i) {
+      String l = String.valueOf((char) ('A' + i));
+      String json = String.format(rowModel, l, i);
+      ODocument doc = db.newInstance("alphabet");
+      doc.fromJSON(json);
+      doc.save();
+    }
   }
 
   @AfterClass
@@ -531,6 +559,62 @@ public class OCommandExecutorSQLSelectTest {
 
     qResult = db.command(new OCommandSQL("select from TestParams where surname like '%' + :param1 + '%'")).execute(params);
     assertEquals(qResult.size(), 1);
+  }
+
+
+
+
+
+
+
+///*** from issue #2743
+  @Test
+  public void testBasicQueryOrdered() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter");
+    List<ODocument> results = db.query(sql);
+    assertEquals( 26, results.size());
+  }
+
+  @Test
+  public void testSkipZeroOrdered() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 0");
+    List<ODocument> results = db.query(sql);
+    assertEquals( 26, results.size());
+  }
+
+  @Test
+  public void testSkipOrdered() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 7");
+    List<ODocument> results = db.query(sql);
+    assertEquals( 19, results.size());  // FAILURE - actual 0
+  }
+
+  @Test
+  public void testLimitOrdered() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter LIMIT 9");
+    List<ODocument> results = db.query(sql);
+    assertEquals( 9, results.size());
+  }
+
+  @Test
+  public void testLimitMinusOneOrdered() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter LIMIT -1");
+    List<ODocument> results = db.query(sql);
+    assertEquals( 26, results.size());
+  }
+
+  @Test
+  public void testSkipAndLimitOrdered() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 7 LIMIT 9");
+    List<ODocument> results = db.query(sql);
+    assertEquals( 9, results.size());
+  }
+
+  @Test
+  public void testSkipAndLimitMinusOneOrdered() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 7 LIMIT -1");
+    List<ODocument> results = db.query(sql);
+    assertEquals( 19, results.size());  // FAILURE - actual 0
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {
