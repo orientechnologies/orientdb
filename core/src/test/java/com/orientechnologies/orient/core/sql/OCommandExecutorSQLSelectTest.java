@@ -96,6 +96,10 @@ public class OCommandExecutorSQLSelectTest {
 
     db.command(new OCommandSQL("CREATE class TestUrl")).execute();
     db.command(new OCommandSQL("insert into TestUrl content { \"url\": \"http://www.google.com\" }")).execute();
+
+    db.command(new OCommandSQL("CREATE class TestParams")).execute();
+    db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='foo'")).execute();
+    db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='bar'")).execute();
   }
 
   @AfterClass
@@ -509,6 +513,24 @@ public class OCommandExecutorSQLSelectTest {
       String coll = doc.field("coll");
       assertTrue(coll.startsWith(name));
     }
+  }
+
+
+  public void testMultipleParamsWithSameName(){
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("param1", "foo");
+    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParams where name like '%' + :param1 + '%'")).execute(params);
+    assertEquals(qResult.size(), 2);
+
+
+    qResult = db.command(new OCommandSQL("select from TestParams where name like '%' + :param1 + '%' and surname like '%' + :param1 + '%'")).execute(params);
+    assertEquals(qResult.size(), 1);
+
+    params = new HashMap<String, Object>();
+    params.put("param1", "bar");
+
+    qResult = db.command(new OCommandSQL("select from TestParams where surname like '%' + :param1 + '%'")).execute(params);
+    assertEquals(qResult.size(), 1);
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {
