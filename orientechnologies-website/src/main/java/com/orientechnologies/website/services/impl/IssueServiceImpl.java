@@ -98,12 +98,13 @@ public class IssueServiceImpl implements IssueService {
 
       if (issue.getClient() != null) {
         Client client = userService.getClient(comment.getUser(), issue.getRepository().getOrganization().getName());
-        if (client != null && client.getClientId() == issue.getClient().getClientId() && issue.getDueTime() == null) {
+        if (client != null && client.getClientId() == issue.getClient().getClientId() && issue.getDueTime() == null
+            && !issue.isClosed()) {
           issue.setSlaAt(new Date());
-          changeSlaDueTime(issue, issue.getPriority());
+          OUser actor = securityManager.bot(issue.getRepository().getOrganization().getName());
+          changeSlaDueTime(issue, actor, issue.getPriority());
           issue = issueRepository.save(issue);
-          removeLabel(issue, WAIT_FOR_REPLY, securityManager.bot(issue.getRepository().getOrganization().getName()),
-              !Boolean.TRUE.equals(issue.getConfidential()));
+          removeLabel(issue, WAIT_FOR_REPLY, actor, !Boolean.TRUE.equals(issue.getConfidential()));
         }
       } else {
         if (issue.getUser().getName().equals(comment.getUser().getUsername())) {
@@ -377,7 +378,7 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
-  public void changeSlaDueTime(Issue issue, Priority priority) {
+  public void changeSlaDueTime(Issue issue, OUser actor, Priority priority) {
 
     if (issue.getClient() != null) {
 
@@ -394,7 +395,7 @@ public class IssueServiceImpl implements IssueService {
           e.setCreatedAt(new Date());
           e.setEvent("slaStarted");
           e.setPriority(priority);
-          e.setActor(SecurityHelper.currentUser());
+          e.setActor(actor != null ? actor : SecurityHelper.currentUser());
           e.setSecret(true);
           e.setTime(issue.getDueTime());
           e = (IssueEventInternal) eventRepository.save(e);
@@ -429,7 +430,7 @@ public class IssueServiceImpl implements IssueService {
       e = (IssueEventInternal) eventRepository.save(e);
       fireEvent(issue, e);
     }
-    changeSlaDueTime(issue, priority);
+    changeSlaDueTime(issue, securityManager.bot(issue.getRepository().getOrganization().getName()), priority);
   }
 
   @Override
@@ -560,12 +561,12 @@ public class IssueServiceImpl implements IssueService {
       if (evt.equals("reopened")) {
         eventManager.pushInternalEvent(IssueReopenEvent.EVENT, e);
         issue.setSlaAt(new Date());
-        changeSlaDueTime(issue, issue.getPriority());
+        changeSlaDueTime(issue, actor, issue.getPriority());
         issue = issueRepository.save(issue);
 
       } else {
         eventManager.pushInternalEvent(IssueClosedEvent.EVENT, e);
-        if (issue.getClient() != null)
+        if (issue.getClient() != null && issue.getDueTime() != null)
           removeSlaCounting(issue, actor);
       }
     }

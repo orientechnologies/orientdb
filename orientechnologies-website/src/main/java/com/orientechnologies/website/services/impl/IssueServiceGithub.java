@@ -276,7 +276,7 @@ public class IssueServiceGithub implements IssueService {
   }
 
   @Override
-  public void changeSlaDueTime(Issue issue, Priority priority) {
+  public void changeSlaDueTime(Issue issue, OUser actor, Priority priority) {
     throw new UnsupportedOperationException();
   }
 }

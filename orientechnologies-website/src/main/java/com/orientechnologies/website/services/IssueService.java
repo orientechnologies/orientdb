@@ -60,5 +60,5 @@ public interface IssueService {
 
   public GIssue isChanged(Issue issue, OUser user);
 
-  public void changeSlaDueTime(Issue issue,Priority priority);
+  public void changeSlaDueTime(Issue issue, OUser actor, Priority priority);
 }

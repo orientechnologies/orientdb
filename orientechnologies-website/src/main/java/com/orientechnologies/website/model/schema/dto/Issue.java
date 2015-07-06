@@ -206,7 +206,6 @@ public class Issue {
     return environment;
   }
 
-
   public void setSlaAt(Date slaAt) {
     this.slaAt = slaAt;
   }
@@ -236,6 +235,13 @@ public class Issue {
 
   public void setUuid(String uid) {
     this.uuid = uid;
+  }
+
+  @JsonIgnore
+  public boolean isClosed() {
+    if (state == null)
+      return false;
+    return IssueState.CLOSED.equals(IssueState.valueOf(state.toUpperCase()));
   }
 
   public enum IssueState {

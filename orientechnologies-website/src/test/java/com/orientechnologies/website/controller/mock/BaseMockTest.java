@@ -177,18 +177,45 @@ public class BaseMockTest {
   }
 
   protected Issue assigneIssue(OUser actor, Integer issue, final String assignee) {
-    Map<String, String> params = new HashMap<String, String>() {
+    Map<String, Object> params = new HashMap<String, Object>() {
       {
         put("assignee", assignee);
       }
     };
+    return patchSingleIssue(actor, issue, params);
+  }
 
-    Response patch = header(actor.getToken()).body(params).when()
+  public Issue closeIssue(OUser actor, Integer isssue) {
+    Map<String, Object> params = new HashMap<String, Object>() {
+      {
+        put("state", "closed");
+      }
+    };
+    return patchSingleIssue(actor, isssue, params);
+  }
+
+  public Issue reopenIssue(OUser actor, Integer isssue) {
+    Map<String, Object> params = new HashMap<String, Object>() {
+      {
+        put("state", "open");
+      }
+    };
+    return patchSingleIssue(actor, isssue, params);
+  }
+
+  protected Issue patchSingleIssue(OUser actor, Integer issue, Map<String, Object> params) {
+
+    Response patch = header(memberUser.getToken()).body(params).when()
         .patch("/api/v1/repos/romeshell/gnome-shell-extension-aam/issues/" + issue);
 
     Issue as = patch.as(Issue.class);
 
     Assert.assertEquals(patch.statusCode(), 200);
+    try {
+      Thread.sleep(MILLIS);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
     return as;
   }
 

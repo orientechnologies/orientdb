@@ -135,6 +135,8 @@ public class GithubMockClientTest extends BaseMockTest {
     // should remove wait for reply
     Assert.assertEquals(singleIssue.getLabels().size(), 1);
 
+    Assert.assertNotNull(singleIssue.getDueTime());
+
     List<Map> events = events(memberUser, 1);
 
     // scoped
@@ -175,7 +177,59 @@ public class GithubMockClientTest extends BaseMockTest {
     // label in progress
     // sla stopped
 
-
     Assert.assertEquals(events.size(), 16);
+
+    Issue singleIssue = getSigleIssue(memberUser, 1);
+
+    Assert.assertNull(singleIssue.getDueTime());
+  }
+
+  @Test
+  public void test4CloseReopen() {
+
+    closeIssue(memberUser, 1);
+
+    Issue issue = getSigleIssue(memberUser, 1);
+
+    Assert.assertNull(issue.getDueTime());
+
+    Assert.assertEquals(issue.getState(), "CLOSED");
+
+    reopenIssue(clientUser, 1);
+
+    issue = getSigleIssue(memberUser, 1);
+
+    Assert.assertEquals(issue.getState(), "OPEN");
+
+    Assert.assertNotNull(issue.getDueTime());
+
+    List<Map> events = events(memberUser, 1);
+
+    Assert.assertEquals(events.size(), 19);
+
+  }
+
+  @Test
+  public void test5CloseComment() {
+
+    closeIssue(memberUser, 1);
+
+    Issue issue = getSigleIssue(memberUser, 1);
+
+    Assert.assertNull(issue.getDueTime());
+
+    Comment comment = new Comment();
+    comment.setBody("Test");
+
+    // Comment client
+    commentIssue(clientUser, 1, comment);
+
+    issue = getSigleIssue(memberUser, 1);
+
+    Assert.assertNull(issue.getDueTime());
+
+    List<Map> events = events(memberUser, 1);
+
+    Assert.assertEquals(events.size(), 22);
   }
 }
