@@ -349,11 +349,33 @@ public class OSelectStatementTest {
     checkRightSyntax("SELECT $e FROM [#1:1,#1:2] let $e = (SELECT FROM (SELECT FROM $parent.$current))");
   }
 
+
+  @Test
+  public void testEval() {
+    checkRightSyntax("  select  sum(weight) , f.name as name from (\n"
+        + "      select weight, if(eval(\"out.name = 'one'\"),out,in) as f  from (\n"
+        + "      select expand(bothE('E')) from V\n"
+        + "  )\n"
+        + "      ) group by name\n");
+
+  }
+
+  @Test
+  public void testGroupBy() {
+    //issue #4245
+    checkRightSyntax("select in.name from (  \n"
+        + "select expand(outE()) from V\n"
+        + ")\n"
+        + "group by in.name");
+
+  }
+
   @Test(enabled = false)
   public void testSlashInQuery() {
     checkRightSyntax("insert into test content {\"node_id\": \"MFmqvmht//sYYWB8=\"}");
     checkRightSyntax("insert into test content { \"node_id\": \"MFmqvmht\\/\\/GYsYYWB8=\"}");
   }
+
 
 
 

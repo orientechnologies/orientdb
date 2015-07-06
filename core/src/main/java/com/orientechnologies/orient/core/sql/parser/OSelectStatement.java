@@ -29,7 +29,7 @@ public class OSelectStatement extends OStatement {
 
   protected OUnwind      unwind;
 
-  protected OSkip       skip;
+  protected OSkip        skip;
 
   protected OLimit       limit;
 
@@ -268,11 +268,15 @@ public class OSelectStatement extends OStatement {
       whereClause.replaceParameters(params);
     }
 
-    if(skip!=null){
+    if (groupBy != null) {
+      groupBy.replaceParameters(params);
+    }
+
+    if (skip != null) {
       skip.replaceParameters(params);
     }
 
-    if(limit!=null){
+    if (limit != null) {
       limit.replaceParameters(params);
     }
 

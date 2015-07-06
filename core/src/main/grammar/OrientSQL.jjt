@@ -2539,13 +2539,13 @@ OOrderBy OrderBy():
 }
 
 OGroupBy GroupBy():
-{ OIdentifier lastIdentifier; }
+{ OExpression lastExpression; }
 {
 (
-	<GROUP> <BY> lastIdentifier = Identifier() { jjtThis.items.add(lastIdentifier); }
+	<GROUP> <BY> lastExpression = Expression() { jjtThis.items.add(lastExpression); }
 	(
 	    ","
-	    lastIdentifier = Identifier() { jjtThis.items.add(lastIdentifier); }
+	    lastExpression = Expression() { jjtThis.items.add(lastExpression); }
 	)*
 ) {return jjtThis;}
 }

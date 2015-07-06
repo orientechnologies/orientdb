@@ -6952,12 +6952,12 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
   OGroupBy jjtn000 = new OGroupBy(JJTGROUPBY);
   boolean jjtc000 = true;
   jjtree.openNodeScope(jjtn000);
-  jjtn000.jjtSetFirstToken(getToken(1));OIdentifier lastIdentifier;
+  jjtn000.jjtSetFirstToken(getToken(1));OExpression lastExpression;
     try {
       jj_consume_token(GROUP);
       jj_consume_token(BY);
-      lastIdentifier = Identifier();
-                                                     jjtn000.items.add(lastIdentifier);
+      lastExpression = Expression();
+                                                     jjtn000.items.add(lastExpression);
       label_33:
       while (true) {
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -6969,8 +6969,8 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           break label_33;
         }
         jj_consume_token(COMMA);
-        lastIdentifier = Identifier();
-                                            jjtn000.items.add(lastIdentifier);
+        lastExpression = Expression();
+                                            jjtn000.items.add(lastExpression);
       }
     jjtree.closeNodeScope(jjtn000, true);
     jjtc000 = false;
@@ -10785,7 +10785,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
 
   private boolean jj_3R_312() {
     if (jj_scan_token(COMMA)) return true;
-    if (jj_3R_57()) return true;
+    if (jj_3R_63()) return true;
     return false;
   }
 
@@ -10910,7 +10910,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
   private boolean jj_3R_236() {
     if (jj_scan_token(GROUP)) return true;
     if (jj_scan_token(BY)) return true;
-    if (jj_3R_57()) return true;
+    if (jj_3R_63()) return true;
     Token xsp;
     while (true) {
       xsp = jj_scanpos;
