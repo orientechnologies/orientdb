@@ -42,6 +42,20 @@ public class ODistributedCounter extends OOrientListenerAbstract {
     updateCounter(delta);
   }
 
+  public void clear() {
+    while (!poolBusy.compareAndSet(false, true))
+      ;
+
+    final AtomicLong[] cts = new AtomicLong[counters.length];
+    for (int i = 0; i < counters.length; i++) {
+      cts[i] = new AtomicLong();
+    }
+
+    counters = cts;
+
+    poolBusy.set(true);
+  }
+
   private void updateCounter(long delta) {
     final int hashCode = threadHashCode.get();
 
