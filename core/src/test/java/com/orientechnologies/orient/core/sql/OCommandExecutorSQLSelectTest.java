@@ -94,6 +94,8 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into cluster:testmultipleclusters1 set name = 'foo'")).execute();
     db.command(new OCommandSQL("insert into cluster:testmultipleclusters2 set name = 'bar'")).execute();
 
+    db.command(new OCommandSQL("CREATE class TestUrl")).execute();
+    db.command(new OCommandSQL("insert into TestUrl content { \"url\": \"http://www.google.com\" }")).execute();
   }
 
   @AfterClass
@@ -485,6 +487,15 @@ public class OCommandExecutorSQLSelectTest {
     List<ODocument> qResult = db.command(new OCommandSQL("select from `edge`")).execute();
 
     assertEquals(qResult.size(), 0);
+
+  }
+
+  public void testUrl() {
+
+    List<ODocument> qResult = db.command(new OCommandSQL("select from TestUrl")).execute();
+
+    assertEquals(qResult.size(), 1);
+    assertEquals(qResult.get(0).field("url"), "http://www.google.com");
 
   }
 

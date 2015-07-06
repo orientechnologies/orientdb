@@ -361,6 +361,19 @@ public class OSelectStatementTest {
   }
 
   @Test
+  public void testNewLine() {
+    checkRightSyntax("INSERT INTO Country SET name=\"one\\ntwo\" RETURN @rid");
+
+  }
+
+
+  @Test
+  public void testJsonWithUrl() {
+    checkRightSyntax("insert into V content { \"url\": \"http://www.google.com\" } ");
+  }
+
+
+  @Test
   public void testGroupBy() {
     //issue #4245
     checkRightSyntax("select in.name from (  \n"
