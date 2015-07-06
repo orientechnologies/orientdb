@@ -309,7 +309,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
 
   $scope.queryText = ""
   $scope.modificati = new Array;
-  $scope.listTypes = ['BINARY', 'BOOLEAN', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'];
+  $scope.listTypes = ['BINARY', 'BOOLEAN','BYTE', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'];
   $scope.collateTypes = ['Case Insensitive', 'default'];
   $scope.modificato = function (result, prop) {
     var key = result['name'];
@@ -641,7 +641,7 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
     "min": null,
     "max": null
   }
-  $scope.listTypes = ['BINARY', 'BOOLEAN', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'];
+  $scope.listTypes = ['BINARY', 'BOOLEAN','BYTE', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'];
   $scope.database = Database;
   $scope.listClasses = $scope.database.listNameOfClasses();
 
