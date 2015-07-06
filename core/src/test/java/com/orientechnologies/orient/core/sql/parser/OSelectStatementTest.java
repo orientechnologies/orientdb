@@ -319,6 +319,12 @@ public class OSelectStatementTest {
   }
 
   @Test
+  public void testRecordAttributes() {
+    checkRightSyntax("SELECT @this, @rid, @rid_id, @rid_pos, @version, @class, @type, @size, @fields, @raw from V");
+    checkRightSyntax("SELECT @THIS, @RID, @RID_ID, @RID_POS, @VERSION, @CLASS, @TYPE, @SIZE, @FIELDS, @RAW from V");
+  }
+
+  @Test
   // issue #3718
   public void testComplexTarget1() {
     checkRightSyntax("SELECT $e FROM [#1:1,#1:2] LET $e = (SELECT FROM $current.prop1)");
@@ -329,8 +335,9 @@ public class OSelectStatementTest {
   public void testSlashInQuery() {
     checkRightSyntax("insert into test content {\"node_id\": \"MFmqvmht//sYYWB8=\"}");
     checkRightSyntax("insert into test content { \"node_id\": \"MFmqvmht\\/\\/GYsYYWB8=\"}");
-
   }
+
+
 
   @Test()
   public void testClusterList() {
