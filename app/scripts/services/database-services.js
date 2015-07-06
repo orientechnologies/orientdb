@@ -37,8 +37,8 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
 
 
   var version = STUDIO_VERSION.indexOf("SNAPSHOT") == -1 ? STUDIO_VERSION : "last";
-  var wikiBase = 'http://www.orientechnologies.com/docs/' + version + "/orientdb-studio.wiki/";
-  var oWikiBase = 'http://www.orientechnologies.com/docs/' + version + "/orientdb.wiki/";
+  var wikiBase = 'http://www.orientechnologies.com/docs/' + version + "/";
+  var oWikiBase = 'http://www.orientechnologies.com/docs/' + version + "/";
   var current = {
     name: null,
     username: null,

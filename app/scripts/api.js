@@ -3,4 +3,4 @@ var API = (function () {
     return m && m[1] ? m[1] : '/api/';
 })();
 
-var STUDIO_VERSION = "2.0";
+var STUDIO_VERSION = "2.1";
