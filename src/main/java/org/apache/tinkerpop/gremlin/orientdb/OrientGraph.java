@@ -1,5 +1,7 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -16,6 +18,8 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
@@ -26,7 +30,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
@@ -39,16 +42,16 @@ public final class OrientGraph implements Graph {
     public static String CONFIG_CREATE = "orient-create";
     public static String CONFIG_OPEN = "orient-open";
 
-    protected Logger log = Logger.getLogger(getClass().getSimpleName());
-    protected ODatabaseDocumentTx database;
+    protected final ODatabaseDocumentTx database;
+    protected final String url;
 
     public static OrientGraph open(final Configuration configuration) {
         return new OrientGraph(configuration);
     }
 
     public OrientGraph(Configuration config) {
-        this.database = getDatabase(
-            config.getString(CONFIG_URL, "memory:test-" + Math.random()),
+        this.url = config.getString(CONFIG_URL, "memory:test-" + Math.random());
+        this.database = getDatabase(url,
             config.getString(CONFIG_USER, "admin"),
             config.getString(CONFIG_PASS, "admin"),
             config.getBoolean(CONFIG_CREATE, true),
@@ -193,8 +196,33 @@ public final class OrientGraph implements Graph {
     @Override
     public void close() throws Exception {
         makeActive();
-        database.close();
+        boolean commitTx = true;
+
+        try {
+            if (!database.isClosed() && commitTx) {
+                final OStorage storage = database.getStorage();
+                if (storage instanceof OAbstractPaginatedStorage) {
+                    if (((OAbstractPaginatedStorage) storage).getWALInstance() != null)
+                        database.commit();
+                }
+
+            }
+
+        } catch (RuntimeException e) {
+            OLogManager.instance().info(this, "Error during context close for db " + url, e);
+            throw e;
+        } catch (Exception e) {
+            OLogManager.instance().error(this, "Error during context close for db " + url, e);
+            throw new OException("Error during context close for db " + url, e);
+        } finally {
+            try {
+                database.close();
+            } catch (Exception e) {
+                OLogManager.instance().error(this, "Error during context close for db " + url, e);
+            }
+        }
     }
+
 
     public void createVertexClass(final String className) {
         makeActive();
@@ -221,7 +249,7 @@ public final class OrientGraph implements Graph {
         OSchemaProxy schema = database.getMetadata().getSchema();
         if (schema.getClass(className) == null) {
             schema.createClass(className, superClass);
-            log.info("created class '" + className + "' as subclass of '" + superClass + "'");
+            OLogManager.instance().info(this, "created class '" + className + "' as subclass of '" + superClass + "'");
         }
     }
 

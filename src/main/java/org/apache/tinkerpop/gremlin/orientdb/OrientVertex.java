@@ -1,6 +1,7 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -24,7 +25,6 @@ import java.util.stream.Stream;
 public final class OrientVertex extends OrientElement implements Vertex {
     public static final String CONNECTION_OUT_PREFIX = OrientGraphUtils.CONNECTION_OUT + "_";
     public static final String CONNECTION_IN_PREFIX  = OrientGraphUtils.CONNECTION_IN + "_";
-    protected Logger log = Logger.getLogger(getClass().getSimpleName());
 
     public OrientVertex(final OrientGraph graph, final OIdentifiable rawElement) {
         super(graph, rawElement);
@@ -461,7 +461,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
                 if (vertexDoc == null) {
                     fieldRecord.reload();
                     if (vertexDoc == null) {
-                        log.warning("Cannot load edge " + fieldRecord + " to get the " + connection.getKey().opposite() + " vertex");
+                        OLogManager.instance().warn(this, "Cannot load edge " + fieldRecord + " to get the " + connection.getKey().opposite() + " vertex");
                         return;
                     }
                 }
