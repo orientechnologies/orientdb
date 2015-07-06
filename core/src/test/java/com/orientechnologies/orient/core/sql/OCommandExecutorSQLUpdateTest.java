@@ -1,14 +1,13 @@
 package com.orientechnologies.orient.core.sql;
 
-import static org.testng.Assert.assertEquals;
-
-import java.util.Set;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.annotations.Test;
+
+import java.util.Set;
+
+import static org.testng.Assert.*;
 
 public class OCommandExecutorSQLUpdateTest {
   @Test
@@ -82,5 +81,37 @@ public class OCommandExecutorSQLUpdateTest {
     } finally {
       db.close();
     }
+  }
+
+  @Test
+  public void testUpdateMergeWithIndex() {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestMergeWithIndex");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE CLASS i_have_a_list ")).execute();
+      db.command(new OCommandSQL("CREATE PROPERTY i_have_a_list.id STRING")).execute();
+      db.command(new OCommandSQL("CREATE INDEX i_have_a_list.id ON i_have_a_list (id) UNIQUE")).execute();
+      db.command(new OCommandSQL("CREATE PROPERTY i_have_a_list.types EMBEDDEDLIST STRING")).execute();
+      db.command(new OCommandSQL("CREATE INDEX i_have_a_list.types ON i_have_a_list (types) NOTUNIQUE")).execute();
+      db.command(new OCommandSQL("INSERT INTO i_have_a_list CONTENT {\"id\": \"the_id\", \"types\": [\"aaa\", \"bbb\"]}"))
+          .execute();
+
+      Iterable result = db.query(new OSQLSynchQuery<Object>("SELECT * FROM i_have_a_list WHERE types = 'aaa'"));
+      assertTrue(result.iterator().hasNext());
+
+      db.command(
+          new OCommandSQL("UPDATE i_have_a_list CONTENT {\"id\": \"the_id\", \"types\": [\"ccc\", \"bbb\"]} WHERE id = 'the_id'"))
+          .execute();
+
+      result = db.query(new OSQLSynchQuery<Object>("SELECT * FROM i_have_a_list WHERE types = 'ccc'"));
+      assertTrue(result.iterator().hasNext());
+
+      result = db.query(new OSQLSynchQuery<Object>("SELECT * FROM i_have_a_list WHERE types = 'aaa'"));
+      assertFalse(result.iterator().hasNext());
+
+    } finally {
+      db.close();
+    }
+
   }
 }

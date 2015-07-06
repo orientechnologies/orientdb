@@ -1,5 +1,6 @@
-package com.orientechnologies.orient.core.index.hashindex.local.cache;
+package com.orientechnologies.orient.core.storage.cache.local;
 
+import com.orientechnologies.orient.core.index.hashindex.local.cache.LRUListTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

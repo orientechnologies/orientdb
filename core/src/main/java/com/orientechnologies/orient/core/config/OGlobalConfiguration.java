@@ -24,7 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 

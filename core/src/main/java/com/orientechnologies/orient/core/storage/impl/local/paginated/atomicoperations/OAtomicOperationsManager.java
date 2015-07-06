@@ -23,13 +23,12 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import com.sun.org.apache.xpath.internal.operations.*;
 
 import java.io.IOException;
 import java.lang.String;
