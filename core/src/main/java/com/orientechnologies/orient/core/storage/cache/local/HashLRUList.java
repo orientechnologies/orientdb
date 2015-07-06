@@ -1,26 +1,27 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
-package com.orientechnologies.orient.core.index.hashindex.local.cache;
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
+package com.orientechnologies.orient.core.storage.cache.local;
 
 import com.orientechnologies.common.hash.OMurmurHash3;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -53,7 +54,7 @@ class HashLRUList implements LRUList {
     LRUEntry lruEntry = entries[index];
 
     while (lruEntry != null
-        && (lruEntry.hashCode != hashCode || lruEntry.cacheEntry.pageIndex != pageIndex || lruEntry.cacheEntry.fileId != fileId))
+        && (lruEntry.hashCode != hashCode || lruEntry.cacheEntry.getPageIndex() != pageIndex || lruEntry.cacheEntry.getFileId() != fileId))
       lruEntry = lruEntry.next;
 
     if (lruEntry == null)
@@ -71,7 +72,7 @@ class HashLRUList implements LRUList {
 
     LRUEntry prevEntry = null;
     while (lruEntry != null
-        && (lruEntry.hashCode != hashCode || lruEntry.cacheEntry.fileId != fileId || lruEntry.cacheEntry.pageIndex != pageIndex)) {
+        && (lruEntry.hashCode != hashCode || lruEntry.cacheEntry.getFileId() != fileId || lruEntry.cacheEntry.getPageIndex() != pageIndex)) {
       prevEntry = lruEntry;
       lruEntry = lruEntry.next;
     }
@@ -114,17 +115,17 @@ class HashLRUList implements LRUList {
 
   @Override
   public void putToMRU(OCacheEntry cacheEntry) {
-    final long fileId = cacheEntry.fileId;
-    final long pageIndex = cacheEntry.pageIndex;
+    final long fileId = cacheEntry.getFileId();
+    final long pageIndex = cacheEntry.getPageIndex();
 
-    long hashCode = hashCode(cacheEntry.fileId, cacheEntry.pageIndex);
+    long hashCode = hashCode(cacheEntry.getFileId(), cacheEntry.getPageIndex());
     int index = index(hashCode);
 
     LRUEntry lruEntry = entries[index];
 
     LRUEntry prevEntry = null;
     while (lruEntry != null
-        && (lruEntry.hashCode != hashCode || lruEntry.cacheEntry.fileId != fileId || lruEntry.cacheEntry.pageIndex != pageIndex)) {
+        && (lruEntry.hashCode != hashCode || lruEntry.cacheEntry.getFileId() != fileId || lruEntry.cacheEntry.getPageIndex() != pageIndex)) {
       prevEntry = lruEntry;
       lruEntry = lruEntry.next;
     }
@@ -233,11 +234,12 @@ class HashLRUList implements LRUList {
   @Override
   public OCacheEntry removeLRU() {
     LRUEntry entryToRemove = head;
-    while (entryToRemove != null && (entryToRemove.cacheEntry.dataPointer != null && entryToRemove.cacheEntry.usagesCount != 0)) {
+    while (entryToRemove != null
+        && (entryToRemove.cacheEntry.getCachePointer() != null && entryToRemove.cacheEntry.getUsagesCount() != 0)) {
       entryToRemove = entryToRemove.after;
     }
     if (entryToRemove != null) {
-      return remove(entryToRemove.cacheEntry.fileId, entryToRemove.cacheEntry.pageIndex);
+      return remove(entryToRemove.cacheEntry.getFileId(), entryToRemove.cacheEntry.getPageIndex());
     } else {
       return null;
     }
@@ -246,7 +248,7 @@ class HashLRUList implements LRUList {
   @Override
   public OCacheEntry getLRU() {
     LRUEntry lruEntry = head;
-    while (lruEntry != null && (lruEntry.cacheEntry.dataPointer != null && lruEntry.cacheEntry.usagesCount != 0)) {
+    while (lruEntry != null && (lruEntry.cacheEntry.getCachePointer() != null && lruEntry.cacheEntry.getUsagesCount() != 0)) {
       lruEntry = lruEntry.after;
     }
 

@@ -27,8 +27,9 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import javax.management.MBeanServer;
@@ -70,11 +71,12 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
       for (OStorage s : Orient.instance().getStorages()) {
         if (s instanceof OLocalPaginatedStorage) {
           final OReadCache dk = ((OLocalPaginatedStorage) s).getReadCache();
-          if (dk == null)
+          final OWriteCache wk = ((OLocalPaginatedStorage) s).getWriteCache();
+          if (dk == null || wk == null)
             // NOT YET READY
             continue;
 
-          final long totalDiskCacheUsedMemory = dk.getUsedMemory() / OFileUtils.MEGABYTE;
+          final long totalDiskCacheUsedMemory = (dk.getUsedMemory() + wk.getExclusiveWriteCachePagesSize()) / OFileUtils.MEGABYTE;
           final long maxDiskCacheUsedMemory = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong();
 
           // CHECK IF THERE IS MORE THAN 40% HEAP UNUSED AND DISK-CACHE IS 80% OF THE MAXIMUM SIZE
@@ -297,10 +299,12 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
         public void run() {
           final StringBuilder output = new StringBuilder();
 
-          output.append("\n*******************************************************************************************************************************************");
+          output
+              .append("\n*******************************************************************************************************************************************");
           output.append("\nPROFILER AUTO DUMP OUTPUT (to disabled it set 'profiler.autoDump.interval' = 0):\n");
           output.append(dump());
-          output.append("\n*******************************************************************************************************************************************");
+          output
+              .append("\n*******************************************************************************************************************************************");
 
           OLogManager.instance().info(null, output.toString());
         }

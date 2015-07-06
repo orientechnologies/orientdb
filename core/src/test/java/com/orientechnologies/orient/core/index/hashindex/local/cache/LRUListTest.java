@@ -2,6 +2,9 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.util.Iterator;
 
+import com.orientechnologies.orient.core.storage.cache.local.LRUList;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -199,7 +202,7 @@ public abstract class LRUListTest {
     OCachePointer cachePointerOne = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0), 0, 0);
     OCacheEntry cacheEntry = new OCacheEntry(1, 10, cachePointerOne, false);
     lruList.putToMRU(cacheEntry);
-    cacheEntry.usagesCount++;
+    cacheEntry.incrementUsages();
 
     OCacheEntry removedLRU = lruList.removeLRU();
 
