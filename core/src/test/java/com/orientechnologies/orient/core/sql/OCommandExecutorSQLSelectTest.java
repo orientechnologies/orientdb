@@ -103,11 +103,7 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='foo'")).execute();
     db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='bar'")).execute();
 
-
-
-
-
-    ///*** from issue #2743
+    // /*** from issue #2743
     OSchema schema = db.getMetadata().getSchema();
     if (!schema.existsClass("alphabet")) {
       schema.createClass("alphabet");
@@ -543,15 +539,16 @@ public class OCommandExecutorSQLSelectTest {
     }
   }
 
-
-  public void testMultipleParamsWithSameName(){
+  public void testMultipleParamsWithSameName() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", "foo");
-    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParams where name like '%' + :param1 + '%'")).execute(params);
+    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParams where name like '%' + :param1 + '%'")).execute(
+        params);
     assertEquals(qResult.size(), 2);
 
-
-    qResult = db.command(new OCommandSQL("select from TestParams where name like '%' + :param1 + '%' and surname like '%' + :param1 + '%'")).execute(params);
+    qResult = db.command(
+        new OCommandSQL("select from TestParams where name like '%' + :param1 + '%' and surname like '%' + :param1 + '%'"))
+        .execute(params);
     assertEquals(qResult.size(), 1);
 
     params = new HashMap<String, Object>();
@@ -561,60 +558,64 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(qResult.size(), 1);
   }
 
-
-
-
-
-
-
-///*** from issue #2743
+  // /*** from issue #2743
   @Test
   public void testBasicQueryOrdered() {
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter");
     List<ODocument> results = db.query(sql);
-    assertEquals( 26, results.size());
+    assertEquals(26, results.size());
   }
 
   @Test
   public void testSkipZeroOrdered() {
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 0");
     List<ODocument> results = db.query(sql);
-    assertEquals( 26, results.size());
+    assertEquals(26, results.size());
   }
 
   @Test
   public void testSkipOrdered() {
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 7");
     List<ODocument> results = db.query(sql);
-    assertEquals( 19, results.size());  // FAILURE - actual 0
+    assertEquals(19, results.size()); // FAILURE - actual 0
   }
 
   @Test
   public void testLimitOrdered() {
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter LIMIT 9");
     List<ODocument> results = db.query(sql);
-    assertEquals( 9, results.size());
+    assertEquals(9, results.size());
   }
 
   @Test
   public void testLimitMinusOneOrdered() {
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter LIMIT -1");
     List<ODocument> results = db.query(sql);
-    assertEquals( 26, results.size());
+    assertEquals(26, results.size());
   }
 
   @Test
   public void testSkipAndLimitOrdered() {
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 7 LIMIT 9");
     List<ODocument> results = db.query(sql);
-    assertEquals( 9, results.size());
+    assertEquals(9, results.size());
   }
 
   @Test
   public void testSkipAndLimitMinusOneOrdered() {
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 7 LIMIT -1");
     List<ODocument> results = db.query(sql);
-    assertEquals( 19, results.size());  // FAILURE - actual 0
+    assertEquals(19, results.size());
+  }
+
+  @Test
+  public void testLetAsListAsString() {
+    OSQLSynchQuery sql = new OSQLSynchQuery(
+        "SELECT $ll as lll from unwindtest let $ll = coll.asList().asString() where name = 'bar'");
+    List<ODocument> results = db.query(sql);
+    assertEquals(1, results.size());
+    assertNotNull(results.get(0).field("lll"));
+    assertEquals("[bar1, bar2]", results.get(0).field("lll"));
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {
