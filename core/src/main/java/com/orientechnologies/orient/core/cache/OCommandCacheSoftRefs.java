@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -55,7 +56,6 @@ public class OCommandCacheSoftRefs implements OCommandCache {
   }
 
   private class OCommandCacheImplRefs extends OSoftRefsHashMap<String, OCachedResult> {
-
   }
 
   public enum STRATEGY {
@@ -63,6 +63,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
   }
 
   private final String          databaseName;
+  private Set<String>           clusters         = new HashSet<String>();
   private volatile boolean      enable           = OGlobalConfiguration.COMMAND_CACHE_ENABLED.getValueAsBoolean();
   private OCommandCacheImplRefs cache            = new OCommandCacheImplRefs();
   private int                   minExecutionTime = OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.getValueAsInteger();
@@ -81,7 +82,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
 
   @Override
   public void shutdown() {
-    cache = new OCommandCacheImplRefs();
+    clear();
   }
 
   @Override
@@ -98,6 +99,10 @@ public class OCommandCacheSoftRefs implements OCommandCache {
   @Override
   public OCommandCacheSoftRefs disable() {
     enable = false;
+    synchronized (this) {
+      clusters.clear();
+      cache.clear();
+    }
     return this;
   }
 
@@ -106,28 +111,31 @@ public class OCommandCacheSoftRefs implements OCommandCache {
     if (!enable)
       return null;
 
-    final String key = getKey(iUser, queryText, iLimit);
-
     OCachedResult result;
 
-    result = cache.get(key);
+    synchronized (this) {
+      final String key = getKey(iUser, queryText, iLimit);
 
-    if (result != null) {
-      // SERIALIZE ALL THE RECORDS IN LOCK TO AVOID CONCURRENT ACCESS. ONCE SERIALIZED CAN ARE THREAD-SAFE
-      int resultsetSize = 1;
+      result = cache.get(key);
 
-      if (result.result instanceof ORecord)
-        ((ORecord) result.result).toStream();
-      else if (OMultiValue.isMultiValue(result.result)) {
-        resultsetSize = OMultiValue.getSize(result.result);
-        for (Object rc : OMultiValue.getMultiValueIterable(result.result)) {
-          if (rc != null && rc instanceof ORecord) {
-            ((ORecord) rc).toStream();
+      if (result != null) {
+        // SERIALIZE ALL THE RECORDS IN LOCK TO AVOID CONCURRENT ACCESS. ONCE SERIALIZED CAN ARE THREAD-SAFE
+        int resultsetSize = 1;
+
+        if (result.result instanceof ORecord)
+          ((ORecord) result.result).toStream();
+        else if (OMultiValue.isMultiValue(result.result)) {
+          resultsetSize = OMultiValue.getSize(result.result);
+          for (Object rc : OMultiValue.getMultiValueIterable(result.result)) {
+            if (rc != null && rc instanceof ORecord) {
+              ((ORecord) rc).toStream();
+            }
           }
         }
-      }
 
-      OLogManager.instance().debug(this, "Reused cached resultset size=%d", resultsetSize);
+        if (OLogManager.instance().isDebugEnabled())
+          OLogManager.instance().debug(this, "Reused cached resultset size=%d", resultsetSize);
+      }
     }
 
     final OProfilerMBean profiler = Orient.instance().getProfiler();
@@ -171,12 +179,17 @@ public class OCommandCacheSoftRefs implements OCommandCache {
     if (evictStrategy != STRATEGY.PER_CLUSTER)
       iInvolvedClusters = null;
 
-    final String key = getKey(iUser, queryText, iLimit);
-    final OCachedResult value = new OCachedResult(iResult, iInvolvedClusters);
+    synchronized (this) {
+      final String key = getKey(iUser, queryText, iLimit);
+      final OCachedResult value = new OCachedResult(iResult, iInvolvedClusters);
 
-    OLogManager.instance().debug(this, "Storing resultset in cache size=%d", resultsetSize);
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Storing resultset in cache size=%d", resultsetSize);
 
-    cache.put(key, value);
+      cache.put(key, value);
+
+      clusters.addAll(iInvolvedClusters);
+    }
   }
 
   @Override
@@ -184,20 +197,26 @@ public class OCommandCacheSoftRefs implements OCommandCache {
     if (!enable)
       return;
 
-    final String key = getKey(iUser, queryText, iLimit);
-
-    cache.remove(key);
+    synchronized (this) {
+      final String key = getKey(iUser, queryText, iLimit);
+      cache.remove(key);
+    }
   }
 
   @Override
   public OCommandCacheSoftRefs clear() {
-    cache = new OCommandCacheImplRefs();
+    synchronized (this) {
+      cache = new OCommandCacheImplRefs();
+      clusters.clear();
+    }
     return this;
   }
 
   @Override
   public int size() {
-    return cache.size();
+    synchronized (this) {
+      return cache.size();
+    }
   }
 
   @Override
@@ -205,28 +224,39 @@ public class OCommandCacheSoftRefs implements OCommandCache {
     if (!enable)
       return;
 
-    if (cache.size() == 0)
-      return;
+    synchronized (this) {
+      if (cache.size() == 0)
+        return;
 
-    if (evictStrategy == STRATEGY.INVALIDATE_ALL) {
-      OLogManager.instance().debug(this, "Invalidate all cached results (%d)  ", size());
-      clear();
-      return;
-    }
+      if (evictStrategy == STRATEGY.INVALIDATE_ALL) {
+        if (OLogManager.instance().isDebugEnabled())
+          OLogManager.instance().debug(this, "Invalidate all cached results (%d)  ", size());
 
-    int evicted = 0;
-    for (Iterator<Map.Entry<String, OCachedResult>> it = cache.entrySet().iterator(); it.hasNext();) {
-      final OCachedResult cached = it.next().getValue();
-      if (cached != null) {
-        if (cached.involvedClusters == null || cached.involvedClusters.isEmpty() || cached.involvedClusters.contains(iCluster)) {
-          cached.clear();
-          it.remove();
+        clear();
+        return;
+      }
+
+      if (!clusters.remove(iCluster)) {
+        // NOT CONTAINED, AVOID COSTLY BROWSING OF RESULTS
+        if (OLogManager.instance().isDebugEnabled())
+          OLogManager.instance().debug(this, "No results found for '%s'", iCluster);
+        return;
+      }
+
+      int evicted = 0;
+      for (Iterator<Map.Entry<String, OCachedResult>> it = cache.entrySet().iterator(); it.hasNext();) {
+        final OCachedResult cached = it.next().getValue();
+        if (cached != null) {
+          if (cached.involvedClusters == null || cached.involvedClusters.isEmpty() || cached.involvedClusters.contains(iCluster)) {
+            cached.clear();
+            it.remove();
+          }
         }
       }
-    }
 
-    if (evicted > 0)
-      OLogManager.instance().debug(this, "Invalidate %d cached results associated to the cluster '%s'", evicted, iCluster);
+      if (evicted > 0 && OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Invalidate %d cached results associated to the cluster '%s'", evicted, iCluster);
+    }
   }
 
   public int getMinExecutionTime() {
