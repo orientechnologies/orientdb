@@ -124,6 +124,14 @@ public class OCommandExecutorSQLSelectTest {
       doc.fromJSON(json);
       doc.save();
     }
+
+
+    db.command(new OCommandSQL("create class OCommandExecutorSQLSelectTest_aggregations")).execute();
+    db.command(new OCommandSQL("insert into OCommandExecutorSQLSelectTest_aggregations set data = [{\"size\": 0}, {\"size\": 0}, {\"size\": 30}, {\"size\": 50}, {\"size\": 50}]")).execute();
+
+
+
+
   }
 
   @AfterClass
@@ -616,6 +624,21 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(1, results.size());
     assertNotNull(results.get(0).field("lll"));
     assertEquals("[bar1, bar2]", results.get(0).field("lll"));
+  }
+
+
+  @Test
+  public void testAggregations() {
+    OSQLSynchQuery sql = new OSQLSynchQuery(
+        "select data.size as collection_content, data.size() as collection_size, min(data.size) as collection_min, max(data.size) as collection_max, sum(data.size) as collection_sum, avg(data.size) as collection_avg from OCommandExecutorSQLSelectTest_aggregations");
+    List<ODocument> results = db.query(sql);
+    assertEquals(1, results.size());
+    ODocument doc = results.get(0);
+    assertEquals(5, doc.field("collection_size"));
+    assertEquals(130, doc.field("collection_sum"));
+    assertEquals(26, doc.field("collection_avg"));
+    assertEquals(0, doc.field("collection_min"));
+    assertEquals(50, doc.field("collection_max"));
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {
