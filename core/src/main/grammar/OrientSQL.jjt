@@ -488,58 +488,145 @@ OIdentifier Identifier():
         (
             token = <IDENTIFIER>
             |
-            token = <IN>
+            token = <SELECT>
+            |
+            token = <TRAVERSE>
+            |
+            token = <INSERT>
+            |
+            token = <CREATE>
+            |
+            token = <DELETE>
+            |
+            token = <VERTEX>
+            |
+            token = <EDGE>
+            |
+            token = <UPDATE>
+            |
+            token = <UPSERT>
+            |
+            token = <FROM>
+            |
+            token = <TO>
+            |
+            token = <WHERE>
+            |
+            token = <WHILE>
+            |
+            token = <INTO>
+            |
+            token = <VALUES>
             |
             token = <SET>
             |
-            token = <PUT>
-            |
             token = <ADD>
             |
-            token = <REMOVE>
+            token = <PUT>
             |
             token = <MERGE>
             |
             token = <CONTENT>
             |
+            token = <REMOVE>
+            |
+            token = <INCREMENT>
+            |
+            token = <AND>
+            |
+            token = <OR>
+            |
+            token = <NULL>
+            |
+            token = <DEFINED>
+            |
             token = <ORDER>
-            |
-            token = <KEY>
-            |
-            token = <OFFSET>
             |
             token = <GROUP>
             |
-            token = <VALUES>
+            token = <BY>
+            |
+            token = <LIMIT>
+            |
+            token = <SKIP2>
+            |
+            token = <OFFSET>
+            |
+            token = <TIMEOUT>
+            |
+            token = <ASC>
+            |
+            token = <AS>
+            |
+            token = <DESC>
+            |
+            token = <FETCHPLAN>
+            |
+            token = <RETURN>
+            |
+            token = <BEFORE>
+            |
+            token = <AFTER>
+            |
+            token = <LOCK>
             |
             token = <RECORD>
             |
-            token = <TO>
+            token = <WAIT>
+            |
+            token = <RETRY>
+            |
+            token = <LET>
+            |
+            token = <NOCACHE>
+            |
+            token = <UNSAFE>
+            |
+            token = <PARALLEL>
+            |
+            token = <STRATEGY>
+            |
+            token = <DEPTH_FIRST>
+            |
+            token = <BREADTH_FIRST>
             |
             token = <LUCENE>
             |
             token = <NEAR>
             |
             token = <WITHIN>
-            //plus reserved keyworks
             |
-            token = <FROM>
+            token = <UNWIND>
             |
-            token = <SELECT>
+            token = <MAXDEPTH>
             |
-            token = <UPDATE>
+            token = <NOT>
             |
-            token = <DELETE>
+            token = <IN>
             |
-            token = <TRAVERSE>
+            token = <LIKE>
             |
-            token = <WHERE>
+            token = <IS>
             |
-            token = <INSERT>
+            token = <BETWEEN>
             |
-            token = <VERTEX>
+            token = <CONTAINS>
             |
-            token = <EDGE>
+            token = <CONTAINSALL>
+            |
+            token = <CONTAINSKEY>
+            |
+            token = <CONTAINSVALUE>
+            |
+            token = <CONTAINSTEXT>
+            |
+            token = <MATCHES>
+            |
+            token = <KEY>
+            |
+            token = <INSTANCEOF>
+            |
+            token = <CLUSTER>
         )
         <BACKTICK>
     )

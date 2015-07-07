@@ -79,10 +79,11 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
   protected long             timeoutMs                = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
   protected TIMEOUT_STRATEGY timeoutStrategy          = TIMEOUT_STRATEGY.EXCEPTION;
+  protected OStatement       preParsedStatement;
 
   /**
    * The command is replicated
-   * 
+   *
    * @return
    */
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
@@ -225,6 +226,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
       final OrientSql osql = new OrientSql(is);
       try {
         final OStatement result = osql.parse();
+        preParsedStatement = result;
 
         if (iRequest instanceof OCommandRequestAbstract) {
           final Map<Object, Object> params = ((OCommandRequestAbstract) iRequest).getParameters();

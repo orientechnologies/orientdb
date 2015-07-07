@@ -91,4 +91,12 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
 
   }
 
+  public void testIsClassName(){
+    OrientGraph graph = new OrientGraph(database, false);
+    graph.shutdown();
+    database.open("admin", "admin");
+    graph.createVertexType("Like").createProperty("anything", OType.STRING);
+    graph.createVertexType("Is").createProperty("anything", OType.STRING);
+  }
+
 }
