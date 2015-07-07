@@ -410,8 +410,12 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     var link = '#/database/' + dbName + '/schema/editclass/' + value.replace('#', '');
     return link
   }
-  $scope.otherwise = function (value, header) {
-    return !$scope.isRid(value) && !$scope.isRids(value) && !$scope.isClass(header);
+  $scope.otherwise = function (doc,value, header) {
+    return !$scope.isRid(value) && !$scope.isRids(value) && !$scope.isClass(header) && !$scope.isBinary(doc,header);
+  }
+  $scope.isBinary = function (doc, header) {
+    var t = Database.findTypeFromFieldTipes(doc, header)
+    return t == "BYTE";
   }
   $scope.linkRid = function (value) {
     var dbName = Database.getName();

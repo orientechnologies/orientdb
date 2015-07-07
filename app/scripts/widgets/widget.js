@@ -392,6 +392,7 @@ Widget.directive('ridrender', function (Database, $http, $compile) {
 
       var value = scope.result[scope.header];
 
+
       if (typeof value == 'string') {
         if (value.indexOf('#') == 0) {
           var dbName = Database.getName();
@@ -403,6 +404,7 @@ Widget.directive('ridrender', function (Database, $http, $compile) {
         return (value instanceof Array && value.length > 0 && typeof value[0] == "string" && value[0].indexOf('#') == 0 )
 
       }
+
 
       if (isRids(value)) {
 

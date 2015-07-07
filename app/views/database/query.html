@@ -80,7 +80,10 @@
 
               </div>
             </div>
-            <div ng-if="otherwise(result[header],header)">
+            <div ng-if="isBinary(result,header)">
+              [binary-data]
+            </div>
+            <div ng-if="otherwise(result,result[header],header)">
               {{result[header]}}
             </div>
 
