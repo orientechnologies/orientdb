@@ -185,7 +185,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
           for (; (lastLine = reader.readLine()) != null; ++line) {
             lastLine = lastLine.trim();
 
-            final List<String> lineParts = OStringSerializerHelper.smartSplit(lastLine, ';');
+            final List<String> lineParts = OStringSerializerHelper.smartSplit(lastLine, ';', true);
 
             if (line == txBegunAtLine)
               // SKIP PREVIOUS COMMAND PART AND JUMP TO THE BEGIN IF ANY
