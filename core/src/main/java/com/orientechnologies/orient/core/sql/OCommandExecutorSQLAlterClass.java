@@ -90,15 +90,18 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
 
     value = parserText.substring(pos + 1).trim();
 
+    if (parserTextUpperCase.endsWith("UNSAFE")) {
+      unsafe = true;
+      value = value.substring(0, value.length() - "UNSAFE".length());
+      for (int i = value.length() - 1; value.charAt(i) == ' ' || value.charAt(i) == '\t'; i--)
+        value = value.substring(0, value.length() - 1);
+    }
     if (value.length() == 0)
       throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", parserText,
           oldPos);
 
     if (value.equalsIgnoreCase("null"))
       value = null;
-
-    if (parserTextUpperCase.endsWith("UNSAFE"))
-      unsafe = true;
 
     return this;
   }

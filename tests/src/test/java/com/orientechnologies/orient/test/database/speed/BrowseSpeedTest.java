@@ -1,10 +1,5 @@
 package com.orientechnologies.orient.test.database.speed;
 
-import java.io.IOException;
-import java.util.TimerTask;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -14,8 +9,18 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.TimerTask;
 
 /**
+ * Test the speed on browsing records at storage level. Run this with the following syntax:
+ * 
+ * <pre>
+ * BrowseSpeedTest <directory where the database is stored> <class to use for browsing>
+ * </pre>
+ * 
  * @author Luca Garulli
  * @since 9/17/14
  */
@@ -24,12 +29,14 @@ public class BrowseSpeedTest {
   private static String className;
   private static String url;
 
-  public static void main(String[] args) {
-    if (args.length < 3)
+  public static void main(String[] args) throws IOException {
+    if (args.length < 2)
       throw new IllegalArgumentException("Syntax error: ");
 
-    url = args[0];
+    url = "plocal:" + args[0];
     className = args[1];
+
+    new BrowseSpeedTest().testIterationSpeed();
   }
 
   public void testIterationSpeed() throws IOException {

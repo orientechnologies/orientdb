@@ -17,9 +17,7 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.core.index.hashindex.local.cache;
-
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+package com.orientechnologies.orient.core.storage.cache;
 
 import java.io.IOException;
 

@@ -15,6 +15,8 @@ public class OBaseExpression extends OMathExpression {
 
   protected OInputParameter inputParam;
 
+  protected String string;
+
   OModifier                 modifier;
 
 
@@ -39,6 +41,8 @@ public class OBaseExpression extends OMathExpression {
       result.append(number.toString());
     } else if (identifier != null) {
       result.append(identifier.toString());
+    }else if(string!=null){
+      result.append(string);
     } else if (inputParam != null) {
       if (inputFinalValue == UNSET) {
         result.append(inputParam.toString());

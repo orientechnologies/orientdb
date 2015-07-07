@@ -101,7 +101,6 @@ public class ODistributedWorker extends Thread {
             queuedMsg, databaseName, lastMessageId);
 
         restoringMessages = false;
-        break;
       }
 
       String senderNode = null;

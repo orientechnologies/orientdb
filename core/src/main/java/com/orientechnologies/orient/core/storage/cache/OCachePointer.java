@@ -17,7 +17,7 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.core.index.hashindex.local.cache;
+package com.orientechnologies.orient.core.storage.cache;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -78,11 +78,11 @@ public class OCachePointer {
     return pageIndex;
   }
 
-  OLogSequenceNumber getLastFlushedLsn() {
+  public OLogSequenceNumber getLastFlushedLsn() {
     return lastFlushedLsn;
   }
 
-  void setLastFlushedLsn(OLogSequenceNumber lastFlushedLsn) {
+  public void setLastFlushedLsn(OLogSequenceNumber lastFlushedLsn) {
     this.lastFlushedLsn = lastFlushedLsn;
   }
 

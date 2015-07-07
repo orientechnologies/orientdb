@@ -66,7 +66,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   protected File                                           defaultDatabaseConfigFile;
   protected ConcurrentHashMap<String, ODistributedStorage> storages                    = new ConcurrentHashMap<String, ODistributedStorage>();
 
-  public static Object runInDistributedMode(Callable iCall) throws Exception {
+  public static Object runInDistributedMode(final Callable iCall) throws Exception {
     final OScenarioThreadLocal.RUN_MODE currentRunningMode = OScenarioThreadLocal.INSTANCE.get();
     if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
       OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
@@ -76,7 +76,21 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     } finally {
 
       if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
-        OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+        OScenarioThreadLocal.INSTANCE.set(currentRunningMode);
+    }
+  }
+
+  public static Object runInDefaultMode(final Callable iCall) throws Exception {
+    final OScenarioThreadLocal.RUN_MODE currentRunningMode = OScenarioThreadLocal.INSTANCE.get();
+    if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
+      OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+
+    try {
+      return iCall.call();
+    } finally {
+
+      if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
+        OScenarioThreadLocal.INSTANCE.set(currentRunningMode);
     }
   }
 
@@ -194,6 +208,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
    */
   @Override
   public void onClose(final ODatabaseInternal iDatabase) {
+  }
+
+  @Override
+  public void onDrop(ODatabaseInternal iDatabase) {
   }
 
   @Override

@@ -19,10 +19,10 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import com.orientechnologies.common.listener.OProgressListener;
-
 import java.util.Map;
 import java.util.Set;
+
+import com.orientechnologies.common.listener.OProgressListener;
 
 /**
  * Generic GOF command pattern implementation.

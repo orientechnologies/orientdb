@@ -3,7 +3,10 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -92,6 +95,42 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into cluster:testmultipleclusters set name = 'aaa'")).execute();
     db.command(new OCommandSQL("insert into cluster:testmultipleclusters1 set name = 'foo'")).execute();
     db.command(new OCommandSQL("insert into cluster:testmultipleclusters2 set name = 'bar'")).execute();
+
+    db.command(new OCommandSQL("CREATE class TestUrl")).execute();
+    db.command(new OCommandSQL("insert into TestUrl content { \"url\": \"http://www.google.com\" }")).execute();
+
+    db.command(new OCommandSQL("CREATE class TestParams")).execute();
+    db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='foo'")).execute();
+    db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='bar'")).execute();
+
+    // /*** from issue #2743
+    OSchema schema = db.getMetadata().getSchema();
+    if (!schema.existsClass("alphabet")) {
+      schema.createClass("alphabet");
+    }
+
+    ORecordIteratorClass<ODocument> iter = db.browseClass("alphabet");
+    while (iter.hasNext()) {
+      iter.next().delete();
+    }
+
+    // add 26 entries: { "letter": "A", "number": 0 }, ... { "letter": "Z", "number": 25 }
+
+    String rowModel = "{\"letter\": \"%s\", \"number\": %d}";
+    for (int i = 0; i < 26; ++i) {
+      String l = String.valueOf((char) ('A' + i));
+      String json = String.format(rowModel, l, i);
+      ODocument doc = db.newInstance("alphabet");
+      doc.fromJSON(json);
+      doc.save();
+    }
+
+
+    db.command(new OCommandSQL("create class OCommandExecutorSQLSelectTest_aggregations")).execute();
+    db.command(new OCommandSQL("insert into OCommandExecutorSQLSelectTest_aggregations set data = [{\"size\": 0}, {\"size\": 0}, {\"size\": 30}, {\"size\": 50}, {\"size\": 50}]")).execute();
+
+
+
 
   }
 
@@ -454,10 +493,45 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
+  public void testMatches() {
+    List<?> result = db.query(new OSQLSynchQuery<Object>(
+        "select from foo where name matches '(?i)(^\\\\Qa\\\\E$)|(^\\\\Qname2\\\\E$)|(^\\\\Qname3\\\\E$)' and bar = 1"));
+    assertEquals(result.size(), 1);
+  }
+
+  @Test
+  public void testStarPosition() {
+    List<ODocument> result = db.query(new OSQLSynchQuery<Object>("select *, name as blabla from foo where name = 'a'"));
+
+    assertEquals(result.size(), 1);
+    assertEquals(result.get(0).field("blabla"), "a");
+
+    result = db.query(new OSQLSynchQuery<Object>("select name as blabla, * from foo where name = 'a'"));
+
+    assertEquals(result.size(), 1);
+    assertEquals(result.get(0).field("blabla"), "a");
+
+    result = db.query(new OSQLSynchQuery<Object>("select name as blabla, *, fff as zzz from foo where name = 'a'"));
+
+    assertEquals(result.size(), 1);
+    assertEquals(result.get(0).field("blabla"), "a");
+
+  }
+
+  @Test
   public void testQuotedClassName() {
     List<ODocument> qResult = db.command(new OCommandSQL("select from `edge`")).execute();
 
     assertEquals(qResult.size(), 0);
+
+  }
+
+  public void testUrl() {
+
+    List<ODocument> qResult = db.command(new OCommandSQL("select from TestUrl")).execute();
+
+    assertEquals(qResult.size(), 1);
+    assertEquals(qResult.get(0).field("url"), "http://www.google.com");
 
   }
 
@@ -471,6 +545,100 @@ public class OCommandExecutorSQLSelectTest {
       String coll = doc.field("coll");
       assertTrue(coll.startsWith(name));
     }
+  }
+
+  public void testMultipleParamsWithSameName() {
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("param1", "foo");
+    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParams where name like '%' + :param1 + '%'")).execute(
+        params);
+    assertEquals(qResult.size(), 2);
+
+    qResult = db.command(
+        new OCommandSQL("select from TestParams where name like '%' + :param1 + '%' and surname like '%' + :param1 + '%'"))
+        .execute(params);
+    assertEquals(qResult.size(), 1);
+
+    params = new HashMap<String, Object>();
+    params.put("param1", "bar");
+
+    qResult = db.command(new OCommandSQL("select from TestParams where surname like '%' + :param1 + '%'")).execute(params);
+    assertEquals(qResult.size(), 1);
+  }
+
+  // /*** from issue #2743
+  @Test
+  public void testBasicQueryOrdered() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter");
+    List<ODocument> results = db.query(sql);
+    assertEquals(26, results.size());
+  }
+
+  @Test
+  public void testSkipZeroOrdered() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 0");
+    List<ODocument> results = db.query(sql);
+    assertEquals(26, results.size());
+  }
+
+  @Test
+  public void testSkipOrdered() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 7");
+    List<ODocument> results = db.query(sql);
+    assertEquals(19, results.size()); // FAILURE - actual 0
+  }
+
+  @Test
+  public void testLimitOrdered() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter LIMIT 9");
+    List<ODocument> results = db.query(sql);
+    assertEquals(9, results.size());
+  }
+
+  @Test
+  public void testLimitMinusOneOrdered() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter LIMIT -1");
+    List<ODocument> results = db.query(sql);
+    assertEquals(26, results.size());
+  }
+
+  @Test
+  public void testSkipAndLimitOrdered() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 7 LIMIT 9");
+    List<ODocument> results = db.query(sql);
+    assertEquals(9, results.size());
+  }
+
+  @Test
+  public void testSkipAndLimitMinusOneOrdered() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 7 LIMIT -1");
+    List<ODocument> results = db.query(sql);
+    assertEquals(19, results.size());
+  }
+
+  @Test
+  public void testLetAsListAsString() {
+    OSQLSynchQuery sql = new OSQLSynchQuery(
+        "SELECT $ll as lll from unwindtest let $ll = coll.asList().asString() where name = 'bar'");
+    List<ODocument> results = db.query(sql);
+    assertEquals(1, results.size());
+    assertNotNull(results.get(0).field("lll"));
+    assertEquals("[bar1, bar2]", results.get(0).field("lll"));
+  }
+
+
+  @Test
+  public void testAggregations() {
+    OSQLSynchQuery sql = new OSQLSynchQuery(
+        "select data.size as collection_content, data.size() as collection_size, min(data.size) as collection_min, max(data.size) as collection_max, sum(data.size) as collection_sum, avg(data.size) as collection_avg from OCommandExecutorSQLSelectTest_aggregations");
+    List<ODocument> results = db.query(sql);
+    assertEquals(1, results.size());
+    ODocument doc = results.get(0);
+    assertEquals(5, doc.field("collection_size"));
+    assertEquals(130, doc.field("collection_sum"));
+    assertEquals(26, doc.field("collection_avg"));
+    assertEquals(0, doc.field("collection_min"));
+    assertEquals(50, doc.field("collection_max"));
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {

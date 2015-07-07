@@ -37,8 +37,10 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 import java.lang.reflect.Array;
@@ -225,6 +227,7 @@ public class ODocumentHelper {
 
     int beginPos = iFieldName.charAt(0) == '.' ? 1 : 0;
     int nextSeparatorPos = iFieldName.charAt(0) == '.' ? 1 : 0;
+    boolean firstInChain = true;
     do {
       char nextSeparator = ' ';
       for (; nextSeparatorPos < fieldNameLength; ++nextSeparatorPos) {
@@ -476,9 +479,19 @@ public class ODocumentHelper {
 
         if (fieldName.startsWith("$"))
           value = iContext.getVariable(fieldName);
-        else if (fieldName.contains("("))
-          value = evaluateFunction(value, fieldName, iContext);
-        else {
+        else if (fieldName.contains("(")) {
+          boolean executedMethod = false;
+          if (!firstInChain && fieldName.endsWith("()")) {
+            OSQLMethod method = OSQLEngine.getInstance().getMethod(fieldName.substring(0, fieldName.length() - 2));
+            if (method != null) {
+              value = method.execute(value, currentRecord, iContext, value, new Object[] {});
+              executedMethod = true;
+            }
+          }
+          if (!executedMethod) {
+            value = evaluateFunction(value, fieldName, iContext);
+          }
+        } else {
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(fieldName, '=', ' ');
 
           if (indexCondition.size() == 2) {
@@ -532,6 +545,7 @@ public class ODocumentHelper {
         currentRecord = null;
 
       beginPos = ++nextSeparatorPos;
+      firstInChain = false;
     } while (nextSeparatorPos < fieldNameLength && value != null);
 
     return (RET) value;

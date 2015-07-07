@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -51,16 +61,6 @@ import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
  * condition.
@@ -76,7 +76,7 @@ import java.util.Set;
  * <p>
  * <code>SELECT FROM (TRAVERSE children FROM #5:23 WHERE $depth BETWEEN 1 AND 3) WHERE city.name = 'Rome'</code>
  * </p>
- * 
+ *
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
@@ -260,7 +260,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
             if (limit > -1 && fetched >= limit)
               break;
 
-            if (!request.getResultListener().result(d))
+            if (!pushResult(d))
               break;
 
             ++fetched;
@@ -273,6 +273,16 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     }
   }
 
+  protected boolean pushResult(final Object rec) {
+    if (rec instanceof ORecord) {
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      if (db != null)
+        db.getLocalCache().updateRecord((ORecord) rec);
+    }
+
+    return request.getResultListener().result(rec);
+  }
+
   protected boolean handleResult(final OIdentifiable iRecord) {
     if (iRecord != null) {
       resultCount++;
@@ -281,7 +291,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
       // CALL THE LISTENER NOW
       if (identifiable != null && request.getResultListener() != null) {
-        final boolean result = request.getResultListener().result(identifiable);
+        final boolean result = pushResult(identifiable);
         if (!result)
           return false;
       }
@@ -327,7 +337,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * Parses the limit keyword if found.
    *
    * @param w
-   *
    * @return the limit found as integer, or -1 if no limit is found. -1 means no limits.
    * @throws OCommandSQLParsingException
    *           if no valid limit has been found
@@ -354,7 +363,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * Parses the skip keyword if found.
    *
    * @param w
-   *
    * @return the skip found as integer, or -1 if no skip is found. -1 means no skip.
    * @throws OCommandSQLParsingException
    *           if no valid skip has been found
@@ -466,11 +474,15 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final ORID[] range = getRange();
     if (iAscendentOrder)
-      return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, request.isUseCache()).setRange(
-          range[0], range[1]);
+      return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, isUseCache()).setRange(range[0],
+          range[1]);
     else
-      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic,
-          request.isUseCache()).setRange(range[0], range[1]);
+      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic, isUseCache())
+          .setRange(range[0], range[1]);
+  }
+
+  protected boolean isUseCache() {
+    return request.isUseCache();
   }
 
   protected void searchInClusters() {
@@ -509,7 +521,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final ORID[] range = getRange();
 
-    target = new ORecordIteratorClusters<ORecord>(database, database, clIds, request.isUseCache()).setRange(range[0], range[1]);
+    target = new ORecordIteratorClusters<ORecord>(database, database, clIds, !isUseCache()).setRange(range[0], range[1]);
   }
 
   protected void applyLimitAndSkip() {

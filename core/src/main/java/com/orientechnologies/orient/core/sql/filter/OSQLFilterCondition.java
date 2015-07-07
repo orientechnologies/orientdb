@@ -301,12 +301,12 @@ public class OSQLFilterCondition {
     }
 
     if (iValue instanceof OSQLFilterItem) {
-      if (iCurrentResult != null) {
-        final Object v = ((OSQLFilterItem) iValue).getValue(iCurrentResult, iCurrentResult, iContext);
-        if (v != null) {
-          return v;
-        }
-      }
+//      if (iCurrentResult != null) {
+//        final Object v = ((OSQLFilterItem) iValue).getValue(iCurrentResult, iCurrentResult, iContext);
+//        if (v != null) {
+//          return v;
+//        }
+//      }
 
       return ((OSQLFilterItem) iValue).getValue(iCurrentRecord, iCurrentResult, iContext);
     }

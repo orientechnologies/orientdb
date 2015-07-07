@@ -18,9 +18,10 @@
  *
  */
 
-package com.orientechnologies.orient.core.index.hashindex.local.cache;
+package com.orientechnologies.orient.core.storage.cache.local;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,21 +30,23 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
+import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+
+import javax.management.*;
 
 /**
  * @author Andrey Lomakin
  * @since 7/24/13
  */
-public class O2QCache implements OReadCache {
+public class O2QCache implements OReadCache, O2QCacheMXBean {
   public static final int                              MIN_CACHE_SIZE             = 256;
 
   private static final int                             MAX_CACHE_OVERFLOW         = Runtime.getRuntime().availableProcessors() * 8;
@@ -69,6 +72,11 @@ public class O2QCache implements OReadCache {
   private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages                = new ConcurrentHashMap<PinnedPage, OCacheEntry>();
 
   private final AtomicBoolean                          coldPagesRemovalInProgress = new AtomicBoolean();
+  private final ODistributedCounter                    cacheHitCounter            = new ODistributedCounter();
+  private final ODistributedCounter                    cacheQueriesCounter        = new ODistributedCounter();
+
+  private final AtomicBoolean                          mbeanIsRegistered          = new AtomicBoolean();
+  public static final String                           MBEAN_NAME                 = "com.orientechnologies.orient.core.storage.cache.local:type=O2QCacheMXBean";
 
   public O2QCache(final long readCacheMaxMemory, final int pageSize, final boolean checkMinSize) {
     cacheLock.acquireWriteLock();
@@ -207,12 +215,12 @@ public class O2QCache implements OReadCache {
 
     cacheLock.acquireReadLock();
     try {
-      fileLock = fileLockManager.acquireSharedLock(cacheEntry.fileId);
+      fileLock = fileLockManager.acquireSharedLock(cacheEntry.getFileId());
       try {
-        pageLock = pageLockManager.acquireExclusiveLock(new PageKey(cacheEntry.fileId, cacheEntry.pageIndex));
+        pageLock = pageLockManager.acquireExclusiveLock(new PageKey(cacheEntry.getFileId(), cacheEntry.getPageIndex()));
         try {
-          remove(cacheEntry.fileId, cacheEntry.pageIndex);
-          pinnedPages.put(new PinnedPage(cacheEntry.fileId, cacheEntry.pageIndex), cacheEntry);
+          remove(cacheEntry.getFileId(), cacheEntry.getPageIndex());
+          pinnedPages.put(new PinnedPage(cacheEntry.getFileId(), cacheEntry.getPageIndex()), cacheEntry);
         } finally {
           pageLockManager.releaseLock(pageLock);
         }
@@ -237,7 +245,7 @@ public class O2QCache implements OReadCache {
       if (cacheResult.removeColdPages)
         removeColdestPagesIfNeeded();
     } catch (RuntimeException e) {
-      assert !cacheResult.cacheEntry.isDirty;
+      assert !cacheResult.cacheEntry.isDirty();
 
       release(cacheResult.cacheEntry, writeCache);
       throw e;
@@ -253,6 +261,8 @@ public class O2QCache implements OReadCache {
 
     Lock fileLock;
     Lock pageLock;
+
+    cacheQueriesCounter.increment();
 
     cacheLock.acquireReadLock();
     try {
@@ -270,9 +280,11 @@ public class O2QCache implements OReadCache {
 
             cacheEntry = cacheResult.cacheEntry;
             removeColdPages = cacheResult.removeColdPages;
+          } else {
+            cacheHitCounter.increment();
           }
 
-          cacheEntry.usagesCount++;
+          cacheEntry.incrementUsages();
         } finally {
           pageLockManager.releaseLock(pageLock);
         }
@@ -312,7 +324,7 @@ public class O2QCache implements OReadCache {
       if (cacheResult.removeColdPages)
         removeColdestPagesIfNeeded();
     } catch (RuntimeException e) {
-      assert !cacheResult.cacheEntry.isDirty;
+      assert !cacheResult.cacheEntry.isDirty();
 
       release(cacheResult.cacheEntry, writeCache);
       throw e;
@@ -329,17 +341,17 @@ public class O2QCache implements OReadCache {
     Lock pageLock;
     cacheLock.acquireReadLock();
     try {
-      fileLock = fileLockManager.acquireSharedLock(cacheEntry.fileId);
+      fileLock = fileLockManager.acquireSharedLock(cacheEntry.getFileId());
       try {
-        pageLock = pageLockManager.acquireExclusiveLock(new PageKey(cacheEntry.fileId, cacheEntry.pageIndex));
+        pageLock = pageLockManager.acquireExclusiveLock(new PageKey(cacheEntry.getFileId(), cacheEntry.getPageIndex()));
         try {
-          cacheEntry.usagesCount--;
+          cacheEntry.decrementUsages();
 
-          assert cacheEntry.usagesCount >= 0;
+          assert cacheEntry.getUsagesCount() >= 0;
 
-          if (cacheEntry.usagesCount == 0 && cacheEntry.isDirty) {
-            flushFuture = writeCache.store(cacheEntry.fileId, cacheEntry.pageIndex, cacheEntry.dataPointer);
-            cacheEntry.isDirty = false;
+          if (cacheEntry.getUsagesCount() == 0 && cacheEntry.isDirty()) {
+            flushFuture = writeCache.store(cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
+            cacheEntry.clearDirty();
           }
         } finally {
           pageLockManager.releaseLock(pageLock);
@@ -406,14 +418,15 @@ public class O2QCache implements OReadCache {
         cacheEntry = pinnedPages.get(new PinnedPage(fileId, pageIndex));
 
       if (cacheEntry != null) {
-        if (cacheEntry.usagesCount == 0) {
+        if (cacheEntry.getUsagesCount() == 0) {
           cacheEntry = remove(fileId, pageIndex);
           if (cacheEntry == null)
             cacheEntry = pinnedPages.remove(new PinnedPage(fileId, pageIndex));
 
-          if (cacheEntry.dataPointer != null) {
-            cacheEntry.dataPointer.decrementReadersReferrer();
-            cacheEntry.dataPointer = null;
+          final OCachePointer cachePointer = cacheEntry.getCachePointer();
+          if (cachePointer != null) {
+            cachePointer.decrementReadersReferrer();
+            cacheEntry.clearCachePointer();
           }
 
         } else
@@ -496,6 +509,66 @@ public class O2QCache implements OReadCache {
     }
   }
 
+  public void registerMBean() {
+    if (mbeanIsRegistered.compareAndSet(false, true)) {
+      try {
+        final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
+        server.registerMBean(this, mbeanName);
+      } catch (MalformedObjectNameException e) {
+        throw new OStorageException("Error during registration of read cache MBean.", e);
+      } catch (InstanceAlreadyExistsException e) {
+        throw new OStorageException("Error during registration of read cache MBean.", e);
+      } catch (MBeanRegistrationException e) {
+        throw new OStorageException("Error during registration of read cache MBean.", e);
+      } catch (NotCompliantMBeanException e) {
+        throw new OStorageException("Error during registration of read cache MBean.", e);
+      }
+    }
+  }
+
+  public void unregisterMBean() {
+    if (mbeanIsRegistered.compareAndSet(true, false)) {
+      try {
+        final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
+        server.unregisterMBean(mbeanName);
+      } catch (MalformedObjectNameException e) {
+        throw new OStorageException("Error during unregistration of read cache MBean.", e);
+      } catch (InstanceNotFoundException e) {
+        throw new OStorageException("Error during unregistration of read cache MBean.", e);
+      } catch (MBeanRegistrationException e) {
+        throw new OStorageException("Error during unregistration of read cache MBean.", e);
+      }
+    }
+  }
+
+  @Override
+  public int getA1InSize() {
+    return a1in.size();
+  }
+
+  @Override
+  public int getA1OutSize() {
+    return a1out.size();
+  }
+
+  @Override
+  public int getAmSize() {
+    return am.size();
+  }
+
+  @Override
+  public double getCacheHits() {
+    return (cacheHitCounter.get() * 100.0) / cacheQueriesCounter.get();
+  }
+
+  @Override
+  public void clearCacheStatistics() {
+    cacheHitCounter.clear();
+    cacheQueriesCounter.clear();
+  }
+
   private OCacheEntry get(long fileId, long pageIndex, boolean useOutQueue) {
     OCacheEntry cacheEntry = am.get(fileId, pageIndex);
 
@@ -526,23 +599,25 @@ public class O2QCache implements OReadCache {
 
   private void clearCacheContent() {
     for (OCacheEntry cacheEntry : am)
-      if (cacheEntry.usagesCount == 0) {
-        cacheEntry.dataPointer.decrementReadersReferrer();
-        cacheEntry.dataPointer = null;
+      if (cacheEntry.getUsagesCount() == 0) {
+        final OCachePointer cachePointer = cacheEntry.getCachePointer();
+        cachePointer.decrementReadersReferrer();
+        cacheEntry.clearCachePointer();
       }
 
       else
-        throw new OStorageException("Page with index " + cacheEntry.pageIndex + " for file id " + cacheEntry.fileId
+        throw new OStorageException("Page with index " + cacheEntry.getPageIndex() + " for file id " + cacheEntry.getFileId()
             + " is used and can not be removed");
 
     for (OCacheEntry cacheEntry : a1in)
-      if (cacheEntry.usagesCount == 0) {
-        cacheEntry.dataPointer.decrementReadersReferrer();
-        cacheEntry.dataPointer = null;
+      if (cacheEntry.getUsagesCount() == 0) {
+        final OCachePointer cachePointer = cacheEntry.getCachePointer();
+        cachePointer.decrementReadersReferrer();
+        cacheEntry.clearCachePointer();
       }
 
       else
-        throw new OStorageException("Page with index " + cacheEntry.pageIndex + " for file id " + cacheEntry.fileId
+        throw new OStorageException("Page with index " + cacheEntry.getPageIndex() + " for file id " + cacheEntry.getFileId()
             + " is used and can not be removed");
 
     a1out.clear();
@@ -557,12 +632,13 @@ public class O2QCache implements OReadCache {
 
   private void clearPinnedPages() {
     for (OCacheEntry pinnedEntry : pinnedPages.values()) {
-      if (pinnedEntry.usagesCount == 0) {
-        pinnedEntry.dataPointer.decrementReadersReferrer();
-        pinnedEntry.dataPointer = null;
+      if (pinnedEntry.getUsagesCount() == 0) {
+        final OCachePointer cachePointer = pinnedEntry.getCachePointer();
+        cachePointer.decrementReadersReferrer();
+        pinnedEntry.clearCachePointer();
       } else
-        throw new OStorageException("Page with index " + pinnedEntry.pageIndex + " for file with id " + pinnedEntry.fileId
-            + "can not be freed because it is used.");
+        throw new OStorageException("Page with index " + pinnedEntry.getPageIndex() + " for file with id "
+            + pinnedEntry.getFileId() + "can not be freed because it is used.");
     }
 
     pinnedPages.clear();
@@ -577,6 +653,7 @@ public class O2QCache implements OReadCache {
       assert filePages.get(fileId).contains(pageIndex);
 
       am.putToMRU(cacheEntry);
+      cacheHitCounter.increment();
 
       return new UpdateCacheResult(false, cacheEntry);
     }
@@ -589,10 +666,10 @@ public class O2QCache implements OReadCache {
       OCachePointer dataPointer = writeCache.load(fileId, pageIndex, false);
 
       assert dataPointer != null;
-      assert cacheEntry.dataPointer == null;
-      assert !cacheEntry.isDirty;
+      assert cacheEntry.getCachePointer() == null;
+      assert !cacheEntry.isDirty();
 
-      cacheEntry.dataPointer = dataPointer;
+      cacheEntry.setCachePointer(dataPointer);
 
       am.putToMRU(cacheEntry);
 
@@ -604,6 +681,7 @@ public class O2QCache implements OReadCache {
       assert filePages.get(fileId) != null;
       assert filePages.get(fileId).contains(pageIndex);
 
+      cacheHitCounter.increment();
       return new UpdateCacheResult(false, cacheEntry);
     }
 
@@ -662,11 +740,12 @@ public class O2QCache implements OReadCache {
         if (removedFromAInEntry == null) {
           throw new OAllCacheEntriesAreUsedException("All records in aIn queue in 2q cache are used!");
         } else {
-          assert removedFromAInEntry.usagesCount == 0;
-          assert !removedFromAInEntry.isDirty;
+          assert removedFromAInEntry.getUsagesCount() == 0;
+          assert !removedFromAInEntry.isDirty();
 
-          removedFromAInEntry.dataPointer.decrementReadersReferrer();
-          removedFromAInEntry.dataPointer = null;
+          final OCachePointer cachePointer = removedFromAInEntry.getCachePointer();
+          cachePointer.decrementReadersReferrer();
+          removedFromAInEntry.clearCachePointer();
 
           a1out.putToMRU(removedFromAInEntry);
         }
@@ -674,12 +753,12 @@ public class O2QCache implements OReadCache {
         while (a1out.size() > K_OUT) {
           OCacheEntry removedEntry = a1out.removeLRU();
 
-          assert removedEntry.usagesCount == 0;
-          assert removedEntry.dataPointer == null;
-          assert !removedEntry.isDirty;
+          assert removedEntry.getUsagesCount() == 0;
+          assert removedEntry.getCachePointer() == null;
+          assert !removedEntry.isDirty();
 
-          Set<Long> pageEntries = filePages.get(removedEntry.fileId);
-          pageEntries.remove(removedEntry.pageIndex);
+          Set<Long> pageEntries = filePages.get(removedEntry.getFileId());
+          pageEntries.remove(removedEntry.getPageIndex());
         }
       } else {
         OCacheEntry removedEntry = am.removeLRU();
@@ -687,14 +766,15 @@ public class O2QCache implements OReadCache {
         if (removedEntry == null) {
           throw new OAllCacheEntriesAreUsedException("All records in aIn queue in 2q cache are used!");
         } else {
-          assert removedEntry.usagesCount == 0;
-          assert !removedEntry.isDirty;
+          assert removedEntry.getUsagesCount() == 0;
+          assert !removedEntry.isDirty();
 
-          removedEntry.dataPointer.decrementReadersReferrer();
-          removedEntry.dataPointer = null;
+          final OCachePointer cachePointer = removedEntry.getCachePointer();
+          cachePointer.decrementReadersReferrer();
+          removedEntry.clearCachePointer();
 
-          Set<Long> pageEntries = filePages.get(removedEntry.fileId);
-          pageEntries.remove(removedEntry.pageIndex);
+          Set<Long> pageEntries = filePages.get(removedEntry.getFileId());
+          pageEntries.remove(removedEntry.getPageIndex());
         }
       }
     }
@@ -713,22 +793,24 @@ public class O2QCache implements OReadCache {
         if (removedFromAInEntry == null) {
           throw new OAllCacheEntriesAreUsedException("All records in aIn queue in 2q cache are used!");
         } else {
-          fileLock = fileLockManager.acquireSharedLock(removedFromAInEntry.fileId);
+          fileLock = fileLockManager.acquireSharedLock(removedFromAInEntry.getFileId());
           try {
-            pageLock = pageLockManager.acquireExclusiveLock(new PageKey(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex));
+            pageLock = pageLockManager.acquireExclusiveLock(new PageKey(removedFromAInEntry.getFileId(), removedFromAInEntry
+                .getPageIndex()));
             try {
-              if (a1in.get(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex) == null)
+              if (a1in.get(removedFromAInEntry.getFileId(), removedFromAInEntry.getPageIndex()) == null)
                 continue;
 
-              if (removedFromAInEntry.usagesCount > 0)
+              if (removedFromAInEntry.getUsagesCount() > 0)
                 continue;
 
-              assert !removedFromAInEntry.isDirty;
+              assert !removedFromAInEntry.isDirty();
 
-              a1in.remove(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex);
+              a1in.remove(removedFromAInEntry.getFileId(), removedFromAInEntry.getPageIndex());
 
-              removedFromAInEntry.dataPointer.decrementReadersReferrer();
-              removedFromAInEntry.dataPointer = null;
+              final OCachePointer cachePointer = removedFromAInEntry.getCachePointer();
+              cachePointer.decrementReadersReferrer();
+              removedFromAInEntry.clearCachePointer();
 
               if (OLogManager.instance().isDebugEnabled())
                 OLogManager.instance().debug(this, "Moving page in disk cache from a1in to a1out area: %s", removedFromAInEntry);
@@ -744,19 +826,19 @@ public class O2QCache implements OReadCache {
 
         while (a1out.size() > K_OUT) {
           OCacheEntry removedEntry = a1out.getLRU();
-          fileLock = fileLockManager.acquireSharedLock(removedEntry.fileId);
+          fileLock = fileLockManager.acquireSharedLock(removedEntry.getFileId());
           try {
-            pageLock = pageLockManager.acquireExclusiveLock(new PageKey(removedEntry.fileId, removedEntry.pageIndex));
+            pageLock = pageLockManager.acquireExclusiveLock(new PageKey(removedEntry.getFileId(), removedEntry.getPageIndex()));
             try {
-              if (a1out.remove(removedEntry.fileId, removedEntry.pageIndex) == null)
+              if (a1out.remove(removedEntry.getFileId(), removedEntry.getPageIndex()) == null)
                 continue;
 
-              assert removedEntry.usagesCount == 0;
-              assert removedEntry.dataPointer == null;
-              assert !removedEntry.isDirty;
+              assert removedEntry.getUsagesCount() == 0;
+              assert removedEntry.getCachePointer() == null;
+              assert !removedEntry.isDirty();
 
-              Set<Long> pageEntries = filePages.get(removedEntry.fileId);
-              pageEntries.remove(removedEntry.pageIndex);
+              Set<Long> pageEntries = filePages.get(removedEntry.getFileId());
+              pageEntries.remove(removedEntry.getPageIndex());
             } finally {
               pageLockManager.releaseLock(pageLock);
             }
@@ -770,25 +852,26 @@ public class O2QCache implements OReadCache {
         if (removedEntry == null) {
           throw new OAllCacheEntriesAreUsedException("All records in aIn queue in 2q cache are used!");
         } else {
-          fileLock = fileLockManager.acquireSharedLock(removedEntry.fileId);
+          fileLock = fileLockManager.acquireSharedLock(removedEntry.getFileId());
           try {
-            pageLock = pageLockManager.acquireExclusiveLock(new PageKey(removedEntry.fileId, removedEntry.pageIndex));
+            pageLock = pageLockManager.acquireExclusiveLock(new PageKey(removedEntry.getFileId(), removedEntry.getPageIndex()));
             try {
-              if (am.get(removedEntry.fileId, removedEntry.pageIndex) == null)
+              if (am.get(removedEntry.getFileId(), removedEntry.getPageIndex()) == null)
                 continue;
 
-              if (removedEntry.usagesCount > 0)
+              if (removedEntry.getUsagesCount() > 0)
                 continue;
 
-              assert !removedEntry.isDirty;
+              assert !removedEntry.isDirty();
 
-              am.remove(removedEntry.fileId, removedEntry.pageIndex);
+              am.remove(removedEntry.getFileId(), removedEntry.getPageIndex());
 
-              removedEntry.dataPointer.decrementReadersReferrer();
-              removedEntry.dataPointer = null;
+              final OCachePointer cachePointer = removedEntry.getCachePointer();
+              cachePointer.decrementReadersReferrer();
+              removedEntry.clearCachePointer();
 
-              Set<Long> pageEntries = filePages.get(removedEntry.fileId);
-              pageEntries.remove(removedEntry.pageIndex);
+              Set<Long> pageEntries = filePages.get(removedEntry.getFileId());
+              pageEntries.remove(removedEntry.getPageIndex());
             } finally {
               pageLockManager.releaseLock(pageLock);
             }
@@ -809,10 +892,20 @@ public class O2QCache implements OReadCache {
     return ((long) (am.size() + a1in.size())) * (2 * ODurablePage.PAGE_PADDING + pageSize);
   }
 
+  @Override
+  public long getUsedMemoryInMB() {
+    return getUsedMemory() / (1024 * 1024);
+  }
+
+  @Override
+  public double getUsedMemoryInGB() {
+    return Math.ceil((getUsedMemory() * 100) / (1024.0 * 1024 * 1024)) / 100;
+  }
+
   private OCacheEntry remove(long fileId, long pageIndex) {
     OCacheEntry cacheEntry = am.remove(fileId, pageIndex);
     if (cacheEntry != null) {
-      if (cacheEntry.usagesCount > 1)
+      if (cacheEntry.getUsagesCount() > 1)
         throw new IllegalStateException("Record cannot be removed because it is used!");
       return cacheEntry;
     }
@@ -822,7 +915,7 @@ public class O2QCache implements OReadCache {
       return cacheEntry;
 
     cacheEntry = a1in.remove(fileId, pageIndex);
-    if (cacheEntry != null && cacheEntry.usagesCount > 1)
+    if (cacheEntry != null && cacheEntry.getUsagesCount() > 1)
       throw new IllegalStateException("Record cannot be removed because it is used!");
 
     return cacheEntry;

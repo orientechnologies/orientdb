@@ -30,27 +30,27 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
  */
 public interface ODatabaseListener {
 
-  public void onCreate(final ODatabase iDatabase);
+  void onCreate(final ODatabase iDatabase);
 
-  public void onDelete(final ODatabase iDatabase);
+  void onDelete(final ODatabase iDatabase);
 
-  public void onOpen(final ODatabase iDatabase);
+  void onOpen(final ODatabase iDatabase);
 
-  public void onBeforeTxBegin(final ODatabase iDatabase);
+  void onBeforeTxBegin(final ODatabase iDatabase);
 
-  public void onBeforeTxRollback(final ODatabase iDatabase);
+  void onBeforeTxRollback(final ODatabase iDatabase);
 
-  public void onAfterTxRollback(final ODatabase iDatabase);
+  void onAfterTxRollback(final ODatabase iDatabase);
 
-  public void onBeforeTxCommit(final ODatabase iDatabase);
+  void onBeforeTxCommit(final ODatabase iDatabase);
 
-  public void onAfterTxCommit(final ODatabase iDatabase);
+  void onAfterTxCommit(final ODatabase iDatabase);
 
-  public void onClose(final ODatabase iDatabase);
+  void onClose(final ODatabase iDatabase);
 
-  public void onBeforeCommand(final OCommandRequestText iCommand, final OCommandExecutor executor);
+  void onBeforeCommand(final OCommandRequestText iCommand, final OCommandExecutor executor);
 
-  public void onAfterCommand(final OCommandRequestText iCommand, final OCommandExecutor executor, Object result);
+  void onAfterCommand(final OCommandRequestText iCommand, final OCommandExecutor executor, Object result);
 
   /**
    * Callback to decide if repair the database upon corruption.
@@ -63,5 +63,5 @@ public interface ODatabaseListener {
    *          TODO
    * @return true if repair must be done, otherwise false
    */
-  public boolean onCorruptionRepairDatabase(final ODatabase iDatabase, final String iReason, String iWhatWillbeFixed);
+  boolean onCorruptionRepairDatabase(final ODatabase iDatabase, final String iReason, String iWhatWillbeFixed);
 }

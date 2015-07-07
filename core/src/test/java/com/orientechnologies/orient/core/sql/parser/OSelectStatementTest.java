@@ -319,17 +319,73 @@ public class OSelectStatementTest {
   }
 
   @Test
+  public void testRecordAttributes() {
+    // issue #4430
+    checkRightSyntax("SELECT @this, @rid, @rid_id, @rid_pos, @version, @class, @type, @size, @fields, @raw from V");
+    checkRightSyntax("SELECT @THIS, @RID, @RID_ID, @RID_POS, @VERSION, @CLASS, @TYPE, @SIZE, @FIELDS, @RAW from V");
+  }
+
+  @Test
+  public void testDoubleEquals() {
+    // issue #4413
+    checkRightSyntax("SELECT from V where name = 'foo'");
+    checkRightSyntax("SELECT from V where name == 'foo'");
+  }
+
+  @Test
+  public void testMatches() {
+
+    checkRightSyntax("select from Person where name matches 'a'");
+
+    checkRightSyntax("select from Person where name matches '(?i)(^\\\\Qname1\\\\E$)|(^\\\\Qname2\\\\E$)|(^\\\\Qname3\\\\E$)' and age=30");
+  }
+
+  @Test
   // issue #3718
   public void testComplexTarget1() {
     checkRightSyntax("SELECT $e FROM [#1:1,#1:2] LET $e = (SELECT FROM $current.prop1)");
     checkRightSyntax("SELECT $e FROM [#1:1,#1:2] let $e = (SELECT FROM (SELECT FROM $parent.$current))");
   }
 
+  @Test
+  public void testEval() {
+    checkRightSyntax("  select  sum(weight) , f.name as name from (\n"
+        + "      select weight, if(eval(\"out.name = 'one'\"),out,in) as f  from (\n" + "      select expand(bothE('E')) from V\n"
+        + "  )\n" + "      ) group by name\n");
+
+  }
+
+  @Test
+  public void testNewLine() {
+    checkRightSyntax("INSERT INTO Country SET name=\"one\\ntwo\" RETURN @rid");
+
+  }
+
+  @Test
+  public void testJsonWithUrl() {
+    checkRightSyntax("insert into V content { \"url\": \"http://www.google.com\" } ");
+  }
+
+  @Test
+  public void testGroupBy() {
+    // issue #4245
+    checkRightSyntax("select in.name from (  \n" + "select expand(outE()) from V\n" + ")\n" + "group by in.name");
+
+  }
+
+  @Test
+  public void testInputParams() {
+
+    checkRightSyntax("select from foo where name like  '%'+ :param1 + '%'");
+
+    checkRightSyntax("select from foo where name like  'aaa'+ :param1 + 'a'");
+
+  }
+
   @Test(enabled = false)
   public void testSlashInQuery() {
     checkRightSyntax("insert into test content {\"node_id\": \"MFmqvmht//sYYWB8=\"}");
     checkRightSyntax("insert into test content { \"node_id\": \"MFmqvmht\\/\\/GYsYYWB8=\"}");
-
   }
 
   @Test()

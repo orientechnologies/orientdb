@@ -190,21 +190,28 @@ TOKEN:
 	|
 	< MAXDEPTH: ( "m" | "M" ) ( "a" | "A" ) ( "x" | "X" ) ( "d" | "D" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) >
 	|
-	< THIS: "@this" >
+	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
-	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> >
+	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
 	|
-	< #RID_ATTR: "@" ( ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" )) >
+	< #RID_ATTR: "@" ( ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" ) ) >
 	|
-	< #CLASS_ATTR: "@class" >
+	< #CLASS_ATTR: "@" ( ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ))>
 	|
-	< #VERSION_ATTR: "@version" >
+	< #VERSION_ATTR: "@" ( ( "v" | "V" ) ( "e" | "E" ) ( "r" | "R" ) ( "s" | "S" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" )) >
 	|
-	< #SIZE_ATTR: "@size" >
+	< #SIZE_ATTR: "@" ( ( "s" | "S" ) ( "i" | "I" ) ( "z" | "Z" ) ( "e" | "E" ) ) >
 	|
-	< #TYPE_ATTR: "@type" >
+	< #TYPE_ATTR: "@" ( ( "t" | "T" ) ( "y" | "Y" ) ( "p" | "P" ) ( "e" | "E" ) ) >
     |
-	< #RAW_ATTR: "@raw" >
+	< #RAW_ATTR: "@" ( ( "r" | "R" ) ( "a" | "A" ) ( "w" | "W" ) ) >
+	|
+	< #RID_ID_ATTR: "@" ( ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" ) "_" ( "i" | "I" ) ( "d" | "D" )) >
+	|
+	< #RID_POS_ATTR: "@" ( ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" ) "_" ( "p" | "P" ) ( "o" | "O" )  ( "s" | "S" )) >
+    |
+    < #FIELDS_ATTR: "@" ( ( "f" | "F" ) ( "i" | "I" ) ( "e" | "E" ) ( "l" | "L" ) ( "d" | "D" ) ( "s" | "S" )) >
+
 }
 
 
@@ -321,6 +328,7 @@ TOKEN :
 {
 
   < EQ: "=" >
+| < EQEQ: "==" >
 | < LT: "<" >
 | < GT: ">" >
 | < BANG: "!" >
@@ -480,58 +488,145 @@ OIdentifier Identifier():
         (
             token = <IDENTIFIER>
             |
-            token = <IN>
+            token = <SELECT>
+            |
+            token = <TRAVERSE>
+            |
+            token = <INSERT>
+            |
+            token = <CREATE>
+            |
+            token = <DELETE>
+            |
+            token = <VERTEX>
+            |
+            token = <EDGE>
+            |
+            token = <UPDATE>
+            |
+            token = <UPSERT>
+            |
+            token = <FROM>
+            |
+            token = <TO>
+            |
+            token = <WHERE>
+            |
+            token = <WHILE>
+            |
+            token = <INTO>
+            |
+            token = <VALUES>
             |
             token = <SET>
             |
-            token = <PUT>
-            |
             token = <ADD>
             |
-            token = <REMOVE>
+            token = <PUT>
             |
             token = <MERGE>
             |
             token = <CONTENT>
             |
+            token = <REMOVE>
+            |
+            token = <INCREMENT>
+            |
+            token = <AND>
+            |
+            token = <OR>
+            |
+            token = <NULL>
+            |
+            token = <DEFINED>
+            |
             token = <ORDER>
-            |
-            token = <KEY>
-            |
-            token = <OFFSET>
             |
             token = <GROUP>
             |
-            token = <VALUES>
+            token = <BY>
+            |
+            token = <LIMIT>
+            |
+            token = <SKIP2>
+            |
+            token = <OFFSET>
+            |
+            token = <TIMEOUT>
+            |
+            token = <ASC>
+            |
+            token = <AS>
+            |
+            token = <DESC>
+            |
+            token = <FETCHPLAN>
+            |
+            token = <RETURN>
+            |
+            token = <BEFORE>
+            |
+            token = <AFTER>
+            |
+            token = <LOCK>
             |
             token = <RECORD>
             |
-            token = <TO>
+            token = <WAIT>
+            |
+            token = <RETRY>
+            |
+            token = <LET>
+            |
+            token = <NOCACHE>
+            |
+            token = <UNSAFE>
+            |
+            token = <PARALLEL>
+            |
+            token = <STRATEGY>
+            |
+            token = <DEPTH_FIRST>
+            |
+            token = <BREADTH_FIRST>
             |
             token = <LUCENE>
             |
             token = <NEAR>
             |
             token = <WITHIN>
-            //plus reserved keyworks
             |
-            token = <FROM>
+            token = <UNWIND>
             |
-            token = <SELECT>
+            token = <MAXDEPTH>
             |
-            token = <UPDATE>
+            token = <NOT>
             |
-            token = <DELETE>
+            token = <IN>
             |
-            token = <TRAVERSE>
+            token = <LIKE>
             |
-            token = <WHERE>
+            token = <IS>
             |
-            token = <INSERT>
+            token = <BETWEEN>
             |
-            token = <VERTEX>
+            token = <CONTAINS>
             |
-            token = <EDGE>
+            token = <CONTAINSALL>
+            |
+            token = <CONTAINSKEY>
+            |
+            token = <CONTAINSVALUE>
+            |
+            token = <CONTAINSTEXT>
+            |
+            token = <MATCHES>
+            |
+            token = <KEY>
+            |
+            token = <INSTANCEOF>
+            |
+            token = <CLUSTER>
         )
         <BACKTICK>
     )
@@ -1682,7 +1777,8 @@ OExpression Expression():
 {
     (
         <NULL> {jjtThis.value = null;}
-        |
+
+/*        |
         LOOKAHEAD(2)
         token = <STRING_LITERAL>
         {
@@ -1697,6 +1793,7 @@ OExpression Expression():
 
         |
         token = <CHARACTER_LITERAL> {jjtThis.value = token.image.substring(1, token.image.length() - 1);  jjtThis.singleQuotes = true;}
+        */
         |
         LOOKAHEAD( Rid() )
         jjtThis.value = Rid()
@@ -1704,6 +1801,7 @@ OExpression Expression():
         LOOKAHEAD( InputParameter() )
         jjtThis.value = InputParameter()
         |
+        LOOKAHEAD( MathExpression() )
         jjtThis.value = MathExpression()
         |
         jjtThis.value = Json()
@@ -1810,6 +1908,19 @@ OBaseExpression BaseExpression():
     	        jjtThis.modifier = Modifier()
     	    ]
     	)
+    	|
+        (
+            (
+                token = <STRING_LITERAL> { jjtThis.string = token.image; }
+                |
+                token = <CHARACTER_LITERAL> { jjtThis.string = token.image; }
+            )
+            [
+                LOOKAHEAD( Modifier() )
+                jjtThis.modifier = Modifier()
+            ]
+        )
+
 	)
 	{return jjtThis;}
 }
@@ -2196,7 +2307,9 @@ OEqualsCompareOperator EqualsCompareOperator():
 {}
 {
 (
-	<EQ>
+	<EQ> { jjtThis.doubleEquals = false; }
+	|
+	<EQEQ> { jjtThis.doubleEquals = true; }
 ){return jjtThis;}
 }
 
@@ -2413,8 +2526,14 @@ OBooleanExpression MatchesCondition():
 {Token token;}
 {
     (
-    	jjtThis.expression = Expression() <MATCHES> token = <STRING_LITERAL> {jjtThis.right = token.image;}
+    	jjtThis.expression = Expression() <MATCHES>
+    	(
+    	    ( token = <STRING_LITERAL> {jjtThis.right = token.image;} )
+    	    |
+    	    ( token = <CHARACTER_LITERAL> {jjtThis.right = token.image;} )
+    	)
     )
+
     {return jjtThis;}
 }
 
@@ -2523,13 +2642,13 @@ OOrderBy OrderBy():
 }
 
 OGroupBy GroupBy():
-{ OIdentifier lastIdentifier; }
+{ OExpression lastExpression; }
 {
 (
-	<GROUP> <BY> lastIdentifier = Identifier() { jjtThis.items.add(lastIdentifier); }
+	<GROUP> <BY> lastExpression = Expression() { jjtThis.items.add(lastExpression); }
 	(
 	    ","
-	    lastIdentifier = Identifier() { jjtThis.items.add(lastIdentifier); }
+	    lastExpression = Expression() { jjtThis.items.add(lastExpression); }
 	)*
 ) {return jjtThis;}
 }
