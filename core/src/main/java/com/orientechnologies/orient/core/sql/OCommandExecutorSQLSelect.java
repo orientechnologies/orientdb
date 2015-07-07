@@ -136,7 +136,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private String                      NULL_VALUE           = "null";
 
   public OCommandExecutorSQLSelect() {
-
   }
 
   private static final class IndexUsageLog {
@@ -198,6 +197,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     } else {
       return indexDefinition.createValue(OSQLHelper.getValue(value));
     }
+  }
+
+  @Override
+  protected boolean isUseCache() {
+    return !noCache && request.isUseCache();
   }
 
   private static ODocument createIndexEntryAsDocument(final Object iKey, final OIdentifiable iValue) {
@@ -491,7 +495,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     final ORecord record;
     if (!(id instanceof ORecord)) {
-      record = getDatabase().load(id.getIdentity(), null, noCache);
+      record = getDatabase().load(id.getIdentity(), null, !isUseCache());
       if (id instanceof OContextualRecordId && ((OContextualRecordId) id).getContext() != null) {
         Map<String, Object> ridContext = ((OContextualRecordId) id).getContext();
         for (String key : ridContext.keySet()) {
@@ -652,7 +656,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       // SEND THE RESULT INLINE
       if (request.getResultListener() != null)
         for (OIdentifiable iRes : allResults) {
-          result = request.getResultListener().result(iRes);
+          result = pushResult(iRes);
         }
     } else {
 
@@ -2369,7 +2373,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
-  public void setProjections(Map<String, Object> projections) {
+  public void setProjections(final Map<String, Object> projections) {
     this.projections = projections;
   }
 
@@ -2377,31 +2381,31 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return projectionDefinition;
   }
 
-  public void setProjectionDefinition(Map<String, String> projectionDefinition) {
+  public void setProjectionDefinition(final Map<String, String> projectionDefinition) {
     this.projectionDefinition = projectionDefinition;
   }
 
-  public void setOrderedFields(List<OPair<String, String>> orderedFields) {
+  public void setOrderedFields(final List<OPair<String, String>> orderedFields) {
     this.orderedFields = orderedFields;
   }
 
-  public void setGroupByFields(List<String> groupByFields) {
+  public void setGroupByFields(final List<String> groupByFields) {
     this.groupByFields = groupByFields;
   }
 
-  public void setFetchLimit(int fetchLimit) {
+  public void setFetchLimit(final int fetchLimit) {
     this.fetchLimit = fetchLimit;
   }
 
-  public void setFetchPlan(String fetchPlan) {
+  public void setFetchPlan(final String fetchPlan) {
     this.fetchPlan = fetchPlan;
   }
 
-  public void setParallel(boolean parallel) {
+  public void setParallel(final boolean parallel) {
     this.parallel = parallel;
   }
 
-  public void setNoCache(boolean noCache) {
+  public void setNoCache(final boolean noCache) {
     this.noCache = noCache;
   }
 
