@@ -68,7 +68,7 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
   public ORecordIteratorClass(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final String iClassName, final boolean iPolymorphic, final boolean iUseCache, final boolean iUpdateCache,
       final boolean iterateThroughTombstones) {
-    this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, iUseCache, false, iterateThroughTombstones,
+    this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, iUseCache, iUpdateCache, iterateThroughTombstones,
         OStorage.LOCKING_STRATEGY.DEFAULT);
     begin();
   }
