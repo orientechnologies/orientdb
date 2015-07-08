@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -40,10 +41,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -52,13 +52,13 @@ import java.util.Set;
  * @author Luca Garulli
  */
 public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstract implements OCommandDistributedReplicateRequest {
-  public static final String  NAME = "CREATE EDGE";
+  public static final String          NAME = "CREATE EDGE";
 
-  private String              from;
-  private String              to;
-  private OClass              clazz;
-  private String              clusterName;
-  private Map<String, Object> fields;
+  private String                      from;
+  private String                      to;
+  private OClass                      clazz;
+  private String                      clusterName;
+  private List<OPair<String, Object>> fields;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLCreateEdge parse(final OCommandRequest iRequest) {
@@ -94,7 +94,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
           to = parserRequiredWord(false, "Syntax error", " =><,\r\n");
 
         } else if (temp.equals(KEYWORD_SET)) {
-          fields = new LinkedHashMap<String, Object>();
+          fields = new ArrayList<OPair<String, Object>>();
           parseSetFields(clazz, fields);
 
         } else if (temp.equals(KEYWORD_CONTENT)) {
@@ -161,9 +161,10 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
 
             if (fields != null)
               // EVALUATE FIELDS
-              for (Entry<String, Object> f : fields.entrySet()) {
+              for (Iterator<OPair<String, Object>> it = fields.iterator(); it.hasNext();) {
+                final OPair<String, Object> f = it.next();
                 if (f.getValue() instanceof OSQLFunctionRuntime)
-                  fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(to, null, context));
+                  f.setValue(((OSQLFunctionRuntime) f.getValue()).getValue(to, null, context));
               }
 
             OrientEdge edge = null;
@@ -172,9 +173,9 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
                 if (content != null) {
                   if (fields != null)
                     // MERGE CONTENT WITH FIELDS
-                    fields.putAll(content.toMap());
+                    fields.addAll(OPair.convertFromMap(content.toMap()));
                   else
-                    fields = content.toMap();
+                    fields = OPair.convertFromMap(content.toMap());
                 }
 
                 edge = fromVertex.addEdge(null, toVertex, clsName, clusterName, fields);

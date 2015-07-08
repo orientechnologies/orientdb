@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -50,7 +51,7 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
       throwSyntaxErrorException("Content not provided. Example: CONTENT { \"name\": \"Jay\" }");
   }
 
-  protected void parseSetFields(final OClass iClass, final Map<String, Object> fields) {
+  protected void parseSetFields(final OClass iClass, final List<OPair<String, Object>> fields) {
     String fieldName;
     String fieldValue;
 
@@ -67,7 +68,7 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
       // INSERT TRANSFORMED FIELD VALUE
       final Object v = convertValue(iClass, fieldName, getFieldValueCountingParameters(fieldValue));
 
-      fields.put(fieldName, v);
+      fields.add(new OPair(fieldName, v));
       parserSkipWhiteSpaces();
     }
 
