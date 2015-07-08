@@ -27,9 +27,14 @@ import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
+
 import org.testng.annotations.Test;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.lang.ProcessBuilder.Redirect;
 import java.lang.reflect.Field;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -108,10 +113,13 @@ public abstract class BaseLuceneTest {
     // "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
         "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName(), getDatabaseName(), "" + drop);
-    processBuilder.inheritIO();
 
     process = processBuilder.start();
-    Thread.sleep(5000);
+    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+    String line;
+    do {
+      line = reader.readLine();
+    } while (!"started".equals(line));
   }
 
   protected void kill(boolean soft) {
@@ -224,8 +232,8 @@ public abstract class BaseLuceneTest {
             db.drop();
           }
         });
-        while (true)
-          Thread.sleep(1000);
+        // Don't remove this is needed for the parent process to understand when the server started
+        System.out.println("started");
       }
 
     }
