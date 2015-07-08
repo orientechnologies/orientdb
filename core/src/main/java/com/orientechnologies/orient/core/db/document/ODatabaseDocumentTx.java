@@ -1661,8 +1661,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@inheritDoc}
    */
   public <RET extends ORecord> RET load(final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, iFetchPlan, iIgnoreCache, !iIgnoreCache, false,
-        OStorage.LOCKING_STRATEGY.NONE, new SimpleRecordReader());
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, iFetchPlan, iIgnoreCache, !iIgnoreCache,
+        false, OStorage.LOCKING_STRATEGY.NONE, new SimpleRecordReader());
   }
 
   /**
@@ -2235,8 +2235,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in current database");
 
     checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iClassName);
-    ORecordIteratorClass<ODocument> iter = new ORecordIteratorClass<ODocument>(this, this, iClassName, iPolymorphic, true, false);
-    return iter;
+    return (ORecordIteratorClass<ODocument>) new ORecordIteratorClass<ODocument>(this, this, iClassName, iPolymorphic, true, false)
+        .setUpdateCache(true);
   }
 
   /**
@@ -2246,7 +2246,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   public ORecordIteratorCluster<ODocument> browseCluster(final String iClusterName) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-    return new ORecordIteratorCluster<ODocument>(this, this, getClusterIdByName(iClusterName), true);
+    return (ORecordIteratorCluster<ODocument>) new ORecordIteratorCluster<ODocument>(this, this, getClusterIdByName(iClusterName),
+        true).setUpdateCache(true);
   }
 
   /**
