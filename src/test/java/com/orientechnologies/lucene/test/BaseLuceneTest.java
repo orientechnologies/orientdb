@@ -45,7 +45,7 @@ import java.util.concurrent.Executors;
 @Test
 public abstract class BaseLuceneTest {
 
-  protected ODatabaseDocument   databaseDocumentTx;
+  protected ODatabaseDocumentTx   databaseDocumentTx;
   private String                url;
   protected OServer             server;
   private boolean               remote;
