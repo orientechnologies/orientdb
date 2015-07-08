@@ -776,7 +776,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     // AGGREGATE IT
-    getProjectionGroup(null);
+    groupedResult = new LinkedHashMap<Object, ORuntimeResult>();
   }
 
   protected void parseUnwind() {
@@ -934,7 +934,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           if (groupedResult == null && expandTarget instanceof OSQLFunctionRuntime
               && ((OSQLFunctionRuntime) expandTarget).aggregateResults())
-            getProjectionGroup(null);
+            groupedResult = new LinkedHashMap<Object, ORuntimeResult>();
 
           continue;
         }
