@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -26,10 +30,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * Execute a read of a record from a distributed node.
@@ -76,6 +76,11 @@ public class OReadRecordTask extends OAbstractRemoteTask {
   @Override
   public String getName() {
     return "record_read";
+  }
+
+  @Override
+  public String toString() {
+    return getName() + "(" + rid + ")";
   }
 
   @Override

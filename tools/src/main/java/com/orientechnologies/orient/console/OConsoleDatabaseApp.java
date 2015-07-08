@@ -19,33 +19,6 @@
  */
 package com.orientechnologies.orient.console;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.Set;
-
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -111,6 +84,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPa
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedClusterDebug;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
+import java.io.*;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected static final int    DEFAULT_WIDTH      = 150;
@@ -1497,71 +1477,70 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     boolean verbose = iOptions != null && iOptions.contains("-v");
 
-
     long fixedLinks = 0l;
     long modifiedDocuments = 0l;
     long errors = 0l;
 
     try {
 
-        message("\n- Fixing dirty links...");
-        for (String clusterName : currentDatabase.getClusterNames()) {
-          for (ORecord rec : currentDatabase.browseCluster(clusterName)) {
-            try {
-              if (rec instanceof ODocument) {
-                boolean changed = false;
+      message("\n- Fixing dirty links...");
+      for (String clusterName : currentDatabase.getClusterNames()) {
+        for (ORecord rec : currentDatabase.browseCluster(clusterName)) {
+          try {
+            if (rec instanceof ODocument) {
+              boolean changed = false;
 
-                final ODocument doc = (ODocument) rec;
-                for (String fieldName : doc.fieldNames()) {
-                  final Object fieldValue = doc.rawField(fieldName);
+              final ODocument doc = (ODocument) rec;
+              for (String fieldName : doc.fieldNames()) {
+                final Object fieldValue = doc.rawField(fieldName);
 
-                  if (fieldValue instanceof OIdentifiable) {
-                    if (fixLink(fieldValue)) {
-                      doc.field(fieldName, (OIdentifiable) null);
+                if (fieldValue instanceof OIdentifiable) {
+                  if (fixLink(fieldValue)) {
+                    doc.field(fieldName, (OIdentifiable) null);
+                    fixedLinks++;
+                    changed = true;
+                    if (verbose)
+                      message("\n--- reset link " + ((OIdentifiable) fieldValue).getIdentity() + " in field '" + fieldName
+                          + "' (rid=" + doc.getIdentity() + ")");
+                  }
+                } else if (fieldValue instanceof Iterable<?>) {
+                  if (fieldValue instanceof ORecordLazyMultiValue)
+                    ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
+
+                  final Iterator<Object> it = ((Iterable) fieldValue).iterator();
+                  for (int i = 0; it.hasNext(); ++i) {
+                    final Object v = it.next();
+                    if (fixLink(v)) {
+                      it.remove();
                       fixedLinks++;
                       changed = true;
                       if (verbose)
-                        message("\n--- reset link " + ((OIdentifiable) fieldValue).getIdentity() + " in field '" + fieldName
-                            + "' (rid=" + doc.getIdentity() + ")");
-                    }
-                  } else if (fieldValue instanceof Iterable<?>) {
-                    if (fieldValue instanceof ORecordLazyMultiValue)
-                      ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
-
-                    final Iterator<Object> it = ((Iterable) fieldValue).iterator();
-                    for (int i = 0; it.hasNext(); ++i) {
-                      final Object v = it.next();
-                      if (fixLink(v)) {
-                        it.remove();
-                        fixedLinks++;
-                        changed = true;
-                        if (verbose)
-                          message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as item " + i
-                              + " in collection of field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
-                      }
+                        message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as item " + i
+                            + " in collection of field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
                     }
                   }
                 }
-
-                if (changed) {
-                  modifiedDocuments++;
-                  doc.save();
-
-                  if (verbose)
-                    message("\n-- updated document " + doc.getIdentity());
-                }
               }
-            } catch (Exception e) {
-              errors++;
+
+              if (changed) {
+                modifiedDocuments++;
+                doc.save();
+
+                if (verbose)
+                  message("\n-- updated document " + doc.getIdentity());
+              }
             }
+          } catch (Exception e) {
+            errors++;
           }
         }
-        if (verbose)
-          message("\n");
+      }
+      if (verbose)
+        message("\n");
 
-        message("Done! Fixed links: " + fixedLinks + ", modified documents: " + modifiedDocuments);
+      message("Done! Fixed links: " + fixedLinks + ", modified documents: " + modifiedDocuments);
 
-        message("\nRepair database complete (" + errors + " errors)");
+      message("\nRepair database complete (" + errors + " errors)");
     } catch (Exception e) {
       printError(e);
     }
@@ -1958,7 +1937,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void reloadRecordInternal(String iRecordId, String iFetchPlan) {
     checkForDatabase();
 
-    currentRecord = currentDatabase.executeReadRecord(new ORecordId(iRecordId), null, null, iFetchPlan, true, false,
+    currentRecord = currentDatabase.executeReadRecord(new ORecordId(iRecordId), null, null, iFetchPlan, true, false, false,
         OStorage.LOCKING_STRATEGY.NONE, new ODatabaseDocumentTx.SimpleRecordReader());
     displayRecord(null);
 
