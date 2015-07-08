@@ -132,6 +132,12 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
         checkClassExists(database, className, cName);
       }
     }
+    if (!unsafe && value != null && attribute == ATTRIBUTES.NAME) {
+      if(!cls.getIndexes().isEmpty()){
+        throw new OCommandExecutionException("Cannot rename class '" + className
+            + "' because it has indexes defined on it. Drop indexes before or use UNSAFE (at your won risk)");
+      }
+    }
     cls.set(attribute, value);
 
     return null;
