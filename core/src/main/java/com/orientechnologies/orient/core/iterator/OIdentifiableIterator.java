@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -30,10 +34,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
 
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
@@ -163,26 +163,6 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
    */
   public long getLimit() {
     return limit;
-  }
-
-  /**
-   * Returns if update the cache while fetching records.
-   * 
-   * @return
-   */
-  public boolean isUpdateCache() {
-    return updateCache;
-  }
-
-  /**
-   * Tells if update the cache while fetching records.
-   * 
-   * @param updateCache
-   * @return
-   */
-  public OIdentifiableIterator<REC> setUpdateCache(final boolean updateCache) {
-    this.updateCache = updateCache;
-    return this;
   }
 
   /**
