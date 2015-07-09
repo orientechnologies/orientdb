@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.DatabaseAbstractTest;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.Orient;
@@ -61,6 +62,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.orientechnologies.DatabaseAbstractTest.getEnvironment;
 
 @Test(groups = { "index" })
 public class IndexTest extends ObjectDBBaseTest {
@@ -765,7 +768,8 @@ public class IndexTest extends ObjectDBBaseTest {
     long expectedIndexSize = 0;
 
     final int passCount = 10;
-    final int chunkSize = 1000;
+    final int chunkSize = getEnvironment() == DatabaseAbstractTest.ENV.DEV ? 10 : 1000;
+
     for (int pass = 0; pass < passCount; pass++) {
       List<ODocument> recordsToDelete = new ArrayList<ODocument>();
       db.begin();
