@@ -21,6 +21,8 @@ package com.orientechnologies.common.concur.lock;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
@@ -32,16 +34,32 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
   protected long                                                  acquireTimeout;
   protected final ConcurrentHashMap<RESOURCE_TYPE, CountableLock> map;
   private final boolean                                           enabled;
-  private final int                                               shift;
-  private final int                                               mask;
-  private final Object[]                                          locks;
 
   @SuppressWarnings("serial")
-  protected static class CountableLock extends ReentrantReadWriteLock {
-    protected int countLocks = 0;
+  protected static class CountableLock {
+    private final AtomicInteger countLocks    = new AtomicInteger(1);
+    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-    public CountableLock() {
-      super(false);
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (!(o instanceof CountableLock))
+        return false;
+
+      CountableLock that = (CountableLock) o;
+
+      if (!countLocks.equals(that.countLocks))
+        return false;
+      return readWriteLock.equals(that.readWriteLock);
+
+    }
+
+    @Override
+    public int hashCode() {
+      int result = countLocks.hashCode();
+      result = 31 * result + readWriteLock.hashCode();
+      return result;
     }
   }
 
@@ -52,21 +70,11 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
   public OLockManager(final boolean iEnabled, final int iAcquireTimeout, final int concurrencyLevel) {
     int cL = 1;
 
-    int sh = 0;
     while (cL < concurrencyLevel) {
       cL <<= 1;
-      sh++;
     }
-
-    shift = 32 - sh;
-    mask = cL - 1;
 
     map = new ConcurrentHashMap<RESOURCE_TYPE, CountableLock>(cL);
-    locks = new Object[cL];
-    for (int i = 0; i < locks.length; i++) {
-      locks[i] = new Object();
-    }
-
     acquireTimeout = iAcquireTimeout;
     enabled = iEnabled;
   }
@@ -79,33 +87,44 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
     if (!enabled)
       return;
 
+    final RESOURCE_TYPE immutableResource = getImmutableResourceId(iResourceId);
+
     CountableLock lock;
-    final Object internalLock = internalLock(iResourceId);
-    synchronized (internalLock) {
-      lock = map.get(iResourceId);
-      if (lock == null) {
-        final CountableLock newLock = new CountableLock();
-        lock = map.putIfAbsent(getImmutableResourceId(iResourceId), newLock);
-        if (lock == null)
-          lock = newLock;
+
+    while (true) {
+      lock = new CountableLock();
+
+      CountableLock oldLock = map.putIfAbsent(immutableResource, lock);
+      if (oldLock == null)
+        break;
+
+      lock = oldLock;
+      final int oldValue = lock.countLocks.get();
+
+      if (oldValue > 0) {
+        if (lock.countLocks.compareAndSet(oldValue, oldValue + 1)) {
+          if (map.get(immutableResource) == lock)
+            break;
+        }
+
+        // otherwise wait till lock will be removed by release
       }
-      lock.countLocks++;
     }
 
     try {
       if (iTimeout <= 0) {
         if (iLockType == LOCK.SHARED)
-          lock.readLock().lock();
+          lock.readWriteLock.readLock().lock();
         else
-          lock.writeLock().lock();
+          lock.readWriteLock.writeLock().lock();
       } else {
         try {
           if (iLockType == LOCK.SHARED) {
-            if (!lock.readLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
+            if (!lock.readWriteLock.readLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
               throw new OLockException("Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId
                   + "' because is locked from another thread");
           } else {
-            if (!lock.writeLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
+            if (!lock.readWriteLock.writeLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
               throw new OLockException("Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId
                   + "' because is locked from another thread");
           }
@@ -115,14 +134,13 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
         }
       }
     } catch (RuntimeException e) {
-      synchronized (internalLock) {
-        lock.countLocks--;
-        if (lock.countLocks == 0)
-          map.remove(iResourceId);
-      }
+      lock.countLocks.decrementAndGet();
+
+      if (lock.countLocks.get() == 0)
+        map.remove(iResourceId);
+
       throw e;
     }
-
   }
 
   public void releaseLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType)
@@ -131,21 +149,20 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
       return;
 
     final CountableLock lock;
-    final Object internalLock = internalLock(iResourceId);
-    synchronized (internalLock) {
-      lock = map.get(iResourceId);
-      if (lock == null)
-        throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
-            + "' against the resource: '" + iResourceId + "'");
+    lock = map.get(iResourceId);
+    if (lock == null)
+      throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
+          + "' against the resource: '" + iResourceId + "'");
 
-      lock.countLocks--;
-      if (lock.countLocks == 0)
-        map.remove(iResourceId);
-    }
+    lock.countLocks.decrementAndGet();
+
+    if (lock.countLocks.get() == 0)
+      map.remove(iResourceId);
+
     if (iLockType == LOCK.SHARED)
-      lock.readLock().unlock();
+      lock.readWriteLock.readLock().unlock();
     else
-      lock.writeLock().unlock();
+      lock.readWriteLock.writeLock().unlock();
   }
 
   public void clear() {
@@ -162,12 +179,6 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 
   protected RESOURCE_TYPE getImmutableResourceId(final RESOURCE_TYPE iResourceId) {
     return iResourceId;
-  }
-
-  private Object internalLock(final RESOURCE_TYPE iResourceId) {
-    final int hashCode = iResourceId.hashCode();
-    final int index = (hashCode ^ (hashCode >>> 16)) & mask;
-    return locks[index];
   }
 
   private static int defaultConcurrency() {

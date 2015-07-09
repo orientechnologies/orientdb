@@ -31,7 +31,7 @@ public class OOperationUnitId {
   private static final AtomicLong                      sharedId        = new AtomicLong();
 
   private static volatile ThreadLocal<OModifiableLong> localId         = new ThreadLocal<OModifiableLong>();
-  private static volatile ThreadLocal<OModifiableLong> sharedIdCopy    = new ThreadLocal<OModifiableLong>();
+  private static volatile ThreadLocal<Long>            sharedIdCopy    = new ThreadLocal<Long>();
 
   public static final int                              SERIALIZED_SIZE = 2 * OLongSerializer.LONG_SIZE;
 
@@ -43,7 +43,7 @@ public class OOperationUnitId {
           localId = new ThreadLocal<OModifiableLong>();
 
         if (sharedIdCopy == null)
-          sharedIdCopy = new ThreadLocal<OModifiableLong>();
+          sharedIdCopy = new ThreadLocal<Long>();
       }
 
       @Override
@@ -72,14 +72,14 @@ public class OOperationUnitId {
     }
     lId.increment();
 
-    OModifiableLong sId = sharedIdCopy.get();
+    Long sId = sharedIdCopy.get();
     if (sId == null) {
-      sId = new OModifiableLong(sharedId.incrementAndGet());
+      sId = sharedId.incrementAndGet();
       sharedIdCopy.set(sId);
     }
 
     operationUnitId.lId = lId.getValue();
-    operationUnitId.sId = sId.getValue();
+    operationUnitId.sId = sId;
 
     return operationUnitId;
   }
