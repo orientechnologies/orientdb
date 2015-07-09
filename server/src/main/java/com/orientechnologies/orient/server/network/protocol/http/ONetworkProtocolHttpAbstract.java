@@ -193,7 +193,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
               "->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + request.httpMethod + "."
                   + URLDecoder.decode(command, "UTF-8"));
 
-          sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, OHttpUtils.STATUS_INVALIDMETHOD_DESCRIPTION, null,
+          sendError(OHttpUtils.STATUS_INVALIDMETHOD_CODE, OHttpUtils.STATUS_INVALIDMETHOD_DESCRIPTION, null,
               OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: " + command, request.keepAlive);
         } catch (IOException e1) {
           sendShutdown();
@@ -337,19 +337,44 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     }
 
     try {
-      sendTextContent(errorCode, errorReason, responseHeaders, OHttpUtils.CONTENT_TEXT_PLAIN, errorMessage, request.keepAlive);
+      sendError(errorCode, errorReason, responseHeaders, OHttpUtils.CONTENT_TEXT_PLAIN, errorMessage, request.keepAlive);
     } catch (IOException e1) {
       sendShutdown();
     }
   }
 
-  protected void sendJsonContent(final int iCode, final String iReason, String iHeaders, final String iContentType,
+  protected void sendTextContent(final int iCode, final String iReason, String iHeaders, final String iContentType,
       final String iContent, final boolean iKeepAlive) throws IOException {
-
     final boolean empty = iContent == null || iContent.length() == 0;
 
     sendStatus(empty && iCode == 200 ? 204 : iCode, iReason);
     sendResponseHeaders(iContentType, iKeepAlive);
+
+    if (iHeaders != null)
+      writeLine(iHeaders);
+
+    final byte[] binaryContent = empty ? null : iContent.getBytes(utf8);
+
+    writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
+
+    writeLine(null);
+
+    if (binaryContent != null)
+      channel.writeBytes(binaryContent);
+    channel.flush();
+  }
+
+  protected void sendError(final int iCode, final String iReason, String iHeaders, final String iContentType,
+      final String iContent, final boolean iKeepAlive) throws IOException {
+    final byte[] binaryContent;
+
+    if (!jsonResponseError) {
+      sendTextContent(iCode, iReason, iHeaders, iContentType, iContent, iKeepAlive);
+      return;
+    }
+
+    sendStatus(iCode, iReason);
+    sendResponseHeaders(OHttpUtils.CONTENT_JSON, iKeepAlive);
 
     if (iHeaders != null)
       writeLine(iHeaders);
@@ -366,39 +391,14 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     response.field("errors", errors);
 
-    final byte[] binaryContent = response.toJSON("prettyPrint").getBytes(utf8);
-    writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
+    binaryContent = response.toJSON("prettyPrint").getBytes(utf8);
 
+    writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (binaryContent != null ? binaryContent.length : 0));
     writeLine(null);
 
     if (binaryContent != null)
       channel.writeBytes(binaryContent);
     channel.flush();
-  }
-
-  protected void sendTextContent(final int iCode, final String iReason, String iHeaders, final String iContentType,
-      final String iContent, final boolean iKeepAlive) throws IOException {
-    final boolean empty = iContent == null || iContent.length() == 0;
-
-    if (jsonResponseError) {
-      sendJsonContent(iCode, iReason, iHeaders, OHttpUtils.CONTENT_JSON, iContent, iKeepAlive);
-    } else {
-      sendStatus(empty && iCode == 200 ? 204 : iCode, iReason);
-      sendResponseHeaders(iContentType, iKeepAlive);
-
-      if (iHeaders != null)
-        writeLine(iHeaders);
-
-      final byte[] binaryContent = empty ? null : iContent.getBytes(utf8);
-
-      writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
-
-      writeLine(null);
-
-      if (binaryContent != null)
-        channel.writeBytes(binaryContent);
-      channel.flush();
-    }
   }
 
   protected void writeLine(final String iContent) throws IOException {
@@ -634,12 +634,12 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     } catch (Throwable t) {
       if (request.httpMethod != null && request.url != null) {
         try {
-          sendTextContent(505, "Error on executing of " + request.httpMethod + " for the resource: " + request.url, null,
-              "text/plain", t.toString(), request.keepAlive);
+          sendError(505, "Error on executing of " + request.httpMethod + " for the resource: " + request.url, null, "text/plain",
+              t.toString(), request.keepAlive);
         } catch (IOException e) {
         }
       } else
-        sendTextContent(505, "Error on executing request", null, "text/plain", t.toString(), request.keepAlive);
+        sendError(505, "Error on executing request", null, "text/plain", t.toString(), request.keepAlive);
 
       readAllContent(request);
     } finally {

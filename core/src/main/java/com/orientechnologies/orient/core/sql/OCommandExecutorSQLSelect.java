@@ -43,13 +43,8 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngineException;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
@@ -64,23 +59,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.OFilterOptimizer;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+import com.orientechnologies.orient.core.sql.filter.*;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
+import com.orientechnologies.orient.core.sql.operator.*;
 import com.orientechnologies.orient.core.sql.parser.OOrderBy;
 import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
@@ -677,17 +660,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   private Collection<OIdentifiable> unwind(OIdentifiable iRecord, List<String> unwindFields) {
     List<OIdentifiable> result = new ArrayList<OIdentifiable>();
+    ODocument doc;
+    if (iRecord instanceof ODocument) {
+      doc = (ODocument) iRecord;
+    } else {
+      doc = iRecord.getRecord();
+    }
     if (unwindFields.size() == 0) {
-      result.add(iRecord);
+      ORecordInternal.setIdentity(doc, new ORecordId(-2, getTemporaryRIDCounter()));
+      result.add(doc);
     } else {
       String firstField = unwindFields.get(0);
       List<String> nextFields = unwindFields.subList(1, unwindFields.size());
-      ODocument doc;
-      if (iRecord instanceof ODocument) {
-        doc = (ODocument) iRecord;
-      } else {
-        doc = iRecord.getRecord();
-      }
+
       Object fieldValue = doc.field(firstField);
       if (fieldValue == null || !(fieldValue instanceof Iterable)) {
         result.addAll(unwind(doc, nextFields));
@@ -695,6 +680,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         for (Object o : (Iterable) fieldValue) {
           ODocument unwindedDoc = new ODocument();
           doc.copyTo(unwindedDoc);
+//          ORecordInternal.setIdentity(doc, new ORecordId(-2, getTemporaryRIDCounter()));
           unwindedDoc.field(firstField, o);
           result.addAll(unwind(unwindedDoc, nextFields));
         }
@@ -779,7 +765,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     // AGGREGATE IT
-    getProjectionGroup(null);
+    groupedResult = new LinkedHashMap<Object, ORuntimeResult>();
   }
 
   protected void parseUnwind() {
@@ -937,7 +923,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           if (groupedResult == null && expandTarget instanceof OSQLFunctionRuntime
               && ((OSQLFunctionRuntime) expandTarget).aggregateResults())
-            getProjectionGroup(null);
+            groupedResult = new LinkedHashMap<Object, ORuntimeResult>();
 
           continue;
         }

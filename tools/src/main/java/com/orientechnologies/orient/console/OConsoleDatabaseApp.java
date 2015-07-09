@@ -257,6 +257,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       final OStorage stg = Orient.instance().getStorage(currentDatabase.getURL());
 
+      currentDatabase.activateOnCurrentThread();
       if (!currentDatabase.isClosed())
         currentDatabase.close();
 
@@ -919,10 +920,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         currentDatabase.drop();
       } else
         message("\n\nCannot drop database '" + iDatabaseURL + "' because was not found");
-
-      currentDatabase = null;
-      currentDatabaseName = null;
     }
+
+    currentDatabase = null;
+    currentDatabaseName = null;
 
     message("\n\nDatabase '" + iDatabaseURL + "' deleted successfully");
   }

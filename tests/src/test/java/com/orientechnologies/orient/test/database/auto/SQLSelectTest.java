@@ -52,7 +52,7 @@ public class SQLSelectTest extends AbstractSelectTest {
   private ODocument record = new ODocument();
 
   @Parameters(value = "url")
-  public SQLSelectTest(@Optional String url) {
+  public SQLSelectTest(@Optional String url) throws Exception {
     super(url);
   }
 
@@ -1076,27 +1076,27 @@ public class SQLSelectTest extends AbstractSelectTest {
     List<ODocument> result = executeQuery("select * from account where id < 3 + 4", database);
     Assert.assertFalse(result.isEmpty());
     for (int i = 0; i < result.size(); ++i)
-      Assert.assertTrue(((Integer) result.get(i).field("id")) < 3 + 4);
+      Assert.assertTrue(((Number) result.get(i).field("id")).intValue() < 3 + 4);
 
     result = executeQuery("select * from account where id < 10 - 3", database);
     Assert.assertFalse(result.isEmpty());
     for (int i = 0; i < result.size(); ++i)
-      Assert.assertTrue(((Integer) result.get(i).field("id")) < 10 - 3);
+      Assert.assertTrue(((Number) result.get(i).field("id")).intValue() < 10 - 3);
 
     result = executeQuery("select * from account where id < 3 * 2", database);
     Assert.assertFalse(result.isEmpty());
     for (int i = 0; i < result.size(); ++i)
-      Assert.assertTrue(((Integer) result.get(i).field("id")) < 3 * 2);
+      Assert.assertTrue(((Number) result.get(i).field("id")).intValue() < 3 * 2);
 
     result = executeQuery("select * from account where id < 120 / 20", database);
     Assert.assertFalse(result.isEmpty());
     for (int i = 0; i < result.size(); ++i)
-      Assert.assertTrue(((Integer) result.get(i).field("id")) < 120 / 20);
+      Assert.assertTrue(((Number) result.get(i).field("id")).intValue() < 120 / 20);
 
     result = executeQuery("select * from account where id < 27 % 10", database);
     Assert.assertFalse(result.isEmpty());
     for (int i = 0; i < result.size(); ++i)
-      Assert.assertTrue(((Integer) result.get(i).field("id")) < 27 % 10);
+      Assert.assertTrue(((Number) result.get(i).field("id")).intValue() < 27 % 10);
 
     result = executeQuery("select * from account where id = id * 1", database);
     Assert.assertFalse(result.isEmpty());

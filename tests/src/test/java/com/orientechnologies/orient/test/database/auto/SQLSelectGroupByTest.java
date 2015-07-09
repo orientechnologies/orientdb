@@ -70,7 +70,7 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select count(*) from Account group by location"))
         .execute();
 
-    Assert.assertTrue(result.size()>1);
+    Assert.assertTrue(result.size() > 1);
   }
 
   @Test
@@ -111,7 +111,7 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
       final List<ODocument> result = database.command(
           new OSQLSynchQuery<ODocument>("select location, count(*) from GroupByTest group by location")).execute();
 
-      Assert.assertTrue(result.size() > 1);
+      Assert.assertEquals(result.size(), 3);
 
       boolean foundNullGroup = false;
       for (ODocument d : result) {
@@ -122,6 +122,29 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
       }
 
       Assert.assertTrue(foundNullGroup);
+    } finally {
+      database.command(new OCommandSQL("delete vertex GroupByTest")).execute();
+      database.command(new OCommandSQL("drop class GroupByTest UNSAFE")).execute();
+    }
+  }
+
+  @Test
+  public void queryGroupByNoNulls() {
+    database.command(new OCommandSQL("create class GroupByTest extends V")).execute();
+    try {
+      database.command(new OCommandSQL("insert into GroupByTest set location = 'Rome'")).execute();
+      database.command(new OCommandSQL("insert into GroupByTest set location = 'Austin'")).execute();
+      database.command(new OCommandSQL("insert into GroupByTest set location = 'Austin'")).execute();
+
+      final List<ODocument> result = database.command(
+          new OSQLSynchQuery<ODocument>("select location, count(*) from GroupByTest group by location")).execute();
+
+      Assert.assertEquals(result.size(), 2);
+
+      for (ODocument d : result) {
+        Assert.assertNotNull(d.field("location"), "Found null in resultset with groupby");
+      }
+
     } finally {
       database.command(new OCommandSQL("delete vertex GroupByTest")).execute();
       database.command(new OCommandSQL("drop class GroupByTest UNSAFE")).execute();

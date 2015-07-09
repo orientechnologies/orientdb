@@ -18,17 +18,6 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -41,6 +30,16 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 public class GraphTests {
 
@@ -97,6 +96,26 @@ public class GraphTests {
       }
 
     }
+  }
+
+  @Test
+  public void testIndexCollate() {
+    OrientGraph g = new OrientGraph(URL, "admin", "admin");
+
+    OrientVertexType vCollate = g.createVertexType("VCollate");
+
+    vCollate.createProperty("name", OType.STRING);
+
+    g.createKeyIndex("name", Vertex.class, new Parameter<String, String>("class", "VCollate"), new Parameter<String, String>("type",
+        "UNIQUE"), new Parameter<String, OType>("keytype", OType.STRING), new Parameter<String, String>("collate", "ci"));
+    OrientVertex vertex = g.addVertex("class:VCollate", new Object[] { "name", "Enrico" });
+
+    g.commit();
+
+    Iterable<Vertex> enrico = g.getVertices("VCollate.name", "ENRICO");
+
+    Assert.assertEquals(true, enrico.iterator().hasNext());
+
   }
 
   @Test

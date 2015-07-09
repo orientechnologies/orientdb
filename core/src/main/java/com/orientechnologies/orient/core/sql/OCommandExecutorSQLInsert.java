@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -153,9 +154,11 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
           parseContent();
           sourceClauseProcessed = true;
         } else if (parserGetLastWord().equals(KEYWORD_SET)) {
-          final LinkedHashMap<String, Object> fields = new LinkedHashMap<String, Object>();
-          newRecords.add(fields);
+          final List<OPair<String, Object>> fields = new ArrayList<OPair<String, Object>>();
           parseSetFields(clazz, fields);
+
+          newRecords.add(OPair.convertToMap(fields));
+
           sourceClauseProcessed = true;
         }
       }

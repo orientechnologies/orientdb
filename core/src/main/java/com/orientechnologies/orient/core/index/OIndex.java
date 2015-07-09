@@ -161,6 +161,11 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   String getType();
 
   /**
+   * Returns the engine of the index as string.
+   */
+  public String getAlgorithm();
+
+  /**
    * Tells if the index is automatic. Automatic means it's maintained automatically by OrientDB. This is the case of indexes created
    * against schema properties. Automatic indexes can always been rebuilt.
    * 
