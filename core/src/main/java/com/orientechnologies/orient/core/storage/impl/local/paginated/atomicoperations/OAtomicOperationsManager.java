@@ -57,7 +57,7 @@ public class OAtomicOperationsManager {
 
   private final OAbstractPaginatedStorage                      storage;
   private final OWriteAheadLog                                 writeAheadLog;
-  private final OLockManager<String, OAtomicOperationsManager> lockManager      = new OLockManager<String, OAtomicOperationsManager>(
+  private final OLockManager<String>                    lockManager      = new OLockManager<String>(
                                                                                     true, -1);
   private final OReadCache                                     readCache;
   private final OWriteCache                                    writeCache;
@@ -152,7 +152,7 @@ public class OAtomicOperationsManager {
     if (operation.containsInLockedObjects(fullName))
       return;
 
-    lockManager.acquireLock(this, fullName, OLockManager.LOCK.EXCLUSIVE);
+    lockManager.acquireLock(fullName, OLockManager.LOCK.EXCLUSIVE);
     operation.addLockedObject(fullName);
   }
 
@@ -163,7 +163,7 @@ public class OAtomicOperationsManager {
     assert durableComponent.getName() != null;
     assert durableComponent.getFullName() != null;
 
-    lockManager.acquireLock(this, durableComponent.getFullName(), OLockManager.LOCK.SHARED);
+    lockManager.acquireLock(durableComponent.getFullName(), OLockManager.LOCK.SHARED);
   }
 
   public void releaseReadLock(ODurableComponent durableComponent) {

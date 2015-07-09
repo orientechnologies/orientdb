@@ -25,14 +25,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
+public class OLockManager<T> {
   public enum LOCK {
     SHARED, EXCLUSIVE
   }
 
   private static final int                                        DEFAULT_CONCURRENCY_LEVEL = 16;
   protected long                                                  acquireTimeout;
-  protected final ConcurrentHashMap<RESOURCE_TYPE, CountableLock> map;
+  protected final ConcurrentHashMap<T, CountableLock> map;
   private final boolean                                           enabled;
 
   @SuppressWarnings("serial")
@@ -74,20 +74,20 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
       cL <<= 1;
     }
 
-    map = new ConcurrentHashMap<RESOURCE_TYPE, CountableLock>(cL);
+    map = new ConcurrentHashMap<T, CountableLock>(cL);
     acquireTimeout = iAcquireTimeout;
     enabled = iEnabled;
   }
 
-  public void acquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType) {
-    acquireLock(iRequester, iResourceId, iLockType, acquireTimeout);
+  public void acquireLock(final T iResourceId, final LOCK iLockType) {
+    acquireLock(iResourceId, iLockType, acquireTimeout);
   }
 
-  public void acquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType, long iTimeout) {
+  public void acquireLock(final T iResourceId, final LOCK iLockType, long iTimeout) {
     if (!enabled)
       return;
 
-    final RESOURCE_TYPE immutableResource = getImmutableResourceId(iResourceId);
+    final T immutableResource = getImmutableResourceId(iResourceId);
 
     CountableLock lock;
 
@@ -103,8 +103,8 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 
       if (oldValue > 0) {
         if (lock.countLocks.compareAndSet(oldValue, oldValue + 1)) {
-          if (map.get(immutableResource) == lock)
-            break;
+          assert map.get(immutableResource) == lock;
+          break;
         }
 
         // otherwise wait till lock will be removed by release
@@ -134,16 +134,15 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
         }
       }
     } catch (RuntimeException e) {
-      lock.countLocks.decrementAndGet();
-
-      if (lock.countLocks.get() == 0)
-        map.remove(iResourceId);
+      final int usages = lock.countLocks.decrementAndGet();
+      if (usages == 0)
+        map.remove(immutableResource);
 
       throw e;
     }
   }
 
-  public void releaseLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType)
+  public void releaseLock(final Object iRequester, final T iResourceId, final LOCK iLockType)
       throws OLockException {
     if (!enabled)
       return;
@@ -154,9 +153,8 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
       throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
           + "' against the resource: '" + iResourceId + "'");
 
-    lock.countLocks.decrementAndGet();
-
-    if (lock.countLocks.get() == 0)
+    final int usages = lock.countLocks.decrementAndGet();
+    if (usages == 0)
       map.remove(iResourceId);
 
     if (iLockType == LOCK.SHARED)
@@ -174,15 +172,15 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
     return map.size();
   }
 
-  public void releaseAllLocksOfRequester(REQUESTER_TYPE iRequester) {
+  public void releaseAllLocksOfRequester(Object iRequester) {
   }
 
-  protected RESOURCE_TYPE getImmutableResourceId(final RESOURCE_TYPE iResourceId) {
+  protected T getImmutableResourceId(final T iResourceId) {
     return iResourceId;
   }
 
   private static int defaultConcurrency() {
-    return Runtime.getRuntime().availableProcessors() * 8 > DEFAULT_CONCURRENCY_LEVEL ? Runtime.getRuntime().availableProcessors() * 8
+    return Runtime.getRuntime().availableProcessors() * 64 > DEFAULT_CONCURRENCY_LEVEL ? Runtime.getRuntime().availableProcessors() * 64
         : DEFAULT_CONCURRENCY_LEVEL;
   }
 }

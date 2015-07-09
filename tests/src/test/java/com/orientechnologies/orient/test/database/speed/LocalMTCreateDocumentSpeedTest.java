@@ -51,7 +51,6 @@ public class LocalMTCreateDocumentSpeedTest {
     }
 
     database.create();
-    database.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 8);
     database.getMetadata().getSchema().createClass("Account");
 
     final OSecurity security = database.getMetadata().getSecurity();
@@ -61,7 +60,7 @@ public class LocalMTCreateDocumentSpeedTest {
     }
 
     futures = new ArrayList<Future>();
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 1; i++)
       futures.add(executorService.submit(new Saver()));
   }
 
@@ -78,29 +77,29 @@ public class LocalMTCreateDocumentSpeedTest {
 
     System.out.println("Speed : " + (sum / futures.size()) + " ns per document.");
 
-    // futures.clear();
-    //
-    // latch = new CountDownLatch(1);
-    //
-    // stop = false;
-    // System.out.println("Start reading");
-    // System.out.println("Doc count : " + database.countClass("Account"));
-    //
-    // for (int i = 0; i < 8; i++)
-    // futures.add(executorService.submit(new Reader(database.countClass("Account"), database.getMetadata().getSchema()
-    // .getClass("Account").getDefaultClusterId())));
-    //
-    // latch.countDown();
-    //
-    // Thread.sleep(10 * 60 * 1000);
-    //
-    // stop = true;
-    //
-    // sum = 0;
-    // for (Future future : futures)
-    // sum += (Long) future.get();
-    //
-    // System.out.println("Speed : " + (sum / futures.size()) + " ns per document.");
+    futures.clear();
+
+    latch = new CountDownLatch(1);
+
+    stop = false;
+    System.out.println("Start reading");
+    System.out.println("Doc count : " + database.countClass("Account"));
+
+    for (int i = 0; i < 8; i++)
+      futures.add(executorService.submit(new Reader(database.countClass("Account"), database.getMetadata().getSchema()
+          .getClass("Account").getDefaultClusterId())));
+
+    latch.countDown();
+
+    Thread.sleep(10 * 60 * 1000);
+
+    stop = true;
+
+    sum = 0;
+    for (Future future : futures)
+      sum += (Long) future.get();
+
+    System.out.println("Speed : " + (sum / futures.size()) + " ns per document.");
   }
 
   @AfterClass
