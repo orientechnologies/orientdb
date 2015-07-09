@@ -21,50 +21,42 @@ public class ODirtyManager {
   private Set<ORecord>                        updateRecord;
 
   public void setDirty(ORecord record) {
-    if (overrider != null)
-      overrider.setDirty(record);
-    else {
-      if (record.getIdentity().isNew()) {
-        if (newRecord == null)
-          newRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
-        newRecord.add(record);
-      } else {
-        if (updateRecord == null)
-          updateRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
-        updateRecord.add(record);
-      }
+    ODirtyManager real = getReal();
+    if (record.getIdentity().isNew()) {
+      if (real.newRecord == null)
+        real.newRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
+      real.newRecord.add(record);
+    } else {
+      if (real.updateRecord == null)
+        real.updateRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
+      real.updateRecord.add(record);
     }
   }
 
   public ODirtyManager getReal() {
-    if (overrider != null)
-      return overrider.getReal();
-    return this;
+    ODirtyManager real = this;
+    while (real.overrider != null)
+      real = real.overrider;
+    return real;
   }
 
   public Set<ORecord> getNewRecord() {
-    if (overrider != null)
-      return overrider.getNewRecord();
-    return newRecord;
+    return getReal().newRecord;
   }
 
   public Set<ORecord> getUpdateRecord() {
-    if (overrider != null)
-      return overrider.getUpdateRecord();
-    return updateRecord;
+    return getReal().updateRecord;
   }
 
   public Map<ODocument, List<OIdentifiable>> getReferences() {
-    if (overrider != null)
-      return overrider.getReferences();
-    return references;
+    return getReal().references;
   }
 
   public boolean isSame(ODirtyManager other) {
-    other = other.getReal();
-    if (overrider != null)
-      return overrider.isSame(other);
-    return this == other;
+    // other = other.getReal();
+    // if (overrider != null)
+    // return overrider.isSame(other);
+    return this.getReal() == other.getReal();
   }
 
   public void merge(ODirtyManager toMerge) {
@@ -95,10 +87,10 @@ public class ODirtyManager {
   }
 
   public void track(ORecord pointing, OIdentifiable pointed) {
-    if (overrider != null) {
-      overrider.track(pointing, pointed);
-      return;
-    }
+    getReal().internalTrack(pointing, pointed);
+  }
+
+  private void internalTrack(ORecord pointing, OIdentifiable pointed) {
     if (pointing instanceof ODocument) {
       if (((ODocument) pointing).isEmbedded()) {
 
@@ -138,47 +130,37 @@ public class ODirtyManager {
       }
     }
     if (pointed instanceof ORecord) {
-      ORecordInternal.setDirtyManager((ORecord) pointed, ORecordInternal.getDirtyManager(pointing));
+      ORecordInternal.setDirtyManager((ORecord) pointed, this);
     }
-
   }
 
   private void override(ODirtyManager oDirtyManager) {
+    ODirtyManager real = getReal();
     oDirtyManager = oDirtyManager.getReal();
-    if (this == oDirtyManager)
+    if (real == oDirtyManager)
       return;
-    if (this.overrider != null)
-      this.overrider.override(oDirtyManager);
-    else {
-      this.overrider = oDirtyManager;
-      this.newRecord = null;
-      this.updateRecord = null;
-      this.references = null;
-    }
+    real.overrider = oDirtyManager;
+    real.newRecord = null;
+    real.updateRecord = null;
+    real.references = null;
   }
 
   public void cleanForSave() {
-    if (overrider != null)
-      overrider.cleanForSave();
-    else {
-      this.newRecord = null;
-      this.updateRecord = null;
-    }
+    ODirtyManager real = getReal();
+    real.newRecord = null;
+    real.updateRecord = null;
   }
 
   public List<OIdentifiable> getPointed(ORecord rec) {
-    if (overrider != null)
-      return overrider.getPointed(rec);
-
-    if (references == null)
+    ODirtyManager real = getReal();
+    if (real.references == null)
       return null;
-    return references.get(rec);
+    return real.references.get(rec);
   }
 
   public void removeNew(ODocument oDocument) {
-    if (overrider != null)
-      this.overrider.removeNew(oDocument);
-    else if (this.newRecord != null)
-      this.newRecord.remove(oDocument);
+    ODirtyManager real = getReal();
+    if (real.newRecord != null)
+      real.newRecord.remove(oDocument);
   }
 }

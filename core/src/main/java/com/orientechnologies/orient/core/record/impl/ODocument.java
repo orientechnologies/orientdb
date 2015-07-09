@@ -1352,12 +1352,12 @@ public class ODocument extends ORecordAbstract
         if (e != null)
           e.setDirty();
       }
-    }
+    } else if (!isDirty())
+      getDirtyManager().setDirty(this);
+    
     // THIS IS IMPORTANT TO BE SURE THAT FIELDS ARE LOADED BEFORE IT'S TOO LATE AND THE RECORD _SOURCE IS NULL
     checkForFields();
 
-    if (!isDirty())
-      getDirtyManager().setDirty(this);
     super.setDirty();
 
     boolean addToChangedList = false;

@@ -1187,11 +1187,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         if (toSave != null) {
           for (OIdentifiable oIdentifiable : toSave) {
             if (oIdentifiable.getIdentity().isNew()) {
-              if (oIdentifiable instanceof ORecord)
+              if (oIdentifiable instanceof ORecord) {
                 nextToInspect = (ORecord) oIdentifiable;
-              else
+                break;
+              } else {
                 nextToInspect = oIdentifiable.getRecord();
-              break;
+                if (nextToInspect.getIdentity().isNew())
+                  break;
+                else
+                  nextToInspect = null;
+              }
+
             }
           }
         }
