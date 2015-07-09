@@ -20,21 +20,18 @@ package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-
 import org.testng.annotations.Test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.lang.ProcessBuilder.Redirect;
 import java.lang.reflect.Field;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,7 +42,7 @@ import java.util.concurrent.Executors;
 @Test
 public abstract class BaseLuceneTest {
 
-  protected ODatabaseDocumentTx   databaseDocumentTx;
+  protected ODatabaseDocumentTx databaseDocumentTx;
   private String                url;
   protected OServer             server;
   private boolean               remote;
@@ -103,6 +100,7 @@ public abstract class BaseLuceneTest {
         databaseDocumentTx = Orient.instance().getDatabaseFactory().createDatabase("graph", url);
         databaseDocumentTx.create();
       }
+      ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTx);
     }
   }
 

@@ -25,11 +25,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexEngineException;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -44,8 +40,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.Version;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Set;
+import java.util.*;
 
 public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
@@ -129,28 +124,50 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
       doc.add(OLuceneIndexType.createField(RID, oIdentifiable, oIdentifiable.getIdentity().toString(), Field.Store.YES,
           Field.Index.NOT_ANALYZED_NO_NORMS));
       int i = 0;
-      for (String f : index.getFields()) {
+      if (index.isAutomatic()) {
+        for (String f : index.getFields()) {
+
+          Object val = null;
+          if (key instanceof OCompositeKey) {
+            val = ((OCompositeKey) key).getKeys().get(i);
+            i++;
+          } else {
+            val = key;
+          }
+          if (val != null) {
+            if (facetManager.supportsFacets() && facetManager.isFacetField(f)) {
+              doc.add(facetManager.buildFacetField(f, val));
+            } else {
+
+              if (isToStore(f).equals(Field.Store.YES)) {
+                doc.add(OLuceneIndexType.createField(f + STORED, oIdentifiable, val, Field.Store.YES,
+                    Field.Index.NOT_ANALYZED_NO_NORMS));
+              }
+              doc.add(OLuceneIndexType.createField(f, oIdentifiable, val, Field.Store.NO, Field.Index.ANALYZED));
+            }
+          }
+
+        }
+      } else {
 
         Object val = null;
         if (key instanceof OCompositeKey) {
-          val = ((OCompositeKey) key).getKeys().get(i);
-          i++;
+          List<Object> keys = ((OCompositeKey) key).getKeys();
+
+          int k = 0;
+          for (Object o : keys) {
+            doc.add(OLuceneIndexType.createField("k" + k, oIdentifiable, val, Field.Store.NO, Field.Index.ANALYZED));
+          }
+        } else if (key instanceof Collection) {
+          Collection<Object> keys = (Collection<Object>) key;
+          int k = 0;
+          for (Object o : keys) {
+            doc.add(OLuceneIndexType.createField("k" + k, oIdentifiable, o, Field.Store.NO, Field.Index.ANALYZED));
+          }
         } else {
           val = key;
+          doc.add(OLuceneIndexType.createField("k0", oIdentifiable, val, Field.Store.NO, Field.Index.ANALYZED));
         }
-        if (val != null) {
-          if (facetManager.supportsFacets() && facetManager.isFacetField(f)) {
-            doc.add(facetManager.buildFacetField(f, val));
-          } else {
-
-            if (isToStore(f).equals(Field.Store.YES)) {
-              doc.add(OLuceneIndexType.createField(f + STORED, oIdentifiable, val, Field.Store.YES,
-                  Field.Index.NOT_ANALYZED_NO_NORMS));
-            }
-            doc.add(OLuceneIndexType.createField(f, oIdentifiable, val, Field.Store.NO, Field.Index.ANALYZED));
-          }
-        }
-
       }
       if (facetManager.supportsFacets()) {
         try {
@@ -164,6 +181,9 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
       facetManager.commit();
 
+      if (!index.isAutomatic()) {
+        commit();
+      }
     }
   }
 
@@ -204,7 +224,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer) {
-    return null;
+    return new LuceneIndexCursor((LuceneResultSet) get(rangeFrom), rangeFrom);
   }
 
   @Override
@@ -246,5 +266,79 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   public void delete() {
     super.delete();
     facetManager.delete();
+  }
+
+  public class LuceneIndexCursor implements OIndexCursor {
+
+    private final Object            key;
+    private LuceneResultSet         resultSet;
+
+    private Iterator<OIdentifiable> iterator;
+
+    public LuceneIndexCursor(LuceneResultSet resultSet, Object key) {
+      this.resultSet = resultSet;
+      this.iterator = resultSet.iterator();
+      this.key = key;
+    }
+
+    @Override
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
+
+      if (iterator.hasNext()) {
+        final OIdentifiable next = iterator.next();
+        return new Map.Entry<Object, OIdentifiable>() {
+          @Override
+          public Object getKey() {
+            return key;
+          }
+
+          @Override
+          public OIdentifiable getValue() {
+            return next;
+          }
+
+          @Override
+          public OIdentifiable setValue(OIdentifiable value) {
+            return null;
+          }
+        };
+      }
+      return null;
+    }
+
+    @Override
+    public Set<OIdentifiable> toValues() {
+      return null;
+    }
+
+    @Override
+    public Set<Map.Entry<Object, OIdentifiable>> toEntries() {
+      return null;
+    }
+
+    @Override
+    public Set<Object> toKeys() {
+      return null;
+    }
+
+    @Override
+    public void setPrefetchSize(int prefetchSize) {
+
+    }
+
+    @Override
+    public boolean hasNext() {
+      return false;
+    }
+
+    @Override
+    public OIdentifiable next() {
+      return null;
+    }
+
+    @Override
+    public void remove() {
+
+    }
   }
 }
