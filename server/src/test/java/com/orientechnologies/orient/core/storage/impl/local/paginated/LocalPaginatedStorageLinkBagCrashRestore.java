@@ -37,7 +37,7 @@ import com.orientechnologies.orient.server.OServerMain;
 public class LocalPaginatedStorageLinkBagCrashRestore {
   private static String                         URL_BASE;
   private static String                         URL_TEST;
-  private final OLockManager<ORID, Callable>    lockManager     = new OLockManager<ORID, Callable>(true, 30000);
+  private final OLockManager<ORID>              lockManager     = new OLockManager<ORID>(true, 30000);
   private final AtomicInteger                   positionCounter = new AtomicInteger();
   private File                                  buildDir;
 
@@ -114,7 +114,7 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
         final int position = random.nextInt((int) lastClusterPosition);
         final ORID orid = new ORecordId(defaultClusterId, position);
 
-        lockManager.acquireLock(this, orid, OLockManager.LOCK.EXCLUSIVE);
+        lockManager.acquireLock(orid, OLockManager.LOCK.EXCLUSIVE);
         try {
 
           try {
@@ -167,7 +167,7 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
           final long position = random.nextInt((int) lastClusterPosition);
           final ORID orid = new ORecordId(defaultClusterId, position);
 
-          lockManager.acquireLock(this, orid, OLockManager.LOCK.EXCLUSIVE);
+          lockManager.acquireLock(orid, OLockManager.LOCK.EXCLUSIVE);
           try {
             ODatabaseDocumentTx base_db = poolFactory.get(URL_BASE, "admin", "admin").acquire();
             final List<ORID> ridsToRemove = new ArrayList<ORID>();
