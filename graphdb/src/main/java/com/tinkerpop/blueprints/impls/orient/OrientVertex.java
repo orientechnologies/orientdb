@@ -134,11 +134,11 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     if (found == null) {
       if (iGraph.isAutoScaleEdgeType()
-          && (prop == null || propType == OType.LINK || "true".equalsIgnoreCase(prop.getCustom("ordered")))) {
+          && (prop == null || propType == OType.LINK || "true".equalsIgnoreCase(prop.getCustom(OrientVertexType.OrientVertexProperty.ORDERED)))) {
         // CREATE ONLY ONE LINK
         out = iTo;
         outType = OType.LINK;
-      } else if (propType == OType.LINKLIST || (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered")))) {
+      } else if (propType == OType.LINKLIST || (prop != null && "true".equalsIgnoreCase(prop.getCustom(OrientVertexType.OrientVertexProperty.ORDERED)))) {
         final Collection coll = new ORecordLazyList(iFromVertex);
         coll.add(iTo);
         out = coll;
@@ -157,7 +157,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         throw new IllegalStateException("Type of field provided in schema '" + prop.getType()
             + "' can not be used for creation to hold several links.");
 
-      if (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered"))) {
+      if (prop != null && "true".equalsIgnoreCase(prop.getCustom(OrientVertexType.OrientVertexProperty.ORDERED))) {
         final Collection coll = new ORecordLazyList(iFromVertex);
         coll.add(found);
         coll.add(iTo);
