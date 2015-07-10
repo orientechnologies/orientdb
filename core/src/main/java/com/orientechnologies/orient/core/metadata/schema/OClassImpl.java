@@ -589,6 +589,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public OClass setName(final String name) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(name);
+    OClass oClass = getDatabase().getMetadata().getSchema().getClass(name);
+    if (oClass != null) {
+      String error = String.format("Cannot rename class %s to %s. A Class with name %s exists", this.name, name, name);
+      throw new OSchemaException(error);
+    }
     if (wrongCharacter != null)
       throw new OSchemaException("Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '"
           + name + "'");
@@ -2264,8 +2269,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (Character.isDigit(propertyName.charAt(0)))
       throw new OSchemaException("Found invalid name for property '" + propertyName + "': it cannot start with numbers");
 
-    if(reserved.contains(propertyName.toLowerCase())){
-      throw new OSchemaException("Error creating schema: '"+propertyName+"' is a reserved keyword, it cannot be used as a property name");
+    if (reserved.contains(propertyName.toLowerCase())) {
+      throw new OSchemaException("Error creating schema: '" + propertyName
+          + "' is a reserved keyword, it cannot be used as a property name");
     }
 
     if (getDatabase().getTransaction().isActive())
