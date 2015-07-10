@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -172,8 +173,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
       if (newRecord != null) {
         for (ORecord rec : newRecord) {
           if (rec.getIdentity().isNew() && rec instanceof ODocument) {
-            ORecord ret = saveNew((ODocument) rec, dirtyManager, iClusterName, iRecord, iMode, iForceCreate,
-                iRecordCreatedCallback, iRecordUpdatedCallback);
+            ORecord ret = saveNew((ODocument) rec, dirtyManager, iClusterName, iRecord, iMode, iForceCreate, iRecordCreatedCallback,
+                iRecordUpdatedCallback);
             if (ret != null)
               toRet = ret;
           }
@@ -185,7 +186,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
             toRet = database.executeSaveRecord(rec, iClusterName, rec.getRecordVersion(), true, iMode, iForceCreate,
                 iRecordCreatedCallback, iRecordUpdatedCallback);
           } else
-            database.executeSaveRecord(rec, null, rec.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+            database.executeSaveRecord(rec, getClusterName(rec), rec.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false,
+                null, null);
         }
       }
 
@@ -235,8 +237,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
               toRet = database.executeSaveRecord(nextToInspect, iClusterName, nextToInspect.getRecordVersion(), true, iMode,
                   iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
             else
-              database.executeSaveRecord(nextToInspect, null, nextToInspect.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS,
-                  false, null, null);
+              database.executeSaveRecord(nextToInspect, getClusterName(nextToInspect), nextToInspect.getRecordVersion(), true,
+                  OPERATION_MODE.SYNCHRONOUS, false, null, null);
             OSerializationSetThreadLocal.removeCheck((ODocument) nextToInspect);
             toResave.add((ODocument) nextToInspect);
           } else {
@@ -248,8 +250,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
             toRet = database.executeSaveRecord(next, iClusterName, next.getRecordVersion(), true, iMode, iForceCreate,
                 iRecordCreatedCallback, iRecordUpdatedCallback);
           else
-            toRet = database.executeSaveRecord(next, null, next.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null,
-                null);
+            database.executeSaveRecord(next, getClusterName(next), next.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false,
+                null, null);
           next = path.pollFirst();
         }
 
@@ -260,8 +262,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
     } while (next != null);
     for (ODocument op : toResave) {
       op.setDirty();
-      ORecord ret = database
-          .executeSaveRecord(op, null, op.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+      ORecord ret = database.executeSaveRecord(op, null, op.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null,
+          null);
       if (op == original)
         toRet = ret;
     }

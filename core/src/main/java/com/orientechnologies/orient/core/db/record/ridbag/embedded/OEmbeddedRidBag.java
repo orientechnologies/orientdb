@@ -34,6 +34,7 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
@@ -42,6 +43,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 public class OEmbeddedRidBag implements ORidBagDelegate {
   private byte[]                                                       serializedContent = null;
@@ -390,7 +392,11 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     for (int i = 0; i < totEntries; ++i) {
       final Object entry = entries[i];
       if (entry instanceof OIdentifiable) {
-        OLinkSerializer.INSTANCE.serialize((OIdentifiable) entry, stream, offset);
+        OIdentifiable link = (OIdentifiable) entry;
+        if(link.getIdentity().isTemporary())
+          link = link.getRecord();
+
+        OLinkSerializer.INSTANCE.serialize(link, stream, offset);
         offset += OLinkSerializer.RID_SIZE;
       }
     }

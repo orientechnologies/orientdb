@@ -257,8 +257,12 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       offset += OIntegerSerializer.INT_SIZE;
 
       for (Map.Entry<K, Change> entry : changes.entrySet()) {
-        keySerializer.serialize(entry.getKey(), stream, offset);
-        offset += keySerializer.getObjectSize(entry.getKey());
+        K key = entry.getKey();
+        if (((OIdentifiable) key).getIdentity().isTemporary())
+          key = ((OIdentifiable) key).getRecord();
+
+        keySerializer.serialize(key, stream, offset);
+        offset += keySerializer.getObjectSize(key);
 
         offset += entry.getValue().serialize(stream, offset);
       }

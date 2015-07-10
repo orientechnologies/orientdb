@@ -344,4 +344,29 @@ public class ODirtyManagerTest {
     assertTrue(manager.getPointed(doc).contains(link));
   }
 
+  @Test
+  public void testNestedMapDocRidBag() {
+
+    ODocument doc = new ODocument();
+
+    Map<String, ODocument> embeddedMap = new HashMap<String, ODocument>();
+    ODocument embeddedMapDoc = new ODocument();
+    ORidBag embeddedMapDocRidBag = new ORidBag();
+    ODocument link = new ODocument();
+    embeddedMapDocRidBag.add(link);
+    embeddedMapDoc.field("ridBag", embeddedMapDocRidBag);
+    embeddedMap.put("k1", embeddedMapDoc);
+
+    doc.field("embeddedMap", embeddedMap, OType.EMBEDDEDMAP);
+
+    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
+    ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
+    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(1, manager.getPointed(doc).size());
+    //TODO: double check this, it's an overhead
+    assertEquals(1, manager.getPointed(embeddedMapDoc).size());
+    assertTrue(manager.getPointed(doc).contains(link));
+
+  }
+
 }

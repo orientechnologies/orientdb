@@ -400,28 +400,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     return iRecord;
   }
 
-  private String getClusterName(ORecord record) {
-    int clusterId = record.getIdentity().getClusterId();
-    if (clusterId == ORID.CLUSTER_ID_INVALID) {
-      // COMPUTE THE CLUSTER ID
-      OClass schemaClass = null;
-      if (record instanceof ODocument)
-        schemaClass = ODocumentInternal.getImmutableSchemaClass((ODocument) record);
-      if (schemaClass != null) {
-        // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
-        if (schemaClass.isAbstract())
-          throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
-        clusterId = schemaClass.getClusterForNewInstance((ODocument) record);
-        return database.getClusterNameById(clusterId);
-      } else {
-        return database.getClusterNameById(database.getStorage().getDefaultClusterId());
-      }
-
-    } else {
-      return database.getClusterNameById(clusterId);
-    }
-  }
-
   @Override
   public String toString() {
     return "OTransactionOptimistic [id=" + id + ", status=" + status + ", recEntries=" + recordEntries.size() + ", idxEntries="

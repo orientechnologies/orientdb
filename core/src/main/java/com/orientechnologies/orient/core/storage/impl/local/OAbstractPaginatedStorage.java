@@ -1184,6 +1184,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (next instanceof ODocument) {
         ORecord nextToInspect = null;
         List<OIdentifiable> toSave = manager.getPointed(next);
+        if (toSave == null) {
+          toSave = ORecordInternal.getDirtyManager(next).getPointed(next);
+        }
         if (toSave != null) {
           for (OIdentifiable oIdentifiable : toSave) {
             if (oIdentifiable.getIdentity().isNew()) {

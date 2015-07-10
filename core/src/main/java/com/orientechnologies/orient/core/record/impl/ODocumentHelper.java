@@ -100,8 +100,10 @@ public class ODocumentHelper {
   }
 
   @SuppressWarnings("unchecked")
-  public static <RET> RET convertField(final ODocument iDocument, final String iFieldName, OType type, Object iValue) {
-    final Class<?> iFieldType = type.getDefaultJavaType();
+  public static <RET> RET convertField(final ODocument iDocument, final String iFieldName, OType type, Class<?> iFieldType,
+      Object iValue) {
+    if (iFieldType == null)
+      iFieldType = type.getDefaultJavaType();
     if (iFieldType == null)
       return (RET) iValue;
 
@@ -809,7 +811,9 @@ public class ODocumentHelper {
         return ((ODocument) fieldValue).copy();
 
       } else if (fieldValue instanceof ORidBag) {
-        return ((ORidBag) fieldValue).copy();
+        ORidBag newBag = ((ORidBag) fieldValue).copy();
+        newBag.setOwner(iCloned);
+        return newBag;
 
       } else if (fieldValue instanceof ORecordLazyList) {
         return ((ORecordLazyList) fieldValue).copy(iCloned);

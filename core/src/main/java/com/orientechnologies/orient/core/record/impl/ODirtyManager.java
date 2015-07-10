@@ -35,8 +35,11 @@ public class ODirtyManager {
 
   public ODirtyManager getReal() {
     ODirtyManager real = this;
-    while (real.overrider != null)
+    while (real.overrider != null) {
       real = real.overrider;
+    }
+    if (this.overrider != null && this.overrider != real)
+      this.overrider = real;
     return real;
   }
 
@@ -101,7 +104,7 @@ public class ODirtyManager {
           pointing = (ORecord) ele;
       }
     }
-    if (pointed.getIdentity().isNew() && pointing.getIdentity().isNew()) {
+    if (pointed.getIdentity().isNew()) {
       if (!(pointed instanceof ODocument) || !((ODocument) pointed).isEmbedded()) {
         if (references == null) {
           references = new IdentityHashMap<ODocument, List<OIdentifiable>>();
