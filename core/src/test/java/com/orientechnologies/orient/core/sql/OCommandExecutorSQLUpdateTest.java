@@ -5,6 +5,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import static org.testng.Assert.*;
@@ -114,4 +116,42 @@ public class OCommandExecutorSQLUpdateTest {
     }
 
   }
+    @Test
+    public void testNamedParamsSyntax() {
+      //issue #4470
+      String className = getClass().getSimpleName() + "_NamedParamsSyntax";
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:"+className);
+      db.create();
+
+      try {
+        db.command(new OCommandSQL("create class " + className)).execute();
+
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("name", "foo");
+        params.put("full_name", "foo");
+        params.put("html_url", "foo");
+        params.put("description", "foo");
+        params.put("git_url", "foo");
+        params.put("ssh_url", "foo");
+        params.put("clone_url", "foo");
+        params.put("svn_url", "foo");
+
+        OCommandSQL sql1 = new OCommandSQL("update " + className
+            + " SET name = :name, full_name = :full_name, html_url = :html_url, description = :description, "
+            + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
+            + "UPSERT WHERE full_name = :full_name");
+        db.command(sql1).execute(params);
+
+        OCommandSQL sql2 = new OCommandSQL("update " + className
+            + " SET name = :name, html_url = :html_url, description = :description, "
+            + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
+            + "UPSERT WHERE full_name = :full_name");
+        db.command(sql2).execute(params);
+      }finally{
+        db.close();
+      }
+    }
+
+
+
 }
