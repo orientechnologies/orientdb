@@ -663,6 +663,34 @@ public class OCommandExecutorSQLSelectTest {
     } catch (OCommandSQLParsingException x) {
 
     }
+  }
+
+  @Test
+  public void testNamedParamsSyntax() {
+    String className = getClass().getSimpleName() + "_NamedParamsSyntax";
+    db.command(new OCommandSQL("create class " + className)).execute();
+
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("name", "foo");
+    params.put("full_name", "foo");
+    params.put("html_url", "foo");
+    params.put("description", "foo");
+    params.put("git_url", "foo");
+    params.put("ssh_url", "foo");
+    params.put("clone_url", "foo");
+    params.put("svn_url", "foo");
+
+    OCommandSQL sql1 = new OCommandSQL("update " + className
+        + " SET name = :name, full_name = :full_name, html_url = :html_url, description = :description, "
+        + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
+        + "UPSERT WHERE full_name = :full_name");
+    db.command(sql1).execute(params);
+
+    OCommandSQL sql2 = new OCommandSQL("update " + className
+        + " SET name = :name, html_url = :html_url, description = :description, "
+        + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
+        + "UPSERT WHERE full_name = :full_name");
+    db.command(sql2).execute(params);
 
   }
 
