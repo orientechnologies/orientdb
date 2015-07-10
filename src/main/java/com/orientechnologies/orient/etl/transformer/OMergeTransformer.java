@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
@@ -42,7 +43,7 @@ public class OMergeTransformer extends OAbstractLookupTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-    Object joinValue = ((ODocument) input).field(joinFieldName);
+    Object joinValue = ((ODocument) ((OIdentifiable) input).getRecord()).field(joinFieldName);
     final Object result = lookup(joinValue, false);
 
     log(OETLProcessor.LOG_LEVELS.DEBUG, "joinValue=%s, lookupResult=%s", joinValue, result);
