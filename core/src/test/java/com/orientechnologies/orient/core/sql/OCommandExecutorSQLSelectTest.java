@@ -378,6 +378,16 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
+  public void testParamsInLetSubquery() {
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("name", "foo");
+    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParams let $foo = (select name from TestParams where surname = :name) where surname in $foo.name ")).execute(params);
+    assertEquals(qResult.size(), 1);
+  }
+
+
+
+  @Test
   public void testFromInSquareBrackets() {
     List<ODocument> qResult = db.command(new OCommandSQL("select tags[' from '] as a from TestFromInSquare")).execute();
     assertEquals(qResult.size(), 1);
@@ -640,7 +650,7 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(0, doc.field("collection_min"));
     assertEquals(50, doc.field("collection_max"));
   }
-
+  
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

@@ -90,6 +90,10 @@ public class OExpression extends SimpleNode {
       value = ((OInputParameter) value).bindFromInputParams(params);
     } else if (value instanceof OBaseExpression) {
       ((OBaseExpression) value).replaceParameters(params);
+    } else if (value instanceof OParenthesisExpression) {
+      ((OParenthesisExpression) value).replaceParameters(params);
+    } else if (value instanceof OMathExpression) {
+      ((OMathExpression) value).replaceParameters(params);
     }
   }
 }
