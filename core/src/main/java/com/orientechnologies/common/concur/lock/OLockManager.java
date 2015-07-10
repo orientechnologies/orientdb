@@ -163,17 +163,12 @@ public class OLockManager<T> {
       lock.readWriteLock.writeLock().unlock();
   }
 
-  public void clear() {
-    map.clear();
-  }
 
   // For tests purposes.
   public int getCountCurrentLocks() {
     return map.size();
   }
 
-  public void releaseAllLocksOfRequester(Object iRequester) {
-  }
 
   protected T getImmutableResourceId(final T iResourceId) {
     return iResourceId;
