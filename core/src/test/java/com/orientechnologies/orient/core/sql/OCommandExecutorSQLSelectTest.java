@@ -125,12 +125,11 @@ public class OCommandExecutorSQLSelectTest {
       doc.save();
     }
 
-
     db.command(new OCommandSQL("create class OCommandExecutorSQLSelectTest_aggregations")).execute();
-    db.command(new OCommandSQL("insert into OCommandExecutorSQLSelectTest_aggregations set data = [{\"size\": 0}, {\"size\": 0}, {\"size\": 30}, {\"size\": 50}, {\"size\": 50}]")).execute();
-
-
-
+    db.command(
+        new OCommandSQL(
+            "insert into OCommandExecutorSQLSelectTest_aggregations set data = [{\"size\": 0}, {\"size\": 0}, {\"size\": 30}, {\"size\": 50}, {\"size\": 50}]"))
+        .execute();
 
   }
 
@@ -381,11 +380,12 @@ public class OCommandExecutorSQLSelectTest {
   public void testParamsInLetSubquery() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("name", "foo");
-    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParams let $foo = (select name from TestParams where surname = :name) where surname in $foo.name ")).execute(params);
+    List<ODocument> qResult = db.command(
+        new OCommandSQL(
+            "select from TestParams let $foo = (select name from TestParams where surname = :name) where surname in $foo.name "))
+        .execute(params);
     assertEquals(qResult.size(), 1);
   }
-
-
 
   @Test
   public void testFromInSquareBrackets() {
@@ -439,6 +439,7 @@ public class OCommandExecutorSQLSelectTest {
       String name = doc.field("name");
       String coll = doc.field("coll");
       assertTrue(coll.startsWith(name));
+      assertFalse(doc.getIdentity().isPersistent());
     }
   }
 
@@ -636,7 +637,6 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals("[bar1, bar2]", results.get(0).field("lll"));
   }
 
-
   @Test
   public void testAggregations() {
     OSQLSynchQuery sql = new OSQLSynchQuery(
@@ -650,7 +650,22 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(0, doc.field("collection_min"));
     assertEquals(50, doc.field("collection_max"));
   }
-  
+
+  @Test
+  public void testLetOrder() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT" + "      source," + "  $maxYear as maxYear" + "              FROM" + "      ("
+        + "          SELECT expand( $union ) " + "  LET" + "      $a = (SELECT 'A' as source, 2013 as year),"
+        + "  $b = (SELECT 'B' as source, 2012 as year)," + "  $union = unionAll($a,$b) " + "  ) " + "  LET "
+        + "      $maxYear = max(year)" + "  GROUP BY" + "  source");
+    try {
+      List<ODocument> results = db.query(sql);
+      fail("Invalid query, usage of LET, aggregate functions and GROUP BY together is not supported");
+    } catch (OCommandSQLParsingException x) {
+
+    }
+
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

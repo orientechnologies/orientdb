@@ -282,11 +282,25 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (limit == 0 || limit < -1) {
         throw new IllegalArgumentException("Limit must be > 0 or = -1 (no limit)");
       }
+      validateQuery();
     } finally {
       textRequest.setText(originalQuery);
     }
 
     return this;
+  }
+
+  private void validateQuery() {
+    if (this.let != null) {
+      for (Object letValue : let.values()) {
+        if (letValue instanceof OSQLFunctionRuntime) {
+          final OSQLFunctionRuntime f = (OSQLFunctionRuntime) letValue;
+          if (f.getFunction().aggregateResults() && this.groupByFields != null && this.groupByFields.size() > 0) {
+            throwParsingException("Aggregate function cannot be used in LET clause together with GROUP BY");
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -677,7 +691,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         for (Object o : (Iterable) fieldValue) {
           ODocument unwindedDoc = new ODocument();
           doc.copyTo(unwindedDoc);
-//          ORecordInternal.setIdentity(doc, new ORecordId(-2, getTemporaryRIDCounter()));
           unwindedDoc.field(firstField, o);
           result.addAll(unwind(unwindedDoc, nextFields));
         }
