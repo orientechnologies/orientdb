@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.collection.OSortedMultiIterator;
@@ -93,6 +87,12 @@ import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -402,37 +402,31 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
-    try {
-      bindDefaultContextVariables();
+    bindDefaultContextVariables();
 
-      if (iArgs != null)
-      // BIND ARGUMENTS INTO CONTEXT TO ACCESS FROM ANY POINT (EVEN FUNCTIONS)
-      {
-        for (Entry<Object, Object> arg : iArgs.entrySet()) {
-          context.setVariable(arg.getKey().toString(), arg.getValue());
-        }
-      }
-
-      if (timeoutMs > 0) {
-        getContext().beginExecution(timeoutMs, timeoutStrategy);
-      }
-
-      if (!optimizeExecution()) {
-        fetchLimit = getQueryFetchLimit();
-
-        executeSearch(iArgs);
-        applyExpand();
-        handleNoTarget();
-        handleGroupBy();
-        applyOrderBy();
-        applyLimitAndSkip();
-      }
-      return getResult();
-    } finally {
-      if (request.getResultListener() != null) {
-        request.getResultListener().end();
+    if (iArgs != null)
+    // BIND ARGUMENTS INTO CONTEXT TO ACCESS FROM ANY POINT (EVEN FUNCTIONS)
+    {
+      for (Entry<Object, Object> arg : iArgs.entrySet()) {
+        context.setVariable(arg.getKey().toString(), arg.getValue());
       }
     }
+
+    if (timeoutMs > 0) {
+      getContext().beginExecution(timeoutMs, timeoutStrategy);
+    }
+
+    if (!optimizeExecution()) {
+      fetchLimit = getQueryFetchLimit();
+
+      executeSearch(iArgs);
+      applyExpand();
+      handleNoTarget();
+      handleGroupBy();
+      applyOrderBy();
+      applyLimitAndSkip();
+    }
+    return getResult();
   }
 
   public Map<String, Object> getProjections() {
