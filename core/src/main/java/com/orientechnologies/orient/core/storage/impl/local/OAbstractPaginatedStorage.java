@@ -119,7 +119,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private static final int                                    RECORD_LOCK_TIMEOUT                        = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
                                                                                                              .getValueAsInteger();
 
-  private final OLockManager<ORID, OAbstractPaginatedStorage> lockManager;
+  private final OLockManager<ORID>               lockManager;
   private final String                                        PROFILER_CREATE_RECORD;
   private final String                                        PROFILER_READ_RECORD;
   private final String                                        PROFILER_UPDATE_RECORD;
@@ -153,7 +153,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
 
     this.id = id;
-    lockManager = new OLockManager<ORID, OAbstractPaginatedStorage>(true, -1) {
+    lockManager = new OLockManager<ORID>(true, -1) {
       @Override
       protected ORID getImmutableResourceId(ORID iResourceId) {
         return new ORecordId(iResourceId);
@@ -733,7 +733,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     checkOpeness();
 
     final OCluster cluster = getClusterById(rid.getClusterId());
-    lockManager.acquireLock(this, rid, OLockManager.LOCK.SHARED);
+    lockManager.acquireLock(rid, OLockManager.LOCK.SHARED);
     try {
       lock.acquireSharedLock();
       try {
@@ -793,7 +793,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       modificationLock.requestModificationLock();
       try {
         // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
-        lockManager.acquireLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
+        lockManager.acquireLock(rid, OLockManager.LOCK.EXCLUSIVE);
         try {
           lock.acquireSharedLock();
           try {
@@ -851,7 +851,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       modificationLock.requestModificationLock();
       try {
-        lockManager.acquireLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
+        lockManager.acquireLock(rid, OLockManager.LOCK.EXCLUSIVE);
         try {
           lock.acquireSharedLock();
           try {
@@ -896,7 +896,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       modificationLock.requestModificationLock();
       try {
-        lockManager.acquireLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
+        lockManager.acquireLock(rid, OLockManager.LOCK.EXCLUSIVE);
         try {
           lock.acquireSharedLock();
           try {
@@ -1451,7 +1451,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   public void acquireWriteLock(final ORID rid) {
     assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be taken inside a storage lock";
-    lockManager.acquireLock(this, rid, OLockManager.LOCK.EXCLUSIVE, RECORD_LOCK_TIMEOUT);
+    lockManager.acquireLock(rid, OLockManager.LOCK.EXCLUSIVE, RECORD_LOCK_TIMEOUT);
   }
 
   public void releaseWriteLock(final ORID rid) {
@@ -1460,7 +1460,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public void acquireReadLock(final ORID rid) {
-    lockManager.acquireLock(this, rid, OLockManager.LOCK.SHARED, RECORD_LOCK_TIMEOUT);
+    lockManager.acquireLock(rid, OLockManager.LOCK.SHARED, RECORD_LOCK_TIMEOUT);
   }
 
   public void releaseReadLock(final ORID rid) {
@@ -1574,7 +1574,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     final long timer = Orient.instance().getProfiler().startChrono();
     cluster.getExternalModificationLock().requestModificationLock();
     try {
-      lockManager.acquireLock(this, rid, OLockManager.LOCK.SHARED);
+      lockManager.acquireLock(rid, OLockManager.LOCK.SHARED);
       try {
         ORawBuffer buff;
         lock.acquireSharedLock();
@@ -1616,7 +1616,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     final long timer = Orient.instance().getProfiler().startChrono();
     clusterSegment.getExternalModificationLock().requestModificationLock();
     try {
-      lockManager.acquireLock(this, rid, OLockManager.LOCK.SHARED);
+      lockManager.acquireLock(rid, OLockManager.LOCK.SHARED);
       try {
         ORawBuffer buff;
         lock.acquireSharedLock();
