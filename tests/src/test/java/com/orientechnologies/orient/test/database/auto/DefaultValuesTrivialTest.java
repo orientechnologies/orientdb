@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.*;
 
 import java.util.Date;
 import java.util.List;
@@ -98,6 +98,32 @@ public class DefaultValuesTrivialTest {
       Set<OIdentifiable> rids = doc1.field("users");
       assertEquals(rids.size(), 1);
       assertEquals(rids.iterator().next(), new ORecordId(3, 1));
+    } finally {
+      database.drop();
+    }
+  }
+  
+  @Test
+  public void testPrepopulation() throws Exception {
+    final ODatabaseDocumentTx database = new ODatabaseDocumentTx("memory:defaultValues");
+    try {
+
+      database.create();
+
+      // create example schema
+      OSchema schema = database.getMetadata().getSchema();
+      OClass classA = schema.createClass("ClassA");
+
+      classA.createProperty("name", OType.STRING).setDefaultValue("default name");
+      classA.createProperty("date", OType.DATETIME).setDefaultValue("sysdate()");
+      classA.createProperty("active", OType.BOOLEAN).setDefaultValue("true");
+      
+      ODocument doc = new ODocument(classA);
+      assertEquals("default name", doc.field("name"));
+      assertNotNull(doc.field("date"));
+      assertEquals(true, doc.field("active"));
+
+      
     } finally {
       database.drop();
     }

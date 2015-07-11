@@ -80,6 +80,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   private String                                          _className;
   private OImmutableClass                                 _immutableClazz;
   private int                                             _immutableSchemaVersion = 1;
+  private boolean                                         _default_values_prepopulated = false;
 
   /**
    * Internal constructor used on unmarshalling.
@@ -175,7 +176,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    *          OClass instance
    */
   public ODocument(final OClass iClass) {
-    setup();
 
     if (iClass == null)
       _className = null;
@@ -184,6 +184,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     _immutableClazz = null;
     _immutableSchemaVersion = -1;
+    setup();
   }
 
   /**
@@ -221,6 +222,21 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     this(iFields);
     field(iFieldName, iFieldValue);
   }
+  
+  public ODocument populateDefaultValues() {
+    final OImmutableClass immutableSchemaClass = getImmutableSchemaClass();
+    if (immutableSchemaClass != null) {
+      for (OProperty p : immutableSchemaClass.properties()) {
+        String defValue = p.getDefaultValue();
+        if (defValue != null && defValue.length() > 0 && !containsField(p.getName())) {
+          Object curFieldValue = OSQLHelper.parseDefaultValue(this, defValue);
+          Object fieldValue = ODocumentHelper.convertField(this, p.getName(), p.getType().getDefaultJavaType(), curFieldValue);
+          rawField(p.getName(), fieldValue, p.getType());
+        }
+      }
+    }
+    return this;
+  }
 
   protected static void validateField(ODocument iRecord, OImmutableProperty p) throws OValidationException {
     final Object fieldValue;
@@ -241,17 +257,10 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       }
 
     } else {
-      String defValue = p.getDefaultValue();
-      if (defValue != null && defValue.length() > 0) {
-        Object curFieldValue = OSQLHelper.parseDefaultValue(iRecord, defValue);
-        fieldValue = ODocumentHelper.convertField(iRecord, p.getName(), p.getType().getDefaultJavaType(), curFieldValue);
-        iRecord.rawField(p.getName(), fieldValue, p.getType());
-      } else {
         if (p.isMandatory()) {
           throw new OValidationException("The field '" + p.getFullName() + "' is mandatory, but not found on record: " + iRecord);
         }
         fieldValue = null;
-      }
     }
 
     final OType type = p.getType();
@@ -2341,6 +2350,10 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     if (_recordFormat == null)
       // GET THE DEFAULT ONE
       _recordFormat = ODatabaseDocumentTx.getDefaultSerializer();
+    if(!_default_values_prepopulated) {
+      populateDefaultValues();
+      _default_values_prepopulated=true;
+    }
   }
 
   protected String checkFieldName(final String iFieldName) {
