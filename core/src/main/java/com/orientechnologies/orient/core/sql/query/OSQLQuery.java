@@ -122,8 +122,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
 
     buffer.setUtf8(text); // TEXT AS STRING
     buffer.set(limit); // LIMIT AS INTEGER
-    buffer.setUtf8(fetchPlan != null ? fetchPlan : ""); // FETCH PLAN IN FORM OF STRING (to know more goto:
-    // http://code.google.com/p/orient/wiki/FetchingStrategies)
+    buffer.setUtf8(fetchPlan != null ? fetchPlan : "");
 
     buffer.set(serializeQueryParameters(parameters));
 

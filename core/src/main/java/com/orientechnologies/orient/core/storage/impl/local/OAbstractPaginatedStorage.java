@@ -1307,7 +1307,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       boolean foundInCache = false;
       Object result = null;
-      if (iCommand.isCacheableResult() && executor.isCacheable()) {
+      if (iCommand.isCacheableResult() && executor.isCacheable() && iCommand.getParameters() == null) {
         // TRY WITH COMMAND CACHE
         result = db.getMetadata().getCommandCache().get(db.getUser(), iCommand.getText(), iCommand.getLimit());
 

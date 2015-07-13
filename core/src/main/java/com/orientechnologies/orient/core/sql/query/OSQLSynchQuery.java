@@ -141,7 +141,7 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
   }
 
   @Override
-  protected void queryFromStream(OMemoryStream buffer) {
+  protected void queryFromStream(final OMemoryStream buffer) {
     super.queryFromStream(buffer);
 
     final String rid = buffer.getAsString();

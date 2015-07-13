@@ -74,7 +74,9 @@ public class OConcurrentResultSet<T> implements OResultSet<T> {
   @Override
   public OResultSet<T> copy() {
     synchronized (wrapped) {
-      return new OConcurrentResultSet<T>(wrapped.copy());
+      final OConcurrentResultSet<T> copy = new OConcurrentResultSet<T>(wrapped.copy());
+      copy.completed = true;
+      return copy;
     }
   }
 
