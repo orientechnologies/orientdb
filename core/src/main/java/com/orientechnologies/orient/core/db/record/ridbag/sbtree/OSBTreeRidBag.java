@@ -550,6 +550,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       for (OIdentifiable entry : newEntries.keySet()) {
         ORecordInternal.track(this.owner, entry);
       }
+      for (OIdentifiable entry : changes.keySet()) {
+        ORecordInternal.track(this.owner, entry);
+      }
     }
   }
 

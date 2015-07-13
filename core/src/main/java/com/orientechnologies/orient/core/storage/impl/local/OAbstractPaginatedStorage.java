@@ -2449,62 +2449,67 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         ((OTxListener) rec).onEvent(txEntry, OTxListener.EVENT.BEFORE_COMMIT);
 
       switch (txEntry.type) {
-        case ORecordOperation.LOADED:
-          break;
+      case ORecordOperation.LOADED:
+        break;
 
-        case ORecordOperation.CREATED: {
-          // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
+      case ORecordOperation.CREATED: {
+        // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
+        final ORecordId oldRID;
+        if (rid.isNew()) {
+          oldRID = rid.copy();
+          rid.clusterId = clusterId;
+        } else
+          oldRID = rid;
 
-          final byte[] stream = rec.toStream();
-          if (stream == null) {
-            OLogManager.instance().warn(this, "Null serialization on committing new record %s in transaction", rid);
-            break;
-          }
-          final ORecordId oldRID = rid.isNew() ? rid.copy() : rid;
-
-          if (rid.isNew()) {
-            rid = rid.copy();
-            rid.clusterId = cluster.getId();
-            final OPhysicalPosition ppos;
-
-            final byte recordType = ORecordInternal.getRecordType(rec);
-            ppos = doCreateRecord(rid, stream, rec.getRecordVersion(), recordType, null, cluster, new OPhysicalPosition(recordType))
-                .getResult();
-
-            rid.clusterPosition = ppos.clusterPosition;
-            rec.getRecordVersion().copyFrom(ppos.recordVersion);
-            clientTx.updateIdentityAfterCommit(oldRID, rid);
-          } else {
-            // ORecordInternal.setContentChanged(rec, true);
-            rec.getRecordVersion().copyFrom(updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, rec.getRecordVersion(),
-                ORecordInternal.getRecordType(rec), -1, null).getResult());
-          }
+        final byte[] stream = rec.toStream();
+        if (stream == null) {
+          OLogManager.instance().warn(this, "Null serialization on committing new record %s in transaction", rid);
           break;
         }
 
-        case ORecordOperation.UPDATED: {
-          final byte[] stream = rec.toStream();
-          if (stream == null) {
-            OLogManager.instance().warn(this, "Null serialization on committing updated record %s in transaction", rid);
-            break;
-          }
+        if (rid.isNew()) {
+          rid = rid.copy();
+          rid.clusterId = cluster.getId();
+          final OPhysicalPosition ppos;
 
-          OStorageOperationResult<ORecordVersion> updateRes = doUpdateRecord(rid, ORecordInternal.isContentChanged(rec), stream,
-              rec.getRecordVersion(), ORecordInternal.getRecordType(rec), null, cluster);
-          rec.getRecordVersion().copyFrom(updateRes.getResult());
-          if (updateRes.getModifiedRecordContent() != null) {
-            ORecordInternal.fill(rec, rid, updateRes.getResult(), updateRes.getModifiedRecordContent(), false);
-          }
+          final byte recordType = ORecordInternal.getRecordType(rec);
+          ppos = doCreateRecord(rid, stream, rec.getRecordVersion(), recordType, null, cluster, new OPhysicalPosition(recordType))
+              .getResult();
+
+          rid.clusterPosition = ppos.clusterPosition;
+          rec.getRecordVersion().copyFrom(ppos.recordVersion);
+          clientTx.updateIdentityAfterCommit(oldRID, rid);
+        } else {
+          // ORecordInternal.setContentChanged(rec, true);
+          rec.getRecordVersion().copyFrom(updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, rec.getRecordVersion(),
+              ORecordInternal.getRecordType(rec), -1, null).getResult());
+        }
+        break;
+      }
+
+      case ORecordOperation.UPDATED: {
+        final byte[] stream = rec.toStream();
+        if (stream == null) {
+          OLogManager.instance().warn(this, "Null serialization on committing updated record %s in transaction", rid);
           break;
         }
 
-        case ORecordOperation.DELETED: {
-          deleteRecord(rid, rec.getRecordVersion(), -1, null);
-          break;
+        OStorageOperationResult<ORecordVersion> updateRes = doUpdateRecord(rid, ORecordInternal.isContentChanged(rec), stream,
+            rec.getRecordVersion(), ORecordInternal.getRecordType(rec), null, cluster);
+        rec.getRecordVersion().copyFrom(updateRes.getResult());
+        if (updateRes.getModifiedRecordContent() != null) {
+          ORecordInternal.fill(rec, rid, updateRes.getResult(), updateRes.getModifiedRecordContent(), false);
         }
+        break;
+      }
 
-        default:
-          throw new OStorageException("Unknown record operation " + txEntry.type);
+      case ORecordOperation.DELETED: {
+        deleteRecord(rid, rec.getRecordVersion(), -1, null);
+        break;
+      }
+
+      default:
+        throw new OStorageException("Unknown record operation " + txEntry.type);
       }
     } finally {
       ORecordSerializationContext.pullContext();
