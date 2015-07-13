@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.collection.OSortedMultiIterator;
@@ -93,6 +87,12 @@ import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -848,8 +848,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   @Override
   protected void searchInClasses() {
-    final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
+    final String className = parsedTarget.getTargetClasses().keySet().iterator().next();
 
+    final OClass cls = getDatabase().getMetadata().getSchema().getClass(className);
     if (!searchForIndexes(cls) && !searchForSubclassIndexes(cls)) {
       // CHECK FOR INVERSE ORDER
       final boolean browsingOrderAsc = !(orderedFields.size() == 1 && orderedFields.get(0).getKey().equalsIgnoreCase("@rid") && orderedFields
@@ -1090,7 +1091,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
             if (parsedTarget.getTargetClasses() != null && user != null
                 && user.checkIfAllowed(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_READ) == null) {
-              for (OClass cls : parsedTarget.getTargetClasses().keySet()) {
+              for (String className : parsedTarget.getTargetClasses().keySet()) {
+                final OClass cls = getDatabase().getMetadata().getSchema().getClass(className);
                 if (cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
                   restrictedClasses = true;
                   break;
@@ -1102,7 +1104,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               long count = 0;
 
               if (parsedTarget.getTargetClasses() != null) {
-                final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
+                final String className = parsedTarget.getTargetClasses().keySet().iterator().next();
+                final OClass cls = getDatabase().getMetadata().getSchema().getClass(className);
                 count = cls.count();
               } else if (parsedTarget.getTargetClusters() != null) {
                 for (String cluster : parsedTarget.getTargetClusters().keySet()) {
@@ -1488,7 +1491,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         @Override
         public void run() {
           final ODatabaseDocumentTx localDatabase = db.copy();
+
           try {
+            // CREATE A SNAPSHOT TO AVOID DEADLOCKS
+            db.getMetadata().getSchema().makeSnapshot();
+
             final ORecordIteratorCluster it = new ORecordIteratorCluster(localDatabase, localDatabase, iterators.get(current),
                 true, false);
 

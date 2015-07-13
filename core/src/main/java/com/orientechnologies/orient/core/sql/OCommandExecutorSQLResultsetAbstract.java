@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClassDescendentOrder;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -392,11 +393,12 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     if (iRecord instanceof ODocument) {
       // CHECK THE TARGET CLASS
       final ODocument recordSchemaAware = (ODocument) iRecord;
-      Map<OClass, String> targetClasses = parsedTarget.getTargetClasses();
+      Map<String, String> targetClasses = parsedTarget.getTargetClasses();
       // check only classes that specified in query will go to result set
       if ((targetClasses != null) && (!targetClasses.isEmpty())) {
-        for (OClass targetClass : targetClasses.keySet()) {
-          if (!targetClass.isSuperClassOf(ODocumentInternal.getImmutableSchemaClass(recordSchemaAware)))
+        for (String targetClass : targetClasses.keySet()) {
+          if (!((OMetadataDefault) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(targetClass)
+              .isSuperClassOf(ODocumentInternal.getImmutableSchemaClass(recordSchemaAware)))
             return false;
         }
         context.updateMetric("documentAnalyzedCompatibleClass", +1);
@@ -461,8 +463,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   }
 
   protected void searchInClasses(final boolean iAscendentOrder) {
-    final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
-    target = searchInClasses(cls, true, iAscendentOrder);
+    final String cls = parsedTarget.getTargetClasses().keySet().iterator().next();
+    target = searchInClasses(getDatabase().getMetadata().getSchema().getClass(cls), true, iAscendentOrder);
   }
 
   protected Iterator<? extends OIdentifiable> searchInClasses(final OClass iCls, final boolean iPolymorphic,
