@@ -268,12 +268,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   @Override
   public void close() {
-    acquireExclusiveLock();
-    try {
-      clearMetadata();
-    } finally {
-      releaseExclusiveLock();
-    }
+    indexes.clear();
+    classPropertyIndex.clear();
   }
 
   public OIndexManager setDirty() {

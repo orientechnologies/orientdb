@@ -71,12 +71,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public static final String                                  CLUSTER_PREFIX      = "cluster:";
   public static final String                                  ADMIN               = "admin";
   private static volatile ThreadLocal<OrientBaseGraph>        activeGraph         = new ThreadLocal<OrientBaseGraph>();
-  private static volatile ThreadLocal<Deque<OrientBaseGraph>> initializationStack = new ThreadLocal<Deque<OrientBaseGraph>>() {
-                                                                                    @Override
-                                                                                    protected Deque<OrientBaseGraph> initialValue() {
-                                                                                      return new LinkedList<OrientBaseGraph>();
-                                                                                    }
-                                                                                  };
+  private static volatile ThreadLocal<Deque<OrientBaseGraph>> initializationStack = new InitializationStackThreadLocal();
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -85,12 +80,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         if (activeGraph == null)
           activeGraph = new ThreadLocal<OrientBaseGraph>();
         if (initializationStack == null)
-          initializationStack = new ThreadLocal<Deque<OrientBaseGraph>>() {
-            @Override
-            protected Deque<OrientBaseGraph> initialValue() {
-              return new LinkedList<OrientBaseGraph>();
-            }
-          };
+          initializationStack = new InitializationStackThreadLocal();
       }
 
       @Override
@@ -1860,5 +1850,12 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
     // compatibility with versions earlier 1.6.3
         || idx.getConfiguration().field(OrientIndex.CONFIG_CLASSNAME) != null;
+  }
+
+  private static class InitializationStackThreadLocal extends ThreadLocal<Deque<OrientBaseGraph>> {
+    @Override
+    protected Deque<OrientBaseGraph> initialValue() {
+      return new LinkedList<OrientBaseGraph>();
+    }
   }
 }

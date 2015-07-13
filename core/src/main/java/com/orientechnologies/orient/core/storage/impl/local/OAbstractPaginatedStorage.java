@@ -49,6 +49,8 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -114,39 +116,38 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @since 28.03.13
  */
 public abstract class OAbstractPaginatedStorage extends OStorageAbstract implements OLowDiskSpaceListener,
-    OFullCheckpointRequestListener, OIdentifiableStorage {
-  private static final int                                    RECORD_LOCK_TIMEOUT                        = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
-                                                                                                             .getValueAsInteger();
+    OFullCheckpointRequestListener, OIdentifiableStorage, OOrientStartupListener, OOrientShutdownListener {
+  private static final int                          RECORD_LOCK_TIMEOUT                        = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
+                                                                                                   .getValueAsInteger();
 
-  private final OLockManager<ORID>               lockManager;
-  private final String                                        PROFILER_CREATE_RECORD;
-  private final String                                        PROFILER_READ_RECORD;
-  private final String                                        PROFILER_UPDATE_RECORD;
-  private final String                                        PROFILER_DELETE_RECORD;
-  private final ConcurrentMap<String, OCluster>               clusterMap                                 = new ConcurrentHashMap<String, OCluster>();
-  private final ThreadLocal<OStorageTransaction>              transaction                                = new ThreadLocal<OStorageTransaction>();
-  private final OModificationLock                             modificationLock                           = new OModificationLock();
-  private final AtomicBoolean                                 checkpointInProgress                       = new AtomicBoolean();
-  protected volatile OWriteAheadLog                           writeAheadLog;
+  private final OLockManager<ORID>                  lockManager;
+  private final String                              PROFILER_CREATE_RECORD;
+  private final String                              PROFILER_READ_RECORD;
+  private final String                              PROFILER_UPDATE_RECORD;
+  private final String                              PROFILER_DELETE_RECORD;
+  private final ConcurrentMap<String, OCluster>     clusterMap                                 = new ConcurrentHashMap<String, OCluster>();
+  private volatile ThreadLocal<OStorageTransaction> transaction                                = new ThreadLocal<OStorageTransaction>();
+  private final OModificationLock                   modificationLock                           = new OModificationLock();
+  private final AtomicBoolean                       checkpointInProgress                       = new AtomicBoolean();
+  protected volatile OWriteAheadLog                 writeAheadLog;
 
-  protected volatile OReadCache                               readCache;
-  protected volatile OWriteCache                              writeCache;
+  protected volatile OReadCache                     readCache;
+  protected volatile OWriteCache                    writeCache;
 
-  private ORecordConflictStrategy                             recordConflictStrategy                     = Orient
-                                                                                                             .instance()
-                                                                                                             .getRecordConflictStrategy()
-                                                                                                             .newInstanceOfDefaultClass();
-  private List<OCluster>                                      clusters                                   = new ArrayList<OCluster>();
-  private volatile int                                        defaultClusterId                           = -1;
-  private volatile OAtomicOperationsManager                   atomicOperationsManager;
-  private volatile boolean                                    wereDataRestoredAfterOpen                  = false;
-  private volatile boolean                                    wereNonTxOperationsPerformedInPreviousOpen = false;
-  private boolean                                             makeFullCheckPointAfterClusterCreate       = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
-                                                                                                             .getValueAsBoolean();
-  private volatile OLowDiskSpaceInformation                   lowDiskSpace                               = null;
-  private volatile boolean                                    checkpointRequest                          = false;
+  private ORecordConflictStrategy                   recordConflictStrategy                     = Orient.instance()
+                                                                                                   .getRecordConflictStrategy()
+                                                                                                   .newInstanceOfDefaultClass();
+  private List<OCluster>                            clusters                                   = new ArrayList<OCluster>();
+  private volatile int                              defaultClusterId                           = -1;
+  private volatile OAtomicOperationsManager         atomicOperationsManager;
+  private volatile boolean                          wereDataRestoredAfterOpen                  = false;
+  private volatile boolean                          wereNonTxOperationsPerformedInPreviousOpen = false;
+  private boolean                                   makeFullCheckPointAfterClusterCreate       = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
+                                                                                                   .getValueAsBoolean();
+  private volatile OLowDiskSpaceInformation         lowDiskSpace                               = null;
+  private volatile boolean                          checkpointRequest                          = false;
 
-  private final int                                           id;
+  private final int                                 id;
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode, int id) {
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
@@ -304,6 +305,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     } finally {
       lock.releaseExclusiveLock();
     }
+  }
+
+  @Override
+  public void onShutdown() {
+    transaction = null;
+  }
+
+  @Override
+  public void onStartup() {
+    if (transaction == null)
+      transaction = new ThreadLocal<OStorageTransaction>();
   }
 
   public void startAtomicOperation() throws IOException {

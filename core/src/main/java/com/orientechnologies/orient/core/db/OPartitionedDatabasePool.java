@@ -79,19 +79,20 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 06/11/14
  */
 public class OPartitionedDatabasePool extends OOrientListenerAbstract {
-  private static final int            HASH_INCREMENT = 0x61c88647;
-  private static final int            MIN_POOL_SIZE  = 2;
-  private static final AtomicInteger  nextHashCode   = new AtomicInteger();
-  private final String                url;
-  private final String                userName;
-  private final String                password;
-  private final int                   maxSize;
-  private final ThreadLocal<PoolData> poolData       = new ThreadPoolData();
-  private final AtomicBoolean         poolBusy       = new AtomicBoolean();
-  private final int                   maxPartitions  = Runtime.getRuntime().availableProcessors() << 3;
-  private volatile PoolPartition[]    partitions;
-  private volatile boolean            closed         = false;
-  private boolean                     autoCreate     = false;
+  private static final int               HASH_INCREMENT = 0x61c88647;
+  private static final int               MIN_POOL_SIZE  = 2;
+  private static final AtomicInteger     nextHashCode   = new AtomicInteger();
+  private final String                   url;
+  private final String                   userName;
+  private final String                   password;
+  private final int                      maxSize;
+
+  private volatile ThreadLocal<PoolData> poolData       = new ThreadPoolData();
+  private final AtomicBoolean            poolBusy       = new AtomicBoolean();
+  private final int                      maxPartitions  = Runtime.getRuntime().availableProcessors() << 3;
+  private volatile PoolPartition[]       partitions;
+  private volatile boolean               closed         = false;
+  private boolean                        autoCreate     = false;
 
   private static final class PoolData {
     private final int                hashCode;
@@ -337,6 +338,12 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     close();
   }
 
+  @Override
+  public void onStartup() {
+    if (poolData == null)
+      poolData = new ThreadPoolData();
+  }
+
   public void close() {
     if (closed)
       return;
@@ -356,6 +363,9 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
       }
 
     }
+
+    partitions = null;
+    poolData = null;
   }
 
   private void initQueue(String url, PoolPartition partition) {

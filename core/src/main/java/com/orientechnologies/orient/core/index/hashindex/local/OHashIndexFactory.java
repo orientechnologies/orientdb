@@ -113,13 +113,13 @@ public class OHashIndexFactory implements OIndexFactory {
       throw new OIndexException("Unsupported storage type : " + storageType);
 
     if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexUnique(indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexUnique(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
     else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexNotUnique(indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexNotUnique(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
     else if (OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType))
-      return new OIndexFullText(indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexFullText(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
     else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType))
-      return new OIndexDictionary(indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexDictionary(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
 
     throw new OConfigurationException("Unsupported type : " + indexType);
   }

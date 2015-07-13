@@ -35,6 +35,8 @@ import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.common.util.OArrays;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -71,33 +73,29 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable {
-  public static final int                       CURRENT_VERSION_NUMBER  = 4;
-  public static final int                       VERSION_NUMBER_V4       = 4;
+public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable, OOrientStartupListener,
+    OOrientShutdownListener {
+  public static final int                          CURRENT_VERSION_NUMBER  = 4;
+  public static final int                          VERSION_NUMBER_V4       = 4;
   // this is needed for guarantee the compatibility to 2.0-M1 and 2.0-M2 no changed associated with it
-  public static final int                       VERSION_NUMBER_V5       = 5;
-  private static final long                     serialVersionUID        = 1L;
+  public static final int                          VERSION_NUMBER_V5       = 5;
+  private static final long                        serialVersionUID        = 1L;
 
-  private final boolean                         clustersCanNotBeSharedAmongClasses;
+  private final boolean                            clustersCanNotBeSharedAmongClasses;
 
-  private final OReadersWriterSpinLock          rwSpinLock              = new OReadersWriterSpinLock();
+  private final OReadersWriterSpinLock             rwSpinLock              = new OReadersWriterSpinLock();
 
-  private final Map<String, OClass>             classes                 = new HashMap<String, OClass>();
-  private final Map<Integer, OClass>            clustersToClasses       = new HashMap<Integer, OClass>();
+  private final Map<String, OClass>                classes                 = new HashMap<String, OClass>();
+  private final Map<Integer, OClass>               clustersToClasses       = new HashMap<Integer, OClass>();
 
-  private final OClusterSelectionFactory        clusterSelectionFactory = new OClusterSelectionFactory();
+  private final OClusterSelectionFactory           clusterSelectionFactory = new OClusterSelectionFactory();
 
-  private final ThreadLocal<OModifiableInteger> modificationCounter     = new ThreadLocal<OModifiableInteger>() {
-                                                                          @Override
-                                                                          protected OModifiableInteger initialValue() {
-                                                                            return new OModifiableInteger(0);
-                                                                          }
-                                                                        };
-  private final List<OGlobalProperty>           properties              = new ArrayList<OGlobalProperty>();
-  private final Map<String, OGlobalProperty>    propertiesByNameType    = new HashMap<String, OGlobalProperty>();
-  private volatile int                          version                 = 0;
-  private volatile boolean                      fullCheckpointOnChange  = false;
-  private volatile OImmutableSchema             snapshot;
+  private volatile ThreadLocal<OModifiableInteger> modificationCounter     = new OModificationsCounter();
+  private final List<OGlobalProperty>              properties              = new ArrayList<OGlobalProperty>();
+  private final Map<String, OGlobalProperty>       propertiesByNameType    = new HashMap<String, OGlobalProperty>();
+  private volatile int                             version                 = 0;
+  private volatile boolean                         fullCheckpointOnChange  = false;
+  private volatile OImmutableSchema                snapshot;
 
   private static final class ClusterIdsAreEmptyException extends Exception {
   }
@@ -105,6 +103,20 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   public OSchemaShared(boolean clustersCanNotBeSharedAmongClasses) {
     super(new ODocument().setTrackingChanges(false));
     this.clustersCanNotBeSharedAmongClasses = clustersCanNotBeSharedAmongClasses;
+
+    Orient.instance().registerWeakOrientStartupListener(this);
+    Orient.instance().registerWeakOrientShutdownListener(this);
+  }
+
+  @Override
+  public void onShutdown() {
+    modificationCounter = null;
+  }
+
+  @Override
+  public void onStartup() {
+    if (modificationCounter == null)
+      modificationCounter = new OModificationsCounter();
   }
 
   public static Character checkClassNameIfValid(String iName) {
@@ -861,13 +873,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   @Override
   public void close() {
-    rwSpinLock.acquireWriteLock();
-    try {
-      classes.clear();
-      document.clear();
-    } finally {
-      rwSpinLock.releaseWriteLock();
-    }
+    classes.clear();
+    document.clear();
   }
 
   @Deprecated
@@ -1262,5 +1269,12 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   private void ensurePropertiesSize(int size) {
     while (properties.size() <= size)
       properties.add(null);
+  }
+
+  private static class OModificationsCounter extends ThreadLocal<OModifiableInteger> {
+    @Override
+    protected OModifiableInteger initialValue() {
+      return new OModifiableInteger(0);
+    }
   }
 }
