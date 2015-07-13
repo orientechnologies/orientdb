@@ -68,7 +68,11 @@ public abstract class GraphNoTxAbstractTest {
 
     OFileUtils.deleteRecursively(new File(buildDirectory + "/" + dbName));
 
-    graph = new OrientGraphNoTx(storageType + ":" + buildDirectory + "/" + dbName);
+    final String url = System.getProperty("url");
+    if (url != null)
+      graph = new OrientGraphNoTx(url);
+    else
+      graph = new OrientGraphNoTx(storageType + ":" + buildDirectory + "/" + dbName);
   }
 
   @AfterClass

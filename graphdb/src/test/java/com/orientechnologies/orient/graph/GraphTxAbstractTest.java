@@ -64,9 +64,22 @@ public abstract class GraphTxAbstractTest {
       final String dbName = GraphTxAbstractTest.class.getSimpleName();
       final String storageType = getStorageType();
       final String buildDirectory = System.getProperty("buildDirectory", ".");
-      graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
-      graph.drop();
-      graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+
+      final String url = System.getProperty("url");
+
+      if (url != null)
+        graph = new OrientGraph(url);
+      else
+        graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+
+      if (!graph.getRawGraph().getURL().startsWith("remote:")) {
+        graph.drop();
+
+        if (url != null)
+          graph = new OrientGraph(url);
+        else
+          graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+      }
     }
 
   }

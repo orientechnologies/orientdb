@@ -1372,7 +1372,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       // ASSIGNED THE PARSED FETCHPLAN
       listener.setFetchPlan(connection.database.command(command).getFetchPlan());
 
-      final Object result = connection.database.command(command).execute(params);
+      final Object result;
+      if (params == null)
+        result = connection.database.command(command).execute();
+      else
+        result = connection.database.command(command).execute(params);
 
       // FETCHPLAN HAS TO BE ASSIGNED AGAIN, because it can be changed by SQL statement
       listener.setFetchPlan(command.getFetchPlan());
