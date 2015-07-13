@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.collection.OSortedMultiIterator;
@@ -87,12 +93,6 @@ import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
-
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -303,11 +303,25 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (limit == 0 || limit < -1) {
         throw new IllegalArgumentException("Limit must be > 0 or = -1 (no limit)");
       }
+      validateQuery();
     } finally {
       textRequest.setText(originalQuery);
     }
 
     return this;
+  }
+
+  private void validateQuery() {
+    if (this.let != null) {
+      for (Object letValue : let.values()) {
+        if (letValue instanceof OSQLFunctionRuntime) {
+          final OSQLFunctionRuntime f = (OSQLFunctionRuntime) letValue;
+          if (f.getFunction().aggregateResults() && this.groupByFields != null && this.groupByFields.size() > 0) {
+            throwParsingException("Aggregate function cannot be used in LET clause together with GROUP BY");
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -692,7 +706,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         for (Object o : (Iterable) fieldValue) {
           ODocument unwindedDoc = new ODocument();
           doc.copyTo(unwindedDoc);
-          // ORecordInternal.setIdentity(doc, new ORecordId(-2, getTemporaryRIDCounter()));
           unwindedDoc.field(firstField, o);
           result.addAll(unwind(unwindedDoc, nextFields));
         }

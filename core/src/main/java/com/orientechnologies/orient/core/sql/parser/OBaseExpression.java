@@ -9,17 +9,15 @@ public class OBaseExpression extends OMathExpression {
   private static final Object UNSET           = new Object();
   private Object              inputFinalValue = UNSET;
 
-  protected ONumber         number;
+  protected ONumber           number;
 
-  protected OBaseIdentifier identifier;
+  protected OBaseIdentifier   identifier;
 
-  protected OInputParameter inputParam;
+  protected OInputParameter   inputParam;
 
-  protected String string;
+  protected String            string;
 
-  OModifier                 modifier;
-
-
+  OModifier                   modifier;
 
   public OBaseExpression(int id) {
     super(id);
@@ -41,7 +39,7 @@ public class OBaseExpression extends OMathExpression {
       result.append(number.toString());
     } else if (identifier != null) {
       result.append(identifier.toString());
-    }else if(string!=null){
+    } else if (string != null) {
       result.append(string);
     } else if (inputParam != null) {
       if (inputFinalValue == UNSET) {
@@ -49,7 +47,13 @@ public class OBaseExpression extends OMathExpression {
       } else if (inputFinalValue == null) {
         result.append("NULL");
       } else {
-        result.append(inputFinalValue.toString());
+        if (inputFinalValue instanceof String) {
+          result.append("\"");
+          result.append(OExpression.encode(inputFinalValue.toString()));
+          result.append("\"");
+        } else {
+          result.append(inputFinalValue.toString());
+        }
       }
     }
 
@@ -65,7 +69,7 @@ public class OBaseExpression extends OMathExpression {
     }
     if (inputParam != null) {
       Object result = inputParam.bindFromInputParams(params);
-      if(inputParam!=result){
+      if (inputParam != result) {
         inputFinalValue = result;
       }
     }
