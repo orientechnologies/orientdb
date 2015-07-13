@@ -76,54 +76,11 @@ public class OSharedContainerImpl implements OSharedContainer {
   }
 
   public synchronized void clearResources() {
-    final ExecutorService service = Executors.newSingleThreadExecutor(new CloseTaskFactory());
-    try {
-      final List<OCloseable> resourcesToClose = new ArrayList<OCloseable>();
-
-      for (Object resource : sharedResources.values()) {
-        if (resource instanceof OCloseable)
-          resourcesToClose.add(((OCloseable) resource));
-      }
-
-      sharedResources.clear();
-
-      service.submit(new CloseTask(resourcesToClose));
-    } finally {
-      service.shutdown();
-      try {
-        service.awaitTermination(1, TimeUnit.MINUTES);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-    }
-  }
-
-  private static class CloseTask implements Runnable {
-    private final List<OCloseable> resourcesToClose;
-
-    public CloseTask(List<OCloseable> resourcesToClose) {
-      this.resourcesToClose = resourcesToClose;
+    for (Object resource : sharedResources.values()) {
+      if (resource instanceof OCloseable)
+        (((OCloseable) resource)).close();
     }
 
-    @Override
-    public void run() {
-      for (OCloseable closeable : resourcesToClose) {
-        try {
-          closeable.close();
-        } catch (Exception e) {
-          OLogManager.instance().debug(this, "Exception while resource is closed.", e);
-        }
-      }
-    }
-  }
-
-  private static class CloseTaskFactory implements ThreadFactory {
-    @Override
-    public Thread newThread(Runnable r) {
-      final Thread thread = new Thread(r, "Close task thread");
-      thread.setDaemon(true);
-
-      return thread;
-    }
+    sharedResources.clear();
   }
 }

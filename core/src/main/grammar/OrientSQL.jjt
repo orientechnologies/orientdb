@@ -378,7 +378,7 @@ TOKEN :
 | < MATCHES: ( "M" | "m") ( "A" | "a") ( "T" | "t") ( "C" | "c") ( "H" | "h") ( "E" | "e") ( "S" | "s") >
 | < KEY: ( "K" | "k") ( "E" | "e") ( "Y" | "y") >
 | < INSTANCEOF: "instanceof" >
-| < CLUSTER: "cluster" >
+| < CLUSTER: ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) >
 }
 
 

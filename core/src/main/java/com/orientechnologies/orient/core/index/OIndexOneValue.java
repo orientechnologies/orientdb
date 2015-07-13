@@ -43,9 +43,9 @@ import java.util.Set;
  * 
  */
 public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
-  public OIndexOneValue(final String type, String algorithm, OIndexEngine<OIdentifiable> engine, String valueContainerAlgorithm,
-      ODocument metadata) {
-    super(type, algorithm, engine, valueContainerAlgorithm, metadata);
+  public OIndexOneValue(String name, final String type, String algorithm, OIndexEngine<OIdentifiable> engine,
+      String valueContainerAlgorithm, ODocument metadata) {
+    super(name, type, algorithm, engine, valueContainerAlgorithm, metadata);
   }
 
   public OIdentifiable get(Object iKey) {
@@ -125,7 +125,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
   public OIndexOneValue create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
-    return (OIndexOneValue) super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
+    return (OIndexOneValue) super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
         determineValueSerializer());
   }
 

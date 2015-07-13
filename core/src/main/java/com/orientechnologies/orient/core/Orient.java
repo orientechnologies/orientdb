@@ -19,6 +19,22 @@
  */
 package com.orientechnologies.orient.core;
 
+import java.io.IOException;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -41,22 +57,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.IOException;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Orient extends OListenerManger<OOrientListener> {
   public static final String                                                         ORIENTDB_HOME                 = "ORIENTDB_HOME";
@@ -331,6 +331,8 @@ public class Orient extends OListenerManger<OOrientListener> {
           }
 
       }
+
+      System.gc();
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
