@@ -267,7 +267,9 @@ public class OServerPluginManager implements OService {
   }
 
   private void updatePlugins() {
-    final File pluginsDirectory = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}", ".") + "/plugins/");
+    // load plugins.directory from server configuration or default to $ORIENTDB_HOME/plugins
+    String dirName = server.getConfiguration().getProperty("plugins.directory", OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}", ".") + "/plugins/");
+    final File pluginsDirectory = new File(dirName);
     if (!pluginsDirectory.exists())
       pluginsDirectory.mkdirs();
 
