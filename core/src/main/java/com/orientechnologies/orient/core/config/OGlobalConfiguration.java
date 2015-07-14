@@ -24,9 +24,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -292,7 +292,7 @@ public enum OGlobalConfiguration {
 
   // FILE
   TRACK_FILE_CLOSE("file.trackFileClose",
-      "Log all cases when files are closed. That is needed only for debug of issues insied system.", Boolean.class, false),
+      "Log all the cases when files are closed. This is needed only for internal debugging purpose", Boolean.class, false),
 
   FILE_LOCK("file.lock", "Locks files when used. Default is true", boolean.class, true),
 
