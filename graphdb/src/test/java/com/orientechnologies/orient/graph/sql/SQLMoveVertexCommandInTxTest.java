@@ -44,7 +44,8 @@ public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
 
   @BeforeClass
   public static void beforeClass() {
-    GraphTxAbstractTest.beforeClass();
+    init(SQLMoveVertexCommandInTxTest.class.getSimpleName());
+
     graph.executeOutsideTx(new OCallable<Object, OrientBaseGraph>() {
       @Override
       public Object call(OrientBaseGraph iArgument) {

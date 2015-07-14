@@ -30,6 +30,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -285,5 +286,10 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
     }
 
     Assert.assertEquals(tot, 2);
+  }
+
+  @BeforeClass
+  public static void init() {
+    init(SQLMoveVertexCommandTest.class.getSimpleName());
   }
 }

@@ -57,10 +57,9 @@ public abstract class GraphTxAbstractTest {
 
     return "plocal";
   }
-  @BeforeClass
-  public static void beforeClass() {
+
+  public static void init(final String dbName) {
     if (graph == null) {
-      final String dbName = GraphTxAbstractTest.class.getSimpleName();
       final String storageType = getStorageType();
       final String buildDirectory = System.getProperty("buildDirectory", ".");
 
