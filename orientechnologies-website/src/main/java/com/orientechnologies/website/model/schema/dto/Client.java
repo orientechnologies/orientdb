@@ -11,6 +11,14 @@ public class Client {
 
   protected boolean support;
 
+  protected String  supportEmail;
+
+  protected String  supportSubject;
+
+  protected String  supportSubjectUpdate;
+
+  protected String  supportTemplate;
+
   public Integer getClientId() {
     return clientId;
   }
@@ -41,5 +49,37 @@ public class Client {
 
   public void setSupport(boolean support) {
     this.support = support;
+  }
+
+  public String getSupportEmail() {
+    return supportEmail;
+  }
+
+  public void setSupportEmail(String supportEmail) {
+    this.supportEmail = supportEmail;
+  }
+
+  public String getSupportSubject() {
+    return supportSubject;
+  }
+
+  public void setSupportSubject(String supportSubject) {
+    this.supportSubject = supportSubject;
+  }
+
+  public String getSupportTemplate() {
+    return supportTemplate;
+  }
+  
+  public void setSupportTemplate(String supportTemplate) {
+    this.supportTemplate = supportTemplate;
+  }
+
+  public String getSupportSubjectUpdate() {
+    return supportSubjectUpdate;
+  }
+
+  public void setSupportSubjectUpdate(String supportSubjectUpdate) {
+    this.supportSubjectUpdate = supportSubjectUpdate;
   }
 }

@@ -165,7 +165,6 @@ public class IssueServiceImpl implements IssueService {
       if (l != null) {
         lbs.add(l);
         if (isStopSla(l.getName())) {
-          if (issue.getClient() != null)
             removeSlaCounting(issue, actor);
         }
       }

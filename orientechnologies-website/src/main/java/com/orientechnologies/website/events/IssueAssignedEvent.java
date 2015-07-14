@@ -64,6 +64,7 @@ public class IssueAssignedEvent extends EventInternal<IssueEvent> {
       sender.send(mailMessage);
 
     }
+
   }
 
   private void fillContextVariable(Context context, Issue issue, IssueEvent issueEvent) {

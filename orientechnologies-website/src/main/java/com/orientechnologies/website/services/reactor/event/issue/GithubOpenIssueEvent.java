@@ -1,5 +1,6 @@
 package com.orientechnologies.website.services.reactor.event.issue;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.events.EventManager;
 import com.orientechnologies.website.events.IssueCreatedEvent;
@@ -60,47 +61,52 @@ public class GithubOpenIssueEvent implements GithubIssueEvent {
     ODocument issue = payload.field("issue");
     ODocument repository = payload.field("repository");
     ODocument organization = payload.field("organization");
-    OUser user = findUser(issue, "user");
-    String repoName = repository.field(ORepository.NAME.toString());
-    String organizationName = organization.field("login");
 
-    GIssue gIssue = GIssue.fromDoc(issue);
-    Issue issue1 = repositoryRepository.findIssueByRepoAndNumber(repoName, gIssue.getNumber());
-    if (issue1 != null) {
-      return;
-    }
-    Repository r = orgRepository.findOrganizationRepository(organizationName, repoName);
-    GMilestone m = gIssue.getMilestone();
-    Milestone milestone = null;
-    if (m != null) {
-      milestone = repositoryRepository.findMilestoneByRepoAndName(repoName, m.getNumber());
-      if (milestone == null) {
-        milestone = new Milestone();
-        milestone.setNumber(m.getNumber());
-        milestone.setTitle(m.getTitle());
-        milestone.setDescription(m.getDescription());
-        milestone.setState(m.getState().name());
-        milestone.setCreatedAt(m.getCreatedAt());
-        milestone.setDueOn(m.getDueOn());
-        milestone = milestoneRepository.save(milestone);
-        repositoryService.addMilestone(r, milestone);
+    if (issue != null) {
+      OUser user = findUser(issue, "user");
+      String repoName = repository.field(ORepository.NAME.toString());
+      String organizationName = organization.field("login");
+
+      GIssue gIssue = GIssue.fromDoc(issue);
+      Issue issue1 = repositoryRepository.findIssueByRepoAndNumber(repoName, gIssue.getNumber());
+      if (issue1 != null) {
+        return;
       }
-    }
-    Issue i = new Issue();
-    i.setCreatedAt(gIssue.getCreatedAt());
-    i.setTitle(gIssue.getTitle());
-    i.setBody(gIssue.getBody());
-    i.setNumber(gIssue.getNumber());
-    i.setConfidential(false);
-    i.setState(gIssue.getState().name());
-    i = issueRepository.save(i);
-    issueService.changeUser(i, user);
-    repositoryService.createIssue(r, i);
-    if (milestone != null)
-      issueService.changeMilestone(i, milestone, user, true);
+      Repository r = orgRepository.findOrganizationRepository(organizationName, repoName);
+      GMilestone m = gIssue.getMilestone();
+      Milestone milestone = null;
+      if (m != null) {
+        milestone = repositoryRepository.findMilestoneByRepoAndName(repoName, m.getNumber());
+        if (milestone == null) {
+          milestone = new Milestone();
+          milestone.setNumber(m.getNumber());
+          milestone.setTitle(m.getTitle());
+          milestone.setDescription(m.getDescription());
+          milestone.setState(m.getState().name());
+          milestone.setCreatedAt(m.getCreatedAt());
+          milestone.setDueOn(m.getDueOn());
+          milestone = milestoneRepository.save(milestone);
+          repositoryService.addMilestone(r, milestone);
+        }
+      }
+      Issue i = new Issue();
+      i.setCreatedAt(gIssue.getCreatedAt());
+      i.setTitle(gIssue.getTitle());
+      i.setBody(gIssue.getBody());
+      i.setNumber(gIssue.getNumber());
+      i.setConfidential(false);
+      i.setState(gIssue.getState().name());
+      i = issueRepository.save(i);
+      issueService.changeUser(i, user);
+      repositoryService.createIssue(r, i);
+      if (milestone != null)
+        issueService.changeMilestone(i, milestone, user, true);
 
-    i.setUser(user);
-    eventManager.pushInternalEvent(IssueCreatedEvent.EVENT, i);
+      i.setUser(user);
+      eventManager.pushInternalEvent(IssueCreatedEvent.EVENT, i);
+    } else {
+      OLogManager.instance().warn(this, "New Issue not handle : " + payload.toJSON());
+    }
 
   }
 

@@ -1,7 +1,13 @@
 package com.orientechnologies.website.events;
 
+import com.orientechnologies.website.model.schema.dto.Client;
+import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.OUser;
+import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.services.reactor.ReactorMSG;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import reactor.event.Event;
 import reactor.function.Consumer;
 
@@ -13,6 +19,9 @@ import java.util.Set;
  * Created by Enrico Risa on 30/12/14.
  */
 public abstract class EventInternal<T> implements Consumer<Event<T>> {
+
+  @Autowired
+  protected OrganizationRepository organizationRepository;
 
   public String handleWhat() {
     return ReactorMSG.INTERNAL_EVENT.toString() + "/" + event();
@@ -47,4 +56,33 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
     return actors.toArray(new String[actors.size()]);
   }
 
+  protected void sendSupportMail(JavaMailSenderImpl sender, Issue issue, String content, boolean isNew) {
+
+    for (Client client : organizationRepository.findClients(issue.getRepository().getOrganization().getName())) {
+
+      if (client.isSupport()) {
+
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setTo(client.getSupportEmail());
+        mailMessage.setFrom("prjhub@orientechnologies.com");
+        mailMessage.setSubject(prepareSubject(issue, client, isNew));
+        mailMessage.setText(content);
+        sender.send(mailMessage);
+      }
+    }
+
+  }
+
+  protected String prepareSubject(Issue issue, Client support, boolean isNew) {
+    String text = null;
+
+    if (isNew) {
+      text = support.getSupportSubject();
+    } else {
+      text = support.getSupportSubjectUpdate();
+    }
+    text = text.replace("$issue", "" + issue.getIid());
+    text = text.replace("$client", "" + issue.getClient().getName());
+    return text;
+  }
 }

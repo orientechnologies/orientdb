@@ -4,7 +4,6 @@ import com.orientechnologies.website.configuration.AppConfig;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.IssueRepository;
-import com.orientechnologies.website.repository.OrganizationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.mail.SimpleMailMessage;
@@ -24,21 +23,18 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
 
   @Autowired
   @Lazy
-  protected JavaMailSenderImpl     sender;
+  protected JavaMailSenderImpl sender;
 
   @Autowired
-  protected AppConfig              config;
+  protected AppConfig          config;
 
   @Autowired
-  private IssueRepository          issueRepository;
+  private IssueRepository      issueRepository;
 
   @Autowired
-  private SpringTemplateEngine     templateEngine;
+  private SpringTemplateEngine templateEngine;
 
-  public static String             EVENT = "issue_created";
-
-  @Autowired
-  protected OrganizationRepository organizationRepository;
+  public static String         EVENT = "issue_created";
 
   @Override
   public String event() {
@@ -96,6 +92,9 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
           mailMessage.setText(htmlContent);
           sender.send(mailMessage);
         }
+      }
+      if (issue.getClient() != null) {
+        sendSupportMail(sender, issue, htmlContent, true);
       }
     }
   }

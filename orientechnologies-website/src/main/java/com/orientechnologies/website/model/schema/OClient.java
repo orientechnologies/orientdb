@@ -27,7 +27,32 @@ public enum OClient implements OTypeHolder<Client> {
     public OType getType() {
       return OType.BOOLEAN;
     }
+  },
+  SUPPORT_EMAIL("supportEmail") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
+    }
+  },
+  SUPPORT_SUBJECT("supportSubject") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
+    }
+  },
+  SUPPORT_SUBJECT_UPDATE("supportSubjectUpdate") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
+    }
+  },
+  SUPPORT_TEMPLATE("supportTemplate") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
+    }
   };
+
   private final String description;
 
   OClient(String description) {
@@ -46,6 +71,11 @@ public enum OClient implements OTypeHolder<Client> {
     doc.field(NAME.toString(), entity.getName());
     doc.field(CLIENT_ID.toString(), entity.getClientId());
     doc.field(SUPPORT.toString(), entity.isSupport());
+
+    doc.field(SUPPORT_EMAIL.toString(), entity.getSupportEmail());
+    doc.field(SUPPORT_SUBJECT.toString(), entity.getSupportSubject());
+    doc.field(SUPPORT_SUBJECT_UPDATE.toString(), entity.getSupportSubjectUpdate());
+    doc.field(SUPPORT_TEMPLATE.toString(), entity.getSupportTemplate());
     return doc;
   }
 
@@ -61,7 +91,10 @@ public enum OClient implements OTypeHolder<Client> {
     l.setClientId((Integer) doc.field(CLIENT_ID.toString()));
     Boolean field = (Boolean) doc.field(SUPPORT.toString());
     l.setSupport(field != null ? field : false);
-
+    l.setSupportEmail((String) doc.field(SUPPORT_EMAIL.toString()));
+    l.setSupportSubject((String) doc.field(SUPPORT_SUBJECT.toString()));
+    l.setSupportSubjectUpdate((String) doc.field(SUPPORT_SUBJECT_UPDATE.toString()));
+    l.setSupportTemplate((String) doc.field(SUPPORT_TEMPLATE.toString()));
     return l;
   }
 

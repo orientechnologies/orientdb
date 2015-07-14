@@ -192,6 +192,10 @@ public class OrganizationServiceImpl implements OrganizationService {
 
       client.setName(patch.getName());
       client.setSupport(patch.isSupport());
+      client.setSupportEmail(patch.getSupportEmail());
+      client.setSupportSubject(patch.getSupportSubject());
+      client.setSupportSubjectUpdate(patch.getSupportSubjectUpdate());
+      client.setSupportTemplate(patch.getSupportTemplate());
       client = clientRepository.save(client);
       return client;
     }

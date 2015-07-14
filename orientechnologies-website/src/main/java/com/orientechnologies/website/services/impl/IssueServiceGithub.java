@@ -122,10 +122,10 @@ public class IssueServiceGithub implements IssueService {
       GRepo repo = github.repo(iPropertyValue, doc.toJSON());
       repo.removeIssueLabel(issue.getNumber(), label);
       OUser current = SecurityHelper.currentUser();
-      if (actor != null && !actor.getUsername().equals(current.getUsername())
+      if (current != null && actor != null && !actor.getUsername().equals(current.getUsername())
           && issueService.securityManager.isCurrentSupport(issue.getRepository().getOrganization().getName())) {
         Label l = issueService.repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
-        issueService.eventService.fireEvent(issue, SecurityHelper.currentUser(), "unlabeled", null, l);
+        issueService.eventService.fireEvent(issue, current, "unlabeled", null, l);
       }
     } catch (IOException e) {
 

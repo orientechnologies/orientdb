@@ -65,6 +65,7 @@ public class MockMailSender extends JavaMailSenderImpl {
       }
 
     } else {
+      LOGGER.info(simpleMessage.getSubject());
       LOGGER.info(simpleMessage.getText());
     }
   }

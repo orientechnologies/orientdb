@@ -16,7 +16,7 @@ public class SecurityHelper {
 
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-    if (auth.isAuthenticated()) {
+    if (auth != null && auth.isAuthenticated()) {
       DeveloperAuthentication developerAuthentication = (DeveloperAuthentication) auth;
       return developerAuthentication.getUser();
     } else {
@@ -29,7 +29,7 @@ public class SecurityHelper {
   public static String currentToken() {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-    if (auth.isAuthenticated()) {
+    if (auth != null && auth.isAuthenticated()) {
       DeveloperAuthentication developerAuthentication = (DeveloperAuthentication) auth;
       return developerAuthentication.getGithubToken();
     } else {
