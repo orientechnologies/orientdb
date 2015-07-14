@@ -372,7 +372,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     fillRecord(rid, buffer, version, newRecord, null);
 
     ORecordInternal.setContentChanged(newRecord, updateContent);
-    ORecordInternal.setDirtyManager(newRecord, null);
+    ORecordInternal.getDirtyManager(newRecord).cleanForSave();
     final ORecord currentRecord;
     if (newRecord instanceof ODocument) {
       currentRecord = iDatabase.load(rid);
