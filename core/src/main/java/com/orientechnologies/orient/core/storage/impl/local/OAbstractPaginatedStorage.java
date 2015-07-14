@@ -323,7 +323,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   public void commitAtomicOperation() throws IOException {
     lock.acquireSharedLock();
     try {
-      atomicOperationsManager.endAtomicOperation(false);
+      atomicOperationsManager.endAtomicOperation(false, null);
     } finally {
       lock.releaseSharedLock();
     }
@@ -332,7 +332,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   public void rollbackAtomicOperation() throws IOException {
     lock.acquireSharedLock();
     try {
-      atomicOperationsManager.endAtomicOperation(true);
+      atomicOperationsManager.endAtomicOperation(true, null);
     } finally {
       lock.releaseSharedLock();
     }
@@ -1607,7 +1607,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   private void endStorageTx() throws IOException {
-    atomicOperationsManager.endAtomicOperation(false);
+    atomicOperationsManager.endAtomicOperation(false, null);
 
     assert atomicOperationsManager.getCurrentOperation() == null;
   }
@@ -1635,7 +1635,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (writeAheadLog == null || transaction.get() == null)
       return;
 
-    atomicOperationsManager.endAtomicOperation(true);
+    atomicOperationsManager.endAtomicOperation(true, null);
 
     assert atomicOperationsManager.getCurrentOperation() == null;
   }
@@ -1674,20 +1674,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
           context.executeOperations(this);
-        atomicOperationsManager.endAtomicOperation(false);
-      } catch (Throwable throwable) {
-        atomicOperationsManager.endAtomicOperation(true);
+        atomicOperationsManager.endAtomicOperation(false, null);
+      } catch (Exception e) {
+        atomicOperationsManager.endAtomicOperation(true, e);
 
-        if (throwable instanceof OOfflineClusterException)
-          throw (OOfflineClusterException) throwable;
+        if (e instanceof OOfflineClusterException)
+          throw (OOfflineClusterException) e;
 
-        OLogManager.instance().error(this, "Error on creating record in cluster: " + cluster, throwable);
+        OLogManager.instance().error(this, "Error on creating record in cluster: " + cluster, e);
 
         try {
           if (ppos.clusterPosition != ORID.CLUSTER_POS_INVALID)
             cluster.deleteRecord(ppos.clusterPosition);
-        } catch (IOException e) {
-          OLogManager.instance().error(this, "Error on removing record in cluster: " + cluster, e);
+        } catch (IOException ioe) {
+          OLogManager.instance().error(this, "Error on removing record in cluster: " + cluster, ioe);
         }
 
         return null;
@@ -1745,9 +1745,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
           context.executeOperations(this);
-        atomicOperationsManager.endAtomicOperation(false);
-      } catch (Throwable e) {
-        atomicOperationsManager.endAtomicOperation(true);
+        atomicOperationsManager.endAtomicOperation(false, null);
+      } catch (Exception e) {
+        atomicOperationsManager.endAtomicOperation(true, e);
 
         OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", e);
 
@@ -1802,9 +1802,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           context.executeOperations(this);
 
         cluster.deleteRecord(ppos.clusterPosition);
-        atomicOperationsManager.endAtomicOperation(false);
-      } catch (Throwable e) {
-        atomicOperationsManager.endAtomicOperation(true);
+        atomicOperationsManager.endAtomicOperation(false, null);
+      } catch (Exception e) {
+        atomicOperationsManager.endAtomicOperation(true, e);
         OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
         return new OStorageOperationResult<Boolean>(false);
       }
@@ -1835,9 +1835,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           context.executeOperations(this);
 
         cluster.hideRecord(ppos.clusterPosition);
-        atomicOperationsManager.endAtomicOperation(false);
-      } catch (Throwable e) {
-        atomicOperationsManager.endAtomicOperation(true);
+        atomicOperationsManager.endAtomicOperation(false, null);
+      } catch (Exception e) {
+        atomicOperationsManager.endAtomicOperation(true, e);
         OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
 
         return new OStorageOperationResult<Boolean>(false);

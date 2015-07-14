@@ -77,12 +77,12 @@ public class OClusterPositionMap extends ODurableComponent {
     acquireExclusiveLock();
     try {
       fileId = addFile(atomicOperation, getFullName());
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException ioe) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, ioe);
       throw ioe;
     } catch (Exception e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw new OStorageException("Error during cluster position - physical position map.", e);
     } finally {
       releaseExclusiveLock();
@@ -117,12 +117,12 @@ public class OClusterPositionMap extends ODurableComponent {
     acquireExclusiveLock();
     try {
       truncateFile(atomicOperation, fileId);
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException ioe) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, ioe);
       throw ioe;
     } catch (Exception e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw new OStorageException("Error during truncation of cluster position - physical position map", e);
     } finally {
       releaseExclusiveLock();
@@ -135,12 +135,12 @@ public class OClusterPositionMap extends ODurableComponent {
     acquireExclusiveLock();
     try {
       deleteFile(atomicOperation, fileId);
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException ioe) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, ioe);
       throw ioe;
     } catch (Exception e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw new OStorageException("Error during deletion of cluster position - physical position map.", e);
     } finally {
       releaseExclusiveLock();
@@ -153,12 +153,12 @@ public class OClusterPositionMap extends ODurableComponent {
     try {
       writeCache.renameFile(fileId, getFullName(), newName + getExtension());
       setName(newName);
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException ioe) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, ioe);
       throw ioe;
     } catch (Exception e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw new OStorageException("Error during rename of cluster position - physical position map.");
     } finally {
       releaseExclusiveLock();
@@ -194,10 +194,10 @@ public class OClusterPositionMap extends ODurableComponent {
         final long index = bucket.add(pageIndex, recordPosition);
         final long result = index + cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES;
 
-        endAtomicOperation(false);
+        endAtomicOperation(false, null);
         return result;
-      } catch (Throwable e) {
-        endAtomicOperation(true);
+      } catch (Exception e) {
+        endAtomicOperation(true, e);
         throw new OStorageException("Error during creation of mapping between logical adn physical record position.", e);
       } finally {
         cacheEntry.releaseExclusiveLock();
@@ -253,14 +253,14 @@ public class OClusterPositionMap extends ODurableComponent {
 
         OClusterPositionMapBucket.PositionEntry positionEntry = bucket.remove(index);
         if (positionEntry == null) {
-          endAtomicOperation(false);
+          endAtomicOperation(false, null);
           return null;
         }
 
-        endAtomicOperation(false);
+        endAtomicOperation(false, null);
         return positionEntry;
-      } catch (Throwable e) {
-        endAtomicOperation(true);
+      } catch (Exception e) {
+        endAtomicOperation(true, e);
 
         throw new OStorageException("Error during removal of mapping between logical and physical record position.", e);
       } finally {
@@ -516,9 +516,9 @@ public class OClusterPositionMap extends ODurableComponent {
   }
 
   @Override
-  protected void endAtomicOperation(final boolean rollback) throws IOException {
+  protected void endAtomicOperation(final boolean rollback, Exception e) throws IOException {
     if (useWal)
-      super.endAtomicOperation(rollback);
+      super.endAtomicOperation(rollback, e);
   }
 
   @Override

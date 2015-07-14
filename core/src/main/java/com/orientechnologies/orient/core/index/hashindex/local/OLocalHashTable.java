@@ -171,12 +171,12 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         if (nullKeyIsSupported)
           nullBucketFileId = addFile(atomicOperation, getName() + nullBucketFileExtension);
 
-        endAtomicOperation(false);
+        endAtomicOperation(false, null);
       } catch (IOException e) {
-        endAtomicOperation(true);
+        endAtomicOperation(true, e);
         throw e;
-      } catch (Throwable e) {
-        endAtomicOperation(true);
+      } catch (Exception e) {
+        endAtomicOperation(true, e);
         throw new OStorageException(null, e);
       }
     } catch (IOException e) {
@@ -187,11 +187,11 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  protected void endAtomicOperation(boolean rollback) throws IOException {
+  protected void endAtomicOperation(boolean rollback, Exception e) throws IOException {
     if (storage.getStorageTransaction() == null && !durableInNonTxMode)
       return;
 
-    super.endAtomicOperation(rollback);
+    super.endAtomicOperation(rollback, e);
   }
 
   @Override
@@ -236,22 +236,22 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         releasePage(atomicOperation, hashStateEntry);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      rollback();
+      rollback(e);
 
       throw new OIndexException("Can not set serializer for index keys", e);
-    } catch (Throwable e) {
-      rollback();
+    } catch (Exception e) {
+      rollback(e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
   }
 
-  private void rollback() {
+  private void rollback(Exception e) {
     try {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
     } catch (IOException ioe) {
       throw new OIndexException("Error during operation roolback", ioe);
     }
@@ -292,12 +292,12 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         releasePage(atomicOperation, hashStateEntry);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      rollback();
+      rollback(e);
       throw new OIndexException("Can not set serializer for index values", e);
-    } catch (Throwable e) {
-      rollback();
+    } catch (Exception e) {
+      rollback(e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -383,12 +383,12 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
       doPut(key, value, atomicOperation);
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      rollback();
+      rollback(e);
       throw new OIndexException("Error during index update", e);
-    } catch (Throwable e) {
-      rollback();
+    } catch (Exception e) {
+      rollback(e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -427,7 +427,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
               getChangesTree(atomicOperation, cacheEntry));
           final int positionIndex = bucket.getIndex(hashCode, key);
           if (positionIndex < 0) {
-            endAtomicOperation(false);
+            endAtomicOperation(false, null);
             return null;
           }
 
@@ -448,11 +448,11 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
         changeSize(sizeDiff, atomicOperation);
 
-        endAtomicOperation(false);
+        endAtomicOperation(false, null);
         return removed;
       } else {
         if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
-          endAtomicOperation(false);
+          endAtomicOperation(false, null);
           return null;
         }
 
@@ -479,14 +479,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
         changeSize(sizeDiff, atomicOperation);
 
-        endAtomicOperation(false);
+        endAtomicOperation(false, null);
         return removed;
       }
     } catch (IOException e) {
-      rollback();
+      rollback(e);
       throw new OIndexException("Error during index removal", e);
-    } catch (Throwable e) {
-      rollback();
+    } catch (Exception e) {
+      rollback(e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -525,12 +525,12 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
       initHashTreeState(atomicOperation);
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      rollback();
+      rollback(e);
       throw new OIndexException("Error during hash table clear", e);
-    } catch (Throwable e) {
-      rollback();
+    } catch (Exception e) {
+      rollback(e);
       throw new OSBTreeException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -677,12 +677,12 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         deleteFile(atomicOperation, fileId);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException ioe) {
-      rollback();
+      rollback(ioe);
       throw new OIndexException("Can not delete hash table with name " + name, ioe);
     } catch (Exception e) {
-      rollback();
+      rollback(e);
       throw new OIndexException("Can not delete hash table with name " + name, e);
     } finally {
       releaseExclusiveLock();
@@ -1238,13 +1238,12 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       if (nullKeyIsSupported)
         deleteFile(atomicOperation, nullBucketFileId);
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      rollback();
-
+      rollback(e);
       throw new OIndexException("Exception during index deletion", e);
     } catch (Exception e) {
-      rollback();
+      rollback(e);
 
       throw new OIndexException("Exception during index deletion", e);
     } finally {

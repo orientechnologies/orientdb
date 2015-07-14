@@ -64,12 +64,12 @@ public class OHashTableDirectory extends ODurableComponent {
 
       fileId = addFile(atomicOperation, getFullName());
       init();
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException("Error during creation of hash table.", e);
     } finally {
       releaseExclusiveLock();
@@ -100,12 +100,12 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(atomicOperation, firstEntry);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     }
   }
@@ -144,12 +144,12 @@ public class OHashTableDirectory extends ODurableComponent {
     acquireExclusiveLock();
     try {
       deleteFile(atomicOperation, fileId);
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
     } catch (Exception e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw new OStorageException("Error during hash table deletion", e);
     } finally {
       releaseExclusiveLock();
@@ -165,12 +165,12 @@ public class OHashTableDirectory extends ODurableComponent {
         deleteFile(atomicOperation, fileId);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
     } catch (Exception e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw new OStorageException("", e);
     } finally {
       releaseExclusiveLock();
@@ -247,13 +247,13 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(atomicOperation, firstEntry);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
 
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -295,12 +295,12 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(atomicOperation, firstEntry);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -340,12 +340,12 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(page, true, atomicOperation);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -384,12 +384,12 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(page, true, atomicOperation);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -427,12 +427,12 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(page, true, atomicOperation);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -479,12 +479,12 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(page, true, atomicOperation);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -522,12 +522,12 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(page, true, atomicOperation);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -542,12 +542,12 @@ public class OHashTableDirectory extends ODurableComponent {
 
       init();
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
     } catch (Exception e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw new OStorageException("Error during removing of hash table directory content.", e);
     } finally {
       releaseExclusiveLock();
@@ -604,11 +604,11 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   @Override
-  protected void endAtomicOperation(boolean rollback) throws IOException {
+  protected void endAtomicOperation(boolean rollback, Exception e) throws IOException {
     if (storage.getStorageTransaction() == null && !durableInNonTxMode)
       return;
 
-    super.endAtomicOperation(rollback);
+    super.endAtomicOperation(rollback, e);
   }
 
   @Override

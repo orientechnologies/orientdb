@@ -101,7 +101,6 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
   private final String                   metadataConfigurationFileExtension;
   private final String                   treeStateFileExtension;
 
-
   public static final int                HASH_CODE_SIZE      = 64;
   public static final int                MAX_LEVEL_DEPTH     = 8;
   public static final int                MAX_LEVEL_SIZE      = 1 << MAX_LEVEL_DEPTH;
@@ -188,12 +187,12 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
         if (nullKeyIsSupported)
           nullBucketFileId = addFile(atomicOperation, getName() + nullBucketFileExtension);
 
-        endAtomicOperation(false);
+        endAtomicOperation(false, null);
       } catch (IOException e) {
-        endAtomicOperation(true);
+        endAtomicOperation(true, e);
         throw e;
-      } catch (Throwable e) {
-        endAtomicOperation(true);
+      } catch (Exception e) {
+        endAtomicOperation(true, e);
         throw new OStorageException(null, e);
       }
     } catch (IOException e) {
@@ -204,11 +203,11 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
   }
 
   @Override
-  protected void endAtomicOperation(boolean rollback) throws IOException {
+  protected void endAtomicOperation(boolean rollback, Exception e) throws IOException {
     if (storage.getStorageTransaction() == null && !durableInNonTxMode)
       return;
 
-    super.endAtomicOperation(rollback);
+    super.endAtomicOperation(rollback, e);
   }
 
   @Override
@@ -253,7 +252,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
         releasePage(atomicOperation, hashStateEntry);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
       rollback();
 
@@ -268,7 +267,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
   private void rollback() {
     try {
-      endAtomicOperation(true);
+      endAtomicOperation(true, null);
     } catch (IOException ioe) {
       throw new OIndexException("Error during operation roolback", ioe);
     }
@@ -309,7 +308,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
         releasePage(atomicOperation, hashStateEntry);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
       rollback();
       throw new OIndexException("Can not set serializer for index values", e);
@@ -409,7 +408,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
       doPut(key, value, atomicOperation);
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
       rollback();
       throw new OIndexException("Error during index update", e);
@@ -454,7 +453,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
               getChangesTree(atomicOperation, cacheEntry));
           final int positionIndex = bucket.getIndex(hashCode, key);
           if (positionIndex < 0) {
-            endAtomicOperation(false);
+            endAtomicOperation(false, null);
             return null;
           }
 
@@ -477,11 +476,11 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
         changeSize(sizeDiff, atomicOperation);
 
-        endAtomicOperation(false);
+        endAtomicOperation(false, null);
         return removed;
       } else {
         if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
-          endAtomicOperation(false);
+          endAtomicOperation(false, null);
           return null;
         }
 
@@ -508,7 +507,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
         changeSize(sizeDiff, atomicOperation);
 
-        endAtomicOperation(false);
+        endAtomicOperation(false, null);
         return removed;
       }
     } catch (IOException e) {
@@ -572,7 +571,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
       initHashTreeState(atomicOperation);
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
       rollback();
       throw new OIndexException("Error during hash table clear", e);
@@ -739,7 +738,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
         }
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException ioe) {
       rollback();
       throw new OIndexException("Can not delete hash table with name " + name, ioe);
@@ -1332,7 +1331,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
       if (nullKeyIsSupported)
         deleteFile(atomicOperation, nullBucketFileId);
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
       rollback();
 

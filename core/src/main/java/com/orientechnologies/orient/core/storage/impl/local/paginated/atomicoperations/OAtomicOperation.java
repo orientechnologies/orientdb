@@ -48,6 +48,7 @@ public class OAtomicOperation {
 
   private int                      startCounter;
   private boolean                  rollback;
+  private Exception                rollbackException;
 
   private Set<String>              lockedObjects        = new HashSet<String>();
   private Map<Long, FileChanges>   fileChanges          = new HashMap<Long, FileChanges>();
@@ -394,8 +395,13 @@ public class OAtomicOperation {
     return startCounter;
   }
 
-  void rollback() {
+  void rollback(Exception e) {
     rollback = true;
+    rollbackException = e;
+  }
+
+  Exception getRollbackException() {
+    return rollbackException;
   }
 
   boolean isRollback() {
