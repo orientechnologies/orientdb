@@ -886,8 +886,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     // GET THE FIRST ONE TO ASK FOR DATABASE. THIS FORCES TO HAVE ONE NODE TO DO BACKUP SAVING RESOURCES IN CASE BACKUP IS STILL
     // VALID FOR FURTHER NODES
     final List<String> firstNode = new ArrayList<String>();
-    if (nodes.iterator().hasNext())
-      firstNode.add(nodes.iterator().next());
+    while (nodes.iterator().hasNext()) {
+      final String f = nodes.iterator().next();
+      if (isNodeAvailable(f, databaseName)) {
+        firstNode.add(f);
+        break;
+      }
+    }
+
+    if (firstNode.isEmpty())
+      // NO NODE ONLINE, SEND THE MESSAGE TO EVERYONE
+      firstNode.addAll(nodes);
 
     ODistributedServerLog.warn(this, getLocalNodeName(), firstNode.toString(), DIRECTION.OUT,
         "requesting deploy of database '%s' on local server...", databaseName);
