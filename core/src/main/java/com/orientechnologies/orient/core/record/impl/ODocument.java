@@ -2119,6 +2119,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     if (_className == null)
       fetchClassName();
 
+    if( _className == null )
+      return null;
+
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
 
     if (databaseRecord != null && !databaseRecord.isClosed()) {
