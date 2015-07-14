@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -62,16 +72,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -1888,7 +1888,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   public String getClassName() {
     if (_className == null)
-      getImmutableSchemaClass();
+      fetchClassName();
 
     return _className;
   }
@@ -1966,9 +1966,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
       final ODatabaseDocument db = getDatabaseIfDefined();
       if (db != null && !db.isClosed()) {
-        final OClass _clazz = getImmutableSchemaClass();
-        if (_clazz != null)
-          buffer.append(_clazz.getStreamableName());
+        final String clsName = getClassName();
+        if (clsName != null)
+          buffer.append(clsName);
       }
 
       if (_recordId != null) {
@@ -2119,7 +2119,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     if (_className == null)
       fetchClassName();
 
-    if( _className == null )
+    if (_className == null)
       return null;
 
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
