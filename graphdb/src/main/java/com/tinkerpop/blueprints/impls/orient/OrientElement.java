@@ -280,7 +280,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       if (firstValue instanceof ODocument) {
         final ODocument document = (ODocument) firstValue;
 
-        if (document.isEmbedded())
+        if (document.isEmbedded() || ODocumentInternal.getImmutableSchemaClass(document) == null)
           return (T) fieldValue;
       }
 

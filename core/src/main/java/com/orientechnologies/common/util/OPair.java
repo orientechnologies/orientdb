@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.common.util;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,7 +38,7 @@ import java.util.Map.Entry;
  *          Value
  * @see OTriple
  */
-public class OPair<K extends Comparable<K>, V> implements Entry<K, V>, Comparable<OPair<K, V>> {
+public class OPair<K extends Comparable<K>, V> implements Entry<K, V>, Comparable<OPair<K, V>>, Serializable {
   public K key;
   public V value;
 

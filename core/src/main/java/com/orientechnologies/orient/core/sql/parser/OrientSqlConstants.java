@@ -472,7 +472,7 @@ public interface OrientSqlConstants {
     "<CONTAINSTEXT>",
     "<MATCHES>",
     "<KEY>",
-    "\"instanceof\"",
+    "<INSTANCEOF>",
     "<CLUSTER>",
     "<IDENTIFIER>",
     "<INDEX_IDENTIFIER>",
