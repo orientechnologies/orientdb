@@ -516,11 +516,11 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   protected void setDirtyManager(ODirtyManager dirtyManager) {
-    if (this._dirtyManager != null) {
+    if (this._dirtyManager != null && dirtyManager != null) {
       dirtyManager.merge(this._dirtyManager);
     }
     this._dirtyManager = dirtyManager;
-    if (this.getIdentity().isNew() && getOwner() == null)
+    if (this.getIdentity().isNew() && getOwner() == null && this._dirtyManager != null)
       this._dirtyManager.setDirty(this);
   }
 
