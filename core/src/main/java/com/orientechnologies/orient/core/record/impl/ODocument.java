@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -30,12 +40,24 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableProperty;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
@@ -50,11 +72,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.*;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -922,6 +939,12 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    *         document has been found in chain
    */
   public ODocument field(String iFieldName, Object iPropertyValue, OType... iFieldType) {
+    if (iFieldName == null)
+      throw new IllegalArgumentException("Field is null");
+
+    if (iFieldName.isEmpty())
+      throw new IllegalArgumentException("Field name is empty");
+
     if ("@class".equals(iFieldName)) {
       setClassName(iPropertyValue.toString());
       return this;
@@ -1865,7 +1888,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   public String getClassName() {
     if (_className == null)
-      getImmutableSchemaClass();
+      fetchClassName();
 
     return _className;
   }
@@ -1943,9 +1966,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
       final ODatabaseDocument db = getDatabaseIfDefined();
       if (db != null && !db.isClosed()) {
-        final OClass _clazz = getImmutableSchemaClass();
-        if (_clazz != null)
-          buffer.append(_clazz.getStreamableName());
+        final String clsName = getClassName();
+        if (clsName != null)
+          buffer.append(clsName);
       }
 
       if (_recordId != null) {
@@ -2095,6 +2118,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   protected OImmutableClass getImmutableSchemaClass() {
     if (_className == null)
       fetchClassName();
+
+    if (_className == null)
+      return null;
 
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
 

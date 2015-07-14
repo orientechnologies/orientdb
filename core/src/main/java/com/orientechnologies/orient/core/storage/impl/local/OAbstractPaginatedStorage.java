@@ -52,10 +52,6 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -73,6 +69,10 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
@@ -118,37 +118,33 @@ import java.util.zip.ZipOutputStream;
  */
 public abstract class OAbstractPaginatedStorage extends OStorageAbstract implements OLowDiskSpaceListener,
     OFullCheckpointRequestListener, OIdentifiableStorage, OOrientStartupListener, OOrientShutdownListener {
-  private static final int                          RECORD_LOCK_TIMEOUT                        = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
-                                                                                                   .getValueAsInteger();
+  private static final int RECORD_LOCK_TIMEOUT = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger();
 
-  private final OLockManager<ORID>                  lockManager;
-  private final String                              PROFILER_CREATE_RECORD;
-  private final String                              PROFILER_READ_RECORD;
-  private final String                              PROFILER_UPDATE_RECORD;
-  private final String                              PROFILER_DELETE_RECORD;
-  private final ConcurrentMap<String, OCluster>     clusterMap                                 = new ConcurrentHashMap<String, OCluster>();
-  private volatile ThreadLocal<OStorageTransaction> transaction                                = new ThreadLocal<OStorageTransaction>();
-  private final OModificationLock                   modificationLock                           = new OModificationLock();
-  private final AtomicBoolean                       checkpointInProgress                       = new AtomicBoolean();
-  protected volatile OWriteAheadLog                 writeAheadLog;
+  private final OLockManager<ORID> lockManager;
+  private final String             PROFILER_CREATE_RECORD;
+  private final String             PROFILER_READ_RECORD;
+  private final String             PROFILER_UPDATE_RECORD;
+  private final String             PROFILER_DELETE_RECORD;
+  private final    ConcurrentMap<String, OCluster>  clusterMap           = new ConcurrentHashMap<String, OCluster>();
+  private volatile ThreadLocal<OStorageTransaction> transaction          = new ThreadLocal<OStorageTransaction>();
+  private final    OModificationLock                modificationLock     = new OModificationLock();
+  private final    AtomicBoolean                    checkpointInProgress = new AtomicBoolean();
+  protected volatile OWriteAheadLog writeAheadLog;
 
-  protected volatile OReadCache                     readCache;
-  protected volatile OWriteCache                    writeCache;
+  protected volatile OReadCache  readCache;
+  protected volatile OWriteCache writeCache;
 
-  private ORecordConflictStrategy                   recordConflictStrategy                     = Orient.instance()
-                                                                                                   .getRecordConflictStrategy()
-                                                                                                   .newInstanceOfDefaultClass();
-  private List<OCluster>                            clusters                                   = new ArrayList<OCluster>();
-  private volatile int                              defaultClusterId                           = -1;
-  private volatile OAtomicOperationsManager         atomicOperationsManager;
-  private volatile boolean                          wereDataRestoredAfterOpen                  = false;
-  private volatile boolean                          wereNonTxOperationsPerformedInPreviousOpen = false;
-  private boolean                                   makeFullCheckPointAfterClusterCreate       = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
-                                                                                                   .getValueAsBoolean();
-  private volatile OLowDiskSpaceInformation         lowDiskSpace                               = null;
-  private volatile boolean                          checkpointRequest                          = false;
+  private          ORecordConflictStrategy recordConflictStrategy = Orient.instance().getRecordConflictStrategy().newInstanceOfDefaultClass();
+  private          List<OCluster>          clusters               = new ArrayList<OCluster>();
+  private volatile int                     defaultClusterId       = -1;
+  private volatile OAtomicOperationsManager atomicOperationsManager;
+  private volatile boolean                  wereDataRestoredAfterOpen                  = false;
+  private volatile boolean                  wereNonTxOperationsPerformedInPreviousOpen = false;
+  private          boolean                  makeFullCheckPointAfterClusterCreate       = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE.getValueAsBoolean();
+  private volatile OLowDiskSpaceInformation lowDiskSpace                               = null;
+  private volatile boolean                  checkpointRequest                          = false;
 
-  private final int                                 id;
+  private final int id;
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode, int id) {
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
@@ -199,7 +195,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       addDefaultClusters();
 
       // REGISTER CLUSTER
-      for (int i = 0; i < configuration.clusters.size(); ++i) {
+      for (int i = 0; i<configuration.clusters.size(); ++i) {
         final OStorageClusterConfiguration clusterConfig = configuration.clusters.get(i);
 
         if (clusterConfig != null) {
@@ -215,10 +211,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               clusters.get(pos).open();
             }
           } catch (FileNotFoundException e) {
-            OLogManager.instance().warn(
-                this,
-                "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i
-                    + "): file not found. It will be excluded from current database '" + getName() + "'.");
+            OLogManager.instance().warn(this, "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i + "): file not found. It will be excluded from current database '" + getName() + "'.");
 
             clusterMap.remove(clusters.get(i).getName().toLowerCase());
 
@@ -252,17 +245,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
 
       if (status != STATUS.CLOSED)
-        throw new OStorageException("Cannot create new storage '" + name + "' because it is not closed");
+        throw new OStorageException("Cannot create new storage '" + getURL() + "' because it is not closed");
 
       if (exists())
-        throw new OStorageException("Cannot create new storage '" + name + "' because it already exists");
+        throw new OStorageException("Cannot create new storage '" + getURL() + "' because it already exists");
 
-      if (!configuration.getContextConfiguration().getContextKeys()
-          .contains(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey()))
+      if (!configuration.getContextConfiguration().getContextKeys().contains(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey()))
 
         // SAVE COMPRESSION IN STORAGE CFG
-        configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD,
-            OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
+        configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
 
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
       initWalAndDiskCache();

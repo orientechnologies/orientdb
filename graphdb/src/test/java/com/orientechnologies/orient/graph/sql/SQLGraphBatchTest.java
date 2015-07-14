@@ -23,6 +23,7 @@ package com.orientechnologies.orient.graph.sql;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.graph.GraphNoTxAbstractTest;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Iterator;
@@ -46,5 +47,10 @@ public class SQLGraphBatchTest extends GraphNoTxAbstractTest {
 
     assertTrue(it.hasNext());
     assertNotNull(it.next());
+  }
+
+  @BeforeClass
+  public static void init() {
+    init(SQLGraphBatchTest.class.getSimpleName());
   }
 }
