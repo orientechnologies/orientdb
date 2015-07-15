@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.collection.OSortedMultiIterator;
@@ -87,13 +94,6 @@ import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
-
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -402,7 +402,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       executeSearch(iArgs);
       applyExpand();
       handleNoTarget();
-      handleGroupBy();
+      handleGroupBy(context);
       applyOrderBy();
 
       subIterator = new ArrayList<OIdentifiable>((List<OIdentifiable>) getResult()).iterator();
@@ -437,7 +437,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       executeSearch(iArgs);
       applyExpand();
       handleNoTarget();
-      handleGroupBy();
+      handleGroupBy(context);
       applyOrderBy();
       applyLimitAndSkip();
     }
@@ -487,7 +487,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return true;
   }
 
-  protected boolean executeSearchRecord(final OIdentifiable id) {
+  protected boolean executeSearchRecord(final OIdentifiable id, final OCommandContext iContext) {
     if (id == null)
       return false;
 
@@ -504,10 +504,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (Thread.interrupted())
       throw new OCommandExecutionException("The select execution has been interrupted");
 
-    if (!context.checkTimeout())
+    if (!iContext.checkTimeout())
       return false;
 
-    final LOCKING_STRATEGY contextLockingStrategy = context.getVariable("$locking") != null ? (LOCKING_STRATEGY) context
+    final LOCKING_STRATEGY contextLockingStrategy = iContext.getVariable("$locking") != null ? (LOCKING_STRATEGY) iContext
         .getVariable("$locking") : null;
 
     final LOCKING_STRATEGY localLockingStrategy = contextLockingStrategy != null ? contextLockingStrategy : lockingStrategy;
@@ -530,13 +530,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       record = (ORecord) id;
     }
 
-    context.updateMetric("recordReads", +1);
+    iContext.updateMetric("recordReads", +1);
 
     if (record == null || ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE)
       // SKIP IT
       return true;
 
-    context.updateMetric("documentReads", +1);
+    iContext.updateMetric("documentReads", +1);
 
     if (localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK) {
       record.lock(false);
@@ -547,10 +547,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     try {
-      context.setVariable("current", record);
+      iContext.setVariable("current", record);
 
-      if (filter(record)) {
-        if (!handleResult(record)) {
+      if (filter(record, iContext)) {
+        if (!handleResult(record, iContext)) {
           // LIMIT REACHED
           return false;
         }
@@ -563,6 +563,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
     }
+
     return true;
   }
 
@@ -571,9 +572,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    *
    * @param iRecord
    *          Record to handle
+   * @param iContext
    * @return false if limit has been reached, otherwise true
    */
-  protected boolean handleResult(final OIdentifiable iRecord) {
+  protected boolean handleResult(final OIdentifiable iRecord, final OCommandContext iContext) {
     if (parallel)
       // LOCK FOR PARALLEL EXECUTION. THIS PREVENT CONCURRENT ISSUES
       parallelLock.lock();
@@ -589,15 +591,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       resultCount++;
 
-      if (!addResult(lastRecord)) {
+      if (!addResult(lastRecord, iContext)) {
         return false;
       }
 
       return !((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && !isAnyFunctionAggregates()
           && (groupByFields == null || groupByFields.isEmpty()) && fetchLimit > -1 && resultCount >= fetchLimit);
+
     } finally {
+
       if (parallel)
-        // UNLOCK PARALLEL EXECUTION
+        // UNLOCK FOR PARALLEL EXECUTION. THIS PREVENT CONCURRENT ISSUES
         parallelLock.unlock();
     }
   }
@@ -606,20 +610,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * Returns the temporary RID counter assuring it's unique per query tree.
    * 
    * @return Serial as integer
+   * @param iContext
    */
-  protected int getTemporaryRIDCounter() {
-    final OCommandExecutorSQLSelect parentQuery = (OCommandExecutorSQLSelect) context.getVariable("parentQuery");
-    return parentQuery != null && parentQuery != this ? parentQuery.getTemporaryRIDCounter() : serialTempRID++;
+  protected int getTemporaryRIDCounter(final OCommandContext iContext) {
+    final OCommandExecutorSQLSelect parentQuery = (OCommandExecutorSQLSelect) iContext.getVariable("parentQuery");
+    return parentQuery != null && parentQuery != this ? parentQuery.getTemporaryRIDCounter(iContext) : serialTempRID++;
   }
 
-  protected boolean addResult(OIdentifiable iRecord) {
+  protected boolean addResult(OIdentifiable iRecord, final OCommandContext iContext) {
     if (iRecord == null)
       return true;
 
     if (projections != null || groupByFields != null && !groupByFields.isEmpty()) {
       if (groupedResult == null) {
         // APPLY PROJECTIONS IN LINE
-        iRecord = ORuntimeResult.getProjectionResult(getTemporaryRIDCounter(), projections, context, iRecord);
+        iRecord = ORuntimeResult.getProjectionResult(getTemporaryRIDCounter(iContext), projections, iContext, iRecord);
         if (iRecord == null)
           return true;
 
@@ -634,7 +639,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             for (int i = 0; i < groupByFields.size(); ++i) {
               final String field = groupByFields.get(i);
               if (field.startsWith("$"))
-                fields[i] = context.getVariable(field);
+                fields[i] = iContext.getVariable(field);
               else
                 fields[i] = doc.field(field);
 
@@ -644,14 +649,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             final String field = groupByFields.get(0);
             if (field != null) {
               if (field.startsWith("$"))
-                fieldValue = context.getVariable(field);
+                fieldValue = iContext.getVariable(field);
               else
                 fieldValue = ((ODocument) iRecord.getRecord()).field(field);
             }
           }
         }
 
-        getProjectionGroup(fieldValue).applyRecord(iRecord);
+        getProjectionGroup(fieldValue, iContext).applyRecord(iRecord);
         return true;
       }
     }
@@ -665,7 +670,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     List<OIdentifiable> allResults = new ArrayList<OIdentifiable>();
     if (unwindFields != null) {
-      Collection<OIdentifiable> partial = unwind(iRecord, this.unwindFields);
+      Collection<OIdentifiable> partial = unwind(iRecord, this.unwindFields, iContext);
 
       for (OIdentifiable item : partial) {
         allResults.add(item);
@@ -694,8 +699,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return result;
   }
 
-  private Collection<OIdentifiable> unwind(OIdentifiable iRecord, List<String> unwindFields) {
-    List<OIdentifiable> result = new ArrayList<OIdentifiable>();
+  private Collection<OIdentifiable> unwind(final OIdentifiable iRecord, final List<String> unwindFields,
+      final OCommandContext iContext) {
+    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
     ODocument doc;
     if (iRecord instanceof ODocument) {
       doc = (ODocument) iRecord;
@@ -703,21 +709,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       doc = iRecord.getRecord();
     }
     if (unwindFields.size() == 0) {
-      ORecordInternal.setIdentity(doc, new ORecordId(-2, getTemporaryRIDCounter()));
+      ORecordInternal.setIdentity(doc, new ORecordId(-2, getTemporaryRIDCounter(iContext)));
       result.add(doc);
     } else {
       String firstField = unwindFields.get(0);
-      List<String> nextFields = unwindFields.subList(1, unwindFields.size());
+      final List<String> nextFields = unwindFields.subList(1, unwindFields.size());
 
-      Object fieldValue = doc.field(firstField);
+      final Object fieldValue = doc.field(firstField);
       if (fieldValue == null || !(fieldValue instanceof Iterable)) {
-        result.addAll(unwind(doc, nextFields));
+        result.addAll(unwind(doc, nextFields, iContext));
       } else {
         for (Object o : (Iterable) fieldValue) {
-          ODocument unwindedDoc = new ODocument();
+          final ODocument unwindedDoc = new ODocument();
           doc.copyTo(unwindedDoc);
           unwindedDoc.field(firstField, o);
-          result.addAll(unwind(unwindedDoc, nextFields));
+          result.addAll(unwind(unwindedDoc, nextFields, iContext));
         }
       }
     }
@@ -739,7 +745,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     tips.add(iMessage);
   }
 
-  protected ORuntimeResult getProjectionGroup(final Object fieldValue) {
+  protected ORuntimeResult getProjectionGroup(final Object fieldValue, final OCommandContext iContext) {
     final long projectionElapsed = (Long) context.getVariable("projectionElapsed", 0l);
     final long begin = System.currentTimeMillis();
     try {
@@ -776,7 +782,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       ORuntimeResult group = groupedResult.get(key);
       if (group == null) {
-        group = new ORuntimeResult(fieldValue, createProjectionFromDefinition(), getTemporaryRIDCounter(), context);
+        group = new ORuntimeResult(fieldValue, createProjectionFromDefinition(), getTemporaryRIDCounter(iContext), context);
         groupedResult.put(key, group);
       }
       return group;
@@ -977,7 +983,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           if (groupedResult == null && p instanceof OSQLFunctionRuntime && ((OSQLFunctionRuntime) p).aggregateResults()) {
             // AGGREGATE IT
-            getProjectionGroup(null);
+            getProjectionGroup(null, context);
             break;
           }
         }
@@ -1399,7 +1405,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final long startFetching = System.currentTimeMillis();
 
     // CHECK TO ACTIVATE AUTOMATIC PARALLEL EXECUTION
-    if (iTarget instanceof ORecordIteratorClusters) {
+    if (OGlobalConfiguration.QUERY_PARALLEL_AUTO.getValueAsBoolean() && iTarget instanceof ORecordIteratorClusters) {
       final int[] clusterIds = ((ORecordIteratorClusters) iTarget).getClusterIds();
       if (clusterIds.length > 1) {
         final long totalRecords = getDatabase().getStorage().count(clusterIds);
@@ -1429,7 +1435,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     // BROWSE, UNMARSHALL AND FILTER ALL THE RECORDS ON CURRENT THREAD
     for (int browsed = 0; iTarget.hasNext(); browsed++) {
       final OIdentifiable next = iTarget.next();
-      if (!executeSearchRecord(next))
+      if (!executeSearchRecord(next, context))
         return false;
 
       if (queryScanThresholdWarning > 0 && browsed > queryScanThresholdWarning && compiledFilter != null) {
@@ -1475,13 +1481,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private boolean execParallelWithMultipleThreads(final ORecordIteratorClusters iTarget, final ODatabaseDocumentTx db) {
     final int[] clusterIds = iTarget.getClusterIds();
 
-    final List<Integer> iterators = new ArrayList<Integer>();
+    final List<Integer> clusterList = new ArrayList<Integer>();
     for (int i = 0; i < clusterIds.length; ++i)
       if (db.getStorage().getClusterById(clusterIds[i]).getEntries() > 0)
-        iterators.add(clusterIds[i]);
+        clusterList.add(clusterIds[i]);
 
     // CREATE ONE THREAD PER CLUSTER
-    final int threadNumber = iterators.size();
+    final int threadNumber = clusterList.size();
 
     OLogManager.instance().debug(this, "Executing parallel query with strategy one thread per cluster. clusterIds=%d, threads=%d",
         clusterIds.length, threadNumber);
@@ -1500,29 +1506,23 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           results[current] = true;
 
           final ODatabaseDocumentTx localDatabase = db.copy();
+          final OCommandContext threadContext = context.copy();
 
           try {
             // CREATE A SNAPSHOT TO AVOID DEADLOCKS
             db.getMetadata().getSchema().makeSnapshot();
 
-            final ORecordIteratorCluster it = new ORecordIteratorCluster(localDatabase, localDatabase, iterators.get(current),
-                true, false);
+            scanClusterWithIterator(localDatabase, threadContext, current, clusterList, results);
 
-            while (it.hasNext()) {
-              final ORecord next = it.next();
-
-              if (!executeSearchRecord(next)) {
-                results[current] = false;
-                return;
-              }
-            }
           } catch (RuntimeException t) {
             exceptions[current] = t;
           } finally {
+            mergeContext(threadContext);
+
             localDatabase.close();
           }
         }
-      });
+      }, "OrientDB SELECT " + getDatabase().getName() + "-" + i);
       threads[i].start();
     }
 
@@ -1546,6 +1546,33 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return true;
   }
 
+  protected void mergeContext(final OCommandContext iContext) {
+    parallelLock.lock();
+    try {
+      context.merge(iContext);
+    } finally {
+      parallelLock.unlock();
+    }
+  }
+
+  protected void scanClusterWithIterator(final ODatabaseDocumentTx localDatabase, final OCommandContext iContext,
+      final int current, final List<Integer> clusterList, final boolean[] results) {
+    final ORecordIteratorCluster it = new ORecordIteratorCluster(localDatabase, localDatabase, clusterList.get(current), true,
+        false);
+
+    while (it.hasNext()) {
+      final ORecord next = it.next();
+
+      if (!executeSearchRecord(next, iContext)) {
+        results[current] = false;
+      }
+    }
+  }
+
+  /**
+   * Deprecate this method because it's inefficient in comparison to one thread per cluster.
+   */
+  @Deprecated
   private boolean execParallelWithPool(Iterator<? extends OIdentifiable> iTarget, final ODatabaseDocumentInternal db) {
     final int cores = Runtime.getRuntime().availableProcessors();
 
@@ -1567,7 +1594,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         public void run() {
           ODatabaseRecordThreadLocal.INSTANCE.set(db);
 
-          if (!executeSearchRecord(next))
+          if (!executeSearchRecord(next, context))
             executing = false;
         }
       };
@@ -2138,7 +2165,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       doc.field("rid", entryRecord.getValue().getIdentity());
       ORecordInternal.unsetDirty(doc);
 
-      if (!handleResult(doc))
+      if (!handleResult(doc, context))
       // LIMIT REACHED
       {
         break;
@@ -2357,7 +2384,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (res instanceof Collection<?>) {
             // MULTI VALUES INDEX
             for (final OIdentifiable r : (Collection<OIdentifiable>) res) {
-              if (!handleResult(createIndexEntryAsDocument(keyValue, r.getIdentity())))
+              if (!handleResult(createIndexEntryAsDocument(keyValue, r.getIdentity()), context))
               // LIMIT REACHED
               {
                 break;
@@ -2365,19 +2392,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             }
           } else {
             // SINGLE VALUE INDEX
-            handleResult(createIndexEntryAsDocument(keyValue, ((OIdentifiable) res).getIdentity()));
+            handleResult(createIndexEntryAsDocument(keyValue, ((OIdentifiable) res).getIdentity()), context);
           }
         }
       }
 
     } else {
       if (isIndexSizeQuery()) {
-        getProjectionGroup(null).applyValue(projections.keySet().iterator().next(), index.getSize());
+        getProjectionGroup(null, context).applyValue(projections.keySet().iterator().next(), index.getSize());
         return;
       }
 
       if (isIndexKeySizeQuery()) {
-        getProjectionGroup(null).applyValue(projections.keySet().iterator().next(), index.getKeySize());
+        getProjectionGroup(null, context).applyValue(projections.keySet().iterator().next(), index.getKeySize());
         return;
       }
 
@@ -2464,10 +2491,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private void handleNoTarget() {
     if (parsedTarget == null && expandTarget == null)
       // ONLY LET, APPLY TO THEM
-      addResult(ORuntimeResult.createProjectionDocument(getTemporaryRIDCounter()));
+      addResult(ORuntimeResult.createProjectionDocument(getTemporaryRIDCounter(context)), context);
   }
 
-  private void handleGroupBy() {
+  private void handleGroupBy(final OCommandContext iContext) {
     if (groupedResult != null && tempResult == null) {
 
       final long startGroupBy = System.currentTimeMillis();
@@ -2485,7 +2512,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
       } finally {
-        context.setVariable("groupByElapsed", (System.currentTimeMillis() - startGroupBy));
+        iContext.setVariable("groupByElapsed", (System.currentTimeMillis() - startGroupBy));
       }
     }
   }
