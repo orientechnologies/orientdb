@@ -27,7 +27,11 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.Assert;
@@ -106,8 +110,8 @@ public class GraphTests {
 
     vCollate.createProperty("name", OType.STRING);
 
-    g.createKeyIndex("name", Vertex.class, new Parameter<String, String>("class", "VCollate"), new Parameter<String, String>("type",
-        "UNIQUE"), new Parameter<String, OType>("keytype", OType.STRING), new Parameter<String, String>("collate", "ci"));
+    g.createKeyIndex("name", Vertex.class, new Parameter<String, String>("class", "VCollate"), new Parameter<String, String>(
+        "type", "UNIQUE"), new Parameter<String, OType>("keytype", OType.STRING), new Parameter<String, String>("collate", "ci"));
     OrientVertex vertex = g.addVertex("class:VCollate", new Object[] { "name", "Enrico" });
 
     g.commit();
@@ -246,6 +250,29 @@ public class GraphTests {
 
     } finally {
       g.shutdown();
+    }
+  }
+
+  @Test
+  public void shouldAddVertexAndEdgeInTheSameCluster() {
+    OrientGraphFactory orientGraphFactory = new OrientGraphFactory("memory:shouldAddVertexAndEdgeInTheSameCluster");
+    final OrientGraphNoTx graphDbNoTx = orientGraphFactory.getNoTx();
+    try {
+      OrientVertexType deviceVertex = graphDbNoTx.createVertexType("Device");
+      OrientEdgeType edgeType = graphDbNoTx.createEdgeType("Link");
+
+      edgeType.addCluster("Links");
+
+      OrientVertex dev1 = graphDbNoTx.addVertex("Device");
+      OrientVertex dev2 = graphDbNoTx.addVertex("Device");
+
+      final OrientEdge e = graphDbNoTx.addEdge("class:Link,cluster:Links", dev1, dev2, null);
+
+      Assert.assertEquals(e.getIdentity().getClusterId(), graphDbNoTx.getRawGraph().getClusterIdByName("Links"));
+
+    } finally {
+      graphDbNoTx.shutdown();
+      orientGraphFactory.close();
     }
   }
 }
