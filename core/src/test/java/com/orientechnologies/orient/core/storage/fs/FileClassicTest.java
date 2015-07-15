@@ -29,7 +29,7 @@ public class FileClassicTest {
   public void testSoftlyClosedFailed() throws Exception {
     OFileClassic fileClassicOne = new OFileClassic();
     fileClassicOne.init(buildDirectory + File.separator + "file.tst", "rw");
-    fileClassicOne.create(-1);
+    fileClassicOne.create();
 
     Assert.assertFalse(fileClassicOne.isSoftlyClosed());
     Assert.assertTrue(fileClassicOne.wasSoftlyClosed());
@@ -51,7 +51,7 @@ public class FileClassicTest {
   public void testSoftlyClosedSuccess() throws Exception {
     OFileClassic fileClassicOne = new OFileClassic();
     fileClassicOne.init(buildDirectory + File.separator + "file.tst", "rw");
-    fileClassicOne.create(-1);
+    fileClassicOne.create();
 
     Assert.assertFalse(fileClassicOne.isSoftlyClosed());
     Assert.assertTrue(fileClassicOne.wasSoftlyClosed());

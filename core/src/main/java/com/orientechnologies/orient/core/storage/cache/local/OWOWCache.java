@@ -1072,7 +1072,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private void addFile(final OFileClassic fileClassic) throws IOException {
     if (!fileClassic.exists()) {
-      fileClassic.create(-1);
+      fileClassic.create();
       fileClassic.synch();
     } else {
       throw new OStorageException("File '" + fileClassic.getName() + "' already exists.");

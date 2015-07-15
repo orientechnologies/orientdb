@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OApi;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
+
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -292,6 +301,9 @@ public enum OGlobalConfiguration {
   PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental.", Boolean.class, false),
 
   // FILE
+  TRACK_FILE_CLOSE("file.trackFileClose",
+      "Log all the cases when files are closed. This is needed only for internal debugging purpose", Boolean.class, false),
+
   FILE_LOCK("file.lock", "Locks files when used. Default is true", boolean.class, true),
 
   FILE_DELETE_DELAY("file.deleteDelay", "Delay time in ms to wait for another attempt to delete a locked file", Integer.class, 10),

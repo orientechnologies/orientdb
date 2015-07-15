@@ -31,6 +31,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.String;
 
 /**
@@ -38,7 +40,7 @@ import java.lang.String;
  * @since 12/3/13
  */
 public class OAtomicOperationsManager {
-  private static volatile ThreadLocal<OAtomicOperation>        currentOperation = new ThreadLocal<OAtomicOperation>();
+  private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<OAtomicOperation>();
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -55,12 +57,11 @@ public class OAtomicOperationsManager {
     });
   }
 
-  private final OAbstractPaginatedStorage                      storage;
-  private final OWriteAheadLog                                 writeAheadLog;
-  private final OLockManager<String>                    lockManager      = new OLockManager<String>(
-                                                                                    true, -1);
-  private final OReadCache                                     readCache;
-  private final OWriteCache                                    writeCache;
+  private final OAbstractPaginatedStorage               storage;
+  private final OWriteAheadLog                          writeAheadLog;
+  private final OLockManager<String>                    lockManager      = new OLockManager<String>(true, -1);
+  private final OReadCache                              readCache;
+  private final OWriteCache                             writeCache;
 
   public OAtomicOperationsManager(OAbstractPaginatedStorage storage) {
     this.storage = storage;
@@ -114,18 +115,28 @@ public class OAtomicOperationsManager {
     return currentOperation.get();
   }
 
-  public OAtomicOperation endAtomicOperation(boolean rollback) throws IOException {
+  public OAtomicOperation endAtomicOperation(boolean rollback, Exception exception) throws IOException {
     if (writeAheadLog == null)
       return null;
 
     final OAtomicOperation operation = currentOperation.get();
     assert operation != null;
 
-    if (rollback)
-      operation.rollback();
+    if (rollback) {
+      operation.rollback(exception);
+    }
 
-    if (operation.isRollback() && !rollback)
-      throw new ONestedRollbackException("Atomic operation was rolled back by internal component");
+    if (operation.isRollback() && !rollback) {
+      final StringWriter writer = new StringWriter();
+      writer.append("Atomic operation was rolled back by internal component");
+      if (operation.getRollbackException() != null) {
+        writer.append(", exception which caused this rollback is :\n");
+        operation.getRollbackException().printStackTrace(new PrintWriter(writer));
+        writer.append("\r\n");
+      }
+
+      throw new ONestedRollbackException(writer.toString(), exception);
+    }
 
     final int counter = operation.decrementCounter();
     assert counter >= 0;

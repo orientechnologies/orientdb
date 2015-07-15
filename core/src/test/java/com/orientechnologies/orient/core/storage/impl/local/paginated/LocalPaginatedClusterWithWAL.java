@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -481,8 +481,8 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
     byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
 
-    datFileOne.seek(OAbstractFile.HEADER_SIZE);
-    datFileTwo.seek(OAbstractFile.HEADER_SIZE);
+    datFileOne.seek(OFileClassic.HEADER_SIZE);
+    datFileTwo.seek(OFileClassic.HEADER_SIZE);
 
     int bytesRead = datFileOne.read(expectedContent);
     while (bytesRead >= 0) {
