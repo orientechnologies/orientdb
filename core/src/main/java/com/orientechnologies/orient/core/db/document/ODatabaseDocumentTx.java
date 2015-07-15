@@ -2587,6 +2587,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       getLocalCache().clear();
       OSerializationSetThreadLocal.clear();
 
+      // CLEAR SERIALIZATION TL TO AVOID MEMORY LEAKS
+      OSerializationSetThreadLocal.clear();
+
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : browseListeners())
         try {
@@ -2651,6 +2654,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
 
     getLocalCache().clear();
+    OSerializationSetThreadLocal.clear();
+
+    // CLEAR SERIALIZATION TL TO AVOID MEMORY LEAKS
     OSerializationSetThreadLocal.clear();
 
     return this;
