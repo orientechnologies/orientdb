@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -284,7 +285,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return request.getResultListener().result(rec);
   }
 
-  protected boolean handleResult(final OIdentifiable iRecord) {
+  protected boolean handleResult(final OIdentifiable iRecord, OCommandContext iContext) {
     if (iRecord != null) {
       resultCount++;
 
@@ -389,7 +390,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return skip;
   }
 
-  protected boolean filter(final ORecord iRecord) {
+  protected boolean filter(final ORecord iRecord, final OCommandContext iContext) {
     if (iRecord instanceof ODocument) {
       // CHECK THE TARGET CLASS
       final ODocument recordSchemaAware = (ODocument) iRecord;
@@ -401,21 +402,21 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
               .isSuperClassOf(ODocumentInternal.getImmutableSchemaClass(recordSchemaAware)))
             return false;
         }
-        context.updateMetric("documentAnalyzedCompatibleClass", +1);
+        iContext.updateMetric("documentAnalyzedCompatibleClass", +1);
       }
     }
 
-    return evaluateRecord(iRecord);
+    return evaluateRecord(iRecord, iContext);
   }
 
-  protected boolean evaluateRecord(final ORecord iRecord) {
-    context.setVariable("current", iRecord);
-    context.updateMetric("evaluated", +1);
+  protected boolean evaluateRecord(final ORecord iRecord, final OCommandContext iContext) {
+    iContext.setVariable("current", iRecord);
+    iContext.updateMetric("evaluated", +1);
 
     assignLetClauses(iRecord);
     if (compiledFilter == null)
       return true;
-    return (Boolean) compiledFilter.evaluate(iRecord, null, context);
+    return (Boolean) compiledFilter.evaluate(iRecord, null, iContext);
   }
 
   protected void assignLetClauses(final ORecord iRecord) {
