@@ -91,7 +91,10 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
       currentDocument.merge(doc, partialUpdateMode, false);
       if (currentDocument.isDirty()) {
-        currentDocument.getRecordVersion().copyFrom(doc.getRecordVersion());
+        if (doc.getRecordVersion().isValid())
+          // OVERWRITE THE VERSION
+          currentDocument.getRecordVersion().copyFrom(doc.getRecordVersion());
+
         currentDocument.save();
       }
 

@@ -62,6 +62,7 @@ public class OServerPluginManager implements OService {
   private ConcurrentHashMap<String, OServerPluginInfo> activePlugins = new ConcurrentHashMap<String, OServerPluginInfo>();
   private ConcurrentHashMap<String, String>            loadedPlugins = new ConcurrentHashMap<String, String>();
   private volatile TimerTask                           autoReloadTimerTask;
+  private String                                       directory;
 
   public void config(OServer iServer) {
     server = iServer;
@@ -70,6 +71,8 @@ public class OServerPluginManager implements OService {
   public void startup() {
     boolean hotReload = true;
     boolean dynamic = true;
+    boolean loadAtStartup = true;
+    directory = OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}", ".") + "/plugins/";
 
     if (server.getConfiguration() != null && server.getConfiguration().properties != null)
       for (OServerEntryConfiguration p : server.getConfiguration().properties) {
@@ -77,12 +80,17 @@ public class OServerPluginManager implements OService {
           hotReload = Boolean.parseBoolean(p.value);
         else if (p.name.equals("plugin.dynamic"))
           dynamic = Boolean.parseBoolean(p.value);
+        else if (p.name.equals("plugin.loadAtStartup"))
+          loadAtStartup = Boolean.parseBoolean(p.value);
+        else if (p.name.equals("plugin.directory"))
+          directory = p.value;
       }
 
     if (!dynamic)
       return;
 
-    updatePlugins();
+    if (loadAtStartup)
+      updatePlugins();
 
     if (hotReload) {
       // SCHEDULE A TIMER TASK FOR AUTO-RELOAD
@@ -267,7 +275,8 @@ public class OServerPluginManager implements OService {
   }
 
   private void updatePlugins() {
-    final File pluginsDirectory = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}", ".") + "/plugins/");
+    // load plugins.directory from server configuration or default to $ORIENTDB_HOME/plugins
+    final File pluginsDirectory = new File(directory);
     if (!pluginsDirectory.exists())
       pluginsDirectory.mkdirs();
 

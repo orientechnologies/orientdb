@@ -65,7 +65,7 @@ public class OSingleFileSegment {
   }
 
   public void create(final int iStartSize) throws IOException {
-    file.create(iStartSize);
+    file.create();
   }
 
   public void close() throws IOException {
