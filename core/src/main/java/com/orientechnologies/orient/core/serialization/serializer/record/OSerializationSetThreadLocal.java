@@ -87,6 +87,10 @@ public class OSerializationSetThreadLocal extends ThreadLocal<Map<ODocument, Boo
     INSTANCE.get().remove(document);
   }
 
+  public static void clear() {
+    INSTANCE.get().clear();
+  }
+
   @Override
   protected Map<ODocument, Boolean> initialValue() {
     return new IdentityHashMap<ODocument, Boolean>();
