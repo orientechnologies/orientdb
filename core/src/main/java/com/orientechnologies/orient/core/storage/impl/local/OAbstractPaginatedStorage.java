@@ -2077,7 +2077,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
     case -2:
-      iDatabaseVersion.setCounter(-2);
       break;
 
     default:

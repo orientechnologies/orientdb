@@ -166,6 +166,7 @@ public enum OGlobalConfiguration {
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound", "The minimal amount of free space (in kb)"
       + " in page which is tracked in paginated storage", Integer.class, 16),
 
+  @Deprecated
   STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
       "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
 
