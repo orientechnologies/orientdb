@@ -1529,14 +1529,16 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     if (_fields != null) {
       final ODocumentEntry value = _fields.get(field);
-      if (value.created) {
-        _fields.remove(field);
-      }
-      if (value.changed) {
-        value.value = value.original;
-        value.original = null;
-        value.changed = false;
-        value.exist = true;
+      if(value!=null) {
+        if (value.created) {
+          _fields.remove(field);
+        }
+        if (value.changed) {
+          value.value = value.original;
+          value.original = null;
+          value.changed = false;
+          value.exist = true;
+        }
       }
     }
     return this;
