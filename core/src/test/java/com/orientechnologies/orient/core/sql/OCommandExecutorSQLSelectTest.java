@@ -665,6 +665,26 @@ public class OCommandExecutorSQLSelectTest {
     }
   }
 
+  @Test
+  public void testNullProjection() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT 1 AS integer, 'Test' AS string, NULL AS nothing, [] AS array, {} AS object");
+
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 1);
+    ODocument doc = results.get(0);
+    assertEquals(doc.field("integer"), 1);
+    assertEquals(doc.field("string"), "Test");
+    assertNull(doc.field("nothing"));
+    boolean nullFound = false;
+    for (String s : doc.fieldNames()) {
+      if (s.equals("nothing")) {
+        nullFound = true;
+        break;
+      }
+    }
+    assertTrue(nullFound);
+
+  }
 
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
