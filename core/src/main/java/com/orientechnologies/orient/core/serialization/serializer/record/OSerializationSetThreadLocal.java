@@ -20,14 +20,12 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record;
 
-import java.util.IdentityHashMap;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.IdentityHashMap;
+import java.util.Map;
 
 /**
  * Thread local set of serialized documents. Used to prevent infinite recursion during serialization of records.
@@ -83,6 +81,10 @@ public class OSerializationSetThreadLocal extends ThreadLocal<Map<ODocument, Boo
 
   public static void removeCheck(final ODocument document) {
     INSTANCE.get().remove(document);
+  }
+
+  public static void clear() {
+    INSTANCE.get().clear();
   }
 
   @Override
