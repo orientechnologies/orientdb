@@ -25,5 +25,11 @@ public class OGtOperator extends SimpleNode implements OBinaryCompareOperator {
   public String toString() {
     return ">";
   }
+
+  @Override public boolean supportsBasicCalculation() {
+    return true;
+  }
+
+
 }
 /* JavaCC - OriginalChecksum=4b96739fc6e9ae496916d542db361376 (do not edit this line) */

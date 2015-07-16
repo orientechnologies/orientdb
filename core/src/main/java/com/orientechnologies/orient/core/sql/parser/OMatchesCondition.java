@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class OMatchesCondition extends OBooleanExpression {
@@ -41,5 +43,27 @@ public class OMatchesCondition extends OBooleanExpression {
     result.append(right);
     return result.toString();
   }
+
+  @Override
+  public boolean supportsBasicCalculation() {
+    return expression.supportsBasicCalculation();
+  }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    if (expression != null && !expression.supportsBasicCalculation()) {
+      return 1;
+    }
+    return 0;
+  }
+
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
+    if (expression != null && !expression.supportsBasicCalculation()) {
+      return (List) Collections.singletonList(expression);
+    }
+    return Collections.EMPTY_LIST;
+  }
+
 }
 /* JavaCC - OriginalChecksum=68712f476e2e633c2bbfc34cb6c39356 (do not edit this line) */

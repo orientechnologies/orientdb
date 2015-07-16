@@ -45,5 +45,13 @@ public class OParenthesisExpression extends OMathExpression {
       statement.replaceParameters(params);
     }
   }
+
+  @Override
+  protected boolean supportsBasicCalculation() {
+    if (expression != null) {
+      return expression.supportsBasicCalculation();
+    }
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=4656e5faf4f54dc3fc45a06d8e375c35 (do not edit this line) */
