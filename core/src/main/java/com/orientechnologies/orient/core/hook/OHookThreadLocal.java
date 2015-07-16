@@ -20,8 +20,6 @@
 package com.orientechnologies.orient.core.hook;
 
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
@@ -59,6 +57,10 @@ public class OHookThreadLocal extends ThreadLocal<Set<OIdentifiable>> {
 
     set.add(iRecord);
     return true;
+  }
+
+  public boolean isInsideHookExecution() {
+    return !get().isEmpty();
   }
 
   public boolean pop(final OIdentifiable iRecord) {

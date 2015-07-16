@@ -949,7 +949,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   /**
-   * Callback the registeted hooks if any.
+   * Callback the registered hooks if any.
    *
    * @param type
    *          Hook type. Define when hook is called.
@@ -1943,6 +1943,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       currentTx.rollback(true, 0);
     }
+
+    // CHECK IT'S NOT INSIDE A HOOK
+    if (OHookThreadLocal.INSTANCE.isInsideHookExecution())
+      throw new IllegalStateException("Cannot begin a transaction while a hook is executing");
 
     // WAKE UP LISTENERS
     for (ODatabaseListener listener : browseListeners())
