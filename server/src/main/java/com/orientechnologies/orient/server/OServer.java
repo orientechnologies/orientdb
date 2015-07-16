@@ -107,6 +107,8 @@ public class OServer {
   private String                                           databaseDirectory;
   private final boolean                                    shutdownEngineOnExit;
 
+  private ClassLoader extensionClassLoader;
+
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
     this(true);
@@ -132,6 +134,58 @@ public class OServer {
       Orient.instance().getProfiler().startRecording();
 
     shutdownHook = new OServerShutdownHook(this);
+  }
+
+  /**
+   * Set the preferred {@link ClassLoader} used to load extensions.
+   *
+   * @since 2.1
+   */
+  public void setExtensionClassLoader(/*@Nullable*/ final ClassLoader extensionClassLoader) {
+    this.extensionClassLoader = extensionClassLoader;
+  }
+
+  /**
+   * Get the preferred {@link ClassLoader} used to load extensions.
+   *
+   * @since 2.1
+   */
+  /*@Nullable*/
+  public ClassLoader getExtensionClassLoader() {
+    return extensionClassLoader;
+  }
+
+  /**
+   * Load an extension class by name.
+   */
+  private Class<?> loadClass(final String name) throws ClassNotFoundException {
+    Class<?> loaded = tryLoadClass(extensionClassLoader, name);
+    if (loaded == null) {
+      loaded = tryLoadClass(Thread.currentThread().getContextClassLoader(), name);
+      if (loaded == null) {
+        loaded = tryLoadClass(getClass().getClassLoader(), name);
+        if (loaded == null) {
+          loaded = Class.forName(name);
+        }
+      }
+    }
+    return loaded;
+  }
+
+  /**
+   * Attempt to load a class from given class-loader.
+   */
+  /*@Nullable*/
+  private Class<?> tryLoadClass(/*@Nullable*/ final ClassLoader classLoader, final String name) {
+    if (classLoader != null) {
+      try {
+        return classLoader.loadClass(name);
+      }
+      catch (ClassNotFoundException e) {
+        // ignore
+      }
+    }
+    return null;
   }
 
   public static OServer getInstance(final String iServerId) {
@@ -241,7 +295,8 @@ public class OServer {
       // REGISTER/CREATE SOCKET FACTORIES
       if (configuration.network.sockets != null) {
         for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
-          Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) Class.forName(f.implementation);
+          Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) loadClass(
+              f.implementation);
           OServerSocketFactory factory = fClass.newInstance();
           try {
             factory.config(f.name, f.parameters);
@@ -254,7 +309,7 @@ public class OServer {
 
       // REGISTER PROTOCOLS
       for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
-        networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) Class.forName(p.implementation));
+        networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) loadClass(p.implementation));
 
       // STARTUP LISTENERS
       for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
@@ -891,7 +946,7 @@ public class OServer {
             continue;
         }
 
-        handler = (OServerPlugin) Class.forName(h.clazz).newInstance();
+        handler = (OServerPlugin) loadClass(h.clazz).newInstance();
 
         if (handler instanceof ODistributedServerManager)
           distributedManager = (ODistributedServerManager) handler;
