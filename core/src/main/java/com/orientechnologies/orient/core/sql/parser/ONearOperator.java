@@ -28,5 +28,10 @@ class ONearOperator  extends SimpleNode implements OBinaryCompareOperator {
     return "NEAR";
   }
 
+  @Override public boolean supportsBasicCalculation() {
+    return false;
+  }
+
+
 }
 /* JavaCC - OriginalChecksum=a79af9beed70f813658f38a0162320e0 (do not edit this line) */

@@ -2,11 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 public class OAndBlock extends OBooleanExpression {
   List<OBooleanExpression> subBlocks = new ArrayList<OBooleanExpression>();
@@ -67,6 +67,32 @@ public class OAndBlock extends OBooleanExpression {
       first = false;
     }
     return result.toString();
+  }
+
+  @Override protected boolean supportsBasicCalculation() {
+    for(OBooleanExpression expr:subBlocks){
+      if(!expr.supportsBasicCalculation()){
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    int result = 0;
+    for (OBooleanExpression expr : subBlocks) {
+      result += expr.getNumberOfExternalCalculations();
+    }
+    return result;
+  }
+
+  @Override protected List<Object> getExternalCalculationConditions() {
+    List<Object> result = new ArrayList<Object>();
+    for(OBooleanExpression expr:subBlocks) {
+      result.addAll(expr.getExternalCalculationConditions());
+    }
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */

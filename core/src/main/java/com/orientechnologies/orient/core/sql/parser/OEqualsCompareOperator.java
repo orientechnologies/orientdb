@@ -23,6 +23,10 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
     return false;
   }
 
+  @Override public boolean supportsBasicCalculation() {
+    return true;
+  }
+
   @Override
   public String toString() {
     return doubleEquals ? "==" : "=";

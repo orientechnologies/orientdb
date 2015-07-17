@@ -8,7 +8,6 @@ import java.util.Map;
 
 public class OMathExpression extends SimpleNode {
 
-
   public enum Operator {
     PLUS, MINUS, STAR, SLASH, REM
   }
@@ -25,13 +24,12 @@ public class OMathExpression extends SimpleNode {
   }
 
   public void replaceParameters(Map<Object, Object> params) {
-    if(childExpressions!=null){
-      for(OMathExpression expr:childExpressions){
+    if (childExpressions != null) {
+      for (OMathExpression expr : childExpressions) {
         expr.replaceParameters(params);
       }
     }
   }
-
 
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
@@ -80,6 +78,15 @@ public class OMathExpression extends SimpleNode {
       result.append(childExpressions.get(i).toString());
     }
     return result.toString();
+  }
+
+  protected boolean supportsBasicCalculation() {
+    for (OMathExpression expr : this.childExpressions) {
+      if (!expr.supportsBasicCalculation()) {
+        return false;
+      }
+    }
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=c255bea24e12493e1005ba2a4d1dbb9d (do not edit this line) */
