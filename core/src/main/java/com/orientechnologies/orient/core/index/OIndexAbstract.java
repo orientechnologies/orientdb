@@ -891,7 +891,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   protected void startStorageAtomicOperation() {
     try {
-      getStorage().startAtomicOperation();
+      getStorage().startAtomicOperation(true);
     } catch (IOException e) {
       throw new OIndexException("Error during start of atomic operation", e);
     }

@@ -53,10 +53,17 @@ public class OAtomicOperation {
   private Set<Long>                deletedFiles         = new HashSet<Long>();
   private Map<String, Long>        deletedFileNameIdMap = new HashMap<String, Long>();
 
-  public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId) {
+  private final boolean            rollbackOnlyMode;
+
+  public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId, boolean rollbackOnlyMode) {
     this.startLSN = startLSN;
     this.operationUnitId = operationUnitId;
+    this.rollbackOnlyMode = rollbackOnlyMode;
     startCounter = 1;
+  }
+
+  public boolean isRollbackOnlyMode() {
+    return rollbackOnlyMode;
   }
 
   public OLogSequenceNumber getStartLSN() {
@@ -292,25 +299,27 @@ public class OAtomicOperation {
   }
 
   public void commitChanges(ODiskCache diskCache, OWriteAheadLog writeAheadLog) throws IOException {
-    for (long deletedFileId : deletedFiles) {
-      writeAheadLog.log(new OFileDeletedWALRecord(operationUnitId, startLSN, deletedFileId));
-    }
+    if (!rollbackOnlyMode) {
+      for (long deletedFileId : deletedFiles) {
+        writeAheadLog.log(new OFileDeletedWALRecord(operationUnitId, startLSN, deletedFileId));
+      }
 
-    for (Map.Entry<Long, FileChanges> fileChangesEntry : fileChanges.entrySet()) {
-      final FileChanges fileChanges = fileChangesEntry.getValue();
-      final long fileId = fileChangesEntry.getKey();
+      for (Map.Entry<Long, FileChanges> fileChangesEntry : fileChanges.entrySet()) {
+        final FileChanges fileChanges = fileChangesEntry.getValue();
+        final long fileId = fileChangesEntry.getKey();
 
-      if (fileChanges.isNew)
-        writeAheadLog.log(new OFileCreatedWALRecord(operationUnitId, fileChanges.fileName, fileId, startLSN));
-      else if (fileChanges.truncate)
-        writeAheadLog.log(new OFileTruncatedWALRecord(operationUnitId, startLSN, fileId));
+        if (fileChanges.isNew)
+          writeAheadLog.log(new OFileCreatedWALRecord(operationUnitId, fileChanges.fileName, fileId, startLSN));
+        else if (fileChanges.truncate)
+          writeAheadLog.log(new OFileTruncatedWALRecord(operationUnitId, startLSN, fileId));
 
-      for (Map.Entry<Long, FilePageChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
-        final long pageIndex = filePageChangesEntry.getKey();
-        final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
+        for (Map.Entry<Long, FilePageChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
+          final long pageIndex = filePageChangesEntry.getKey();
+          final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
 
-        filePageChanges.lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId,
-            filePageChanges.changesTree, startLSN));
+          filePageChanges.lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId,
+              filePageChanges.changesTree, startLSN));
+        }
       }
     }
 
@@ -346,7 +355,9 @@ public class OAtomicOperation {
         try {
           ODurablePage durablePage = new ODurablePage(cacheEntry, null);
           durablePage.restoreChanges(filePageChanges.changesTree);
-          durablePage.setLsn(filePageChanges.lsn);
+
+          if (!rollbackOnlyMode)
+            durablePage.setLsn(filePageChanges.lsn);
 
           if (filePageChanges.pinPage)
             diskCache.pinPage(cacheEntry);

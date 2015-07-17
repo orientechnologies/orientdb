@@ -78,8 +78,9 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   private long resolveFileIdByName(String fileName) {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying();
+
     try {
-      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
       final ODiskCache diskCache = storage.getDiskCache();
 
       if (atomicOperation == null) {
@@ -88,12 +89,26 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
         return diskCache.addFile(fileName);
       } else {
-        if (atomicOperation.isFileExists(fileName, diskCache))
-          return atomicOperation.openFile(fileName, diskCache);
+        final long fileId;
 
-        return atomicOperation.addFile(fileName, diskCache);
+        if (atomicOperation.isFileExists(fileName, diskCache)) {
+          fileId = atomicOperation.openFile(fileName, diskCache);
+          storage.getAtomicOperationsManager().endAtomicOperation(false);
+          return fileId;
+        }
+
+        fileId = atomicOperation.addFile(fileName, diskCache);
+        storage.getAtomicOperationsManager().endAtomicOperation(false);
+
+        return fileId;
       }
     } catch (IOException e) {
+      try {
+        storage.getAtomicOperationsManager().endAtomicOperation(true);
+      } catch (IOException ioe) {
+        throw new OSBTreeException("Error creation of sbtree with name " + fileName, e);
+      }
+
       throw new OSBTreeException("Error creation of sbtree with name " + fileName, e);
     }
   }
@@ -231,8 +246,8 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
   private void convertToSbTree() {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, durableNonTxMode,
-        (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, durableNonTxMode, (OAbstractPaginatedStorage) db
+        .getStorage().getUnderlying());
 
     tree.addAll(underlying);
 

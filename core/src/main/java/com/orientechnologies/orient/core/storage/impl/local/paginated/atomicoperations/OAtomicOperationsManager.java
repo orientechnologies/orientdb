@@ -61,7 +61,11 @@ public class OAtomicOperationsManager {
     this.writeAheadLog = storage.getWALInstance();
   }
 
-  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent) throws IOException {
+  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent, boolean rollbackOnlyMode) throws IOException {
+    return startAtomicOperation(durableComponent.getFullName(), rollbackOnlyMode);
+  }
+
+  public OAtomicOperation startAtomicOperation(String component, boolean rollbackOnlyMode) throws IOException {
     if (writeAheadLog == null)
       return null;
 
@@ -69,23 +73,28 @@ public class OAtomicOperationsManager {
     if (operation != null) {
       operation.incrementCounter();
 
-      if (durableComponent != null)
-        acquireExclusiveLockTillOperationComplete(durableComponent);
+      if (component != null)
+        acquireExclusiveLockTillOperationComplete(component);
 
       return operation;
     }
 
     final OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
-    operation = new OAtomicOperation(lsn, unitId);
+    final OLogSequenceNumber lsn;
+    if (!rollbackOnlyMode)
+      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
+    else
+      lsn = null;
+
+    operation = new OAtomicOperation(lsn, unitId, rollbackOnlyMode);
     currentOperation.set(operation);
 
     if (storage.getStorageTransaction() == null)
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
 
-    if (durableComponent != null)
-      acquireExclusiveLockTillOperationComplete(durableComponent);
+    if (component != null)
+      acquireExclusiveLockTillOperationComplete(component);
 
     return operation;
   }
@@ -114,7 +123,9 @@ public class OAtomicOperationsManager {
       if (!operation.isRollback())
         operation.commitChanges(storage.getDiskCache(), writeAheadLog);
 
-      writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
+      if (!operation.isRollbackOnlyMode())
+        writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
+
       currentOperation.set(null);
 
       for (String lockObject : operation.lockedObjects())
@@ -124,19 +135,18 @@ public class OAtomicOperationsManager {
     return operation;
   }
 
-  private void acquireExclusiveLockTillOperationComplete(ODurableComponent durableComponent) {
+  private void acquireExclusiveLockTillOperationComplete(String durableComponent) {
     final OAtomicOperation operation = currentOperation.get();
     if (operation == null)
       return;
 
-    assert durableComponent.getName() != null;
-    assert durableComponent.getFullName() != null;
+    assert durableComponent != null;
 
-    if (operation.containsInLockedObjects(durableComponent.getFullName()))
+    if (operation.containsInLockedObjects(durableComponent))
       return;
 
-    lockManager.acquireLock(this, durableComponent.getFullName(), OLockManager.LOCK.EXCLUSIVE);
-    operation.addLockedObject(durableComponent.getFullName());
+    lockManager.acquireLock(this, durableComponent, OLockManager.LOCK.EXCLUSIVE);
+    operation.addLockedObject(durableComponent);
   }
 
   public void acquireReadLock(ODurableComponent durableComponent) {

@@ -20,10 +20,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
-import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableBoolean;
@@ -95,7 +93,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
 
 /**
  * @author Andrey Lomakin
@@ -288,12 +285,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  public void startAtomicOperation() throws IOException {
+  public void startAtomicOperation(boolean rollbackOnlyMode) throws IOException {
     lock.acquireSharedLock();
     try {
       makeStorageDirty();
 
-      atomicOperationsManager.startAtomicOperation(null);
+      atomicOperationsManager.startAtomicOperation((String) null, rollbackOnlyMode);
     } finally {
       lock.releaseSharedLock();
     }
@@ -1450,7 +1447,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     transaction.set(new OStorageTransaction(clientTx));
     try {
-      atomicOperationsManager.startAtomicOperation(null);
+      atomicOperationsManager.startAtomicOperation((String) null, false);
     } catch (RuntimeException e) {
       transaction.set(null);
       throw e;
@@ -1492,7 +1489,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         recordVersion = OVersionFactory.instance().createVersion();
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation(null);
+      atomicOperationsManager.startAtomicOperation((String) null, false);
       try {
         ppos = cluster.createRecord(content, recordVersion, recordType);
         rid.clusterPosition = ppos.clusterPosition;
@@ -1560,7 +1557,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation(null);
+      atomicOperationsManager.startAtomicOperation((String) null, false);
       try {
         if (updateContent)
           cluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
@@ -1615,7 +1612,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation(null);
+      atomicOperationsManager.startAtomicOperation((String) null, false);
       try {
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
@@ -1639,7 +1636,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private OStorageOperationResult<Boolean> doHideRecord(ORecordId rid, OCluster cluster) {
     try {
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation(null);
+      atomicOperationsManager.startAtomicOperation((String) null, false);
       try {
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)

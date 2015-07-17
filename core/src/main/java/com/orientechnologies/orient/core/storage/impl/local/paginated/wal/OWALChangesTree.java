@@ -2,15 +2,21 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.directmemory.ODirectMemoryViolationException;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 
 import java.util.*;
 
 public class OWALChangesTree {
+  private final int            pageSize       = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 + 2
+                                                  * OWOWCache.PAGE_PADDING;
+
   private static final boolean BLACK          = false;
   private static final boolean RED            = true;
 
@@ -129,6 +135,8 @@ public class OWALChangesTree {
   private void add(byte[] value, int start, int version, boolean updateSerializedSize) {
     if (value == null || value.length == 0)
       return;
+
+    rangeCheck(start, value.length);
 
     final Node fnode = bsearch(start);
 
@@ -796,5 +804,21 @@ public class OWALChangesTree {
       return (char) OWALChangesTree.this.getShortValue(pointer, (int) offset);
     }
 
+  }
+
+  private void rangeCheck(final long offset, final long size) {
+    if (offset < 0)
+      throw new ODirectMemoryViolationException("Negative offset was provided");
+
+    if (size < 0)
+      throw new ODirectMemoryViolationException("Negative size was provided");
+
+    if (offset > pageSize)
+      throw new ODirectMemoryViolationException("Provided offset [" + offset + "] is more than size of allocated area  ["
+          + pageSize + "]");
+
+    if (offset + size > pageSize)
+      throw new ODirectMemoryViolationException("Last position of provided data interval [" + (offset + size)
+          + "] is more than size of allocated area [" + pageSize + "]");
   }
 }
