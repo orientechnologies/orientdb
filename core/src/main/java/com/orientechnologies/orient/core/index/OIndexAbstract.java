@@ -917,6 +917,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     try {
       getStorage().startAtomicOperation();
     } catch (IOException e) {
+      OLogManager.instance().error(this, "Error during start of atomic operation", e);
+
       throw new OIndexException("Error during start of atomic operation", e);
     }
   }
@@ -925,6 +927,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     try {
       getStorage().commitAtomicOperation();
     } catch (IOException e) {
+      OLogManager.instance().error(this, "Error during commit of atomic operation", e);
+
       throw new OIndexException("Error during commit of atomic operation", e);
     }
   }
@@ -933,6 +937,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     try {
       getStorage().rollbackAtomicOperation();
     } catch (IOException e) {
+      OLogManager.instance().error(this, "Error during rollback of atomic operation", e);
+
       throw new OIndexException("Error during rollback of atomic operation", e);
     }
   }

@@ -124,7 +124,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
           } else if (temp.startsWith("[") && temp.endsWith("]")) {
             temp = temp.substring(1, temp.length() - 1);
             rids = new ArrayList<ORecordId>();
-            for (String rid : temp.split(", ")) {
+            for (String rid : temp.split(",")) {
               rid = rid.trim();
               if (!rid.startsWith("#")) {
                 throwSyntaxErrorException("Not a valid RID: " + rid);
@@ -202,7 +202,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
                 final OrientEdge e = graph.getEdge(rid);
                 if (e != null) {
                   e.remove();
-                  removed = 1;
+                  removed++;
                 }
               }
               return null;

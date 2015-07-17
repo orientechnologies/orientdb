@@ -214,6 +214,10 @@ public enum OGlobalConfiguration {
 
   // TRANSACTIONS
 
+  TX_TRACK_ATOMIC_OPERATIONS("tx.trackAtomicOperations",
+      "This setting is used only for debug purpose, it track stac trace of methods where atomic operation is started.",
+      Boolean.class, false),
+
   // INDEX
   INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("index.embeddedToSbtreeBonsaiThreshold",
       "Amount of values after which index implementation will use sbtree as values container. Set to -1 to force always using it",
