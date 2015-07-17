@@ -55,7 +55,7 @@ public class HookTxTest extends ORecordHookAbstract {
   @BeforeClass
   public void beforeClass() {
     database = new OObjectDatabaseTx(url);
-    if (url.startsWith("memory:")) {
+    if (url.startsWith("memory:") && !database.exists()) {
       database.create();
       database.close();
     }
