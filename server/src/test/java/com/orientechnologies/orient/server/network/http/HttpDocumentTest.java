@@ -13,17 +13,37 @@ import java.io.IOException;
  */
 @Test
 public class HttpDocumentTest extends BaseHttpDatabaseTest {
-  public void createDocument() throws IOException {
+  public void create() throws IOException {
     post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:99}", CONTENT.JSON).exec();
 
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
 
-    final ODocument response = new ODocument().fromJSON(getResponse().getEntity().getContent());
+    final ODocument created = new ODocument().fromJSON(getResponse().getEntity().getContent());
 
-    Assert.assertEquals(response.field("name"), "Jay");
-    Assert.assertEquals(response.field("surname"), "Miner");
-    Assert.assertEquals(response.field("age"), 99);
-    Assert.assertEquals(response.getVersion(), 1);
+    Assert.assertEquals(created.field("name"), "Jay");
+    Assert.assertEquals(created.field("surname"), "Miner");
+    Assert.assertEquals(created.field("age"), 99);
+    Assert.assertEquals(created.getVersion(), 1);
+  }
+
+  public void read() throws IOException {
+    post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:99}", CONTENT.JSON).exec();
+    Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
+    final ODocument created = new ODocument().fromJSON(getResponse().getEntity().getContent());
+
+    Assert.assertEquals(created.field("name"), "Jay");
+    Assert.assertEquals(created.field("surname"), "Miner");
+    Assert.assertEquals(created.field("age"), 99);
+    Assert.assertEquals(created.getVersion(), 1);
+
+    get("document/" + getDatabaseName() + "/" + created.getIdentity().toString().substring(1)).exec();
+    Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 200);
+    final ODocument updated = new ODocument().fromJSON(getResponse().getEntity().getContent());
+
+    Assert.assertEquals(updated.field("name"), "Jay");
+    Assert.assertEquals(updated.field("surname"), "Miner");
+    Assert.assertEquals(updated.field("age"), 99);
+    Assert.assertEquals(updated.getVersion(), 1);
   }
 
   public void updateFull() throws IOException {
@@ -106,6 +126,41 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
     Assert.assertEquals(updated.field("surname"), "Miner");
     Assert.assertEquals(updated.field("age"), 1);
     Assert.assertEquals(updated.getVersion(), 2);
+  }
+
+  public void deleteByRid() throws IOException {
+    post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
+    Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
+    final ODocument created = new ODocument().fromJSON(getResponse().getEntity().getContent());
+
+    Assert.assertEquals(created.field("name"), "Jay");
+    Assert.assertEquals(created.field("surname"), "Miner");
+    Assert.assertEquals(created.field("age"), 0);
+    Assert.assertEquals(created.getVersion(), 1);
+
+    delete("document/" + getDatabaseName() + "/" + created.getIdentity().toString().substring(1)).exec();
+    Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 204);
+
+    get("document/" + getDatabaseName() + "/" + created.getIdentity().toString().substring(1)).exec();
+    Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 404);
+  }
+
+  public void deleteWithMVCC() throws IOException {
+    post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
+    Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
+    final ODocument created = new ODocument().fromJSON(getResponse().getEntity().getContent());
+
+    Assert.assertEquals(created.field("name"), "Jay");
+    Assert.assertEquals(created.field("surname"), "Miner");
+    Assert.assertEquals(created.field("age"), 0);
+    Assert.assertEquals(created.getVersion(), 1);
+
+    delete("document/" + getDatabaseName() + "/" + created.getIdentity().toString().substring(1)).payload(created.toJSON(),
+        CONTENT.JSON).exec();
+    Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 204);
+
+    get("document/" + getDatabaseName() + "/" + created.getIdentity().toString().substring(1)).exec();
+    Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 404);
   }
 
   @Override
