@@ -55,6 +55,10 @@ public class HookTxTest extends ORecordHookAbstract {
   @BeforeClass
   public void beforeClass() {
     database = new OObjectDatabaseTx(url);
+    if (url.startsWith("memory:")) {
+      database.create();
+      database.close();
+    }
   }
 
   @Override
@@ -64,7 +68,7 @@ public class HookTxTest extends ORecordHookAbstract {
 
   @Test
   public void testRegisterHook() throws IOException {
-    database.open("writer", "writer");
+    database.open("admin", "admin");
     database.registerHook(this);
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
@@ -129,18 +133,19 @@ public class HookTxTest extends ORecordHookAbstract {
     Assert.assertEquals(callbackCount, expectedHookState);
 
     database.unregisterHook(this);
-    database.close();
   }
 
   @Test(dependsOnMethods = "testHookCallsDelete")
   public void testHookCannotBeginTx() throws IOException {
     final AtomicBoolean exc = new AtomicBoolean(false);
+    database.activateOnCurrentThread();
     database.registerHook(new ORecordHookAbstract() {
       @Override
       public RESULT onRecordBeforeCreate(ORecord iRecord) {
         try {
+          database.activateOnCurrentThread();
           database.begin();
-        } catch( IllegalStateException e ){
+        } catch (IllegalStateException e) {
           exc.set(true);
         }
         return null;
@@ -152,10 +157,11 @@ public class HookTxTest extends ORecordHookAbstract {
       }
     });
 
-    Assert.assertTrue(exc.get());
-    new ODocument().field("test-hook", true).save();
     Assert.assertFalse(exc.get());
+    new ODocument().field("test-hook", true).save();
+    Assert.assertTrue(exc.get());
 
+    database.activateOnCurrentThread();
     database.close();
   }
 

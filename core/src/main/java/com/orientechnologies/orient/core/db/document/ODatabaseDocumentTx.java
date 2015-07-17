@@ -66,7 +66,6 @@ import com.orientechnologies.orient.core.exception.OTransactionBlockedException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
-import com.orientechnologies.orient.core.hook.OHookThreadLocal;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -2089,7 +2088,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
 
     // CHECK IT'S NOT INSIDE A HOOK
-    if (OHookThreadLocal.INSTANCE.isInsideHookExecution())
+    if (!inHook.isEmpty())
       throw new IllegalStateException("Cannot begin a transaction while a hook is executing");
 
     // WAKE UP LISTENERS
