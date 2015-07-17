@@ -37,11 +37,18 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.io.InputStream;
 import java.util.List;
 import java.util.ArrayList;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 
 /** Orient Database Sql grammar. */
 public class OrientSql {
 
+  class ValidationStats{
+    int luceneCount = 0;
+  }
   private int inputParamCount = 0;
+
+  private List<ValidationStats> validationStats = new ArrayList<ValidationStats>();
 
     /** Main entry point. For development purpose only */
   public static void main(String args[]) {
@@ -691,7 +698,9 @@ ONumber Number():
 
 
 OStatement Statement():
-{ OStatement result = null;}
+{
+    OStatement result = null;
+}
 {
 	(
 	    result = QueryStatement()
@@ -724,7 +733,10 @@ OStatement Statement():
         |
 		result = UpdateStatement()
 
-	) [ <SEMICOLON> ] { return result; }
+	) [ <SEMICOLON> ]
+	{
+	    return result;
+	}
 }
 
 OStatement QueryStatement():
@@ -743,7 +755,7 @@ OStatement QueryStatement():
 }
 
 OSelectWithoutTargetStatement SelectWithoutTargetStatement():
-{}
+{validationStats.add(0, new ValidationStats());}
 {
     (
     	<SELECT>
@@ -755,11 +767,15 @@ OSelectWithoutTargetStatement SelectWithoutTargetStatement():
         [ <LOCK>  <RECORD> {jjtThis.lockRecord = true;} ]
         [ <PARALLEL> { jjtThis.parallel = true; } ]
         [ <NOCACHE> { jjtThis.noCache = true; } ]
-    ) { return jjtThis; }
+    )
+    {
+        jjtThis.validate(validationStats.remove(0));
+        return jjtThis;
+    }
 }
 
 OSelectStatement SelectStatement():
-{}
+{validationStats.add(0, new ValidationStats());}
 {
     (
    	    <SELECT>
@@ -784,7 +800,10 @@ OSelectStatement SelectStatement():
         [ <PARALLEL> { jjtThis.parallel = true; } ]
         [ <NOCACHE> { jjtThis.noCache = true; } ]
     )
-    {return jjtThis;}
+    {
+        jjtThis.validate(validationStats.remove(0));
+        return jjtThis;
+    }
 }
 
 OTraverseStatement TraverseStatement():
@@ -2268,7 +2287,14 @@ OLuceneOperator LuceneOperator():
 {
 (
 	<LUCENE>
-){return jjtThis;}
+){
+    ValidationStats stats = validationStats.get(0);
+    stats.luceneCount++;
+//    if(stats.luceneCount > 1){
+//        throw new OQueryParsingException("Two or more LUCENE operators are not allowed in the same query");
+//    }
+    return jjtThis;
+}
 }
 
 ONearOperator NearOperator():

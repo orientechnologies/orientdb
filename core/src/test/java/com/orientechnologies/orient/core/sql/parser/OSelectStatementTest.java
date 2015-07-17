@@ -410,6 +410,26 @@ public class OSelectStatementTest {
     checkRightSyntax("select from test order by (something asc),(somethingElse desc)");
   }
 
+  @Test()
+  public void testMultipleLucene() {
+    checkRightSyntax("select from Foo where a lucene 'a'");
+    checkWrongSyntax("select from Foo where a lucene 'a' and b lucene 'a'");
+
+    checkWrongSyntax(
+        "select union($a, $b) let $a = (select from Foo where a lucene 'a' and b lucene 'b'), $b = (select from Foo where b lucene 'b')");
+    checkRightSyntax("select union($a, $b) let $a = (select from Foo where a lucene 'a'), $b = (select from Foo where b lucene 'b')");
+    checkWrongSyntax("select from (select from Foo) where a lucene 'a'");
+
+    checkWrongSyntax(
+        "select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo')))) or select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo'))))");
+
+    checkWrongSyntax("select from cluster:foo where a lucene 'b'");
+    checkWrongSyntax("select from index:foo where a lucene 'b'");
+    checkWrongSyntax("select from #12:0 where a lucene 'b'");
+    checkWrongSyntax("select from [#12:0, #12:1] where a lucene 'b'");
+
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {

@@ -20,5 +20,11 @@ public class OInOperator extends SimpleNode implements OBinaryCompareOperator {
   public boolean execute(Object left, Object right) {
     return false;
   }
+
+  @Override public boolean supportsBasicCalculation() {
+    return true;
+  }
+
+
 }
 /* JavaCC - OriginalChecksum=6650a720cb942fa3c4d588ff0f381b3a (do not edit this line) */
