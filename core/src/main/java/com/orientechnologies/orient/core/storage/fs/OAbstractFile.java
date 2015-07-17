@@ -26,10 +26,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -49,48 +46,57 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * <br>
  */
 public abstract class OAbstractFile implements OFile {
-  private FileLock            fileLock;
+  private static final boolean trackFileClose           = OGlobalConfiguration.TRACK_FILE_CLOSE.getValueAsBoolean();
 
-  protected File              osFile;
-  protected RandomAccessFile  accessFile;
-  protected FileChannel       channel;
-  protected volatile boolean  dirty                    = false;
-  protected volatile boolean  headerDirty              = false;
-  protected int               version;
+  private FileLock             fileLock;
 
-  protected int               incrementSize            = DEFAULT_INCREMENT_SIZE;
-  protected long              maxSize;
-  protected byte[]            securityCode             = new byte[32];                // PART OF HEADER (32 bytes)
-  protected String            mode;
-  protected boolean           failCheck                = true;
-  protected volatile long     size;                                                   // PART OF HEADER (4 bytes)
+  protected File               osFile;
+  protected RandomAccessFile   accessFile;
+  protected FileChannel        channel;
+  protected volatile boolean   dirty                    = false;
+  protected volatile boolean   headerDirty              = false;
+  protected int                version;
 
-  public static final int     HEADER_SIZE              = 1024;
-  protected static final int  HEADER_DATA_OFFSET       = 128;
-  protected static final int  DEFAULT_SIZE             = 1024000;
-  protected static final int  DEFAULT_INCREMENT_SIZE   = -50;                         // NEGATIVE NUMBER MEANS AS PERCENT OF
-                                                                                       // CURRENT
-                                                                                       // SIZE
+  protected int                incrementSize            = DEFAULT_INCREMENT_SIZE;
+  protected long               maxSize;
+  protected byte[]             securityCode             = new byte[32];                                             // PART OF
+                                                                                                                     // HEADER (32
+                                                                                                                     // bytes)
+  protected String             mode;
+  protected boolean            failCheck                = true;
+  protected volatile long      size;                                                                                // PART OF
+                                                                                                                     // HEADER (4
+                                                                                                                     // bytes)
 
-  private static final int    OPEN_RETRY_MAX           = 10;
-  private static final int    OPEN_DELAY_RETRY         = 100;
+  public static final int      HEADER_SIZE              = 1024;
+  protected static final int   HEADER_DATA_OFFSET       = 128;
+  protected static final int   DEFAULT_SIZE             = 1024000;
+  protected static final int   DEFAULT_INCREMENT_SIZE   = -50;                                                      // NEGATIVE
+                                                                                                                     // NUMBER MEANS
+                                                                                                                     // AS PERCENT
+                                                                                                                     // OF
+                                                                                                                     // CURRENT
+                                                                                                                     // SIZE
 
-  private static final long   LOCK_WAIT_TIME           = 300;
-  private static final int    LOCK_MAX_RETRIES         = 10;
+  private static final int     OPEN_RETRY_MAX           = 10;
+  private static final int     OPEN_DELAY_RETRY         = 100;
 
-  protected static final int  SIZE_OFFSET_V_0          = 0;
-  protected static final int  FILLEDUPTO_OFFSET_V_0    = 4;
-  protected static final int  SOFTLY_CLOSED_OFFSET_V_0 = 8;
+  private static final long    LOCK_WAIT_TIME           = 300;
+  private static final int     LOCK_MAX_RETRIES         = 10;
 
-  protected static final int  SIZE_OFFSET              = 0;
-  protected static final int  FILLEDUPTO_OFFSET        = 8;
-  protected static final int  SOFTLY_CLOSED_OFFSET     = 16;
-  protected static final int  VERSION_OFFSET           = 48;
+  protected static final int   SIZE_OFFSET_V_0          = 0;
+  protected static final int   FILLEDUPTO_OFFSET_V_0    = 4;
+  protected static final int   SOFTLY_CLOSED_OFFSET_V_0 = 8;
 
-  protected static final int  CURRENT_VERSION          = 1;
+  protected static final int   SIZE_OFFSET              = 0;
+  protected static final int   FILLEDUPTO_OFFSET        = 8;
+  protected static final int   SOFTLY_CLOSED_OFFSET     = 16;
+  protected static final int   VERSION_OFFSET           = 48;
 
-  private final ReadWriteLock lock                     = new ReentrantReadWriteLock();
-  private boolean             wasSoftlyClosed          = true;
+  protected static final int   CURRENT_VERSION          = 1;
+
+  private final ReadWriteLock  lock                     = new ReentrantReadWriteLock();
+  private boolean              wasSoftlyClosed          = true;
 
   public abstract long getFileSize();
 
@@ -266,6 +272,18 @@ public abstract class OAbstractFile implements OFile {
           accessFile = null;
         }
 
+        if (trackFileClose) {
+          final Exception exception = new Exception();
+          final StringWriter writer = new StringWriter();
+          writer.append("File ").append(getName()).append(" was closed at : \r\n");
+
+          final PrintWriter printWriter = new PrintWriter(writer);
+          exception.printStackTrace(printWriter);
+          printWriter.flush();
+
+          OLogManager.instance().warn(this, writer.toString());
+        }
+
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error on closing file " + osFile.getAbsolutePath(), e, OIOException.class);
       }
@@ -291,6 +309,18 @@ public abstract class OAbstractFile implements OFile {
         if (accessFile != null) {
           accessFile.close();
           accessFile = null;
+        }
+
+        if (trackFileClose) {
+          final Exception exception = new Exception();
+          final StringWriter writer = new StringWriter();
+          writer.append("File ").append(getName()).append(" was closed at : \r\n");
+
+          final PrintWriter printWriter = new PrintWriter(writer);
+          exception.printStackTrace(printWriter);
+          printWriter.flush();
+
+          OLogManager.instance().warn(this, writer.toString());
         }
 
       } catch (Exception e) {
