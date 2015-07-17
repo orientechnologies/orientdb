@@ -21,7 +21,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.put;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -66,8 +65,6 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
       if (!recordId.isValid())
         recordId = (ORecordId) doc.getIdentity();
-      else
-        ORecordInternal.setIdentity(doc, recordId);
 
       if (!recordId.isValid())
         throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
@@ -91,7 +88,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
       currentDocument.merge(doc, partialUpdateMode, false);
       if (currentDocument.isDirty()) {
-        if (doc.getRecordVersion().isValid())
+        if (doc.getVersion() > 0)
           // OVERWRITE THE VERSION
           currentDocument.getRecordVersion().copyFrom(doc.getRecordVersion());
 
@@ -99,7 +96,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
       }
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          currentDocument.toJSON(), OHttpUtils.HEADER_ETAG + doc.getVersion());
+          currentDocument.toJSON(), OHttpUtils.HEADER_ETAG + currentDocument.getVersion());
 
     } finally {
       if (db != null)
