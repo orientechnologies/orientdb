@@ -287,7 +287,7 @@ public class OSelectStatement extends OStatement {
 
   public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
     if (this.target == null || this.target.item == null || this.target.item.cluster != null || this.target.item.clusterList != null
-        || this.target.item.index != null || this.target.item.metadata != null || this.target.item.modifier != null
+        || this.target.item.metadata != null || this.target.item.modifier != null
         || this.target.item.rids.size() > 0 || this.target.item.statement != null || !isClassTarget(this.target)) {
       if (stats.luceneCount > 0) {
         throw new OQueryParsingException("LUCENE condition is allowed only when query target is a Class");

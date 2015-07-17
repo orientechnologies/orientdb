@@ -427,7 +427,7 @@ public class OSelectStatementTest {
     checkWrongSyntax("select from index:foo where a lucene 'b'");
     checkWrongSyntax("select from #12:0 where a lucene 'b'");
     checkWrongSyntax("select from [#12:0, #12:1] where a lucene 'b'");
-    
+
   }
 
   private void printTree(String s) {
