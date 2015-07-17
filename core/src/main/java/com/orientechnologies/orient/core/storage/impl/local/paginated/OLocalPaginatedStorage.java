@@ -209,7 +209,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   @Override
   protected void preCloseSteps() throws IOException {
-    ((OWOWCache) writeCache).unregisterMBean();
+    try {
+      ((OWOWCache) writeCache).unregisterMBean();
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "MBean for write cache can not unregistered", e);
+    }
+
     try {
       if (writeAheadLog != null) {
         checkpointExecutor.shutdown();
@@ -297,7 +302,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), writeCacheSize, diskCacheSize, this, true,
         getId());
     wowCache.addLowDiskSpaceListener(this);
-    wowCache.registerMBean();
+    try {
+      wowCache.registerMBean();
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "MBean for write cache can not be registered.");
+    }
+
     writeCache = wowCache;
   }
 

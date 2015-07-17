@@ -43,7 +43,12 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     readCache = new O2QCache(
         (long) (OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024 * ((100 - OGlobalConfiguration.DISK_WRITE_CACHE_PART
             .getValueAsInteger()) / 100.0)), OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true);
-    readCache.registerMBean();
+    try {
+      readCache.registerMBean();
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "MBean for read cache can not be registered", e);
+    }
+
   }
 
   public OStorage createStorage(final String dbName, final Map<String, String> configuration) {
@@ -72,6 +77,11 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     super.shutdown();
 
     readCache.clear();
-    readCache.unregisterMBean();
+    try {
+      readCache.unregisterMBean();
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "MBean for read cache can not be unregisterd.", e);
+    }
+
   }
 }
