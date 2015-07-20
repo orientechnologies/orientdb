@@ -43,6 +43,13 @@ public class OConsoleDatabaseAppTest {
     StringBuilder builder = new StringBuilder();
     builder.append("create database " + dbUrl + ";\n");
     builder.append("create class foo;\n");
+    builder.append("config;\n");
+    builder.append("list classes;\n");
+    builder.append("list properties;\n");
+    builder.append("list clusters;\n");
+    builder.append("list indexes;\n");
+    builder.append("info class OUser;\n");
+
     builder.append("begin;\n");
     builder.append("insert into foo set name = 'foo';\n");
     builder.append("insert into foo set name = 'bla';\n");
