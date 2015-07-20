@@ -52,7 +52,7 @@ public class OConsoleDatabaseAppTest {
 
     builder.append("create class bar;\n");
     builder.append("create property bar.name STRING;\n");
-    builder.append("create index bar_name on ;\n");
+    builder.append("create index bar_name on bar (name) NOTUNIQUE;\n");
 
     builder.append("insert into bar set name = 'foo';\n");
     builder.append("delete from bar;\n");
