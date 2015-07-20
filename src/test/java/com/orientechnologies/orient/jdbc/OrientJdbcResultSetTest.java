@@ -1,9 +1,11 @@
 package com.orientechnologies.orient.jdbc;
 
+import junit.framework.Assert;
 import org.junit.Test;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 import static org.junit.Assert.assertEquals;
@@ -53,5 +55,19 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
       count++;
     }
     assertEquals(count, 10);
+  }
+
+  @Test
+  public void testNoResult() throws Exception {
+    assertFalse(conn.isClosed());
+
+    Statement stmt = conn.createStatement();
+    ResultSet rs = stmt.executeQuery("SELECT * FROM Author where false = true");
+    try {
+      rs.getMetaData().getColumnType(1);
+      Assert.assertTrue(false);
+    } catch (SQLException e) {
+      Assert.assertTrue(true);
+    }
   }
 }
