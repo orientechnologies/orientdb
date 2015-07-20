@@ -37,7 +37,7 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
 
   public OLuceneIndexNotUnique(String name, String typeId, String algorithm, OLuceneIndexEngine engine,
       String valueContainerAlgorithm, ODocument metadata) {
-    super(typeId, algorithm, engine, valueContainerAlgorithm, metadata);
+    super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata);
 
     engine.setIndexMetadata(metadata);
   }
