@@ -57,6 +57,20 @@ public class OEdgeTransformerTest extends ETLBaseTest {
   }
 
   @Test
+  public void testLookupMultipleValues() {
+    graph.addVertex("class:V2").setProperty("name", "Luca");
+    graph.commit();
+
+    process("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { row: {} },"
+        + " transformers: [{csv: {}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
+        + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+
+    assertEquals(1, graph.countVertices("V1"));
+    assertEquals(2, graph.countVertices("V2"));
+    assertEquals(2, graph.countEdges("Friend"));
+  }
+
+  @Test
   public void testEdgeWithProperties() {
     process("{source: { content: { value: 'id,name,surname,friendSince,friendId,friendName,friendSurname\n0,Jay,Miner,1996,1,Luca,Garulli' } }, extractor : { row: {} },"
         + " transformers: [{csv: {}}, {vertex: {class:'V1'}}, "

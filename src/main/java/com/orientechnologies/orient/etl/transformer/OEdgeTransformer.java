@@ -29,6 +29,9 @@ import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class OEdgeTransformer extends OAbstractLookupTransformer {
   private String    edgeClass    = "E";
   private boolean   directionOut = true;
@@ -119,7 +122,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
     return input;
   }
 
-  private OrientEdge createEdge(final OrientVertex vertex, final Object joinCurrentValue, Object result) {
+  private List<OrientEdge> createEdge(final OrientVertex vertex, final Object joinCurrentValue, Object result) {
     log(OETLProcessor.LOG_LEVELS.DEBUG, "joinCurrentValue=%s, lookupResult=%s", joinCurrentValue, result);
 
     if (result == null) {
@@ -160,24 +163,40 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
     }
 
     if (result != null) {
-      final OrientVertex targetVertex = pipeline.getGraphDatabase().getVertex(result);
+      final List<OrientEdge> edges;
+      if (OMultiValue.isMultiValue(result)) {
+        final int size = OMultiValue.getSize(result);
+        if (size == 0)
+          // NO EDGES
+          return null;
 
-      // CREATE THE EDGE
-      final OrientEdge edge;
-      if (directionOut)
-        edge = (OrientEdge) vertex.addEdge(edgeClass, targetVertex);
-      else
-        edge = (OrientEdge) targetVertex.addEdge(edgeClass, vertex);
+        edges = new ArrayList<OrientEdge>(size);
+      } else
+        edges = new ArrayList<OrientEdge>(1);
 
-      if (edgeFields != null) {
-        for (String f : edgeFields.fieldNames())
-          edge.setProperty(f, resolve(edgeFields.field(f)));
+      for (Object o : OMultiValue.getMultiValueIterable(result)) {
+        final OrientVertex targetVertex = pipeline.getGraphDatabase().getVertex(o);
+
+        // CREATE THE EDGE
+        final OrientEdge edge;
+        if (directionOut)
+          edge = (OrientEdge) vertex.addEdge(edgeClass, targetVertex);
+        else
+          edge = (OrientEdge) targetVertex.addEdge(edgeClass, vertex);
+
+        if (edgeFields != null) {
+          for (String f : edgeFields.fieldNames())
+            edge.setProperty(f, resolve(edgeFields.field(f)));
+        }
+
+        edges.add(edge);
+
+        log(OETLProcessor.LOG_LEVELS.DEBUG, "created new edge=%s", edge);
       }
-
-      log(OETLProcessor.LOG_LEVELS.DEBUG, "created new edge=%s", edge);
-      return edge;
+      return edges;
     }
 
+    // NO EDGES
     return null;
   }
 }
