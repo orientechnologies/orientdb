@@ -515,17 +515,9 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  @Override
-  protected void endAtomicOperation(final boolean rollback, Exception e) throws IOException {
-    if (useWal)
-      super.endAtomicOperation(rollback, e);
-  }
 
   @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    if (useWal)
-      return super.startAtomicOperation();
-
-    return atomicOperationsManager.getCurrentOperation();
+    return atomicOperationsManager.startAtomicOperation(this, !useWal);
   }
 }

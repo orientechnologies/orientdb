@@ -1508,13 +1508,14 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       Iterator<Entry<String, ODocumentEntry>> vals = _fields.entrySet().iterator();
       while (vals.hasNext()) {
         Entry<String, ODocumentEntry> next = vals.next();
-        if (next.getValue().isCreated()) {
+        ODocumentEntry val = next.getValue();
+        if (val.created) {
           vals.remove();
-        } else if (next.getValue().isChanged()) {
-          next.getValue().value = next.getValue().original;
-          next.getValue().setChanged(false);
-          next.getValue().original = null;
-          next.getValue().setExist(true);
+        } else if (val.changed) {
+          val.value = val.original;
+          val.changed = false;
+          val.original = null;
+          val.exist = true;
         }
       }
       _fieldSize = _fields.size();
@@ -1529,14 +1530,16 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     if (_fields != null) {
       final ODocumentEntry value = _fields.get(field);
-      if (value.created) {
-        _fields.remove(field);
-      }
-      if (value.changed) {
-        value.value = value.original;
-        value.original = null;
-        value.changed = false;
-        value.exist = true;
+      if(value!=null) {
+        if (value.created) {
+          _fields.remove(field);
+        }
+        if (value.changed) {
+          value.value = value.original;
+          value.original = null;
+          value.changed = false;
+          value.exist = true;
+        }
       }
     }
     return this;

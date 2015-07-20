@@ -108,7 +108,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this);
+    return atomicOperationsManager.startAtomicOperation(this, false);
   }
 
   protected OWALChangesTree getChangesTree(OAtomicOperation atomicOperation, OCacheEntry entry) {

@@ -328,12 +328,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       transaction = new ThreadLocal<OStorageTransaction>();
   }
 
-  public void startAtomicOperation() throws IOException {
+  public void startAtomicOperation(boolean rollbackOnlyMode) throws IOException {
     lock.acquireSharedLock();
     try {
       makeStorageDirty();
 
-      atomicOperationsManager.startAtomicOperation((String) null);
+      atomicOperationsManager.startAtomicOperation((String) null, rollbackOnlyMode);
     } finally {
       lock.releaseSharedLock();
     }
@@ -1643,7 +1643,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     transaction.set(new OStorageTransaction(clientTx));
     try {
-      atomicOperationsManager.startAtomicOperation((String) null);
+      atomicOperationsManager.startAtomicOperation((String) null, false);
     } catch (RuntimeException e) {
       transaction.set(null);
       throw e;
@@ -1685,7 +1685,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         recordVersion = OVersionFactory.instance().createVersion();
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation((String) null);
+      atomicOperationsManager.startAtomicOperation((String) null, false);
       try {
         ppos = cluster.createRecord(content, recordVersion, recordType);
         rid.clusterPosition = ppos.clusterPosition;
@@ -1756,7 +1756,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation((String) null);
+      atomicOperationsManager.startAtomicOperation((String) null, false);
       try {
         if (updateContent)
           cluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
@@ -1814,7 +1814,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation((String) null);
+      atomicOperationsManager.startAtomicOperation((String) null, false);
       try {
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
@@ -1847,7 +1847,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         return new OStorageOperationResult<Boolean>(false);
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation((String) null);
+      atomicOperationsManager.startAtomicOperation((String) null, false);
       try {
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
