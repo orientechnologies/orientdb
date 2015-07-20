@@ -769,19 +769,8 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   @Override
-  protected void endAtomicOperation(boolean rollback, Exception e) throws IOException {
-    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return;
-
-    super.endAtomicOperation(rollback, e);
-  }
-
-  @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return atomicOperationsManager.getCurrentOperation();
-
-    return super.startAtomicOperation();
+    return atomicOperationsManager.startAtomicOperation(this, !durableInNonTxMode);
   }
 
   private void checkNullSupport(K key) {

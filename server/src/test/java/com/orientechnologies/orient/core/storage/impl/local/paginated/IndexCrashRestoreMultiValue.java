@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -72,14 +73,14 @@ public class IndexCrashRestoreMultiValue {
 
   @AfterClass
   public void afterClass() {
-    // ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
-    // testDocumentTx.drop();
-    //
-    // ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
-    // baseDocumentTx.drop();
-    //
-    // Assert.assertTrue(new File(buildDir, "plugins").delete());
-    // Assert.assertTrue(buildDir.delete());
+    ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
+    testDocumentTx.drop();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+    baseDocumentTx.drop();
+
+    Assert.assertTrue(new File(buildDir, "plugins").delete());
+    Assert.assertTrue(buildDir.delete());
   }
 
   @BeforeMethod
@@ -126,7 +127,7 @@ public class IndexCrashRestoreMultiValue {
     Thread.sleep(300000);
 
     System.out.println("Wait for process to destroy");
-    process.destroy();
+    process.destroyForcibly();
 
     process.waitFor();
     System.out.println("Process was destroyed");

@@ -87,14 +87,14 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     this.writeCache = storage.getWriteCache();
   }
 
-  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent) throws IOException {
+  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent, boolean rollbackOnlyMode) throws IOException {
     if (durableComponent != null)
-      return startAtomicOperation(durableComponent.getFullName());
+      return startAtomicOperation(durableComponent.getFullName(), rollbackOnlyMode);
 
-    return startAtomicOperation((String) null);
+    return startAtomicOperation((String) null, rollbackOnlyMode);
   }
 
-  public OAtomicOperation startAtomicOperation(String fullName) throws IOException {
+  public OAtomicOperation startAtomicOperation(String fullName, boolean rollbackOnlyMode) throws IOException {
     if (writeAheadLog == null)
       return null;
 
@@ -109,9 +109,14 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     }
 
     final OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
+    final OLogSequenceNumber lsn;
 
-    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId());
+    if (!rollbackOnlyMode)
+      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
+    else
+      lsn = null;
+
+    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId(), rollbackOnlyMode);
     currentOperation.set(operation);
 
     if (trackAtomicOperations) {
@@ -162,7 +167,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       if (!operation.isRollback())
         operation.commitChanges(writeAheadLog);
 
-      writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
+      if (!operation.isRollbackOnlyMode())
+        writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
+
       currentOperation.set(null);
 
       if (trackAtomicOperations) {
@@ -265,7 +272,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
     final StringWriter writer = new StringWriter();
     writer.append("List of active atomic operations: \r\n");
-    writer.append("------------------------------------------------------------------------------------------------");
+    writer.append("------------------------------------------------------------------------------------------------\r\n");
     for (Map.Entry<OOperationUnitId, OPair<String, StackTraceElement[]>> entry : activeAtomicOperations.entrySet()) {
       writer.append("Operation unit id :").append(entry.getKey().toString()).append("\r\n");
       writer.append("Started at thread : ").append(entry.getValue().getKey()).append("\r\n");
@@ -278,7 +285,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
       writer.append("\r\n\r\n");
     }
-    writer.append("-------------------------------------------------------------------------------------------------");
+    writer.append("-------------------------------------------------------------------------------------------------\r\n");
     return writer.toString();
   }
 }
