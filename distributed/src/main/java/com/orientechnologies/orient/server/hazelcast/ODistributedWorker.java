@@ -144,7 +144,9 @@ public class ODistributedWorker extends Thread {
               message != null ? message.getTask() : "-");
       } finally {
         // CLEAR SERIALIZATION TL TO AVOID MEMORY LEAKS
-        OSerializationSetThreadLocal.clear();
+        if (OSerializationSetThreadLocal.INSTANCE != null) {
+          OSerializationSetThreadLocal.clear();
+        }
       }
     }
 
