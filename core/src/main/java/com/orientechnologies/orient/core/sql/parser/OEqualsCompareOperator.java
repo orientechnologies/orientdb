@@ -24,7 +24,7 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
   public boolean execute(Object iLeft, Object iRight) {
     return OQueryOperatorEquals.equals(iLeft, iRight);
   }
-
+  
   @Override public boolean supportsBasicCalculation() {
     return true;
   }
