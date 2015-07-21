@@ -19,19 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
@@ -51,7 +38,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -62,10 +48,24 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Handles indexing when records change.
@@ -432,8 +432,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
         // INDEX ALL CLUSTERS
         for (final String clusterName : clustersToIndex) {
           final long[] metrics = indexCluster(clusterName, iProgressListener, documentNum, documentIndexed, documentTotal);
-          documentNum += metrics[0];
-          documentIndexed += metrics[1];
+          documentNum = metrics[0];
+          documentIndexed = metrics[1];
         }
 
         if (iProgressListener != null)
@@ -915,8 +915,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   protected void startStorageAtomicOperation() {
     try {
-      getStorage().startAtomicOperation();
+      getStorage().startAtomicOperation(true);
     } catch (IOException e) {
+      OLogManager.instance().error(this, "Error during start of atomic operation", e);
+
       throw new OIndexException("Error during start of atomic operation", e);
     }
   }
@@ -925,6 +927,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     try {
       getStorage().commitAtomicOperation();
     } catch (IOException e) {
+      OLogManager.instance().error(this, "Error during commit of atomic operation", e);
+
       throw new OIndexException("Error during commit of atomic operation", e);
     }
   }
@@ -933,6 +937,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     try {
       getStorage().rollbackAtomicOperation();
     } catch (IOException e) {
+      OLogManager.instance().error(this, "Error during rollback of atomic operation", e);
+
       throw new OIndexException("Error during rollback of atomic operation", e);
     }
   }

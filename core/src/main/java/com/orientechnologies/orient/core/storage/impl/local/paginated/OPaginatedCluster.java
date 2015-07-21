@@ -1302,19 +1302,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  protected void endAtomicOperation(boolean rollback, Exception e) throws IOException {
-    if (!config.useWal)
-      return;
-
-    super.endAtomicOperation(rollback, e);
-  }
-
-  @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    if (!config.useWal)
-      return atomicOperationsManager.getCurrentOperation();
-
-    return super.startAtomicOperation();
+    return atomicOperationsManager.startAtomicOperation(this, !config.useWal);
   }
 
   private void updateClusterState(long sizeDiff, long recordsSizeDiff, OAtomicOperation atomicOperation) throws IOException {

@@ -246,7 +246,7 @@ public class OMultiValue {
       return temp;
     }
 
-    return null;
+    return new OIterableObject<Object>(iObject);
   }
 
   /**

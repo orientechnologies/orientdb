@@ -26,5 +26,10 @@ class OContainsKeyOperator extends SimpleNode  implements OBinaryCompareOperator
     return "CONTAINSKEY";
   }
 
+  @Override public boolean supportsBasicCalculation() {
+    return true;
+  }
+
+
 }
 /* JavaCC - OriginalChecksum=1a03daaa6712eb981b070e8e94960951 (do not edit this line) */

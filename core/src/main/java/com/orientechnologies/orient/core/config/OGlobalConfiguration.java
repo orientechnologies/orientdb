@@ -214,6 +214,10 @@ public enum OGlobalConfiguration {
 
   // TRANSACTIONS
 
+  TX_TRACK_ATOMIC_OPERATIONS("tx.trackAtomicOperations",
+      "This setting is used only for debug purpose, it track stac trace of methods where atomic operation is started.",
+      Boolean.class, false),
+
   // INDEX
   INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("index.embeddedToSbtreeBonsaiThreshold",
       "Amount of values after which index implementation will use sbtree as values container. Set to -1 to force always using it",
@@ -433,7 +437,7 @@ public enum OGlobalConfiguration {
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL(
       "server.log.dumpClientExceptionLevel",
       "Logs client exceptions. Use any level supported by Java java.util.logging.Level class: OFF, FINE, CONFIG, INFO, WARNING, SEVERE",
-      Level.class, Level.SEVERE),
+      Level.class, Level.FINE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
       "Dumps the full stack trace of the exception to sent to the client", Boolean.class, Boolean.FALSE),
