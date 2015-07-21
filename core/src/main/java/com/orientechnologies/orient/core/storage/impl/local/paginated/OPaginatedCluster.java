@@ -894,7 +894,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
               nextRecordPosition = -1;
             }
 
-            sizeDiff = localPage.getFreeSpace() - pageFreeSpace;
+            sizeDiff += pageFreeSpace - localPage.getFreeSpace();
 
           } finally {
             cacheEntry.releaseExclusiveLock();
@@ -949,7 +949,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             nextEntryPointer = localPage.getRecordLongValue(nextRecordPosition, -OLongSerializer.LONG_SIZE);
             localPage.deleteRecord(nextRecordPosition);
 
-            sizeDiff = localPage.getFreeSpace() - freeSpace;
+            sizeDiff += freeSpace - localPage.getFreeSpace();
           } finally {
             cacheEntry.releaseExclusiveLock();
             releasePage(atomicOperation, cacheEntry);
