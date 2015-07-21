@@ -7,6 +7,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.Collection;
 import java.util.Iterator;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class OContainsCondition extends OBooleanExpression {
@@ -108,6 +111,52 @@ public class OContainsCondition extends OBooleanExpression {
     }
 
     return result.toString();
+  }
+
+  @Override
+  public boolean supportsBasicCalculation() {
+    if(!left.supportsBasicCalculation()){
+      return false;
+    }
+    if(!right.supportsBasicCalculation()){
+      return false;
+    }
+    if(!condition.supportsBasicCalculation()){
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    int total = 0;
+    if (condition != null) {
+      total += condition.getNumberOfExternalCalculations();
+    }
+    if (!left.supportsBasicCalculation()) {
+      total++;
+    }
+    if (right!=null && !right.supportsBasicCalculation()) {
+      total++;
+    }
+    return total;
+  }
+
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
+    List<Object> result = new ArrayList<Object>();
+
+    if(condition!=null) {
+      result.addAll(condition.getExternalCalculationConditions());
+    }
+    if (!left.supportsBasicCalculation()) {
+      result.add(left);
+    }
+    if (right!=null && !right.supportsBasicCalculation()) {
+      result.add(right);
+    }
+    return result;
   }
 
 }

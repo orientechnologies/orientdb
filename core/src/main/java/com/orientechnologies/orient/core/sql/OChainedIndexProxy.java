@@ -489,6 +489,11 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
+  @Override
+  public String getAlgorithm() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
   public boolean isAutomatic() {
     throw new UnsupportedOperationException("Not allowed operation");
   }

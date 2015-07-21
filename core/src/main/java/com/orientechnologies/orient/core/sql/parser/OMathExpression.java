@@ -199,6 +199,7 @@ public class OMathExpression extends SimpleNode {
     return nextValue;
   }
 
+
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
@@ -313,6 +314,17 @@ public class OMathExpression extends SimpleNode {
 
     throw new IllegalArgumentException("Cannot increment value '" + a + "' (" + a.getClass() + ") with '" + b + "' ("
         + b.getClass() + ")");
+
+  }
+
+  protected boolean supportsBasicCalculation() {
+    for (OMathExpression expr : this.childExpressions) {
+      if (!expr.supportsBasicCalculation()) {
+        return false;
+      }
+    }
+    return true;
+
   }
 }
 /* JavaCC - OriginalChecksum=c255bea24e12493e1005ba2a4d1dbb9d (do not edit this line) */

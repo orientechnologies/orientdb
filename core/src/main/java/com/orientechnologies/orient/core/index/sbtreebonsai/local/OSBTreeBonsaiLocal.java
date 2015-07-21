@@ -40,11 +40,10 @@ import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
@@ -108,12 +107,12 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
       initAfterCreate(atomicOperation);
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      rollback();
+      rollback(e);
       throw new OSBTreeException("Error creation of sbtree with name" + getName(), e);
     } catch (Exception e) {
-      rollback();
+      rollback(e);
       throw new OSBTreeException("Error creation of sbtree with name" + getName(), e);
     } finally {
       lock.unlock();
@@ -258,19 +257,19 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       if (!itemFound)
         setSize(size() + 1, atomicOperation);
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
       return result;
-    } catch (Throwable e) {
-      rollback();
+    } catch (Exception e) {
+      rollback(e);
       throw new OSBTreeException("Error during index update with key " + key + " and value " + value, e);
     } finally {
       lock.unlock();
     }
   }
 
-  private void rollback() {
+  private void rollback(Exception e) {
     try {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
     } catch (IOException e1) {
       OLogManager.instance().error(this, "Error during sbtree operation  rollback", e1);
     }
@@ -327,9 +326,9 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
       recycleSubTrees(subTreesToDelete, atomicOperation);
 
-      endAtomicOperation(false);
-    } catch (Throwable e) {
-      rollback();
+      endAtomicOperation(false, null);
+    } catch (Exception e) {
+      rollback(e);
 
       throw new OSBTreeException("Error during clear of sbtree with name " + getName(), e);
     } finally {
@@ -424,9 +423,9 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       subTreesToDelete.add(rootBucketPointer);
       recycleSubTrees(subTreesToDelete, atomicOperation);
 
-      endAtomicOperation(false);
-    } catch (Throwable e) {
-      rollback();
+      endAtomicOperation(false, null);
+    } catch (Exception e) {
+      rollback(e);
 
       throw new OSBTreeException("Error during delete of sbtree with name " + getName(), e);
     } finally {
@@ -518,7 +517,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
       if (bucketSearchResult.itemIndex < 0) {
-        endAtomicOperation(false);
+        endAtomicOperation(false, null);
         return null;
       }
 
@@ -541,10 +540,10 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       }
       setSize(size() - 1, atomicOperation);
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
       return removed;
-    } catch (Throwable e) {
-      rollback();
+    } catch (Exception e) {
+      rollback(e);
 
       throw new OSBTreeException("Error during removing key " + key + " from sbtree " + getName(), e);
     } finally {
@@ -553,19 +552,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   @Override
-  protected void endAtomicOperation(boolean rollback) throws IOException {
-    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return;
-
-    super.endAtomicOperation(rollback);
-  }
-
-  @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return atomicOperationsManager.getCurrentOperation();
-
-    return super.startAtomicOperation();
+    return atomicOperationsManager.startAtomicOperation(this, !durableInNonTxMode);
   }
 
   @Override

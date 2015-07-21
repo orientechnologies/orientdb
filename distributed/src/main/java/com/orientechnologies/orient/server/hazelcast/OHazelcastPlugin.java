@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -377,9 +378,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     } else if (dbUrl.startsWith("remote:"))
       return;
 
-    final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(iDatabase.getName());
-    distribDatabase.configureDatabase(false, false, null).setOnline();
-    onOpen(iDatabase);
+    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    try {
+
+      final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(iDatabase.getName());
+      distribDatabase.configureDatabase(false, false, null).setOnline();
+      onOpen(iDatabase);
+
+    } finally {
+      // RESTORE ORIGINAL DATABASE INSTANCE IN TL
+      ODatabaseRecordThreadLocal.INSTANCE.set(currDb);
+    }
   }
 
   /**
@@ -398,25 +407,31 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     } else if (dbUrl.startsWith("remote:"))
       return;
 
-    synchronized (cachedDatabaseConfiguration) {
-      final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
-      if (cfg == null)
-        return;
+    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    try {
+      synchronized (cachedDatabaseConfiguration) {
+        final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
+        if (cfg == null)
+          return;
 
-      if (iDatabase instanceof ODatabase<?> && !(iDatabase.getStorage() instanceof ODistributedStorage)) {
-        ODistributedStorage storage = storages.get(iDatabase.getURL());
-        if (storage == null) {
-          storage = new ODistributedStorage(serverInstance, (OAbstractPaginatedStorage) iDatabase.getStorage());
-          final ODistributedStorage oldStorage = storages.putIfAbsent(iDatabase.getURL(), storage);
-          if (oldStorage != null)
-            storage = oldStorage;
+        if (iDatabase instanceof ODatabase<?> && !(iDatabase.getStorage() instanceof ODistributedStorage)) {
+          ODistributedStorage storage = storages.get(iDatabase.getURL());
+          if (storage == null) {
+            storage = new ODistributedStorage(serverInstance, (OAbstractPaginatedStorage) iDatabase.getStorage());
+            final ODistributedStorage oldStorage = storages.putIfAbsent(iDatabase.getURL(), storage);
+            if (oldStorage != null)
+              storage = oldStorage;
+          }
+
+          iDatabase.replaceStorage(storage);
+
+          installDbClustersLocalStrategy(iDatabase);
         }
 
-        iDatabase.replaceStorage(storage);
-
-        installDbClustersLocalStrategy(iDatabase);
       }
-
+    } finally {
+      // RESTORE ORIGINAL DATABASE INSTANCE IN TL
+      ODatabaseRecordThreadLocal.INSTANCE.set(currDb);
     }
   }
 
@@ -871,8 +886,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     // GET THE FIRST ONE TO ASK FOR DATABASE. THIS FORCES TO HAVE ONE NODE TO DO BACKUP SAVING RESOURCES IN CASE BACKUP IS STILL
     // VALID FOR FURTHER NODES
     final List<String> firstNode = new ArrayList<String>();
-    if (nodes.iterator().hasNext())
-      firstNode.add(nodes.iterator().next());
+    while (nodes.iterator().hasNext()) {
+      final String f = nodes.iterator().next();
+      if (isNodeAvailable(f, databaseName)) {
+        firstNode.add(f);
+        break;
+      }
+    }
+
+    if (firstNode.isEmpty())
+      // NO NODE ONLINE, SEND THE MESSAGE TO EVERYONE
+      firstNode.addAll(nodes);
 
     ODistributedServerLog.warn(this, getLocalNodeName(), firstNode.toString(), DIRECTION.OUT,
         "requesting deploy of database '%s' on local server...", databaseName);

@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.storage.fs;
 
 import java.io.File;
@@ -41,7 +41,7 @@ public interface OFile {
    *          Opening mode between "r" = read-only and "rw" for read write
    * @return
    */
-  public abstract OFile init(String iFileName, String iOpenMode);
+  OFile init(String iFileName, String iOpenMode);
 
   /**
    * Opens the file.
@@ -49,71 +49,70 @@ public interface OFile {
    * @return
    * @throws IOException
    */
-  public abstract boolean open() throws IOException;
+  boolean open() throws IOException;
 
   /**
    * Creates the file.
    * 
-   * @param iStartSize
    * @throws IOException
    */
-  public abstract void create(int iStartSize) throws IOException;
+  void create() throws IOException;
 
   /**
    * Closes the file.
    * 
    * @throws IOException
    */
-  public abstract void close() throws IOException;
+  void close() throws IOException;
 
   /**
    * Deletes the file.
    * 
    * @throws IOException
    */
-  public abstract void delete() throws IOException;
+  void delete() throws IOException;
 
-  public abstract void setSize(long iSize) throws IOException;
+  void setSize(long iSize) throws IOException;
 
-  public abstract void writeHeaderLong(int iPosition, long iValue) throws IOException;
+  void writeHeaderLong(int iPosition, long iValue) throws IOException;
 
-  public abstract long readHeaderLong(int iPosition) throws IOException;
+  long readHeaderLong(int iPosition) throws IOException;
 
-  public abstract boolean synch() throws IOException;
+  boolean synch() throws IOException;
 
-  public abstract void read(long iOffset, byte[] iDestBuffer, int iLenght) throws IOException;
+  void read(long iOffset, byte[] iDestBuffer, int iLenght) throws IOException;
 
-  public abstract short readShort(long iLogicalPosition) throws IOException;
+  short readShort(long iLogicalPosition) throws IOException;
 
-  public abstract int readInt(long iLogicalPosition) throws IOException;
+  int readInt(long iLogicalPosition) throws IOException;
 
-  public abstract long readLong(long iOffset) throws IOException;
+  long readLong(long iOffset) throws IOException;
 
-  public abstract byte readByte(long iOffset) throws IOException;
+  byte readByte(long iOffset) throws IOException;
 
-  public abstract void writeInt(long iOffset, int iValue) throws IOException;
+  void writeInt(long iOffset, int iValue) throws IOException;
 
-  public abstract void writeLong(long iOffset, long iValue) throws IOException;
+  void writeLong(long iOffset, long iValue) throws IOException;
 
-  public abstract void writeShort(long iOffset, short iValue) throws IOException;
+  void writeShort(long iOffset, short iValue) throws IOException;
 
-  public abstract void writeByte(long iOffset, byte iValue) throws IOException;
+  void writeByte(long iOffset, byte iValue) throws IOException;
 
-  public abstract long write(long iOffset, byte[] iSourceBuffer) throws IOException;
+  long write(long iOffset, byte[] iSourceBuffer) throws IOException;
 
-  public abstract void setSoftlyClosed(boolean b) throws IOException;
+  void setSoftlyClosed(boolean b) throws IOException;
 
-  public abstract boolean wasSoftlyClosed() throws IOException;
+  boolean wasSoftlyClosed() throws IOException;
 
-  public boolean isSoftlyClosed() throws IOException;
+  boolean isSoftlyClosed() throws IOException;
 
-  public abstract void lock() throws IOException;
+  void lock() throws IOException;
 
-  public FileLock lock(final long iRangeFrom, final long iRangeSize, final boolean iShared) throws IOException;
+  FileLock lock(final long iRangeFrom, final long iRangeSize, final boolean iShared) throws IOException;
 
-  public OFile unlock(final FileLock iLock) throws IOException;
+  OFile unlock(final FileLock iLock) throws IOException;
 
-  public abstract void unlock() throws IOException;
+  void unlock() throws IOException;
 
   /**
    * Cuts bytes from the tail of the file reducing the filledUpTo size.
@@ -122,7 +121,7 @@ public interface OFile {
    * @param iSizeToShrink
    * @throws IOException
    */
-  public abstract void removeTail(long iSizeToShrink) throws IOException;
+  void removeTail(long iSizeToShrink) throws IOException;
 
   /**
    * Shrink the file content (filledUpTo attribute only)
@@ -131,43 +130,43 @@ public interface OFile {
    * @param iSize
    * @throws IOException
    */
-  public abstract void shrink(final long iSize) throws IOException;
+  void shrink(final long iSize) throws IOException;
 
-  public abstract String getName();
+  String getName();
 
-  public abstract String getPath();
+  String getPath();
 
-  public abstract String getAbsolutePath();
+  String getAbsolutePath();
 
-  public abstract boolean renameTo(File newFile) throws IOException;
+  boolean renameTo(File newFile) throws IOException;
 
-  public abstract long allocateSpace(final long iSize) throws IOException;
+  long allocateSpace(final long iSize) throws IOException;
 
-  public abstract long getFreeSpace();
+  long getFreeSpace();
 
-  public abstract long getFileSize();
+  long getFileSize();
 
-  public abstract long getFilledUpTo();
+  long getFilledUpTo();
 
-  public abstract boolean canOversize(final int iRecordSize);
+  boolean canOversize(final int iRecordSize);
 
-  public abstract String toString();
+  String toString();
 
-  public abstract long getMaxSize();
+  long getMaxSize();
 
-  public abstract void setMaxSize(int maxSize);
+  void setMaxSize(int maxSize);
 
-  public abstract int getIncrementSize();
+  int getIncrementSize();
 
-  public abstract void setIncrementSize(int incrementSize);
+  void setIncrementSize(int incrementSize);
 
-  public abstract boolean isOpen();
+  boolean isOpen();
 
-  public abstract boolean exists();
+  boolean exists();
 
-  public abstract boolean isFailCheck();
+  boolean isFailCheck();
 
-  public abstract void setFailCheck(boolean failCheck);
+  void setFailCheck(boolean failCheck);
 
   void read(long iOffset, byte[] iData, int iLength, int iArrayOffset) throws IOException;
 

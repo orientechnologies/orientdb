@@ -69,5 +69,31 @@ public class OAndBlock extends OBooleanExpression {
     }
     return result.toString();
   }
+
+  @Override protected boolean supportsBasicCalculation() {
+    for(OBooleanExpression expr:subBlocks){
+      if(!expr.supportsBasicCalculation()){
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    int result = 0;
+    for (OBooleanExpression expr : subBlocks) {
+      result += expr.getNumberOfExternalCalculations();
+    }
+    return result;
+  }
+
+  @Override protected List<Object> getExternalCalculationConditions() {
+    List<Object> result = new ArrayList<Object>();
+    for(OBooleanExpression expr:subBlocks) {
+      result.addAll(expr.getExternalCalculationConditions());
+    }
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */

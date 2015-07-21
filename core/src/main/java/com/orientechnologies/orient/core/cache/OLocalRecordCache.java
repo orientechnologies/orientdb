@@ -59,7 +59,7 @@ public class OLocalRecordCache extends OAbstractRecordCache {
    *          record that should be cached
    */
   public void updateRecord(final ORecord record) {
-    if (record.getIdentity().getClusterId() != excludedCluster && record.getIdentity().isValid()
+    if (record.getIdentity().getClusterId() != excludedCluster && record.getIdentity().isValid() && !record.isDirty()
         && !record.getRecordVersion().isTombstone()) {
       if (underlying.get(record.getIdentity()) != record)
         underlying.put(record);

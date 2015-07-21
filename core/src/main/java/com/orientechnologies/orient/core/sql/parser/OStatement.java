@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 import java.util.Map;
 
@@ -33,5 +34,8 @@ public class OStatement extends SimpleNode {
 
   }
 
+  public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
+
+  }
 }
 /* JavaCC - OriginalChecksum=589c4dcc8287f430e46d8eb12b0412c5 (do not edit this line) */

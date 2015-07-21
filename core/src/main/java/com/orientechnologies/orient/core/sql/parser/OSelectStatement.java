@@ -3,8 +3,11 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
+import java.util.List;
 import java.util.Map;
 
 public class OSelectStatement extends OStatement {
@@ -21,7 +24,7 @@ public class OSelectStatement extends OStatement {
 
   protected OUnwind      unwind;
 
-  protected OSkip       skip;
+  protected OSkip        skip;
 
   protected OLimit       limit;
 
@@ -228,14 +231,45 @@ public class OSelectStatement extends OStatement {
       whereClause.replaceParameters(params);
     }
 
-    if(skip!=null){
+    if (groupBy != null) {
+      groupBy.replaceParameters(params);
+    }
+
+    if (skip != null) {
       skip.replaceParameters(params);
     }
 
-    if(limit!=null){
+    if (limit != null) {
       limit.replaceParameters(params);
     }
 
   }
+
+  public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
+    if (this.target == null || this.target.item == null || this.target.item.cluster != null || this.target.item.clusterList != null
+        || this.target.item.metadata != null || this.target.item.modifier != null || this.target.item.rids.size() > 0
+        || this.target.item.statement != null || !isClassTarget(this.target)) {
+      if (stats.luceneCount > 0) {
+        throw new OQueryParsingException("LUCENE condition is allowed only when query target is a Class");
+      }
+    }
+
+    if (whereClause != null && whereClause.baseExpression.getNumberOfExternalCalculations() > 1) {
+      StringBuilder exceptionText = new StringBuilder();
+      exceptionText.append("Incompatible conditions found: \n");
+      List<Object> conditions = whereClause.baseExpression.getExternalCalculationConditions();
+      for (Object condition : conditions) {
+        exceptionText.append(condition.toString() + "\n");
+      }
+      throw new OQueryParsingException(exceptionText.toString());
+    }
+  }
+
+  private boolean isClassTarget(OFromClause target) {
+
+    return target != null && target.item != null && target.item.identifier != null && target.item.identifier.suffix != null
+        && target.item.identifier.suffix.identifier != null;
+  }
+
 }
 /* JavaCC - OriginalChecksum=b26959b9726a8cf35d6283eca931da6b (do not edit this line) */

@@ -18,6 +18,8 @@ public class OBaseExpression extends OMathExpression {
 
   protected OInputParameter   inputParam;
 
+  protected String            string;
+
   OModifier                   modifier;
 
   public OBaseExpression(int id) {
@@ -40,13 +42,21 @@ public class OBaseExpression extends OMathExpression {
       result.append(number.toString());
     } else if (identifier != null) {
       result.append(identifier.toString());
+    } else if (string != null) {
+      result.append(string);
     } else if (inputParam != null) {
       if (inputFinalValue == UNSET) {
         result.append(inputParam.toString());
       } else if (inputFinalValue == null) {
         result.append("NULL");
       } else {
-        result.append(inputFinalValue.toString());
+        if (inputFinalValue instanceof String) {
+          result.append("\"");
+          result.append(OExpression.encode(inputFinalValue.toString()));
+          result.append("\"");
+        } else {
+          result.append(inputFinalValue.toString());
+        }
       }
     }
 
@@ -63,6 +73,9 @@ public class OBaseExpression extends OMathExpression {
     }
     if (identifier != null) {
       result = identifier.execute(iCurrentRecord, ctx);
+    }
+    if (string != null && string.length() > 1) {
+      result = string.substring(1, string.length() - 1);
     }
     if (modifier != null) {
       result = modifier.execute(iCurrentRecord, result, ctx);
@@ -83,6 +96,11 @@ public class OBaseExpression extends OMathExpression {
     if (modifier != null) {
       modifier.replaceParameters(params);
     }
+  }
+
+  @Override
+  protected boolean supportsBasicCalculation() {
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=71b3e2d1b65c923dc7cfe11f9f449d2b (do not edit this line) */

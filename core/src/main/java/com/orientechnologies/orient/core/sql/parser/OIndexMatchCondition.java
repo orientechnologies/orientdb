@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -87,5 +88,21 @@ public class OIndexMatchCondition extends OBooleanExpression {
     }
     return result.toString();
   }
+
+  @Override public boolean supportsBasicCalculation() {
+    return false;
+  }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    return 1;
+  }
+
+  @Override protected List<Object> getExternalCalculationConditions() {
+    List<Object> result = new ArrayList<Object>();
+    result.add(this);
+    return result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=702e9ab959e87b043b519844a7d31224 (do not edit this line) */

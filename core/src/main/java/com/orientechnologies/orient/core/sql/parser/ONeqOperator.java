@@ -27,5 +27,11 @@ public class ONeqOperator extends SimpleNode implements OBinaryCompareOperator {
   public String toString() {
     return "<>";
   }
+
+  @Override public boolean supportsBasicCalculation() {
+    return true;
+  }
+
+
 }
 /* JavaCC - OriginalChecksum=588c4112ae7d2c83239f97ab0d2d5989 (do not edit this line) */

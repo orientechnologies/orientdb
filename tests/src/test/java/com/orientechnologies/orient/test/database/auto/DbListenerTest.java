@@ -220,7 +220,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
     Assert.assertEquals(onAfterTxRollback, 1);
 
     ODatabaseHelper.deleteDatabase(database, getStorageType());
-    Assert.assertEquals(onClose, curOnclose + 2);
+    Assert.assertEquals(onClose, curOnclose + 1);
     Assert.assertEquals(onDelete, curDelete + 1);
 
     ODatabaseHelper.createDatabase(database, url, getStorageType());

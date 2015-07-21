@@ -27,6 +27,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -75,45 +76,11 @@ public class OSharedContainerImpl implements OSharedContainer {
   }
 
   public synchronized void clearResources() {
-    final ExecutorService service = Executors.newSingleThreadExecutor(new CloseTaskFactory());
-    final List<OCloseable> resourcesToClose = new ArrayList<OCloseable>();
-
     for (Object resource : sharedResources.values()) {
       if (resource instanceof OCloseable)
-        resourcesToClose.add(((OCloseable) resource));
+        (((OCloseable) resource)).close();
     }
 
     sharedResources.clear();
-
-    service.submit(new CloseTask(resourcesToClose));
-  }
-
-  private static class CloseTask implements Runnable {
-    private final List<OCloseable> resourcesToClose;
-
-    public CloseTask(List<OCloseable> resourcesToClose) {
-      this.resourcesToClose = resourcesToClose;
-    }
-
-    @Override
-    public void run() {
-      for (OCloseable closeable : resourcesToClose) {
-        try {
-          closeable.close();
-        } catch (Exception e) {
-          OLogManager.instance().debug(this, "Exception while resource is closed.", e);
-        }
-      }
-    }
-  }
-
-  private static class CloseTaskFactory implements ThreadFactory {
-    @Override
-    public Thread newThread(Runnable r) {
-      final Thread thread = new Thread(r, "Close task thread");
-      thread.setDaemon(true);
-
-      return thread;
-    }
   }
 }

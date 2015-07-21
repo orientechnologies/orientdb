@@ -37,5 +37,10 @@ public class OLeOperator extends SimpleNode implements OBinaryCompareOperator {
     return "<=";
   }
 
+  @Override public boolean supportsBasicCalculation() {
+    return true;
+  }
+
+
 }
 /* JavaCC - OriginalChecksum=8b3232c970fd654af947274a5f384a93 (do not edit this line) */

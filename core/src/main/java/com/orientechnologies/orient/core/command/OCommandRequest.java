@@ -30,39 +30,54 @@ public interface OCommandRequest {
   public <RET> RET execute(Object... iArgs);
 
   /**
+   * This api is deprecated use sql keyword "LIMIT" instead
+   * 
    * Returns the limit of result set. -1 means no limits.
    * 
    */
+  @Deprecated
   public int getLimit();
 
   /**
+   * This api is deprecated use sql keyword "LIMIT" instead
+   * 
    * Sets the maximum items the command can returns. -1 means no limits.
    * 
    * @param iLimit
    *          -1 = no limit. 1 to N to limit the result set.
    * @return
    */
+  @Deprecated
   public OCommandRequest setLimit(int iLimit);
 
   /**
+   * This api is deprecated use sql keyword "TIMEOUT" instead
+   * 
    * Returns the command timeout. 0 means no timeout.
    * 
    * @return
    */
+  @Deprecated
   public long getTimeoutTime();
 
   /**
+   * This api is deprecated use sql keyword "TIMEOUT" instead
+   * 
    * Returns the command timeout strategy between the defined ones.
    * 
    * @return
    */
+  @Deprecated
   public TIMEOUT_STRATEGY getTimeoutStrategy();
 
   /**
+   * This api is deprecated use sql keyword "TIMEOUT" instead
+   * 
    * Sets the command timeout. When the command execution time is major than the timeout the command returns
    * 
    * @param timeout
    */
+  @Deprecated
   public void setTimeout(long timeout, TIMEOUT_STRATEGY strategy);
 
   /**
@@ -71,13 +86,18 @@ public interface OCommandRequest {
   public boolean isIdempotent();
 
   /**
+   * This api is deprecated use sql keyword "FETCHPLAN" instead
+   * 
    * Returns the fetch plan if any
    * 
    * @return Fetch plan as unique string or null if it was not defined.
    */
+  @Deprecated
   public String getFetchPlan();
 
   /**
+   * This api is deprecated use sql keyword "FETCHPLAN" instead
+   * 
    * Set the fetch plan. The format is:
    * 
    * <pre>
@@ -101,6 +121,7 @@ public interface OCommandRequest {
    * @param iFetchPlan
    * @return
    */
+  @Deprecated
   public <RET extends OCommandRequest> RET setFetchPlan(String iFetchPlan);
 
   public void setUseCache(boolean iUseCache);

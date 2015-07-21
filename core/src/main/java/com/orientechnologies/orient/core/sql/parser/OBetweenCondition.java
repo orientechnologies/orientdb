@@ -6,6 +6,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class OBetweenCondition extends OBooleanExpression {
@@ -88,5 +90,18 @@ public class OBetweenCondition extends OBooleanExpression {
   public String toString() {
     return first.toString() + " BETWEEN " + second.toString() + " AND " + third.toString();
   }
+
+  @Override public boolean supportsBasicCalculation() {
+    return true;
+  }
+
+  @Override protected int getNumberOfExternalCalculations() {
+    return 0;
+  }
+
+  @Override protected List<Object> getExternalCalculationConditions() {
+    return Collections.EMPTY_LIST;
+  }
+
 }
 /* JavaCC - OriginalChecksum=f94f4779c4a6c6d09539446045ceca89 (do not edit this line) */

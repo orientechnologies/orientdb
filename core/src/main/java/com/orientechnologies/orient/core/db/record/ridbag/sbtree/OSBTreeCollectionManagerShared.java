@@ -25,6 +25,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -38,23 +41,36 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbstract {
-  private final OAbstractPaginatedStorage                        storage;
-  private final ThreadLocal<Map<UUID, OBonsaiCollectionPointer>> collectionPointerChanges = new ThreadLocal<Map<UUID, OBonsaiCollectionPointer>>() {
-                                                                                            @Override
-                                                                                            protected Map<UUID, OBonsaiCollectionPointer> initialValue() {
-                                                                                              return new HashMap<UUID, OBonsaiCollectionPointer>();
-                                                                                            }
-                                                                                          };
+public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbstract implements OOrientStartupListener,
+    OOrientShutdownListener {
+  private final OAbstractPaginatedStorage                           storage;
+  private volatile ThreadLocal<Map<UUID, OBonsaiCollectionPointer>> collectionPointerChanges = new CollectionPointerChangesThreadLocal();
 
   public OSBTreeCollectionManagerShared() {
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
     this.storage = (OAbstractPaginatedStorage) db.getStorage().getUnderlying();
+
+    Orient.instance().registerWeakOrientStartupListener(this);
+    Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
   public OSBTreeCollectionManagerShared(int evictionThreshold, int cacheMaxSize, OAbstractPaginatedStorage storage) {
     super(evictionThreshold, cacheMaxSize);
     this.storage = storage;
+
+    Orient.instance().registerWeakOrientStartupListener(this);
+    Orient.instance().registerWeakOrientShutdownListener(this);
+  }
+
+  @Override
+  public void onShutdown() {
+    collectionPointerChanges = null;
+  }
+
+  @Override
+  public void onStartup() {
+    if (collectionPointerChanges == null)
+      collectionPointerChanges = new CollectionPointerChangesThreadLocal();
   }
 
   @Override
@@ -130,5 +146,12 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
 
   public void clearChangedIds() {
     collectionPointerChanges.get().clear();
+  }
+
+  private static class CollectionPointerChangesThreadLocal extends ThreadLocal<Map<UUID, OBonsaiCollectionPointer>> {
+    @Override
+    protected Map<UUID, OBonsaiCollectionPointer> initialValue() {
+      return new HashMap<UUID, OBonsaiCollectionPointer>();
+    }
   }
 }

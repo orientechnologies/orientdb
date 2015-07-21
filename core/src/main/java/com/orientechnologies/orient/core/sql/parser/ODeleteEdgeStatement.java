@@ -64,7 +64,7 @@ public class ODeleteEdgeStatement extends OStatement {
       result.append(rid.toString());
     }
     if (rids != null) {
-      result.append("[");
+      result.append(" [");
       boolean first = true;
       for (ORid rid : rids) {
         if (!first) {

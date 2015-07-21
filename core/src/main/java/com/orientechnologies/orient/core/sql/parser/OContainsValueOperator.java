@@ -28,6 +28,10 @@ public class OContainsValueOperator extends SimpleNode implements OBinaryCompare
 
   }
 
+  @Override public boolean supportsBasicCalculation() {
+    return true;
+  }
+
   @Override
   public String toString() {
     return "CONTAINSVALUE";

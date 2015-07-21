@@ -20,15 +20,9 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Arrays;
-import java.util.Map;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -50,6 +44,14 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.util.ElementHelper;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Base Graph Element where OrientVertex and OrientEdge classes extends from. Labels are managed as OrientDB classes.
@@ -278,7 +280,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       if (firstValue instanceof ODocument) {
         final ODocument document = (ODocument) firstValue;
 
-        if (document.isEmbedded())
+        if (document.isEmbedded() || ODocumentInternal.getImmutableSchemaClass(document) == null)
           return (T) fieldValue;
       }
 
@@ -709,6 +711,16 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
         if (f instanceof Map<?, ?>) {
           for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) f).entrySet())
             setPropertyInternal(this, (ODocument) rawElement.getRecord(), entry.getKey().toString(), entry.getValue());
+
+        } else if (f instanceof Collection) {
+          for (Object o : (Collection) f) {
+            if (!(o instanceof OPair))
+              throw new IllegalArgumentException(
+                  "Invalid fields: expecting a pairs of fields as String,Object, but found the item: " + o);
+
+            final OPair entry = (OPair) o;
+            setPropertyInternal(this, (ODocument) rawElement.getRecord(), entry.getKey().toString(), entry.getValue());
+          }
 
         } else
           throw new IllegalArgumentException(

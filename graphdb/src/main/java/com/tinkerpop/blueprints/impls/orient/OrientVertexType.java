@@ -34,6 +34,7 @@ public class OrientVertexType extends OrientElementType {
   public static final String CLASS_NAME = OImmutableClass.VERTEX_CLASS_NAME;
 
   public class OrientVertexProperty extends OPropertyAbstractDelegate {
+    public static final String      ORDERED = "ordered";
     protected final OrientBaseGraph graph;
 
     public OrientVertexProperty(final OrientBaseGraph iGraph, final OProperty iProperty) {
@@ -41,13 +42,13 @@ public class OrientVertexType extends OrientElementType {
       graph = iGraph;
     }
 
-    public boolean getOrdered() {
-      final String value = delegate.getCustom("ordered");
+    public boolean isOrdered() {
+      final String value = delegate.getCustom(ORDERED);
       return Boolean.parseBoolean(value);
     }
 
     public OrientVertexProperty setOrdered(final boolean iOrdered) {
-      delegate.setCustom("ordered", Boolean.toString(iOrdered));
+      delegate.setCustom(ORDERED, Boolean.toString(iOrdered));
       return this;
     }
   }

@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.List;
 import java.util.Map;
 
 public class ONotBlock extends OBooleanExpression {
@@ -60,5 +61,21 @@ public class ONotBlock extends OBooleanExpression {
     }
     return sub.toString();
   }
+
+  @Override
+  public boolean supportsBasicCalculation() {
+    return true;
+  }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    return sub.getNumberOfExternalCalculations();
+  }
+
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
+    return sub.getExternalCalculationConditions();
+  }
+
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

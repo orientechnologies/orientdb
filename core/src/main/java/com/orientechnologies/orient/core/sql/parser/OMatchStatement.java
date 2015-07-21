@@ -714,11 +714,6 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   @Override
-  public boolean isLocalExecution() {
-    return false;
-  }
-
-  @Override
   public String toString() {
     StringBuilder result = new StringBuilder();
     result.append(KEYWORD_MATCH);

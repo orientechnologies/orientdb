@@ -29,12 +29,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
@@ -216,7 +211,11 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       final OIdentifiable previousRecord = get(iKey);
       if (previousRecord != null && !previousRecord.equals(iRecord)) {
         final ODocument metadata = getMetadata();
-        final boolean mergeSameKey = metadata != null && (Boolean) metadata.field(OIndex.MERGE_KEYS);
+        Boolean mergeKeys = false;
+        if (metadata != null) {
+          mergeKeys = metadata.field(OIndex.MERGE_KEYS);
+        }
+        final boolean mergeSameKey = mergeKeys != null && mergeKeys;
         if (mergeSameKey) {
           return (ODocument) previousRecord.getRecord();
         } else

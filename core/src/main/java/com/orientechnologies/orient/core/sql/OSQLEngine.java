@@ -405,7 +405,9 @@ public class OSQLEngine {
     ODynamicSQLElementFactory.FUNCTIONS.remove(iName);
   }
 
-  public OCommandExecutor getCommand(final String candidate) {
+
+  public OCommandExecutor getCommand(String candidate) {
+    candidate = candidate.trim();
     final Set<String> names = getCommandNames();
     String commandName = candidate;
     boolean found = names.contains(commandName);

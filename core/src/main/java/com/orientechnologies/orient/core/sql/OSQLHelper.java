@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -35,12 +36,20 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
-import com.orientechnologies.orient.core.sql.filter.*;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemAbstract;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 
 import java.math.BigDecimal;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL Helper class
@@ -156,7 +165,7 @@ public class OSQLHelper {
         if (func != null) {
           fieldValue = func.execute(null, null, null, iContext);
         }
-      }else {
+      } else {
         final Object v = parseStringNumber(iValue);
         if (v != null)
           fieldValue = v;
@@ -296,8 +305,21 @@ public class OSQLHelper {
     if (iFields == null)
       return null;
 
+    final List<OPair<String, Object>> fields = new ArrayList<OPair<String, Object>>(iFields.size());
+
+    for (Map.Entry<String, Object> entry : iFields.entrySet())
+      fields.add(new OPair<String, Object>(entry.getKey(), entry.getValue()));
+
+    return bindParameters(iDocument, fields, iArguments, iContext);
+  }
+
+  public static ODocument bindParameters(final ODocument iDocument, final List<OPair<String, Object>> iFields,
+      final OCommandParameters iArguments, final OCommandContext iContext) {
+    if (iFields == null)
+      return null;
+
     // BIND VALUES
-    for (Entry<String, Object> field : iFields.entrySet()) {
+    for (OPair<String, Object> field : iFields) {
       final String fieldName = field.getKey();
       Object fieldValue = field.getValue();
 

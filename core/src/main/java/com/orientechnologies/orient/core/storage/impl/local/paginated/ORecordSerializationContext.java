@@ -35,30 +35,21 @@ import java.util.Deque;
  */
 public class ORecordSerializationContext {
 
-  private static volatile ThreadLocal<Deque<ORecordSerializationContext>> SERIALIZATION_CONTEXT_STACK = new ThreadLocal<Deque<ORecordSerializationContext>>() {
-                                                                                                        @Override
-                                                                                                        protected Deque<ORecordSerializationContext> initialValue() {
-                                                                                                          return new ArrayDeque<ORecordSerializationContext>();
-                                                                                                        }
-                                                                                                      };
+  private static volatile ThreadLocal<Deque<ORecordSerializationContext>> SERIALIZATION_CONTEXT_STACK = new SerializationContextThreadLocal();
+
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
-			@Override
-			public void onStartup() {
-				if (SERIALIZATION_CONTEXT_STACK == null)
-					SERIALIZATION_CONTEXT_STACK = new ThreadLocal<Deque<ORecordSerializationContext>>() {
-						@Override
-						protected Deque<ORecordSerializationContext> initialValue() {
-							return new ArrayDeque<ORecordSerializationContext>();
-						}
-					};
-			}
+      @Override
+      public void onStartup() {
+        if (SERIALIZATION_CONTEXT_STACK == null)
+          SERIALIZATION_CONTEXT_STACK = new SerializationContextThreadLocal();
+      }
 
-			@Override
-			public void onShutdown() {
-				SERIALIZATION_CONTEXT_STACK = null;
-			}
-		});
+      @Override
+      public void onShutdown() {
+        SERIALIZATION_CONTEXT_STACK = null;
+      }
+    });
   }
   private final Deque<ORecordSerializationOperation>                      operations                  = new ArrayDeque<ORecordSerializationOperation>();
 
@@ -97,6 +88,13 @@ public class ORecordSerializationContext {
   public void executeOperations(OAbstractPaginatedStorage storage) {
     for (ORecordSerializationOperation operation : operations) {
       operation.execute(storage);
+    }
+  }
+
+  private static class SerializationContextThreadLocal extends ThreadLocal<Deque<ORecordSerializationContext>> {
+    @Override
+    protected Deque<ORecordSerializationContext> initialValue() {
+      return new ArrayDeque<ORecordSerializationContext>();
     }
   }
 }

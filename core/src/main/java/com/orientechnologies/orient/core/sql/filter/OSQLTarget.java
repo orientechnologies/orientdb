@@ -187,7 +187,7 @@ public class OSQLTarget extends OBaseParser {
             + subCommand);
 
       targetQuery = subText.toString();
-      targetRecords = (Iterable<? extends OIdentifiable>) executor;
+      targetRecords = executor;
 
     } else if (c == OStringSerializerHelper.LIST_BEGIN) {
       // COLLECTION OF RIDS

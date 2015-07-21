@@ -19,14 +19,17 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import static org.testng.Assert.*;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.annotations.Test;
-
-import java.util.Set;
-
-import static org.testng.Assert.assertEquals;
 
 public class OCommandExecutorSQLUpdateTest {
   @Test
@@ -101,4 +104,73 @@ public class OCommandExecutorSQLUpdateTest {
       db.close();
     }
   }
+
+  @Test
+  public void testUpdateMergeWithIndex() {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestMergeWithIndex");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE CLASS i_have_a_list ")).execute();
+      db.command(new OCommandSQL("CREATE PROPERTY i_have_a_list.id STRING")).execute();
+      db.command(new OCommandSQL("CREATE INDEX i_have_a_list.id ON i_have_a_list (id) UNIQUE")).execute();
+      db.command(new OCommandSQL("CREATE PROPERTY i_have_a_list.types EMBEDDEDLIST STRING")).execute();
+      db.command(new OCommandSQL("CREATE INDEX i_have_a_list.types ON i_have_a_list (types) NOTUNIQUE")).execute();
+      db.command(new OCommandSQL("INSERT INTO i_have_a_list CONTENT {\"id\": \"the_id\", \"types\": [\"aaa\", \"bbb\"]}"))
+          .execute();
+
+      Iterable result = db.query(new OSQLSynchQuery<Object>("SELECT * FROM i_have_a_list WHERE types = 'aaa'"));
+      assertTrue(result.iterator().hasNext());
+
+      db.command(
+          new OCommandSQL("UPDATE i_have_a_list CONTENT {\"id\": \"the_id\", \"types\": [\"ccc\", \"bbb\"]} WHERE id = 'the_id'"))
+          .execute();
+
+      result = db.query(new OSQLSynchQuery<Object>("SELECT * FROM i_have_a_list WHERE types = 'ccc'"));
+      assertTrue(result.iterator().hasNext());
+
+      result = db.query(new OSQLSynchQuery<Object>("SELECT * FROM i_have_a_list WHERE types = 'aaa'"));
+      assertFalse(result.iterator().hasNext());
+
+    } finally {
+      db.close();
+    }
+
+  }
+
+  @Test
+  public void testNamedParamsSyntax() {
+    // issue #4470
+    String className = getClass().getSimpleName() + "_NamedParamsSyntax";
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + className);
+    db.create();
+
+    try {
+      db.command(new OCommandSQL("create class " + className)).execute();
+
+      Map<String, Object> params = new HashMap<String, Object>();
+      params.put("name", "foo");
+      params.put("full_name", "foo");
+      params.put("html_url", "foo");
+      params.put("description", "foo");
+      params.put("git_url", "foo");
+      params.put("ssh_url", "foo");
+      params.put("clone_url", "foo");
+      params.put("svn_url", "foo");
+
+      OCommandSQL sql1 = new OCommandSQL("update " + className
+          + " SET name = :name, full_name = :full_name, html_url = :html_url, description = :description, "
+          + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
+          + "UPSERT WHERE full_name = :full_name");
+      db.command(sql1).execute(params);
+
+      OCommandSQL sql2 = new OCommandSQL("update " + className
+          + " SET name = :name, html_url = :html_url, description = :description, "
+          + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
+          + "UPSERT WHERE full_name = :full_name");
+      db.command(sql2).execute(params);
+    } finally {
+      db.close();
+    }
+  }
+
 }

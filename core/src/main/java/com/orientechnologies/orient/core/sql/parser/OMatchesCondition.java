@@ -5,12 +5,13 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
-public
-class OMatchesCondition extends OBooleanExpression {
+public class OMatchesCondition extends OBooleanExpression {
   protected OExpression expression;
-  protected String right;
+  protected String      right;
 
   public OMatchesCondition(int id) {
     super(id);
@@ -19,7 +20,6 @@ class OMatchesCondition extends OBooleanExpression {
   public OMatchesCondition(OrientSql p, int id) {
     super(p, id);
   }
-
 
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
@@ -30,8 +30,40 @@ class OMatchesCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public void replaceParameters(Map<Object, Object> params) {
+  @Override
+  public void replaceParameters(Map<Object, Object> params) {
     expression.replaceParameters(params);
   }
+
+  @Override
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append(expression.toString());
+    result.append(" MATCHES ");
+    result.append(right);
+    return result.toString();
+  }
+
+  @Override
+  public boolean supportsBasicCalculation() {
+    return expression.supportsBasicCalculation();
+  }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    if (expression != null && !expression.supportsBasicCalculation()) {
+      return 1;
+    }
+    return 0;
+  }
+
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
+    if (expression != null && !expression.supportsBasicCalculation()) {
+      return (List) Collections.singletonList(expression);
+    }
+    return Collections.EMPTY_LIST;
+  }
+
 }
 /* JavaCC - OriginalChecksum=68712f476e2e633c2bbfc34cb6c39356 (do not edit this line) */

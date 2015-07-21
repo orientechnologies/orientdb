@@ -134,6 +134,6 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public String toString() {
-    return super.toString() + " delayed=" + delayed;
+    return getName() + "(" + rid + " delayed=" + delayed + ")";
   }
 }

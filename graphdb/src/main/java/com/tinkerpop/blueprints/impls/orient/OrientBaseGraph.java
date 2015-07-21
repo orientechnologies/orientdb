@@ -40,9 +40,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
@@ -91,12 +89,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public static final String                                  CLUSTER_PREFIX      = "cluster:";
   public static final String                                  ADMIN               = "admin";
   private static volatile ThreadLocal<OrientBaseGraph>        activeGraph         = new ThreadLocal<OrientBaseGraph>();
-  private static volatile ThreadLocal<Deque<OrientBaseGraph>> initializationStack = new ThreadLocal<Deque<OrientBaseGraph>>() {
-                                                                                    @Override
-                                                                                    protected Deque<OrientBaseGraph> initialValue() {
-                                                                                      return new LinkedList<OrientBaseGraph>();
-                                                                                    }
-                                                                                  };
+  private static volatile ThreadLocal<Deque<OrientBaseGraph>> initializationStack = new InitializationStackThreadLocal();
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -105,12 +98,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         if (activeGraph == null)
           activeGraph = new ThreadLocal<OrientBaseGraph>();
         if (initializationStack == null)
-          initializationStack = new ThreadLocal<Deque<OrientBaseGraph>>() {
-            @Override
-            protected Deque<OrientBaseGraph> initialValue() {
-              return new LinkedList<OrientBaseGraph>();
-            }
-          };
+          initializationStack = new InitializationStackThreadLocal();
       }
 
       @Override
@@ -685,10 +673,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         }
       }
     }
-
-    if (id != null && id instanceof String && id.toString().startsWith(CLASS_PREFIX))
-      // GET THE CLASS NAME
-      className = id.toString().substring(CLASS_PREFIX.length());
 
     // SAVE THE ID TOO?
     final Object[] fields = isSaveOriginalIds() && id != null ? new Object[] { OrientElement.DEF_ORIGINAL_ID_FIELDNAME, id } : null;
@@ -1539,6 +1523,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         String indexType = OClass.INDEX_TYPE.NOTUNIQUE.name();
         OType keyType = OType.STRING;
         String className = null;
+        String collate = null;
         ODocument metadata = null;
 
         final String ancestorClassName = getClassName(elementClass);
@@ -1551,6 +1536,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
             keyType = OType.valueOf(p.getValue().toString().toUpperCase());
           else if (p.getKey().equals("class"))
             className = p.getValue().toString();
+          else if (p.getKey().equals("collate"))
+            collate = p.getValue().toString();
           else if (p.getKey().toString().startsWith("metadata.")) {
             if (metadata == null)
               metadata = new ODocument();
@@ -1569,11 +1556,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         if (property != null)
           keyType = property.getType();
 
-        OIndexFactory factory = OIndexes.getFactory(indexType, null);
-        db.getMetadata()
-            .getIndexManager()
-            .createIndex(className + "." + key, indexType, new OPropertyIndexDefinition(className, key, keyType),
-                cls.getPolymorphicClusterIds(), null, metadata);
+        OPropertyIndexDefinition indexDefinition = new OPropertyIndexDefinition(className, key, keyType);
+        if (collate != null)
+          indexDefinition.setCollate(collate);
+        db.getMetadata().getIndexManager()
+            .createIndex(className + "." + key, indexType, indexDefinition, cls.getPolymorphicClusterIds(), null, metadata);
         return null;
 
       }
@@ -1877,5 +1864,12 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
     // compatibility with versions earlier 1.6.3
         || idx.getConfiguration().field(OrientIndex.CONFIG_CLASSNAME) != null;
+  }
+
+  private static class InitializationStackThreadLocal extends ThreadLocal<Deque<OrientBaseGraph>> {
+    @Override
+    protected Deque<OrientBaseGraph> initialValue() {
+      return new LinkedList<OrientBaseGraph>();
+    }
   }
 }

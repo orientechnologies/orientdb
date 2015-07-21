@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -177,9 +178,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         clusterPositionMap.create();
 
-        endAtomicOperation(false);
-      } catch (Throwable e) {
-        endAtomicOperation(true);
+        endAtomicOperation(false, null);
+      } catch (Exception e) {
+        endAtomicOperation(true, e);
         throw new OStorageException("Error during creation of cluster with name " + getName(), e);
       } finally {
         releaseExclusiveLock();
@@ -207,6 +208,30 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         }
 
         clusterPositionMap.open();
+      } finally {
+        releaseExclusiveLock();
+      }
+    } finally {
+      externalModificationLock.releaseModificationLock();
+    }
+  }
+
+  public void replaceFile(File file) throws IOException {
+    externalModificationLock.requestModificationLock();
+    try {
+      acquireExclusiveLock();
+      try {
+        final String newFileName = file.getName() + "$temp";
+
+        final File rootDir = new File(storageLocal.getConfiguration().getDirectory());
+        final File newFile = new File(rootDir, newFileName);
+
+        OFileUtils.copyFile(file, newFile);
+
+        final long newFileId = readCache.openFile(newFileName, writeCache);
+        readCache.deleteFile(fileId, writeCache);
+        fileId = newFileId;
+        writeCache.renameFile(fileId, newFileName, getFullName());
       } finally {
         releaseExclusiveLock();
       }
@@ -249,13 +274,13 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         clusterPositionMap.delete();
 
-        endAtomicOperation(false);
+        endAtomicOperation(false, null);
       } catch (IOException ioe) {
-        endAtomicOperation(true);
+        endAtomicOperation(true, ioe);
 
         throw ioe;
       } catch (Exception e) {
-        endAtomicOperation(true);
+        endAtomicOperation(true, e);
 
         throw new OStorageException("Error during deletion of cluset " + getName(), e);
       } finally {
@@ -411,11 +436,11 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
             final long clusterPosition = clusterPositionMap.add(addEntryResult.pageIndex, addEntryResult.pagePosition);
 
-            endAtomicOperation(false);
+            endAtomicOperation(false, null);
 
             return createPhysicalPosition(recordType, clusterPosition, addEntryResult.recordVersion);
-          } catch (Throwable e) {
-            endAtomicOperation(true);
+          } catch (Exception e) {
+            endAtomicOperation(true, e);
             throw new OStorageException(null, e);
           }
         } else {
@@ -503,11 +528,11 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
             long clusterPosition = clusterPositionMap.add(firstPageIndex, firstPagePosition);
 
-            endAtomicOperation(false);
+            endAtomicOperation(false, null);
 
             return createPhysicalPosition(recordType, clusterPosition, version);
-          } catch (Throwable e) {
-            endAtomicOperation(true);
+          } catch (Exception e) {
+            endAtomicOperation(true, e);
             throw new OStorageException(null, e);
           }
         }
@@ -637,7 +662,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
         if (positionEntry == null) {
-          endAtomicOperation(false);
+          endAtomicOperation(false, null);
           return false;
         }
 
@@ -645,7 +670,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         int recordPosition = positionEntry.getRecordPosition();
 
         if (getFilledUpTo(atomicOperation, fileId) <= pageIndex) {
-          endAtomicOperation(false);
+          endAtomicOperation(false, null);
           return false;
         }
 
@@ -662,7 +687,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
             if (localPage.isDeleted(recordPosition)) {
               if (removedContentSize == 0) {
-                endAtomicOperation(false);
+                endAtomicOperation(false, null);
                 return false;
               } else
                 throw new OStorageException("Content of record " + new ORecordId(id, clusterPosition) + " was broken.");
@@ -697,11 +722,11 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         updateClusterState(-1, -removedContentSize, atomicOperation);
 
         clusterPositionMap.remove(clusterPosition);
-        endAtomicOperation(false);
+        endAtomicOperation(false, null);
 
         return true;
-      } catch (Throwable e) {
-        endAtomicOperation(true);
+      } catch (Exception e) {
+        endAtomicOperation(true, e);
         throw new OStorageException(null, e);
       } finally {
         releaseExclusiveLock();
@@ -721,24 +746,24 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(position);
 
         if (positionEntry == null) {
-          endAtomicOperation(false);
+          endAtomicOperation(false, null);
           return false;
         }
 
         long pageIndex = positionEntry.getPageIndex();
         if (getFilledUpTo(atomicOperation, fileId) <= pageIndex) {
-          endAtomicOperation(false);
+          endAtomicOperation(false, null);
           return false;
         }
 
         try {
           updateClusterState(-1, 0, atomicOperation);
           clusterPositionMap.remove(position);
-          endAtomicOperation(false);
+          endAtomicOperation(false, null);
 
           return true;
-        } catch (Throwable e) {
-          endAtomicOperation(true);
+        } catch (Exception e) {
+          endAtomicOperation(true, e);
           throw new OStorageException(null, e);
         }
       } finally {
@@ -762,7 +787,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
 
         if (positionEntry == null) {
-          endAtomicOperation(false);
+          endAtomicOperation(false, null);
           return;
         }
 
@@ -773,7 +798,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         byte[] fullEntryContent = readFullEntry(clusterPosition, pageIndex, recordPosition, atomicOperation);
 
         if (fullEntryContent == null) {
-          endAtomicOperation(false);
+          endAtomicOperation(false, null);
           return;
         }
 
@@ -935,9 +960,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
           updateClusterState(0, recordsSizeDiff, atomicOperation);
 
-          endAtomicOperation(false);
-        } catch (Throwable e) {
-          endAtomicOperation(true);
+          endAtomicOperation(false, null);
+        } catch (Exception e) {
+          endAtomicOperation(true, e);
           throw new OStorageException(null, e);
         }
       } finally {
@@ -973,10 +998,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         initCusterState(atomicOperation);
 
-        endAtomicOperation(false);
+        endAtomicOperation(false, null);
 
-      } catch (Throwable e) {
-        endAtomicOperation(true);
+      } catch (Exception e) {
+        endAtomicOperation(true, e);
         throw new OStorageException(null, e);
       } finally {
         releaseExclusiveLock();
@@ -1271,19 +1296,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  protected void endAtomicOperation(boolean rollback) throws IOException {
-    if (!config.useWal)
-      return;
-
-    super.endAtomicOperation(rollback);
-  }
-
-  @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    if (!config.useWal)
-      return atomicOperationsManager.getCurrentOperation();
-
-    return super.startAtomicOperation();
+    return atomicOperationsManager.startAtomicOperation(this, !config.useWal);
   }
 
   private long createPagePointer(long pageIndex, int pagePosition) {

@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
@@ -145,6 +146,9 @@ public class ODistributedWorker extends Thread {
         ODistributedServerLog.error(this, getLocalNodeName(), senderNode, DIRECTION.IN,
             "error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
             message != null ? message.getTask() : "-");
+      } finally {
+        // CLEAR SERIALIZATION TL TO AVOID MEMORY LEAKS
+        OSerializationSetThreadLocal.clear();
       }
     }
 
