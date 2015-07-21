@@ -239,28 +239,34 @@ public class OServer {
       for (OServerLifecycleListener l : lifecycleListeners)
         l.onBeforeActivate();
 
-      // REGISTER/CREATE SOCKET FACTORIES
-      if (configuration.network.sockets != null) {
-        for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
-          Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) Class.forName(f.implementation);
-          OServerSocketFactory factory = fClass.newInstance();
-          try {
-            factory.config(f.name, f.parameters);
-            networkSocketFactories.put(f.name, factory);
-          } catch (OConfigurationException e) {
-            OLogManager.instance().error(this, "Error creating socket factory", e);
-          }
-        }
+      if (configuration.network != null) {
+    	  
+	      // REGISTER/CREATE SOCKET FACTORIES
+	      if (configuration.network.sockets != null) {
+	        for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
+	          Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) Class.forName(f.implementation);
+	          OServerSocketFactory factory = fClass.newInstance();
+	          try {
+	            factory.config(f.name, f.parameters);
+	            networkSocketFactories.put(f.name, factory);
+	          } catch (OConfigurationException e) {
+	            OLogManager.instance().error(this, "Error creating socket factory", e);
+	          }
+	        }
+	      }
+	
+	      // REGISTER PROTOCOLS
+	      if (configuration.network.protocols != null)
+		      for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
+		        networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) Class.forName(p.implementation));
+	
+	      // STARTUP LISTENERS
+	      if (configuration.network.listeners != null)
+		      for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
+		        networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
+		            l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
+      
       }
-
-      // REGISTER PROTOCOLS
-      for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
-        networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) Class.forName(p.implementation));
-
-      // STARTUP LISTENERS
-      for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-        networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
-            l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
 
       registerPlugins();
 
