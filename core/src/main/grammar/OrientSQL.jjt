@@ -3010,6 +3010,14 @@ OMatchFilterItem MatchFilterItem():
             )
             <RPAREN>
         )
+        |
+        (
+            <WHILE> <COLON> <LPAREN>
+            (
+                jjtThis.whileCondition = WhereClause()
+            )
+            <RPAREN>
+        )
     )
     { return jjtThis; }
 }

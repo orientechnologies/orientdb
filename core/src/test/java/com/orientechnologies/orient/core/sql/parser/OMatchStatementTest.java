@@ -114,6 +114,11 @@ public class OMatchStatementTest {
     checkRightSyntax(query);
   }
 
+  @Test
+  public void testWhile() {
+    checkRightSyntax("MATCH {class: 'V', as: foo}.out(){while:($depth<4), as:bar} RETURN bar ");
+}
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {

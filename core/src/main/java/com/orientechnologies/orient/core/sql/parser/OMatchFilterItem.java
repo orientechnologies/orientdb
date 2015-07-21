@@ -7,6 +7,7 @@ public class OMatchFilterItem extends SimpleNode {
   protected OExpression         classNames;
   protected OIdentifier         alias;
   protected OWhereClause        filter;
+  protected OWhereClause        whileCondition;
   protected OArrayRangeSelector depth;
   protected OInteger            minDepth;
   protected OInteger            maxDepth;
@@ -48,6 +49,12 @@ public class OMatchFilterItem extends SimpleNode {
     if (filter != null) {
       return "where: (" + filter + ")";
     }
+
+    if (whileCondition!= null) {
+      return "while: (" + whileCondition + ")";
+    }
+
+
     return null;
   }
 }

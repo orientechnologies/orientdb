@@ -60,6 +60,15 @@ public class OMatchFilter extends SimpleNode {
     return null;
   }
 
+  public OWhereClause getWhileCondition(){
+    for (OMatchFilterItem item : items) {
+      if (item.whileCondition != null) {
+        return item.whileCondition;
+      }
+    }
+    return null;
+  }
+
   public String getClassName() {
     for (OMatchFilterItem item : items) {
       if (item.className != null) {
