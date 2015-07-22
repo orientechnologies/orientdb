@@ -107,7 +107,7 @@ public class OServer {
   private String                                           databaseDirectory;
   private final boolean                                    shutdownEngineOnExit;
 
-  private ClassLoader extensionClassLoader;
+  private ClassLoader                                      extensionClassLoader;
 
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -141,7 +141,7 @@ public class OServer {
    *
    * @since 2.1
    */
-  public void setExtensionClassLoader(/*@Nullable*/ final ClassLoader extensionClassLoader) {
+  public void setExtensionClassLoader(/* @Nullable */final ClassLoader extensionClassLoader) {
     this.extensionClassLoader = extensionClassLoader;
   }
 
@@ -150,7 +150,7 @@ public class OServer {
    *
    * @since 2.1
    */
-  /*@Nullable*/
+  /* @Nullable */
   public ClassLoader getExtensionClassLoader() {
     return extensionClassLoader;
   }
@@ -175,13 +175,12 @@ public class OServer {
   /**
    * Attempt to load a class from given class-loader.
    */
-  /*@Nullable*/
-  private Class<?> tryLoadClass(/*@Nullable*/ final ClassLoader classLoader, final String name) {
+  /* @Nullable */
+  private Class<?> tryLoadClass(/* @Nullable */final ClassLoader classLoader, final String name) {
     if (classLoader != null) {
       try {
         return classLoader.loadClass(name);
-      }
-      catch (ClassNotFoundException e) {
+      } catch (ClassNotFoundException e) {
         // ignore
       }
     }
@@ -292,28 +291,32 @@ public class OServer {
       for (OServerLifecycleListener l : lifecycleListeners)
         l.onBeforeActivate();
 
-      // REGISTER/CREATE SOCKET FACTORIES
-      if (configuration.network.sockets != null) {
-        for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
-          Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) loadClass(f.implementation);
-          OServerSocketFactory factory = fClass.newInstance();
-          try {
-            factory.config(f.name, f.parameters);
-            networkSocketFactories.put(f.name, factory);
-          } catch (OConfigurationException e) {
-            OLogManager.instance().error(this, "Error creating socket factory", e);
+      if (configuration.network != null) {
+        // REGISTER/CREATE SOCKET FACTORIES
+        if (configuration.network.sockets != null) {
+          for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
+            Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) loadClass(f.implementation);
+            OServerSocketFactory factory = fClass.newInstance();
+            try {
+              factory.config(f.name, f.parameters);
+              networkSocketFactories.put(f.name, factory);
+            } catch (OConfigurationException e) {
+              OLogManager.instance().error(this, "Error creating socket factory", e);
+            }
           }
         }
-      }
 
-      // REGISTER PROTOCOLS
-      for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
-        networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) loadClass(p.implementation));
+        // REGISTER PROTOCOLS
+        for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
+          networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) loadClass(p.implementation));
 
-      // STARTUP LISTENERS
-      for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-        networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
-            l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
+        // STARTUP LISTENERS
+        for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
+          networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
+              l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
+
+      } else
+        OLogManager.instance().warn(this, "Network configuration was not found");
 
       try {
         loadStorages();
