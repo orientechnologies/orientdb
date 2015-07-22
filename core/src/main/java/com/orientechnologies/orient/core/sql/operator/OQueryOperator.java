@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -215,7 +215,7 @@ public abstract class OQueryOperator {
     if (iContext.isRecordingMetrics())
       iContext.updateMetric("compositeIndexUsed", +1);
 
-    final OProfilerMBean profiler = Orient.instance().getProfiler();
+    final OProfiler profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {
       profiler.updateCounter(profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"), "Used index in query", +1);
 

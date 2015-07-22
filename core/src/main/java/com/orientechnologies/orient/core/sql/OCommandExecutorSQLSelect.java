@@ -24,7 +24,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.collection.OSortedMultiIterator;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.Orient;
@@ -1125,7 +1125,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected void revertSubclassesProfiler(final OCommandContext iContext, int num) {
-    final OProfilerMBean profiler = Orient.instance().getProfiler();
+    final OProfiler profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {
       profiler.updateCounter(profiler.getDatabaseMetric(getDatabase().getName(), "query.indexUseAttemptedAndReverted"),
           "Reverted index usage in query", num);
@@ -1138,7 +1138,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       iContext.updateMetric("compositeIndexUsed", -1);
     }
 
-    final OProfilerMBean profiler = Orient.instance().getProfiler();
+    final OProfiler profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {
       profiler.updateCounter(profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"), "Used index in query", -1);
 

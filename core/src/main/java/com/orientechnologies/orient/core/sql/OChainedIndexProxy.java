@@ -21,7 +21,7 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfilerStub;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -395,14 +395,14 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   /**
-   * Register statistic information about usage of index in {@link OProfiler}.
+   * Register statistic information about usage of index in {@link OProfilerStub}.
    * 
    * @param index
    *          which usage is registering.
    */
   private void updateStatistic(OIndex<?> index) {
 
-    final OProfilerMBean profiler = Orient.instance().getProfiler();
+    final OProfiler profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {
       Orient.instance().getProfiler()
           .updateCounter(profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"), "Used index in query", +1);
