@@ -124,6 +124,32 @@ public class OMatchStatementExecutionTest {
     assertEquals("n2", qResult.get(0).field("name"));
   }
 
+  @Test
+  public void testWhile() throws Exception {
+
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 2)} return friend)"))
+        .execute();
+    assertEquals(3, qResult.size());
+
+    qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 2), where: ($depth=1) } return friend)"))
+        .execute();
+    assertEquals(2, qResult.size());
+
+    qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend)"))
+        .execute();
+    assertEquals(6, qResult.size());
+
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

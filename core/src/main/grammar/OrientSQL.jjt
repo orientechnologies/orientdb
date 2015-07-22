@@ -2996,14 +2996,6 @@ OMatchFilterItem MatchFilterItem():
         )
         |
         (
-            <MINDEPTH> <COLON> jjtThis.minDepth = Integer()
-        )
-        |
-        (
-            <MAXDEPTH> <COLON> jjtThis.maxDepth = Integer()
-        )
-        |
-        (
             <WHERE> <COLON> <LPAREN>
             (
                 jjtThis.filter = WhereClause()
@@ -3017,6 +3009,10 @@ OMatchFilterItem MatchFilterItem():
                 jjtThis.whileCondition = WhereClause()
             )
             <RPAREN>
+        )
+        |
+        (
+            <MAXDEPTH> <COLON> jjtThis.maxDepth = Integer()
         )
     )
     { return jjtThis; }

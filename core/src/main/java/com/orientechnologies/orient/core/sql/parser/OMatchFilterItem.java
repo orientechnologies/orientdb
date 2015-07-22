@@ -9,7 +9,6 @@ public class OMatchFilterItem extends SimpleNode {
   protected OWhereClause        filter;
   protected OWhereClause        whileCondition;
   protected OArrayRangeSelector depth;
-  protected OInteger            minDepth;
   protected OInteger            maxDepth;
 
   public OMatchFilterItem(int id) {
@@ -36,10 +35,6 @@ public class OMatchFilterItem extends SimpleNode {
 
     if (alias != null) {
       return "as: " + alias;
-    }
-
-    if (minDepth != null) {
-      return "mindepth: " + minDepth;
     }
 
     if (maxDepth != null) {

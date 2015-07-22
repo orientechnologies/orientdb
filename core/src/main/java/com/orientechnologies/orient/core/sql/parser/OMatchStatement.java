@@ -441,17 +441,48 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   private Object executeTraversal(MatchContext matchContext, OCommandContext iCommandContext, PatternEdge outEdge) {
-    Iterable<OIdentifiable> queryResult = (Iterable) outEdge.item.method.execute(matchContext.matched.get(matchContext.root),
-        iCommandContext);
-    if (outEdge.item.filter == null || outEdge.item.filter.getFilter() == null) {
-      return queryResult;
-    }
+    return executeTraversal(matchContext, iCommandContext, outEdge, matchContext.matched.get(matchContext.root), 0);
+  }
+
+  private Iterable<OIdentifiable> executeTraversal(MatchContext matchContext, OCommandContext iCommandContext, PatternEdge outEdge,
+      OIdentifiable startingPoint, int depth) {
+
     OWhereClause filter = outEdge.item.filter.getFilter();
+    OWhereClause whileCondition = outEdge.item.filter.getWhileCondition();
+
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
-    for (OIdentifiable origin : queryResult) {
-      if (filter.matchesFilters(origin, iCommandContext)) {
-        result.add(origin);
+    if (whileCondition == null) {// in this case starting point is not returned and only one level depth is evaluated
+      Iterable<OIdentifiable> queryResult = (Iterable) outEdge.item.method.execute(startingPoint, iCommandContext);
+      if (outEdge.item.filter == null || outEdge.item.filter.getFilter() == null) {
+        return queryResult;
+      }
+
+      for (OIdentifiable origin : queryResult) {
+        if (filter == null || filter.matchesFilters(origin, iCommandContext)) {
+          result.add(origin);
+        }
+      }
+    } else {// in this case also zero level (starting point) is considered and traversal depth is given by the while condition
+      iCommandContext.setVariable("$depth", depth);
+      if (whileCondition.matchesFilters(startingPoint, iCommandContext)) {
+        if (filter == null || filter.matchesFilters(startingPoint, iCommandContext)) {
+          result.add(startingPoint);
+        }
+        Iterable<OIdentifiable> queryResult = (Iterable) outEdge.item.method.execute(startingPoint, iCommandContext);
+
+        for (OIdentifiable origin : queryResult) {
+          // TODO optimize checking maxDepth
+          // TODO consider break strategies (eg. re-traverse nodes)
+          Iterable<OIdentifiable> subResult = executeTraversal(matchContext, iCommandContext, outEdge, origin, depth + 1);
+          if (subResult instanceof Collection) {
+            result.addAll((Collection<? extends OIdentifiable>) subResult);
+          } else {
+            for (OIdentifiable i : subResult) {
+              result.add(i);
+            }
+          }
+        }
       }
     }
     return result;
