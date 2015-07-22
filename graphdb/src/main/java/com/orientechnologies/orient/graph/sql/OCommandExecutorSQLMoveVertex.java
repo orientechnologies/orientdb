@@ -62,7 +62,7 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
   private OClass                      clazz;
   private List<OPair<String, Object>> fields;
   private ODocument                   merge;
-  private int                         batch         = -1;
+  private int                         batch         = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLMoveVertex parse(final OCommandRequest iRequest) {
