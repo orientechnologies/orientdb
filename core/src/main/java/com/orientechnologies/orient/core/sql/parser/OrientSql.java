@@ -8656,8 +8656,9 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3R_166()) {
-    jj_scanpos = xsp;
-    if (jj_3R_167()) return true;
+      jj_scanpos = xsp;
+      if (jj_3R_167())
+        return true;
     }
     return false;
   }

@@ -99,7 +99,7 @@ public class OConsoleDatabaseAppTest {
       Iterator<Vertex> iterator = result.iterator();
       Assert.assertTrue(iterator.hasNext());
       Vertex next = iterator.next();
-      Assert.assertEquals("bar",next.getProperty("name"));
+      Assert.assertEquals("bar", next.getProperty("name"));
       Assert.assertFalse(iterator.hasNext());
     } finally {
       graph.shutdown();

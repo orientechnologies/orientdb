@@ -430,7 +430,7 @@ public class OSelectStatementTest {
 
   }
 
-  public void testBacktick(){
+  public void testBacktick() {
     checkRightSyntax("select `foo` from foo where `foo` = 'bar'");
     checkRightSyntax("select `SELECT` from foo where `SELECT` = 'bar'");
     checkRightSyntax("select `TRAVERSE` from foo where `TRAVERSE` = 'bar'");
