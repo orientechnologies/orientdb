@@ -132,6 +132,8 @@ TOKEN:
 	|
 	< SKIP2: ( "s" | "S" ) ( "k" | "K" ) ( "i" | "I" ) ( "p" | "P" ) >
 	|
+	< BATCH: ( "b" | "B" ) ( "a" | "A" ) ( "t" | "T" ) ( "c" | "C" ) ( "h" | "H" ) >
+	|
 	< OFFSET: ( "o" | "O" ) ( "f" | "F" ) ( "f" | "F" ) ( "s" | "S" ) ( "e" | "E" ) ( "t" | "T" ) >
 	|
 	< TIMEOUT: ( "t" | "T" ) ( "i" | "I" ) ( "m" | "M" ) ( "e" | "E" ) ( "o" | "O" ) ( "u" | "U" ) ( "t" | "T" ) >
@@ -841,6 +843,7 @@ ODeleteVertexStatement DeleteVertexStatement():
 	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
 	[ <WHERE> jjtThis.whereClause = WhereClause() ]
     [ jjtThis.limit = Limit() ]
+    [ jjtThis.batch = Batch() ]
 ) {return jjtThis;}
 }
 
@@ -894,6 +897,7 @@ ODeleteEdgeStatement DeleteEdgeByRidStatement():
             ] <RBRACKET>
 	    )
 	)
+	[ jjtThis.batch = Batch() ]
 
 
 ) {return jjtThis;}
@@ -987,6 +991,7 @@ ODeleteEdgeStatement DeleteEdgeFromToStatement():
 
     [ <WHERE> jjtThis.whereClause = WhereClause() ]
     [ jjtThis.limit = Limit() ]
+    [ jjtThis.batch = Batch() ]
 
 ) {return jjtThis;}
 }
@@ -1040,6 +1045,7 @@ ODeleteEdgeStatement DeleteEdgeToStatement():
 
         [ <WHERE> jjtThis.whereClause = WhereClause() ]
         [ jjtThis.limit = Limit() ]
+        [ jjtThis.batch = Batch() ]
 
 	)
      {return jjtThis;}
@@ -1091,6 +1097,7 @@ ODeleteEdgeStatement DeleteEdgeVToStatement():
 
         [ <WHERE> jjtThis.whereClause = WhereClause() ]
         [ jjtThis.limit = Limit() ]
+        [ jjtThis.batch = Batch() ]
 
 	)
      {return jjtThis;}
@@ -1109,7 +1116,7 @@ ODeleteEdgeStatement DeleteEdgeWhereStatement():
 
         [ <WHERE> jjtThis.whereClause = WhereClause() ]
         [ jjtThis.limit = Limit() ]
-
+        [ jjtThis.batch = Batch() ]
 	)
      {return jjtThis;}
 }
@@ -2715,6 +2722,19 @@ OSkip Skip():
     ) {return jjtThis;}
 }
 
+OBatch Batch():
+{}
+{
+    (
+    	<BATCH>
+    	(
+            jjtThis.num  = Integer()
+            |
+            jjtThis.inputParam = InputParameter()
+        )
+    )
+    { return jjtThis; }
+}
 
 java.lang.Number Timeout():
 { OInteger val; }

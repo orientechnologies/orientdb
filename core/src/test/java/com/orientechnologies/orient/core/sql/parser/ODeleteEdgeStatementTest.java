@@ -42,6 +42,8 @@ public class ODeleteEdgeStatementTest {
     checkRightSyntax("DELETE EDGE E from #12:0 to #12:1");
     checkRightSyntax("DELETE EDGE E from (select from V where name = 'foo') to (select from V where name = 'bar')");
 
+    checkRightSyntax("DELETE EDGE E from (select from V where name = 'foo') to (select from V where name = 'bar') BATCH 14");
+
     checkRightSyntax("DELETE EDGE E where age = 50");
     checkRightSyntax("DELETE EDGE E from #12:0 where age = 50");
     checkRightSyntax("DELETE EDGE E to #12:0 where age = 50");
