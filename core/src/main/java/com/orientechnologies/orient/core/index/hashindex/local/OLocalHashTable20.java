@@ -202,20 +202,10 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
     }
   }
 
-  @Override
-  protected void endAtomicOperation(boolean rollback, Exception e) throws IOException {
-    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return;
-
-    super.endAtomicOperation(rollback, e);
-  }
 
   @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return atomicOperationsManager.getCurrentOperation();
-
-    return super.startAtomicOperation();
+    return atomicOperationsManager.startAtomicOperation(this, !durableInNonTxMode);
   }
 
   @Override

@@ -55,6 +55,21 @@ public class OUpdateStatementTest {
     printTree("update  Foo set a = a.b.toLowerCase(), b=out('pippo')[0]");
   }
 
+  public void testCollections() {
+    checkRightSyntax("update Foo add a = b");
+    checkWrongSyntax("update Foo add 'a' = b");
+    checkRightSyntax("update Foo add a = 'a'");
+    checkWrongSyntax("update Foo put a = b");
+    checkRightSyntax("update Foo put a = b, c");
+    checkRightSyntax("update Foo put a = 'b', 1.34");
+    checkRightSyntax("update Foo put a = 'b', 'c'");
+  }
+
+  public void testJson(){
+    checkRightSyntax("update Foo merge {'a':'b', 'c':{'d':'e'}} where name = 'foo'");
+    checkRightSyntax("update Foo content {'a':'b', 'c':{'d':'e', 'f': ['a', 'b', 4]}} where name = 'foo'");
+  }
+
   public void testIncrementOld() {
     checkRightSyntax("update  Foo increment a = 2");
   }

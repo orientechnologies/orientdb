@@ -73,6 +73,33 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.lang.management.ManagementFactory;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.zip.CRC32;
+
 /**
  * @author Andrey Lomakin
  * @since 7/23/13
@@ -315,10 +342,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
               .instance()
               .error(
                   this,
-                  "File "
+                  "File '"
                       + fileName
-                      + " is not registered in 'file name - id' map but exists in file system, "
-                      + "probably you work in distributed storage. If it is not true, please create bug in bug tracker https://github.com/orientechnologies/orientdb/issues .");
+                      + "' is not registered in the 'file name - id' map, but exists in file system. This could be due to a failed restore");
 
           if (fileId == null) {
             ++fileCounter;

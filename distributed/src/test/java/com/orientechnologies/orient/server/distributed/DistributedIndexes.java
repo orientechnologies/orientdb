@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import junit.framework.Assert;
 
 import org.junit.Test;
@@ -49,9 +50,31 @@ public class DistributedIndexes extends AbstractServerClusterTest {
   protected void executeTest() throws Exception {
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/server1/databases/" + getDatabaseName());
-
     db.open("admin", "admin");
 
+    try {
+
+      testIndexUsage(db);
+      testIndexAcceptsNulls(db);
+
+    } finally {
+      db.close();
+    }
+  }
+
+  @Override
+  protected void onAfterDatabaseCreation(OrientBaseGraph db) {
+    db.command(new OCommandSQL("CREATE CLASS Person extends V")).execute();
+    db.command(new OCommandSQL("CREATE PROPERTY Person.name STRING")).execute();
+    db.command(new OCommandSQL("CREATE INDEX Person.name NOTUNIQUE METADATA { ignoreNullValues: false }")).execute();
+  }
+
+  private void testIndexAcceptsNulls(ODatabaseDocumentTx db) {
+    db.command(new OCommandSQL("CREATE VERTEX Person SET name = 'Tobie'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX Person SET temp = true")).execute();
+  }
+
+  private void testIndexUsage(ODatabaseDocumentTx db) {
     db.command(new OCommandSQL("create class DistributedIndexTest")).execute();
     db.command(new OCommandSQL("create property DistributedIndexTest.unique STRING")).execute();
     db.command(new OCommandSQL("create property DistributedIndexTest.notunique STRING")).execute();

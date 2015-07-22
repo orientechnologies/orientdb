@@ -16,12 +16,10 @@
  *  
  */
 
-package com.orientechnologies.orient.server.network.protocol.http.command.get;
+package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -29,13 +27,9 @@ import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtoco
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
-public class OServerCommandKillDbConnection extends OServerCommandAuthenticatedDbAbstract {
+public class OServerCommandPostKillDbConnection extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = { "POST|dbconnection/*" };
 
   @Override

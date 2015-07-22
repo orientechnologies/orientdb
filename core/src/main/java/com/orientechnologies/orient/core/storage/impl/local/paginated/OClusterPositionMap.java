@@ -208,6 +208,39 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
+  public void update(long clusterPosition, OClusterPositionMapBucket.PositionEntry entry) throws IOException {
+    OAtomicOperation atomicOperation = startAtomicOperation();
+
+    acquireExclusiveLock();
+    try {
+      long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
+      int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
+
+      if (pageIndex >= getFilledUpTo(atomicOperation, fileId))
+        throw new OStorageException("Passed in cluster position " + clusterPosition
+            + " is outside of range of cluster-position map.");
+
+      final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
+      cacheEntry.acquireExclusiveLock();
+      try {
+        final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, getChangesTree(atomicOperation,
+            cacheEntry));
+        bucket.set(index, entry);
+      } finally {
+        cacheEntry.releaseExclusiveLock();
+        releasePage(atomicOperation, cacheEntry);
+      }
+
+      endAtomicOperation(false, null);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
+      throw new OStorageException("Error of update of mapping between logical adn physical record position.", e);
+    } finally {
+      releaseExclusiveLock();
+    }
+
+  }
+
   public OClusterPositionMapBucket.PositionEntry get(final long clusterPosition) throws IOException {
     atomicOperationsManager.acquireReadLock(this);
     try {
@@ -515,17 +548,9 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  @Override
-  protected void endAtomicOperation(final boolean rollback, Exception e) throws IOException {
-    if (useWal)
-      super.endAtomicOperation(rollback, e);
-  }
 
   @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    if (useWal)
-      return super.startAtomicOperation();
-
-    return atomicOperationsManager.getCurrentOperation();
+    return atomicOperationsManager.startAtomicOperation(this, !useWal);
   }
 }

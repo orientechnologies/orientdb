@@ -80,7 +80,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying();
     try {
-      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName);
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
       final OReadCache readCache = storage.getReadCache();
       final OWriteCache writeCache = storage.getWriteCache();
 

@@ -19,14 +19,7 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
@@ -44,9 +37,6 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.processor.OComposableProcessor;
-import com.orientechnologies.orient.core.processor.OProcessException;
-import com.orientechnologies.orient.core.processor.OProcessorManager;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -55,6 +45,12 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Document Database wrapper class to use from scripts.
@@ -119,29 +115,6 @@ public class OScriptDocumentDatabaseWrapper {
       final List<OIdentifiable> list = (List<OIdentifiable>) res;
       return list.toArray(new OIdentifiable[list.size()]);
     }
-    return res;
-  }
-
-  public Object process(final String iType, final String iName, final Object... iParameters) {
-    final OComposableProcessor process = (OComposableProcessor) OProcessorManager.getInstance().get(iType);
-    if (process == null)
-      throw new OProcessException("Process type '" + iType + "' is undefined");
-
-    final OBasicCommandContext context = new OBasicCommandContext();
-    if (iParameters != null) {
-      int argIdx = 0;
-      for (Object p : iParameters)
-        context.setVariable("arg" + (argIdx++), p);
-    }
-
-    Object res;
-
-    try {
-      res = process.processFromFile(iName, context, false);
-    } catch (Exception e) {
-      throw new OProcessException("Error on processing '" + iName + "' field of '" + getName() + "' block", e);
-    }
-
     return res;
   }
 

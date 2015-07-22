@@ -50,21 +50,6 @@ public class OrientSql {
 
   private List<ValidationStats> validationStats = new ArrayList<ValidationStats>();
 
-    /** Main entry point. For development purpose only */
-  public static void main(String args[]) {
-    System.out.println("Reading from standard input...");
-    OrientSql t = new OrientSql(System.in);
-    try {
-      OStatement n = t.parse();
-      n.dump("");
-      System.out.println("Thank you.");
-    } catch (Exception e) {
-      System.out.println("Oops.");
-      System.out.println(e.getMessage());
-      e.printStackTrace();
-    }
-  }
-
     public OrientSql(InputStream stream) {
       this(new JavaCharStream(stream));
     }
