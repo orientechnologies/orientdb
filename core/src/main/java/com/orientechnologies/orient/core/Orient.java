@@ -41,7 +41,7 @@ import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfilerStub;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactory;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactoryImpl;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -95,7 +95,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   private volatile Timer                                                             timer;
   private volatile ORecordFactoryManager                                             recordFactoryManager          = new ORecordFactoryManager();
   private OrientShutdownHook                                                         shutdownHook;
-  private volatile OProfilerMBean                                                    profiler;
+  private volatile OProfiler                                                         profiler;
   private ODatabaseThreadLocalFactory                                                databaseThreadFactory;
   private volatile boolean                                                           active                        = false;
   private ThreadPoolExecutor                                                         workers;
@@ -200,7 +200,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (timer == null)
         timer = new Timer(true);
 
-      profiler = new OProfiler();
+      profiler = new OProfilerStub();
 
       shutdownHook = new OrientShutdownHook();
       if (signalHandler == null) {
@@ -700,11 +700,11 @@ public class Orient extends OListenerManger<OOrientListener> {
     return databaseFactory;
   }
 
-  public OProfilerMBean getProfiler() {
+  public OProfiler getProfiler() {
     return profiler;
   }
 
-  public void setProfiler(final OProfilerMBean iProfiler) {
+  public void setProfiler(final OProfiler iProfiler) {
     profiler = iProfiler;
   }
 

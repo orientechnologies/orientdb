@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.metadata;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
@@ -64,7 +64,7 @@ public class OMetadataDefault implements OMetadataInternal {
   protected OSchedulerListenerProxy     scheduler;
 
   protected OCommandCache               commandCache;
-  protected static final OProfilerMBean PROFILER                  = Orient.instance().getProfiler();
+  protected static final OProfiler  PROFILER                  = Orient.instance().getProfiler();
 
   private OImmutableSchema              immutableSchema           = null;
   private int                           immutableCount            = 0;

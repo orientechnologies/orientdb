@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -138,7 +138,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
       }
     }
 
-    final OProfilerMBean profiler = Orient.instance().getProfiler();
+    final OProfiler profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {
       // UPDATE PROFILER
       if (result != null) {

@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.type.tree.provider;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
@@ -101,7 +101,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
   }
 
   public byte[] toStream() throws OSerializationException {
-    final OProfilerMBean profiler = Orient.instance().getProfiler();
+    final OProfiler profiler = Orient.instance().getProfiler();
     final long timer = profiler.startChrono();
 
     try {
@@ -132,7 +132,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 
   @SuppressWarnings("unchecked")
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-    final OProfilerMBean profiler = Orient.instance().getProfiler();
+    final OProfiler profiler = Orient.instance().getProfiler();
     final long timer = profiler.startChrono();
 
     try {
