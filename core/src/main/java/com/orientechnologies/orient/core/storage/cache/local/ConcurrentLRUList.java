@@ -275,6 +275,9 @@ public class ConcurrentLRUList implements LRUList {
 
     headReference.next.set(null);
     tailReference.set(headReference);
+
+    trash.clear();
+    trashSize.set(0);
   }
 
   @Override

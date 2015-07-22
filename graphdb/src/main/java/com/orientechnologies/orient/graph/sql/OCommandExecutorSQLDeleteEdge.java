@@ -60,17 +60,19 @@ import java.util.Set;
  */
 public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstract implements OCommandDistributedReplicateRequest,
     OCommandResultListener {
-  public static final String NAME         = "DELETE EDGE";
-  private List<ORecordId>    rids;
-  private String             fromExpr;
-  private String             toExpr;
-  private int                removed      = 0;
-  private OCommandRequest    query;
-  private OSQLFilter         compiledFilter;
-  private OrientGraph        graph;
-  private String             label;
-  private OModifiableBoolean shutdownFlag = new OModifiableBoolean();
-  private boolean            txAlreadyBegun;
+  public static final String  NAME          = "DELETE EDGE";
+  private static final String KEYWORD_BATCH = "BATCH";
+  private List<ORecordId>     rids;
+  private String              fromExpr;
+  private String              toExpr;
+  private int                 removed       = 0;
+  private OCommandRequest     query;
+  private OSQLFilter          compiledFilter;
+  private OrientGraph         graph;
+  private String              label;
+  private OModifiableBoolean  shutdownFlag  = new OModifiableBoolean();
+  private boolean             txAlreadyBegun;
+  private int                 batch         = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteEdge parse(final OCommandRequest iRequest) {
@@ -143,6 +145,11 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
           } else if (temp.equals(KEYWORD_RETRY)) {
             parseRetry();
+          } else if (temp.equals(KEYWORD_BATCH)) {
+            temp = parserNextWord(true);
+            if (temp != null)
+              batch = Integer.parseInt(temp);
+
           } else if (temp.length() > 0) {
             // GET/CHECK CLASS NAME
             label = originalTemp;
@@ -332,6 +339,11 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
       if (e != null) {
         e.remove();
         removed++;
+
+        if (!txAlreadyBegun && batch > 0 && removed % batch == 0) {
+          graph.commit();
+          graph.begin();
+        }
       }
     }
 
@@ -340,7 +352,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
   @Override
   public String getSyntax() {
-    return "DELETE EDGE <rid>|FROM <rid>|TO <rid>|<[<class>] [WHERE <conditions>]>";
+    return "DELETE EDGE <rid>|FROM <rid>|TO <rid>|<[<class>] [WHERE <conditions>]> [BATCH <batch-size>]";
   }
 
   @Override

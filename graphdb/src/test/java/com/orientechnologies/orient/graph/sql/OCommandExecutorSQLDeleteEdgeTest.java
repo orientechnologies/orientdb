@@ -93,4 +93,21 @@ public class OCommandExecutorSQLDeleteEdgeTest {
     final int res = (Integer) db.command(new OCommandSQL("delete edge [" + edges.get(0).getIdentity() + "]")).execute();
     Assert.assertEquals(res, 1);
   }
+
+  @Test
+  public void testDeleteEdgeBatch() throws Exception {
+    // for issue #4622
+
+    for (int i = 0; i < 100; i++) {
+      db.command(new OCommandSQL("create vertex User set name = 'foo" + i + "'")).execute();
+      db.command(new OCommandSQL("create edge CanAccess from (select from User where name = 'foo" + i + "') to " + folderId1))
+          .execute();
+    }
+
+    final int res = (Integer) db.command(new OCommandSQL("delete edge CanAccess batch 5")).execute();
+
+    List<?> result = db.query(new OSQLSynchQuery("select expand( in('CanAccess') ) from " + folderId1));
+    Assert.assertEquals(result.size(), 0);
+
+  }
 }

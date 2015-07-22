@@ -65,6 +65,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.regex.Pattern;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
@@ -75,27 +76,29 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable, OOrientStartupListener,
     OOrientShutdownListener {
-  public static final int                          CURRENT_VERSION_NUMBER  = 4;
-  public static final int                          VERSION_NUMBER_V4       = 4;
+  public static final  int  CURRENT_VERSION_NUMBER = 4;
+  public static final  int  VERSION_NUMBER_V4      = 4;
   // this is needed for guarantee the compatibility to 2.0-M1 and 2.0-M2 no changed associated with it
-  public static final int                          VERSION_NUMBER_V5       = 5;
-  private static final long                        serialVersionUID        = 1L;
+  public static final  int  VERSION_NUMBER_V5      = 5;
+  private static final long serialVersionUID       = 1L;
 
-  private final boolean                            clustersCanNotBeSharedAmongClasses;
+  private final boolean clustersCanNotBeSharedAmongClasses;
 
-  private final OReadersWriterSpinLock             rwSpinLock              = new OReadersWriterSpinLock();
+  private final OReadersWriterSpinLock rwSpinLock = new OReadersWriterSpinLock();
 
-  private final Map<String, OClass>                classes                 = new HashMap<String, OClass>();
-  private final Map<Integer, OClass>               clustersToClasses       = new HashMap<Integer, OClass>();
+  private final Map<String, OClass>  classes           = new HashMap<String, OClass>();
+  private final Map<Integer, OClass> clustersToClasses = new HashMap<Integer, OClass>();
 
-  private final OClusterSelectionFactory           clusterSelectionFactory = new OClusterSelectionFactory();
+  private final OClusterSelectionFactory clusterSelectionFactory = new OClusterSelectionFactory();
 
-  private volatile ThreadLocal<OModifiableInteger> modificationCounter     = new OModificationsCounter();
-  private final List<OGlobalProperty>              properties              = new ArrayList<OGlobalProperty>();
-  private final Map<String, OGlobalProperty>       propertiesByNameType    = new HashMap<String, OGlobalProperty>();
-  private volatile int                             version                 = 0;
-  private volatile boolean                         fullCheckpointOnChange  = false;
-  private volatile OImmutableSchema                snapshot;
+  private volatile ThreadLocal<OModifiableInteger> modificationCounter    = new OModificationsCounter();
+  private final    List<OGlobalProperty>           properties             = new ArrayList<OGlobalProperty>();
+  private final    Map<String, OGlobalProperty>    propertiesByNameType   = new HashMap<String, OGlobalProperty>();
+  private volatile int                             version                = 0;
+  private volatile boolean                         fullCheckpointOnChange = false;
+  private volatile OImmutableSchema snapshot;
+
+  public static final Pattern validClassNamePattern = Pattern.compile("[a-zA-Z_$]([a-zA-Z0-9_$\\+])*");
 
   private static final class ClusterIdsAreEmptyException extends Exception {
   }
@@ -119,22 +122,21 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       modificationCounter = new OModificationsCounter();
   }
 
-  public static Character checkClassNameIfValid(String iName) {
+  public static Character checkClassNameIfValid(String iName) throws OSchemaException{
     if (iName == null)
       throw new IllegalArgumentException("Name is null");
 
     iName = iName.trim();
 
+
     final int nameSize = iName.length();
 
-    if (nameSize == 0)
+    if (nameSize == 0) {
       throw new IllegalArgumentException("Name is empty");
-
-    for (int i = 0; i < nameSize; ++i) {
-      final char c = iName.charAt(i);
-      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '%' || c == '@' || c == '=' || c == '.')
-        // INVALID CHARACTER
-        return c;
+    }
+    if(!validClassNamePattern.matcher(iName).matches()){
+      System.out.println("Invalid class name: "+iName+". Valid class names must match this pattern: "+validClassNamePattern.toString());
+      throw new OSchemaException("Invalid class name: "+iName+". Valid class names must match this pattern: "+validClassNamePattern.toString());
     }
 
     return null;
