@@ -40,20 +40,11 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
-import javax.script.Bindings;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
+import javax.script.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Executes Script Commands.
@@ -322,7 +313,16 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
   }
 
   private Object executeCommand(final String lastCommand, final ODatabaseDocument db) {
-    return db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute(parameters);
+    return db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute(toMap(parameters));
+  }
+
+  private Object toMap(Object parameters) {
+    if (parameters instanceof SimpleBindings) {
+      HashMap<Object, Object> result = new LinkedHashMap<Object, Object>();
+      result.putAll((SimpleBindings) parameters);
+      return result;
+    }
+    return parameters;
   }
 
   private Object executeReturn(String lastCommand, Object lastResult) {
