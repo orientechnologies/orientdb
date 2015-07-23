@@ -12,7 +12,7 @@
     <properties>
         <orientdb.version>2.0.10</orientdb.version>
         <spring-boot.version>1.1.8.RELEASE</spring-boot.version>
-        <reactor.version>1.1.5.RELEASE</reactor.version>
+        <reactor.version>2.0.4.RELEASE</reactor.version>
         <rest-assured.version>2.4.0</rest-assured.version>
     </properties>
     <build>
@@ -189,7 +189,7 @@
 
         <!-- Reactor -->
         <dependency>
-            <groupId>org.projectreactor</groupId>
+            <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
             <version>${reactor.version}</version>
         </dependency>
@@ -267,5 +267,6 @@
                 <enabled>true</enabled>
             </snapshots>
         </pluginRepository>
+
     </pluginRepositories>
 </project>
