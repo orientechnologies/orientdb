@@ -79,7 +79,7 @@ public class IssueReopenEvent extends EventInternal<IssueEvent> {
         MimeMessage mailMessage = sender.createMimeMessage();
         try {
           mailMessage.setRecipient(Message.RecipientType.TO, new InternetAddress(actor));
-          mailMessage.setFrom(new InternetAddress("prjhub@orientechnologies.com", "foo"));
+          mailMessage.setFrom(new InternetAddress("prjhub@orientechnologies.com", comment.getActor().getName()));
           if (issue.getClient() != null) {
             mailMessage.setSubject("[PrjHub][" + issue.getClient().getName() + "] " + issue.getTitle());
           } else {
