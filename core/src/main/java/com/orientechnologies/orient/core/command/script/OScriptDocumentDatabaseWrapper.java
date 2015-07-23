@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
@@ -30,6 +36,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -45,12 +52,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * Document Database wrapper class to use from scripts.
@@ -302,6 +303,10 @@ public class OScriptDocumentDatabaseWrapper {
 
   public int getDefaultClusterId() {
     return database.getDefaultClusterId();
+  }
+
+  public <RET extends ORecord> RET load(final String iRidAsString) {
+    return (RET) database.load(new ORecordId(iRidAsString));
   }
 
   public <RET extends ORecord> RET load(ORecord iRecord) {
