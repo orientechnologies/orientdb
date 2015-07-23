@@ -39,15 +39,18 @@ public class OLevelZeroIdentifier extends SimpleNode {
   }
 
   public void replaceParameters(Map<Object, Object> params) {
-    if(functionCall!=null){
+    if (functionCall != null) {
       functionCall.replaceParameters(params);
     }
-    if(collection!=null){
+    if (collection != null) {
       collection.replaceParameters(params);
     }
   }
 
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    if (functionCall != null) {
+      return functionCall.execute(iCurrentRecord, ctx);
+    }
     throw new UnsupportedOperationException();
   }
 }

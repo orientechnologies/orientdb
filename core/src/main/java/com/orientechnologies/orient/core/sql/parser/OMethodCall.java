@@ -80,10 +80,11 @@ public class OMethodCall extends SimpleNode {
 
     }
     OSQLMethod method = OSQLEngine.getMethod(name);
-    if (method == null) {
-      // TODO implement this
+    if (method != null) {
+      return method.execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), ctx, targetObjects, paramValues.toArray());
     }
-    return null;
+    throw new UnsupportedOperationException("OMethod call, something missing in the implementation...?");
+
   }
 
   public Object executeReverse(Object targetObjects, OCommandContext ctx) {

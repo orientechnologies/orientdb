@@ -77,8 +77,16 @@ public class OModifier extends SimpleNode {
   }
 
   public Object execute(OIdentifiable iCurrentRecord, Object result, OCommandContext ctx) {
-    throw new UnsupportedOperationException();
-    // TODO
+    if (methodCall != null) {
+      result = methodCall.execute(result, ctx);
+    } else {
+      throw new UnsupportedOperationException("implement OModifier!");
+      // TODO
+    }
+    if (next != null) {
+      result = next.execute(iCurrentRecord, result, ctx);
+    }
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=39c21495d02f9b5007b4a2d6915496e1 (do not edit this line) */

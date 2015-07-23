@@ -71,16 +71,49 @@ public class OMatchStatementExecutionTest {
     deptHierarchy[8] = new int[] {};
     deptHierarchy[9] = new int[] {};
 
-    // ______________0
-    // ____________/___\
-    // ___________/_____\
-    // __________1_______2
-    // _________/_\_____/_\
-    // ________3___4___5___6
-    // ______/__\_____________
-    // ____7_____8_____________
-    // ___/_____________________
-    // __9_______________________
+    String[] deptManagers = { "a", "b", "d", null, null, null, null, "c", null, null };
+
+    String[][] employees = new String[10][];
+    employees[0] = new String[] { "p1" };
+    employees[1] = new String[] { "p2", "p3" };
+    employees[2] = new String[] { "p4", "p5" };
+    employees[3] = new String[] { "p6" };
+    employees[4] = new String[] { "p7" };
+    employees[5] = new String[] { "p8" };
+    employees[6] = new String[] { "p9" };
+    employees[7] = new String[] { "p10" };
+    employees[8] = new String[] { "p11" };
+    employees[9] = new String[] { "p12", "p13" };
+
+    // ______ [manager] department _______
+    // _____ (employees in department)____
+    // ___________________________________
+    // ___________________________________
+    // ____________[a]0___________________
+    // _____________(p1)__________________
+    // _____________/___\_________________
+    // ____________/_____\________________
+    // ___________/_______\_______________
+    // _______[b]1_________2[d]___________
+    // ______(p2, p3)_____(p4, p5)________
+    // _________/_\_________/_\___________
+    // ________3___4_______5___6__________
+    // ______(p6)_(p7)___(p8)__(p9)_______
+    // ______/__\_________________________
+    // __[c]7_____8[]_____________________
+    // __(p10)___(p11)____________________
+    // ___/_______________________________
+    // __9[]______________________________
+    // (p12, p13)_________________________
+    //
+    // short description:
+    // Department 0 is the company itself, "a" is the CEO
+    // p10 works at department 7, his manager is "c"
+    // p12 works at department 9, this department has no direct manager, so p12's manager is c (the upper manager)
+
+    for (int i = 0; i < deptHierarchy.length; i++) {
+      db.command(new OCommandSQL("CREATE VERTEX Department set name = 'department" + i + "' ")).execute();
+    }
 
     for (int parent = 0; parent < deptHierarchy.length; parent++) {
       int[] children = deptHierarchy[parent];
@@ -90,6 +123,29 @@ public class OMatchStatementExecutionTest {
                 + "') to (select from Department where name = 'department" + parent + "') ")).execute();
       }
     }
+
+    for (int dept = 0; dept < deptManagers.length; dept++) {
+      String manager = deptManagers[dept];
+      if (manager != null) {
+        db.command(new OCommandSQL("CREATE Vertex Employee set name = '" + manager + "' ")).execute();
+
+        db.command(
+            new OCommandSQL("CREATE EDGE ManagerOf from (select from Employee where name = '" + manager + ""
+                + "') to (select from Department where name = 'department" + dept + "') ")).execute();
+      }
+    }
+
+    for (int dept = 0; dept < employees.length; dept++) {
+      String[] employeesForDept = employees[dept];
+      for (String employee : employeesForDept) {
+        db.command(new OCommandSQL("CREATE Vertex Employee set name = '" + employee + "' ")).execute();
+
+        db.command(
+            new OCommandSQL("CREATE EDGE WorksAt from (select from Employee where name = '" + employee + ""
+                + "') to (select from Department where name = 'department" + dept + "') ")).execute();
+      }
+    }
+
   }
 
   @AfterClass
@@ -190,7 +246,6 @@ public class OMatchStatementExecutionTest {
         .execute();
     assertEquals(2, qResult.size());
 
-
     qResult = db
         .command(
             new OCommandSQL(
@@ -230,6 +285,33 @@ public class OMatchStatementExecutionTest {
         .execute();
     assertEquals(2, qResult.size());
 
+  }
+
+  @Test
+  public void testOrgChart() {
+    assertEquals("c", getManager("p10").field("name"));
+//    assertEquals("c", getManager("p12").field("name"));
+//    assertEquals("b", getManager("p6").field("name"));
+  }
+
+  private ODocument getManager(String personName) {
+    StringBuilder query = new StringBuilder();
+    query.append("select expand(manager) from (");
+    query.append("  match {class:Employee, where: (name = '" + personName + "')}");
+    query.append("  .out('WorksAt')");
+    query.append("  .out('ParentDepartment'){");
+    query.append("      while: (in('ManagerOf').size() == 0),");
+    query.append("      where: (in('ManagerOf').size() > 0)");
+    query.append("  }");
+    query.append("  .in('ManagerOf'){as: manager}");
+    query.append("  return manager");
+    query.append(")");
+
+    System.out.println(query);
+
+    List<OIdentifiable> qResult = db.command(new OCommandSQL(query.toString())).execute();
+//    assertEquals(1, qResult.size());
+    return qResult.get(0).getRecord();
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {
