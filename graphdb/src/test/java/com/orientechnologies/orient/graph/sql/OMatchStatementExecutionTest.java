@@ -55,10 +55,6 @@ public class OMatchStatementExecutionTest {
     db.command(new OCommandSQL("CREATE class WorksAt extends E")).execute();
     db.command(new OCommandSQL("CREATE class ManagerOf extends E")).execute();
 
-    for (int i = 0; i < 10; i++) {
-      db.command(new OCommandSQL("CREATE VERTEX Department set name = 'department" + i + "'")).execute();
-    }
-
     int[][] deptHierarchy = new int[10][];
     deptHierarchy[0] = new int[] { 1, 2 };
     deptHierarchy[1] = new int[] { 3, 4 };
@@ -290,8 +286,8 @@ public class OMatchStatementExecutionTest {
   @Test
   public void testOrgChart() {
     assertEquals("c", getManager("p10").field("name"));
-//    assertEquals("c", getManager("p12").field("name"));
-//    assertEquals("b", getManager("p6").field("name"));
+    assertEquals("c", getManager("p12").field("name"));
+    assertEquals("b", getManager("p6").field("name"));
   }
 
   private ODocument getManager(String personName) {
@@ -310,7 +306,7 @@ public class OMatchStatementExecutionTest {
     System.out.println(query);
 
     List<OIdentifiable> qResult = db.command(new OCommandSQL(query.toString())).execute();
-//    assertEquals(1, qResult.size());
+    assertEquals(1, qResult.size());
     return qResult.get(0).getRecord();
   }
 
