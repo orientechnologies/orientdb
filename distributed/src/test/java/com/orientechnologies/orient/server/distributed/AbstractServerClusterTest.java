@@ -147,7 +147,7 @@ public abstract class AbstractServerClusterTest {
   protected void onTestEnded() {
   }
 
-  protected void onAfterExecution() {
+  protected void onAfterExecution() throws Exception {
   }
 
   protected abstract String getDatabaseName();
