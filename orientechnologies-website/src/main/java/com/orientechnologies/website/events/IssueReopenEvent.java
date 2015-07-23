@@ -8,15 +8,13 @@ import com.orientechnologies.website.repository.EventRepository;
 import com.orientechnologies.website.repository.IssueRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring4.SpringTemplateEngine;
 import reactor.event.Event;
 
-import javax.mail.Message;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,12 +74,12 @@ public class IssueReopenEvent extends EventInternal<IssueEvent> {
     String[] actors = getActorsEmail(owner, involvedActors, actorsInIssue);
     if (actors.length > 0) {
       for (String actor : actors) {
-        MimeMessage mailMessage = sender.createMimeMessage();
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
         try {
-          mailMessage.setRecipient(Message.RecipientType.TO, new InternetAddress(actor));
-          mailMessage.setFrom(new InternetAddress("prjhub@orientechnologies.com", comment.getActor().getName()));
+          mailMessage.setTo(actor);
+          mailMessage.setFrom(comment.getActor().getName());
           if (issue.getClient() != null) {
-            mailMessage.setSubject("[PrjHub][" + issue.getClient().getName() + "] " + issue.getTitle());
+            mailMessage.setSubject("[PrjHub!] " + issue.getTitle());
           } else {
             mailMessage.setSubject("[PrjHub] " + issue.getTitle());
           }

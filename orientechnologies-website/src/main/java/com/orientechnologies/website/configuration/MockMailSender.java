@@ -51,7 +51,7 @@ public class MockMailSender extends JavaMailSenderImpl {
         email.setDebug(false);
 
         email.setHostName(mailConfiguration.host);
-        email.setFrom(mailConfiguration.from, "PrjHub");
+        email.setFrom(mailConfiguration.from, simpleMessage.getFrom());
         email.setSubject(simpleMessage.getSubject());
         email.setContent(simpleMessage.getText(), "text/html");
         for (String s : simpleMessage.getTo()) {

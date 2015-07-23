@@ -72,11 +72,19 @@ public class IssueClosedEvent extends EventInternal<IssueEvent> {
 
       for (String actor : actors) {
         SimpleMailMessage mailMessage = new SimpleMailMessage();
-        mailMessage.setTo(actor);
-        mailMessage.setFrom("prjhub@orientechnologies.com");
-        mailMessage.setSubject(issue.getTitle());
-        mailMessage.setText(htmlContent);
-        sender.send(mailMessage);
+        try {
+          mailMessage.setTo(actor);
+          mailMessage.setFrom(comment.getActor().getName());
+          if (issue.getClient() != null) {
+            mailMessage.setSubject("[PrjHub!] " + issue.getTitle());
+          } else {
+            mailMessage.setSubject("[PrjHub] " + issue.getTitle());
+          }
+          mailMessage.setText(htmlContent);
+          sender.send(mailMessage);
+        } catch (Exception e) {
+
+        }
       }
 
     }
