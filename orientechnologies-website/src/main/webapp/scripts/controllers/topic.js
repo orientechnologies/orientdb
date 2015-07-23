@@ -87,6 +87,7 @@ angular.module('webappApp').controller('TopicCtrl', function ($scope, $location,
 angular.module('webappApp').controller('TopicNewCtrl', function ($scope, $location, Organization, User) {
 
   $scope.preview = false;
+  $scope.carriage = true;
   $scope.topic = {}
   User.whoami().then(function (data) {
     $scope.user = data;
@@ -108,6 +109,7 @@ angular.module('webappApp').controller('TopicNewCtrl', function ($scope, $locati
 angular.module('webappApp').controller('TopicEditCtrl', function ($scope, $location, $routeParams, Organization, User) {
 
 
+  $scope.carriage = true;
   $scope.number = $routeParams.id;
 
   $scope.newComment = {};
@@ -167,6 +169,8 @@ angular.module('webappApp').controller('TopicBodyController', function ($scope, 
   $scope.preview = true;
 
 
+  $scope.carriage = true;
+
   $scope.clonedComment = {};
   $scope.cancelEditing = function () {
     $scope.preview = true;
@@ -189,6 +193,7 @@ angular.module('webappApp').controller('TopicBodyController', function ($scope, 
 angular.module('webappApp').controller('TopicCommentController', function ($scope, Organization) {
   $scope.preview = true;
 
+  $scope.carriage = true;
 
   $scope.clonedComment = {};
   $scope.cancelEditing = function () {

@@ -313,6 +313,7 @@ angular.module('webappApp')
 angular.module('webappApp')
   .controller('IssueNewCtrl', function ($scope, Organization, Repo, $location, User) {
 
+    $scope.carriage = true;
 
     $scope.types = {
       'Bug': 'bug',
@@ -377,6 +378,7 @@ angular.module('webappApp')
   .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User, $timeout, $location, $q) {
 
 
+    $scope.carriage = true;
     $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
 
     var waiting_reply = 'waiting reply';
@@ -902,6 +904,7 @@ angular.module('webappApp')
   });
 angular.module('webappApp').controller('CommentController', function ($scope, Repo) {
   $scope.preview = true;
+  $scope.carriage = true;
 
 
   $scope.clonedComment = {};
@@ -935,7 +938,7 @@ angular.module('webappApp').controller('CommentController', function ($scope, Re
 
 angular.module('webappApp').controller('BodyController', function ($scope, Repo) {
   $scope.preview = true;
-
+  $scope.carriage = true;
 
   $scope.clonedComment = {};
   $scope.cancelEditing = function () {

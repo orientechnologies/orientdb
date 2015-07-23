@@ -65,7 +65,7 @@
               </div>
             </div>
             <div class="form-group">
-              <div vue-editor preview="false"  ng-model="issue.body"></div>
+              <div vue-editor preview="false"  carriage = "carriage" ng-model="issue.body"></div>
               <!--<div mkeditor ng-model="issue.body"></div>-->
             </div>
             <button type="submit" class="btn btn-success pull-right" ng-disabled="newIssue.$invalid" ng-click="save()">

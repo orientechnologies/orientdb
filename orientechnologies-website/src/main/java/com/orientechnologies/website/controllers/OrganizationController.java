@@ -573,6 +573,12 @@ public class OrganizationController extends ExceptionController {
   public ResponseEntity<Topic> getSingleTopic(@PathVariable("name") String name, @PathVariable("number") Long uuid) {
     Topic singleTopicByNumber = orgRepository.findSingleTopicByNumber(name, uuid);
     if (singleTopicByNumber != null) {
+
+      if(Boolean.TRUE.equals(singleTopicByNumber.getConfidential())){
+        if(!securityManager.isCurrentMemberOrSupport(name)){
+          return new ResponseEntity<Topic>(HttpStatus.UNAUTHORIZED);
+        }
+      }
       return new ResponseEntity<Topic>(singleTopicByNumber, HttpStatus.OK);
     } else {
       return new ResponseEntity<Topic>(HttpStatus.NOT_FOUND);

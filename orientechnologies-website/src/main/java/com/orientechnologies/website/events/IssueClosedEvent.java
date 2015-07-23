@@ -67,7 +67,7 @@ public class IssueClosedEvent extends EventInternal<IssueEvent> {
       actorsInIssue = issueRepository.findToNotifyPrivateActors(issue);
       involvedActors.addAll(actorsInIssue);
     }
-    String[] actors = getActorsEmail(owner, involvedActors,actorsInIssue);
+    String[] actors = getActorsEmail(owner, involvedActors, actorsInIssue);
     if (actors.length > 0) {
 
       for (String actor : actors) {
@@ -81,7 +81,8 @@ public class IssueClosedEvent extends EventInternal<IssueEvent> {
 
     }
 
-    sendSupportMail(sender,issue,htmlContent,false);
+    if (issue.getClient() != null)
+      sendSupportMail(sender, issue, htmlContent, false);
   }
 
   private void fillContextVariable(Context context, Issue issue, IssueEvent comment) {

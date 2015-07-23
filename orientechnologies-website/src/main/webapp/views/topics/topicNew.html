@@ -10,12 +10,12 @@
             <div class="form-group">
               <input type="text" class="form-control" required placeholder="Title" ng-model="topic.title">
             </div>
-            <!--<div class="checkbox" ng-show="(isMember || isClient)">-->
-            <!--<label>-->
-            <!--<input type="checkbox" placeholder="Private Topic"-->
-            <!--ng-model="issue.confidential">-->
-            <!--Private Topic</label>-->
-            <!--</div>-->
+            <div class="checkbox" ng-show="(isMember || isClient)">
+            <label>
+            <input type="checkbox" placeholder="Private Topic"
+            ng-model="topic.confidential">
+            Private Topic</label>
+            </div>
             <div class="form-group">
               <tags-input ng-model="topic.tags"
                           add-from-autocomplete-only="true"
@@ -27,7 +27,7 @@
               </tags-input>
             </div>
             <div class="form-group">
-              <div vue-editor preview="preview" ng-model="topic.body"></div>
+              <div vue-editor preview="preview" carriage="carriage" ng-model="topic.body"></div>
             </div>
             <button type="submit" class="btn btn-success pull-right" ng-disabled="newIssue.$invalid"
                     ng-click="save()">

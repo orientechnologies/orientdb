@@ -85,7 +85,8 @@ public class IssueReopenEvent extends EventInternal<IssueEvent> {
       }
     }
 
-    sendSupportMail(sender,issue,htmlContent,false);
+    if (issue.getClient() != null)
+      sendSupportMail(sender, issue, htmlContent, false);
   }
 
   private void fillContextVariable(Context context, Issue issue, IssueEvent comment) {

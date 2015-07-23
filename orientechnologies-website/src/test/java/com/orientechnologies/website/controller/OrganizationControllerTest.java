@@ -62,6 +62,7 @@ public class OrganizationControllerTest {
   static Organization    test;
 
   static OUser           user;
+  static OUser           normalUser;
 
   @Before
   public void setUp() {
@@ -71,6 +72,12 @@ public class OrganizationControllerTest {
 
       user.setName("Enrico");
       user.setToken("testToken");
+
+      normalUser = new OUser();
+      normalUser.setName("testNormal");
+      normalUser.setToken("testNormal");
+      normalUser.setId(3l);
+      normalUser = userRepository.save(normalUser);
 
       test = new Organization();
       test.setName("fake");
@@ -251,7 +258,7 @@ public class OrganizationControllerTest {
 
     testDeleteTag(tag);
 
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 5; i++) {
       t = new Topic();
       t.setTitle("Test " + i);
       t.setBody("Test body " + i);
@@ -266,7 +273,7 @@ public class OrganizationControllerTest {
     JsonNode jsonNode = mapper.readTree(post.getBody().asString());
     JsonNode content = jsonNode.get("content");
     List<Topic> topics = Arrays.asList(mapper.readValue(content.toString(), Topic[].class));
-    Assert.assertEquals(10, topics.size());
+    Assert.assertEquals(6, topics.size());
 
     /* TEST PATCH + DELETE */
 
@@ -366,6 +373,45 @@ public class OrganizationControllerTest {
     topics = Arrays.asList(mapper.readValue(content.toString(), Topic[].class));
     Assert.assertEquals(1, topics.size());
 
+    // private Topic
+
+    t = new Topic();
+    t.setTitle("PrivateTopic");
+    t.setBody("Test body");
+    t.setConfidential(true);
+    t.setTags(new ArrayList<Tag>() {
+      {
+        add(tag);
+      }
+    });
+
+    post = header().given().body(t).when().post("/api/v1/orgs/fake/topics");
+
+    Assert.assertEquals(200, post.statusCode());
+
+    response = post.getBody().as(Topic.class);
+
+    Assert.assertEquals(response.getConfidential(), true);
+
+    Response get = header(normalUser).given().when().get("/api/v1/orgs/fake/topics/" + response.getNumber());
+
+    Assert.assertEquals(401, get.statusCode());
+
+    get = header().given().when().get("/api/v1/orgs/fake/topics");
+    Assert.assertEquals(200, get.statusCode());
+    mapper = new ObjectMapper();
+    jsonNode = mapper.readTree(get.getBody().asString());
+    content = jsonNode.get("content");
+    topics = Arrays.asList(mapper.readValue(content.toString(), Topic[].class));
+    Assert.assertEquals(6, topics.size());
+
+    get = header(normalUser).given().when().get("/api/v1/orgs/fake/topics");
+    Assert.assertEquals(200, get.statusCode());
+    mapper = new ObjectMapper();
+    jsonNode = mapper.readTree(get.getBody().asString());
+    content = jsonNode.get("content");
+    topics = Arrays.asList(mapper.readValue(content.toString(), Topic[].class));
+    Assert.assertEquals(5, topics.size());
   }
 
   protected Tag testCreateTag() {
@@ -424,5 +470,9 @@ public class OrganizationControllerTest {
 
   public static RequestSpecification header() {
     return given().header("X-AUTH-TOKEN", "testToken").given().contentType("application/json");
+  }
+
+  public static RequestSpecification header(OUser user) {
+    return given().header("X-AUTH-TOKEN", user.getToken()).given().contentType("application/json");
   }
 }

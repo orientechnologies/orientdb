@@ -14,6 +14,7 @@ import com.orientechnologies.website.model.schema.*;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.OrganizationRepository;
+import com.orientechnologies.website.security.OSecurityManager;
 import com.orientechnologies.website.services.UserService;
 import com.orientechnologies.website.websocket.ChatHandler;
 import com.tinkerpop.blueprints.Direction;
@@ -32,15 +33,18 @@ import java.util.*;
 public class OrganizationRepositoryImpl extends OrientBaseRepository<Organization> implements OrganizationRepository {
 
   @Autowired
-  private UserService     userService;
+  private UserService      userService;
   @Autowired
-  private OrientDBFactory dbFactory;
+  private OrientDBFactory  dbFactory;
 
   @Autowired
-  private ChatHandler     chatHandler;
+  private ChatHandler      chatHandler;
 
   @Autowired
-  private SchemaManager   schemaManager;
+  private SchemaManager    schemaManager;
+
+  @Autowired
+  private OSecurityManager securityManager;
 
   @Override
   public Organization findOneByName(String name) {
@@ -228,15 +232,24 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
       if (count) {
         query = String
             .format(
-                "select unionAll.size() as count  from (select unionAll($a,$b)  let $a= (select from Topic where [title,body] LUCENE '%s'),  $b = (select expand(in('HasComment')) from TopicComment where body lucene '%s') )",
+                "select count(*) from ( select expand(unionAll)  from (select unionAll($a,$b)  let $a= (select from Topic where [title,body] LUCENE '%s'),  $b = (select expand(in('HasComment')) from TopicComment where body lucene '%s') ) )",
                 stringStringMap.get("text"), stringStringMap.get("text"));
       } else {
         query = String
             .format(
-                "select expand(unionAll)  from (select unionAll($a,$b)  let $a= (select from Topic where [title,body] LUCENE '%s'),  $b = (select expand(in('HasComment')) from TopicComment where body lucene '%s') )",
+                "select from (select expand(unionAll)  from (select unionAll($a,$b)  let $a= (select from Topic where [title,body] LUCENE '%s'),  $b = (select expand(in('HasComment')) from TopicComment where body lucene '%s') ) )",
                 stringStringMap.get("text"), stringStringMap.get("text"));
       }
 
+    }
+
+    boolean canSeePrivate = securityManager.isCurrentMemberOrSupport(name);
+
+    if (!canSeePrivate) {
+      query = query + " where confidential <> true";
+    }
+    if (!count) {
+      query = query + " order by createdAt desc";
     }
     return query;
   }

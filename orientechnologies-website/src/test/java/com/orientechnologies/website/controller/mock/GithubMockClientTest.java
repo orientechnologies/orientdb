@@ -8,6 +8,7 @@ import com.orientechnologies.website.model.schema.dto.Label;
 import com.orientechnologies.website.model.schema.dto.Repository;
 import com.orientechnologies.website.model.schema.dto.web.MockIssueDTO;
 import com.orientechnologies.website.services.impl.IssueServiceImpl;
+import org.apache.commons.io.IOUtils;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,8 +20,12 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.testng.Assert;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+
+import static com.jayway.restassured.RestAssured.given;
 
 /**
  * Created by Enrico Risa on 24/06/15.
@@ -210,7 +215,27 @@ public class GithubMockClientTest extends BaseMockTest {
   }
 
   @Test
-  public void test5CloseComment() {
+  public void test5CommendFromExternal() {
+
+    InputStream stream = ClassLoader.getSystemResourceAsStream("comment-client.json");
+    try {
+      String content = IOUtils.toString(stream);
+      given().body(content).when().post("/api/v1/github/events");
+
+      Thread.sleep(1000);
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+
+    Issue issue = getSigleIssue(memberUser, 1);
+
+    Assert.assertEquals(issue.getComments().longValue(), 6);
+  }
+
+  @Test
+  public void test6CloseComment() {
 
     closeIssue(memberUser, 1);
 
@@ -230,6 +255,6 @@ public class GithubMockClientTest extends BaseMockTest {
 
     List<Map> events = events(memberUser, 1);
 
-    Assert.assertEquals(events.size(), 22);
+    Assert.assertEquals(events.size(), 23);
   }
 }

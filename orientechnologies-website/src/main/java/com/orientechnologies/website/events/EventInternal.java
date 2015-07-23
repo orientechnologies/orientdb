@@ -65,7 +65,12 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
         SimpleMailMessage mailMessage = new SimpleMailMessage();
         mailMessage.setTo(client.getSupportEmail());
         mailMessage.setFrom("prjhub@orientechnologies.com");
-        mailMessage.setSubject(prepareSubject(issue, client, isNew));
+        String subject = prepareSubject(issue, client, isNew);
+        if (subject != null) {
+          mailMessage.setSubject(subject);
+        } else {
+          mailMessage.setSubject(issue.getTitle());
+        }
         mailMessage.setText(content);
         sender.send(mailMessage);
       }
@@ -81,8 +86,10 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
     } else {
       text = support.getSupportSubjectUpdate();
     }
-    text = text.replace("$issue", "" + issue.getIid());
-    text = text.replace("$client", "" + issue.getClient().getName());
+    if (text != null) {
+      text = text.replace("$issue", "" + issue.getIid());
+      text = text.replace("$client", "" + issue.getClient().getName());
+    }
     return text;
   }
 }

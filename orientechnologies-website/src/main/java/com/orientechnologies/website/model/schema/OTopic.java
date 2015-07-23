@@ -133,7 +133,7 @@ public enum OTopic implements OTypeHolder<Topic> {
     doc.field(CREATED_AT.toString(), entity.getCreatedAt());
     doc.field(UPDATED_AT.toString(), entity.getUpdatedAt());
     doc.field(TITLE.toString(), entity.getTitle());
-    doc.field(CONFIDENTIAL.toString(), entity.getConfidential());
+    doc.field(CONFIDENTIAL.toString(), Boolean.TRUE.equals(entity.getConfidential()));
     return doc;
   }
 
