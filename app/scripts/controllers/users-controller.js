@@ -193,13 +193,15 @@ schemaModule.controller("UsersController", ['$scope', '$routeParams', '$location
       title: 'Warning!',
       body: 'You are deleting user ' + user.name + '. Are you sure?',
       success: function () {
-        DocumentApi.deleteDocument($scope.database.getName(), user['@rid'], function (data) {
+        DocumentApi.deleteDocument($scope.database.getName(), user['@rid']).then(function (data) {
           Notification.push({content: 'User ' + user.name + ' has been deleted.'});
           var idx = $scope.usersResult.indexOf(user);
           if (idx > -1) {
             $scope.usersResult.splice(idx, 1);
             $scope.tableParams.reload();
           }
+        }).catch(function () {
+
         });
       }
     });
@@ -216,8 +218,7 @@ schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location
 
   $scope.strictSql = Database.isStrictSql();
 
-
-  console.log($scope.strictSql)
+  
   if ($scope.strictSql) {
     var selectAllUsers = 'select * from oRole order by name fetchPlan *:1 ';
   } else {
