@@ -365,18 +365,15 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
               }
             }
           } else {// searching for neighbors
-            OWhereClause where = aliasFilters.get(outEdge.in.alias);
-            if (where == null || where.matchesFilters(rightValue, iCommandContext)) {
-              MatchContext childContext = matchContext.copy(outEdge.in.alias, rightValue.getIdentity());
-              if (edgeIterator.hasNext()) {
-                childContext.root = rootNode.alias;
-              } else {
-                childContext.root = calculateNextRoot(pattern, childContext);
-              }
-              childContext.matchedEdges.put(outEdge, true);
-              if (!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
-                return false;
-              }
+            MatchContext childContext = matchContext.copy(outEdge.in.alias, rightValue.getIdentity());
+            if (edgeIterator.hasNext()) {
+              childContext.root = rootNode.alias;
+            } else {
+              childContext.root = calculateNextRoot(pattern, childContext);
+            }
+            childContext.matchedEdges.put(outEdge, true);
+            if (!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
+              return false;
             }
           }
         }
@@ -475,7 +472,6 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         Iterable<OIdentifiable> queryResult = (Iterable) outEdge.item.method.execute(startingPoint, iCommandContext);
 
         for (OIdentifiable origin : queryResult) {
-          // TODO optimize checking maxDepth
           // TODO consider break strategies (eg. re-traverse nodes)
           Iterable<OIdentifiable> subResult = executeTraversal(matchContext, iCommandContext, outEdge, origin, depth + 1);
           if (subResult instanceof Collection) {

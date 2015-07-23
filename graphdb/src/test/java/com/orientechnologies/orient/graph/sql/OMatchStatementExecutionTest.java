@@ -10,7 +10,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 
@@ -96,7 +98,7 @@ public class OMatchStatementExecutionTest {
     // ________3___4_______5___6__________
     // ______(p6)_(p7)___(p8)__(p9)_______
     // ______/__\_________________________
-    // __[c]7_____8[]_____________________
+    // __[c]7_____8_______________________
     // __(p10)___(p11)____________________
     // ___/_______________________________
     // __9[]______________________________
@@ -284,10 +286,13 @@ public class OMatchStatementExecutionTest {
   }
 
   @Test
-  public void testOrgChart() {
+  public void testManager() {
+    // the manager of a person is the manager of the department that person belongs to.
+    // if that department does not have a direct manager, climb up the hierarchy until you find one
     assertEquals("c", getManager("p10").field("name"));
     assertEquals("c", getManager("p12").field("name"));
     assertEquals("b", getManager("p6").field("name"));
+    assertEquals("b", getManager("p11").field("name"));
   }
 
   private ODocument getManager(String personName) {
@@ -303,11 +308,49 @@ public class OMatchStatementExecutionTest {
     query.append("  return manager");
     query.append(")");
 
-    System.out.println(query);
-
     List<OIdentifiable> qResult = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, qResult.size());
     return qResult.get(0).getRecord();
+  }
+
+  @Test
+  public void testManaged() {
+    // people managed by a manager are people who belong to his department or people who belong to sub-departments without a manager
+    List<OIdentifiable> managedByA = getManagedBy("a");
+    assertEquals(1, managedByA.size());
+    assertEquals("p1", ((ODocument) managedByA.get(0).getRecord()).field("name"));
+
+    List<OIdentifiable> managedByB = getManagedBy("b");
+    assertEquals(5, managedByB.size());
+    Set<String> expectedNames = new HashSet<String>();
+    expectedNames.add("p2");
+    expectedNames.add("p3");
+    expectedNames.add("p6");
+    expectedNames.add("p7");
+    expectedNames.add("p11");
+    Set<String> names = new HashSet<String>();
+    for (OIdentifiable id : managedByB) {
+      ODocument doc = id.getRecord();
+      String name = doc.field("name");
+      names.add(name);
+    }
+    assertEquals(expectedNames, names);
+  }
+
+  private List<OIdentifiable> getManagedBy(String managerName) {
+    StringBuilder query = new StringBuilder();
+    query.append("select expand(managed) from (");
+    query.append("  match {class:Employee, where: (name = '" + managerName + "')}");
+    query.append("  .out('ManagerOf')");
+    query.append("  .in('ParentDepartment'){");
+    query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
+    query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
+    query.append("  }");
+    query.append("  .in('WorksAt'){as: managed}");
+    query.append("  return managed");
+    query.append(")");
+
+    return db.command(new OCommandSQL(query.toString())).execute();
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {

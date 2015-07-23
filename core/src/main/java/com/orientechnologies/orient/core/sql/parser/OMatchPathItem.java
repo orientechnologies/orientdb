@@ -20,6 +20,12 @@ public class OMatchPathItem extends SimpleNode {
   }
 
   public boolean isBidirectional() {
+    if (filter.getWhileCondition() != null) {
+      return false;
+    }
+    if (filter.getMaxDepth() != null) {
+      return false;
+    }
     return method.isBidirectional();
   }
 
