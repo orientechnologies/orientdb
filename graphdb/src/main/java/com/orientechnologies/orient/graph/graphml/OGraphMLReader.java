@@ -18,8 +18,9 @@
  *  
  */
 
-package com.orientechnologies.orient.graph.console;
+package com.orientechnologies.orient.graph.graphml;
 
+import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Graph;
@@ -29,7 +30,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLTokens;
 
 import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.events.XMLEvent;
 import java.io.FileInputStream;
@@ -49,14 +49,16 @@ import java.util.Map;
  * @author Joshua Shinavier (http://fortytwo.net)
  */
 public class OGraphMLReader {
-  private static final String   LABELS           = "labels";
-  private final OrientBaseGraph graph;
-  private int                   vertexLabelIndex = 0;
-  private String                vertexIdKey      = "id";
-  private String                edgeIdKey        = null;
-  private String                edgeLabelKey     = null;
-  private boolean               storeVertexIds   = false;
-  private int                   batchSize        = 1000;
+  private static final String                 LABELS              = "labels";
+  private final OrientBaseGraph               graph;
+  private int                                 vertexLabelIndex    = 0;
+  private String                              vertexIdKey         = "id";
+  private String                              edgeIdKey           = null;
+  private String                              edgeLabelKey        = GraphMLTokens.LABEL;
+  private boolean                             storeVertexIds      = false;
+  private int                                 batchSize           = 1000;
+  private Map<String, OGraphMLImportStrategy> vertexPropsStrategy = new HashMap<String, OGraphMLImportStrategy>();
+  private Map<String, OGraphMLImportStrategy> edgePropsStrategy   = new HashMap<String, OGraphMLImportStrategy>();
 
   /**
    * @param graph
@@ -64,6 +66,32 @@ public class OGraphMLReader {
    */
   public OGraphMLReader(OrientBaseGraph graph) {
     this.graph = graph;
+  }
+
+  /**
+   * Define custom strategy to use for vertex attribute.
+   * 
+   * @param iAttributeName
+   *          attribute name
+   * @param iStrategy
+   *          strategy implementation
+   */
+  public OGraphMLReader defineVertexAttributeStrategy(final String iAttributeName, final OGraphMLImportStrategy iStrategy) {
+    vertexPropsStrategy.put(iAttributeName, iStrategy);
+    return this;
+  }
+
+  /**
+   * Define custom strategy to use for edge attribute.
+   *
+   * @param iAttributeName
+   *          attribute name
+   * @param iStrategy
+   *          strategy implementation
+   */
+  public OGraphMLReader defineEdgeAttributeStrategy(final String iAttributeName, final OGraphMLImportStrategy iStrategy) {
+    edgePropsStrategy.put(iAttributeName, iStrategy);
+    return this;
   }
 
   /**
@@ -77,7 +105,7 @@ public class OGraphMLReader {
    *           thrown when the GraphML data is not correctly formatted
    */
   public void inputGraph(final Graph inputGraph, final InputStream graphMLInputStream) throws IOException {
-    inputGraph(inputGraph, graphMLInputStream, batchSize, null, null, null);
+    inputGraph(inputGraph, graphMLInputStream, batchSize, vertexIdKey, edgeIdKey, edgeLabelKey);
   }
 
   /**
@@ -91,7 +119,7 @@ public class OGraphMLReader {
    *           thrown when the GraphML data is not correctly formatted
    */
   public void inputGraph(final Graph inputGraph, final String filename) throws IOException {
-    inputGraph(inputGraph, filename, batchSize, vertexIdKey, null, null);
+    inputGraph(inputGraph, filename, batchSize, vertexIdKey, edgeIdKey, edgeLabelKey);
   }
 
   /**
@@ -112,11 +140,11 @@ public class OGraphMLReader {
    * @throws IOException
    *           thrown when the GraphML data is not correctly formatted
    */
-  public void inputGraph(final Graph inputGraph, final String filename, int bufferSize, String vertexIdKey, String edgeIdKey,
-      String edgeLabelKey) throws IOException {
+  public OGraphMLReader inputGraph(final Graph inputGraph, final String filename, int bufferSize, String vertexIdKey,
+      String edgeIdKey, String edgeLabelKey) throws IOException {
     FileInputStream fis = new FileInputStream(filename);
     try {
-      inputGraph(inputGraph, fis, bufferSize, vertexIdKey, edgeIdKey, edgeLabelKey);
+      return inputGraph(inputGraph, fis, bufferSize, vertexIdKey, edgeIdKey, edgeLabelKey);
     } finally {
       fis.close();
     }
@@ -140,8 +168,8 @@ public class OGraphMLReader {
    * @throws IOException
    *           thrown when the GraphML data is not correctly formatted
    */
-  public void inputGraph(final Graph inputGraph, final InputStream graphMLInputStream, int bufferSize, String vertexIdKey,
-      String edgeIdKey, String edgeLabelKey) throws IOException {
+  public OGraphMLReader inputGraph(final Graph inputGraph, final InputStream graphMLInputStream, int bufferSize,
+      String vertexIdKey, String edgeIdKey, String edgeLabelKey) throws IOException {
 
     XMLInputFactory inputFactory = XMLInputFactory.newInstance();
 
@@ -220,7 +248,8 @@ public class OGraphMLReader {
               if (vertexIdKey == null) {
                 edgeEndVertices[i] = null;
               } else {
-                edgeEndVertices[i] = graph.getVertex(vertexMappedIdMap.get(vertexIds[i]));
+                final Object vId = vertexMappedIdMap.get(vertexIds[i]);
+                edgeEndVertices[i] = vId != null ? graph.getVertex(vId) : null;
               }
 
               if (null == edgeEndVertices[i]) {
@@ -240,22 +269,43 @@ public class OGraphMLReader {
             String key = reader.getAttributeValue(null, GraphMLTokens.KEY);
             String attributeName = keyIdMap.get(key);
 
-            if (attributeName != null) {
-              String value = reader.getElementText();
+            if (attributeName == null)
+              attributeName = key;
 
-              if (inVertex == true) {
-                if ((vertexIdKey != null) && (key.equals(vertexIdKey))) {
-                  // Should occur at most once per Vertex
-                  vertexId = value;
-                } else
-                  vertexProps.put(attributeName, typeCastValue(key, value, keyTypesMaps));
-              } else if (inEdge == true) {
-                if ((edgeLabelKey != null) && (key.equals(edgeLabelKey)))
-                  edgeLabel = value;
-                else if ((edgeIdKey != null) && (key.equals(edgeIdKey)))
-                  edgeId = value;
-                else
-                  edgeProps.put(attributeName, typeCastValue(key, value, keyTypesMaps));
+            String value = reader.getElementText();
+
+            if (inVertex == true) {
+              if ((vertexIdKey != null) && (key.equals(vertexIdKey))) {
+                // Should occur at most once per Vertex
+                vertexId = value;
+              } else if (attributeName.equalsIgnoreCase(LABELS)) {
+                // IGNORE LABELS
+              } else {
+                final Object attrValue = typeCastValue(key, value, keyTypesMaps);
+
+                final OGraphMLImportStrategy strategy = vertexPropsStrategy.get(attributeName);
+                if (strategy != null) {
+                  attributeName = strategy.transformAttribute(attributeName, attrValue);
+                }
+
+                if (attributeName != null)
+                  vertexProps.put(attributeName, attrValue);
+              }
+            } else if (inEdge == true) {
+              if ((edgeLabelKey != null) && (key.equals(edgeLabelKey)))
+                edgeLabel = value;
+              else if ((edgeIdKey != null) && (key.equals(edgeIdKey)))
+                edgeId = value;
+              else {
+                final Object attrValue = typeCastValue(key, value, keyTypesMaps);
+
+                final OGraphMLImportStrategy strategy = edgePropsStrategy.get(attributeName);
+                if (strategy != null) {
+                  attributeName = strategy.transformAttribute(attributeName, attrValue);
+                }
+
+                if (attributeName != null)
+                  edgeProps.put(attributeName, attrValue);
               }
             }
 
@@ -267,7 +317,7 @@ public class OGraphMLReader {
             ORID currentVertex = null;
 
             if (vertexIdKey != null)
-              vertexMappedIdMap.get(vertexId);
+              currentVertex = vertexMappedIdMap.get(vertexId);
 
             if (currentVertex == null) {
               final OrientVertex v = graph.addVertex(vertexLabel, vertexProps);
@@ -304,9 +354,11 @@ public class OGraphMLReader {
 
       graph.commit();
 
-    } catch (XMLStreamException xse) {
-      throw new IOException(xse);
+    } catch (Exception xse) {
+      throw new ODatabaseImportException(xse);
     }
+
+    return this;
   }
 
   public int getVertexLabelIndex() {
@@ -349,8 +401,8 @@ public class OGraphMLReader {
    * @throws IOException
    *           thrown when the GraphML data is not correctly formatted
    */
-  public void inputGraph(final InputStream graphMLInputStream) throws IOException {
-    inputGraph(this.graph, graphMLInputStream, batchSize, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
+  public OGraphMLReader inputGraph(final InputStream graphMLInputStream) throws IOException {
+    return inputGraph(this.graph, graphMLInputStream, batchSize, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
   }
 
   /**
@@ -361,8 +413,8 @@ public class OGraphMLReader {
    * @throws IOException
    *           thrown when the GraphML data is not correctly formatted
    */
-  public void inputGraph(final String filename) throws IOException {
-    inputGraph(this.graph, filename, batchSize, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
+  public OGraphMLReader inputGraph(final String filename) throws IOException {
+    return inputGraph(this.graph, filename, batchSize, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
   }
 
   /**
@@ -375,8 +427,8 @@ public class OGraphMLReader {
    * @throws IOException
    *           thrown when the GraphML data is not correctly formatted
    */
-  public void inputGraph(final InputStream graphMLInputStream, int bufferSize) throws IOException {
-    inputGraph(this.graph, graphMLInputStream, bufferSize, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
+  public OGraphMLReader inputGraph(final InputStream graphMLInputStream, int bufferSize) throws IOException {
+    return inputGraph(this.graph, graphMLInputStream, bufferSize, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
   }
 
   /**
@@ -389,8 +441,16 @@ public class OGraphMLReader {
    * @throws IOException
    *           thrown when the GraphML data is not correctly formatted
    */
-  public void inputGraph(final String filename, final int bufferSize) throws IOException {
-    inputGraph(this.graph, filename, bufferSize, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
+  public OGraphMLReader inputGraph(final String filename, final int bufferSize) throws IOException {
+    return inputGraph(this.graph, filename, bufferSize, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
+  }
+
+  public boolean isStoreVertexIds() {
+    return storeVertexIds;
+  }
+
+  public void setStoreVertexIds(final boolean storeVertexIds) {
+    this.storeVertexIds = storeVertexIds;
   }
 
   public OGraphMLReader setOptions(final Map<String, List<String>> opts) {

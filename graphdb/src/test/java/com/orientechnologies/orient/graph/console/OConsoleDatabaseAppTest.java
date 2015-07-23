@@ -77,32 +77,37 @@ public class OConsoleDatabaseAppTest {
     builder.append("traverse out() from V;\n");
 
     OConsoleDatabaseApp console = new OConsoleDatabaseApp(new String[] { builder.toString() });
-    console.run();
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-    db.open("admin", "admin");
     try {
-      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
-      Assert.assertEquals(1, result.size());
-      ODocument doc = result.get(0);
-      Assert.assertEquals("bar", doc.field("surname"));
+      console.run();
 
-      result = db.query(new OSQLSynchQuery<ODocument>("select from bar"));
-      Assert.assertEquals(0, result.size());
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+      db.open("admin", "admin");
+      try {
+        List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
+        Assert.assertEquals(1, result.size());
+        ODocument doc = result.get(0);
+        Assert.assertEquals("bar", doc.field("surname"));
+
+        result = db.query(new OSQLSynchQuery<ODocument>("select from bar"));
+        Assert.assertEquals(0, result.size());
+      } finally {
+        db.close();
+      }
+      OrientGraph graph = new OrientGraph(dbUrl);
+      try {
+        Iterable<Vertex> result = graph.command(
+            new OSQLSynchQuery<Vertex>("select expand(out()) from (select from V where name = 'foo')")).execute();
+        Iterator<Vertex> iterator = result.iterator();
+        Assert.assertTrue(iterator.hasNext());
+        Vertex next = iterator.next();
+        Assert.assertEquals("bar", next.getProperty("name"));
+        Assert.assertFalse(iterator.hasNext());
+      } finally {
+        graph.shutdown();
+      }
     } finally {
-      db.close();
-    }
-    OrientGraph graph = new OrientGraph(dbUrl);
-    try {
-      Iterable<Vertex> result = graph.command(
-          new OSQLSynchQuery<Vertex>("select expand(out()) from (select from V where name = 'foo')")).execute();
-      Iterator<Vertex> iterator = result.iterator();
-      Assert.assertTrue(iterator.hasNext());
-      Vertex next = iterator.next();
-      Assert.assertEquals("bar",next.getProperty("name"));
-      Assert.assertFalse(iterator.hasNext());
-    } finally {
-      graph.shutdown();
+      console.close();
     }
 
   }
@@ -118,17 +123,23 @@ public class OConsoleDatabaseAppTest {
     builder.append("blabla;\n");// <- wrong command, this should break the console
     builder.append("update foo set surname = 'bar' where name = 'foo';\n");
     OConsoleDatabaseApp console = new OConsoleDatabaseApp(new String[] { builder.toString() });
-    console.run();
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-    db.open("admin", "admin");
     try {
-      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
-      Assert.assertEquals(1, result.size());
-      ODocument doc = result.get(0);
-      Assert.assertNull(doc.field("surname"));
+      console.run();
+
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+      db.open("admin", "admin");
+      try {
+        List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
+        Assert.assertEquals(1, result.size());
+        ODocument doc = result.get(0);
+        Assert.assertNull(doc.field("surname"));
+      } finally {
+        db.close();
+      }
     } finally {
-      db.close();
+      console.close();
     }
+
   }
 }
