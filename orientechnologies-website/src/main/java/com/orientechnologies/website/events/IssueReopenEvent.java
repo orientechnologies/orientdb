@@ -1,22 +1,22 @@
 package com.orientechnologies.website.events;
 
+import com.orientechnologies.website.configuration.AppConfig;
+import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.IssueEvent;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.EventRepository;
 import com.orientechnologies.website.repository.IssueRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring4.SpringTemplateEngine;
-
 import reactor.event.Event;
 
-import com.orientechnologies.website.configuration.AppConfig;
-import com.orientechnologies.website.model.schema.dto.Issue;
-import com.orientechnologies.website.model.schema.dto.OUser;
-
+import javax.mail.Message;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,12 +76,20 @@ public class IssueReopenEvent extends EventInternal<IssueEvent> {
     String[] actors = getActorsEmail(owner, involvedActors, actorsInIssue);
     if (actors.length > 0) {
       for (String actor : actors) {
-        SimpleMailMessage mailMessage = new SimpleMailMessage();
-        mailMessage.setTo(actor);
-        mailMessage.setFrom("prjhub@orientechnologies.com");
-        mailMessage.setSubject(issue.getTitle());
-        mailMessage.setText(htmlContent);
-        sender.send(mailMessage);
+        MimeMessage mailMessage = sender.createMimeMessage();
+        try {
+          mailMessage.setRecipient(Message.RecipientType.TO, new InternetAddress(actor));
+          mailMessage.setFrom(new InternetAddress("prjhub@orientechnologies.com", "foo"));
+          if (issue.getClient() != null) {
+            mailMessage.setSubject("[PrjHub][" + issue.getClient().getName() + "] " + issue.getTitle());
+          } else {
+            mailMessage.setSubject("[PrjHub] " + issue.getTitle());
+          }
+          mailMessage.setText(htmlContent);
+          sender.send(mailMessage);
+        } catch (Exception e) {
+
+        }
       }
     }
 
