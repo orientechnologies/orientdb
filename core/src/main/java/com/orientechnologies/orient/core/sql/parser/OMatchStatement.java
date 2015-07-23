@@ -449,10 +449,12 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
     OWhereClause filter = outEdge.item.filter.getFilter();
     OWhereClause whileCondition = outEdge.item.filter.getWhileCondition();
+    Integer maxDepth = outEdge.item.filter.getMaxDepth();
 
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
-    if (whileCondition == null) {// in this case starting point is not returned and only one level depth is evaluated
+    if (whileCondition == null && maxDepth == null) {// in this case starting point is not returned and only one level depth is
+                                                     // evaluated
       Iterable<OIdentifiable> queryResult = (Iterable) outEdge.item.method.execute(startingPoint, iCommandContext);
       if (outEdge.item.filter == null || outEdge.item.filter.getFilter() == null) {
         return queryResult;
@@ -465,10 +467,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     } else {// in this case also zero level (starting point) is considered and traversal depth is given by the while condition
       iCommandContext.setVariable("$depth", depth);
-      if (whileCondition.matchesFilters(startingPoint, iCommandContext)) {
-        if (filter == null || filter.matchesFilters(startingPoint, iCommandContext)) {
-          result.add(startingPoint);
-        }
+      if (filter == null || filter.matchesFilters(startingPoint, iCommandContext)) {
+        result.add(startingPoint);
+      }
+      if ((maxDepth == null || depth < maxDepth)
+          && (whileCondition == null || whileCondition.matchesFilters(startingPoint, iCommandContext))) {
         Iterable<OIdentifiable> queryResult = (Iterable) outEdge.item.method.execute(startingPoint, iCommandContext);
 
         for (OIdentifiable origin : queryResult) {

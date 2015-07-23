@@ -60,7 +60,7 @@ public class OMatchFilter extends SimpleNode {
     return null;
   }
 
-  public OWhereClause getWhileCondition(){
+  public OWhereClause getWhileCondition() {
     for (OMatchFilterItem item : items) {
       if (item.whileCondition != null) {
         return item.whileCondition;
@@ -77,6 +77,15 @@ public class OMatchFilter extends SimpleNode {
         else
           return item.className.value.toString();
         // TODO evaluate expression
+      }
+    }
+    return null;
+  }
+
+  public Integer getMaxDepth() {
+    for (OMatchFilterItem item : items) {
+      if (item.maxDepth != null) {
+        return item.maxDepth.value.intValue();
       }
     }
     return null;

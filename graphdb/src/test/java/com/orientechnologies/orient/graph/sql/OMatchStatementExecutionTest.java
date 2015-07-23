@@ -48,6 +48,48 @@ public class OMatchStatementExecutionTest {
     db.command(new OCommandSQL("CREATE class MathOp extends V")).execute();
     db.command(new OCommandSQL("CREATE VERTEX MathOp set a = 1, b = 3, c = 2")).execute();
     db.command(new OCommandSQL("CREATE VERTEX MathOp set a = 5, b = 3, c = 2")).execute();
+
+    db.command(new OCommandSQL("CREATE class Employee extends V")).execute();
+    db.command(new OCommandSQL("CREATE class Department extends V")).execute();
+    db.command(new OCommandSQL("CREATE class ParentDepartment extends E")).execute();
+    db.command(new OCommandSQL("CREATE class WorksAt extends E")).execute();
+    db.command(new OCommandSQL("CREATE class ManagerOf extends E")).execute();
+
+    for (int i = 0; i < 10; i++) {
+      db.command(new OCommandSQL("CREATE VERTEX Department set name = 'department" + i + "'")).execute();
+    }
+
+    int[][] deptHierarchy = new int[10][];
+    deptHierarchy[0] = new int[] { 1, 2 };
+    deptHierarchy[1] = new int[] { 3, 4 };
+    deptHierarchy[2] = new int[] { 5, 6 };
+    deptHierarchy[3] = new int[] { 7, 8 };
+    deptHierarchy[4] = new int[] {};
+    deptHierarchy[5] = new int[] {};
+    deptHierarchy[6] = new int[] {};
+    deptHierarchy[7] = new int[] { 9 };
+    deptHierarchy[8] = new int[] {};
+    deptHierarchy[9] = new int[] {};
+
+    // ______________0
+    // ____________/___\
+    // ___________/_____\
+    // __________1_______2
+    // _________/_\_____/_\
+    // ________3___4___5___6
+    // ______/__\_____________
+    // ____7_____8_____________
+    // ___/_____________________
+    // __9_______________________
+
+    for (int parent = 0; parent < deptHierarchy.length; parent++) {
+      int[] children = deptHierarchy[parent];
+      for (int child : children) {
+        db.command(
+            new OCommandSQL("CREATE EDGE ParentDepartment from (select from Department where name = 'department" + child
+                + "') to (select from Department where name = 'department" + parent + "') ")).execute();
+      }
+    }
   }
 
   @AfterClass
@@ -130,7 +172,7 @@ public class OMatchStatementExecutionTest {
     List<ODocument> qResult = db
         .command(
             new OCommandSQL(
-                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 2)} return friend)"))
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 1)} return friend)"))
         .execute();
     assertEquals(3, qResult.size());
 
@@ -144,9 +186,49 @@ public class OMatchStatementExecutionTest {
     qResult = db
         .command(
             new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 4), where: ($depth=1) } return friend)"))
+        .execute();
+    assertEquals(2, qResult.size());
+
+
+    qResult = db
+        .command(
+            new OCommandSQL(
                 "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend)"))
         .execute();
     assertEquals(6, qResult.size());
+
+  }
+
+  @Test
+  public void testMaxDepth() throws Exception {
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1, where: ($depth=1) } return friend)"))
+        .execute();
+    assertEquals(2, qResult.size());
+
+    qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1 } return friend)"))
+        .execute();
+    assertEquals(3, qResult.size());
+
+    qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 0 } return friend)"))
+        .execute();
+    assertEquals(1, qResult.size());
+
+    qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1, where: ($depth > 0) } return friend)"))
+        .execute();
+    assertEquals(2, qResult.size());
 
   }
 
