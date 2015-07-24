@@ -33,6 +33,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
+import org.mindrot.jbcrypt.BCrypt;
+
 /**
  * Contains the user settings about security and permissions. Each user has one or more roles associated. Roles contains the
  * permission rules that define what the user can access and what he cannot.
@@ -200,7 +202,7 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
   }
 
   public boolean checkPassword(final String iPassword) {
-    return OSecurityManager.instance().check(iPassword, (String) document.field("password"));
+    return BCrypt.checkpw(iPassword, (String) document.field("password"));
   }
 
   public String getName() {

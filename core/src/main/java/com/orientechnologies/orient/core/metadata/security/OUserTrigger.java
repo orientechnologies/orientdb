@@ -25,6 +25,9 @@ import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 
+import org.mindrot.jbcrypt.BCrypt;
+
+
 /**
  * Encrypt the password using the SHA-256 algorithm.
  * 
@@ -61,17 +64,17 @@ public class OUserTrigger extends ODocumentHookAbstract {
   private RESULT encodePassword(final ODocument iDocument) {
     if (iDocument.field("name") == null)
       throw new OSecurityException("User name not found");
-
     final String password = (String) iDocument.field("password");
 
     if (password == null)
       throw new OSecurityException("User '" + iDocument.field("name") + "' has no password");
 
     if (!password.startsWith(OSecurityManager.ALGORITHM_PREFIX)) {
-      iDocument.field("password", OUser.encryptPassword(password));
+      if (password.length() < 20) {
+        iDocument.field("password", BCrypt.hashpw(password, BCrypt.gensalt()));
+      }
       return RESULT.RECORD_CHANGED;
     }
-
     return RESULT.RECORD_NOT_CHANGED;
   }
 }
