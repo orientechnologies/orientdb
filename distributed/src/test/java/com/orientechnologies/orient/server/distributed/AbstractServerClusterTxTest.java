@@ -44,7 +44,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
     @Override
     public Void call() throws Exception {
       String name = Integer.toString(serverId);
-      for (int i = 0; i < count; i++) {
+      for (int i = baseCount; i < count; i++) {
         final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
         try {
           if ((i + 1) % 100 == 0)

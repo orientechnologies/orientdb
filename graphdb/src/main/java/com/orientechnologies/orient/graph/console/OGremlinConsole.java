@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundExcepti
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.graph.graphml.OGraphMLReader;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.orientechnologies.orient.graph.migration.OGraphMigration;
@@ -105,8 +106,8 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
     final String options = fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim() : text;
 
-    if (fileName != null && fileName.endsWith(".graphml")) {
-      message("\nImporting GRAPHML database from " + text + "...");
+    if (fileName != null && (fileName.endsWith(".graphml") || fileName.endsWith(".xml"))) {
+      message("\nImporting GRAPHML database from " + fileName + " with options (" + options + ")...");
 
       try {
         final Map<String, List<String>> opts = parseOptions(options);
@@ -116,7 +117,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
         g.setWarnOnForceClosingTx(false);
         new OGraphMLReader(g).setOptions(opts).inputGraph(g, fileName);
         g.commit();
-        commit();
+        currentDatabase.commit();
 
       } catch (ODatabaseImportException e) {
         printError(e);

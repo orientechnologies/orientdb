@@ -50,6 +50,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   protected static final int delayWriter = 0;
   protected static final int delayReader = 1000;
   protected static final int writerCount = 5;
+  protected int              baseCount   = 0;
   protected long             expected;
   protected long             beginInstances;
   protected OIndex<?>        idx;
@@ -74,9 +75,11 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
           if ((i + 1) % 100 == 0)
             System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
 
-          final ODocument person = createRecord(database, i);
-          updateRecord(database, i);
-          checkRecord(database, i);
+          final int id = baseCount + i;
+
+          final ODocument person = createRecord(database, id);
+          updateRecord(database, id);
+          checkRecord(database, id);
           checkIndex(database, (String) person.field("name"), person.getIdentity());
 
           Thread.sleep(delayWriter);
@@ -187,30 +190,42 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       database.close();
     }
 
+    executeMultipleTest();
+    dropIndexNode1();
+    recreateIndexNode2();
+  }
+
+  protected void executeMultipleTest() throws InterruptedException, java.util.concurrent.ExecutionException {
     System.out.println("Creating Writers and Readers threads...");
 
     final ExecutorService writerExecutors = Executors.newCachedThreadPool();
     final ExecutorService readerExecutors = Executors.newCachedThreadPool();
 
     runningWriters = new CountDownLatch(serverInstance.size() * writerCount);
-    expected = writerCount * count * serverInstance.size() + beginInstances;
 
     int serverId = 0;
     int threadId = 0;
     List<Callable<Void>> writerWorkers = new ArrayList<Callable<Void>>();
     for (ServerRun server : serverInstance) {
-      for (int j = 0; j < writerCount; j++) {
-        Callable writer = createWriter(serverId, threadId++, getDatabaseURL(server));
-        writerWorkers.add(writer);
+      if (server.isActive()) {
+        for (int j = 0; j < writerCount; j++) {
+          Callable writer = createWriter(serverId, threadId++, getDatabaseURL(server));
+          writerWorkers.add(writer);
+        }
+        serverId++;
       }
-      serverId++;
     }
+
+    expected = writerCount * count * serverId + beginInstances + baseCount;
+
     List<Future<Void>> futures = writerExecutors.invokeAll(writerWorkers);
 
     List<Callable<Void>> readerWorkers = new ArrayList<Callable<Void>>();
     for (ServerRun server : serverInstance) {
-      Callable<Void> reader = createReader(getDatabaseURL(server));
-      readerWorkers.add(reader);
+      if (server.isActive()) {
+        Callable<Void> reader = createReader(getDatabaseURL(server));
+        readerWorkers.add(reader);
+      }
     }
 
     List<Future<Void>> rFutures = readerExecutors.invokeAll(readerWorkers);
@@ -236,13 +251,13 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     System.out.println("All threads have finished, shutting down server instances");
 
     for (ServerRun server : serverInstance) {
-      printStats(getDatabaseURL(server));
+      if (server.isActive()) {
+        printStats(getDatabaseURL(server));
+      }
     }
 
     checkInsertedEntries();
     checkIndexedEntries();
-    dropIndexNode1();
-    recreateIndexNode2();
   }
 
   protected Callable<Void> createReader(String databaseURL) {
@@ -394,7 +409,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person")
           + " counting cluster: " + database.countClusterElements("Person"));
 
-      if (((OMetadataInternal)database.getMetadata()).getImmutableSchemaSnapshot().existsClass("ODistributedConflict"))
+      if (((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().existsClass("ODistributedConflict"))
         try {
           List<ODocument> conflicts = database
               .query(new OSQLSynchQuery<OIdentifiable>("select count(*) from ODistributedConflict"));
