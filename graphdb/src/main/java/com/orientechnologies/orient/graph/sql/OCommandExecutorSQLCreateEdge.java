@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -202,6 +203,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
                   try {
                     Thread.sleep(wait);
                   } catch (InterruptedException e1) {
+                    OLogManager.instance().error(this, "Wait was interrupted.");
                   }
 
                 // RELOAD LAST VERSION

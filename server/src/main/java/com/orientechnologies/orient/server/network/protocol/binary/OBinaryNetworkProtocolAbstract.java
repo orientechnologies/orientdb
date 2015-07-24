@@ -396,6 +396,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     try {
       channel.flush();
     } catch (IOException e1) {
+      OLogManager.instance().error(this, "Error during channel flush", e1);
     }
   }
 

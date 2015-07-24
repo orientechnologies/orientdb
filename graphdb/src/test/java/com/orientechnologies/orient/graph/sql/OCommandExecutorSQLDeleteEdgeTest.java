@@ -57,6 +57,9 @@ public class OCommandExecutorSQLDeleteEdgeTest {
 
   @Before
   public void setUp() throws Exception {
+    db.close();
+    db.open("admin", "admin");
+
     db.getMetadata().getSchema().getClass("User").truncate();
     db.getMetadata().getSchema().getClass("Folder").truncate();
     db.getMetadata().getSchema().getClass("CanAccess").truncate();

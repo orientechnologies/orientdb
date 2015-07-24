@@ -192,8 +192,7 @@ public class ReadWriteCacheConcurrentTest {
   private void validateFileContent(byte version, int k) throws IOException {
     String path = storageLocal.getConfiguration().getDirectory() + "/readWriteCacheTest" + k + ".tst";
 
-    OFileClassic fileClassic = new OFileClassic();
-    fileClassic.init(path, "r");
+    OFileClassic fileClassic = new OFileClassic(path, "r");
     fileClassic.open();
 
     for (int i = 0; i < PAGE_COUNT; i++) {

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.command.script;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -38,6 +39,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 import javax.script.*;
@@ -309,6 +311,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     try {
       Thread.sleep(new Random().nextInt(MAX_DELAY - 1) + 1);
     } catch (InterruptedException e) {
+      OLogManager.instance().error(this, "Wait was interrupted", e);
     }
   }
 
@@ -404,6 +407,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     try {
       Thread.sleep(Integer.parseInt(sleepTimeInMs));
     } catch (InterruptedException e) {
+      OLogManager.instance().error(this, "Sleep was interrupted", e);
     }
   }
 
