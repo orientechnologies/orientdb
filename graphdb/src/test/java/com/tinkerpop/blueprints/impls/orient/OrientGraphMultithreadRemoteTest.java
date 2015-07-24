@@ -91,7 +91,7 @@ public class OrientGraphMultithreadRemoteTest  {
     List<Thread> threads = new ArrayList<Thread>();
     int threadCount = 8;
     final int recordsPerThread = 20;
-    int records = threadCount * recordsPerThread;
+    long records = threadCount * recordsPerThread;
     try {
       for (int t = 0; t < threadCount; t++) {
         Thread thread = new Thread() {
@@ -134,7 +134,29 @@ public class OrientGraphMultithreadRemoteTest  {
       }
     }
     OrientGraph graph = graphFactory.getTx();
-    assertEquals(graph.countVertices(), records);
+
+    long actualRecords = graph.countVertices();
+
+    if (actualRecords != records) {
+      System.out
+          .println("Count of records on server does not equal to expected count of records. Try to reproduce it next 10 times");
+
+      int reproduced = 0;
+      while (true) {
+        if (graph.countVertices() != records)
+          reproduced++;
+        else
+          break;
+        if (reproduced == 10) {
+          System.out.println("Test goes in forever loop to investigate reason of this error.");
+          while (true)
+            ;
+        }
+      }
+
+      Assert.fail();
+    }
+
     graph.shutdown();
 
   }

@@ -140,23 +140,28 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
 
     @Override
     public void close() {
-      final PoolData data = poolData.get();
-      if (data.acquireCount == 0)
-        return;
+      if (poolData != null) {
+        final PoolData data = poolData.get();
+        if (data.acquireCount == 0)
+          return;
 
-      data.acquireCount--;
+        data.acquireCount--;
 
-      if (data.acquireCount > 0)
-        return;
+        if (data.acquireCount > 0)
+          return;
 
-      PoolPartition p = partition;
-      partition = null;
+        PoolPartition p = partition;
+        partition = null;
 
-      super.close();
-      data.acquiredDatabase = null;
+        super.close();
 
-      p.queue.offer(this);
-      p.acquiredConnections.decrementAndGet();
+        data.acquiredDatabase = null;
+
+        p.queue.offer(this);
+        p.acquiredConnections.decrementAndGet();
+      } else {
+        super.close();
+      }
     }
   }
 

@@ -26,11 +26,11 @@ public class OLockException extends OException {
 
   public OLockException(String iMessage) {
     super(iMessage);
-    // OProfiler.getInstance().updateCounter("system.concurrency.OLockException", +1);
+    // OProfilerStub.getInstance().updateCounter("system.concurrency.OLockException", +1);
   }
 
   public OLockException(String iMessage, Exception iException) {
     super(iMessage, iException);
-    // OProfiler.getInstance().updateCounter("system.concurrency.OLockException", +1);
+    // OProfilerStub.getInstance().updateCounter("system.concurrency.OLockException", +1);
   }
 }

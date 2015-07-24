@@ -19,6 +19,27 @@
  */
 package com.orientechnologies.orient.server;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+
 import com.orientechnologies.common.console.DefaultConsoleReader;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.io.OFileUtils;
@@ -26,7 +47,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
-import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -62,26 +83,6 @@ import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
-
 public class OServer {
   private static final String                              ROOT_PASSWORD_VAR      = "ORIENTDB_ROOT_PASSWORD";
   private static ThreadGroup                               threadGroup;
@@ -107,7 +108,7 @@ public class OServer {
   private String                                           databaseDirectory;
   private final boolean                                    shutdownEngineOnExit;
 
-  private ClassLoader extensionClassLoader;
+  private ClassLoader                                      extensionClassLoader;
 
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -141,7 +142,7 @@ public class OServer {
    *
    * @since 2.1
    */
-  public void setExtensionClassLoader(/*@Nullable*/ final ClassLoader extensionClassLoader) {
+  public void setExtensionClassLoader(/* @Nullable */final ClassLoader extensionClassLoader) {
     this.extensionClassLoader = extensionClassLoader;
   }
 
@@ -150,9 +151,13 @@ public class OServer {
    *
    * @since 2.1
    */
-  /*@Nullable*/
+  /* @Nullable */
   public ClassLoader getExtensionClassLoader() {
     return extensionClassLoader;
+  }
+
+  public boolean isActive() {
+    return running;
   }
 
   /**
@@ -175,13 +180,12 @@ public class OServer {
   /**
    * Attempt to load a class from given class-loader.
    */
-  /*@Nullable*/
-  private Class<?> tryLoadClass(/*@Nullable*/ final ClassLoader classLoader, final String name) {
+  /* @Nullable */
+  private Class<?> tryLoadClass(/* @Nullable */final ClassLoader classLoader, final String name) {
     if (classLoader != null) {
       try {
         return classLoader.loadClass(name);
-      }
-      catch (ClassNotFoundException e) {
+      } catch (ClassNotFoundException e) {
         // ignore
       }
     }
@@ -292,28 +296,32 @@ public class OServer {
       for (OServerLifecycleListener l : lifecycleListeners)
         l.onBeforeActivate();
 
-      // REGISTER/CREATE SOCKET FACTORIES
-      if (configuration.network.sockets != null) {
-        for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
-          Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) loadClass(f.implementation);
-          OServerSocketFactory factory = fClass.newInstance();
-          try {
-            factory.config(f.name, f.parameters);
-            networkSocketFactories.put(f.name, factory);
-          } catch (OConfigurationException e) {
-            OLogManager.instance().error(this, "Error creating socket factory", e);
+      if (configuration.network != null) {
+        // REGISTER/CREATE SOCKET FACTORIES
+        if (configuration.network.sockets != null) {
+          for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
+            Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) loadClass(f.implementation);
+            OServerSocketFactory factory = fClass.newInstance();
+            try {
+              factory.config(f.name, f.parameters);
+              networkSocketFactories.put(f.name, factory);
+            } catch (OConfigurationException e) {
+              OLogManager.instance().error(this, "Error creating socket factory", e);
+            }
           }
         }
-      }
 
-      // REGISTER PROTOCOLS
-      for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
-        networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) loadClass(p.implementation));
+        // REGISTER PROTOCOLS
+        for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
+          networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) loadClass(p.implementation));
 
-      // STARTUP LISTENERS
-      for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-        networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
-            l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
+        // STARTUP LISTENERS
+        for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
+          networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
+              l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
+
+      } else
+        OLogManager.instance().warn(this, "Network configuration was not found");
 
       try {
         loadStorages();

@@ -63,6 +63,10 @@ public class ServerRun {
     OFileUtils.deleteRecursively(new File(getServerHome()));
   }
 
+  public boolean isActive() {
+    return server.isActive();
+  }
+
   protected OrientBaseGraph createDatabase(final String iName) {
     String dbPath = getDatabasePath(iName);
 

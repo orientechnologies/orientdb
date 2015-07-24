@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.hazelcast.core.Hazelcast;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -147,7 +148,7 @@ public abstract class AbstractServerClusterTest {
   protected void onTestEnded() {
   }
 
-  protected void onAfterExecution() {
+  protected void onAfterExecution() throws Exception {
   }
 
   protected abstract String getDatabaseName();

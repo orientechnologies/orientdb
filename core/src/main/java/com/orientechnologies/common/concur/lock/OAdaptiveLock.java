@@ -20,6 +20,7 @@
 package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.log.OLogManager;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -128,6 +129,7 @@ public class OAdaptiveLock extends OAbstractLock {
       if (lock.isLocked())
         lock.unlock();
     } catch (Exception e) {
+      OLogManager.instance().error(this, "Can not unlock lock", e);
     }
   }
 

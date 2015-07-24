@@ -57,6 +57,9 @@ public class OCommandExecutorSQLDeleteEdgeTest {
 
   @Before
   public void setUp() throws Exception {
+    db.close();
+    db.open("admin", "admin");
+
     db.getMetadata().getSchema().getClass("User").truncate();
     db.getMetadata().getSchema().getClass("Folder").truncate();
     db.getMetadata().getSchema().getClass("CanAccess").truncate();
@@ -92,5 +95,22 @@ public class OCommandExecutorSQLDeleteEdgeTest {
   public void testDeleteByRID() throws Exception {
     final int res = (Integer) db.command(new OCommandSQL("delete edge [" + edges.get(0).getIdentity() + "]")).execute();
     Assert.assertEquals(res, 1);
+  }
+
+  @Test
+  public void testDeleteEdgeBatch() throws Exception {
+    // for issue #4622
+
+    for (int i = 0; i < 100; i++) {
+      db.command(new OCommandSQL("create vertex User set name = 'foo" + i + "'")).execute();
+      db.command(new OCommandSQL("create edge CanAccess from (select from User where name = 'foo" + i + "') to " + folderId1))
+          .execute();
+    }
+
+    final int res = (Integer) db.command(new OCommandSQL("delete edge CanAccess batch 5")).execute();
+
+    List<?> result = db.query(new OSQLSynchQuery("select expand( in('CanAccess') ) from " + folderId1));
+    Assert.assertEquals(result.size(), 0);
+
   }
 }

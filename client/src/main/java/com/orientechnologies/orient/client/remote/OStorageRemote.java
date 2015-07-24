@@ -1725,7 +1725,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       try {
         engine.getConnectionManager().remove(iNetwork);
       } catch (Exception e) {
-        // IGNORE ANY EXCEPTION
+        OLogManager.instance().error(this, "Can not remove connection from  connection manager.", e);
       }
     } else {
       OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)",
@@ -1785,7 +1785,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         return;
 
       } catch (Throwable t) {
-        // DO NOTHING BUT CONTINUE IN THE LOOP
+        OLogManager.instance().error(this, "Error during exception handling", t);
       }
     }
 
@@ -1864,6 +1864,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             engine.getConnectionManager().remove(network);
             network = null;
           }
+
+          OLogManager.instance().error(this, "Can not open database with url " + currentURL, e);
+
         } catch (OException e) {
           // PROPAGATE ANY OTHER ORIENTDB EXCEPTION
           throw e;
@@ -1874,6 +1877,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             engine.getConnectionManager().remove(network);
             network = null;
           }
+
+          OLogManager.instance().error(this, "Can not open database with url " + currentURL, e);
         }
       } while (engine.getConnectionManager().getAvailableConnections(currentURL) > 0);
 
@@ -2057,18 +2062,20 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     String lastURL = iCurrentURL;
     do {
+      Exception cause = null;
       try {
         network = engine.getConnectionManager().acquire(lastURL, clientConfiguration, connectionOptions, asynchEventListener);
       } catch (Exception e) {
-        // CATCH ANY EXCEPTION AND TRY WITH A NEXT ONE IF ANY
+        OLogManager.instance().error(this, "Error during acquiring of connection to URL " + lastURL, e);
         network = null;
+        cause = e;
       }
 
       if (network == null) {
         lastURL = useNewServerURL(lastURL);
         if (lastURL == null) {
           parseServerURLs();
-          throw new OIOException("Cannot open a connection to remote server: " + iCurrentURL);
+          throw new OIOException("Cannot open a connection to remote server: " + iCurrentURL, cause);
         }
       } else if (!network.isConnected()) {
         // DISCONNECTED NETWORK, GET ANOTHER ONE

@@ -767,8 +767,7 @@ public class ReadWriteDiskCacheTest {
   private void updateFilePage(long pageIndex, long offset, byte[] value) throws IOException {
     String path = storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst";
 
-    OFileClassic fileClassic = new OFileClassic();
-    fileClassic.init(path, "rw");
+    OFileClassic fileClassic = new OFileClassic(path, "rw");
     fileClassic.open();
 
     fileClassic.write(pageIndex * (8 + systemOffset) + offset, value, value.length, 0);
@@ -779,8 +778,7 @@ public class ReadWriteDiskCacheTest {
   private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn) throws IOException {
     String path = storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst";
 
-    OFileClassic fileClassic = new OFileClassic();
-    fileClassic.init(path, "r");
+    OFileClassic fileClassic = new OFileClassic(path, "r");
     fileClassic.open();
     byte[] content = new byte[8 + systemOffset];
     fileClassic.read(pageIndex * (8 + systemOffset), content, 8 + systemOffset);

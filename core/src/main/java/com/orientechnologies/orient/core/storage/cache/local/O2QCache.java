@@ -309,6 +309,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       fileLock = fileLockManager.acquireExclusiveLock(fileId);
       try {
         final long filledUpTo = writeCache.getFilledUpTo(fileId);
+        assert filledUpTo >= 0;
         cacheResult = doLoad(fileId, filledUpTo, false, true, writeCache);
       } finally {
         fileLockManager.releaseLock(fileLock);

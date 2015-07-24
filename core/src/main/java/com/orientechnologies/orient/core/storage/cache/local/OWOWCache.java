@@ -623,7 +623,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     filesLock.acquireReadLock();
     try {
-      return files.get(intId).getFilledUpTo() / pageSize;
+      return files.get(intId).getFileSize() / pageSize;
     } finally {
       filesLock.releaseReadLock();
     }
@@ -852,7 +852,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
           long time = System.currentTimeMillis();
 
-          long filledUpTo = fileClassic.getFilledUpTo();
+          long filledUpTo = fileClassic.getFileSize();
           fileIsCorrect = true;
 
           for (long pos = 0; pos < filledUpTo; pos += pageSize) {
@@ -1092,9 +1092,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private OFileClassic createFile(String fileName) {
-    OFileClassic fileClassic = new OFileClassic();
     String path = storageLocal.getVariableParser().resolveVariables(storageLocal.getStoragePath() + File.separator + fileName);
-    fileClassic.init(path, storageLocal.getMode());
+    OFileClassic fileClassic = new OFileClassic(path, storageLocal.getMode());
     return fileClassic;
   }
 
@@ -1212,13 +1211,13 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     else
       lastLsn = new OLogSequenceNumber(-1, -1);
 
-    if (fileClassic.getFilledUpTo() >= endPosition) {
+    if (fileClassic.getFileSize() >= endPosition) {
       fileClassic.read(startPosition, content, content.length - 2 * PAGE_PADDING, PAGE_PADDING);
       final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
 
       dataPointer = new OCachePointer(pointer, lastLsn, fileId, pageIndex);
     } else if (addNewPages) {
-      final int space = (int) (endPosition - fileClassic.getFilledUpTo());
+      final int space = (int) (endPosition - fileClassic.getFileSize());
       fileClassic.allocateSpace(space);
 
       addAllocatedSpace(space);

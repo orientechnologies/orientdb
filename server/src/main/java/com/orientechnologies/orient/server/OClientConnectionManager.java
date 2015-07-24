@@ -21,7 +21,7 @@ package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
-import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -186,6 +186,7 @@ public class OClientConnectionManager {
         // INTERRUPT THE NEWTORK MANAGER TOO
         protocol.interrupt();
       } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during interruption of binary protocol.", e);
       }
 
       disconnect(connection);
