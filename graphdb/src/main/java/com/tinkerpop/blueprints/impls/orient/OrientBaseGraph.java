@@ -20,20 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
-import org.apache.commons.configuration.Configuration;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -68,15 +54,16 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Element;
-import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.Index;
-import com.tinkerpop.blueprints.Parameter;
-import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
+import org.apache.commons.configuration.Configuration;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.*;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
@@ -301,6 +288,20 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   /**
+   * (Internal) Returns the case sensitive edge class names.
+   */
+  public static void getEdgeClassNames(final OrientBaseGraph graph, final String... iLabels) {
+    if (iLabels != null && graph.isUseClassForEdgeLabel()) {
+      for (int i = 0; i < iLabels.length; ++i) {
+        final OrientEdgeType edgeType = graph.getEdgeType(iLabels[i]);
+        if (edgeType != null)
+          // OVERWRITE CLASS NAME BECAUSE ATTRIBUTES ARE CASE SENSITIVE
+          iLabels[i] = edgeType.getName();
+      }
+    }
+  }
+
+  /**
    * (Internal)
    */
   public static String encodeClassName(String iClassName) {
@@ -514,11 +515,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Creates a new unconnected vertex with no fields in the Graph.
    *
    * @param id
-<<<<<<< Updated upstream
-   *          Optional, can contains the Edge's class name by prefixing with "class:"
-=======
    *          Optional, can contains the Vertex's class name by prefixing with "class:"
->>>>>>> Stashed changes
    * @return The new OrientVertex created
    */
   @Override
@@ -589,7 +586,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     autoStartTransaction();
 
     final OrientVertex vertex = new OrientVertex(this, className, fields);
-    vertex.setProperties(prop);
+    vertex.setPropertiesInternal(prop);
 
     // SAVE IT
     if (clusterName != null)
@@ -641,7 +638,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     autoStartTransaction();
 
     final OrientVertex vertex = new OrientVertex(this, iClassName);
-    vertex.setProperties(prop);
+    vertex.setPropertiesInternal(prop);
     return vertex;
   }
 
@@ -918,23 +915,27 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    */
   public Iterable<Vertex> getVertices(final String label, final String[] iKey, Object[] iValue) {
     makeActive();
-
-    final OClass clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(label);
+    final OClass clazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(label);
     Set<OIndex<?>> indexes = clazz.getInvolvedIndexes(Arrays.asList(iKey));
     if (indexes.iterator().hasNext()) {
       final OIndex<?> idx = indexes.iterator().next();
       if (idx != null) {
         List<Object> keys = Arrays.asList(convertKeys(idx, iValue));
-        OCompositeKey compositeKey = new OCompositeKey(keys);
-        Object indexValue = idx.get(compositeKey);
+        Object key;
+        if (keys.size() == 1) {
+          key = keys.get(0);
+        } else {
+          key = new OCompositeKey(keys);
+        }
+        Object indexValue = idx.get(key);
         if (indexValue != null && !(indexValue instanceof Iterable<?>))
           indexValue = Arrays.asList(indexValue);
-
         return new OrientElementIterable<Vertex>(this, (Iterable<?>) indexValue);
       }
     }
     // NO INDEX: EXECUTE A QUERY
-    GraphQuery query = query();
+    OrientGraphQuery query = (OrientGraphQuery) query();
+    query.labels(label);
     for (int i = 0; i < iKey.length; i++) {
       query.has(iKey[i], iValue[i]);
     }
@@ -1523,6 +1524,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         String indexType = OClass.INDEX_TYPE.NOTUNIQUE.name();
         OType keyType = OType.STRING;
         String className = null;
+        String collate = null;
         ODocument metadata = null;
 
         final String ancestorClassName = getClassName(elementClass);
@@ -1535,6 +1537,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
             keyType = OType.valueOf(p.getValue().toString().toUpperCase());
           else if (p.getKey().equals("class"))
             className = p.getValue().toString();
+          else if (p.getKey().equals("collate"))
+            collate = p.getValue().toString();
           else if (p.getKey().toString().startsWith("metadata.")) {
             if (metadata == null)
               metadata = new ODocument();
@@ -1553,10 +1557,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         if (property != null)
           keyType = property.getType();
 
-        db.getMetadata()
-            .getIndexManager()
-            .createIndex(className + "." + key, indexType, new OPropertyIndexDefinition(className, key, keyType),
-                cls.getPolymorphicClusterIds(), null, metadata);
+        OPropertyIndexDefinition indexDefinition = new OPropertyIndexDefinition(className, key, keyType);
+        if (collate != null)
+          indexDefinition.setCollate(collate);
+        db.getMetadata().getIndexManager()
+            .createIndex(className + "." + key, indexType, indexDefinition, cls.getPolymorphicClusterIds(), null, metadata);
         return null;
 
       }

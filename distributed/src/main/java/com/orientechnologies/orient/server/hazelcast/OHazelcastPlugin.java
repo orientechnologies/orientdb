@@ -19,39 +19,9 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
-import com.hazelcast.core.EntryEvent;
-import com.hazelcast.core.EntryListener;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IMap;
-import com.hazelcast.core.IQueue;
-import com.hazelcast.core.MapEvent;
-import com.hazelcast.core.Member;
-import com.hazelcast.core.MemberAttributeEvent;
-import com.hazelcast.core.MembershipEvent;
-import com.hazelcast.core.MembershipListener;
+import com.hazelcast.core.*;
 import com.orientechnologies.common.console.DefaultConsoleReader;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.exception.OException;
@@ -63,7 +33,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -100,6 +69,26 @@ import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTa
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -807,6 +796,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public void onMessage(String iText) {
+    if (iText.startsWith("\r\n"))
+      iText = iText.substring(2);
+    else if (iText.startsWith("\n"))
+      iText = iText.substring(1);
+
     OLogManager.instance().info(this, iText);
   }
 
@@ -824,7 +818,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return getHazelcastInstance().getMap("orientdb");
   }
 
-  public boolean installDatabase(boolean iStartup, String databaseName, ODocument config) {
+  public boolean installDatabase(boolean iStartup, final String databaseName, ODocument config) {
 
     final Boolean hotAlignment = config.field("hotAlignment");
     final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
@@ -877,13 +871,28 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     // GET ALL THE OTHER SERVERS
     final Collection<String> nodes = cfg.getServers(null, getLocalNodeName());
 
-    ODistributedServerLog.warn(this, getLocalNodeName(), nodes.toString(), DIRECTION.OUT,
+    // GET THE FIRST ONE TO ASK FOR DATABASE. THIS FORCES TO HAVE ONE NODE TO DO BACKUP SAVING RESOURCES IN CASE BACKUP IS STILL
+    // VALID FOR FURTHER NODES
+    final List<String> firstNode = new ArrayList<String>();
+    while (nodes.iterator().hasNext()) {
+      final String f = nodes.iterator().next();
+      if (isNodeAvailable(f, databaseName)) {
+        firstNode.add(f);
+        break;
+      }
+    }
+
+    if (firstNode.isEmpty())
+      // NO NODE ONLINE, SEND THE MESSAGE TO EVERYONE
+      firstNode.addAll(nodes);
+
+    ODistributedServerLog.warn(this, getLocalNodeName(), firstNode.toString(), DIRECTION.OUT,
         "requesting deploy of database '%s' on local server...", databaseName);
 
-    final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, nodes, new ODeployDatabaseTask(null),
-        EXECUTION_MODE.RESPONSE);
+    final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, firstNode, new ODeployDatabaseTask(
+        null), EXECUTION_MODE.RESPONSE);
 
-    ODistributedServerLog.warn(this, getLocalNodeName(), nodes.toString(), DIRECTION.OUT, "deploy returned: %s", results);
+    ODistributedServerLog.warn(this, getLocalNodeName(), firstNode.toString(), DIRECTION.OUT, "deploy returned: %s", results);
 
     // EXTRACT THE REAL RESULT
     for (Entry<String, Object> r : results.entrySet()) {
@@ -961,17 +970,23 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           if (stg != null)
             stg.close();
 
-          distrDatabase.configureDatabase(false, true, new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-              final boolean distribCfgDirty = installDbClustersForLocalNode(db, cfg);
-              if (distribCfgDirty) {
-                OLogManager.instance().warn(this, "Distributed configuration modified");
-                updateCachedDatabaseConfiguration(db.getName(), cfg.serialize(), true, true);
+          final Lock lock = getLock("orientdb." + databaseName + ".install");
+          lock.lock();
+          try {
+            distrDatabase.configureDatabase(false, true, new Callable<Void>() {
+              @Override
+              public Void call() throws Exception {
+                final boolean distribCfgDirty = installDbClustersForLocalNode(db, cfg);
+                if (distribCfgDirty) {
+                  OLogManager.instance().warn(this, "Distributed configuration modified");
+                  updateCachedDatabaseConfiguration(db.getName(), cfg.serialize(), true, true);
+                }
+                return null;
               }
-              return null;
-            }
-          });
+            });
+          } finally {
+            lock.unlock();
+          }
 
           db.close();
         }

@@ -20,11 +20,11 @@
 
 package com.orientechnologies.orient.core.cache;
 
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord;
-
 import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
+
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)

@@ -19,6 +19,21 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.zip.Deflater;
+import java.util.zip.GZIPOutputStream;
+
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -41,21 +56,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.zip.Deflater;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Export data from a database to a file.
@@ -538,6 +538,13 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           }
           writer.endCollection(4, true);
         }
+        final Set<String> customKeys = cls.getCustomKeys();
+        final Map<String, String> custom = new HashMap<String, String>();
+        for (String key : customKeys)
+          custom.put(key, cls.getCustom(key));
+
+        if (!custom.isEmpty())
+          writer.writeAttribute(0, false, "customFields", custom);
 
         writer.endObject(3, true);
       }

@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl.index;
 
@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 
 import java.io.IOException;
 import java.util.List;
@@ -316,8 +317,37 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
   }
 
   @Override
+  public OCompositeKey deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
+    final OCompositeKey compositeKey = new OCompositeKey();
+
+    offset += OIntegerSerializer.INT_SIZE;
+
+    final int keysSize = wrapper.getInt(offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    final OBinarySerializerFactory factory = OBinarySerializerFactory.getInstance();
+    for (int i = 0; i < keysSize; i++) {
+      final byte serializerId = wrapper.getByte(offset);
+      offset += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
+
+      OBinarySerializer<Object> binarySerializer = (OBinarySerializer<Object>) factory.getObjectSerializer(serializerId);
+      final Object key = binarySerializer.deserializeFromDirectMemoryObject(wrapper, offset);
+      compositeKey.addKey(key);
+
+      offset += binarySerializer.getObjectSize(key);
+    }
+
+    return compositeKey;
+  }
+
+  @Override
   public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return pointer.getInt(offset);
+  }
+
+  @Override
+  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
+    return wrapper.getInt(offset);
   }
 
   public boolean isFixedLength() {

@@ -403,4 +403,9 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     return (OIdentifiable) parsedRid;
   }
 
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
+  }
+
 }

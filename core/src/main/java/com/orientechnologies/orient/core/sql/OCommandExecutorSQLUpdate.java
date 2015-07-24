@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -207,7 +208,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     returnHandler.reset();
 
     if (lockStrategy.equals("RECORD"))
-      query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK);
+      query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK);
 
     for (int r = 0; r < retry; ++r) {
       try {
@@ -238,6 +239,12 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       try {
         result(doc);
       } catch (ORecordDuplicatedException e) {
+        if (upsertMode)
+          // UPDATE THE NEW RECORD
+          getDatabase().query(query, queryArgs);
+        else
+          throw e;
+      } catch (ORecordNotFoundException e) {
         if (upsertMode)
           // UPDATE THE NEW RECORD
           getDatabase().query(query, queryArgs);
@@ -299,7 +306,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
 
   @Override
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return upsertMode ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+    // REPLICATE MODE COULD BE MORE EFFICIENT ON MASSIVE UPDATES
+    return upsertMode || query == null ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
   }
 
   @Override
@@ -727,5 +735,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
 
     if (incrementEntries.size() == 0)
       throwSyntaxErrorException("Entries to increment <field> = <value> are missed. Example: salary = -100");
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
   }
 }

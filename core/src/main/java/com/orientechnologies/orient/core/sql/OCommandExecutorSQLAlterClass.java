@@ -110,9 +110,20 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
     if (cls == null)
       throw new OCommandExecutionException("Cannot alter class '" + className + "' because not found");
 
+    if (value != null && attribute == ATTRIBUTES.SUPERCLASS) {
+      checkClassExists(database, className, value);
+    }
     cls.set(attribute, value);
 
     return null;
+  }
+
+  protected void checkClassExists(ODatabaseDocument database, String targetClass, String superClass) {
+    superClass = "" + superClass;
+    if (database.getMetadata().getSchema().getClass(superClass) == null) {
+      throw new OCommandExecutionException("Cannot alter superClass of '" + targetClass + "' because  " + superClass
+          + " class not found");
+    }
   }
 
   public String getSyntax() {
@@ -122,5 +133,10 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
   @Override
   public boolean involveSchema() {
     return true;
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
   }
 }

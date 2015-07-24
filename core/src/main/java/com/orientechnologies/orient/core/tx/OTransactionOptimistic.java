@@ -92,8 +92,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           final OIndexInternal<?> index = indexesToCommit.get(indexEntry.getKey()).getInternal();
 
           if (index == null) {
-            OLogManager.instance().error(this, "Index with name " + indexEntry.getKey() + " was not found.");
-            throw new OIndexException("Index with name " + indexEntry.getKey() + " was not found.");
+            OLogManager.instance().error(this, "Index with name '" + indexEntry.getKey() + "' was not found.");
+            throw new OIndexException("Index with name '" + indexEntry.getKey() + "' was not found.");
           } else
             index.addTxOperation((ODocument) indexEntry.getValue());
         }
@@ -230,6 +230,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       addRecord(record, ORecordOperation.LOADED, null);
 
     return record;
+  }
+
+  @Override
+  public ORecord loadRecord(ORID rid, ORecord record, String fetchPlan, boolean ignoreCache) {
+    return loadRecord(rid, record, fetchPlan, ignoreCache, false, OStorage.LOCKING_STRATEGY.NONE);
   }
 
   public void deleteRecord(final ORecord iRecord, final OPERATION_MODE iMode) {

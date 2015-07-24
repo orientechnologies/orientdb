@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -41,11 +44,12 @@ import java.util.Map;
  * 
  */
 public class OSQLCommandTask extends OAbstractCommandTask {
-  private static final long     serialVersionUID = 1L;
+  private static final long                                 serialVersionUID = 1L;
 
-  protected String              text;
-  protected Map<Object, Object> params;
-  protected RESULT_STRATEGY     resultStrategy;
+  protected String                                          text;
+  protected Map<Object, Object>                             params;
+  protected RESULT_STRATEGY                                 resultStrategy;
+  protected OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType;
 
   public OSQLCommandTask() {
   }
@@ -53,12 +57,18 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   public OSQLCommandTask(final OCommandRequestText iCommand) {
     text = iCommand.getText();
     params = iCommand.getParameters();
+
+    final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
+    executor.parse(iCommand);
+    quorumType = ((OCommandDistributedReplicateRequest) executor).getQuorumType();
   }
 
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s",
-        text.toString(), database.getName());
+
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s",
+          text.toString(), database.getName());
 
     final OCommandRequest cmd = database.command(new OCommandSQL(text));
 
@@ -72,8 +82,8 @@ public class OSQLCommandTask extends OAbstractCommandTask {
     return res;
   }
 
-  public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.ALL;
+  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
+    return quorumType;
   }
 
   @Override

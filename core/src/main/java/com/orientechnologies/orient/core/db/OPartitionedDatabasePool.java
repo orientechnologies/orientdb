@@ -19,15 +19,17 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.OOrientListenerAbstract;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * <p>
@@ -84,16 +86,12 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   private final String                userName;
   private final String                password;
   private final int                   maxSize;
-  private final ThreadLocal<PoolData> poolData       = new ThreadLocal<PoolData>() {
-                                                       @Override
-                                                       protected PoolData initialValue() {
-                                                         return new PoolData();
-                                                       }
-                                                     };
+  private final ThreadLocal<PoolData> poolData       = new ThreadPoolData();
   private final AtomicBoolean         poolBusy       = new AtomicBoolean();
   private final int                   maxPartitions  = Runtime.getRuntime().availableProcessors() << 3;
   private volatile PoolPartition[]    partitions;
   private volatile boolean            closed         = false;
+  private boolean                     autoCreate     = false;
 
   private static final class PoolData {
     private final int                hashCode;
@@ -111,11 +109,32 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     private final ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue               = new ConcurrentLinkedQueue<DatabaseDocumentTxPolled>();
   }
 
+  private static class ThreadPoolData extends ThreadLocal<PoolData> {
+    @Override
+    protected PoolData initialValue() {
+      return new PoolData();
+    }
+  }
+
   private final class DatabaseDocumentTxPolled extends ODatabaseDocumentTx {
     private PoolPartition partition;
 
     private DatabaseDocumentTxPolled(String iURL) {
       super(iURL, true);
+    }
+
+    @Override
+    public <DB extends ODatabase> DB open(OToken iToken) {
+      throw new ODatabaseException("Impossible to open a database managed by a pool ");
+    }
+
+    @Override
+    public <DB extends ODatabase> DB open(String iUserName, String iUserPassword) {
+      throw new ODatabaseException("Impossible to open a database managed by a pool ");
+    }
+
+    protected void internalOpen() {
+      super.open(userName, password);
     }
 
     @Override
@@ -270,7 +289,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
               throw new IllegalStateException("You have reached maximum pool size for given partition");
 
             db = new DatabaseDocumentTxPolled(url);
-            db.open(userName, password);
+            openDatabase(db);
             db.partition = partition;
 
             data.acquireCount = 1;
@@ -282,7 +301,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
             return db;
           }
         } else {
-          db.open(userName, password);
+          openDatabase(db);
           db.partition = partition;
           partition.acquiredConnections.incrementAndGet();
 
@@ -293,6 +312,23 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
         }
       }
     }
+  }
+
+  public boolean isAutoCreate() {
+    return autoCreate;
+  }
+
+  public OPartitionedDatabasePool setAutoCreate(final boolean autoCreate) {
+    this.autoCreate = autoCreate;
+    return this;
+  }
+
+  protected void openDatabase(final DatabaseDocumentTxPolled db) {
+    if (!db.getURL().startsWith("remote:") && !db.exists()) {
+      if (autoCreate)
+        db.create();
+    } else
+      db.internalOpen();
   }
 
   @Override

@@ -20,17 +20,20 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
@@ -49,6 +52,9 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
                                                       .getValueAsInteger();
   private final boolean      durableNonTxMode;
 
+  /**
+   * Should be called inside of lock to ensure uniqueness of entity on disk !!!
+   */
   public OIndexRIDContainer(String name, boolean durableNonTxMode) {
     fileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);
     underlying = new HashSet<OIdentifiable>();
@@ -72,10 +78,38 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   private long resolveFileIdByName(String fileName) {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying();
+
     try {
-      return storage.getDiskCache().openFile(fileName);
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
+      final ODiskCache diskCache = storage.getDiskCache();
+
+      if (atomicOperation == null) {
+        if (diskCache.exists(fileName))
+          return diskCache.openFile(fileName);
+
+        return diskCache.addFile(fileName);
+      } else {
+        final long fileId;
+
+        if (atomicOperation.isFileExists(fileName, diskCache)) {
+          fileId = atomicOperation.openFile(fileName, diskCache);
+          storage.getAtomicOperationsManager().endAtomicOperation(false);
+          return fileId;
+        }
+
+        fileId = atomicOperation.addFile(fileName, diskCache);
+        storage.getAtomicOperationsManager().endAtomicOperation(false);
+
+        return fileId;
+      }
     } catch (IOException e) {
-      throw new OSBTreeException("Error creation of sbtree with name" + fileName, e);
+      try {
+        storage.getAtomicOperationsManager().endAtomicOperation(true);
+      } catch (IOException ioe) {
+        throw new OSBTreeException("Error creation of sbtree with name " + fileName, e);
+      }
+
+      throw new OSBTreeException("Error creation of sbtree with name " + fileName, e);
     }
   }
 
@@ -211,7 +245,9 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   }
 
   private void convertToSbTree() {
-    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, durableNonTxMode);
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, durableNonTxMode, (OAbstractPaginatedStorage) db
+        .getStorage().getUnderlying());
 
     tree.addAll(underlying);
 

@@ -283,6 +283,11 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
     return "CREATE INDEX <name> [ON <class-name> (prop-names [COLLATE <collate>])] <type> [<key-type>] [METADATA {JSON Index Metadata Document}]";
   }
 
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
+  }
+
   private OClass findClass(String part) {
     return getDatabase().getMetadata().getSchema().getClass(part);
   }

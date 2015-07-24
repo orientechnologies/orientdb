@@ -718,6 +718,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   }
 
   protected Object convertDocumentToObject(final ODocument value, final Object self) {
+    if (value == null)
+      return null;
     return OObjectEntityEnhancer.getInstance().getProxiedInstance(value.getClassName(), getDatabase().getEntityManager(), value,
         (self instanceof ProxyObject ? (ProxyObject) self : null));
   }

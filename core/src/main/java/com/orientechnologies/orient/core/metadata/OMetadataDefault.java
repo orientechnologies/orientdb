@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
@@ -37,7 +38,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
-import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.metadata.security.OSecurityProxy;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener;
@@ -204,22 +204,29 @@ public class OMetadataDefault implements OMetadataInternal {
           }
         }), database);
 
-    final Boolean enableSecurity = (Boolean) database.getProperty(ODatabase.OPTIONS.SECURITY.toString());
-    if (enableSecurity != null && !enableSecurity)
-      // INSTALL NO SECURITY IMPL
-      security = new OSecurityNull();
-    else
-      security = new OSecurityProxy(database.getStorage().getResource(OSecurity.class.getSimpleName(),
-          new Callable<OSecurityShared>() {
-            public OSecurityShared call() {
-              final OSecurityShared instance = new OSecurityShared();
-              if (iLoad) {
-                security = instance;
-                instance.load();
-              }
-              return instance;
+    security = new OSecurityProxy(database.getStorage().getResource(OSecurity.class.getSimpleName(),
+        new Callable<OSecurityShared>() {
+          public OSecurityShared call() {
+            final OSecurityShared instance = new OSecurityShared();
+            if (iLoad) {
+              security = instance;
+              instance.load();
             }
-          }), database);
+            return instance;
+          }
+        }), database);
+
+    final Class<? extends OSecurity> securityClass = (Class<? extends OSecurity>) database.getProperty(ODatabase.OPTIONS.SECURITY
+        .toString());
+    if (securityClass != null)
+      // INSTALL CUSTOM WRAPPED SECURITY
+      try {
+        final OSecurity wrapped = security;
+        security = securityClass.getDeclaredConstructor(OSecurity.class, ODatabaseDocumentInternal.class).newInstance(wrapped,
+            database);
+      } catch (Exception e) {
+        throw new OSecurityException("Cannot install custom security implementation (" + securityClass + ")", e);
+      }
 
     functionLibrary = new OFunctionLibraryProxy(database.getStorage().getResource(OFunctionLibrary.class.getSimpleName(),
         new Callable<OFunctionLibrary>() {

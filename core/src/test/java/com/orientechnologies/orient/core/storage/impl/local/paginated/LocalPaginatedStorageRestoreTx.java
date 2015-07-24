@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -53,6 +54,8 @@ public class LocalPaginatedStorageRestoreTx {
 
   @BeforeClass
   public void beforeClass() {
+    OGlobalConfiguration.FILE_LOCK.setValue(false);
+
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageRestoreFromTx";
 
@@ -95,7 +98,7 @@ public class LocalPaginatedStorageRestoreTx {
 
     baseDocumentTx.declareIntent(new OIntentMassiveInsert());
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 8; i++)
       futures.add(executorService.submit(new DataPropagationTask()));
 
     for (Future<Void> future : futures)
@@ -118,7 +121,7 @@ public class LocalPaginatedStorageRestoreTx {
             System.out.println(text);
           }
         });
-		databaseCompare.setCompareIndexMetadata(true);
+    databaseCompare.setCompareIndexMetadata(true);
 
     Assert.assertTrue(databaseCompare.compare());
   }
@@ -142,8 +145,29 @@ public class LocalPaginatedStorageRestoreTx {
         copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.wmr";
       else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.0.wal"))
         copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.0.wal";
+      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.1.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.1.wal";
+      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.2.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.2.wal";
+      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.3.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.3.wal";
+      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.4.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.4.wal";
+      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.5.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.5.wal";
+      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.6.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.6.wal";
+      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.7.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.7.wal";
+      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.8.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.8.wal";
+      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.9.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.9.wal";
       else
         copyToPath = copyToDir.getAbsolutePath() + File.separator + storageFile.getName();
+
+      if (storageFile.getName().equals("dirty.fl"))
+        continue;
 
       copyFile(storageFile.getAbsolutePath(), copyToPath);
     }
@@ -175,7 +199,7 @@ public class LocalPaginatedStorageRestoreTx {
     testOneClass.createProperty("intProp", OType.INTEGER);
     testOneClass.createProperty("stringProp", OType.STRING);
     testOneClass.createProperty("stringSet", OType.EMBEDDEDSET, OType.STRING);
-    testOneClass.createProperty("linkMap", OType.LINKMAP, OType.STRING);
+    testOneClass.createProperty("linkMap", OType.LINKMAP);
 
     OClass testTwoClass = schema.createClass("TestTwo");
 
@@ -198,7 +222,7 @@ public class LocalPaginatedStorageRestoreTx {
         OClass classOne = db.getMetadata().getSchema().getClass("TestOne");
         OClass classTwo = db.getMetadata().getSchema().getClass("TestTwo");
 
-        for (int i = 0; i < 2000; i++) {
+        for (int i = 0; i < 20000; i++) {
           try {
             db.begin(OTransaction.TXTYPE.OPTIMISTIC);
 

@@ -17,13 +17,13 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 import java.util.List;
 
-public class OCompositeIndexSQLInserTest {
+public class OCompositeIndexSQLInsertTest {
 
   public ODatabaseDocument db;
 
   @BeforeTest
   public void before() {
-    db = new ODatabaseDocumentTx("memory:" + OCompositeIndexSQLInserTest.class.getSimpleName());
+    db = new ODatabaseDocumentTx("memory:" + OCompositeIndexSQLInsertTest.class.getSimpleName());
     db.create();
     OSchema schema = db.getMetadata().getSchema();
     OClass book = schema.createClass("Book");

@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -185,8 +185,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   }
 
   private void compareSchama() {
-    OSchema schema1 = ((OMetadataInternal)databaseDocumentTxOne.getMetadata()).getImmutableSchemaSnapshot();
-    OSchema schema2 = ((OMetadataInternal)databaseDocumentTxTwo.getMetadata()).getImmutableSchemaSnapshot();
+    OSchema schema1 = ((OMetadataInternal) databaseDocumentTxOne.getMetadata()).getImmutableSchemaSnapshot();
+    OSchema schema2 = ((OMetadataInternal) databaseDocumentTxTwo.getMetadata()).getImmutableSchemaSnapshot();
     boolean ok = true;
     for (OClass clazz : schema1.getClasses()) {
       OClass clazz2 = schema2.getClass(clazz.getName());
@@ -593,7 +593,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       listener.onMessage("\n- Checking cluster " + String.format("%-25s: ", "'" + clusterName + "'"));
 
       if (cluster2Id == -1) {
-        listener.onMessage("ERR: cluster name " + clusterName + " was not found on database " + storage2);
+        listener.onMessage("ERR: cluster name '" + clusterName + "' was not found on database " + storage2);
         ++differences;
         ok = false;
       }
@@ -655,13 +655,12 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
       final OStorage storage;
 
-      if (clusterMax==db1Max)
+      if (clusterMax == db1Max)
         storage = storage1;
       else
         storage = storage2;
 
-      OPhysicalPosition[] physicalPositions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(
-          0));
+      OPhysicalPosition[] physicalPositions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(0));
 
       long recordsCounter = 0;
       while (physicalPositions.length > 0) {
@@ -678,18 +677,16 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
               && rid.equals(new ORecordId(storage2.getConfiguration().schemaRecordId)))
             continue;
 
-          final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
-              .getResult();
+          final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null).getResult();
           final ORawBuffer buffer2;
           if (ridMapper == null)
-            buffer2 = storage2.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
+            buffer2 = storage2.readRecord(rid, null, true, null).getResult();
           else {
             final ORID newRid = ridMapper.map(rid);
             if (newRid == null)
-              buffer2 = storage2.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
+              buffer2 = storage2.readRecord(rid, null, true, null).getResult();
             else
-              buffer2 = storage2.readRecord(new ORecordId(newRid), null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
-                  .getResult();
+              buffer2 = storage2.readRecord(new ORecordId(newRid), null, true, null).getResult();
           }
 
           if (buffer1 == null && buffer2 == null)

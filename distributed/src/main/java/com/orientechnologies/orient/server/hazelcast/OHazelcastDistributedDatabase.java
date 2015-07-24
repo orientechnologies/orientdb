@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.hazelcast;
 
 import com.hazelcast.core.IQueue;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -206,7 +207,10 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(), databaseName);
     final IQueue<ODistributedRequest> requestQueue = msgService.getQueue(queueName);
 
-    unqueuePendingMessages(iRestoreMessages, iUnqueuePendingMessages, queueName, requestQueue);
+    final ODistributedWorker listenerThread = unqueuePendingMessages(iRestoreMessages, iUnqueuePendingMessages, queueName,
+        requestQueue);
+
+    workers.add(listenerThread);
 
     if (iCallback != null)
       try {
@@ -216,11 +220,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       }
 
     setOnline();
-
-    // CREATE 1 WORKER THREAD FOR INSERT (ONLY 1 TO MAINTAIN THE SEQUENCE OF REQUESTS)
-    ODistributedWorker listenerThread = new ODistributedWorker(this, requestQueue, databaseName, 0, false);
-    workers.add(listenerThread);
-    listenerThread.start();
 
     return this;
   }
@@ -249,7 +248,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       workers.get(i).shutdown();
   }
 
-  protected void unqueuePendingMessages(boolean iRestoreMessages, boolean iUnqueuePendingMessages, String queueName,
+  protected ODistributedWorker unqueuePendingMessages(boolean iRestoreMessages, boolean iUnqueuePendingMessages, String queueName,
       IQueue<ODistributedRequest> requestQueue) {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE, "listening for incoming requests on queue: %s",
@@ -263,14 +262,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final ODistributedWorker listenerThread = new ODistributedWorker(this, requestQueue, databaseName, 0, restoringMessages);
     listenerThread.initDatabaseInstance();
 
-    if (restoringMessages) {
-      // EXECUTES PENDING MSG ONLY BEFORE TO GO ONLINE
-      listenerThread.start();
-      try {
-        listenerThread.join();
-      } catch (InterruptedException e) {
-      }
-    }
+    listenerThread.start();
+
+    return listenerThread;
   }
 
   protected void checkForServerOnline(ODistributedRequest iRequest) throws ODistributedException {
@@ -313,7 +307,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     int quorum = 0;
 
-    final OAbstractRemoteTask.QUORUM_TYPE quorumType = iRequest.getTask().getQuorumType();
+    final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType = iRequest.getTask().getQuorumType();
 
     switch (quorumType) {
     case NONE:

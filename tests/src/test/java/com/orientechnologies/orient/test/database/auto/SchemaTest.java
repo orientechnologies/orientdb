@@ -19,6 +19,7 @@ import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
@@ -397,6 +398,18 @@ public class SchemaTest extends DocumentDBBaseTest {
     Assert.assertEquals(found, true);
 
     database.close();
+
+  }
+
+  @Test(dependsOnMethods = "alterAttributes", expectedExceptions = OCommandExecutionException.class, expectedExceptionsMessageRegExp = "Cannot alter superClass of.*")
+  public void alterClassWrongSuperClass() {
+
+    database = new ODatabaseDocumentTx(url);
+    database.open("admin", "admin");
+
+    OClass company = database.getMetadata().getSchema().getClass("Company");
+
+    database.command(new OCommandSQL("alter class " + company.getName() + " superclass Dummy")).execute();
 
   }
 

@@ -1731,8 +1731,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           do {
             for (OPhysicalPosition position : positions) {
               final ORecordId identity = new ORecordId(clusterId, position.clusterPosition);
-              final ORawBuffer record = storage.readRecord(identity, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
-                  .getResult();
+              final ORawBuffer record = storage.readRecord(identity, null, true, null).getResult();
 
               if (record.recordType == ODocument.RECORD_TYPE) {
                 final ORecordSerializerSchemaAware2CSV serializer = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory

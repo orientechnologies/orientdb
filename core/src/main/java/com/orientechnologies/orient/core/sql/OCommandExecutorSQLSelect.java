@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -45,13 +39,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngineException;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -64,27 +52,21 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.OFilterOptimizer;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+import com.orientechnologies.orient.core.sql.filter.*;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
+import com.orientechnologies.orient.core.sql.operator.*;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -261,7 +243,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             } else if (lock.equals("NONE")) {
               lockingStrategy = OStorage.LOCKING_STRATEGY.NONE;
             } else if (lock.equals("RECORD")) {
-              lockingStrategy = OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK;
+              lockingStrategy = OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;
             }
           } else if (w.equals(KEYWORD_PARALLEL)) {
             parallel = parseParallel(w);
@@ -461,45 +443,42 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OStorage.LOCKING_STRATEGY localLockingStrategy = contextLockingStrategy != null ? contextLockingStrategy
         : lockingStrategy;
 
-    ORecord record = null;
+    if (localLockingStrategy != null
+        && !(localLockingStrategy == LOCKING_STRATEGY.DEFAULT || localLockingStrategy == LOCKING_STRATEGY.NONE
+            || localLockingStrategy == LOCKING_STRATEGY.EXCLUSIVE_LOCK || localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK))
+      throw new IllegalStateException("Unsupported locking strategy " + localLockingStrategy);
+
+    final ORecord record;
+    if (!(id instanceof ORecord)) {
+      record = getDatabase().load(id.getIdentity(), null, noCache);
+      if (id instanceof OContextualRecordId && ((OContextualRecordId) id).getContext() != null) {
+        Map<String, Object> ridContext = ((OContextualRecordId) id).getContext();
+        for (String key : ridContext.keySet()) {
+          context.setVariable(key, ridContext.get(key));
+        }
+      }
+    } else {
+      record = (ORecord) id;
+    }
+
+    context.updateMetric("recordReads", +1);
+
+    if (record == null || ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE)
+    // SKIP IT
+    {
+      return true;
+    }
+    context.updateMetric("documentReads", +1);
+
+    if (localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK) {
+      record.lock(false);
+      record.reload();
+    } else if (localLockingStrategy == LOCKING_STRATEGY.EXCLUSIVE_LOCK) {
+      record.lock(true);
+      record.reload();
+    }
+
     try {
-      if (id instanceof ORecord) {
-        record = (ORecord) id;
-
-        // LOCK THE RECORD IF NEEDED
-        if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
-          record.lock(true);
-        } else if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
-          record.lock(false);
-        }
-
-      } else {
-        boolean useNoCache = noCache;
-
-        if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
-            || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK)
-          // FORCE NO CACHE
-          useNoCache = true;
-
-        record = getDatabase().load(id.getIdentity(), null, useNoCache, false, localLockingStrategy);
-        if (id instanceof OContextualRecordId && ((OContextualRecordId) id).getContext() != null) {
-          Map<String, Object> ridContext = ((OContextualRecordId) id).getContext();
-          for (String key : ridContext.keySet()) {
-            context.setVariable(key, ridContext.get(key));
-          }
-        }
-      }
-
-      context.updateMetric("recordReads", +1);
-
-      if (record == null || ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE)
-      // SKIP IT
-      {
-        return true;
-      }
-
-      context.updateMetric("documentReads", +1);
-
       context.setVariable("current", record);
 
       if (filter(record)) {
@@ -510,10 +489,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
     } finally {
-      if (record != null && localLockingStrategy != null && record.isLocked()) {
+      if (localLockingStrategy != null && record.isLocked()) {
         // CONTEXT LOCK: lock must be released (no matter if filtered or not)
-        if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
-            || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+        if (localLockingStrategy == LOCKING_STRATEGY.EXCLUSIVE_LOCK || localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK) {
           record.unlock();
         }
       }
@@ -771,8 +749,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (!parserOptionalKeyword(KEYWORD_SELECT))
       return -1;
 
-    int upperBound = OStringSerializerHelper.getLowerIndexOf(parserTextUpperCase, parserGetCurrentPosition(), KEYWORD_FROM_2FIND,
-        KEYWORD_LET_2FIND);
+    int upperBound = OStringSerializerHelper.getLowerIndexOfKeywords(parserTextUpperCase, parserGetCurrentPosition(), KEYWORD_FROM,
+        KEYWORD_LET);
     if (upperBound == -1)
       // UP TO THE END
       upperBound = parserText.length();
@@ -2042,6 +2020,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         context.setVariable("groupByElapsed", (System.currentTimeMillis() - startGroupBy));
       }
     }
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.READ;
   }
 
 }

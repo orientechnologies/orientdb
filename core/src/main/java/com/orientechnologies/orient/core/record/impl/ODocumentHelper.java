@@ -459,7 +459,7 @@ public class ODocumentHelper {
 
             if (values.isEmpty())
               // RETURNS NULL
-              value = null;
+              value = values;
             else if (values.size() == 1)
               // RETURNS THE SINGLE ODOCUMENT
               value = values.iterator().next();

@@ -45,7 +45,7 @@ public class IndexCrashRestoreMultiValueAddDelete {
 
   @BeforeClass
   public void beforeClass() throws Exception {
-		OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+    OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
@@ -94,7 +94,7 @@ public class IndexCrashRestoreMultiValueAddDelete {
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
-			OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+      OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
 
       OServer server = OServerMain.create();
@@ -115,15 +115,14 @@ public class IndexCrashRestoreMultiValueAddDelete {
     System.out.println("Start data propagation");
 
     List<Future> futures = new ArrayList<Future>();
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 8; i++) {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
-		Thread.sleep(1800000);
+    Thread.sleep(300000);
 
     System.out.println("Wait for process to destroy");
-    Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
-    p.waitFor();
+    // process.destroyForcibly();
 
     process.waitFor();
     System.out.println("Process was destroyed");

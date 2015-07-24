@@ -19,14 +19,14 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Locale;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+
+import java.util.Map;
 
 /**
  * SQL UPDATE command.
@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
  * @author Luca Garulli
  * 
  */
-public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
+public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   protected OCommandExecutorSQLAbstract delegate;
 
   @SuppressWarnings("unchecked")
@@ -89,5 +89,12 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
 
   public OCommandExecutorSQLAbstract getDelegate() {
     return delegate;
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    if (delegate instanceof OCommandDistributedReplicateRequest)
+      return ((OCommandDistributedReplicateRequest) delegate).getQuorumType();
+    return QUORUM_TYPE.ALL;
   }
 }

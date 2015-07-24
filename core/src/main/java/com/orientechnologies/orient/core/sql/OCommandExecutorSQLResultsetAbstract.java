@@ -93,7 +93,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected Iterator<? extends OIdentifiable> target;
   protected Iterable<OIdentifiable>           tempResult;
   protected int                               resultCount;
-  protected int                               serialTempRID = 0;
+  protected int                               serialTempRID      = 0;
   protected int                               skip               = 0;
 
   private static final class IndexValuesIterator implements Iterator<OIdentifiable> {
@@ -437,18 +437,13 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, cls.getName().toLowerCase());
 
-    // NO INDEXES: SCAN THE ENTIRE CLUSTER
-
-    OStorage.LOCKING_STRATEGY locking = context != null && context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
-        .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
-
     final ORID[] range = getRange();
     if (iAscendentOrder)
-      target = new ORecordIteratorClass<ORecord>(database, database, cls.getName(), true, request.isUseCache(), false, locking)
-          .setRange(range[0], range[1]);
+      target = new ORecordIteratorClass<ORecord>(database, database, cls.getName(), true, request.isUseCache()).setRange(range[0],
+          range[1]);
     else
-      target = new ORecordIteratorClassDescendentOrder<ORecord>(database, database, cls.getName(), true, request.isUseCache(),
-          false, locking).setRange(range[0], range[1]);
+      target = new ORecordIteratorClassDescendentOrder<ORecord>(database, database, cls.getName(), true, request.isUseCache())
+          .setRange(range[0], range[1]);
   }
 
   protected void searchInClusters() {
@@ -487,11 +482,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final ORID[] range = getRange();
 
-    final OStorage.LOCKING_STRATEGY locking = context != null && context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
-        .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
-
-    target = new ORecordIteratorClusters<ORecord>(database, database, clIds, request.isUseCache(), false, locking).setRange(
-        range[0], range[1]);
+    target = new ORecordIteratorClusters<ORecord>(database, database, clIds, request.isUseCache()).setRange(range[0], range[1]);
   }
 
   protected void applyLimitAndSkip() {

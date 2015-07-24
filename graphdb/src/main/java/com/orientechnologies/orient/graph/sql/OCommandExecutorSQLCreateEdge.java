@@ -206,6 +206,11 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
   }
 
   @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
+  }
+
+  @Override
   public Set<String> getInvolvedClusters() {
     if (clazz != null)
       return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));

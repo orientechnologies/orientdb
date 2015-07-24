@@ -32,12 +32,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -101,7 +102,6 @@ public class ODistributedWorker extends Thread {
             queuedMsg, databaseName, lastMessageId);
 
         restoringMessages = false;
-        break;
       }
 
       String senderNode = null;
@@ -146,6 +146,9 @@ public class ODistributedWorker extends Thread {
         ODistributedServerLog.error(this, getLocalNodeName(), senderNode, DIRECTION.IN,
             "error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
             message != null ? message.getTask() : "-");
+      } finally {
+        // CLEAR SERIALIZATION TL TO AVOID MEMORY LEAKS
+        OSerializationSetThreadLocal.clear();
       }
     }
 
@@ -161,22 +164,17 @@ public class ODistributedWorker extends Thread {
       database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
           replicatorUser.password);
 
+      // AVOID RELOADING DB INFORMATION BECAUSE OF DEADLOCKS
+      // database.reload();
+
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
       final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
           ODistributedAbstractPlugin.REPLICATOR_USER);
       database.open(replicatorUser.name, replicatorUser.password);
 
-    } else {
-      // After initialize database, create replicator user in DB and reset database with OSecurityShared instead of OSecurityNull
-      // OSecurity security = database.getMetadata().getSecurity();
-      // if (security == null || security instanceof OSecurityNull) {
-      // final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
-      // ODistributedAbstractPlugin.REPLICATOR_USER);
-      // createReplicatorUser(database, replicatorUser);
-      // database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
-      // replicatorUser.password);
-      // }
+      // AVOID RELOADING DB INFORMATION BECAUSE OF DEADLOCKS
+      // database.reload();
     }
   }
 

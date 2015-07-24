@@ -139,7 +139,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * @param key
    *          Keys to lock.
    */
-  void lockKeysForUpdate(Object... key);
+  void lockKeysForUpdateNoTx(Object... key);
 
   /**
    * Applies exclusive lock on keys which prevents read/modification of this keys in following methods:
@@ -162,7 +162,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * @param keys
    *          Keys to lock.
    */
-  void lockKeysForUpdate(Collection<Object> keys);
+  void lockKeysForUpdateNoTx(Collection<Object> keys);
 
   /**
    * Release exclusive lock on keys which prevents read/modification of this keys in following methods:
@@ -179,24 +179,24 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * @param key
    *          Keys to unlock.
    */
-  void releaseKeysForUpdate(Object... key);
+  void releaseKeysForUpdateNoTx(Object... key);
 
-	/**
-	 * Release exclusive lock on keys which prevents read/modification of this keys in following methods:
-	 *
-	 * <ol>
-	 * <li>{@link #put(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
-	 * <li>{@link #checkEntry(com.orientechnologies.orient.core.db.record.OIdentifiable, Object)}</li>
-	 * <li>{@link #remove(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
-	 * <li>{@link #remove(Object)}</li>
-	 * </ol>
-	 *
-	 * This is internal method and can not be used by end users.
-	 *
-	 * @param keys
-	 *          Keys to unlock.
-	 */
-	void releaseKeysForUpdate(Collection<Object> keys);
+  /**
+   * Release exclusive lock on keys which prevents read/modification of this keys in following methods:
+   *
+   * <ol>
+   * <li>{@link #put(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
+   * <li>{@link #checkEntry(com.orientechnologies.orient.core.db.record.OIdentifiable, Object)}</li>
+   * <li>{@link #remove(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
+   * <li>{@link #remove(Object)}</li>
+   * </ol>
+   *
+   * This is internal method and can not be used by end users.
+   *
+   * @param keys
+   *          Keys to unlock.
+   */
+  void releaseKeysForUpdateNoTx(Collection<Object> keys);
 
   public IndexMetadata loadMetadata(ODocument iConfig);
 
@@ -213,6 +213,8 @@ public interface OIndexInternal<T> extends OIndex<T> {
   public void commit();
 
   public void postCommit();
+
+  Object getCollatingValue(Object key);
 
   public final class IndexMetadata {
     private final String           name;

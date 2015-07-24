@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.server.OClientConnection;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
+import java.net.Socket;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,11 +51,11 @@ import java.util.zip.GZIPOutputStream;
  * @author Luca Garulli
  */
 public class OHttpResponse {
-  public static final String   JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
-  public static final char[]   URL_SEPARATOR = { '/' };
-  private static final Charset utf8          = Charset.forName("utf8");
+  public static final String   JSON_FORMAT       = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
+  public static final char[]   URL_SEPARATOR     = { '/' };
+  private static final Charset utf8              = Charset.forName("utf8");
   public final String          httpVersion;
-  private final OutputStream   out;
+  private OutputStream         out;
   public String                headers;
   public String[]              additionalHeaders;
   public String                characterSet;
@@ -63,14 +65,16 @@ public class OHttpResponse {
   public String                sessionId;
   public String                callbackFunction;
   public String                contentEncoding;
-  public boolean               sendStarted   = false;
+  public boolean               sendStarted       = false;
   public String                content;
   public int                   code;
-  public boolean               keepAlive     = true;
+  public boolean               keepAlive         = true;
+  public boolean               jsonErrorResponse = true;
+  public OClientConnection     connection;
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
       final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction,
-      final boolean iKeepAlive) {
+      final boolean iKeepAlive, OClientConnection connection) {
     out = iOutStream;
     httpVersion = iHttpVersion;
     additionalHeaders = iAdditionalHeaders;
@@ -79,6 +83,7 @@ public class OHttpResponse {
     sessionId = iSessionId;
     callbackFunction = iCallbackFunction;
     keepAlive = iKeepAlive;
+    this.connection = connection;
   }
 
   public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders)
@@ -332,6 +337,7 @@ public class OHttpResponse {
 
       if (iAdditionalProperties != null) {
         for (Map.Entry<String, Object> entry : iAdditionalProperties.entrySet()) {
+
           final Object v = entry.getValue();
           if (OMultiValue.isMultiValue(v)) {
             json.beginCollection(-1, true, entry.getKey());
@@ -345,6 +351,19 @@ public class OHttpResponse {
       json.endObject();
       send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
     }
+  }
+
+  private void checkConnection() throws IOException {
+    final Socket socket;
+    if (connection.protocol == null || connection.protocol.getChannel() == null)
+      socket = null;
+    else
+      socket = connection.protocol.getChannel().socket;
+    if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
+      OLogManager.instance().debug(this, "[OHttpResponse] found and removed pending closed channel %d (%s)", connection, socket);
+      throw new IOException("Connection is closed ");
+    }
+
   }
 
   public void formatMultiValue(final Iterator<?> iIterator, final StringWriter buffer, final String format) throws IOException {
@@ -376,6 +395,7 @@ public class OHttpResponse {
             buffer.append(OJSONWriter.writeValue(entry, format));
           }
         }
+        checkConnection();
       }
     }
   }
@@ -504,9 +524,12 @@ public class OHttpResponse {
   }
 
   public void flush() throws IOException {
-    out.flush();
-    if (!keepAlive) {
-      out.close();
+    if (out != null) {
+      out.flush();
+      if (!keepAlive) {
+        out.close();
+        out = null;
+      }
     }
   }
 

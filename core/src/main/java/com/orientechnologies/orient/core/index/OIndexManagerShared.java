@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -151,7 +152,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
           metadata.field("trackMode", "FULL");
       }
 
-      index = OIndexes.createIndex(getDatabase(), iType, algorithm, valueContainerAlgorithm, metadata);
+      index = OIndexes.createIndex(getDatabase(), iName, iType, algorithm, valueContainerAlgorithm, metadata, -1);
 
       // decide which cluster to use ("index" - for automatic and "manindex" for manual)
       final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName
@@ -350,11 +351,13 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         while (indexConfigurationIterator.hasNext()) {
           final ODocument d = indexConfigurationIterator.next();
           try {
-            index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE),
-                (String) d.field(OIndexInternal.ALGORITHM), d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM),
-                (ODocument) d.field(OIndexInternal.METADATA));
+            OIndexInternal.IndexMetadata newIndexMetadata = OIndexAbstract.loadMetadataInternal(d,
+                (String) d.field(OIndexInternal.CONFIG_TYPE), (String) d.field(OIndexInternal.ALGORITHM),
+                d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+            index = OIndexes.createIndex(getDatabase(), newIndexMetadata.getName(), newIndexMetadata.getType(),
+                newIndexMetadata.getAlgorithm(), newIndexMetadata.getValueContainerAlgorithm(),
+                (ODocument) d.field(OIndexInternal.METADATA), 1);
 
-            OIndexInternal.IndexMetadata newIndexMetadata = index.loadMetadata(d);
             final String normalizedName = newIndexMetadata.getName().toLowerCase();
 
             OIndex<?> oldIndex = oldIndexes.get(normalizedName);
@@ -387,11 +390,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
         for (OIndex<?> oldIndex : oldIndexes.values())
           try {
-            OLogManager.instance().warn(this, "Index %s was not found after reload and will be removed", oldIndex.getName());
+            OLogManager.instance().warn(this, "Index '%s' was not found after reload and will be removed", oldIndex.getName());
 
             oldIndex.delete();
           } catch (Exception e) {
-            OLogManager.instance().error(this, "Error on deletion of index %s", e, oldIndex.getName());
+            OLogManager.instance().error(this, "Error on deletion of index '%s'", e, oldIndex.getName());
           }
 
         if (configUpdated) {
@@ -406,32 +409,48 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   }
 
   public void removeClassPropertyIndex(final OIndex<?> idx) {
-    final OIndexDefinition indexDefinition = idx.getDefinition();
-    if (indexDefinition == null || indexDefinition.getClassName() == null)
-      return;
+    acquireExclusiveLock();
+    try {
+      final OIndexDefinition indexDefinition = idx.getDefinition();
+      if (indexDefinition == null || indexDefinition.getClassName() == null)
+        return;
 
-    final Map<OMultiKey, Set<OIndex<?>>> map = classPropertyIndex.get(indexDefinition.getClassName().toLowerCase());
+      Map<OMultiKey, Set<OIndex<?>>> map = classPropertyIndex.get(indexDefinition.getClassName().toLowerCase());
 
-    if (map == null) {
-      return;
-    }
-
-    final int paramCount = indexDefinition.getParamCount();
-
-    for (int i = 1; i <= paramCount; i++) {
-      final List<String> fields = normalizeFieldNames(indexDefinition.getFields().subList(0, i));
-      final OMultiKey multiKey = new OMultiKey(fields);
-      final Set<OIndex<?>> indexSet = map.get(multiKey);
-      if (indexSet == null)
-        continue;
-      indexSet.remove(idx);
-      if (indexSet.isEmpty()) {
-        map.remove(multiKey);
+      if (map == null) {
+        return;
       }
-    }
 
-    if (map.isEmpty())
-      classPropertyIndex.remove(indexDefinition.getClassName().toLowerCase());
+      map = new HashMap<OMultiKey, Set<OIndex<?>>>(map);
+
+      final int paramCount = indexDefinition.getParamCount();
+
+      for (int i = 1; i <= paramCount; i++) {
+        final List<String> fields = normalizeFieldNames(indexDefinition.getFields().subList(0, i));
+        final OMultiKey multiKey = new OMultiKey(fields);
+
+        Set<OIndex<?>> indexSet = map.get(multiKey);
+        if (indexSet == null)
+          continue;
+
+        indexSet = new HashSet<OIndex<?>>(indexSet);
+        indexSet.remove(idx);
+
+        if (indexSet.isEmpty()) {
+          map.remove(multiKey);
+        } else {
+          map.put(multiKey, indexSet);
+        }
+      }
+
+      if (map.isEmpty())
+        classPropertyIndex.remove(indexDefinition.getClassName().toLowerCase());
+      else
+        classPropertyIndex.put(indexDefinition.getClassName().toLowerCase(), copyPropertyMap(map));
+
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   private class RecreateIndexesTask implements Runnable {
@@ -544,6 +563,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     }
 
     private OIndexInternal<?> createIndex(ODocument idx) {
+      final String indexName = doc.field(OIndexInternal.CONFIG_NAME);
       final String indexType = idx.field(OIndexInternal.CONFIG_TYPE);
       String algorithm = idx.field(OIndexInternal.ALGORITHM);
       String valueContainerAlgorithm = idx.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM);
@@ -554,7 +574,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         throw new OException("Index type is null, will process other record. Index configuration: " + idx.toString());
       }
 
-      return OIndexes.createIndex(newDb, indexType, algorithm, valueContainerAlgorithm, metadata);
+      return OIndexes.createIndex(newDb, indexName, indexType, algorithm, valueContainerAlgorithm, metadata, -1);
     }
 
     private Collection<ODocument> getConfiguration() {
@@ -568,7 +588,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
     private void setUpDatabase() {
       newDb.resetInitialization();
-      newDb.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
+      newDb.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
       newDb.open("admin", "nopass");
 
       ODatabaseRecordThreadLocal.INSTANCE.set(newDb);

@@ -94,4 +94,9 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
   public String getSyntax() {
     return "TRUNCATE CLASS <class-name>";
   }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
+  }
 }

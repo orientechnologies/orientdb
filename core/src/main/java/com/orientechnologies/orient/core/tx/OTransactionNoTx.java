@@ -72,12 +72,20 @@ public class OTransactionNoTx extends OTransactionAbstract {
   public void rollback() {
   }
 
+  @Deprecated
   public ORecord loadRecord(final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignoreCache,
       final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     if (iRid.isNew())
       return null;
 
     return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, loadTombstone, iLockingStrategy);
+  }
+
+  public ORecord loadRecord(final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignoreCache) {
+    if (iRid.isNew())
+      return null;
+
+    return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, false, OStorage.LOCKING_STRATEGY.NONE);
   }
 
   /**

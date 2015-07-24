@@ -615,6 +615,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   public void add(final OIdentifiable identifiable) {
+    if (identifiable == null)
+      throw new NullPointerException("Impossible to add a null identifiable in a ridbag");
     if (identifiable.getIdentity().isValid()) {
       Change counter = changes.get(identifiable);
       if (counter == null)

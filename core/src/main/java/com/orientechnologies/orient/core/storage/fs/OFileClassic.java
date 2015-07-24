@@ -24,9 +24,11 @@ import java.nio.ByteBuffer;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
 public class OFileClassic extends OAbstractFile {
+
   public final static String NAME                = "classic";
   protected ByteBuffer       internalWriteBuffer = ByteBuffer.allocate(OBinaryProtocol.SIZE_LONG);
 

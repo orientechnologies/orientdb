@@ -100,8 +100,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
 
-    final ORecordOperation oper = graph.getRawGraph().getTransaction().getRecordEntry(getIdentity());
-    if (oper != null && oper.type == ORecordOperation.DELETED)
+    if (checkDeletedInTx())
       throw new IllegalStateException("The elements " + getIdentity() + " has already been deleted");
 
     try {
@@ -111,6 +110,24 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     }
 
     getRecord().delete();
+  }
+
+  protected boolean checkDeletedInTx() {
+    OrientBaseGraph curGraph = getGraph();
+    if (curGraph == null)
+      return false;
+
+    ORID id;
+    if (getRecord() != null)
+      id = getRecord().getIdentity();
+    else
+      return false;
+
+    final ORecordOperation oper = curGraph.getRawGraph().getTransaction().getRecordEntry(id);
+    if (oper == null)
+      return id.isTemporary();
+    else
+      return oper.type == ORecordOperation.DELETED;
   }
 
   /**
@@ -138,31 +155,11 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * @return
    */
   public <T extends OrientElement> T setProperties(final Object... fields) {
-    OrientBaseGraph graph = getGraph();
-    if (fields != null && fields.length > 0 && fields[0] != null) {
-      if (graph != null)
-        graph.autoStartTransaction();
+    if (checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
 
-      if (fields.length == 1) {
-        Object f = fields[0];
-        if (f instanceof Map<?, ?>) {
-          for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) f).entrySet())
-            setPropertyInternal(this, (ODocument) rawElement.getRecord(), entry.getKey().toString(), entry.getValue());
-
-        } else
-          throw new IllegalArgumentException(
-              "Invalid fields: expecting a pairs of fields as String,Object or a single Map<String,Object>, but found: " + f);
-      } else {
-        if (fields.length % 2 != 0)
-          throw new IllegalArgumentException(
-              "Invalid fields: expecting a pairs of fields as String,Object or a single Map<String,Object>, but found: "
-                  + Arrays.toString(fields));
-
-        // SET THE FIELDS
-        for (int i = 0; i < fields.length; i += 2)
-          setPropertyInternal(this, (ODocument) rawElement.getRecord(), fields[i].toString(), fields[i + 1]);
-      }
-    }
+    setPropertiesInternal(fields);
+    save();
     return (T) this;
   }
 
@@ -176,6 +173,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public void setProperty(final String key, final Object value) {
+    if (checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+
     validateProperty(this, key, value);
     final OrientBaseGraph graph = getGraph();
 
@@ -198,6 +198,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    *          Type to set
    */
   public void setProperty(final String key, final Object value, final OType iType) {
+    if (checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+
     validateProperty(this, key, value);
 
     final OrientBaseGraph graph = getGraph();
@@ -217,6 +220,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public <T> T removeProperty(final String key) {
+    if (checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+
     final OrientBaseGraph graph = getGraph();
 
     if (graph != null)
@@ -355,7 +361,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   @Override
   public void lock(final boolean iExclusive) {
     ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
-        .lockRecord(this, iExclusive ? OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK);
+        .lockRecord(this, iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
   }
 
   /**
@@ -650,4 +656,56 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
           "There is no active graph instance for current element. Please either open connection to your storage, or use detach/attach methods instead.");
   }
 
+  /**
+   * (Blueprints Extension) Sets multiple properties in one shot against Vertices and Edges without saving the element. This
+   * improves performance avoiding to save the graph element at every property set. Example:
+   *
+   * <code>
+   * vertex.setProperties( "name", "Jill", "age", 33, "city", "Rome", "born", "Victoria, TX" );
+   * </code> You can also pass a Map of values as first argument. In this case all the map entries will be set as element
+   * properties:
+   *
+   * <code>
+   * Map<String,Object> props = new HashMap<String,Object>();
+   * props.put("name", "Jill");
+   * props.put("age", 33);
+   * props.put("city", "Rome");
+   * props.put("born", "Victoria, TX");
+   * vertex.setProperties(props);
+   * </code>
+   *
+   * @param fields
+   *          Odd number of fields to set as repeating pairs of key, value, or if one parameter is received and it's a Map, the Map
+   *          entries are used as field key/value pairs.
+   * @param <T>
+   * @return
+   */
+  protected <T extends OrientElement> T setPropertiesInternal(final Object... fields) {
+    OrientBaseGraph graph = getGraph();
+    if (fields != null && fields.length > 0 && fields[0] != null) {
+      if (graph != null)
+        graph.autoStartTransaction();
+
+      if (fields.length == 1) {
+        Object f = fields[0];
+        if (f instanceof Map<?, ?>) {
+          for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) f).entrySet())
+            setPropertyInternal(this, (ODocument) rawElement.getRecord(), entry.getKey().toString(), entry.getValue());
+
+        } else
+          throw new IllegalArgumentException(
+              "Invalid fields: expecting a pairs of fields as String,Object or a single Map<String,Object>, but found: " + f);
+      } else {
+        if (fields.length % 2 != 0)
+          throw new IllegalArgumentException(
+              "Invalid fields: expecting a pairs of fields as String,Object or a single Map<String,Object>, but found: "
+                  + Arrays.toString(fields));
+
+        // SET THE FIELDS
+        for (int i = 0; i < fields.length; i += 2)
+          setPropertyInternal(this, (ODocument) rawElement.getRecord(), fields[i].toString(), fields[i + 1]);
+      }
+    }
+    return (T) this;
+  }
 }

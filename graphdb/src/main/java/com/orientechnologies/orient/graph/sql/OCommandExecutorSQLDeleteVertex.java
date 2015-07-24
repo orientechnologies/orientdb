@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -40,11 +37,13 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL DELETE VERTEX command.
@@ -98,11 +97,18 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
         query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
         break;
 
+      } else if (word.equals(KEYWORD_LIMIT)) {
+        word = parseOptionalWord(true);
+        try {
+          limit = Integer.parseInt(word);
+        } catch (Exception e) {
+          throw new OCommandSQLParsingException("Invalid LIMIT: " + word);
+        }
       } else if (word.length() > 0) {
         // GET/CHECK CLASS NAME
         clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(word);
         if (clazz == null)
-          throw new OCommandSQLParsingException("Class '" + word + " was not found");
+          throw new OCommandSQLParsingException("Class '" + word + "' was not found");
       }
 
       word = parseOptionalWord(true);
@@ -115,13 +121,21 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     else
       where = " WHERE " + where;
 
-    if (query == null && rid == null)
-      if (clazz == null)
+    if (query == null && rid == null) {
+      StringBuilder queryString = new StringBuilder();
+      queryString.append("select from ");
+      if (clazz == null) {
         // DELETE ALL VERTEXES
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from V" + where, this));
-      else
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
-
+        queryString.append("V");
+      } else {
+        queryString.append(clazz.getName());
+      }
+      queryString.append(where);
+      if (limit > -1) {
+        queryString.append(" LIMIT " + limit);
+      }
+      query = database.command(new OSQLAsynchQuery<ODocument>(queryString.toString(), this));
+    }
     return this;
   }
 
@@ -186,12 +200,17 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   @Override
   public void end() {
     if (graph != null && shutdownFlag.getValue())
-      graph.shutdown(false);
+      graph.shutdown(false, false);
   }
 
   @Override
   public int getSecurityOperationType() {
     return ORole.PERMISSION_DELETE;
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
   }
 
 }

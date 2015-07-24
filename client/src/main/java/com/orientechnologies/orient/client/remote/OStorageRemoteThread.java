@@ -247,10 +247,10 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
+      ORecordCallback<ORawBuffer> iCallback) {
     pushSession();
     try {
-      return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones, LOCKING_STRATEGY.DEFAULT);
+      return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null);
     } finally {
       popSession();
     }

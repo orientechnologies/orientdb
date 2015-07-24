@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.graph.handler;
 
-import javax.script.Bindings;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
@@ -33,6 +31,8 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+
+import javax.script.Bindings;
 
 public class OGraphServerHandler extends OServerPluginAbstract implements OScriptInjection {
   private boolean enabled      = true;
@@ -79,7 +79,9 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
 
   @Override
   public void bind(Bindings binding) {
-    binding.put("orient", new OScriptGraphOrientWrapper());
+    Object scriptGraph = binding.get("orient");
+    if (scriptGraph == null || !(scriptGraph instanceof OScriptGraphOrientWrapper))
+      binding.put("orient", new OScriptGraphOrientWrapper());
   }
 
   @Override

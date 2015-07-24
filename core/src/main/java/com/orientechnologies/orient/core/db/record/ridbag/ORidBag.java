@@ -20,6 +20,13 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag;
 
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OCollection;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
@@ -42,6 +49,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.Writer;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -332,6 +342,10 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     delegate.setOwner(owner);
   }
 
+  public ORidBagDelegate getDelegate() {
+    return delegate;
+  }
+
   /**
    * Temporary id of collection to track changes in remote mode.
    * 
@@ -427,4 +441,5 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     treeBag.setCollectionPointer(pointer);
     delegate = treeBag;
   }
+
 }

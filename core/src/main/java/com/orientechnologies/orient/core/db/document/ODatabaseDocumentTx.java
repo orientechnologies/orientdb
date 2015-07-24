@@ -20,13 +20,6 @@
 
 package com.orientechnologies.orient.core.db.document;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -114,6 +107,13 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
@@ -513,6 +513,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @Override
   public void reload() {
+    if (this.isClosed())
+      throw new ODatabaseException("Cannot reload a closed db");
+
     metadata.reload();
     storage.reload();
   }
@@ -590,6 +593,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@inheritDoc}
    */
   @Override
+  @Deprecated
   public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(final String iClusterName, final Class<REC> iRecordClass,
       final long startClusterPosition, final long endClusterPosition, final boolean loadTombstones) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
@@ -600,6 +604,18 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true, loadTombstones,
         OStorage.LOCKING_STRATEGY.DEFAULT);
+  }
+
+  @Override
+  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
+      long startClusterPosition, long endClusterPosition) {
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
+
+    setCurrentDatabaseInThreadLocal();
+
+    final int clusterId = getClusterIdByName(iClusterName);
+
+    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true);
   }
 
   /**
@@ -733,12 +749,15 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     if (user != null) {
       try {
-        for (Object target : iResourcesSpecific) {
-          if (target != null) {
-            user.allow(iResourceGeneric, target.toString(), iOperation);
-          } else
-            user.allow(iResourceGeneric, null, iOperation);
-        }
+        if (iResourcesSpecific.length != 0) {
+          for (Object target : iResourcesSpecific) {
+            if (target != null) {
+              user.allow(iResourceGeneric, target.toString(), iOperation);
+            } else
+              user.allow(iResourceGeneric, null, iOperation);
+          }
+        } else
+          user.allow(iResourceGeneric, null, iOperation);
       } catch (OSecurityAccessException e) {
         if (OLogManager.instance().isDebugEnabled())
           OLogManager.instance().debug(this,
@@ -845,7 +864,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   /**
    * {@inheritDoc}
    */
-  public void setUser(OSecurityUser user) {
+  public void setUser(final OSecurityUser user) {
     if (user instanceof OUser) {
       OMetadata metadata = getMetadata();
       if (metadata != null) {
@@ -930,7 +949,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   /**
-   * Callback the registeted hooks if any.
+   * Callback the registered hooks if any.
    *
    * @param type
    *          Hook type. Define when hook is called.
@@ -1415,6 +1434,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @SuppressWarnings("unchecked")
   @Override
+  @Deprecated
   public <RET extends ORecord> RET load(ORecord iRecord, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
       OStorage.LOCKING_STRATEGY iLockingStrategy) {
     return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
@@ -1423,23 +1443,24 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecord> RET load(final ORecord iRecord) {
-    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
+    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, null, false);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecord> RET load(final ORID recordId) {
-    return (RET) currentTx.loadRecord(recordId, null, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
+    return (RET) currentTx.loadRecord(recordId, null, null, false);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecord> RET load(final ORID iRecordId, final String iFetchPlan) {
-    return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
+    return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, false);
   }
 
   @SuppressWarnings("unchecked")
   @Override
+  @Deprecated
   public <RET extends ORecord> RET load(final ORID iRecordId, String iFetchPlan, final boolean iIgnoreCache,
       final boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
     return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
@@ -1458,8 +1479,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecord> RET reload(final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
-    ORecord record = currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false,
-        OStorage.LOCKING_STRATEGY.DEFAULT);
+    ORecord record = currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache);
+
     if (record != null && iRecord != record) {
       iRecord.fromStream(record.toStream());
       iRecord.getRecordVersion().copyFrom(record.getRecordVersion());
@@ -1522,7 +1543,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    */
   public <RET extends ORecord> RET load(final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
     return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false,
-        OStorage.LOCKING_STRATEGY.DEFAULT);
+        OStorage.LOCKING_STRATEGY.NONE);
   }
 
   /**
@@ -1563,10 +1584,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
           record.reload();
 
-        if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK)
+        if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+          OLogManager.instance().warn(this,
+              "You use depricated record locking strategy : %s it may lead to deadlocks " + iLockingStrategy);
           record.lock(false);
-        else if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
+
+        } else if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
+          OLogManager.instance().warn(this,
+              "You use depricated record locking strategy : %s it may lead to deadlocks " + iLockingStrategy);
           record.lock(true);
+        }
 
         callbackHooks(ORecordHook.TYPE.AFTER_READ, record);
         return (RET) record;
@@ -1577,7 +1604,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         recordBuffer = null;
       else {
         OFetchHelper.checkFetchPlanValid(iFetchPlan);
-        recordBuffer = storage.readRecord(rid, iFetchPlan, iIgnoreCache, null, loadTombstones, iLockingStrategy).getResult();
+        recordBuffer = storage.readRecord(rid, iFetchPlan, iIgnoreCache, null).getResult();
       }
 
       if (recordBuffer == null)
@@ -1916,6 +1943,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       currentTx.rollback(true, 0);
     }
+
+    // CHECK IT'S NOT INSIDE A HOOK
+    if (OHookThreadLocal.INSTANCE.isInsideHookExecution())
+      throw new IllegalStateException("Cannot begin a transaction while a hook is executing");
 
     // WAKE UP LISTENERS
     for (ODatabaseListener listener : browseListeners())
@@ -2356,7 +2387,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
               deletedInTx++;
           }
         }
-        if (op.type == ORecordOperation.CREATED){
+        if (op.type == ORecordOperation.CREATED) {
           final ORecord rec = op.getRecord();
           if (rec != null && rec instanceof ODocument) {
             if (((ODocument) rec).getSchemaClass().isSubClassOf(iClassName))
@@ -2415,6 +2446,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       // ROLLBACK TX AT DB LEVEL
       currentTx.rollback(false, 0);
       getLocalCache().clear();
+
+      // CLEAR SERIALIZATION TL TO AVOID MEMORY LEAKS
+      OSerializationSetThreadLocal.clear();
 
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : browseListeners())
@@ -2480,6 +2514,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
 
     getLocalCache().clear();
+
+    // CLEAR SERIALIZATION TL TO AVOID MEMORY LEAKS
+    OSerializationSetThreadLocal.clear();
 
     return this;
   }
@@ -2699,7 +2736,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     registerHook(new ORestrictedAccessHook(), ORecordHook.HOOK_POSITION.FIRST);
     registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
     registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
-    registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
+    registerHook(new OClassIndexManager(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OSchedulerTrigger(), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new ORidBagDeleteHook(), ORecordHook.HOOK_POSITION.LAST);
   }

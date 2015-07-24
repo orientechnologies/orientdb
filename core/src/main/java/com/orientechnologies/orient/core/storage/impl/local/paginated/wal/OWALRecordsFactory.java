@@ -54,10 +54,14 @@ public class OWALRecordsFactory {
       content[0] = 8;
     else if (walRecord instanceof OAtomicUnitEndRecord)
       content[0] = 9;
-    else if (walRecord instanceof OFileCreatedCreatedWALRecord)
+    else if (walRecord instanceof OFileCreatedWALRecord)
       content[0] = 10;
     else if (walRecord instanceof ONonTxOperationPerformedWALRecord)
       content[0] = 11;
+    else if (walRecord instanceof OFileDeletedWALRecord)
+      content[0] = 12;
+    else if (walRecord instanceof OFileTruncatedWALRecord)
+      content[0] = 13;
     else if (typeToIdMap.containsKey(walRecord.getClass())) {
       content[0] = typeToIdMap.get(walRecord.getClass());
     } else
@@ -96,10 +100,16 @@ public class OWALRecordsFactory {
       walRecord = new OAtomicUnitEndRecord();
       break;
     case 10:
-      walRecord = new OFileCreatedCreatedWALRecord();
+      walRecord = new OFileCreatedWALRecord();
       break;
     case 11:
       walRecord = new ONonTxOperationPerformedWALRecord();
+      break;
+    case 12:
+      walRecord = new OFileDeletedWALRecord();
+      break;
+    case 13:
+      walRecord = new OFileTruncatedWALRecord();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

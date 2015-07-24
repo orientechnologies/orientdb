@@ -59,13 +59,14 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   }
 
   @Override
-  public long openFile(String fileName) throws IOException {
+  public long addFile(String fileName) throws IOException {
     metadataLock.lock();
     try {
       Long fileId = fileNameIdMap.get(fileName);
 
       if (fileId == null) {
-        final long id = counter++;
+        counter++;
+        final long id = counter;
 
         files.put(id, new MemoryFile(id, pageSize));
         fileNameIdMap.put(fileName, id);
@@ -73,6 +74,35 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
         fileId = id;
 
         fileIdNameMap.put(fileId, fileName);
+      } else {
+        throw new OStorageException(fileName + " already exists.");
+      }
+
+      return fileId;
+    } finally {
+      metadataLock.unlock();
+    }
+  }
+
+  @Override
+  public long bookFileId(String fileName) {
+    metadataLock.lock();
+    try {
+      counter++;
+      return counter;
+    } finally {
+      metadataLock.unlock();
+    }
+  }
+
+  @Override
+  public long openFile(String fileName) throws IOException {
+    metadataLock.lock();
+    try {
+      Long fileId = fileNameIdMap.get(fileName);
+
+      if (fileId == null) {
+        throw new OStorageException("File " + fileName + " does not exist.");
       }
 
       return fileId;
@@ -94,9 +124,29 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   }
 
   @Override
+  public void addFile(String fileName, long fileId) throws IOException {
+    metadataLock.lock();
+    try {
+      if (files.containsKey(fileId))
+        throw new OStorageException("File with id " + fileId + " already exists.");
+
+      if (fileNameIdMap.containsKey(fileName))
+        throw new OStorageException(fileName + " already exists.");
+
+      files.put(fileId, new MemoryFile(fileId, pageSize));
+      fileNameIdMap.put(fileName, fileId);
+      fileIdNameMap.put(fileId, fileName);
+    } finally {
+      metadataLock.unlock();
+    }
+  }
+
+  @Override
   public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages) throws IOException {
     final MemoryFile memoryFile = getFile(fileId);
     final OCacheEntry cacheEntry = memoryFile.loadPage(pageIndex);
+    if (cacheEntry == null)
+      return null;
 
     synchronized (cacheEntry) {
       cacheEntry.incrementUsages();
@@ -107,13 +157,6 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
 
   @Override
   public void pinPage(OCacheEntry cacheEntry) throws IOException {
-  }
-
-  @Override
-  public void loadPinnedPage(OCacheEntry cacheEntry) throws IOException {
-    synchronized (cacheEntry) {
-      cacheEntry.incrementUsages();
-    }
   }
 
   @Override
@@ -310,24 +353,7 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
     private OCacheEntry loadPage(long index) {
       clearLock.readLock().lock();
       try {
-        OCacheEntry cacheEntry = content.get(index);
-        if (cacheEntry != null)
-          return cacheEntry;
-
-        ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize + 2 * ODurablePage.PAGE_PADDING]);
-        OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(-1, -1));
-        cachePointer.incrementReferrer();
-
-        cacheEntry = new OCacheEntry(id, index, cachePointer, false);
-
-        OCacheEntry oldCacheEntry = content.putIfAbsent(index, cacheEntry);
-
-        if (oldCacheEntry != null) {
-          cacheEntry.getCachePointer().decrementReferrer();
-          cacheEntry = oldCacheEntry;
-        }
-
-        return cacheEntry;
+        return content.get(index);
       } finally {
         clearLock.readLock().unlock();
       }

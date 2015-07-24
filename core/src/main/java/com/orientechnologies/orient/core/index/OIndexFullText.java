@@ -65,9 +65,13 @@ public class OIndexFullText extends OIndexMultiValues {
   public OIndexFullText(String typeId, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
       String valueContainerAlgorithm, ODocument metadata) {
     super(typeId, algorithm, indexEngine, valueContainerAlgorithm, metadata);
-    config();
-    configWithMetadata(metadata);
-
+    acquireExclusiveLock();
+    try {
+      config();
+      configWithMetadata(metadata);
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   /**
@@ -86,8 +90,9 @@ public class OIndexFullText extends OIndexMultiValues {
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    if (!txIsActive)
+      keyLockManager.acquireExclusiveLock(key);
+
     try {
       modificationLock.requestModificationLock();
 
@@ -96,7 +101,7 @@ public class OIndexFullText extends OIndexMultiValues {
 
         // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
         for (final String word : words) {
-          acquireExclusiveLock();
+          acquireSharedLock();
           startStorageAtomicOperation();
           try {
             Set<OIdentifiable> refs;
@@ -129,7 +134,7 @@ public class OIndexFullText extends OIndexMultiValues {
             rollbackStorageAtomicOperation();
             throw new OIndexException("Error during put of key - value entry", e);
           } finally {
-            releaseExclusiveLock();
+            releaseSharedLock();
           }
         }
         return this;
@@ -137,8 +142,8 @@ public class OIndexFullText extends OIndexMultiValues {
         modificationLock.releaseModificationLock();
       }
     } finally {
-      if (txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      if (!txIsActive)
+        keyLockManager.releaseExclusiveLock(key);
     }
   }
 
@@ -161,8 +166,8 @@ public class OIndexFullText extends OIndexMultiValues {
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    if (!txIsActive)
+      keyLockManager.acquireExclusiveLock(key);
     try {
       modificationLock.requestModificationLock();
 
@@ -171,7 +176,7 @@ public class OIndexFullText extends OIndexMultiValues {
         boolean removed = false;
 
         for (final String word : words) {
-          acquireExclusiveLock();
+          acquireSharedLock();
           startStorageAtomicOperation();
           try {
 
@@ -190,7 +195,7 @@ public class OIndexFullText extends OIndexMultiValues {
             rollbackStorageAtomicOperation();
             throw new OIndexException("Error during removal of entry by key and value", e);
           } finally {
-            releaseExclusiveLock();
+            releaseSharedLock();
           }
         }
 
@@ -199,8 +204,8 @@ public class OIndexFullText extends OIndexMultiValues {
         modificationLock.releaseModificationLock();
       }
     } finally {
-      if (txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      if (!txIsActive)
+        keyLockManager.releaseExclusiveLock(key);
     }
   }
 
@@ -225,21 +230,14 @@ public class OIndexFullText extends OIndexMultiValues {
   }
 
   @Override
-  public ODocument updateConfiguration() {
-    super.updateConfiguration();
-    configuration.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+  protected void doConfigurationUpdate(ODocument newConfig) {
+    super.doConfigurationUpdate(newConfig);
 
-    try {
-      configuration.field(CONFIG_SEPARATOR_CHARS, separatorChars);
-      configuration.field(CONFIG_IGNORE_CHARS, ignoreChars);
-      configuration.field(CONFIG_STOP_WORDS, stopWords);
-      configuration.field(CONFIG_MIN_WORD_LEN, minWordLength);
-      configuration.field(CONFIG_INDEX_RADIX, indexRadix);
-
-    } finally {
-      configuration.setInternalStatus(ORecordElement.STATUS.LOADED);
-    }
-    return configuration;
+    newConfig.field(CONFIG_SEPARATOR_CHARS, separatorChars);
+    newConfig.field(CONFIG_IGNORE_CHARS, ignoreChars);
+    newConfig.field(CONFIG_STOP_WORDS, stopWords);
+    newConfig.field(CONFIG_MIN_WORD_LEN, minWordLength);
+    newConfig.field(CONFIG_INDEX_RADIX, indexRadix);
   }
 
   public boolean canBeUsedInEqualityOperators() {

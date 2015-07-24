@@ -102,4 +102,9 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstra
   public String getSyntax() {
     return "TRUNCATE RECORD <rid>*";
   }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
+  }
 }

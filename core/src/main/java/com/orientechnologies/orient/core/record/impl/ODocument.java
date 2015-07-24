@@ -19,6 +19,17 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.text.ParseException;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -54,19 +65,9 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.text.ParseException;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -431,9 +432,16 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   protected static void validateLinkCollection(final OProperty property, Collection<Object> values) {
     if (property.getLinkedClass() != null) {
+      boolean autoconvert = false;
+      if (values instanceof ORecordLazyMultiValue) {
+        autoconvert = ((ORecordLazyMultiValue) values).isAutoConvertToRecord();
+        ((ORecordLazyMultiValue) values).setAutoConvertToRecord(false);
+      }
       for (Object object : values) {
         validateLink(property, object, OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
       }
+      if (values instanceof ORecordLazyMultiValue)
+        ((ORecordLazyMultiValue) values).setAutoConvertToRecord(autoconvert);
     }
   }
 
@@ -482,18 +490,19 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
           + " but the value is the RecordID " + fieldValue);
     else if (fieldValue instanceof OIdentifiable) {
-      if (((OIdentifiable) fieldValue).getIdentity().isValid())
+      final OIdentifiable embedded = (OIdentifiable) fieldValue;
+      if (embedded.getIdentity().isValid())
         throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
             + " but the value is a document with the valid RecordID " + fieldValue);
 
       final OClass embeddedClass = p.getLinkedClass();
       if (embeddedClass != null) {
-        final ORecord rec = ((OIdentifiable) fieldValue).getRecord();
-        if (!(rec instanceof ODocument))
+        final ORecord embeddedRecord = embedded.getRecord();
+        if (!(embeddedRecord instanceof ODocument))
           throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
               + " with linked class '" + embeddedClass + "' but the record was not a document");
 
-        final ODocument doc = (ODocument) rec;
+        final ODocument doc = (ODocument) embeddedRecord;
         if (doc.getImmutableSchemaClass() == null)
           throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
               + " with linked class '" + embeddedClass + "' but the record has no class");
@@ -502,6 +511,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
           throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
               + " with linked class '" + embeddedClass + "' but the record is of class '" + doc.getImmutableSchemaClass().getName()
               + "' that is not a subclass of that");
+
+        doc.validate();
       }
 
     } else
@@ -647,6 +658,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return (ODocument) result;
   }
 
+  @Deprecated
   public ODocument load(final String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
     Object result;
     try {
@@ -1474,6 +1486,18 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   @Override
   public ODocument clear() {
     super.clear();
+    if (_fieldValues != null) {
+      if (_fieldOriginalValues == null) {
+        _fieldOriginalValues = new HashMap<String, Object>();
+      }
+
+      for (Map.Entry<String, Object> entry : _fieldValues.entrySet()) {
+        if (!_fieldOriginalValues.containsKey(entry.getKey())) {
+          _fieldOriginalValues.put(entry.getKey(), entry.getValue());
+        }
+      }
+    }
+
     internalReset();
     _owners = null;
     return this;
@@ -1755,9 +1779,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     if (iFields != null && iFields.length > 0) {
-      if (iFields[0].startsWith("@"))
-        // ATTRIBUTE
-        return true;
+      for (String field : iFields) {
+        if (field.startsWith("@"))
+          // ATTRIBUTE
+          return true;
+      }
 
       // PARTIAL UNMARSHALLING
       if (_fieldValues != null && !_fieldValues.isEmpty())
@@ -1777,6 +1803,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   @Override
   public void writeExternal(ObjectOutput stream) throws IOException {
     final byte[] idBuffer = _recordId.toStream();
+    stream.writeInt(-1);
     stream.writeInt(idBuffer.length);
     stream.write(idBuffer);
 
@@ -1787,11 +1814,18 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     stream.write(content);
 
     stream.writeBoolean(_dirty);
+    stream.writeObject(this._recordFormat.toString());
   }
 
   @Override
   public void readExternal(ObjectInput stream) throws IOException, ClassNotFoundException {
-    final byte[] idBuffer = new byte[stream.readInt()];
+    int i = stream.readInt();
+    int size;
+    if (i < 0)
+      size = stream.readInt();
+    else
+      size = i;
+    final byte[] idBuffer = new byte[size];
     stream.readFully(idBuffer);
     _recordId.fromStream(idBuffer);
 
@@ -1801,9 +1835,13 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     final byte[] content = new byte[len];
     stream.readFully(content);
 
+    _dirty = stream.readBoolean();
+    if (i < 0) {
+      String str = (String) stream.readObject();
+      _recordFormat = ORecordSerializerFactory.instance().getFormat(str);
+    }
     fromStream(content);
 
-    _dirty = stream.readBoolean();
   }
 
   /**

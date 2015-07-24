@@ -66,10 +66,15 @@ public class OrientEdge extends OrientElement implements Edge {
     super(rawGraph, rawEdge);
   }
 
+  protected OrientEdge(final OrientBaseGraph rawGraph, final OIdentifiable rawEdge, String iLabel) {
+    super(rawGraph, rawEdge);
+    label = iLabel;
+  }
+
   protected OrientEdge(final OrientBaseGraph rawGraph, final String iLabel, final Object... fields) {
     super(rawGraph, null);
     rawElement = createDocument(iLabel);
-    setProperties(fields);
+    setPropertiesInternal(fields);
   }
 
   protected OrientEdge(final OrientBaseGraph rawGraph, final OIdentifiable out, final OIdentifiable in) {

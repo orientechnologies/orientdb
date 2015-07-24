@@ -64,7 +64,7 @@ public interface OTransaction {
   /**
    * Changes the isolation level. Default is READ_COMMITTED. When REPEATABLE_READ is set, any record read from the storage is cached
    * in memory to guarantee the repeatable reads. This affects the used RAM and speed (because JVM Garbage Collector job).
-   * 
+   *
    * @param iIsolationLevel
    *          Isolation level to set
    * @return Current object to allow call in chain
@@ -77,8 +77,11 @@ public interface OTransaction {
 
   public void clearRecordEntries();
 
+  @Deprecated
   public ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache, boolean loadTombstone,
       final OStorage.LOCKING_STRATEGY iLockingStrategy);
+
+  public ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache);
 
   public ORecord saveRecord(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
@@ -114,7 +117,7 @@ public interface OTransaction {
 
   /**
    * Tells if the transaction is active.
-   * 
+   *
    * @return
    */
   public boolean isActive();
@@ -127,7 +130,7 @@ public interface OTransaction {
    * <li>Rollback data changes in case of exception</li>
    * <li>Restore data in case of server crash</li>
    * </ol>
-   * 
+   *
    * So you practically unable to work in multithreaded environment and keep data consistent.
    */
   public void setUsingLog(boolean useLog);
@@ -137,7 +140,7 @@ public interface OTransaction {
   /**
    * When commit in transaction is performed all new records will change their identity, but index values will contain stale links,
    * to fix them given method will be called for each entry. This update local transaction maps too.
-   * 
+   *
    * @param oldRid
    *          Record identity before commit.
    * @param newRid
@@ -146,8 +149,10 @@ public interface OTransaction {
   public void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid);
 
   public int amountOfNestedTxs();
-  
+
   public boolean isLockedRecord(OIdentifiable iRecord);
+
+  OStorage.LOCKING_STRATEGY lockingStrategy(OIdentifiable iRecord);
 
   public OTransaction lockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY iLockingStrategy);
 

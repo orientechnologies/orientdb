@@ -27,14 +27,14 @@ import com.orientechnologies.common.serialization.types.OStringSerializer;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 5/21/14
  */
-public class OFileCreatedCreatedWALRecord extends OOperationUnitBodyRecord {
+public class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
   private String fileName;
   private long   fileId;
 
-  public OFileCreatedCreatedWALRecord() {
+  public OFileCreatedWALRecord() {
   }
 
-  public OFileCreatedCreatedWALRecord(OOperationUnitId operationUnitId, String fileName, long fileId, OLogSequenceNumber startLsn) {
+  public OFileCreatedWALRecord(OOperationUnitId operationUnitId, String fileName, long fileId, OLogSequenceNumber startLsn) {
     super(operationUnitId, startLsn);
     this.fileName = fileName;
     this.fileId = fileId;

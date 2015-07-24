@@ -22,10 +22,9 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 import java.io.IOException;
@@ -54,7 +53,7 @@ public class OAtomicOperationsManager {
 
   private final OAbstractPaginatedStorage                      storage;
   private final OWriteAheadLog                                 writeAheadLog;
-  private final OLockManager<Object, OAtomicOperationsManager> lockManager      = new OLockManager<Object, OAtomicOperationsManager>(
+  private final OLockManager<String, OAtomicOperationsManager> lockManager      = new OLockManager<String, OAtomicOperationsManager>(
                                                                                     true, -1);
 
   public OAtomicOperationsManager(OAbstractPaginatedStorage storage) {
@@ -62,24 +61,40 @@ public class OAtomicOperationsManager {
     this.writeAheadLog = storage.getWALInstance();
   }
 
-  public OAtomicOperation startAtomicOperation() throws IOException {
+  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent, boolean rollbackOnlyMode) throws IOException {
+    return startAtomicOperation(durableComponent.getFullName(), rollbackOnlyMode);
+  }
+
+  public OAtomicOperation startAtomicOperation(String component, boolean rollbackOnlyMode) throws IOException {
     if (writeAheadLog == null)
       return null;
 
     OAtomicOperation operation = currentOperation.get();
     if (operation != null) {
       operation.incrementCounter();
+
+      if (component != null)
+        acquireExclusiveLockTillOperationComplete(component);
+
       return operation;
     }
 
     final OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
-    operation = new OAtomicOperation(lsn, unitId);
+    final OLogSequenceNumber lsn;
+    if (!rollbackOnlyMode)
+      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
+    else
+      lsn = null;
+
+    operation = new OAtomicOperation(lsn, unitId, rollbackOnlyMode);
     currentOperation.set(operation);
 
     if (storage.getStorageTransaction() == null)
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
+
+    if (component != null)
+      acquireExclusiveLockTillOperationComplete(component);
 
     return operation;
   }
@@ -105,25 +120,52 @@ public class OAtomicOperationsManager {
     assert counter >= 0;
 
     if (counter == 0) {
-      for (Object lockObject : operation.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
+      if (!operation.isRollback())
+        operation.commitChanges(storage.getDiskCache(), writeAheadLog);
 
-      writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
+      if (!operation.isRollbackOnlyMode())
+        writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
+
       currentOperation.set(null);
+
+      for (String lockObject : operation.lockedObjects())
+        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
     }
 
     return operation;
   }
 
-  public void lockTillOperationComplete(Object lockObject) {
+  private void acquireExclusiveLockTillOperationComplete(String durableComponent) {
     final OAtomicOperation operation = currentOperation.get();
     if (operation == null)
       return;
 
-    if (operation.containsInLockedObjects(lockObject))
+    assert durableComponent != null;
+
+    if (operation.containsInLockedObjects(durableComponent))
       return;
 
-    lockManager.acquireLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
-    operation.addLockedObject(lockObject);
+    lockManager.acquireLock(this, durableComponent, OLockManager.LOCK.EXCLUSIVE);
+    operation.addLockedObject(durableComponent);
+  }
+
+  public void acquireReadLock(ODurableComponent durableComponent) {
+    if (writeAheadLog == null)
+      return;
+
+    assert durableComponent.getName() != null;
+    assert durableComponent.getFullName() != null;
+
+    lockManager.acquireLock(this, durableComponent.getFullName(), OLockManager.LOCK.SHARED);
+  }
+
+  public void releaseReadLock(ODurableComponent durableComponent) {
+    if (writeAheadLog == null)
+      return;
+
+    assert durableComponent.getName() != null;
+    assert durableComponent.getFullName() != null;
+
+    lockManager.releaseLock(this, durableComponent.getFullName(), OLockManager.LOCK.SHARED);
   }
 }

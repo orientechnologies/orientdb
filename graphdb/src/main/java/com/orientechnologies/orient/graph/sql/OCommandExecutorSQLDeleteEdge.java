@@ -40,11 +40,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.*;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -123,7 +119,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
           label = originalTemp;
           clazz = graph.getEdgeType(temp);
           if (clazz == null)
-            throw new OCommandSQLParsingException("Class '" + temp + " was not found");
+            throw new OCommandSQLParsingException("Class '" + temp + "' was not found");
         }
 
         temp = parseOptionalWord(true);
@@ -257,6 +253,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
               @Override
               public Object call(OrientBaseGraph graph) {
                 // TARGET IS A CLASS + OPTIONAL CONDITION
+                query.setContext(getContext());
                 return query.execute(iArgs);
               }
             });
@@ -321,5 +318,10 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
   @Override
   public int getSecurityOperationType() {
     return ORole.PERMISSION_DELETE;
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
   }
 }

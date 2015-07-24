@@ -48,17 +48,17 @@ public class OIndexUnique extends OIndexOneValue {
 
     key = getCollatingValue(key);
 
-		final ODatabase database = getDatabase();
-		final boolean txIsActive = database.getTransaction().isActive();
+    final ODatabase database = getDatabase();
+    final boolean txIsActive = database.getTransaction().isActive();
 
-		if (txIsActive)
-			keyLockManager.acquireSharedLock(key);
+    if (!txIsActive)
+      keyLockManager.acquireExclusiveLock(key);
 
     try {
       modificationLock.requestModificationLock();
       try {
         checkForKeyType(key);
-        acquireExclusiveLock();
+        acquireSharedLock();
         try {
           final OIdentifiable value = indexEngine.get(key);
 
@@ -86,15 +86,15 @@ public class OIndexUnique extends OIndexOneValue {
           return this;
 
         } finally {
-          releaseExclusiveLock();
+          releaseSharedLock();
         }
       } finally {
         modificationLock.releaseModificationLock();
       }
 
     } finally {
-			if (txIsActive)
-      	keyLockManager.releaseSharedLock(key);
+      if (!txIsActive)
+        keyLockManager.releaseExclusiveLock(key);
     }
   }
 
