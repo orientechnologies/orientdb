@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedExcept
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
@@ -1425,7 +1426,8 @@ public class OWOWCache {
 
     @Override
     public Thread newThread(Runnable r) {
-      Thread thread = new Thread(r);
+      Thread thread = new Thread(OStorageAbstract.storageGroup, r);
+
       thread.setDaemon(true);
       thread.setName("OrientDB Write Cache Flush Task (" + storageName + ")");
       return thread;
@@ -1441,7 +1443,7 @@ public class OWOWCache {
 
     @Override
     public Thread newThread(Runnable r) {
-      Thread thread = new Thread(r);
+      Thread thread = new Thread(OStorageAbstract.storageGroup, r);
       thread.setDaemon(true);
       thread.setName("OrientDB Low Disk Space Publisher (" + storageName + ")");
       return thread;

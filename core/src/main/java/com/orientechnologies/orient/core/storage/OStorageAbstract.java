@@ -41,6 +41,18 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class OStorageAbstract extends OSharedContainerImpl implements OStorage {
+  public static ThreadGroup                           storageGroup;
+
+  static {
+    ThreadGroup parentThreadGroup = Thread.currentThread().getThreadGroup();
+
+    while (parentThreadGroup.getParent() != null) {
+      parentThreadGroup = parentThreadGroup.getParent();
+    }
+
+    storageGroup = new ThreadGroup(parentThreadGroup, "OrientDB Storage");
+  }
+
   protected final String                              url;
   protected final String                              mode;
   protected final OSharedResourceAdaptiveExternal     lock;
@@ -180,7 +192,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     // CHECK FOR ORESTRICTED
     OMetadata metaData = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata();
     if (metaData != null) {
-      final Set<OClass> classes = ((OMetadataInternal)metaData).getImmutableSchemaSnapshot().getClassesRelyOnCluster(iClusterName);
+      final Set<OClass> classes = ((OMetadataInternal) metaData).getImmutableSchemaSnapshot().getClassesRelyOnCluster(iClusterName);
       for (OClass c : classes) {
         if (c.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME))
           throw new OSecurityException("Class " + c.getName()

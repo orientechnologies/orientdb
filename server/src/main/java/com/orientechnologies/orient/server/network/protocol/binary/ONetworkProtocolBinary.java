@@ -1776,7 +1776,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
    * This method never returns normally.
    */
   private void runShutdownInNonDaemonThread() {
-    Thread shutdownThread = new Thread("OrientDB server shutdown thread") {
+    // we can not interrupt this thread during shutdown so we do not use OrientDB group.
+
+    ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
+    if (threadGroup.equals(Orient.instance().getThreadGroup()))
+      threadGroup = threadGroup.getParent();
+
+    Thread shutdownThread = new Thread(threadGroup, "OrientDB server shutdown thread") {
       public void run() {
         server.shutdown();
         ShutdownHelper.shutdown(1);
