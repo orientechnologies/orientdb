@@ -1459,8 +1459,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       }
     }
 
-    assert fullContent.length < OClusterPage.MAX_RECORD_SIZE && recordChunks.size() == 1
-        || fullContent.length >= OClusterPage.MAX_RECORD_SIZE;
 
     return fullContent;
   }
