@@ -29,6 +29,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Iterator;
 import java.util.List;
 
@@ -138,6 +141,117 @@ public class OConsoleDatabaseAppTest {
         db.close();
       }
     } finally {
+      console.close();
+    }
+
+  }
+
+  @Test
+  public void testDisplayRawRecord() {
+    String dbUrl = "memory:OConsoleDatabaseAppTestDisplayRawRecord";
+    StringBuilder builder = new StringBuilder();
+    builder.append("create database " + dbUrl + ";\n");
+    builder.append("create class foo;\n");
+    builder.append("insert into foo set name = 'foo';\n");
+
+    // builder.append("display raw record " + rid);
+
+    // OConsoleDatabaseApp console = new OConsoleDatabaseApp(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = new OConsoleDatabaseApp(null);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    PrintStream stream = new PrintStream(out);
+    console.setOutput(stream);
+    try {
+      console.createDatabase(dbUrl, null, null, null, null);
+      console.createClass("class foo");
+      console.insert("into foo set name = 'barbar'");
+
+      byte[] result = out.toByteArray();
+      out.close();
+      stream.close();
+      out = new ByteArrayOutputStream();
+      stream = new PrintStream(out);
+      console.setOutput(stream);
+      String resultString = new String(result);
+
+      String rid = resultString.substring(resultString.indexOf("#"), resultString.indexOf("#") + 5).trim();
+
+      console.set("maxBinaryDisplay", "10000");
+      console.displayRawRecord(rid);
+      result = out.toByteArray();
+      resultString = new String(result);
+      Assert.assertTrue(resultString.contains("class name: foo"));
+      Assert.assertTrue(resultString.contains("property value: barbar"));
+    } catch (IOException e) {
+      Assert.fail();
+    } finally {
+      try {
+        out.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      try {
+        stream.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      console.close();
+    }
+
+  }
+
+  @Test
+  public void testDumpRecordDetails() {
+    String dbUrl = "memory:OConsoleDatabaseAppTestDumpRecordDetails";
+    StringBuilder builder = new StringBuilder();
+    builder.append("create database " + dbUrl + ";\n");
+    builder.append("create class foo;\n");
+    builder.append("insert into foo set name = 'foo';\n");
+
+    // builder.append("display raw record " + rid);
+
+    // OConsoleDatabaseApp console = new OConsoleDatabaseApp(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = new OConsoleDatabaseApp(null);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    PrintStream stream = new PrintStream(out);
+    console.setOutput(stream);
+    try {
+      console.createDatabase(dbUrl, null, null, null, null);
+      console.createClass("class foo");
+      console.insert("into foo set name = 'barbar'");
+      console.select("from foo limit -1");
+
+      byte[] result = out.toByteArray();
+      out.close();
+      stream.close();
+      out = new ByteArrayOutputStream();
+      stream = new PrintStream(out);
+      console.setOutput(stream);
+//      String resultString = new String(result);
+
+//      String rid = resultString.substring(resultString.indexOf("#"), resultString.indexOf("#") + 5).trim();
+
+      console.set("maxBinaryDisplay", "10000");
+      console.displayRecord("0");
+      result = out.toByteArray();
+      String resultString = new String(result);
+      Assert.assertTrue(resultString.contains("@class: foo"));
+      Assert.assertTrue(resultString.contains("barbar"));
+    } catch (Exception e) {
+      Assert.fail();
+    } finally {
+      try {
+        out.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      try {
+        stream.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
       console.close();
     }
 
