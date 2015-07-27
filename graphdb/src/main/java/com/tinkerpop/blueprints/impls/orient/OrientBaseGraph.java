@@ -800,6 +800,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public Iterable<Vertex> getVerticesOfClass(final String iClassName, final boolean iPolymorphic) {
     makeActive();
 
+    final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iClassName);
+    if (cls == null)
+      throw new IllegalArgumentException("Cannot find class '" + iClassName + "' in database schema");
+
+    if (!cls.isSubClassOf(OrientVertexType.CLASS_NAME))
+      throw new IllegalArgumentException("Class '" + iClassName + "' is not a vertex class");
+
     return new OrientElementScanIterable<Vertex>(this, iClassName, iPolymorphic);
   }
 
@@ -987,6 +994,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public Iterable<Edge> getEdgesOfClass(final String iClassName, final boolean iPolymorphic) {
     makeActive();
 
+    final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iClassName);
+    if (cls == null)
+      throw new IllegalArgumentException("Cannot find class '" + iClassName + "' in database schema");
+
+    if (!cls.isSubClassOf(OrientEdgeType.CLASS_NAME))
+      throw new IllegalArgumentException("Class '" + iClassName + "' is not an edge class");
+
     return new OrientElementScanIterable<Edge>(this, iClassName, iPolymorphic);
   }
 
@@ -1078,6 +1092,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     final ODocument doc = rec.getRecord();
     if (doc == null)
       return null;
+
+    if (!doc.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME))
+      throw new IllegalArgumentException("Class '" + doc.getClassName() + "' is not an edge class");
 
     return new OrientEdge(this, rec);
   }

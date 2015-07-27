@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.ArrayList;
@@ -116,7 +117,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
 
       if (className == null) {
         // ASSIGN DEFAULT CLASS
-        className = "E";
+        className = OrientEdgeType.CLASS_NAME;
         clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
       }
 
