@@ -587,6 +587,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public OClass setName(final String name) {
+    if(getName().equals(name)) return this;
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(name);
     OClass oClass = getDatabase().getMetadata().getSchema().getClass(name);
