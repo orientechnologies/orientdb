@@ -274,7 +274,7 @@ public class OGraphMLReader {
 
             String value = reader.getElementText();
 
-            if (inVertex == true) {
+            if (inVertex) {
               if ((vertexIdKey != null) && (key.equals(vertexIdKey))) {
                 // Should occur at most once per Vertex
                 vertexId = value;
@@ -291,7 +291,7 @@ public class OGraphMLReader {
                 if (attributeName != null)
                   vertexProps.put(attributeName, attrValue);
               }
-            } else if (inEdge == true) {
+            } else if (inEdge) {
               if ((edgeLabelKey != null) && (key.equals(edgeLabelKey)))
                 edgeLabel = value;
               else if ((edgeIdKey != null) && (key.equals(edgeIdKey)))

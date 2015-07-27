@@ -159,7 +159,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
         }
         queryString.append(where);
         if (limit > -1) {
-          queryString.append(" LIMIT " + limit);
+          queryString.append(" LIMIT ").append(limit);
         }
         query = database.command(new OSQLAsynchQuery<ODocument>(queryString.toString(), this));
       }

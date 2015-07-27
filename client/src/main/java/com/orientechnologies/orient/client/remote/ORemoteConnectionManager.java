@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.io.OIOException;
@@ -36,6 +30,12 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsyn
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages network connections against OrientDB servers. All the connection pools are managed in a Map<url,pool>, but in the future
@@ -127,13 +127,13 @@ public class ORemoteConnectionManager implements OChannelListener {
     try {
       conn.unlock();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Can not unlock connection lock", e);
+      OLogManager.instance().debug(this, "Can not unlock connection lock", e);
     }
 
     try {
       conn.close();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Can not close connection", e);
+      OLogManager.instance().debug(this, "Can not close connection", e);
     }
 
     final OResourcePool<String, OChannelBinaryAsynchClient> pool = connections.get(conn.getServerURL());
@@ -198,7 +198,7 @@ public class ORemoteConnectionManager implements OChannelListener {
       try {
         c.close();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Can not close binary channel", e);
+        OLogManager.instance().debug(this, "Can not close binary channel", e);
       }
     pool.close();
   }

@@ -70,9 +70,6 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 
           @Override
           public boolean call(ScriptEngine iEngine, OrientBaseGraph iGraph) {
-            if (iCurrentRecord == null || !(iCurrentRecord instanceof ODocument))
-              return false;
-
             final ODocument document = (ODocument) iCurrentRecord;
             OClass clazz =ODocumentInternal.getImmutableSchemaClass(document);
             if (clazz != null && clazz.isSubClassOf(OrientEdgeType.CLASS_NAME)) {

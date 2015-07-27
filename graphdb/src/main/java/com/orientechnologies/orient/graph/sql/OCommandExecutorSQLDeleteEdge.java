@@ -280,7 +280,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
                   // ADDITIONAL FILTERING
                   for (Iterator<OrientEdge> it = edges.iterator(); it.hasNext();) {
                     final OrientEdge edge = it.next();
-                    if (!(Boolean) compiledFilter.evaluate((ODocument) edge.getRecord(), null, context))
+                    if (!(Boolean) compiledFilter.evaluate(edge.getRecord(), null, context))
                       it.remove();
                   }
                 }
@@ -330,7 +330,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
     if (compiledFilter != null) {
       // ADDITIONAL FILTERING
-      if (!(Boolean) compiledFilter.evaluate((ODocument) id.getRecord(), null, context))
+      if (!(Boolean) compiledFilter.evaluate(id.getRecord(), null, context))
         return true;
     }
 

@@ -73,7 +73,7 @@ public class OGraphBatchInsertBasic {
   private boolean             walActive;
 
   private int                 parallel                 = 4;
-  private AtomicInteger       runningThreads           = new AtomicInteger(0);
+  private AtomicInteger       runningThreads;
 
   class BatchImporterJob extends Thread {
 
@@ -243,7 +243,7 @@ public class OGraphBatchInsertBasic {
       db.declareIntent(null);
       db.close();
       if (walActive)
-        OGlobalConfiguration.USE_WAL.setValue(walActive);
+        OGlobalConfiguration.USE_WAL.setValue(true);
     }
   }
 
