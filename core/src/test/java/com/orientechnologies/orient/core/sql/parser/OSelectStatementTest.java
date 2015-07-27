@@ -148,7 +148,14 @@ public class OSelectStatementTest {
   @Test
   public void testIndex1() {
     SimpleNode result = checkRightSyntax("select from index:collateCompositeIndexCS where key = ['VAL', 'VaL']");
-    // result.dump("    ");
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
+  }
+
+  @Test
+  public void testIndex2() {
+    SimpleNode result = checkRightSyntax("select from index:collateCompositeIndexCS where key between ['VAL', 'VaL'] and ['zz', 'zz']");
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
 
