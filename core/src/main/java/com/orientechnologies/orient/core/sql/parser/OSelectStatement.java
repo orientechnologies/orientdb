@@ -287,10 +287,10 @@ public class OSelectStatement extends OStatement {
 
   public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
     if (this.target == null || this.target.item == null || this.target.item.cluster != null || this.target.item.clusterList != null
-        || this.target.item.metadata != null || this.target.item.modifier != null
-        || this.target.item.rids.size() > 0 || this.target.item.statement != null || !isClassTarget(this.target)) {
+        || this.target.item.metadata != null || this.target.item.modifier != null || this.target.item.rids.size() > 0
+        || this.target.item.statement != null || !(isClassTarget(this.target) || isIndexTarget(this.target))) {
       if (stats.luceneCount > 0) {
-        throw new OQueryParsingException("LUCENE condition is allowed only when query target is a Class");
+        throw new OQueryParsingException("LUCENE condition is allowed only when query target is a Class or an Index");
       }
     }
 
@@ -309,6 +309,10 @@ public class OSelectStatement extends OStatement {
 
     return target != null && target.item != null && target.item.identifier != null && target.item.identifier.suffix != null
         && target.item.identifier.suffix.identifier != null;
+  }
+
+  private boolean isIndexTarget(OFromClause target) {
+    return target != null && target.item != null && target.item.index != null;
   }
 
 }
