@@ -399,7 +399,7 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
 
     var color = '#428bca';
     if ($scope.graphConfig) {
-      if ($scope.graphConfig.config && scope.graphConfig.config.classes[value]) {
+      if ($scope.graphConfig.config && $scope.graphConfig.config.classes[value]) {
         color = $scope.graphConfig.config.classes[value].fill;
       }
     }

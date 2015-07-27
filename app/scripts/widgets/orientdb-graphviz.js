@@ -766,7 +766,8 @@ var OrientGraph = (function () {
       } else {
         rid = d['@rid'];
       }
-      return name ? name : rid;
+
+      return name != null ? name : rid;
     }
 
     this.changeClazzConfig = function (clazz, prop, val) {
@@ -821,7 +822,7 @@ var OrientGraph = (function () {
       var scale = d3.event.scale;
       var translation = d3.event.translate;
       self.svg.attr("transform", "translate(" + translation + ")" +
-      " scale(" + scale + ")");
+        " scale(" + scale + ")");
     }
     function refreshSelected(change) {
 

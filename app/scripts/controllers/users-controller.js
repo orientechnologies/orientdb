@@ -218,7 +218,7 @@ schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location
 
   $scope.strictSql = Database.isStrictSql();
 
-  
+
   if ($scope.strictSql) {
     var selectAllUsers = 'select * from oRole order by name fetchPlan *:1 ';
   } else {
