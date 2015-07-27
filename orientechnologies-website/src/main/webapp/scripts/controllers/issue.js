@@ -96,6 +96,9 @@ angular.module('webappApp')
               $scope.issue.client = a;
             }
           })
+          if (!$scope.issue.client && $scope.matched['client'] == "_my") {
+            $scope.issue.client = {name: "_my"};
+          }
         })
       }
     });
@@ -179,14 +182,15 @@ angular.module('webappApp')
       $scope.search();
     });
     $scope.$on("client:changed", function (e, client) {
-      if (client) {
-        if ($scope.issue.client) {
-          $scope.query = removeCondition($scope.query, "client", $scope.issue.client.name);
-        }
-        $scope.query = addCondition($scope.query, "client", client.name)
-        $scope.issue.client = client;
-        $scope.search();
+      if ($scope.issue.client) {
+        $scope.query = removeCondition($scope.query, "client", $scope.issue.client.name);
       }
+      if (client) {
+        $scope.query = addCondition($scope.query, "client", client.name)
+      }
+
+      $scope.issue.client = client;
+      $scope.search();
     });
     $scope.$on("priority:changed", function (e, priority) {
       if (priority) {
@@ -868,13 +872,13 @@ angular.module('webappApp')
 angular.module('webappApp')
   .controller('ChangeClientCtrl', function ($scope, $filter) {
 
+
+    $scope.mockClient = {name: "_my"}
     $scope.isClientSelected = function (client) {
       return $scope.issue.client ? client.name == $scope.issue.client.name : false;
     }
     $scope.toggleClient = function (client) {
-      if (!$scope.isClientSelected(client)) {
-        $scope.$emit("client:changed", client);
-      }
+      $scope.$emit("client:changed", client);
       $scope.$hide();
     }
 

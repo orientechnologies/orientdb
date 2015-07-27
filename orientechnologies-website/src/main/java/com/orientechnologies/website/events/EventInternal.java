@@ -58,21 +58,23 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
 
   protected void sendSupportMail(JavaMailSenderImpl sender, Issue issue, String content, boolean isNew) {
 
-    for (Client client : organizationRepository.findClients(issue.getRepository().getOrganization().getName())) {
+    if (issue.getClient().isSupported()) {
+      for (Client client : organizationRepository.findClients(issue.getRepository().getOrganization().getName())) {
 
-      if (client.isSupport()) {
+        if (client.isSupport()) {
 
-        SimpleMailMessage mailMessage = new SimpleMailMessage();
-        mailMessage.setTo(client.getSupportEmail());
-        mailMessage.setFrom("prjhub@orientechnologies.com");
-        String subject = prepareSubject(issue, client, isNew);
-        if (subject != null) {
-          mailMessage.setSubject(subject);
-        } else {
-          mailMessage.setSubject(issue.getTitle());
+          SimpleMailMessage mailMessage = new SimpleMailMessage();
+          mailMessage.setTo(client.getSupportEmail());
+          mailMessage.setFrom("prjhub@orientechnologies.com");
+          String subject = prepareSubject(issue, client, isNew);
+          if (subject != null) {
+            mailMessage.setSubject(subject);
+          } else {
+            mailMessage.setSubject(issue.getTitle());
+          }
+          mailMessage.setText(content);
+          sender.send(mailMessage);
         }
-        mailMessage.setText(content);
-        sender.send(mailMessage);
       }
     }
 

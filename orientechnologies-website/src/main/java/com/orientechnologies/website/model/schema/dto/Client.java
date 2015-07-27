@@ -10,6 +10,7 @@ public class Client {
   protected Integer clientId;
 
   protected boolean support;
+  protected boolean supported;
 
   protected String  supportEmail;
 
@@ -70,7 +71,15 @@ public class Client {
   public String getSupportTemplate() {
     return supportTemplate;
   }
-  
+
+  public void setSupported(boolean supported) {
+    this.supported = supported;
+  }
+
+  public boolean isSupported() {
+    return supported;
+  }
+
   public void setSupportTemplate(String supportTemplate) {
     this.supportTemplate = supportTemplate;
   }

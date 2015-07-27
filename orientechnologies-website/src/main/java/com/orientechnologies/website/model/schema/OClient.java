@@ -28,6 +28,12 @@ public enum OClient implements OTypeHolder<Client> {
       return OType.BOOLEAN;
     }
   },
+  SUPPORTED("supported") {
+    @Override
+    public OType getType() {
+      return OType.BOOLEAN;
+    }
+  },
   SUPPORT_EMAIL("supportEmail") {
     @Override
     public OType getType() {
@@ -71,7 +77,7 @@ public enum OClient implements OTypeHolder<Client> {
     doc.field(NAME.toString(), entity.getName());
     doc.field(CLIENT_ID.toString(), entity.getClientId());
     doc.field(SUPPORT.toString(), entity.isSupport());
-
+    doc.field(SUPPORTED.toString(), entity.isSupported());
     doc.field(SUPPORT_EMAIL.toString(), entity.getSupportEmail());
     doc.field(SUPPORT_SUBJECT.toString(), entity.getSupportSubject());
     doc.field(SUPPORT_SUBJECT_UPDATE.toString(), entity.getSupportSubjectUpdate());
@@ -89,8 +95,10 @@ public enum OClient implements OTypeHolder<Client> {
     l.setId(doc.getIdentity().toString());
     l.setName((String) doc.field(NAME.toString()));
     l.setClientId((Integer) doc.field(CLIENT_ID.toString()));
-    Boolean field = (Boolean) doc.field(SUPPORT.toString());
+    Boolean field = doc.field(SUPPORT.toString());
     l.setSupport(field != null ? field : false);
+    Boolean supported = doc.field(SUPPORTED.toString());
+    l.setSupported(supported != null ? supported : false);
     l.setSupportEmail((String) doc.field(SUPPORT_EMAIL.toString()));
     l.setSupportSubject((String) doc.field(SUPPORT_SUBJECT.toString()));
     l.setSupportSubjectUpdate((String) doc.field(SUPPORT_SUBJECT_UPDATE.toString()));
