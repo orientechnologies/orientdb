@@ -290,7 +290,7 @@ public class OSQLFilterCondition {
         return new Date(new Double(stringValue).longValue());
       } catch (Exception pe2) {
         throw new OQueryParsingException("Error on conversion of date '" + stringValue + "' using the format: "
-            + formatter.toPattern());
+            + formatter.toPattern(), pe2);
       }
     }
   }

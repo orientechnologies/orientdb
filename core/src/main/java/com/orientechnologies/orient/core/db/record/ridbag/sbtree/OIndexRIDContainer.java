@@ -104,7 +104,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
       try {
         storage.getAtomicOperationsManager().endAtomicOperation(true, e);
       } catch (IOException ioe) {
-        throw new OSBTreeException("Error of rollback of atomic operation");
+        throw new OSBTreeException("Error of rollback of atomic operation", ioe);
       }
 
       throw new OSBTreeException("Error creation of sbtree with name " + fileName, e);

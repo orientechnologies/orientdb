@@ -1909,7 +1909,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     try {
       clone = (OMVRBTree<K, V>) super.clone();
     } catch (CloneNotSupportedException e) {
-      throw new InternalError();
+      throw new InternalError(e);
     }
 
     // Put clone into "virgin" state (except for comparator)

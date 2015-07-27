@@ -222,7 +222,7 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
         this.indexClass = (Class<T>) Class.forName(indexClassName);
       } catch (ClassNotFoundException e) {
         throw new IllegalArgumentException("Index class '" + indexClassName
-            + "' is not registered. Supported ones: Vertex, Edge and custom class that extends them");
+            + "' is not registered. Supported ones: Vertex, Edge and custom class that extends them", e);
       }
 
     if (recordKeyValueMap == null)

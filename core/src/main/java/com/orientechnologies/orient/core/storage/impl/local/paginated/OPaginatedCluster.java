@@ -1082,7 +1082,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         releaseSharedLock();
       }
     } catch (IOException ioe) {
-      throw new OStorageException("Error during retrieval of size of " + getName() + " cluster.");
+      throw new OStorageException("Error during retrieval of size of " + getName() + " cluster.", ioe);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }

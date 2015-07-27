@@ -90,7 +90,7 @@ public class OAdaptiveLock extends OAbstractLock {
           }
 
           throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
-              + timeout);
+              + timeout, e);
         }
 
         throwTimeoutException(lock);
@@ -110,7 +110,7 @@ public class OAdaptiveLock extends OAbstractLock {
           return lock.tryLock(iTimeout, iUnit);
         } catch (InterruptedException e) {
           throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
-              + timeout);
+              + timeout, e);
         }
       else
         return lock.tryLock();

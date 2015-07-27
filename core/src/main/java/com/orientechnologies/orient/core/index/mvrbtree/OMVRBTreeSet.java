@@ -411,7 +411,7 @@ public class OMVRBTreeSet<E> extends AbstractSet<E> implements ONavigableSet<E>,
 		try {
 			clone = (OMVRBTreeSet<E>) super.clone();
 		} catch (CloneNotSupportedException e) {
-			throw new InternalError();
+      throw new InternalError(e);
 		}
 
 		clone.m = new OMVRBTreeMemory<E, Object>(m);

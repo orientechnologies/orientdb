@@ -122,7 +122,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
           try {
             limit = Integer.parseInt(word);
           } catch (Exception e) {
-            throw new OCommandSQLParsingException("Invalid LIMIT: " + word);
+            throw new OCommandSQLParsingException("Invalid LIMIT: " + word, e);
           }
         } else if (word.equals(KEYWORD_RETURN)) {
           returning = parseReturn();

@@ -534,7 +534,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
           Thread.interrupted();
           throw new OStorageException("Thread was interrupted during flush", e);
         } catch (ExecutionException e) {
-          throw new OStorageException("Error during WAL segment " + getPath() + " flush.");
+          throw new OStorageException("Error during WAL segment " + getPath() + " flush.", e);
         }
       } else {
         new FlushTask().run();

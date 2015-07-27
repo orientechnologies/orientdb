@@ -1200,7 +1200,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       return size;
 
     } catch (IOException ioe) {
-      throw new OStorageException("Can not calculate records size");
+      throw new OStorageException("Can not calculate records size", ioe);
     }
   }
 

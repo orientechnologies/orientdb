@@ -72,7 +72,7 @@ public class OrientGraphConfiguration implements GraphConfiguration {
       orientDbSpecificConfiguration = graphSectionConfig.configurationAt(Tokens.REXSTER_GRAPH_PROPERTIES);
     } catch (IllegalArgumentException iae) {
       throw new GraphConfigurationException("Check graph configuration. Missing or empty configuration element: "
-          + Tokens.REXSTER_GRAPH_PROPERTIES);
+          + Tokens.REXSTER_GRAPH_PROPERTIES, iae);
     }
 
     try {
