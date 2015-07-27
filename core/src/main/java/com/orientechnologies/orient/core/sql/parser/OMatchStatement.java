@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -42,14 +43,14 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   class MatchContext {
-    String                     root;
-    Map<String, Iterable>      candidates   = new LinkedHashMap<String, Iterable>();
-    Map<String, OIdentifiable> matched      = new LinkedHashMap<String, OIdentifiable>();
-    Map<PatternEdge, Boolean>  matchedEdges = new IdentityHashMap<PatternEdge, Boolean>();
+    int                        currentEdgeNumber = 0;
+
+    Map<String, Iterable>      candidates        = new LinkedHashMap<String, Iterable>();
+    Map<String, OIdentifiable> matched           = new LinkedHashMap<String, OIdentifiable>();
+    Map<PatternEdge, Boolean>  matchedEdges      = new IdentityHashMap<PatternEdge, Boolean>();
 
     public MatchContext copy(String alias, OIdentifiable value) {
       MatchContext result = new MatchContext();
-      result.root = alias;
 
       result.candidates.putAll(candidates);
       result.candidates.remove(alias);
@@ -60,6 +61,20 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       result.matchedEdges.putAll(matchedEdges);
       return result;
     }
+  }
+
+  class EdgeTraversal {
+    boolean     out = true;
+    PatternEdge edge;
+
+    public EdgeTraversal(PatternEdge edge, boolean out) {
+      this.edge = edge;
+      this.out = out;
+    }
+  }
+
+  class MatchExecutionPlan {
+    List<EdgeTraversal> sortedEdges;
   }
 
   class Pattern {
@@ -226,7 +241,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         return new OResultSet();// some aliases do not match on any classes
       }
 
-      calculateMatch(estimatedRootEntries, new MatchContext(), aliasClasses, aliasFilters, context, request);
+      List<EdgeTraversal> sortedEdges = sortEdges(estimatedRootEntries, pattern);
+      MatchExecutionPlan executionPlan = new MatchExecutionPlan();
+      executionPlan.sortedEdges = sortedEdges;
+
+      calculateMatch(estimatedRootEntries, new MatchContext(), aliasClasses, aliasFilters, context, request, executionPlan);
       return getResult(request);
     } finally {
 
@@ -235,6 +254,59 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     }
 
+  }
+
+  /*
+   * sort edges in the order they will be matched
+   */
+  private List<EdgeTraversal> sortEdges(Map<String, Long> estimatedRootEntries, Pattern pattern) {
+    List<EdgeTraversal> result = new ArrayList<EdgeTraversal>();
+
+    List<OPair<Long, String>> rootWeights = new ArrayList<OPair<Long, String>>();
+    for (Map.Entry<String, Long> root : estimatedRootEntries.entrySet()) {
+      rootWeights.add(new OPair<Long, String>(root.getValue(), root.getKey()));
+    }
+    Collections.sort(rootWeights);
+
+    Set<PatternEdge> traversedEdges = new HashSet<PatternEdge>();
+    Set<PatternNode> traversedNodes = new HashSet<PatternNode>();
+    List<PatternNode> nextNodes = new ArrayList<PatternNode>();
+
+    while (result.size() < pattern.getNumOfEdges()) {
+
+      for (OPair<Long, String> rootPair : rootWeights) {
+        PatternNode root = pattern.get(rootPair.getValue());
+        if (!traversedNodes.contains(root)) {
+          nextNodes.add(root);
+          break;
+        }
+      }
+
+      while (!nextNodes.isEmpty()) {
+        PatternNode node = nextNodes.remove(0);
+        traversedNodes.add(node);
+        for (PatternEdge edge : node.out) {
+          if (!traversedEdges.contains(edge)) {
+            result.add(new EdgeTraversal(edge, true));
+            traversedEdges.add(edge);
+            if (!traversedNodes.contains(edge.in) && !nextNodes.contains(edge.in)) {
+              nextNodes.add(edge.in);
+            }
+          }
+        }
+        for (PatternEdge edge : node.in) {
+          if (!traversedEdges.contains(edge) && edge.item.isBidirectional()) {
+            result.add(new EdgeTraversal(edge, false));
+            traversedEdges.add(edge);
+            if (!traversedNodes.contains(edge.out) && !nextNodes.contains(edge.out)) {
+              nextNodes.add(edge.out);
+            }
+          }
+        }
+      }
+    }
+
+    return result;
   }
 
   protected Object getResult(OSQLAsynchQuery<ODocument> request) {
@@ -246,21 +318,18 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   private boolean calculateMatch(Map<String, Long> estimatedRootEntries, MatchContext matchContext,
       Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, OCommandContext iCommandContext,
-      OSQLAsynchQuery<ODocument> request) {
-    return calculateMatch(pattern, estimatedRootEntries, matchContext, aliasClasses, aliasFilters, iCommandContext, request);
+      OSQLAsynchQuery<ODocument> request, MatchExecutionPlan executionPlan) {
+    return calculateMatch(pattern, estimatedRootEntries, matchContext, aliasClasses, aliasFilters, iCommandContext, request,
+        executionPlan);
 
   }
 
   private boolean calculateMatch(Pattern pattern, Map<String, Long> estimatedRootEntries, MatchContext matchContext,
       Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, OCommandContext iCommandContext,
-      OSQLAsynchQuery<ODocument> request) {
-
-    List<MatchContext> activeContexts = new LinkedList<MatchContext>();
+      OSQLAsynchQuery<ODocument> request, MatchExecutionPlan executionPlan) {
 
     MatchContext rootContext = new MatchContext();
 
-    String smallestAlias = null;
-    Long smallestAmount = Long.MAX_VALUE;
     boolean rootFound = false;
     // find starting nodes with few entries
     for (Map.Entry<String, Long> entryPoint : estimatedRootEntries.entrySet()) {
@@ -274,16 +343,6 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         }
 
         rootContext.candidates.put(nextAlias, matches);
-        long thisAmount;
-        if (matches instanceof Collection) {
-          thisAmount = (long) ((Collection) matches).size();
-        } else {
-          thisAmount = estimatedRootEntries.get(nextAlias);
-        }
-        if (thisAmount <= smallestAmount) {
-          smallestAlias = nextAlias;
-          smallestAmount = thisAmount;
-        }
         rootFound = true;
       }
     }
@@ -294,15 +353,22 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       if (!matches.iterator().hasNext()) {
         return true;
       }
-      smallestAlias = nextAlias;
       rootContext.candidates.put(nextAlias, matches);
     }
 
+    EdgeTraversal firstEdge = executionPlan.sortedEdges.size() == 0 ? null : executionPlan.sortedEdges.get(0);
+    String smallestAlias = null;
+    if (firstEdge != null) {
+      smallestAlias = firstEdge.out ? firstEdge.edge.out.alias : firstEdge.edge.in.alias;
+    } else {
+      smallestAlias = pattern.aliasToNode.values().iterator().next().alias;
+    }
     Iterable<OIdentifiable> allCandidates = rootContext.candidates.get(smallestAlias);
 
     for (OIdentifiable id : allCandidates) {
       MatchContext childContext = rootContext.copy(smallestAlias, id);
-      if (!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
+      childContext.currentEdgeNumber = 0;
+      if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
         return false;
       }
     }
@@ -321,7 +387,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return result;
   }
 
-  private boolean processContext(Pattern pattern, Map<String, Long> estimatedRootEntries, MatchContext matchContext,
+  private boolean processContext(Pattern pattern, MatchExecutionPlan executionPlan, MatchContext matchContext,
       Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, OCommandContext iCommandContext,
       OSQLAsynchQuery<ODocument> request) {
 
@@ -329,14 +395,16 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       addResult(matchContext, request);
       return true;
     }
-    PatternNode rootNode = pattern.get(matchContext.root);
-    Iterator<PatternEdge> edgeIterator = rootNode.out.iterator();
-    while (edgeIterator.hasNext()) {
-      PatternEdge outEdge = edgeIterator.next();
+    EdgeTraversal currentEdge = executionPlan.sortedEdges.get(matchContext.currentEdgeNumber);
+    PatternNode rootNode = currentEdge.out ? currentEdge.edge.out : currentEdge.edge.in;
+
+    if (currentEdge.out) {
+      PatternEdge outEdge = currentEdge.edge;
 
       if (!matchContext.matchedEdges.containsKey(outEdge)) {
 
-        Object rightValues = executeTraversal(matchContext, iCommandContext, outEdge);
+        Object rightValues = executeTraversal(matchContext, iCommandContext, outEdge, matchContext.matched.get(outEdge.out.alias),
+            0);
         if (!(rightValues instanceof Iterable)) {
           rightValues = Collections.singleton(rightValues);
         }
@@ -346,13 +414,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
           if (matchContext.matched.containsKey(outEdge.in.alias)) {
             if (matchContext.matched.get(outEdge.in.alias).getIdentity().equals(rightValue.getIdentity())) {
               MatchContext childContext = matchContext.copy(outEdge.in.alias, rightValue.getIdentity());
-              if (edgeIterator.hasNext()) {
-                childContext.root = rootNode.alias;
-              } else {
-                childContext.root = calculateNextRoot(pattern, childContext);
-              }
+              childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
               childContext.matchedEdges.put(outEdge, true);
-              if (!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
+              if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
                 return false;
               }
               break;
@@ -362,43 +426,31 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
             for (OIdentifiable id : prevMatchedRightValues) {
               if (id.getIdentity().equals(rightValue.getIdentity())) {
                 MatchContext childContext = matchContext.copy(outEdge.in.alias, id);
-                if (edgeIterator.hasNext()) {
-                  childContext.root = rootNode.alias;
-                } else {
-                  childContext.root = calculateNextRoot(pattern, childContext);
-                }
+                childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
                 childContext.matchedEdges.put(outEdge, true);
-                if (!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext,
-                    request)) {
+                if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
                   return false;
                 }
               }
             }
           } else {// searching for neighbors
             MatchContext childContext = matchContext.copy(outEdge.in.alias, rightValue.getIdentity());
-            if (edgeIterator.hasNext()) {
-              childContext.root = rootNode.alias;
-            } else {
-              childContext.root = calculateNextRoot(pattern, childContext);
-            }
+            childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
             childContext.matchedEdges.put(outEdge, true);
-            if (!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
+            if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
               return false;
             }
           }
         }
-        break;
       }
-    }
-    edgeIterator = rootNode.in.iterator();
-    while (edgeIterator.hasNext()) {
-      PatternEdge inEdge = edgeIterator.next();
+    } else {
+      PatternEdge inEdge = currentEdge.edge;
       if (!matchContext.matchedEdges.containsKey(inEdge)) {
         if (!inEdge.item.isBidirectional()) {
-          continue;
+          throw new RuntimeException("Invalid pattern to match!");
         }
         if (!matchContext.matchedEdges.containsKey(inEdge)) {
-          Object leftValues = inEdge.item.method.executeReverse(matchContext.matched.get(matchContext.root), iCommandContext);
+          Object leftValues = inEdge.item.method.executeReverse(matchContext.matched.get(inEdge.in.alias), iCommandContext);
           if (!(leftValues instanceof Iterable)) {
             leftValues = Collections.singleton(leftValues);
           }
@@ -408,14 +460,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
             if (matchContext.matched.containsKey(inEdge.out.alias)) {
               if (matchContext.matched.get(inEdge.out.alias).getIdentity().equals(leftValue.getIdentity())) {
                 MatchContext childContext = matchContext.copy(inEdge.out.alias, leftValue.getIdentity());
-                if (edgeIterator.hasNext()) {
-                  childContext.root = rootNode.alias;
-                } else {
-                  childContext.root = calculateNextRoot(pattern, childContext);
-                }
+                childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
                 childContext.matchedEdges.put(inEdge, true);
-                if (!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext,
-                    request)) {
+                if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
                   return false;
                 }
                 break;
@@ -426,15 +473,10 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
               for (OIdentifiable id : prevMatchedRightValues) {
                 if (id.getIdentity().equals(leftValue.getIdentity())) {
                   MatchContext childContext = matchContext.copy(inEdge.out.alias, id);
-                  if (edgeIterator.hasNext()) {
-                    childContext.root = rootNode.alias;
-                  } else {
-                    childContext.root = calculateNextRoot(pattern, childContext);
-                  }
+                  childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
                   childContext.matchedEdges.put(inEdge, true);
 
-                  if (!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext,
-                      request)) {
+                  if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
                     return false;
                   }
                 }
@@ -443,33 +485,19 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
               OWhereClause where = aliasFilters.get(inEdge.out.alias);
               if (where == null || where.matchesFilters(leftValue, iCommandContext)) {
                 MatchContext childContext = matchContext.copy(inEdge.out.alias, leftValue.getIdentity());
-                if (edgeIterator.hasNext()) {
-                  childContext.root = rootNode.alias;
-                } else {
-                  childContext.root = calculateNextRoot(pattern, childContext);
-                }
+                childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
                 childContext.matchedEdges.put(inEdge, true);
-                if (!processContext(pattern, estimatedRootEntries, childContext, aliasClasses, aliasFilters, iCommandContext,
-                    request)) {
+                if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
                   return false;
                 }
               }
             }
           }
-          break;
         }
       }
     }
 
     return true;
-  }
-
-  private String calculateNextRoot(Pattern pattern, MatchContext ctx) {
-    return ctx.root;// TODO...?
-  }
-
-  private Object executeTraversal(MatchContext matchContext, OCommandContext iCommandContext, PatternEdge outEdge) {
-    return executeTraversal(matchContext, iCommandContext, outEdge, matchContext.matched.get(matchContext.root), 0);
   }
 
   private Iterable<OIdentifiable> executeTraversal(MatchContext matchContext, OCommandContext iCommandContext, PatternEdge outEdge,

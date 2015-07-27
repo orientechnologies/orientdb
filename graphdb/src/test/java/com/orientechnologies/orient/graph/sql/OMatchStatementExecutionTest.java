@@ -53,7 +53,7 @@ public class OMatchStatementExecutionTest {
 
     initOrgChart();
 
-    initStressTest();
+    initTriangleTest();
   }
 
   private static void initOrgChart() {
@@ -152,29 +152,22 @@ public class OMatchStatementExecutionTest {
     }
   }
 
-  private static void initStressTest() {
-    db.command(new OCommandSQL("CREATE class StressV extends V")).execute();
-    db.command(new OCommandSQL("CREATE property StressV.uid INTEGER")).execute();
-    db.command(new OCommandSQL("CREATE index StressV_uid on StressV (uid) UNIQUE_HASH_INDEX")).execute();
-    db.command(new OCommandSQL("CREATE class StressE extends E")).execute();
-    for (int i = 0; i < 3; i++) {
-      db.command(new OCommandSQL("CREATE VERTEX StressV set uid = ?")).execute(i);
+  private static void initTriangleTest() {
+    db.command(new OCommandSQL("CREATE class TriangleV extends V")).execute();
+    db.command(new OCommandSQL("CREATE property TriangleV.uid INTEGER")).execute();
+    db.command(new OCommandSQL("CREATE index TriangleV_uid on TriangleV (uid) UNIQUE_HASH_INDEX")).execute();
+    db.command(new OCommandSQL("CREATE class TriangleE extends E")).execute();
+    for (int i = 0; i < 10; i++) {
+      db.command(new OCommandSQL("CREATE VERTEX TriangleV set uid = ?")).execute(i);
     }
-    // for (int i = 0; i < 10000; i++) {
-    // db.command(
-    // new OCommandSQL("CREATE EDGE StressE from (select from StressV where uid = ?) to (select from StressV where uid = ?)"))
-    // .execute((int) (Math.random() * 10000), (int) (Math.random() * 10000));
-    // }
-
-    db.command(
-        new OCommandSQL("CREATE EDGE StressE from (select from StressV where uid = ?) to (select from StressV where uid = ?)"))
-        .execute(0, 1);
-    db.command(
-        new OCommandSQL("CREATE EDGE StressE from (select from StressV where uid = ?) to (select from StressV where uid = ?)"))
-        .execute(0, 2);
-    db.command(
-        new OCommandSQL("CREATE EDGE StressE from (select from StressV where uid = ?) to (select from StressV where uid = ?)"))
-        .execute(1, 2);
+    int[][] edges = { { 0, 1 }, { 0, 2 }, { 1, 2 }, { 1, 3 }, { 2, 4 }, { 3, 4 }, { 3, 5 }, { 4, 0 }, { 4, 7 }, { 6, 7 }, { 7, 8 },
+        { 7, 9 }, { 8, 9 }, { 9, 1 }, { 8, 3 }, { 8, 4 } };
+    for (int[] edge : edges) {
+      db.command(
+          new OCommandSQL(
+              "CREATE EDGE TriangleE from (select from TriangleV where uid = ?) to (select from TriangleV where uid = ?)"))
+          .execute(edge[0], edge[1]);
+    }
   }
 
   @AfterClass
@@ -386,77 +379,71 @@ public class OMatchStatementExecutionTest {
 
   @Test
   public void testTriangle1() {
-    System.out.println("starting stress test");
-    long begin = System.currentTimeMillis();
-    // find triangles in the graph
     StringBuilder query = new StringBuilder();
     query.append("match ");
-    query.append("{class:StressV, as: friend1, where: (uid = 0)}");
-    query.append("  .out('StressE'){as: friend2}");
-    query.append("  .out('StressE'){as: friend3},");
-    query.append("{class:StressV, as: friend1}");
-    query.append("  .out('StressE'){as: friend3}");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("  .out('TriangleE'){as: friend2}");
+    query.append("  .out('TriangleE'){as: friend3},");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  .out('TriangleE'){as: friend3}");
     query.append("return $matches");
 
     List<?> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
+
   }
 
   @Test
   public void testTriangle2() {
-    System.out.println("starting stress test");
-    long begin = System.currentTimeMillis();
-    // find triangles in the graph
     StringBuilder query = new StringBuilder();
     query.append("match ");
-    query.append("{class:StressV, as: friend1}");
-    query.append("  .out('StressE'){class:StressV, as: friend2, where: (uid = 1)}");
-    query.append("  .out('StressE'){as: friend3},");
-    query.append("{class:StressV, as: friend1}");
-    query.append("  .out('StressE'){as: friend3}");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  .out('TriangleE'){class:TriangleV, as: friend2, where: (uid = 1)}");
+    query.append("  .out('TriangleE'){as: friend3},");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  .out('TriangleE'){as: friend3}");
     query.append("return $matches");
 
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
+    ODocument doc = result.get(0);
+    ODocument friend1 = ((OIdentifiable) doc.field("friend1")).getRecord();
+    ODocument friend2 = ((OIdentifiable) doc.field("friend2")).getRecord();
+    ODocument friend3 = ((OIdentifiable) doc.field("friend3")).getRecord();
+    assertEquals(0, friend1.field("uid"));
+    assertEquals(1, friend2.field("uid"));
+    assertEquals(2, friend3.field("uid"));
   }
 
   @Test
   public void testTriangle3() {
-    System.out.println("starting stress test");
-    long begin = System.currentTimeMillis();
-    // find triangles in the graph
     StringBuilder query = new StringBuilder();
     query.append("match ");
-    query.append("{class:StressV, as: friend1}");
-    query.append("  .out('StressE'){as: friend2}");
-    query.append("  .out('StressE'){as: friend3, where: (uid = 2)},");
-    query.append("{class:StressV, as: friend1}");
-    query.append("  .out('StressE'){as: friend3}");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  .out('TriangleE'){as: friend2}");
+    query.append("  .out('TriangleE'){as: friend3, where: (uid = 2)},");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  .out('TriangleE'){as: friend3}");
     query.append("return $matches");
 
     List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
-    for (ODocument doc : result) {
-      System.out.println("items: " + doc);
-    }
     assertEquals(1, result.size());
   }
 
   @Test
   public void testTriangle4() {
-    System.out.println("starting stress test");
-    long begin = System.currentTimeMillis();
-    // find triangles in the graph
     StringBuilder query = new StringBuilder();
     query.append("match ");
-    query.append("{class:StressV, as: friend1}");
-    query.append("  .out('StressE'){as: friend2, where: (uid = 1)}");
-    query.append("  .out('StressE'){as: friend3},");
-    query.append("{class:StressV, as: friend1}");
-    query.append("  .out('StressE'){as: friend3}");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  .out('TriangleE'){as: friend2, where: (uid = 1)}");
+    query.append("  .out('TriangleE'){as: friend3},");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  .out('TriangleE'){as: friend3}");
     query.append("return $matches");
 
     List<?> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
+
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {
