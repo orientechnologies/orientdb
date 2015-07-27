@@ -62,7 +62,7 @@ public class OMethodCall extends SimpleNode {
   }
 
   public boolean isBidirectional() {
-    return graphMethods.contains(methodName);
+    return graphMethods.contains(methodName.getValue());
   }
 
   public Object execute(Object targetObjects, OCommandContext ctx) {

@@ -50,11 +50,15 @@ public class OWhereClause extends SimpleNode {
    * estimates how many items of this class will be returned applying this filter
    * 
    * @param oClass
-   * @return an estimation of the number of records of this class returned applying this filter, 0 if and only if sure that no records are
-   *         returned
+   * @return an estimation of the number of records of this class returned applying this filter, 0 if and only if sure that no
+   *         records are returned
    */
   public long estimate(OClass oClass) {
-    return oClass.count();// TODO check indexes for an estimation of the number of results
+    long count = oClass.count();
+    if (count > 1) {
+      return count / 2;
+    }
+    return count;
   }
 }
 /* JavaCC - OriginalChecksum=e8015d01ce1ab2bc337062e9e3f2603e (do not edit this line) */

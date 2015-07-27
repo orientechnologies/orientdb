@@ -51,6 +51,39 @@ public class OMatchStatementExecutionTest {
     db.command(new OCommandSQL("CREATE VERTEX MathOp set a = 1, b = 3, c = 2")).execute();
     db.command(new OCommandSQL("CREATE VERTEX MathOp set a = 5, b = 3, c = 2")).execute();
 
+    initOrgChart();
+
+    initStressTest();
+  }
+
+  private static void initOrgChart() {
+
+    // ______ [manager] department _______
+    // _____ (employees in department)____
+    // ___________________________________
+    // ___________________________________
+    // ____________[a]0___________________
+    // _____________(p1)__________________
+    // _____________/___\_________________
+    // ____________/_____\________________
+    // ___________/_______\_______________
+    // _______[b]1_________2[d]___________
+    // ______(p2, p3)_____(p4, p5)________
+    // _________/_\_________/_\___________
+    // ________3___4_______5___6__________
+    // ______(p6)_(p7)___(p8)__(p9)_______
+    // ______/__\_________________________
+    // __[c]7_____8_______________________
+    // __(p10)___(p11)____________________
+    // ___/_______________________________
+    // __9________________________________
+    // (p12, p13)_________________________
+    //
+    // short description:
+    // Department 0 is the company itself, "a" is the CEO
+    // p10 works at department 7, his manager is "c"
+    // p12 works at department 9, this department has no direct manager, so p12's manager is c (the upper manager)
+
     db.command(new OCommandSQL("CREATE class Employee extends V")).execute();
     db.command(new OCommandSQL("CREATE class Department extends V")).execute();
     db.command(new OCommandSQL("CREATE class ParentDepartment extends E")).execute();
@@ -82,32 +115,6 @@ public class OMatchStatementExecutionTest {
     employees[7] = new String[] { "p10" };
     employees[8] = new String[] { "p11" };
     employees[9] = new String[] { "p12", "p13" };
-
-    // ______ [manager] department _______
-    // _____ (employees in department)____
-    // ___________________________________
-    // ___________________________________
-    // ____________[a]0___________________
-    // _____________(p1)__________________
-    // _____________/___\_________________
-    // ____________/_____\________________
-    // ___________/_______\_______________
-    // _______[b]1_________2[d]___________
-    // ______(p2, p3)_____(p4, p5)________
-    // _________/_\_________/_\___________
-    // ________3___4_______5___6__________
-    // ______(p6)_(p7)___(p8)__(p9)_______
-    // ______/__\_________________________
-    // __[c]7_____8_______________________
-    // __(p10)___(p11)____________________
-    // ___/_______________________________
-    // __9[]______________________________
-    // (p12, p13)_________________________
-    //
-    // short description:
-    // Department 0 is the company itself, "a" is the CEO
-    // p10 works at department 7, his manager is "c"
-    // p12 works at department 9, this department has no direct manager, so p12's manager is c (the upper manager)
 
     for (int i = 0; i < deptHierarchy.length; i++) {
       db.command(new OCommandSQL("CREATE VERTEX Department set name = 'department" + i + "' ")).execute();
@@ -143,7 +150,31 @@ public class OMatchStatementExecutionTest {
                 + "') to (select from Department where name = 'department" + dept + "') ")).execute();
       }
     }
+  }
 
+  private static void initStressTest() {
+    db.command(new OCommandSQL("CREATE class StressV extends V")).execute();
+    db.command(new OCommandSQL("CREATE property StressV.uid INTEGER")).execute();
+    db.command(new OCommandSQL("CREATE index StressV_uid on StressV (uid) UNIQUE_HASH_INDEX")).execute();
+    db.command(new OCommandSQL("CREATE class StressE extends E")).execute();
+    for (int i = 0; i < 3; i++) {
+      db.command(new OCommandSQL("CREATE VERTEX StressV set uid = ?")).execute(i);
+    }
+    // for (int i = 0; i < 10000; i++) {
+    // db.command(
+    // new OCommandSQL("CREATE EDGE StressE from (select from StressV where uid = ?) to (select from StressV where uid = ?)"))
+    // .execute((int) (Math.random() * 10000), (int) (Math.random() * 10000));
+    // }
+
+    db.command(
+        new OCommandSQL("CREATE EDGE StressE from (select from StressV where uid = ?) to (select from StressV where uid = ?)"))
+        .execute(0, 1);
+    db.command(
+        new OCommandSQL("CREATE EDGE StressE from (select from StressV where uid = ?) to (select from StressV where uid = ?)"))
+        .execute(0, 2);
+    db.command(
+        new OCommandSQL("CREATE EDGE StressE from (select from StressV where uid = ?) to (select from StressV where uid = ?)"))
+        .execute(1, 2);
   }
 
   @AfterClass
@@ -351,6 +382,81 @@ public class OMatchStatementExecutionTest {
     query.append(")");
 
     return db.command(new OCommandSQL(query.toString())).execute();
+  }
+
+  @Test
+  public void testTriangle1() {
+    System.out.println("starting stress test");
+    long begin = System.currentTimeMillis();
+    // find triangles in the graph
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:StressV, as: friend1, where: (uid = 0)}");
+    query.append("  .out('StressE'){as: friend2}");
+    query.append("  .out('StressE'){as: friend3},");
+    query.append("{class:StressV, as: friend1}");
+    query.append("  .out('StressE'){as: friend3}");
+    query.append("return $matches");
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+  }
+
+  @Test
+  public void testTriangle2() {
+    System.out.println("starting stress test");
+    long begin = System.currentTimeMillis();
+    // find triangles in the graph
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:StressV, as: friend1}");
+    query.append("  .out('StressE'){class:StressV, as: friend2, where: (uid = 1)}");
+    query.append("  .out('StressE'){as: friend3},");
+    query.append("{class:StressV, as: friend1}");
+    query.append("  .out('StressE'){as: friend3}");
+    query.append("return $matches");
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+  }
+
+  @Test
+  public void testTriangle3() {
+    System.out.println("starting stress test");
+    long begin = System.currentTimeMillis();
+    // find triangles in the graph
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:StressV, as: friend1}");
+    query.append("  .out('StressE'){as: friend2}");
+    query.append("  .out('StressE'){as: friend3, where: (uid = 2)},");
+    query.append("{class:StressV, as: friend1}");
+    query.append("  .out('StressE'){as: friend3}");
+    query.append("return $matches");
+
+    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    for (ODocument doc : result) {
+      System.out.println("items: " + doc);
+    }
+    assertEquals(1, result.size());
+  }
+
+  @Test
+  public void testTriangle4() {
+    System.out.println("starting stress test");
+    long begin = System.currentTimeMillis();
+    // find triangles in the graph
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:StressV, as: friend1}");
+    query.append("  .out('StressE'){as: friend2, where: (uid = 1)}");
+    query.append("  .out('StressE'){as: friend3},");
+    query.append("{class:StressV, as: friend1}");
+    query.append("  .out('StressE'){as: friend3}");
+    query.append("return $matches");
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {
