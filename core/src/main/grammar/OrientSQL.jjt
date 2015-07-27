@@ -2849,21 +2849,6 @@ OTraverseProjectionItem TraverseProjectionItem():
     { return jjtThis; }
 }
 
-OArray Array():
-{
-    jjtThis.expressions = new java.util.ArrayList();
-    OExpression currentExpr;
-}
-{
-    (
-        <LBRACKET> [ currentExpr = Expression() { jjtThis.expressions.add(currentExpr); }
-        ( <COMMA> currentExpr = Expression() { jjtThis.expressions.add(currentExpr); } )* ] <RBRACKET>
-    )
-    { return jjtThis; }
-
-}
-
-
 OJson Json():
 {
     OJsonItem lastItem;

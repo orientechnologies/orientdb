@@ -111,7 +111,6 @@ public interface OrientSqlVisitor
   public Object visit(OFetchPlan node, Object data);
   public Object visit(OFetchPlanItem node, Object data);
   public Object visit(OTraverseProjectionItem node, Object data);
-  public Object visit(OArray node, Object data);
   public Object visit(OJson node, Object data);
 }
 /* JavaCC - OriginalChecksum=8d3793a570f491a71e55822e64ecdcef (do not edit this line) */
