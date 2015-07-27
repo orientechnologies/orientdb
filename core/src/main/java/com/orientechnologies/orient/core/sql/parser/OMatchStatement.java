@@ -391,8 +391,12 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, OCommandContext iCommandContext,
       OSQLAsynchQuery<ODocument> request) {
 
-    if (pattern.getNumOfEdges() == matchContext.matchedEdges.size()) {
+    if (pattern.getNumOfEdges() == matchContext.matchedEdges.size() && allNodesCalculated(matchContext, pattern)) {
       addResult(matchContext, request);
+      return true;
+    }
+    if (executionPlan.sortedEdges.size() == matchContext.currentEdgeNumber) {
+      expandCartesianProduct(pattern, matchContext, aliasClasses, aliasFilters, iCommandContext, request);
       return true;
     }
     EdgeTraversal currentEdge = executionPlan.sortedEdges.get(matchContext.currentEdgeNumber);
@@ -421,8 +425,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
               }
               break;
             }
-          } else if (prevMatchedRightValues != null && prevMatchedRightValues.iterator().hasNext()) {// just matching against known
-                                                                                                     // values
+          } else if (prevMatchedRightValues != null && prevMatchedRightValues.iterator().hasNext()) {// just matching against
+                                                                                                     // known
+            // values
             for (OIdentifiable id : prevMatchedRightValues) {
               if (id.getIdentity().equals(rightValue.getIdentity())) {
                 MatchContext childContext = matchContext.copy(outEdge.in.alias, id);
@@ -468,7 +473,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
                 break;
               }
             } else if (prevMatchedRightValues != null && prevMatchedRightValues.iterator().hasNext()) {// just matching against
-                                                                                                       // known
+              // known
               // values
               for (OIdentifiable id : prevMatchedRightValues) {
                 if (id.getIdentity().equals(leftValue.getIdentity())) {
@@ -496,7 +501,38 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         }
       }
     }
+    return true;
+  }
 
+  private void expandCartesianProduct(Pattern pattern, MatchContext matchContext, Map<String, String> aliasClasses,
+      Map<String, OWhereClause> aliasFilters, OCommandContext iCommandContext, OSQLAsynchQuery<ODocument> request) {
+    for (String alias : pattern.aliasToNode.keySet()) {
+      if (!matchContext.matched.containsKey(alias)) {
+        String target = aliasClasses.get(alias);
+        if (target == null) {
+          throw new OCommandExecutionException("Cannot execute MATCH statement on alias " + alias + ": class not defined");
+        }
+
+        Iterable<OIdentifiable> values = calculateMatches(alias, aliasFilters, iCommandContext, aliasClasses);
+        for (OIdentifiable id : values) {
+          MatchContext childContext = matchContext.copy(alias, id);
+          if (allNodesCalculated(childContext, pattern)) {
+            addResult(childContext, request);
+          } else {
+            expandCartesianProduct(pattern, childContext, aliasClasses, aliasFilters, iCommandContext, request);
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  private boolean allNodesCalculated(MatchContext matchContext, Pattern pattern) {
+    for (String alias : pattern.aliasToNode.keySet()) {
+      if (!matchContext.matched.containsKey(alias)) {
+        return false;
+      }
+    }
     return true;
   }
 

@@ -446,6 +446,22 @@ public class OMatchStatementExecutionTest {
 
   }
 
+  @Test
+  public void testCartesianProduct() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where:(uid = 1)},");
+    query.append("{class:TriangleV, as: friend2, where:(uid = 2 or uid = 3)}");
+    query.append("return $matches");
+
+    List<OIdentifiable> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(2, result.size());
+    for (OIdentifiable d : result) {
+      assertEquals(((ODocument) ((ODocument) d.getRecord()).field("friend1")).field("uid"), 1);
+    }
+
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

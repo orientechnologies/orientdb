@@ -107,15 +107,16 @@ public class OMatchStatementTest {
 
   @Test
   public void testMultipleMatches() {
-    String query = "" + "MATCH {class: 'V', as: foo}.out(){class: 'V', as: bar}, "
-        + "{class: 'V', as: foo}.out(){class: 'V', as: bar}," + " {class: 'V', as: foo}.out(){class: 'V', as: bar} RETURN foo";
+    String query = "MATCH {class: 'V', as: foo}.out(){class: 'V', as: bar}, ";
+    query += " {class: 'V', as: foo}.out(){class: 'V', as: bar},";
+    query += " {class: 'V', as: foo}.out(){class: 'V', as: bar} RETURN foo";
     checkRightSyntax(query);
   }
 
   @Test
   public void testWhile() {
     checkRightSyntax("MATCH {class: 'V', as: foo}.out(){while:($depth<4), as:bar} RETURN bar ");
-}
+  }
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
