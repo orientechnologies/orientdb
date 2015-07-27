@@ -1683,8 +1683,7 @@ var OrientGraph = (function () {
                     if (self.isVertex(rid)) {
                       var v1 = self.get(rid);
                       if (!v1) {
-                        v1 = new OVertex(self, rid);
-                        self.addVertex(v1);
+                        return;
                       }
                       var cluster = rid.replace("#", "").split(":")[0];
                       var cfg = self.clusterClass[cluster];
