@@ -153,7 +153,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
         StringBuilder queryString = new StringBuilder();
         queryString.append("select from ");
         if (clazz == null) {
-          queryString.append("V");
+          queryString.append(OrientVertexType.CLASS_NAME);
         } else {
           queryString.append(clazz.getName());
         }
