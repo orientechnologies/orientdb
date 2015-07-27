@@ -1744,7 +1744,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     @Override
     public Thread newThread(Runnable r) {
-      Thread thread = new Thread(OStorageAbstract.storageGroup, r);
+      Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
       thread.setPriority(Thread.MAX_PRIORITY);
       thread.setName("OrientDB Write Cache Flush Task (" + storageName + ")");
@@ -1761,7 +1761,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     @Override
     public Thread newThread(Runnable r) {
-      Thread thread = new Thread(OStorageAbstract.storageGroup, r);
+      Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
       thread.setName("OrientDB Low Disk Space Publisher (" + storageName + ")");
       return thread;

@@ -102,7 +102,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
                                                                                   @Override
                                                                                   public Thread newThread(Runnable r) {
                                                                                     final Thread thread = new Thread(
-                                                                                        OStorageAbstract.storageGroup, r);
+                                                                                        OStorageAbstract.storageThreadGroup, r);
                                                                                     thread.setDaemon(true);
                                                                                     thread.setName("OrientDB WAL Flush Task ("
                                                                                         + storage.getName() + ")");
