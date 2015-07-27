@@ -29,6 +29,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
@@ -100,7 +101,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
                                                                                 .newSingleThreadScheduledExecutor(new ThreadFactory() {
                                                                                   @Override
                                                                                   public Thread newThread(Runnable r) {
-                                                                                    Thread thread = new Thread(r);
+                                                                                    final Thread thread = new Thread(
+                                                                                        OStorageAbstract.storageGroup, r);
                                                                                     thread.setDaemon(true);
                                                                                     thread.setName("OrientDB WAL Flush Task ("
                                                                                         + storage.getName() + ")");

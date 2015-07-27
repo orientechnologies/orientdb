@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.common.concur.resource.*;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -38,6 +39,30 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class OStorageAbstract implements OStorage, OSharedContainer {
+  public final static ThreadGroup                     storageGroup;
+
+  static {
+    ThreadGroup parentThreadGroup = Thread.currentThread().getThreadGroup();
+
+    final ThreadGroup parentThreadGroupBackup = parentThreadGroup;
+
+    boolean found = false;
+
+    while (parentThreadGroup.getParent() != null) {
+      if (parentThreadGroup.equals(Orient.instance().getThreadGroup())) {
+        parentThreadGroup = parentThreadGroup.getParent();
+        found = true;
+        break;
+      } else
+        parentThreadGroup = parentThreadGroup.getParent();
+    }
+
+    if (!found)
+      parentThreadGroup = parentThreadGroupBackup;
+
+    storageGroup = new ThreadGroup(parentThreadGroup, "OrientDB Storage");
+  }
+
   protected final String                              url;
   protected final String                              mode;
   protected final OSharedResourceAdaptiveExternal     lock;
