@@ -319,7 +319,7 @@ public class OGraphBatchInsert {
       db.declareIntent(null);
       db.close();
       if (walActive)
-        OGlobalConfiguration.USE_WAL.setValue(walActive);
+        OGlobalConfiguration.USE_WAL.setValue(true);
     }
   }
 
@@ -382,7 +382,7 @@ public class OGraphBatchInsert {
       return;
     }
     settingProperties = true;
-    int cluster = (int) (id % parallel);
+    final int cluster = (int) (id % parallel);
     if (nextVerticesToCreate[cluster] <= id) {
       if (oVertexClass == null) {
         oVertexClass = db.getMetadata().getSchema().getClass(vertexClass);
@@ -392,7 +392,7 @@ public class OGraphBatchInsert {
       }
       new BatchImporterJob(cluster, oVertexClass, id).createVertex(db, id, properties);
     } else {
-      ODocument doc = (ODocument) db.load(new ORecordId(getClusterId(id), getClusterPosition(id)));
+      final ODocument doc = db.load(new ORecordId(getClusterId(id), getClusterPosition(id)));
       if (doc == null) {
         throw new RuntimeException("trying to insert properties on non existing document");
       }

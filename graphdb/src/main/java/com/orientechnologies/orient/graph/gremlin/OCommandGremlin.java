@@ -19,7 +19,6 @@
   */
 package com.orientechnologies.orient.graph.gremlin;
 
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandRequestTextAbstract;
 
 /**

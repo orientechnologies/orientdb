@@ -20,9 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient.asynch;
 
-import java.util.Set;
-import java.util.concurrent.Future;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -30,6 +27,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
+
+import java.util.Set;
+import java.util.concurrent.Future;
 
 public abstract class OrientElementFuture<T extends OrientElement> implements Element, OIdentifiable {
   protected final Future<T> future;
@@ -39,7 +39,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
   }
 
   @Override
-  public <T> T getProperty(final String key) {
+  public <TY> TY getProperty(final String key) {
     try {
       return future.get().getProperty(key);
     } catch (Exception e) {
@@ -66,7 +66,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
   }
 
   @Override
-  public <T> T removeProperty(final String key) {
+  public <TY> TY removeProperty(final String key) {
     try {
       return future.get().removeProperty(key);
     } catch (Exception e) {

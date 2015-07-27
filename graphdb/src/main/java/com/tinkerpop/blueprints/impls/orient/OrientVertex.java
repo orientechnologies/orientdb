@@ -134,11 +134,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     if (found == null) {
       if (iGraph.isAutoScaleEdgeType()
-          && (prop == null || propType == OType.LINK || "true".equalsIgnoreCase(prop.getCustom(OrientVertexType.OrientVertexProperty.ORDERED)))) {
+          && (prop == null || propType == OType.LINK || "true".equalsIgnoreCase(prop
+              .getCustom(OrientVertexType.OrientVertexProperty.ORDERED)))) {
         // CREATE ONLY ONE LINK
         out = iTo;
         outType = OType.LINK;
-      } else if (propType == OType.LINKLIST || (prop != null && "true".equalsIgnoreCase(prop.getCustom(OrientVertexType.OrientVertexProperty.ORDERED)))) {
+      } else if (propType == OType.LINKLIST
+          || (prop != null && "true".equalsIgnoreCase(prop.getCustom(OrientVertexType.OrientVertexProperty.ORDERED)))) {
         final Collection coll = new ORecordLazyList(iFromVertex);
         coll.add(iTo);
         out = coll;
@@ -612,7 +614,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
             // CREATE LAZY Iterable AGAINST COLLECTION FIELD
             if (coll instanceof ORecordLazyMultiValue)
               iterable.add(new OrientVertexIterator(this, ((ORecordLazyMultiValue) coll).rawIterator(), connection, iLabels,
-                  ((ORecordLazyMultiValue) coll).size()));
+                  coll.size()));
             else
               iterable.add(new OrientVertexIterator(this, coll.iterator(), connection, iLabels, -1));
           }
@@ -919,7 +921,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       // RETRO-COMPATIBILITY WITH THE SYNTAX CLASS:<CLASS-NAME>
       label = OrientBaseGraph.encodeClassName(iClassName);
 
-    if (graph.isUseClassForEdgeLabel()) {
+    if (graph != null && graph.isUseClassForEdgeLabel()) {
       final OrientEdgeType edgeType = graph.getEdgeType(label);
       if (edgeType == null)
         // AUTO CREATE CLASS
@@ -956,8 +958,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       else
         edge.getRecord().fields(OrientBaseGraph.CONNECTION_OUT, rawElement, OrientBaseGraph.CONNECTION_IN, inDocument);
 
-      from = (OIdentifiable) edge.getRecord();
-      to = (OIdentifiable) edge.getRecord();
+      from = edge.getRecord();
+      to = edge.getRecord();
     }
 
     if (settings.isKeepInMemoryReferences()) {
@@ -1093,7 +1095,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
             // CREATE LAZY Iterable AGAINST COLLECTION FIELD
             if (coll instanceof ORecordLazyMultiValue) {
               iterable.add(new OrientEdgeIterator(this, iDestination, ((ORecordLazyMultiValue) coll).rawIterator(), connection,
-                  iLabels, ((ORecordLazyMultiValue) coll).size()));
+                  iLabels, coll.size()));
             } else
               iterable.add(new OrientEdgeIterator(this, iDestination, coll.iterator(), connection, iLabels, -1));
           }
@@ -1275,7 +1277,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     final OrientBaseGraph graph = getGraph();
     final OrientEdge toAdd = getEdge(graph, doc, fieldName, connection, fieldValue, iTargetVertex, iLabels);
 
-    if (settings.isUseVertexFieldsForEdgeLabels() || toAdd.isLabeled(iLabels))
+    if (toAdd != null && (settings.isUseVertexFieldsForEdgeLabels() || toAdd.isLabeled(iLabels)))
       // ADD THE EDGE
       iterable.add(toAdd);
   }
@@ -1341,9 +1343,12 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     } else if (immutableClass.isEdgeType()) {
       // EDGE
       if (settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(fieldRecord), iLabels)) {
-        final OIdentifiable vertexDoc = OrientEdge.getConnection(fieldRecord, connection.getKey().opposite());
+        OIdentifiable vertexDoc = OrientEdge.getConnection(fieldRecord, connection.getKey().opposite());
         if (vertexDoc == null) {
+
           fieldRecord.reload();
+          vertexDoc = OrientEdge.getConnection(fieldRecord, connection.getKey().opposite());
+
           if (vertexDoc == null) {
             OLogManager.instance().warn(this,
                 "Cannot load edge " + fieldRecord + " to get the " + connection.getKey().opposite() + " vertex");

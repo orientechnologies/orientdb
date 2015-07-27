@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -36,6 +33,9 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.Iterator;
+import java.util.LinkedList;
 
 /**
  * Dijkstra's algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph.
@@ -64,7 +64,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
     try {
 
-      final ORecord record = (ORecord) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
+      final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
 
       Object source = iParams[0];
       if (OMultiValue.isMultiValue(source)) {

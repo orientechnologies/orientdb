@@ -125,8 +125,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
         if (fields != null)
           // EVALUATE FIELDS
-          for (Iterator<OPair<String, Object>> it = fields.iterator(); it.hasNext();) {
-            final OPair<String, Object> f = it.next();
+          for (final OPair<String, Object> f : fields) {
             if (f.getValue() instanceof OSQLFunctionRuntime)
               f.setValue(((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), null, context));
           }
