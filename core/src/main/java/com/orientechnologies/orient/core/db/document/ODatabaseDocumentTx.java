@@ -500,7 +500,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     db.metadata = new OMetadataDefault();
     db.initialized = true;
     db.storage = storage;
-    db.storage.addUser();
+
+    if (storage instanceof OStorageProxy)
+      ((OStorageProxy) db.storage).addUser();
+
     db.setStatus(STATUS.OPEN);
     db.activateOnCurrentThread();
     db.metadata.load();

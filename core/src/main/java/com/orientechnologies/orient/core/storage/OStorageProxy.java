@@ -36,4 +36,9 @@ public interface OStorageProxy extends OStorage {
 
   boolean indexRemove(final String iIndexName, final Object iKey);
 
+  int getUsers();
+
+  int addUser();
+
+  int removeUser();
 }
