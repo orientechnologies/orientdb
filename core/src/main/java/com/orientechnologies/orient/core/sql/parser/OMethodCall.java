@@ -14,11 +14,13 @@ import java.util.*;
 
 public class OMethodCall extends SimpleNode {
 
-  static Set<String>          graphMethods = new HashSet<String>(Arrays.asList(new String[] { "out", "in", "both", "outE", "outV",
-      "inE", "inV", "bothE", "bothV"      }));
+  static Set<String>          graphMethods         = new HashSet<String>(Arrays.asList(new String[] { "out", "in", "both", "outE",
+      "inE", "bothE", "bothV", "outV", "inV"      }));
+
+  static Set<String>          bidirectionalMethods = new HashSet<String>(Arrays.asList(new String[] { "out", "in", "both" }));
 
   protected OIdentifier       methodName;
-  protected List<OExpression> params       = new ArrayList<OExpression>();
+  protected List<OExpression> params               = new ArrayList<OExpression>();
 
   public OMethodCall(int id) {
     super(id);
@@ -62,16 +64,16 @@ public class OMethodCall extends SimpleNode {
   }
 
   public boolean isBidirectional() {
-    return graphMethods.contains(methodName.getValue());
+    return bidirectionalMethods.contains(methodName.getValue().toLowerCase());
   }
 
   public Object execute(Object targetObjects, OCommandContext ctx) {
-    return execute(targetObjects, ctx, methodName.getValue());
+    return execute(targetObjects, ctx, methodName.getValue(), params);
   }
 
-  private Object execute(Object targetObjects, OCommandContext ctx, String name) {
+  private Object execute(Object targetObjects, OCommandContext ctx, String name, List<OExpression> iParams) {
     List<Object> paramValues = new ArrayList<Object>();
-    for (OExpression expr : this.params) {
+    for (OExpression expr : iParams) {
       paramValues.add(expr.execute((OIdentifiable) ctx.getVariable("$current"), ctx));
     }
     if (graphMethods.contains(name)) {
@@ -93,26 +95,18 @@ public class OMethodCall extends SimpleNode {
     }
 
     String straightName = methodName.getValue();
-    if (straightName.equals("out")) {
-      return execute(targetObjects, ctx, "in");
+    if (straightName.equalsIgnoreCase("out")) {
+      return execute(targetObjects, ctx, "in", params);
     }
-    if (straightName.equals("in")) {
-      return execute(targetObjects, ctx, "out");
-    }
-    if (straightName.equals("outE")) {
-      return execute(targetObjects, ctx, "outV");
-    }
-    if (straightName.equals("inE")) {
-      return execute(targetObjects, ctx, "inV");
-    }
-    if (straightName.equals("outV")) {
-      return execute(targetObjects, ctx, "outE");
-    }
-    if (straightName.equals("inV")) {
-      return execute(targetObjects, ctx, "inE");
+    if (straightName.equalsIgnoreCase("in")) {
+      return execute(targetObjects, ctx, "out", params);
     }
 
-    return execute(targetObjects, ctx, straightName);// both
+    if (straightName.equalsIgnoreCase("both")) {
+      return execute(targetObjects, ctx, "both", params);
+    }
+
+    throw new UnsupportedOperationException("Invalid reverse traversal: " + methodName);
   }
 
   public static ODatabaseDocumentInternal getDatabase() {
