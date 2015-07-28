@@ -27,13 +27,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class OEdgeTransformer extends OAbstractLookupTransformer {
-  private String    edgeClass    = "E";
+  private String    edgeClass    = OrientEdgeType.CLASS_NAME;
   private boolean   directionOut = true;
   private ODocument targetVertexFields;
   private ODocument edgeFields;

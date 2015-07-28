@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 public class OVertexTransformer extends OAbstractTransformer {
   private String  vertexClass;
@@ -32,7 +33,7 @@ public class OVertexTransformer extends OAbstractTransformer {
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{class:{optional:true,description:'Vertex class name to assign. Default is V'}}"
+        + "{class:{optional:true,description:'Vertex class name to assign. Default is " + OrientVertexType.CLASS_NAME + "'}}"
         + ",skipDuplicates:{optional:true,description:'Vertices with duplicate keys are skipped', default:false}" + "]"
         + ",input:['OrientVertex','ODocument'],output:'OrientVertex'}");
   }
