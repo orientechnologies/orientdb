@@ -24,7 +24,7 @@
     <artifactId>orientdb-jdbc</artifactId>
     <packaging>jar</packaging>
 
-    <version>2.1-rc5</version>
+    <version>2.1-rc6</version>
 
     <properties>
         <orient.version>${version}</orient.version>
