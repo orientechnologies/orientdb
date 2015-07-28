@@ -112,7 +112,7 @@ public class OMethodCall extends SimpleNode {
       return execute(targetObjects, ctx, "inE");
     }
 
-    return execute(targetObjects, ctx, straightName);
+    return execute(targetObjects, ctx, straightName);// both
   }
 
   public static ODatabaseDocumentInternal getDatabase() {

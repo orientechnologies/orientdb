@@ -73,8 +73,10 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
   }
 
-  class MatchExecutionPlan {
-    List<EdgeTraversal> sortedEdges;
+  public static class MatchExecutionPlan {
+    public List<EdgeTraversal> sortedEdges;
+    public Map<String, Long>   preFetchedAliases = new HashMap<String, Long>();
+    public String              rootAlias;
   }
 
   class Pattern {
@@ -343,6 +345,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         }
 
         rootContext.candidates.put(nextAlias, matches);
+        executionPlan.preFetchedAliases.put(nextAlias, entryPoint.getValue());
         rootFound = true;
       }
     }
@@ -354,6 +357,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         return true;
       }
       rootContext.candidates.put(nextAlias, matches);
+      executionPlan.preFetchedAliases.put(nextAlias, estimatedRootEntries.get(nextAlias));
     }
 
     EdgeTraversal firstEdge = executionPlan.sortedEdges.size() == 0 ? null : executionPlan.sortedEdges.get(0);
@@ -363,6 +367,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     } else {
       smallestAlias = pattern.aliasToNode.values().iterator().next().alias;
     }
+    executionPlan.rootAlias = smallestAlias;
     Iterable<OIdentifiable> allCandidates = rootContext.candidates.get(smallestAlias);
 
     for (OIdentifiable id : allCandidates) {
@@ -547,7 +552,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
     if (whileCondition == null && maxDepth == null) {// in this case starting point is not returned and only one level depth is
                                                      // evaluated
-      Iterable<OIdentifiable> queryResult = (Iterable) outEdge.item.method.execute(startingPoint, iCommandContext);
+      Object qR = outEdge.item.method.execute(startingPoint, iCommandContext);
+
+      Iterable<OIdentifiable> queryResult = (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton(qR);
       if (outEdge.item.filter == null || outEdge.item.filter.getFilter() == null) {
         return queryResult;
       }

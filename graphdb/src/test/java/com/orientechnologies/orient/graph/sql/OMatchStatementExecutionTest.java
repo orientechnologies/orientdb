@@ -447,6 +447,22 @@ public class OMatchStatementExecutionTest {
   }
 
   @Test
+  public void testTriangleWithEdges4() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  .outE('TriangleE').inV(){as: friend2, where: (uid = 1)}");
+    query.append("  .outE('TriangleE').inV(){as: friend3},");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  .outE('TriangleE').inV(){as: friend3}");
+    query.append("return $matches");
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+
+  }
+
+  @Test
   public void testCartesianProduct() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
