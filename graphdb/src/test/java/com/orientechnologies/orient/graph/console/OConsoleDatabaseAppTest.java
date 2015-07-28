@@ -40,6 +40,52 @@ import java.util.List;
  */
 public class OConsoleDatabaseAppTest {
 
+  class ConsoleTest {
+    OConsoleDatabaseApp   console;
+    ByteArrayOutputStream out;
+    PrintStream           stream;
+
+    ConsoleTest() {
+      console = new OConsoleDatabaseApp(null);
+      resetOutput();
+    }
+
+    public OConsoleDatabaseApp console() {
+      return console;
+    }
+
+    public String getConsoleOutput() {
+      byte[] result = out.toByteArray();
+      return new String(result);
+    }
+
+    void resetOutput() {
+      if (out != null) {
+        try {
+          stream.close();
+          out.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+      out = new ByteArrayOutputStream();
+      stream = new PrintStream(out);
+      console.setOutput(stream);
+    }
+
+    void shutdown() {
+      if (out != null) {
+        try {
+          stream.close();
+          out.close();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+      console.close();
+    }
+  }
+
   @Test
   public void testSimple() {
     String dbUrl = "memory:OConsoleDatabaseAppTest";
@@ -203,57 +249,52 @@ public class OConsoleDatabaseAppTest {
 
   @Test
   public void testDumpRecordDetails() {
-    String dbUrl = "memory:OConsoleDatabaseAppTestDumpRecordDetails";
-    StringBuilder builder = new StringBuilder();
-    builder.append("create database " + dbUrl + ";\n");
-    builder.append("create class foo;\n");
-    builder.append("insert into foo set name = 'foo';\n");
-
-    // builder.append("display raw record " + rid);
-
-    // OConsoleDatabaseApp console = new OConsoleDatabaseApp(new String[] { builder.toString() });
-    OConsoleDatabaseApp console = new OConsoleDatabaseApp(null);
-
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    PrintStream stream = new PrintStream(out);
-    console.setOutput(stream);
+    ConsoleTest c = new ConsoleTest();
     try {
-      console.createDatabase(dbUrl, null, null, null, null);
-      console.createClass("class foo");
-      console.insert("into foo set name = 'barbar'");
-      console.select("from foo limit -1");
+      c.console().createDatabase("memory:OConsoleDatabaseAppTestDumpRecordDetails", null, null, null, null);
+      c.console().createClass("class foo");
+      c.console().insert("into foo set name = 'barbar'");
+      c.console().select("from foo limit -1");
+      c.resetOutput();
 
-      byte[] result = out.toByteArray();
-      out.close();
-      stream.close();
-      out = new ByteArrayOutputStream();
-      stream = new PrintStream(out);
-      console.setOutput(stream);
-//      String resultString = new String(result);
+      c.console().set("maxBinaryDisplay", "10000");
+      c.console().displayRecord("0");
 
-//      String rid = resultString.substring(resultString.indexOf("#"), resultString.indexOf("#") + 5).trim();
-
-      console.set("maxBinaryDisplay", "10000");
-      console.displayRecord("0");
-      result = out.toByteArray();
-      String resultString = new String(result);
+      String resultString = c.getConsoleOutput();
       Assert.assertTrue(resultString.contains("@class: foo"));
       Assert.assertTrue(resultString.contains("barbar"));
     } catch (Exception e) {
       Assert.fail();
     } finally {
-      try {
-        out.close();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-      try {
-        stream.close();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-      console.close();
+      c.shutdown();
     }
 
   }
+
+  @Test
+  public void testHelp() {
+    ConsoleTest c = new ConsoleTest();
+    try {
+      c.console().help();
+      String resultString = c.getConsoleOutput();
+      Assert.assertTrue(resultString.contains("connect"));
+      Assert.assertTrue(resultString.contains("alter class"));
+      Assert.assertTrue(resultString.contains("create class"));
+      Assert.assertTrue(resultString.contains("select"));
+      Assert.assertTrue(resultString.contains("update"));
+      Assert.assertTrue(resultString.contains("delete"));
+      Assert.assertTrue(resultString.contains("create vertex"));
+      Assert.assertTrue(resultString.contains("create edge"));
+      Assert.assertTrue(resultString.contains("help"));
+      Assert.assertTrue(resultString.contains("exit"));
+
+    } catch (Exception e) {
+      Assert.fail();
+    } finally {
+      c.shutdown();
+    }
+
+  }
+
+
 }
