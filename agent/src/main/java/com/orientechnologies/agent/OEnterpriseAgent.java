@@ -18,14 +18,20 @@
 package com.orientechnologies.agent;
 
 import com.orientechnologies.agent.hook.OAuditingHook;
-import com.orientechnologies.agent.http.command.*;
+import com.orientechnologies.agent.http.command.OServerCommandAuditing;
+import com.orientechnologies.agent.http.command.OServerCommandConfiguration;
+import com.orientechnologies.agent.http.command.OServerCommandGetDeployDb;
+import com.orientechnologies.agent.http.command.OServerCommandGetDistributed;
+import com.orientechnologies.agent.http.command.OServerCommandGetLog;
+import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
+import com.orientechnologies.agent.http.command.OServerCommandGetSQLProfiler;
+import com.orientechnologies.agent.http.command.OServerCommandPostBackupDatabase;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.profiler.OProfilerMBean;
-import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
+import com.orientechnologies.common.profiler.OProfilerStub;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -215,9 +221,9 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   }
 
   private void uninstallProfiler() {
-    final OProfilerMBean currentProfiler = Orient.instance().getProfiler();
+    final OProfiler currentProfiler = Orient.instance().getProfiler();
 
-    Orient.instance().setProfiler(new OProfiler((OProfiler) currentProfiler));
+    Orient.instance().setProfiler(new OProfilerStub((OAbstractProfiler) currentProfiler));
     Orient.instance().getProfiler().startup();
 
     currentProfiler.shutdown();
@@ -231,14 +237,14 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     System.out.printf("\n\n********************************************************************");
     System.out.printf("\n*                 ORIENTDB  -  ENTERPRISE EDITION                  *");
     System.out.printf("\n*                                                                  *");
-//    System.out.printf("\n*            " + OConstants.COPYRIGHT + "           *");
+    // System.out.printf("\n*            " + OConstants.COPYRIGHT + "           *");
     System.out.printf("\n********************************************************************");
 
     Orient
         .instance()
         .getProfiler()
         .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.license"), "Enterprise License",
-            METRIC_TYPE.TEXT, new OProfilerHookValue() {
+            OProfiler.METRIC_TYPE.TEXT, new OProfilerHookValue() {
 
               @Override
               public Object getValue() {
@@ -249,7 +255,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
         .instance()
         .getProfiler()
         .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.agentVersion"), "Enterprise License",
-            METRIC_TYPE.TEXT, new OProfilerHookValue() {
+            OProfiler.METRIC_TYPE.TEXT, new OProfilerHookValue() {
 
               @Override
               public Object getValue() {
@@ -260,7 +266,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
         .instance()
         .getProfiler()
         .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.dayLeft"), "Enterprise License Day Left",
-            METRIC_TYPE.TEXT, new OProfilerHookValue() {
+            OProfiler.METRIC_TYPE.TEXT, new OProfilerHookValue() {
 
               @Override
               public Object getValue() {

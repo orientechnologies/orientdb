@@ -21,15 +21,21 @@ package com.orientechnologies.agent.profiler;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
-import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.sun.management.OperatingSystemMXBean;
 
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -42,7 +48,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli
  * @copyrights Orient Technologies.com
  */
-public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerMBean {
+public class OEnterpriseProfiler extends OAbstractProfiler {
   protected final static Timer        timer                   = new Timer(true);
   protected final static int          BUFFER_SIZE             = 2048;
   public static final int             KEEP_ALIVE              = 60 * 1000;
