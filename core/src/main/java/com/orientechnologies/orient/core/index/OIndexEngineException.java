@@ -22,10 +22,6 @@ import com.orientechnologies.common.exception.OException;
 
 public class OIndexEngineException extends OException {
 
-  public OIndexEngineException(final String string) {
-    super(string);
-  }
-
   public OIndexEngineException(final String message, final Throwable cause) {
     super(message, cause);
   }
