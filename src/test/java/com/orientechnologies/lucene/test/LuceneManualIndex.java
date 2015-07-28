@@ -54,7 +54,7 @@ public class LuceneManualIndex extends BaseLuceneTest {
 
     Assert.assertEquals(manual.getSize(), 3);
 
-    List<ODocument> docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:manual where key = 'Enrico'"))
+    List<ODocument> docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:manual where key LUCENE 'Enrico'"))
         .execute();
     Assert.assertEquals(docs.size(), 1);
   }

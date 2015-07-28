@@ -200,5 +200,14 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
   @Override
   public IndexSearcher searcher() throws IOException {
     return ((OLuceneIndexEngine) indexEngine).searcher();
+
+
+  }
+
+  @Override
+  public boolean canBeUsedInEqualityOperators() {
+    return false;
   }
 }
+
+
