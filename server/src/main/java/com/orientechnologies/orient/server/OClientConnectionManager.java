@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TimerTask;
@@ -376,27 +377,23 @@ public class OClientConnectionManager {
   }
 
   public void killAllChannels() {
-    final Iterator<Entry<Integer, OClientConnection>> iterator = connections.entrySet().iterator();
-    while (iterator.hasNext()) {
-      final Entry<Integer, OClientConnection> entry = iterator.next();
+    for (Map.Entry<Integer, OClientConnection> entry : connections.entrySet()) {
+      try {
+        ONetworkProtocol protocol = entry.getValue().protocol;
 
-      ONetworkProtocol protocol = entry.getValue().protocol;
+        protocol.getChannel().close();
 
-      protocol.getChannel().close();
+        final Socket socket;
+        if (protocol == null || protocol.getChannel() == null)
+          socket = null;
+        else
+          socket = protocol.getChannel().socket;
 
-      final Socket socket;
-      if (protocol == null || protocol.getChannel() == null)
-        socket = null;
-      else
-        socket = protocol.getChannel().socket;
-
-      if (socket != null && !socket.isClosed() && !socket.isInputShutdown()) {
-        try {
+        if (socket != null && !socket.isClosed() && !socket.isInputShutdown())
           socket.shutdownInput();
-        } catch (IOException e) {
-          OLogManager.instance().debug(this, "Error on closing connection of %s client during shutdown", e,
-              entry.getValue().getRemoteAddress());
-        }
+
+      } catch (Exception e) {
+        OLogManager.instance().debug(this, "Error on killing connection to %s client", e, entry.getValue().getRemoteAddress());
       }
     }
   }
