@@ -30,35 +30,66 @@ public class HACrashTest extends AbstractServerClusterTxTest {
   protected Timer  timer         = new Timer(true);
   volatile boolean inserting     = true;
   volatile int     serverStarted = 0;
+  volatile boolean lastServerOn  = false;
 
   @Test
   public void test() throws Exception {
+    count = 1000;
     maxRetries = 10;
     init(SERVERS);
     prepare(false);
     execute();
   }
 
+  protected void log(final String iMessage) {
+    System.out
+        .println("\n**********************************************************************************************************");
+    System.out.println(iMessage);
+    System.out
+        .println("**********************************************************************************************************\n");
+  }
+
   @Override
   protected void onServerStarted(ServerRun server) {
     super.onServerStarted(server);
 
-    if (serverStarted++ == (SERVERS - 1))
+    if (serverStarted++ == (SERVERS - 1)) {
+      lastServerOn = true;
+
       // CRASH LAST SERVER IN 2 SECONDS
       timer.schedule(new TimerTask() {
         @Override
         public void run() {
           Assert.assertTrue("Insert was too fast", inserting);
 
-          System.out.println("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
+          // RESTART LAST SERVER IN 10 SECONDS
+          timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+              Assert.assertTrue("Insert was too fast", inserting);
+
+              log("RESTART SERVER " + (SERVERS - 1));
+              try {
+                serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+                lastServerOn = true;
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+            }
+          }, 10000);
+
+          log("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
           serverInstance.get(SERVERS - 1).crashServer();
+          lastServerOn = false;
         }
       }, 2000);
+    }
   }
 
   @Override
   protected void onAfterExecution() throws Exception {
     inserting = false;
+    Assert.assertTrue(lastServerOn);
   }
 
   protected String getDatabaseURL(final ServerRun server) {
