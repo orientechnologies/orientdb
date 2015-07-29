@@ -44,15 +44,16 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
     @Override
     public Void call() throws Exception {
       String name = Integer.toString(serverId);
-      for (int i = baseCount; i < count; i++) {
+      for (int i = 0; i < count; i++) {
         final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
         try {
           if ((i + 1) % 100 == 0)
             System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
 
+          final int id = baseCount + i;
           database.begin();
           try {
-            ODocument person = createRecord(database, serverId, i);
+            ODocument person = createRecord(database, serverId, id);
             updateRecord(database, person);
             checkRecord(database, person);
             deleteRecord(database, person);
