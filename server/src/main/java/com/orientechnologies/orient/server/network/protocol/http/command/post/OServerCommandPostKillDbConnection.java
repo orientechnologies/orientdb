@@ -18,16 +18,15 @@
 
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
+import java.io.IOException;
+import java.util.List;
+
 import com.orientechnologies.orient.server.OClientConnection;
-import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
-
-import java.io.IOException;
-import java.util.List;
 
 public class OServerCommandPostKillDbConnection extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = { "POST|dbconnection/*" };
@@ -43,10 +42,10 @@ public class OServerCommandPostKillDbConnection extends OServerCommandAuthentica
 
   private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String db, String command) throws IOException {
 
-    List<OClientConnection> connections = OClientConnectionManager.instance().getConnections();
+    List<OClientConnection> connections = server.getClientConnectionManager().getConnections();
     for (OClientConnection connection : connections) {
       if (checkDbSession(iRequest, db, command, connection)) {
-        OClientConnectionManager.instance().kill(connection.id);
+        server.getClientConnectionManager().kill(connection.id);
       }
     }
     iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,

@@ -19,6 +19,23 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.IllegalFormatException;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.GZIPInputStream;
+
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -37,7 +54,6 @@ import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.OClientConnection;
-import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -58,23 +74,6 @@ import com.orientechnologies.orient.server.network.protocol.http.command.put.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.URLDecoder;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.IllegalFormatException;
-import java.util.InputMismatchException;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.GZIPInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   private static final String          COMMAND_SEPARATOR = "|";
@@ -107,7 +106,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       additionalResponseHeaders = addHeaders.split(";");
 
     // CREATE THE CLIENT CONNECTION
-    connection = OClientConnectionManager.instance().connect(this);
+    connection = iServer.getClientConnectionManager().connect(this);
 
     server = iServer;
     requestMaxContentLength = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_MAX_CONTENT_LENGTH);
@@ -227,7 +226,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       channel.close();
 
     } finally {
-      OClientConnectionManager.instance().disconnect(connection.id);
+      server.getClientConnectionManager().disconnect(connection.id);
 
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance().debug(this, "Connection shutdowned");

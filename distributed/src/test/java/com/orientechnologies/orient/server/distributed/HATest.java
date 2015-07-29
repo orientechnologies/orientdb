@@ -15,16 +15,15 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * Distributed TX test against "plocal" protocol + shutdown and restart of a node.
  */
-public class ServerClusterLocalTxHATest extends AbstractServerClusterTxTest {
+public class HATest extends AbstractServerClusterTxTest {
   final static int SERVERS = 3;
 
-  @Ignore
-//  @Test
+  @Test
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
@@ -38,20 +37,20 @@ public class ServerClusterLocalTxHATest extends AbstractServerClusterTxTest {
 
     Thread.sleep(1000);
 
-    System.out.println("RESTARTING TESTS...");
+    System.out.println("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " DOWN...");
 
-    baseCount += count;
-    count = 1000000;
+    // count = 1000;
 
     executeMultipleTest();
 
-    System.out.println("RESTART SERVER " + (SERVERS - 1) + "...");
+    System.out.println("RESTARTING SERVER " + (SERVERS - 1) + "...");
     serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
 
-    System.out.println("RESTARTING TESTS...");
+    Thread.sleep(2000);
 
-    baseCount += count;
-    count = 1000000;
+    System.out.println("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
+
+    // count = 1000;
 
     executeMultipleTest();
   }

@@ -76,7 +76,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   private final OStorageVariableParser     variableParser;
   private final OPaginatedStorageDirtyFlag dirtyFlag;
 
-  private String                           storagePath;
+  private final String    storagePath;
   private ExecutorService                  checkpointExecutor;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id, OReadCache readCache)
@@ -87,15 +87,16 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
     File f = new File(url);
 
+    String sp;
     if (f.exists() || !exists(f.getParent())) {
       // ALREADY EXISTS OR NOT LEGACY
-      storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
+      sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
     } else {
       // LEGACY DB
-      storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
+      sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
     }
 
-    storagePath = OIOUtils.getPathFromDatabaseName(storagePath);
+    storagePath = OIOUtils.getPathFromDatabaseName(sp);
     variableParser = new OStorageVariableParser(storagePath);
 
     configuration = new OStorageConfigurationSegment(this);

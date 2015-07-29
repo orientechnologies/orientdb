@@ -19,27 +19,6 @@
  */
 package com.orientechnologies.orient.server;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-
 import com.orientechnologies.common.console.DefaultConsoleReader;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.io.OFileUtils;
@@ -83,6 +62,26 @@ import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.ReentrantLock;
+
 public class OServer {
   private static final String                              ROOT_PASSWORD_VAR      = "ORIENTDB_ROOT_PASSWORD";
   private static ThreadGroup                               threadGroup;
@@ -107,6 +106,7 @@ public class OServer {
   private String                                           serverRootDirectory;
   private String                                           databaseDirectory;
   private final boolean                                    shutdownEngineOnExit;
+  private OClientConnectionManager                         clientConnectionManager;
 
   private ClassLoader                                      extensionClassLoader;
 
@@ -158,6 +158,10 @@ public class OServer {
 
   public boolean isActive() {
     return running;
+  }
+
+  public OClientConnectionManager getClientConnectionManager() {
+    return clientConnectionManager;
   }
 
   /**
@@ -268,6 +272,8 @@ public class OServer {
     OLogManager.instance().info(this, "OrientDB Server v" + OConstants.getVersion() + " is starting up...");
 
     Orient.instance();
+
+    clientConnectionManager = new OClientConnectionManager();
 
     loadConfiguration(iConfiguration);
 
@@ -410,7 +416,7 @@ public class OServer {
       if (pluginManager != null)
         pluginManager.shutdown();
 
-      OClientConnectionManager.instance().shutdown();
+      clientConnectionManager.shutdown();
 
     } finally {
       lock.unlock();
@@ -629,7 +635,7 @@ public class OServer {
       Thread.currentThread().interrupt();
     }
     if (!running)
-      throw new ODatabaseException("Error on plugin lookup the server didn't start correcty.");
+      throw new ODatabaseException("Error on plugin lookup: the server did not start correctly");
 
     final OServerPluginInfo p = pluginManager.getPluginByName(iName);
     if (p != null)

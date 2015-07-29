@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
@@ -624,6 +625,28 @@ public class SchemaTest extends DocumentDBBaseTest {
       if (e instanceof OResponseProcessingException)
         e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OSchemaException);
+    }
+  }
+
+  public void testRenameWithSameNameIsNop() {
+    database.getMetadata().getSchema().getClass("V").setName("V");
+  }
+
+  public void testRenameWithExistentName() {
+    try {
+      database.getMetadata().getSchema().getClass("V").setName("OUser");
+      Assert.fail();
+    } catch (OSchemaException e) {
+    } catch (OCommandExecutionException e) {
+    }
+  }
+
+  public void testShortNameAlreadyExists() {
+    try {
+      database.getMetadata().getSchema().getClass("V").setShortName("OUser");
+      Assert.fail();
+    } catch (IllegalArgumentException e) {
+    } catch (OCommandExecutionException e) {
     }
   }
 

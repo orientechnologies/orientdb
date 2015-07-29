@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.File;
+import java.io.IOException;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Running server instance.
@@ -67,6 +67,12 @@ public class ServerRun {
     return server.isActive();
   }
 
+  public void crashServer() {
+    server.getClientConnectionManager().killAllChannels();
+    if (server != null)
+      server.shutdown();
+  }
+
   protected OrientBaseGraph createDatabase(final String iName) {
     String dbPath = getDatabasePath(iName);
 
@@ -96,7 +102,9 @@ public class ServerRun {
 
     System.setProperty("ORIENTDB_HOME", getServerHome());
 
-    server = new OServer();
+    if (server == null)
+      server = new OServer();
+
     server.setServerRootDirectory(getServerHome());
     server.startup(getClass().getClassLoader().getResourceAsStream(iServerConfigFile));
     server.activate();

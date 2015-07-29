@@ -94,9 +94,14 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       final OContextConfiguration iConfig) throws IOException {
     server = iServer;
     channel = new OChannelBinaryServer(iSocket, iConfig);
-    tokenHandler = server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
-    if (tokenHandler != null && !tokenHandler.isEnabled())
-      tokenHandler = null;
+
+    try {
+      tokenHandler = server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
+      if (tokenHandler != null && !tokenHandler.isEnabled())
+        tokenHandler = null;
+    } catch (ODatabaseException e) {
+      OLogManager.instance().debug(this, "Error on retrieving plugin '%s'", e, OTokenHandler.TOKEN_HANDLER_NAME);
+    }
   }
 
   @Override
@@ -396,7 +401,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     try {
       channel.flush();
     } catch (IOException e1) {
-      OLogManager.instance().error(this, "Error during channel flush", e1);
+      OLogManager.instance().debug(this, "Error during channel flush", e1);
     }
   }
 

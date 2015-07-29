@@ -51,9 +51,9 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   protected static final int delayReader = 1000;
   protected static final int writerCount = 5;
   protected int              baseCount   = 0;
-  protected long             expected;
-  protected long             beginInstances;
+  protected int              expected;
   protected OIndex<?>        idx;
+  protected int              maxRetries  = 1;
 
   class Writer implements Callable<Void> {
     private final String databaseUrl;
@@ -69,29 +69,43 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     @Override
     public Void call() throws Exception {
       String name = Integer.toString(threadId);
+
       for (int i = 0; i < count; i++) {
         final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
         try {
-          if ((i + 1) % 100 == 0)
-            System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
-
           final int id = baseCount + i;
 
-          final ODocument person = createRecord(database, id);
-          updateRecord(database, id);
-          checkRecord(database, id);
-          checkIndex(database, (String) person.field("name"), person.getIdentity());
+          int retry = 0;
 
-          Thread.sleep(delayWriter);
+          for (retry = 0; retry < maxRetries; retry++) {
+            try {
+              final ODocument person = createRecord(database, id);
+              updateRecord(database, id);
+              checkRecord(database, id);
+              checkIndex(database, (String) person.field("name"), person.getIdentity());
 
-        } catch (InterruptedException e) {
-          System.out.println("Writer received interrupt (db=" + database.getURL());
-          Thread.currentThread().interrupt();
-          break;
-        } catch (Exception e) {
-          System.out.println("Writer received exception (db=" + database.getURL());
-          e.printStackTrace();
-          break;
+              if ((i + 1) % 100 == 0)
+                System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
+
+              Thread.sleep(delayWriter);
+
+              // OK
+              break;
+
+            } catch (InterruptedException e) {
+              System.out.println("Writer received interrupt (db=" + database.getURL());
+              Thread.currentThread().interrupt();
+              break;
+            } catch (Exception e) {
+              System.out.println("Writer received exception (db=" + database.getURL());
+
+              if (retry >= maxRetries)
+                e.printStackTrace();
+
+              break;
+            }
+          }
+
         } finally {
           database.close();
           runningWriters.countDown();
@@ -183,9 +197,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       new ODocument("Customer").fields("name", "Jay", "surname", "Miner").save();
       new ODocument("Customer").fields("name", "Luke", "surname", "Skywalker").save();
       new ODocument("Provider").fields("name", "Yoda", "surname", "Nothing").save();
-
-      List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
-      beginInstances = result.get(0).field("count");
     } finally {
       database.close();
     }
@@ -196,6 +207,14 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   }
 
   protected void executeMultipleTest() throws InterruptedException, java.util.concurrent.ExecutionException {
+    ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
+    try {
+      List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
+      baseCount = ((Number) result.get(0).field("count")).intValue();
+    } finally {
+      database.close();
+    }
+
     System.out.println("Creating Writers and Readers threads...");
 
     final ExecutorService writerExecutors = Executors.newCachedThreadPool();
@@ -216,7 +235,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       }
     }
 
-    expected = writerCount * count * serverId + beginInstances + baseCount;
+    expected = writerCount * count * serverId + baseCount;
 
     List<Future<Void>> futures = writerExecutors.invokeAll(writerWorkers);
 
@@ -323,7 +342,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     try {
       Object result = database.command(new OCommandSQL("create index Person.name on Person (name) unique")).execute();
       System.out.println("recreateIndexNode2: Node2 created index: " + result);
-      Assert.assertEquals(expected, result);
+      Assert.assertEquals(expected, ((Number) result).intValue());
     } finally {
       database.close();
     }
@@ -343,54 +362,56 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   protected void checkIndexedEntries() {
     ODatabaseDocumentTx database;
     for (ServerRun server : serverInstance) {
-      database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
-      try {
-        final long indexSize = database.getMetadata().getIndexManager().getIndex("Person.name").getSize();
+      if (server.isActive()) {
+        database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
+        try {
+          final long indexSize = database.getMetadata().getIndexManager().getIndex("Person.name").getSize();
 
-        if (indexSize != expected) {
-          // ERROR: DUMP ALL THE RECORDS
-          List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select from index:Person.name"));
-          int i = 0;
-          for (ODocument d : result) {
-            System.out.println((i++) + ": " + ((OIdentifiable) d.field("rid")).getRecord());
+          if (indexSize != expected) {
+            // ERROR: DUMP ALL THE RECORDS
+            List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select from index:Person.name"));
+            int i = 0;
+            for (ODocument d : result) {
+              System.out.println((i++) + ": " + ((OIdentifiable) d.field("rid")).getRecord());
+            }
           }
+
+          Assert.assertEquals(expected, indexSize);
+
+          System.out.println("From metadata: indexes " + indexSize + " items");
+
+          List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from index:Person.name"));
+          Assert.assertEquals(expected, ((Long) result.get(0).field("count")).longValue());
+
+          System.out.println("From sql: indexes " + indexSize + " items");
+        } finally {
+          database.close();
         }
-
-        Assert.assertEquals(expected, indexSize);
-
-        System.out.println("From metadata: indexes " + indexSize + " items");
-
-        List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from index:Person.name"));
-        Assert.assertEquals(expected, ((Long) result.get(0).field("count")).longValue());
-
-        System.out.println("From sql: indexes " + indexSize + " items");
-      } finally {
-        database.close();
       }
     }
   }
 
   protected void checkInsertedEntries() {
     ODatabaseDocumentTx database;
-    int i;
     for (ServerRun server : serverInstance) {
-      database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
-      try {
-        List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
-        final long total = result.get(0).field("count");
+      if (server.isActive()) {
+        database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
+        try {
+          final int total = (int) database.countClass("Person");
 
-        if (total != expected) {
-          // ERROR: DUMP ALL THE RECORDS
-          result = database.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
-          i = 0;
-          for (ODocument d : result) {
-            System.out.println((i++) + ": " + d);
-          }
+          // if (total != expected) {
+          // // ERROR: DUMP ALL THE RECORDS
+          // result = database.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
+          // i = 0;
+          // for (ODocument d : result) {
+          // System.out.println((i++) + ": " + d);
+          // }
+          // }
+
+          Assert.assertEquals(expected, total);
+        } finally {
+          database.close();
         }
-
-        Assert.assertEquals(expected, total);
-      } finally {
-        database.close();
       }
     }
   }

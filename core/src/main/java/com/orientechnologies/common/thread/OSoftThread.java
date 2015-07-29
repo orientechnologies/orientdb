@@ -55,6 +55,7 @@ public abstract class OSoftThread extends Thread implements OService {
 
   public void sendShutdown() {
     shutdownFlag = true;
+    interrupt();
   }
 
   public boolean isShutdownFlag() {
