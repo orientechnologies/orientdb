@@ -338,6 +338,37 @@ public class OMatchStatementExecutionTest {
   }
 
   @Test
+  public void testManager2() {
+    // the manager of a person is the manager of the department that person belongs to.
+    // if that department does not have a direct manager, climb up the hierarchy until you find one
+    assertEquals("c", getManager2("p10").field("name"));
+    assertEquals("c", getManager2("p12").field("name"));
+    assertEquals("b", getManager2("p6").field("name"));
+    assertEquals("b", getManager2("p11").field("name"));
+  }
+
+  private ODocument getManager2(String personName) {
+    StringBuilder query = new StringBuilder();
+    query.append("select expand(manager) from (");
+    query.append("  match {class:Employee, where: (name = '" + personName + "')}");
+    query.append("   (");
+    query.append("    .out('WorksAt')");
+    query.append("    .out('ParentDepartment'){");
+    query.append("      while: (in('ManagerOf').size() == 0),");
+    query.append("      where: (in('ManagerOf').size() > 0)");
+    query.append("    }");
+    query.append("   )");
+    query.append("  .in('ManagerOf'){as: manager}");
+    query.append("  return manager");
+    query.append(")");
+
+    List<OIdentifiable> qResult = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, qResult.size());
+    return qResult.get(0).getRecord();
+  }
+
+
+  @Test
   public void testManaged() {
     // people managed by a manager are people who belong to his department or people who belong to sub-departments without a manager
     List<OIdentifiable> managedByA = getManagedBy("a");
@@ -361,12 +392,57 @@ public class OMatchStatementExecutionTest {
     assertEquals(expectedNames, names);
   }
 
+
+
   private List<OIdentifiable> getManagedBy(String managerName) {
     StringBuilder query = new StringBuilder();
     query.append("select expand(managed) from (");
     query.append("  match {class:Employee, where: (name = '" + managerName + "')}");
     query.append("  .out('ManagerOf')");
     query.append("  .in('ParentDepartment'){");
+    query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
+    query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
+    query.append("  }");
+    query.append("  .in('WorksAt'){as: managed}");
+    query.append("  return managed");
+    query.append(")");
+
+    return db.command(new OCommandSQL(query.toString())).execute();
+  }
+
+
+  @Test
+  public void testManaged2() {
+    // people managed by a manager are people who belong to his department or people who belong to sub-departments without a manager
+    List<OIdentifiable> managedByA = getManagedBy2("a");
+    assertEquals(1, managedByA.size());
+    assertEquals("p1", ((ODocument) managedByA.get(0).getRecord()).field("name"));
+
+    List<OIdentifiable> managedByB = getManagedBy2("b");
+    assertEquals(5, managedByB.size());
+    Set<String> expectedNames = new HashSet<String>();
+    expectedNames.add("p2");
+    expectedNames.add("p3");
+    expectedNames.add("p6");
+    expectedNames.add("p7");
+    expectedNames.add("p11");
+    Set<String> names = new HashSet<String>();
+    for (OIdentifiable id : managedByB) {
+      ODocument doc = id.getRecord();
+      String name = doc.field("name");
+      names.add(name);
+    }
+    assertEquals(expectedNames, names);
+  }
+
+
+
+  private List<OIdentifiable> getManagedBy2(String managerName) {
+    StringBuilder query = new StringBuilder();
+    query.append("select expand(managed) from (");
+    query.append("  match {class:Employee, where: (name = '" + managerName + "')}");
+    query.append("  .out('ManagerOf')");
+    query.append("  (.inE('ParentDepartment').outV()){");
     query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
     query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
     query.append("  }");

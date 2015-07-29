@@ -345,8 +345,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
       if (!matchContext.matchedEdges.containsKey(outEdge)) {
 
-        Object rightValues = executeTraversal(matchContext, iCommandContext, outEdge, matchContext.matched.get(outEdge.out.alias),
-            0);
+        Object rightValues = outEdge
+            .executeTraversal(matchContext, iCommandContext, matchContext.matched.get(outEdge.out.alias), 0);
         if (!(rightValues instanceof Iterable)) {
           rightValues = Collections.singleton(rightValues);
         }
@@ -472,63 +472,6 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     }
     return true;
-  }
-
-  private Iterable<OIdentifiable> executeTraversal(MatchContext matchContext, OCommandContext iCommandContext, PatternEdge outEdge,
-      OIdentifiable startingPoint, int depth) {
-
-    OWhereClause filter = outEdge.item.filter.getFilter();
-    OWhereClause whileCondition = outEdge.item.filter.getWhileCondition();
-    Integer maxDepth = outEdge.item.filter.getMaxDepth();
-
-    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-
-    if (whileCondition == null && maxDepth == null) {// in this case starting point is not returned and only one level depth is
-                                                     // evaluated
-      Iterable<OIdentifiable> queryResult = traversePatternEdge(startingPoint, outEdge, iCommandContext);
-
-      if (outEdge.item.filter == null || outEdge.item.filter.getFilter() == null) {
-        return queryResult;
-      }
-
-      for (OIdentifiable origin : queryResult) {
-        if (filter == null || filter.matchesFilters(origin, iCommandContext)) {
-          result.add(origin);
-        }
-      }
-    } else {// in this case also zero level (starting point) is considered and traversal depth is given by the while condition
-      iCommandContext.setVariable("$depth", depth);
-      if (filter == null || filter.matchesFilters(startingPoint, iCommandContext)) {
-        result.add(startingPoint);
-      }
-      if ((maxDepth == null || depth < maxDepth)
-          && (whileCondition == null || whileCondition.matchesFilters(startingPoint, iCommandContext))) {
-
-        Iterable<OIdentifiable> queryResult = traversePatternEdge(startingPoint, outEdge, iCommandContext);
-
-        for (OIdentifiable origin : queryResult) {
-          // TODO consider break strategies (eg. re-traverse nodes)
-          Iterable<OIdentifiable> subResult = executeTraversal(matchContext, iCommandContext, outEdge, origin, depth + 1);
-          if (subResult instanceof Collection) {
-            result.addAll((Collection<? extends OIdentifiable>) subResult);
-          } else {
-            for (OIdentifiable i : subResult) {
-              result.add(i);
-            }
-          }
-        }
-      }
-    }
-    return result;
-  }
-
-  private Iterable<OIdentifiable> traversePatternEdge(OIdentifiable startingPoint, PatternEdge outEdge,
-      OCommandContext iCommandContext) {
-    if (outEdge.subPattern != null) {
-      // TODO
-    }
-    Object qR = outEdge.item.method.execute(startingPoint, iCommandContext);
-    return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton(qR);
   }
 
   private void addResult(MatchContext matchContext, OSQLAsynchQuery<ODocument> request) {

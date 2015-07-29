@@ -2,8 +2,10 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
+import java.util.*;
 
 public class OMultiMatchPathItem extends OMatchPathItem {
   protected List<OMatchPathItem> items = new ArrayList<OMatchPathItem>();
@@ -23,6 +25,40 @@ public class OMultiMatchPathItem extends OMatchPathItem {
 
   public boolean isBidirectional() {
     return false;
+  }
+
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append("(");
+    for (OMatchPathItem item : items) {
+      result.append(item.toString());
+    }
+    result.append(")");
+    if (filter != null) {
+      result.append(filter.toString());
+    }
+    return result.toString();
+  }
+
+  protected Iterable<OIdentifiable> traversePatternEdge(OMatchStatement.MatchContext matchContext, OIdentifiable startingPoint,
+      OCommandContext iCommandContext) {
+    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    result.add(startingPoint);
+    for (OMatchPathItem subItem : items) {
+      Set<OIdentifiable> startingPoints = result;
+      result = new HashSet<OIdentifiable>();
+      for (OIdentifiable sp : startingPoints) {
+        Iterable<OIdentifiable> subResult = subItem.executeTraversal(matchContext, iCommandContext, sp, 0);
+        if (subResult instanceof Collection) {
+          result.addAll((Collection) subResult);
+        } else {
+          for (OIdentifiable id : subResult) {
+            result.add(id);
+          }
+        }
+      }
+    }
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=f18f107768de80b8941f166d7fafb3c0 (do not edit this line) */

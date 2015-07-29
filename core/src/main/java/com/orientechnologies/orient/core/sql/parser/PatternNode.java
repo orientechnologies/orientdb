@@ -4,10 +4,10 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
-* Created by luigidellaquila on 28/07/15.
-*/
+ * Created by luigidellaquila on 28/07/15.
+ */
 class PatternNode {
-  String alias;
+  String           alias;
   Set<PatternEdge> out        = new LinkedHashSet<PatternEdge>();
   Set<PatternEdge> in         = new LinkedHashSet<PatternEdge>();
   int              centrality = 0;
