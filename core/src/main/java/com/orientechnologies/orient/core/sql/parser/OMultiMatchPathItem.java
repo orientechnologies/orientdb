@@ -20,5 +20,9 @@ public class OMultiMatchPathItem extends OMatchPathItem {
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
+
+  public boolean isBidirectional() {
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=f18f107768de80b8941f166d7fafb3c0 (do not edit this line) */
