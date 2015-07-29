@@ -42,9 +42,9 @@ import java.util.Set;
 public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
   protected final static String QUERY_GET = "select rid from index:%s where key = ?";
 
-  public OIndexRemoteOneValue(final String iName, final String iWrappedType, final ORID iRid,
+  public OIndexRemoteOneValue(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
       final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex) {
-    super(iName, iWrappedType, iRid, iIndexDefinition, iConfiguration, clustersToIndex);
+    super(iName, iWrappedType, algorithm, iRid, iIndexDefinition, iConfiguration, clustersToIndex);
   }
 
   public OIdentifiable get(final Object iKey) {

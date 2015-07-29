@@ -10,6 +10,8 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,8 +21,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
- * this is and API for fast batch import of graphs with only one class for edges and one class for vertices,
- * starting from an empty (or non existing) DB. This class allows import of graphs with
+ * this is and API for fast batch import of graphs with only one class for edges and one class for vertices, starting from an empty
+ * (or non existing) DB. This class allows import of graphs with
  * <ul>
  * <li>properties on edges</li>
  * <li>properties on vertices</li>
@@ -37,10 +39,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * Typical usage: <code>
  *   OGraphBatchInsert batch = new OGraphBatchInsert("plocal:your/db", "admin", "admin");
- *
+ * 
  *   //phase 1: begin
  *   batch.begin();
- *
+ * 
  *   //phase 2: create edges
  *   Map&lt;String, Object&gt; edgeProps = new HashMap&lt;String, Object&gt;
  *   edgeProps.put("foo", "bar");
@@ -48,13 +50,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  *   batch.createVertex(2L);
  *   batch.createEdge(3L, 4L, null);
  *   ...
- *
+ * 
  *   //phase 3: set properties on vertices, THIS CAN BE DONE ONLY AFTER EDGE AND VERTEX CREATION
  *   Map&lt;String, Object&gt; vertexProps = new HashMap&lt;String, Object&gt;
  *   vertexProps.put("foo", "bar");
  *   batch.setVertexProperties(0L, vertexProps)
  *   ...
- *
+ * 
  *   //phase 4: end
  *   batch.end();
  * </code>
@@ -82,8 +84,8 @@ public class OGraphBatchInsert {
   Map<Long, List<Object>>     out                      = new HashMap<Long, List<Object>>();
   Map<Long, List<Object>>     in                       = new HashMap<Long, List<Object>>();
   private String              idPropertyName           = "uid";
-  private String              edgeClass                = "E";
-  private String              vertexClass              = "V";
+  private String              edgeClass                = OrientEdgeType.CLASS_NAME;
+  private String              vertexClass              = OrientVertexType.CLASS_NAME;
   private OClass              oVertexClass;
   private ODatabaseDocumentTx db;
   private int                 averageEdgeNumberPerNode = -1;
@@ -133,8 +135,8 @@ public class OGraphBatchInsert {
       db.declareIntent(new OIntentMassiveInsert());
       int clusterId = clusterIds[mod];
 
-      final String outField = "E".equals(edgeClass) ? "out_" : ("out_" + edgeClass);
-      final String inField = "E".equals(edgeClass) ? "in_" : ("in_" + edgeClass);
+      final String outField = OrientEdgeType.CLASS_NAME.equals(edgeClass) ? "out_" : ("out_" + edgeClass);
+      final String inField = OrientEdgeType.CLASS_NAME.equals(edgeClass) ? "in_" : ("in_" + edgeClass);
 
       String clusterName = db.getStorage().getClusterById(clusterId).getName();
       // long firstAvailableClusterPosition = lastClusterPositions[mod] + 1;
@@ -148,8 +150,8 @@ public class OGraphBatchInsert {
     public void createVertex(ODatabaseDocumentTx db, long i, Map<String, Object> properties) {
       int clusterId = clusterIds[mod];
 
-      final String outField = "E".equals(edgeClass) ? "out_" : ("out_" + edgeClass);
-      final String inField = "E".equals(edgeClass) ? "in_" : ("in_" + edgeClass);
+      final String outField = OrientEdgeType.CLASS_NAME.equals(edgeClass) ? "out_" : ("out_" + edgeClass);
+      final String inField = OrientEdgeType.CLASS_NAME.equals(edgeClass) ? "in_" : ("in_" + edgeClass);
       String clusterName = db.getStorage().getClusterById(clusterId).getName();
 
       createVertex(db, i, inField, outField, clusterName, properties);
@@ -317,7 +319,7 @@ public class OGraphBatchInsert {
       db.declareIntent(null);
       db.close();
       if (walActive)
-        OGlobalConfiguration.USE_WAL.setValue(walActive);
+        OGlobalConfiguration.USE_WAL.setValue(true);
     }
   }
 
@@ -380,7 +382,7 @@ public class OGraphBatchInsert {
       return;
     }
     settingProperties = true;
-    int cluster = (int) (id % parallel);
+    final int cluster = (int) (id % parallel);
     if (nextVerticesToCreate[cluster] <= id) {
       if (oVertexClass == null) {
         oVertexClass = db.getMetadata().getSchema().getClass(vertexClass);
@@ -390,7 +392,7 @@ public class OGraphBatchInsert {
       }
       new BatchImporterJob(cluster, oVertexClass, id).createVertex(db, id, properties);
     } else {
-      ODocument doc = (ODocument) db.load(new ORecordId(getClusterId(id), getClusterPosition(id)));
+      final ODocument doc = db.load(new ORecordId(getClusterId(id), getClusterPosition(id)));
       if (doc == null) {
         throw new RuntimeException("trying to insert properties on non existing document");
       }
@@ -530,17 +532,17 @@ public class OGraphBatchInsert {
     final OSchema schema = db.getMetadata().getSchema();
     OClass v;
     OClass e;
-    if (!schema.existsClass("V")) {
-      v = schema.createClass("V");
+    if (!schema.existsClass(OrientVertexType.CLASS_NAME)) {
+      v = schema.createClass(OrientVertexType.CLASS_NAME);
     } else {
-      v = schema.getClass("V");
+      v = schema.getClass(OrientVertexType.CLASS_NAME);
     }
-    if (!schema.existsClass("E")) {
-      e = schema.createClass("E");
+    if (!schema.existsClass(OrientEdgeType.CLASS_NAME)) {
+      e = schema.createClass(OrientEdgeType.CLASS_NAME);
     } else {
-      e = schema.getClass("E");
+      e = schema.getClass(OrientEdgeType.CLASS_NAME);
     }
-    if (!"V".equals(this.vertexClass)) {
+    if (!OrientVertexType.CLASS_NAME.equals(this.vertexClass)) {
       if (!schema.existsClass(this.vertexClass)) {
         schema.createClass(this.vertexClass, v);
       }

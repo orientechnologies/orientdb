@@ -26,7 +26,18 @@
 
 This document contains the last changes of OrientDB Community Edition.
 
----------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1-rc6 - (July, 28th 2015)
+- 153 issues resolved from OrientDB 2.1-rc5.
+
+CHANGELOG:
+- Core (126).: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.1-rc6+is%3Aclosed
+- ETL (6)....: https://github.com/orientechnologies/orientdb-etl/issues?q=milestone%3A2.1-rc6+is%3Aclosed
+- Lucene (8).: https://github.com/orientechnologies/orientdb-lucene/issues?q=milestone%3A2.1-rc6+is%3Aclosed
+- JDBC (1)...: https://github.com/orientechnologies/orientdb-jdbc/issues?q=milestone%3A2.1-rc6+is%3Aclosed
+- Studio (12): https://github.com/orientechnologies/orientdb-studio/issues?q=milestone%3A2.1-rc6+is%3Aclosed
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 2.1-rc5 - (July, 3rd 2015)
 - Bug fixing: 43 issues from 2.1-rc4.
 

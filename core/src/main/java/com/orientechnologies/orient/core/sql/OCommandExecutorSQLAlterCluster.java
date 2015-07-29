@@ -94,7 +94,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
       attribute = OCluster.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException e) {
       throw new OCommandSQLParsingException("Unknown class attribute '" + attributeAsString + "'. Supported attributes are: "
-          + Arrays.toString(OCluster.ATTRIBUTES.values()), parserText, oldPos);
+          + Arrays.toString(OCluster.ATTRIBUTES.values()), parserText, oldPos, e);
     }
 
     value = parserText.substring(pos + 1).trim();

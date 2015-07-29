@@ -33,68 +33,68 @@ import java.util.Set;
  * 
  */
 public interface OSecurity {
-  public static final String RESTRICTED_CLASSNAME   = "ORestricted";
-  public static final String IDENTITY_CLASSNAME     = "OIdentity";
-  public static final String ALLOW_ALL_FIELD        = "_allow";
-  public static final String ALLOW_READ_FIELD       = "_allowRead";
-  public static final String ALLOW_UPDATE_FIELD     = "_allowUpdate";
-  public static final String ALLOW_DELETE_FIELD     = "_allowDelete";
-  public static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
-  public static final String ONCREATE_FIELD         = "onCreate.fields";
+  static final String RESTRICTED_CLASSNAME   = "ORestricted";
+  static final String IDENTITY_CLASSNAME     = "OIdentity";
+  static final String ALLOW_ALL_FIELD        = "_allow";
+  static final String ALLOW_READ_FIELD       = "_allowRead";
+  static final String ALLOW_UPDATE_FIELD     = "_allowUpdate";
+  static final String ALLOW_DELETE_FIELD     = "_allowDelete";
+  static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
+  static final String ONCREATE_FIELD         = "onCreate.fields";
 
-  public OUser create();
+  OUser create();
 
-  public void load();
+  void load();
 
-  public boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation);
+  boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation);
 
-  public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName);
+  OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName);
 
-  public OIdentifiable allowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName);
+  OIdentifiable allowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName);
 
-  public OIdentifiable allowIdentity(final ODocument iDocument, final String iAllowFieldName, final OIdentifiable iId);
+  OIdentifiable allowIdentity(final ODocument iDocument, final String iAllowFieldName, final OIdentifiable iId);
 
-  public OIdentifiable disallowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName);
+  OIdentifiable disallowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName);
 
-  public OIdentifiable disallowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName);
+  OIdentifiable disallowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName);
 
-  public OIdentifiable disallowIdentity(final ODocument iDocument, final String iAllowFieldName, final OIdentifiable iId);
+  OIdentifiable disallowIdentity(final ODocument iDocument, final String iAllowFieldName, final OIdentifiable iId);
 
-  public OUser authenticate(String iUsername, String iUserPassword);
+  OUser authenticate(String iUsername, String iUserPassword);
 
-  public OUser authenticate(final OToken authToken);
+  OUser authenticate(final OToken authToken);
 
-  public OUser getUser(String iUserName);
+  OUser getUser(String iUserName);
 
-  public OUser getUser(final ORID iUserId);
+  OUser getUser(final ORID iUserId);
 
-  public OUser createUser(String iUserName, String iUserPassword, String... iRoles);
+  OUser createUser(String iUserName, String iUserPassword, String... iRoles);
 
-  public OUser createUser(String iUserName, String iUserPassword, ORole... iRoles);
+  OUser createUser(String iUserName, String iUserPassword, ORole... iRoles);
 
-  public boolean dropUser(String iUserName);
+  boolean dropUser(String iUserName);
 
-  public ORole getRole(String iRoleName);
+  ORole getRole(String iRoleName);
 
-  public ORole getRole(OIdentifiable role);
+  ORole getRole(OIdentifiable role);
 
-  public ORole createRole(String iRoleName, ORole.ALLOW_MODES iAllowMode);
+  ORole createRole(String iRoleName, ORole.ALLOW_MODES iAllowMode);
 
-  public ORole createRole(String iRoleName, ORole iParent, ORole.ALLOW_MODES iAllowMode);
+  ORole createRole(String iRoleName, ORole iParent, ORole.ALLOW_MODES iAllowMode);
 
-  public boolean dropRole(String iRoleName);
+  boolean dropRole(String iRoleName);
 
-  public List<ODocument> getAllUsers();
+  List<ODocument> getAllUsers();
 
-  public List<ODocument> getAllRoles();
+  List<ODocument> getAllRoles();
 
-  public void close(boolean onDelete);
+  void close(boolean onDelete);
 
-  public void createClassTrigger();
+  void createClassTrigger();
 
-  public OSecurity getUnderlying();
+  OSecurity getUnderlying();
 
-  public long getVersion();
+  long getVersion();
 
-  public void incrementVersion();
+  void incrementVersion();
 }

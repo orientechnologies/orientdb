@@ -1,25 +1,30 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.common.util;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -33,7 +38,7 @@ import java.util.Map.Entry;
  *          Value
  * @see OTriple
  */
-public class OPair<K extends Comparable<K>, V> implements Entry<K, V>, Comparable<OPair<K, V>> {
+public class OPair<K extends Comparable<K>, V> implements Entry<K, V>, Comparable<OPair<K, V>>, Serializable {
   public K key;
   public V value;
 
@@ -110,5 +115,21 @@ public class OPair<K extends Comparable<K>, V> implements Entry<K, V>, Comparabl
 
   public int compareTo(final OPair<K, V> o) {
     return key.compareTo(o.key);
+  }
+
+  public static <K extends Comparable<K>, V> Map<K, V> convertToMap(final List<OPair<K, V>> iValues) {
+    final HashMap<K, V> result = new HashMap<K, V>(iValues.size());
+    for (OPair<K, V> p : iValues)
+      result.put(p.getKey(), p.getValue());
+
+    return result;
+  }
+
+  public static <K extends Comparable<K>, V> List<OPair<K, V>> convertFromMap(final Map<K, V> iValues) {
+    final List<OPair<K, V>> result = new ArrayList<OPair<K, V>>(iValues.size());
+    for (Entry<K, V> p : iValues.entrySet())
+      result.add(new OPair<K, V>(p.getKey(), p.getValue()));
+
+    return result;
   }
 }

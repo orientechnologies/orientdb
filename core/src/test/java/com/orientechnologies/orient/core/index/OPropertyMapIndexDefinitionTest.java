@@ -1,21 +1,15 @@
 package com.orientechnologies.orient.core.index;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.*;
 
 /**
  * @author LomakiA <a href="mailto:a.lomakin@orientechnologies.com">Andrey Lomakin</a>
@@ -250,12 +244,12 @@ public class OPropertyMapIndexDefinitionTest {
   }
 
   public void testCreateDDLByKey() {
-    final String ddl = propertyIndexByKey.toCreateIndexDDL("testIndex", "unique").toLowerCase();
+    final String ddl = propertyIndexByKey.toCreateIndexDDL("testIndex", "unique",null).toLowerCase();
     Assert.assertEquals(ddl, "create index testindex on testclass ( fone by key ) unique");
   }
 
   public void testCreateDDLByValue() {
-    final String ddl = propertyIndexByValue.toCreateIndexDDL("testIndex", "unique").toLowerCase();
+    final String ddl = propertyIndexByValue.toCreateIndexDDL("testIndex", "unique",null).toLowerCase();
     Assert.assertEquals(ddl, "create index testindex on testclass ( fone by value ) unique");
   }
 

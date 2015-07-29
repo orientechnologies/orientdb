@@ -64,7 +64,7 @@ public class OScriptGraphWrapper implements TransactionalGraph {
 
   @SuppressWarnings("unchecked")
   public Object command(final String language, final String iText, final Object[] iArgs) {
-    Object result = null;
+    Object result;
     if (language.equalsIgnoreCase("sql"))
       result = graph.command(new OCommandSQL(iText)).execute(iArgs);
     else if (language.equalsIgnoreCase("gremlin"))
@@ -103,14 +103,14 @@ public class OScriptGraphWrapper implements TransactionalGraph {
 
   public boolean isAutoStartTx() {
     if (graph instanceof OrientGraph)
-      return ((OrientGraph) graph).isAutoStartTx();
+      return graph.isAutoStartTx();
 
     return false;
   }
 
   public void setAutoStartTx(boolean autoStartTx) {
     if (graph instanceof OrientGraph)
-      ((OrientGraph) graph).setAutoStartTx(autoStartTx);
+      graph.setAutoStartTx(autoStartTx);
   }
 
   public void stopTransaction(Conclusion conclusion) {
@@ -118,7 +118,7 @@ public class OScriptGraphWrapper implements TransactionalGraph {
       ((OrientGraph) graph).stopTransaction(conclusion);
   }
 
-  public boolean equals(Object obj) {
+  public boolean equals(final Object obj) {
     return graph.equals(obj);
   }
 

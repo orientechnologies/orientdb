@@ -148,15 +148,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public OSharedResourceAdaptiveExternal getLock() {
-    pushSession();
-    try {
-      return delegate.getLock();
-    } finally {
-      popSession();
-    }
-  }
-
   public void setSessionId(final String iServerURL, final int iSessionId, byte[] iToken) {
     serverURL = iServerURL;
     sessionId = iSessionId;

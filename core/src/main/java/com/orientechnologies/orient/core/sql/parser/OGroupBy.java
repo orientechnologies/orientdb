@@ -4,10 +4,11 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OGroupBy extends SimpleNode {
 
-  protected List<OIdentifier> items = new ArrayList<OIdentifier>();
+  protected List<OExpression> items = new ArrayList<OExpression>();
 
   public OGroupBy(int id) {
     super(id);
@@ -22,7 +23,8 @@ public class OGroupBy extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     StringBuilder result = new StringBuilder();
     result.append("GROUP BY ");
     for (int i = 0; i < items.size(); i++) {
@@ -32,6 +34,12 @@ public class OGroupBy extends SimpleNode {
       result.append(items.get(i).toString());
     }
     return result.toString();
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    for (OExpression expression : this.items) {
+      expression.replaceParameters(params);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=4739190aa6c1a3533a89b76a15bd6fdf (do not edit this line) */

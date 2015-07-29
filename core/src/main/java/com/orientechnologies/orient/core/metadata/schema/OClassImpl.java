@@ -91,6 +91,20 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
   private volatile int                       hashCode;
 
+  private static Set<String>                 reserved                = new HashSet<String>();
+  static {
+    // reserved.add("select");
+    reserved.add("traverse");
+    reserved.add("insert");
+    reserved.add("update");
+    reserved.add("delete");
+    reserved.add("from");
+    reserved.add("where");
+    reserved.add("skip");
+    reserved.add("limit");
+    reserved.add("timeout");
+  }
+
   /**
    * Constructor used in unmarshalling.
    */
@@ -582,7 +596,19 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public OClass setName(final String name) {
+    if (getName().equals(name))
+      return this;
+
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(name);
+    OClass oClass = getDatabase().getMetadata().getSchema().getClass(name);
+    if (oClass != null) {
+      String error = String.format("Cannot rename class %s to %s. A Class with name %s exists", this.name, name, name);
+      throw new OSchemaException(error);
+    }
+    if (wrongCharacter != null)
+      throw new OSchemaException("Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '"
+          + name + "'");
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
@@ -1826,8 +1852,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void checkEmbedded() {
-    if (!(getDatabase().getStorage().getUnderlying().getUnderlying() instanceof OAbstractPaginatedStorage))
-      throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
+    owner.checkEmbedded(getDatabase().getStorage().getUnderlying().getUnderlying());
   }
 
   public void setClusterSelectionInternal(final String clusterSelection) {
@@ -2059,11 +2084,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       String oldName = null;
 
       if (this.shortName != null)
-        oldName = this.shortName.toLowerCase();
+        oldName = this.shortName;
+
+      owner.changeClassName(oldName, iShortName, this);
 
       this.shortName = iShortName;
-
-      owner.changeClassName(oldName, shortName, this);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -2254,6 +2279,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     if (Character.isDigit(propertyName.charAt(0)))
       throw new OSchemaException("Found invalid name for property '" + propertyName + "': it cannot start with numbers");
+
+    if (reserved.contains(propertyName.toLowerCase())) {
+      throw new OSchemaException("Error creating schema: '" + propertyName
+          + "' is a reserved keyword, it cannot be used as a property name");
+    }
 
     if (getDatabase().getTransaction().isActive())
       throw new OSchemaException("Cannot create property '" + propertyName + "' inside a transaction");

@@ -3,6 +3,8 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompareOperator {
+  boolean doubleEquals = false;
+
   public OEqualsCompareOperator(int id) {
     super(id);
   }
@@ -21,9 +23,13 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
     return false;
   }
 
+  @Override public boolean supportsBasicCalculation() {
+    return true;
+  }
+
   @Override
   public String toString() {
-    return "=";
+    return doubleEquals ? "==" : "=";
   }
 }
 /* JavaCC - OriginalChecksum=bd2ec5d13a1d171779c2bdbc9d3a56bc (do not edit this line) */

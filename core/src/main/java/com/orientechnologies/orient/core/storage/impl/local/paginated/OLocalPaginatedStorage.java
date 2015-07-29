@@ -33,10 +33,9 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
@@ -77,7 +76,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   private final OStorageVariableParser     variableParser;
   private final OPaginatedStorageDirtyFlag dirtyFlag;
 
-  private String                           storagePath;
+  private final String    storagePath;
   private ExecutorService                  checkpointExecutor;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id, OReadCache readCache)
@@ -88,15 +87,16 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
     File f = new File(url);
 
+    String sp;
     if (f.exists() || !exists(f.getParent())) {
       // ALREADY EXISTS OR NOT LEGACY
-      storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
+      sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
     } else {
       // LEGACY DB
-      storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
+      sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
     }
 
-    storagePath = OIOUtils.getPathFromDatabaseName(storagePath);
+    storagePath = OIOUtils.getPathFromDatabaseName(sp);
     variableParser = new OStorageVariableParser(storagePath);
 
     configuration = new OStorageConfigurationSegment(this);
@@ -211,6 +211,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   @Override
   protected void preCloseSteps() throws IOException {
     try {
+      ((OWOWCache) writeCache).unregisterMBean();
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "MBean for write cache can not unregistered", e);
+    }
+
+    try {
       if (writeAheadLog != null) {
         checkpointExecutor.shutdown();
         if (!checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(),
@@ -292,12 +298,18 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     long writeCacheSize = (long) Math.floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0)
         * diskCacheSize);
 
-    writeCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
+    final OWOWCache wowCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000, writeAheadLog,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), writeCacheSize, diskCacheSize, this, true,
         getId());
-    writeCache.addLowDiskSpaceListener(this);
+    wowCache.addLowDiskSpaceListener(this);
+    try {
+      wowCache.registerMBean();
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "MBean for write cache can not be registered.");
+    }
 
+    writeCache = wowCache;
   }
 
   public static boolean exists(final String path) {

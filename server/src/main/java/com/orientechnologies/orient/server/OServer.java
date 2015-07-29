@@ -47,7 +47,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
-import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -108,6 +108,8 @@ public class OServer {
   private String                                           databaseDirectory;
   private final boolean                                    shutdownEngineOnExit;
 
+  private ClassLoader                                      extensionClassLoader;
+
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
     this(true);
@@ -133,6 +135,61 @@ public class OServer {
       Orient.instance().getProfiler().startRecording();
 
     shutdownHook = new OServerShutdownHook(this);
+  }
+
+  /**
+   * Set the preferred {@link ClassLoader} used to load extensions.
+   *
+   * @since 2.1
+   */
+  public void setExtensionClassLoader(/* @Nullable */final ClassLoader extensionClassLoader) {
+    this.extensionClassLoader = extensionClassLoader;
+  }
+
+  /**
+   * Get the preferred {@link ClassLoader} used to load extensions.
+   *
+   * @since 2.1
+   */
+  /* @Nullable */
+  public ClassLoader getExtensionClassLoader() {
+    return extensionClassLoader;
+  }
+
+  public boolean isActive() {
+    return running;
+  }
+
+  /**
+   * Load an extension class by name.
+   */
+  private Class<?> loadClass(final String name) throws ClassNotFoundException {
+    Class<?> loaded = tryLoadClass(extensionClassLoader, name);
+    if (loaded == null) {
+      loaded = tryLoadClass(Thread.currentThread().getContextClassLoader(), name);
+      if (loaded == null) {
+        loaded = tryLoadClass(getClass().getClassLoader(), name);
+        if (loaded == null) {
+          loaded = Class.forName(name);
+        }
+      }
+    }
+    return loaded;
+  }
+
+  /**
+   * Attempt to load a class from given class-loader.
+   */
+  /* @Nullable */
+  private Class<?> tryLoadClass(/* @Nullable */final ClassLoader classLoader, final String name) {
+    if (classLoader != null) {
+      try {
+        return classLoader.loadClass(name);
+      } catch (ClassNotFoundException e) {
+        // ignore
+      }
+    }
+    return null;
   }
 
   public static OServer getInstance(final String iServerId) {
@@ -239,28 +296,32 @@ public class OServer {
       for (OServerLifecycleListener l : lifecycleListeners)
         l.onBeforeActivate();
 
-      // REGISTER/CREATE SOCKET FACTORIES
-      if (configuration.network.sockets != null) {
-        for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
-          Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) Class.forName(f.implementation);
-          OServerSocketFactory factory = fClass.newInstance();
-          try {
-            factory.config(f.name, f.parameters);
-            networkSocketFactories.put(f.name, factory);
-          } catch (OConfigurationException e) {
-            OLogManager.instance().error(this, "Error creating socket factory", e);
+      if (configuration.network != null) {
+        // REGISTER/CREATE SOCKET FACTORIES
+        if (configuration.network.sockets != null) {
+          for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
+            Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) loadClass(f.implementation);
+            OServerSocketFactory factory = fClass.newInstance();
+            try {
+              factory.config(f.name, f.parameters);
+              networkSocketFactories.put(f.name, factory);
+            } catch (OConfigurationException e) {
+              OLogManager.instance().error(this, "Error creating socket factory", e);
+            }
           }
         }
-      }
 
-      // REGISTER PROTOCOLS
-      for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
-        networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) Class.forName(p.implementation));
+        // REGISTER PROTOCOLS
+        for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
+          networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) loadClass(p.implementation));
 
-      // STARTUP LISTENERS
-      for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-        networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
-            l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
+        // STARTUP LISTENERS
+        for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
+          networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
+              l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
+
+      } else
+        OLogManager.instance().warn(this, "Network configuration was not found");
 
       try {
         loadStorages();
@@ -853,6 +914,10 @@ public class OServer {
     saveConfiguration();
   }
 
+  public OServerPluginManager getPluginManager() {
+    return pluginManager;
+  }
+
   protected void registerPlugins() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
     pluginManager = new OServerPluginManager();
     pluginManager.config(this);
@@ -888,7 +953,7 @@ public class OServer {
             continue;
         }
 
-        handler = (OServerPlugin) Class.forName(h.clazz).newInstance();
+        handler = (OServerPlugin) loadClass(h.clazz).newInstance();
 
         if (handler instanceof ODistributedServerManager)
           distributedManager = (ODistributedServerManager) handler;

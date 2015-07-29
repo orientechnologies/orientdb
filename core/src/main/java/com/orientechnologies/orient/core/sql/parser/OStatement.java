@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 import java.util.Map;
 
@@ -35,6 +36,10 @@ public class OStatement extends SimpleNode {
   }
 
   public void replaceParameters(Map<Object, Object> params) {
+
+  }
+
+  public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
 
   }
 }

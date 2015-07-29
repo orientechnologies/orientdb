@@ -25,6 +25,8 @@ package com.orientechnologies.common.util;
  * @since 19.09.12
  */
 
+import com.orientechnologies.common.exception.OException;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -227,7 +229,7 @@ public strictfp class MersenneTwister extends java.util.Random implements Serial
       f.mag01 = (int[]) (mag01.clone());
       return f;
     } catch (CloneNotSupportedException e) {
-      throw new InternalError();
+      throw new OException(e);
     } // should never happen
   }
 

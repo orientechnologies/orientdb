@@ -15,20 +15,20 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Test(groups = "hook")
 public class HookTxTest extends ORecordHookAbstract {
@@ -55,6 +55,10 @@ public class HookTxTest extends ORecordHookAbstract {
   @BeforeClass
   public void beforeClass() {
     database = new OObjectDatabaseTx(url);
+    if (url.startsWith("memory:") && !database.exists()) {
+      database.create();
+      database.close();
+    }
   }
 
   @Override
@@ -64,7 +68,7 @@ public class HookTxTest extends ORecordHookAbstract {
 
   @Test
   public void testRegisterHook() throws IOException {
-    database.open("writer", "writer");
+    database.open("admin", "admin");
     database.registerHook(this);
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
@@ -129,6 +133,35 @@ public class HookTxTest extends ORecordHookAbstract {
     Assert.assertEquals(callbackCount, expectedHookState);
 
     database.unregisterHook(this);
+  }
+
+  @Test(dependsOnMethods = "testHookCallsDelete")
+  public void testHookCannotBeginTx() throws IOException {
+    final AtomicBoolean exc = new AtomicBoolean(false);
+    database.activateOnCurrentThread();
+    database.registerHook(new ORecordHookAbstract() {
+      @Override
+      public RESULT onRecordBeforeCreate(ORecord iRecord) {
+        try {
+          database.activateOnCurrentThread();
+          database.begin();
+        } catch (IllegalStateException e) {
+          exc.set(true);
+        }
+        return null;
+      }
+
+      @Override
+      public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+        return DISTRIBUTED_EXECUTION_MODE.BOTH;
+      }
+    });
+
+    Assert.assertFalse(exc.get());
+    new ODocument().field("test-hook", true).save();
+    Assert.assertTrue(exc.get());
+
+    database.activateOnCurrentThread();
     database.close();
   }
 

@@ -1018,6 +1018,19 @@ public class SQLSelectTest extends AbstractSelectTest {
   }
 
   @Test
+  public void excludeAttributes() {
+    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+        "select expand( roles.exclude('@rid', '@class') ) from OUser");
+
+    List<ODocument> resultset = database.query(query);
+
+    for (ODocument d : resultset) {
+      Assert.assertFalse(d.getIdentity().isPersistent());
+      Assert.assertNull(d.getSchemaClass());
+    }
+  }
+
+  @Test
   public void queryResetPagination() {
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile LIMIT 3");
 

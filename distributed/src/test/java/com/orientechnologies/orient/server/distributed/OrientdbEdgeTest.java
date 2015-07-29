@@ -104,8 +104,6 @@ public class OrientdbEdgeTest {
             + "                <parameter name=\"configuration.db.default\"\n"
             + "                           value=\"src/test/resources/default-distributed-db-config.json\"/>\n"
             + "                <parameter name=\"configuration.hazelcast\" value=\"config/hazelcast.xml\"/>\n"
-            + "                <parameter name=\"conflict.resolver.impl\"\n"
-            + "                           value=\"com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver\"/>\n"
             + "\n"
             + "                <!-- PARTITIONING STRATEGIES -->\n"
             + "                <parameter name=\"sharding.strategy.round-robin\"\n"

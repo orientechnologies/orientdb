@@ -29,16 +29,16 @@ public class OIndexIdentifier extends SimpleNode {
     StringBuilder builder = new StringBuilder();
     switch (type) {
     case INDEX:
-      builder.append("index");
+      builder.append("INDEX");
       break;
     case VALUES:
-      builder.append("indexvalues");
+      builder.append("INDEXVALUES");
       break;
     case VALUESASC:
-      builder.append("indexvaluesasc");
+      builder.append("INDEXVALUESASC");
       break;
     case VALUESDESC:
-      builder.append("indexvaluesdesc");
+      builder.append("INDEXVALUESDESC");
       break;
     }
     builder.append(":");

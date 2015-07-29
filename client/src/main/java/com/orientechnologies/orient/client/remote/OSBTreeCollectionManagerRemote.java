@@ -29,6 +29,9 @@ import java.util.UUID;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -43,26 +46,39 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbstract {
+public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbstract implements OOrientStartupListener,
+    OOrientShutdownListener {
 
-  private final OCollectionNetworkSerializer                   networkSerializer;
-  private boolean                                              remoteCreationAllowed = false;
+  private final OCollectionNetworkSerializer                      networkSerializer;
+  private boolean                                                 remoteCreationAllowed = false;
 
-  private final ThreadLocal<Map<UUID, WeakReference<ORidBag>>> pendingCollections    = new ThreadLocal<Map<UUID, WeakReference<ORidBag>>>() {
-                                                                                       @Override
-                                                                                       protected Map<UUID, WeakReference<ORidBag>> initialValue() {
-                                                                                         return new HashMap<UUID, WeakReference<ORidBag>>();
-                                                                                       }
-                                                                                     };
+  private volatile ThreadLocal<Map<UUID, WeakReference<ORidBag>>> pendingCollections    = new PendingCollectionsThreadLocal();
 
   public OSBTreeCollectionManagerRemote() {
     super();
     networkSerializer = new OCollectionNetworkSerializer();
+
+    Orient.instance().registerWeakOrientStartupListener(this);
+    Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
   public OSBTreeCollectionManagerRemote(OCollectionNetworkSerializer networkSerializer) {
     super();
     this.networkSerializer = networkSerializer;
+
+    Orient.instance().registerWeakOrientStartupListener(this);
+    Orient.instance().registerWeakOrientShutdownListener(this);
+  }
+
+  @Override
+  public void onShutdown() {
+    pendingCollections = null;
+  }
+
+  @Override
+  public void onStartup() {
+    if (pendingCollections == null)
+      pendingCollections = new PendingCollectionsThreadLocal();
   }
 
   @Override
@@ -143,5 +159,12 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
   @Override
   public void clearChangedIds() {
     throw new UnsupportedOperationException();
+  }
+
+  private static class PendingCollectionsThreadLocal extends ThreadLocal<Map<UUID, WeakReference<ORidBag>>> {
+    @Override
+    protected Map<UUID, WeakReference<ORidBag>> initialValue() {
+      return new HashMap<UUID, WeakReference<ORidBag>>();
+    }
   }
 }

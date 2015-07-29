@@ -26,5 +26,11 @@ class OGeOperator extends SimpleNode  implements OBinaryCompareOperator{
     return ">=";
   }
 
+  @Override public boolean supportsBasicCalculation() {
+    return true;
+  }
+
+
+
 }
 /* JavaCC - OriginalChecksum=960da239569d393eb155f7d8a871e6d5 (do not edit this line) */

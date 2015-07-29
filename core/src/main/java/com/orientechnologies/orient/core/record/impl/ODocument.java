@@ -939,6 +939,12 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    *         document has been found in chain
    */
   public ODocument field(String iFieldName, Object iPropertyValue, OType... iFieldType) {
+    if (iFieldName == null)
+      throw new IllegalArgumentException("Field is null");
+
+    if (iFieldName.isEmpty())
+      throw new IllegalArgumentException("Field name is empty");
+
     if ("@class".equals(iFieldName)) {
       setClassName(iPropertyValue.toString());
       return this;
@@ -1083,6 +1089,12 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public Object removeField(final String iFieldName) {
     checkForLoading();
     checkForFields();
+
+    if ("@class".equalsIgnoreCase(iFieldName)) {
+      setClassName(null);
+    } else if ("@rid".equalsIgnoreCase(iFieldName)) {
+      _recordId = new ORecordId();
+    }
 
     final ODocumentEntry entry = _fields.get(iFieldName);
     if (entry == null)
@@ -1496,13 +1508,14 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       Iterator<Entry<String, ODocumentEntry>> vals = _fields.entrySet().iterator();
       while (vals.hasNext()) {
         Entry<String, ODocumentEntry> next = vals.next();
-        if (next.getValue().isCreated()) {
+        ODocumentEntry val = next.getValue();
+        if (val.created) {
           vals.remove();
-        } else if (next.getValue().isChanged()) {
-          next.getValue().value = next.getValue().original;
-          next.getValue().setChanged(false);
-          next.getValue().original = null;
-          next.getValue().setExist(true);
+        } else if (val.changed) {
+          val.value = val.original;
+          val.changed = false;
+          val.original = null;
+          val.exist = true;
         }
       }
       _fieldSize = _fields.size();
@@ -1517,14 +1530,16 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     if (_fields != null) {
       final ODocumentEntry value = _fields.get(field);
-      if (value.created) {
-        _fields.remove(field);
-      }
-      if (value.changed) {
-        value.value = value.original;
-        value.original = null;
-        value.changed = false;
-        value.exist = true;
+      if(value!=null) {
+        if (value.created) {
+          _fields.remove(field);
+        }
+        if (value.changed) {
+          value.value = value.original;
+          value.original = null;
+          value.changed = false;
+          value.exist = true;
+        }
       }
     }
     return this;
@@ -1876,7 +1891,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   public String getClassName() {
     if (_className == null)
-      getImmutableSchemaClass();
+      fetchClassName();
 
     return _className;
   }
@@ -1954,9 +1969,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
       final ODatabaseDocument db = getDatabaseIfDefined();
       if (db != null && !db.isClosed()) {
-        final OClass _clazz = getImmutableSchemaClass();
-        if (_clazz != null)
-          buffer.append(_clazz.getStreamableName());
+        final String clsName = getClassName();
+        if (clsName != null)
+          buffer.append(clsName);
       }
 
       if (_recordId != null) {
@@ -2106,6 +2121,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   protected OImmutableClass getImmutableSchemaClass() {
     if (_className == null)
       fetchClassName();
+
+    if (_className == null)
+      return null;
 
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
 

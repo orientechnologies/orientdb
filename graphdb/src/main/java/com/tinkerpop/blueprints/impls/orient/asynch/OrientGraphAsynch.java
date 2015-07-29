@@ -24,6 +24,7 @@ import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -63,10 +64,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com) that uses multi-threading to work
- * against graph.
+ * against graph. This API is experimental, subject to removal or change.
  * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
+@OApi(enduser = true, maturity = OApi.MATURITY.EXPERIMENTAL)
 public class OrientGraphAsynch implements OrientExtendedGraph {
   private final Features                                FEATURES             = new Features();
 
@@ -80,7 +82,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   private int                                           maxRetries           = 16;
   private boolean                                       transactional        = false;
   private AtomicLong                                    operationStarted     = new AtomicLong();
-  private AtomicLong                                    operationCompleted   = new AtomicLong();
+  private final AtomicLong                              operationCompleted   = new AtomicLong();
   private String                                        keyFieldName;
   // STATISTICS
   private AtomicLong                                    reusedCachedVertex   = new AtomicLong();
@@ -168,8 +170,6 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
           return v;
 
         } catch (ORecordDuplicatedException e) {
-          System.out.printf("\n*** Vertex already exists key=%d, v=%s", id, e.getRid());
-
           // ALREADY EXISTS, TRY TO MERGE IT
           for (int retry = 0;; retry++) {
             indexUniqueException.incrementAndGet();
@@ -184,8 +184,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
             switch (result) {
             case MERGED:
-              OrientVertex v = (OrientVertex) getVertex(existent);
-              return v;
+              return (OrientVertex) getVertex(existent);
             case RETRY:
               break;
             case ERROR:
@@ -359,8 +358,6 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
           final OrientExtendedVertex vOut = getOrAddVertex(iOutVertex);
           final OrientExtendedVertex vIn = getOrAddVertex(iInVertex);
 
-          boolean reloaded = false;
-
           for (int retry = 0;; retry++) {
             try {
 
@@ -376,11 +373,9 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
             } catch (OConcurrentModificationException e) {
               concurrentException.incrementAndGet();
               reloadVertices(vOut, vIn, iEdgeLabel, retry, e);
-              reloaded = true;
             } catch (ORecordDuplicatedException e) {
               indexUniqueException.incrementAndGet();
               reloadVertices(vOut, vIn, iEdgeLabel, retry, e);
-              reloaded = true;
             } catch (Exception e) {
               unknownException.incrementAndGet();
               OLogManager.instance().warn(
@@ -416,8 +411,6 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
           vOut.attach(g);
           vIn.attach(g);
 
-          boolean reloaded = false;
-
           for (int retry = 0;; retry++) {
             try {
 
@@ -433,11 +426,9 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
             } catch (OConcurrentModificationException e) {
               concurrentException.incrementAndGet();
               reloadVertices(vOut, vIn, label, retry, e);
-              reloaded = true;
             } catch (ORecordDuplicatedException e) {
               indexUniqueException.incrementAndGet();
               reloadVertices(vOut, vIn, label, retry, e);
-              reloaded = true;
             } catch (Exception e) {
               unknownException.incrementAndGet();
               OLogManager.instance().warn(

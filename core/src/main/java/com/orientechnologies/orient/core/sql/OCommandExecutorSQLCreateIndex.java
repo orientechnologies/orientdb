@@ -307,7 +307,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
           OPropertyMapIndexDefinition.INDEX_BY.valueOf(fieldNameParts[2].toUpperCase());
         } catch (IllegalArgumentException iae) {
           throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '"
-              + fieldName + "'", text, pos);
+              + fieldName + "'", text, pos, iae);
         }
         return;
       }
