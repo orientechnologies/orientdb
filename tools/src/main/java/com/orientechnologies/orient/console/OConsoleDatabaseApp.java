@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.console;
 
-import java.io.*;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
-
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -92,6 +84,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPa
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedClusterDebug;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
+import java.io.*;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected static final int    DEFAULT_WIDTH      = 150;
@@ -2190,6 +2189,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @Override
   protected String getContext() {
     if (currentDatabase != null && currentDatabaseName != null) {
+      currentDatabase.activateOnCurrentThread();
+      
       final StringBuilder buffer = new StringBuilder(64);
       buffer.append(" {db=");
       buffer.append(currentDatabaseName);
