@@ -33,15 +33,6 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   long                               threshold            = 5;
 
-  @Override
-  public Iterator<OIdentifiable> iterator(Map<Object, Object> iArgs) {
-    if (context == null) {
-      context = new OBasicCommandContext();
-    }
-    Object result = execute(iArgs);
-    return ((Iterable) result).iterator();
-  }
-
   class MatchContext {
     int                        currentEdgeNumber = 0;
 
@@ -63,7 +54,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
   }
 
-  class EdgeTraversal {
+  public static class EdgeTraversal {
     boolean     out = true;
     PatternEdge edge;
 
@@ -494,9 +485,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
     if (whileCondition == null && maxDepth == null) {// in this case starting point is not returned and only one level depth is
                                                      // evaluated
-      Object qR = outEdge.item.method.execute(startingPoint, iCommandContext);
+      Iterable<OIdentifiable> queryResult = traversePatternEdge(startingPoint, outEdge, iCommandContext);
 
-      Iterable<OIdentifiable> queryResult = (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton(qR);
       if (outEdge.item.filter == null || outEdge.item.filter.getFilter() == null) {
         return queryResult;
       }
@@ -513,7 +503,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
       if ((maxDepth == null || depth < maxDepth)
           && (whileCondition == null || whileCondition.matchesFilters(startingPoint, iCommandContext))) {
-        Iterable<OIdentifiable> queryResult = (Iterable) outEdge.item.method.execute(startingPoint, iCommandContext);
+
+        Iterable<OIdentifiable> queryResult = traversePatternEdge(startingPoint, outEdge, iCommandContext);
 
         for (OIdentifiable origin : queryResult) {
           // TODO consider break strategies (eg. re-traverse nodes)
@@ -529,6 +520,15 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     }
     return result;
+  }
+
+  private Iterable<OIdentifiable> traversePatternEdge(OIdentifiable startingPoint, PatternEdge outEdge,
+      OCommandContext iCommandContext) {
+    if (outEdge.subPattern != null) {
+      // TODO
+    }
+    Object qR = outEdge.item.method.execute(startingPoint, iCommandContext);
+    return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton(qR);
   }
 
   private void addResult(MatchContext matchContext, OSQLAsynchQuery<ODocument> request) {
@@ -810,6 +810,15 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       first = false;
     }
     return result.toString();
+  }
+
+  @Override
+  public Iterator<OIdentifiable> iterator(Map<Object, Object> iArgs) {
+    if (context == null) {
+      context = new OBasicCommandContext();
+    }
+    Object result = execute(iArgs);
+    return ((Iterable) result).iterator();
   }
 }
 /* JavaCC - OriginalChecksum=6ff0afbe9d31f08b72159fcf24070c9f (do not edit this line) */
