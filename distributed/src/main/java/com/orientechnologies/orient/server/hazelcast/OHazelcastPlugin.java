@@ -19,6 +19,26 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
@@ -49,7 +69,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
@@ -63,26 +82,6 @@ import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTa
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.OSyncDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -580,7 +579,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     }
 
-    OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+    serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
   }
 
   @Override
@@ -1171,7 +1170,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     installNewDatabases(false);
     updateCachedDatabaseConfiguration(databaseName, (ODocument) iEvent.getValue(), true, false);
-    OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+    serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
 
     updateLastClusterChange();
   }

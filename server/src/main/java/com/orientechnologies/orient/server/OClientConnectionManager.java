@@ -48,7 +48,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OClientConnectionManager {
-  private static final OClientConnectionManager       instance         = new OClientConnectionManager();
   protected ConcurrentMap<Integer, OClientConnection> connections      = new ConcurrentHashMap<Integer, OClientConnection>();
   protected AtomicInteger                             connectionSerial = new AtomicInteger(0);
 
@@ -61,9 +60,7 @@ public class OClientConnectionManager {
       public void run() {
         cleanExpiredConnections();
       }
-    }
-
-    , delay, delay);
+    }, delay, delay);
 
     Orient
         .instance()
@@ -74,10 +71,6 @@ public class OClientConnectionManager {
                 return connections.size();
               }
             });
-  }
-
-  public static OClientConnectionManager instance() {
-    return instance;
   }
 
   public void cleanExpiredConnections() {
@@ -331,17 +324,18 @@ public class OClientConnectionManager {
   }
 
   public void shutdown() {
-
     final Iterator<Entry<Integer, OClientConnection>> iterator = connections.entrySet().iterator();
     while (iterator.hasNext()) {
       final Entry<Integer, OClientConnection> entry = iterator.next();
-      entry.getValue().protocol.sendShutdown();
+
+      final ONetworkProtocol protocol = entry.getValue().protocol;
+
+      protocol.sendShutdown();
 
       OCommandRequestText command = entry.getValue().data.command;
       if (command != null && command.isIdempotent()) {
-        entry.getValue().protocol.interrupt();
+        protocol.interrupt();
       } else {
-        ONetworkProtocol protocol = entry.getValue().protocol;
         if (protocol instanceof ONetworkProtocolBinary
             && ((ONetworkProtocolBinary) protocol).getRequestType() == OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
           continue;
@@ -349,34 +343,59 @@ public class OClientConnectionManager {
 
         try {
           final Socket socket;
-          if (entry.getValue().protocol == null || entry.getValue().protocol.getChannel() == null)
+          if (protocol == null || protocol.getChannel() == null)
             socket = null;
           else
-            socket = entry.getValue().protocol.getChannel().socket;
+            socket = protocol.getChannel().socket;
 
           if (socket != null && !socket.isClosed() && !socket.isInputShutdown()) {
             try {
               socket.shutdownInput();
             } catch (IOException e) {
-              OLogManager.instance().warn(this, "Error on closing connection of %s client during shutdown", e,
+              OLogManager.instance().debug(this, "Error on closing connection of %s client during shutdown", e,
                   entry.getValue().getRemoteAddress());
             }
           }
-          if (entry.getValue().protocol.isAlive()) {
-            if (entry.getValue().protocol instanceof ONetworkProtocolBinary
-                && ((ONetworkProtocolBinary) entry.getValue().protocol).getRequestType() == -1) {
+          if (protocol.isAlive()) {
+            if (protocol instanceof ONetworkProtocolBinary && ((ONetworkProtocolBinary) protocol).getRequestType() == -1) {
               try {
-                entry.getValue().protocol.getChannel().close();
+                protocol.getChannel().close();
               } catch (Exception e) {
-                OLogManager.instance().error(this, "Error during chanel close at shutdown", e);
+                OLogManager.instance().debug(this, "Error during chanel close at shutdown", e);
               }
-              entry.getValue().protocol.interrupt();
+              protocol.interrupt();
             }
 
-            entry.getValue().protocol.join();
+            protocol.join();
           }
         } catch (InterruptedException e) {
           // NOT Needed to handle
+        }
+      }
+    }
+  }
+
+  public void killAllChannels() {
+    final Iterator<Entry<Integer, OClientConnection>> iterator = connections.entrySet().iterator();
+    while (iterator.hasNext()) {
+      final Entry<Integer, OClientConnection> entry = iterator.next();
+
+      ONetworkProtocol protocol = entry.getValue().protocol;
+
+      protocol.getChannel().close();
+
+      final Socket socket;
+      if (protocol == null || protocol.getChannel() == null)
+        socket = null;
+      else
+        socket = protocol.getChannel().socket;
+
+      if (socket != null && !socket.isClosed() && !socket.isInputShutdown()) {
+        try {
+          socket.shutdownInput();
+        } catch (IOException e) {
+          OLogManager.instance().debug(this, "Error on closing connection of %s client during shutdown", e,
+              entry.getValue().getRemoteAddress());
         }
       }
     }
