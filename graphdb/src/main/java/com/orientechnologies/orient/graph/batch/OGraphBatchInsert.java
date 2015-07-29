@@ -253,7 +253,7 @@ public class OGraphBatchInsert {
     if (this.useLightWeigthEdges == null) {
       final List<OStorageEntryConfiguration> custom = (List<OStorageEntryConfiguration>) db.get(ODatabase.ATTRIBUTES.CUSTOM);
       for (OStorageEntryConfiguration c : custom) {
-        if (c.name.equals("useLightweightEdges")) {
+        if (c.name.equalsIgnoreCase("useLightweightEdges")) {
           this.useLightWeigthEdges = Boolean.parseBoolean(c.value);
           break;
         }
