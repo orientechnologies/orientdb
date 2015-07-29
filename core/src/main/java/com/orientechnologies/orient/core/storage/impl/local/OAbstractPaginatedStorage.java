@@ -105,8 +105,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -125,7 +123,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private final String                              PROFILER_READ_RECORD;
   private final String                              PROFILER_UPDATE_RECORD;
   private final String                              PROFILER_DELETE_RECORD;
-  private final Map<String, OCluster>               clusterMap           = new HashMap<String, OCluster>();
+  private final Map<String, OCluster>               clusterMap                                 = new HashMap<String, OCluster>();
   private volatile ThreadLocal<OStorageTransaction> transaction                                = new ThreadLocal<OStorageTransaction>();
   private final OModificationLock                   modificationLock                           = new OModificationLock();
   private final AtomicBoolean                       checkpointInProgress                       = new AtomicBoolean();
@@ -134,7 +132,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   protected volatile OReadCache                     readCache;
   protected volatile OWriteCache                    writeCache;
 
-  private volatile ORecordConflictStrategy  recordConflictStrategy                     = Orient.instance()
+  private volatile ORecordConflictStrategy          recordConflictStrategy                     = Orient.instance()
                                                                                                    .getRecordConflictStrategy()
                                                                                                    .newInstanceOfDefaultClass();
   private List<OCluster>                            clusters                                   = new ArrayList<OCluster>();
@@ -800,8 +798,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         }
       } finally {
         cluster.getExternalModificationLock().releaseModificationLock();
-        Orient.instance().getProfiler().stopChrono(PROFILER_CREATE_RECORD, "Create a record in database", timer,
-            "db.*.createRecord");
+        Orient.instance().getProfiler()
+            .stopChrono(PROFILER_CREATE_RECORD, "Create a record in database", timer, "db.*.createRecord");
       }
     } finally {
       stateLock.releaseReadLock();
@@ -902,8 +900,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         }
       } finally {
         cluster.getExternalModificationLock().releaseModificationLock();
-        Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer,
-            "db.*.updateRecord");
+        Orient.instance().getProfiler()
+            .stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer, "db.*.updateRecord");
       }
     } finally {
       stateLock.releaseReadLock();
@@ -965,8 +963,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         }
       } finally {
         cluster.getExternalModificationLock().releaseModificationLock();
-        Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer,
-            "db.*.deleteRecord");
+        Orient.instance().getProfiler()
+            .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
       }
     } finally {
       stateLock.releaseReadLock();
@@ -1015,8 +1013,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         }
       } finally {
         cluster.getExternalModificationLock().releaseModificationLock();
-        Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer,
-            "db.*.deleteRecord");
+        Orient.instance().getProfiler()
+            .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
       }
     } finally {
       stateLock.releaseReadLock();
@@ -1487,13 +1485,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     } finally {
       if (Orient.instance().getProfiler().isRecording()) {
-        OSecurityUser user = ODatabaseRecordThreadLocal.INSTANCE.get().getUser();
-        String userString = user != null ? user.toString() : null;
-        Orient
-            .instance()
-            .getProfiler()
-            .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
-                "Command executed against the database", beginTime, "db.*.command.*", null, userString);
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+        if (db != null) {
+          final OSecurityUser user = db.getUser();
+          final String userString = user != null ? user.toString() : null;
+          Orient
+              .instance()
+              .getProfiler()
+              .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
+                  "Command executed against the database", beginTime, "db.*.command.*", null, userString);
+        }
       }
     }
   }
@@ -1602,14 +1603,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public void acquireWriteLock(final ORID rid) {
-    assert!dataLock.assertSharedLockHold()
-        && !dataLock.assertExclusiveLockHold() : " a record lock should not be taken inside a storage lock";
+    assert !dataLock.assertSharedLockHold() && !dataLock.assertExclusiveLockHold() : " a record lock should not be taken inside a storage lock";
     lockManager.acquireLock(rid, OLockManager.LOCK.EXCLUSIVE, RECORD_LOCK_TIMEOUT);
   }
 
   public void releaseWriteLock(final ORID rid) {
-    assert!dataLock.assertSharedLockHold()
-        && !dataLock.assertExclusiveLockHold() : " a record lock should not be released inside a storage lock";
+    assert !dataLock.assertSharedLockHold() && !dataLock.assertExclusiveLockHold() : " a record lock should not be released inside a storage lock";
     lockManager.releaseLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
   }
 
@@ -1618,8 +1617,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public void releaseReadLock(final ORID rid) {
-    assert!dataLock.assertSharedLockHold()
-        && !dataLock.assertExclusiveLockHold() : " a record lock should not be released inside a storage lock";
+    assert !dataLock.assertSharedLockHold() && !dataLock.assertExclusiveLockHold() : " a record lock should not be released inside a storage lock";
     lockManager.releaseLock(this, rid, OLockManager.LOCK.SHARED);
   }
 

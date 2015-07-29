@@ -17,14 +17,18 @@ package com.orientechnologies.orient.server.distributed;
 
 import org.junit.Test;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+
 /**
- * Distributed TX test against "plocal" protocol + shutdown and restart of a node.
+ * Distributed test on drop database.
  */
-public class HATest extends AbstractServerClusterTxTest {
-  final static int SERVERS = 3;
+public class DistributedDbDropTest extends AbstractServerClusterTxTest {
+  final static int SERVERS       = 3;
+  int              serverStarted = 0;
 
   @Test
   public void test() throws Exception {
+    count = 10;
     init(SERVERS);
     prepare(false);
     execute();
@@ -32,27 +36,13 @@ public class HATest extends AbstractServerClusterTxTest {
 
   @Override
   protected void onAfterExecution() throws Exception {
-    log("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
-    serverInstance.get(SERVERS - 1).shutdownServer();
+    for (ServerRun s : serverInstance) {
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(s));
+      db.open("admin", "admin");
 
-    Thread.sleep(1000);
-
-    log("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " DOWN...");
-
-    // count = 1000;
-
-    executeMultipleTest();
-
-    log("RESTARTING SERVER " + (SERVERS - 1) + "...");
-    serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-
-    Thread.sleep(2000);
-
-    log("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
-
-    // count = 1000;
-
-    executeMultipleTest();
+      log("DROPPING DATABASE ON SERVER " + s.getServerId());
+      db.drop();
+    }
   }
 
   protected String getDatabaseURL(final ServerRun server) {
@@ -61,6 +51,6 @@ public class HATest extends AbstractServerClusterTxTest {
 
   @Override
   public String getDatabaseName() {
-    return "distributed-inserttxha";
+    return "distributed-dropdb";
   }
 }

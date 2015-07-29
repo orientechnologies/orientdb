@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.hazelcast.core.Hazelcast;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -89,9 +88,7 @@ public abstract class AbstractServerClusterTest {
     System.out.println("Starting test against " + serverInstance.size() + " server nodes...");
 
     for (ServerRun server : serverInstance) {
-      System.out.println("\n******************************************************************************************");
-      System.out.println("STARTING SERVER -> " + server.getServerId() + "...");
-      System.out.println("******************************************************************************************\n");
+      log("STARTING SERVER -> " + server.getServerId() + "...");
       server.startServer(getDistributedServerConfiguration(server));
       try {
         Thread.sleep(delayServerStartup * serverInstance.size());
@@ -113,26 +110,20 @@ public abstract class AbstractServerClusterTest {
       Assert.assertNotNull(cfg);
     }
 
-    System.out.println("\n******************************************************************************************");
-    System.out.println("Executing test...");
-    System.out.println("******************************************************************************************\n");
+    log("Executing test...");
 
     try {
       executeTest();
     } finally {
       onAfterExecution();
 
-      System.out.println("\n******************************************************************************************");
-      System.out.println("Shutting down nodes...");
-      System.out.println("******************************************************************************************\n");
+      log("Shutting down nodes...");
       for (ServerRun server : serverInstance) {
         System.out.println("Shutting down node " + server.getServerId() + "...");
         server.shutdownServer();
       }
 
-      System.out.println("\n******************************************************************************************");
-      System.out.println("Test finished");
-      System.out.println("******************************************************************************************\n");
+      log("Test finished");
 
       onTestEnded();
 
@@ -140,6 +131,14 @@ public abstract class AbstractServerClusterTest {
 
       deleteServers();
     }
+  }
+
+  protected void log(final String iMessage) {
+    System.out
+        .println("\n**********************************************************************************************************");
+    System.out.println(iMessage);
+    System.out
+        .println("**********************************************************************************************************\n");
   }
 
   protected void onServerStarted(ServerRun server) {

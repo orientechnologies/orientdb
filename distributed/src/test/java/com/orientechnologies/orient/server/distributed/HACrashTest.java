@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Timer;
 import java.util.TimerTask;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Distributed TX test against "remote" protocol. It starts 3 servers and during a stress test, kill last server. The test checks
@@ -39,14 +39,6 @@ public class HACrashTest extends AbstractServerClusterTxTest {
     init(SERVERS);
     prepare(false);
     execute();
-  }
-
-  protected void log(final String iMessage) {
-    System.out
-        .println("\n**********************************************************************************************************");
-    System.out.println(iMessage);
-    System.out
-        .println("**********************************************************************************************************\n");
   }
 
   @Override

@@ -30,8 +30,9 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.task.OSyncDatabaseTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
@@ -80,17 +81,22 @@ public class OCommandExecutorSQLSyncDatabase extends OCommandExecutorSQLAbstract
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.DATABASE, "sync", ORole.PERMISSION_UPDATE);
 
-    final OServer serverInstance = OServerMain.server();
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) serverInstance.getDistributedManager();
+    final OStorage stg = database.getStorage();
+    if (!(stg instanceof ODistributedStorage))
+      throw new ODistributedException("SYNC DATABASE command cannot be executed against a non distributed server");
+
+    final ODistributedStorage dStg = (ODistributedStorage) stg;
+
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) dStg.getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
     final String databaseName = database.getName();
 
     Map<String, Object> config = dManager.getConfigurationMap();
-    final ODocument dbConf = (ODocument) config.get("database." + databaseName);
+    final ODocument dbConf = (ODocument) config.get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName);
 
-    return dManager.installDatabase(false, databaseName, dbConf);
+    return dManager.installDatabase(true, databaseName, dbConf);
   }
 
   @Override
