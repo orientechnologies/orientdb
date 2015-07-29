@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.managed.OrientServer;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 import javax.management.MBeanServer;
