@@ -129,7 +129,7 @@ public class OAdaptiveLock extends OAbstractLock {
       if (lock.isLocked())
         lock.unlock();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Can not unlock lock", e);
+      OLogManager.instance().debug(this, "Cannot unlock a lock", e);
     }
   }
 

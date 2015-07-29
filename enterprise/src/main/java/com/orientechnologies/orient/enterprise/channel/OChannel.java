@@ -149,7 +149,7 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
         socket = null;
       }
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error during socket close", e);
+      OLogManager.instance().debug(this, "Error during socket close", e);
     }
 
     try {
@@ -158,7 +158,7 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
         inStream = null;
       }
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error during closing of input stream", e);
+      OLogManager.instance().debug(this, "Error during closing of input stream", e);
     }
 
     try {
@@ -167,14 +167,14 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
         outStream = null;
       }
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error during closing of output stream", e);
+      OLogManager.instance().debug(this, "Error during closing of output stream", e);
     }
 
     for (OChannelListener l : getListenersCopy())
       try {
         l.onChannelClose(this);
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during closing of channel close listener", e);
+        OLogManager.instance().debug(this, "Error during closing of channel close listener", e);
       }
 
     lockRead.close();

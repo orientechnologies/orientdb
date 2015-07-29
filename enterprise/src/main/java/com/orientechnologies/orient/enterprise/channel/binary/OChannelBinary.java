@@ -398,7 +398,7 @@ public abstract class OChannelBinary extends OChannel {
         // in = null;
       }
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error during closing of input stream", e);
+      OLogManager.instance().debug(this, "Error during closing of input stream", e);
     }
 
     try {
@@ -407,7 +407,7 @@ public abstract class OChannelBinary extends OChannel {
         // out = null;
       }
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error during closing of output stream", e);
+      OLogManager.instance().debug(this, "Error during closing of output stream", e);
     }
 
     super.close();
