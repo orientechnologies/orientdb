@@ -228,15 +228,17 @@ public class OServerAdmin {
    * 
    * @return true if exists, otherwise false
    * @throws IOException
+   * @param iDatabaseName
+   *          The database name
    * @param storageType
    *          Storage type between "plocal" or "memory".
    */
-  public synchronized boolean existsDatabase(final String storageType) throws IOException {
+  public synchronized boolean existsDatabase(final String iDatabaseName, final String storageType) throws IOException {
 
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_EXIST);
       try {
-        network.writeString(storage.getName());
+        network.writeString(iDatabaseName);
         network.writeString(storageType);
       } finally {
         storage.endRequest(network);
@@ -253,6 +255,18 @@ public class OServerAdmin {
       storage.close(true, false);
       throw new OStorageException("Error on checking existence of the remote storage: " + storage.getName(), e);
     }
+  }
+  
+  /**
+   * Checks if a database exists in the remote server.
+   * 
+   * @return true if exists, otherwise false
+   * @throws IOException
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
+   */
+  public synchronized boolean existsDatabase(final String storageType) throws IOException {
+	  return existsDatabase(storage.getName(), storageType);
   }
 
   /**
@@ -274,10 +288,12 @@ public class OServerAdmin {
    * 
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
+   * @param iDatabaseName
+   *          The database name
    * @param storageType
    *          Storage type between "plocal" or "memory".
    */
-  public synchronized OServerAdmin dropDatabase(final String storageType) throws IOException {
+  public synchronized OServerAdmin dropDatabase(final String iDatabaseName, final String storageType) throws IOException {
 
     boolean retry = true;
 
@@ -286,7 +302,7 @@ public class OServerAdmin {
 
         final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_DROP);
         try {
-          network.writeString(storage.getName());
+          network.writeString(iDatabaseName);
           network.writeString(storageType);
         } finally {
           storage.endRequest(network);
@@ -313,6 +329,18 @@ public class OServerAdmin {
     return this;
   }
 
+  /**
+   * Drops a database from a remote server instance.
+   * 
+   * @return The instance itself. Useful to execute method in chain
+   * @throws IOException
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
+   */
+  public synchronized OServerAdmin dropDatabase(final String storageType) throws IOException {
+	    return dropDatabase(storage.getName(), storageType);
+  }
+  
   /**
    * Freezes the database by locking it in exclusive mode.
    * 
