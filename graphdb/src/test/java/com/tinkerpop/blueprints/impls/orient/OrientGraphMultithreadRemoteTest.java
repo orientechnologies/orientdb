@@ -9,6 +9,7 @@ import org.junit.*;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.tinkerpop.blueprints.Vertex;
@@ -23,6 +24,7 @@ public class OrientGraphMultithreadRemoteTest {
 
   @BeforeClass
   public static void startEmbeddedServer() throws Exception {
+    OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.setValue(15000);
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     serverHome = buildDirectory + "/" + OrientGraphMultithreadRemoteTest.class.getSimpleName();
 
@@ -79,7 +81,7 @@ public class OrientGraphMultithreadRemoteTest {
   }
 
   @Test
-  @Ignore
+//  @Ignore
   public void testThreadingInsert() throws InterruptedException {
     List<Thread> threads = new ArrayList<Thread>();
     int threadCount = 8;
