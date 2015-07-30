@@ -63,7 +63,7 @@ public class OResourcePool<K, V> {
     // First, get permission to take or create a resource
     try {
       if (!sem.tryAcquire(maxWaitMillis, TimeUnit.MILLISECONDS))
-        throw new OLockException("No more resources available in pool. Requested resource: " + key + " timeout:" + maxWaitMillis);
+        throw new OLockException("No more resources available in pool. Requested resource: " + key + " timeout: " + maxWaitMillis);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new OInterruptedException(e);
