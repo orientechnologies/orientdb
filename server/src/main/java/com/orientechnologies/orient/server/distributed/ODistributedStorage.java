@@ -120,8 +120,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     this.dManager = iServer.getDistributedManager();
     this.wrapped = wrapped;
 
-    ODistributedServerLog.info(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
-        ODistributedServerLog.DIRECTION.NONE, "Installing distributed storage on database '%s'", wrapped.getName());
+    ODistributedServerLog.info(this, dManager != null ? dManager.getLocalNodeName() : "?", null, ODistributedServerLog.DIRECTION.NONE, "Installing distributed storage on database '%s'", wrapped.getName());
 
     purgeDeletedRecordsTask = new TimerTask() {
       @Override
@@ -247,7 +246,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       switch (executionMode) {
       case LOCAL:
-        return wrapped.command(iCommand);
+        return ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+          @Override
+          public Object call() throws Exception {
+            return wrapped.command(iCommand);
+          }
+        });
 
       case REPLICATE: {
         // REPLICATE IT, GET ALL THE INVOLVED NODES
@@ -303,7 +307,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         if (executeLocally)
           // LOCAL NODE, AVOID TO DISTRIBUTE IT
-          return wrapped.command(iCommand);
+          return ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+            @Override
+            public Object call() throws Exception {
+              return wrapped.command(iCommand);
+            }
+          });
 
         // TODO: OPTIMIZE FILTERING BY CHANGING TARGET PER CLUSTER INSTEAD OF LEAVING CLASS
         result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
