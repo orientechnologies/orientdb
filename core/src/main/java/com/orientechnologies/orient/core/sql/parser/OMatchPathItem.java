@@ -69,15 +69,21 @@ public class OMatchPathItem extends SimpleNode {
       }
 
       for (OIdentifiable origin : queryResult) {
+        Object previousMatch = iCommandContext.getVariable("$currentMatch");
+        iCommandContext.setVariable("$currentMatch", origin);
         if (filter == null || filter.matchesFilters(origin, iCommandContext)) {
           result.add(origin);
         }
+        iCommandContext.setVariable("$currentMatch", previousMatch);
       }
     } else {// in this case also zero level (starting point) is considered and traversal depth is given by the while condition
       iCommandContext.setVariable("$depth", depth);
+      Object previousMatch = iCommandContext.getVariable("$currentMatch");
+      iCommandContext.setVariable("$currentMatch", startingPoint);
       if (filter == null || filter.matchesFilters(startingPoint, iCommandContext)) {
         result.add(startingPoint);
       }
+
       if ((maxDepth == null || depth < maxDepth)
           && (whileCondition == null || whileCondition.matchesFilters(startingPoint, iCommandContext))) {
 
@@ -95,6 +101,7 @@ public class OMatchPathItem extends SimpleNode {
           }
         }
       }
+      iCommandContext.setVariable("$currentMatch", previousMatch);
     }
     return result;
   }

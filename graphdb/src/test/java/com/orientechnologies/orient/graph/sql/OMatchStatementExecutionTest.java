@@ -233,6 +233,20 @@ public class OMatchStatementExecutionTest {
   }
 
   @Test
+  public void testFriendsOfFriends2() throws Exception {
+
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1'), as: me}.both('Friend').both('Friend'){as:friend, where: ($matched.me != $currentMatch)} return $matches)"))
+        .execute();
+
+    for (ODocument doc : qResult) {
+      assertNotEquals(doc.field("name"), "n1");
+    }
+  }
+
+  @Test
   public void testFriendsWithName() throws Exception {
 
     List<ODocument> qResult = db
@@ -367,7 +381,6 @@ public class OMatchStatementExecutionTest {
     return qResult.get(0).getRecord();
   }
 
-
   @Test
   public void testManaged() {
     // people managed by a manager are people who belong to his department or people who belong to sub-departments without a manager
@@ -392,8 +405,6 @@ public class OMatchStatementExecutionTest {
     assertEquals(expectedNames, names);
   }
 
-
-
   private List<OIdentifiable> getManagedBy(String managerName) {
     StringBuilder query = new StringBuilder();
     query.append("select expand(managed) from (");
@@ -409,7 +420,6 @@ public class OMatchStatementExecutionTest {
 
     return db.command(new OCommandSQL(query.toString())).execute();
   }
-
 
   @Test
   public void testManaged2() {
@@ -434,8 +444,6 @@ public class OMatchStatementExecutionTest {
     }
     assertEquals(expectedNames, names);
   }
-
-
 
   private List<OIdentifiable> getManagedBy2(String managerName) {
     StringBuilder query = new StringBuilder();

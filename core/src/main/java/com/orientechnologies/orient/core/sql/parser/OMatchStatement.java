@@ -263,8 +263,6 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, OCommandContext iCommandContext,
       OSQLAsynchQuery<ODocument> request, MatchExecutionPlan executionPlan) {
 
-    MatchContext rootContext = new MatchContext();
-
     boolean rootFound = false;
     // find starting nodes with few entries
     for (Map.Entry<String, Long> entryPoint : estimatedRootEntries.entrySet()) {
@@ -277,7 +275,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
           return true;
         }
 
-        rootContext.candidates.put(nextAlias, matches);
+        matchContext.candidates.put(nextAlias, matches);
         executionPlan.preFetchedAliases.put(nextAlias, entryPoint.getValue());
         rootFound = true;
       }
@@ -289,7 +287,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       if (!matches.iterator().hasNext()) {
         return true;
       }
-      rootContext.candidates.put(nextAlias, matches);
+      matchContext.candidates.put(nextAlias, matches);
       executionPlan.preFetchedAliases.put(nextAlias, estimatedRootEntries.get(nextAlias));
     }
 
@@ -301,10 +299,10 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       smallestAlias = pattern.aliasToNode.values().iterator().next().alias;
     }
     executionPlan.rootAlias = smallestAlias;
-    Iterable<OIdentifiable> allCandidates = rootContext.candidates.get(smallestAlias);
+    Iterable<OIdentifiable> allCandidates = matchContext.candidates.get(smallestAlias);
 
     for (OIdentifiable id : allCandidates) {
-      MatchContext childContext = rootContext.copy(smallestAlias, id);
+      MatchContext childContext = matchContext.copy(smallestAlias, id);
       childContext.currentEdgeNumber = 0;
       if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
         return false;
@@ -328,6 +326,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   private boolean processContext(Pattern pattern, MatchExecutionPlan executionPlan, MatchContext matchContext,
       Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, OCommandContext iCommandContext,
       OSQLAsynchQuery<ODocument> request) {
+
+    iCommandContext.setVariable("$matched", matchContext.matched);
 
     if (pattern.getNumOfEdges() == matchContext.matchedEdges.size() && allNodesCalculated(matchContext, pattern)) {
       addResult(matchContext, request);

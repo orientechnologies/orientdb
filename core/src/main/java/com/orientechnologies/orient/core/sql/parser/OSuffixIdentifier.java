@@ -6,6 +6,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.Map;
+
 public class OSuffixIdentifier extends SimpleNode {
 
   protected OIdentifier      identifier;
@@ -50,6 +52,40 @@ public class OSuffixIdentifier extends SimpleNode {
     }
     if (recordAttribute != null) {
       return ((ODocument) iCurrentRecord.getRecord()).field(recordAttribute.name);
+    }
+    return null;
+  }
+
+  public Object execute(Object currentValue, OCommandContext ctx) {
+    if (currentValue == null) {
+      return null;
+    }
+    if (star) {
+      return currentValue;
+    }
+    if (identifier != null) {
+      String varName = identifier.getValue();
+      if (ctx.getVariable(varName) != null) {
+        return ctx.getVariable(varName);
+      }
+      if (currentValue instanceof OIdentifiable) {
+        return ((ODocument) ((OIdentifiable) currentValue).getRecord()).field(varName);
+      }
+      if (currentValue instanceof Map) {
+        return ((Map) currentValue).get(varName);
+      }
+      throw new UnsupportedOperationException("Implement SuffixIdentifier!");
+      // TODO other cases?
+    }
+    if (recordAttribute != null) {
+      if (currentValue instanceof OIdentifiable) {
+        return ((ODocument) ((OIdentifiable) currentValue).getRecord()).field(recordAttribute.name);
+      }
+      if (currentValue instanceof Map) {
+        return ((Map) currentValue).get(recordAttribute.name);
+      }
+      throw new UnsupportedOperationException("Implement SuffixIdentifier!");
+      // TODO other cases?
     }
     return null;
   }
