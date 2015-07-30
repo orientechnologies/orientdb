@@ -49,6 +49,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  * The fourth parameter is the name of the property that represents the 'weight' or 'cost'.
  *  
  * If an edge has no weight field or the weight field is null this edge is not considered for routing.
+ * If source and destination coincide return a path with only one vertex regardless whether a self-loop exists 
  * 
  * @author Martin Hulin
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
@@ -95,6 +96,11 @@ public class OSQLFunctionDijkstra2 extends OSQLFunctionPathFinder {
       if (iParams.length > 4)
         paramDirection = Direction.valueOf(iParams[4].toString().toUpperCase());
 
+ 	  if (source.equals(paramDestinationVertex)) {
+ 		  final LinkedList<OrientVertex> path = new LinkedList<OrientVertex>();
+ 		  path.add(paramSourceVertex);
+ 		  return path;
+ 	  }
       return super.execute(iContext);
     } finally {
       if (shutdownFlag.getValue())

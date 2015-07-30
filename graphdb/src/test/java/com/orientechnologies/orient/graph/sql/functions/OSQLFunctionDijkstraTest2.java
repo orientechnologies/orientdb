@@ -99,6 +99,7 @@ public class OSQLFunctionDijkstraTest2 {
     final List<OrientVertex> result = functionDijkstra.execute(null, null, null, new Object[] { v1, v1, "weight","'weight'" },
         new OBasicCommandContext());
 
-    assertEquals(null, result);
+    assertEquals(1, result.size());
+    assertEquals(v1, result.get(0));
   }
 }
