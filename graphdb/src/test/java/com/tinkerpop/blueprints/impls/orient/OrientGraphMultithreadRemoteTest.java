@@ -24,7 +24,6 @@ public class OrientGraphMultithreadRemoteTest {
 
   @BeforeClass
   public static void startEmbeddedServer() throws Exception {
-    OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.setValue(15000);
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     serverHome = buildDirectory + "/" + OrientGraphMultithreadRemoteTest.class.getSimpleName();
 
@@ -61,6 +60,7 @@ public class OrientGraphMultithreadRemoteTest {
 
   @Before
   public void before() {
+    OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.setValue(15000);
     final String url = "remote:localhost:3080/" + OrientGraphMultithreadRemoteTest.class.getSimpleName();
 
     try {
@@ -81,7 +81,6 @@ public class OrientGraphMultithreadRemoteTest {
   }
 
   @Test
-//  @Ignore
   public void testThreadingInsert() throws InterruptedException {
     List<Thread> threads = new ArrayList<Thread>();
     int threadCount = 8;
