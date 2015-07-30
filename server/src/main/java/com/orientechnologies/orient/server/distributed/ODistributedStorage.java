@@ -248,7 +248,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       switch (executionMode) {
       case LOCAL:
-        return wrapped.command(iCommand);
+        return ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+          @Override
+          public Object call() throws Exception {
+            return wrapped.command(iCommand);
+          }
+        });
 
       case REPLICATE:
         // REPLICATE IT, GET ALL THE INVOLVED NODES
@@ -260,7 +265,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
           if (nodeClusterMap.size() == 1 && nodeClusterMap.keySet().iterator().next().equals(localNodeName))
             // LOCAL NODE, AVOID TO DISTRIBUTE IT
-            return wrapped.command(iCommand);
+            return ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+              @Override
+              public Object call() throws Exception {
+                return wrapped.command(iCommand);
+              }
+            });
 
           // SELECT: SPLIT CLASSES/CLUSTER IF ANY
           final Map<String, Object> results = executeOnServers(iCommand, involvedClusters, nodeClusterMap);
@@ -305,7 +315,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
           if (executeLocally(localNodeName, dbCfg, exec, involvedClusters, nodes))
             // LOCAL NODE, AVOID TO DISTRIBUTE IT
-            return wrapped.command(iCommand);
+            return ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+              @Override
+              public Object call() throws Exception {
+                return wrapped.command(iCommand);
+              }
+            });
 
           result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
           if (exec.involveSchema())
