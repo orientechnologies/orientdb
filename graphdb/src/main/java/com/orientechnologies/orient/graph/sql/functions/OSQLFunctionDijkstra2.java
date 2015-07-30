@@ -19,8 +19,10 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.types.OModifiableBoolean;
@@ -34,27 +36,32 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * Dijkstra's algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph.
  * 
- * The first parameter is source record. The second parameter is destination record. The third parameter is a name of property that
- * represents 'weight'.
+ * The first parameter is the source record. 
+ * The second parameter is the destination record. 
+ * The third parameter is the edge type i. e. the subclass of E considered for routing.
+ * The fourth parameter is the name of the property that represents the 'weight' or 'cost'.
+ *  
+ * If an edge has no weight field or the weight field is null this edge is not considered for routing.
  * 
- * If property is not defined in edge or is null, distance between vertexes are 0.
- * 
+ * @author Martin Hulin
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 public class OSQLFunctionDijkstra2 extends OSQLFunctionPathFinder {
-  public static final String NAME = "dijkstra";
+  public static final String NAME = "dijkstra2";
 
+  private String             		paramEdgeType; //+
   private String             paramWeightFieldName;
 
   public OSQLFunctionDijkstra2() {
-    super(NAME, 3, 4);
+    super(NAME, 4, 5);
   }
 
   public LinkedList<OrientVertex> execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult,
@@ -82,9 +89,11 @@ public class OSQLFunctionDijkstra2 extends OSQLFunctionPathFinder {
       }
       paramDestinationVertex = graph.getVertex(OSQLHelper.getValue(dest, record, iContext));
 
-      paramWeightFieldName = OStringSerializerHelper.getStringContent(iParams[2]);
-      if (iParams.length > 3)
-        paramDirection = Direction.valueOf(iParams[3].toString().toUpperCase());
+      paramEdgeType = OStringSerializerHelper.getStringContent(iParams[3]); // +
+      
+      paramWeightFieldName = OStringSerializerHelper.getStringContent(iParams[4]);
+      if (iParams.length > 4)
+        paramDirection = Direction.valueOf(iParams[4].toString().toUpperCase());
 
       return super.execute(iContext);
     } finally {
@@ -95,24 +104,47 @@ public class OSQLFunctionDijkstra2 extends OSQLFunctionPathFinder {
   }
 
   public String getSyntax() {
-    return "dijkstra(<sourceVertex>, <destinationVertex>, <weightEdgeFieldName>, [<direction>])";
+    return "dijkstra2(<sourceVertex>, <destinationVertex>, <edgeType>, <weightEdgeFieldName>, [<direction>])";
   }
 
   protected float getDistance(final OrientVertex node, final OrientVertex target) {
-    final Iterator<Edge> edges = node.getEdges(target, paramDirection).iterator();
-    if (edges.hasNext()) {
+    final Iterator<Edge> edges = node.getEdges(target, paramDirection, paramEdgeType).iterator();
+    float bestWeight = Float.MAX_VALUE; // if no edge of paramEdgeType and with field paramWeightFieldName exist set distance to maximal value. 
+    while (edges.hasNext()) { // changed from 'if' to 'while': if more than one edge exist take that one with the least weight
       final Edge e = edges.next();
+      float edgeWeight = Float.MAX_VALUE;
       if (e != null) {
         final Object fieldValue = e.getProperty(paramWeightFieldName);
         if (fieldValue != null)
           if (fieldValue instanceof Float)
-            return (Float) fieldValue;
+            edgeWeight = (Float) fieldValue;
           else if (fieldValue instanceof Number)
-            return ((Number) fieldValue).floatValue();
+            edgeWeight = ((Number) fieldValue).floatValue();
       }
+      if (edgeWeight < bestWeight) bestWeight = edgeWeight;
     }
-    return MIN;
+    return bestWeight;
   }
+	
+@Override
+protected Set<OrientVertex> getNeighbors(final Vertex node) {
+    context.incrementVariable("getNeighbors");    
+  	Direction opDirection;
+    final Set<OrientVertex> neighbors = new HashSet<OrientVertex>();
+    if (node != null) {
+    	for (Edge e: node.getEdges(paramDirection, paramEdgeType)) { //changed: regard only edges of edgeType
+    		if (e.getProperty(paramWeightFieldName) != null) {
+    			if (e.getVertex(Direction.IN).equals(node)) opDirection = Direction.OUT;
+    			else opDirection = Direction.IN;
+
+    			final OrientVertex ov = (OrientVertex) e.getVertex(opDirection);
+    			if (ov != null && isNotSettled(ov))
+    				neighbors.add(ov);
+    		}
+    	}
+    }
+    return neighbors;
+}
 
   @Override
   protected boolean isVariableEdgeWeight() {
