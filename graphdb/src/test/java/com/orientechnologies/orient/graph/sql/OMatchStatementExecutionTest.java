@@ -365,12 +365,11 @@ public class OMatchStatementExecutionTest {
     StringBuilder query = new StringBuilder();
     query.append("select expand(manager) from (");
     query.append("  match {class:Employee, where: (name = '" + personName + "')}");
-    query.append("   (");
-    query.append("    .out('WorksAt')");
-    query.append("    .out('ParentDepartment'){");
-    query.append("      while: (in('ManagerOf').size() == 0),");
-    query.append("      where: (in('ManagerOf').size() > 0)");
-    query.append("    }");
+    query.append("   .( out('WorksAt')");
+    query.append("     .out('ParentDepartment'){");
+    query.append("       while: (in('ManagerOf').size() == 0),");
+    query.append("       where: (in('ManagerOf').size() > 0)");
+    query.append("     }");
     query.append("   )");
     query.append("  .in('ManagerOf'){as: manager}");
     query.append("  return manager");
@@ -450,7 +449,7 @@ public class OMatchStatementExecutionTest {
     query.append("select expand(managed) from (");
     query.append("  match {class:Employee, where: (name = '" + managerName + "')}");
     query.append("  .out('ManagerOf')");
-    query.append("  (.inE('ParentDepartment').outV()){");
+    query.append("  .(inE('ParentDepartment').outV()){");
     query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
     query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
     query.append("  }");

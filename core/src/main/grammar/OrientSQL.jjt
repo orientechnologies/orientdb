@@ -2930,8 +2930,10 @@ OMatchExpression MatchExpression():
         jjtThis.origin = MatchFilter()
         (
             (
+                LOOKAHEAD(2)
                 nextItem = MatchPathItem()
                 |
+                LOOKAHEAD(2)
                 nextItem = MultiMatchPathItem()
             )
             { jjtThis.items.add(nextItem); }
@@ -2949,11 +2951,22 @@ OMatchPathItem MatchPathItem():
     ){ return jjtThis; }
 }
 
+OMatchPathItem MatchPathItemFirst():
+{}
+{
+    (
+        jjtThis.function = FunctionCall()
+        [ jjtThis.filter = MatchFilter() ]
+    ){ return jjtThis; }
+}
+
 OMatchPathItem MultiMatchPathItem():
 { OMatchPathItem nextItem = null; }
 {
     (
+        <DOT>
         <LPAREN>
+        nextItem = MatchPathItemFirst() { jjtThis.items.add(nextItem); }
         (
             nextItem = MatchPathItem() { jjtThis.items.add(nextItem); }
         )*

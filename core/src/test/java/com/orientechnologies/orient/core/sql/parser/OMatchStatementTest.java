@@ -101,7 +101,7 @@ public class OMatchStatementTest {
   public void testMultiPath() {
     StringBuilder query = new StringBuilder();
     query.append("MATCH {}");
-    query.append("  (.out().in(){class:'v'}.both('Foo')){maxDepth: 3}.out() return foo");
+    query.append("  .(out().in(){class:'v'}.both('Foo')){maxDepth: 3}.out() return foo");
     System.out.println(query);
     checkRightSyntax(query.toString());
   }

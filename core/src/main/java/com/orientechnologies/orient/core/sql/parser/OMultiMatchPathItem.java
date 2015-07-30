@@ -29,7 +29,7 @@ public class OMultiMatchPathItem extends OMatchPathItem {
 
   public String toString() {
     StringBuilder result = new StringBuilder();
-    result.append("(");
+    result.append(".(");
     for (OMatchPathItem item : items) {
       result.append(item.toString());
     }

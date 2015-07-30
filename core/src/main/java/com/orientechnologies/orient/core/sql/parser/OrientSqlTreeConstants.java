@@ -120,9 +120,10 @@ public interface OrientSqlTreeConstants
   public int JJTJSON = 114;
   public int JJTMATCHEXPRESSION = 115;
   public int JJTMATCHPATHITEM = 116;
-  public int JJTMULTIMATCHPATHITEM = 117;
-  public int JJTMATCHFILTER = 118;
-  public int JJTMATCHFILTERITEM = 119;
+  public int JJTMATCHPATHITEMFIRST = 117;
+  public int JJTMULTIMATCHPATHITEM = 118;
+  public int JJTMATCHFILTER = 119;
+  public int JJTMATCHFILTERITEM = 120;
 
 
   public String[] jjtNodeName = {
@@ -243,9 +244,10 @@ public interface OrientSqlTreeConstants
     "Json",
     "MatchExpression",
     "MatchPathItem",
+    "MatchPathItemFirst",
     "MultiMatchPathItem",
     "MatchFilter",
     "MatchFilterItem",
   };
 }
-/* JavaCC - OriginalChecksum=03ed60a0b09d9fe30921ba9f8bca8989 (do not edit this line) */
+/* JavaCC - OriginalChecksum=97568c816577021aeea9a4778c2ccfad (do not edit this line) */
