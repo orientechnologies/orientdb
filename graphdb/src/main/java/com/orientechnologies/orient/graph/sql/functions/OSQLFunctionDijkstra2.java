@@ -89,9 +89,9 @@ public class OSQLFunctionDijkstra2 extends OSQLFunctionPathFinder {
       }
       paramDestinationVertex = graph.getVertex(OSQLHelper.getValue(dest, record, iContext));
 
-      paramEdgeType = OStringSerializerHelper.getStringContent(iParams[3]); // +
+      paramEdgeType = OStringSerializerHelper.getStringContent(iParams[2]); // +
       
-      paramWeightFieldName = OStringSerializerHelper.getStringContent(iParams[4]);
+      paramWeightFieldName = OStringSerializerHelper.getStringContent(iParams[3]);
       if (iParams.length > 4)
         paramDirection = Direction.valueOf(iParams[4].toString().toUpperCase());
 
