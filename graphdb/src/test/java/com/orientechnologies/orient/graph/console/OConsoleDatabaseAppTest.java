@@ -98,6 +98,7 @@ public class OConsoleDatabaseAppTest {
     builder.append("list clusters;\n");
     builder.append("list indexes;\n");
     builder.append("info class OUser;\n");
+    builder.append("info property OUser.name;\n");
 
     builder.append("begin;\n");
     builder.append("insert into foo set name = 'foo';\n");
