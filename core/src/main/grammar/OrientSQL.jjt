@@ -851,6 +851,7 @@ OMatchStatement MatchStatement():
             <COMMA>
             lastReturn = Identifier() { jjtThis.returnItems.add(lastReturn); }
         )*
+        [ jjtThis.limit = Limit() ]
     ){ return jjtThis; }
 }
 

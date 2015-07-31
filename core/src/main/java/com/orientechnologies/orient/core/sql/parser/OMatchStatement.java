@@ -74,6 +74,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   // parsed data
   protected List<OMatchExpression> matchExpressions = new ArrayList<OMatchExpression>();
   protected List<OIdentifier>      returnItems      = new ArrayList<OIdentifier>();
+  protected OLimit                 limit;
 
   protected Pattern                pattern;
 
@@ -767,6 +768,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
       result.append(expr.toString());
       first = false;
+    }
+    if (limit != null) {
+      result.append(limit.toString());
     }
     return result.toString();
   }

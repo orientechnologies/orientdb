@@ -120,6 +120,11 @@ public class OMatchStatementTest {
     checkRightSyntax("MATCH {class: 'V', as: foo}.out(){while:($depth<4), as:bar} RETURN bar ");
   }
 
+  @Test
+  public void testLimit() {
+    checkRightSyntax("MATCH {class: 'V'} RETURN foo limit 10");
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {
