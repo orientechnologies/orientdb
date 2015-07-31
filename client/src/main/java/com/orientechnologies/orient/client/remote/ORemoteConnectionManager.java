@@ -196,6 +196,8 @@ public class ORemoteConnectionManager implements OChannelListener {
     final List<OChannelBinaryAsynchClient> conns = new ArrayList<OChannelBinaryAsynchClient>(pool.getAllResources());
     for (OChannelBinaryAsynchClient c : conns)
       try {
+        //Unregister the listener that make the connection return to the closing pool.
+        c.unregisterListener(this);
         c.close();
       } catch (Exception e) {
         OLogManager.instance().debug(this, "Can not close binary channel", e);

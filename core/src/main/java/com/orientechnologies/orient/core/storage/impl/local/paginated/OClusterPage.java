@@ -40,10 +40,10 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  */
 public class OClusterPage extends ODurablePage {
 
-  private static final int VERSION_SIZE               = OVersionFactory.instance().getVersionSize();
+  private static final int VERSION_SIZE = OVersionFactory.instance().getVersionSize();
 
-  private static final int NEXT_PAGE_OFFSET           = NEXT_FREE_POSITION;
-  private static final int PREV_PAGE_OFFSET           = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
+  private static final int PREV_PAGE_OFFSET = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
 
   private static final int FREELIST_HEADER_OFFSET     = PREV_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int FREE_POSITION_OFFSET       = FREELIST_HEADER_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -52,14 +52,14 @@ public class OClusterPage extends ODurablePage {
   private static final int PAGE_INDEXES_LENGTH_OFFSET = ENTRIES_COUNT_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int PAGE_INDEXES_OFFSET        = PAGE_INDEXES_LENGTH_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int INDEX_ITEM_SIZE            = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
-  private static final int MARKED_AS_DELETED_FLAG     = 1 << 16;
-  private static final int POSITION_MASK              = 0xFFFF;
-  public static final int  PAGE_SIZE                  = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  private static final int INDEX_ITEM_SIZE        = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
+  private static final int MARKED_AS_DELETED_FLAG = 1 << 16;
+  private static final int POSITION_MASK          = 0xFFFF;
+  public static final int  PAGE_SIZE              = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
-  public static final int  MAX_ENTRY_SIZE             = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
+  public static final int MAX_ENTRY_SIZE = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
 
-  public static final int  MAX_RECORD_SIZE            = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
+  public static final int MAX_RECORD_SIZE = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
 
   public OClusterPage(OCacheEntry cacheEntry, boolean newPage, OWALChangesTree changesTree) throws IOException {
     super(cacheEntry, changesTree);
@@ -73,7 +73,7 @@ public class OClusterPage extends ODurablePage {
     }
   }
 
-  public int appendRecord(ORecordVersion recordVersion, byte[] record, boolean keepTombstoneVersion) throws IOException {
+  public int appendRecord(ORecordVersion recordVersion, byte[] record) throws IOException {
     int freePosition = getIntValue(FREE_POSITION_OFFSET);
     int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
 
@@ -113,23 +113,9 @@ public class OClusterPage extends ODurablePage {
       int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
       setIntValue(entryIndexPosition, freePosition);
 
-      byte[] serializedVersion = getBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, OVersionFactory.instance()
-          .getVersionSize());
-
-      ORecordVersion existingRecordVersion = OVersionFactory.instance().createVersion();
-      existingRecordVersion.getSerializer().fastReadFrom(serializedVersion, 0, existingRecordVersion);
-
-      if (existingRecordVersion.compareTo(recordVersion) < 0) {
-        recordVersion.getSerializer().fastWriteTo(serializedVersion, 0, recordVersion);
-        setBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, serializedVersion);
-      } else {
-        if (!keepTombstoneVersion) {
-          existingRecordVersion.increment();
-          existingRecordVersion.getSerializer().fastWriteTo(serializedVersion, 0, existingRecordVersion);
-          setBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, serializedVersion);
-        }
-      }
-
+      byte[] serializedVersion = new byte[OVersionFactory.instance().getVersionSize()];
+      recordVersion.getSerializer().fastWriteTo(serializedVersion, 0, recordVersion);
+      setBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, serializedVersion);
     } else {
       entryIndex = indexesLength;
 
@@ -167,8 +153,8 @@ public class OClusterPage extends ODurablePage {
     int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
 
     if (recordVersion != null) {
-      byte[] serializedVersion = getBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, OVersionFactory.instance()
-          .getVersionSize());
+      byte[] serializedVersion = getBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE,
+          OVersionFactory.instance().getVersionSize());
 
       ORecordVersion storedRecordVersion = OVersionFactory.instance().createVersion();
       storedRecordVersion.getSerializer().fastReadFrom(serializedVersion, 0, storedRecordVersion);
@@ -203,8 +189,8 @@ public class OClusterPage extends ODurablePage {
       return null;
 
     int entryIndexPosition = PAGE_INDEXES_OFFSET + position * INDEX_ITEM_SIZE;
-    byte[] serializedVersion = getBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, OVersionFactory.instance()
-        .getVersionSize());
+    byte[] serializedVersion = getBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE,
+        OVersionFactory.instance().getVersionSize());
 
     ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
     recordVersion.getSerializer().fastReadFrom(serializedVersion, 0, recordVersion);
