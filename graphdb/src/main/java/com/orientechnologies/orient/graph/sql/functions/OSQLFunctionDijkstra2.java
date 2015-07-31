@@ -96,11 +96,13 @@ public class OSQLFunctionDijkstra2 extends OSQLFunctionPathFinder {
       if (iParams.length > 4)
         paramDirection = Direction.valueOf(iParams[4].toString().toUpperCase());
 
- 	  if (source.equals(paramDestinationVertex)) {
+ 	  // If source and destination coincide return a path with only one vertex regardless whether a self-loop exists
+      if (source.equals(paramDestinationVertex)) {
  		  final LinkedList<OrientVertex> path = new LinkedList<OrientVertex>();
  		  path.add(paramSourceVertex);
  		  return path;
  	  }
+      
       return super.execute(iContext);
     } finally {
       if (shutdownFlag.getValue())
