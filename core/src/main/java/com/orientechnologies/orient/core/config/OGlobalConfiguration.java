@@ -595,6 +595,7 @@ public enum OGlobalConfiguration {
   private Object                       value          = null;
   private String                       description;
   private OConfigurationChangeCallback changeCallback = null;
+  private Boolean                      canChange;
 
   // AT STARTUP AUTO-CONFIG
   static {
@@ -604,15 +605,22 @@ public enum OGlobalConfiguration {
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
       final OConfigurationChangeCallback iChangeAction) {
-    this(iKey, iDescription, iType, iDefValue);
+    this(iKey, iDescription, iType, iDefValue, true);
     changeCallback = iChangeAction;
   }
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue) {
+    this(iKey, iDescription, iType, iDefValue, false);
+  }
+
+  OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
+      final Boolean iCanChange) {
     key = iKey;
     description = iDescription;
     defValue = iDefValue;
     type = iType;
+    canChange = iCanChange;
+
   }
 
   public static void dumpConfiguration(final PrintStream out) {
@@ -789,6 +797,14 @@ public enum OGlobalConfiguration {
 
   public String getKey() {
     return key;
+  }
+
+  public Boolean getCanChange() {
+    return canChange;
+  }
+
+  public Object getDefValue() {
+    return defValue;
   }
 
   public Class<?> getType() {
