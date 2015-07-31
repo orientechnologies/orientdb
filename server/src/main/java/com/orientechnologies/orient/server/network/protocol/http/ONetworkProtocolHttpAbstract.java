@@ -91,6 +91,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   private boolean                      jsonResponseError;
   private String[]                     additionalResponseHeaders;
   private String                       listeningAddress  = "?";
+  private OContextConfiguration        configuration;
 
   public ONetworkProtocolHttpAbstract() {
     super(Orient.instance().getThreadGroup(), "IO-HTTP");
@@ -99,6 +100,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   @Override
   public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
       final OContextConfiguration iConfiguration) throws IOException {
+    configuration = iConfiguration;
     registerStatelessCommands(iListener);
 
     final String addHeaders = iConfiguration.getValueAsString("network.http.additionalResponseHeaders", null);
@@ -117,8 +119,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     channel = new OChannelTextServer(iSocket, iConfiguration);
     channel.connected();
-
-    request = new OHttpRequest(this, channel.inStream, connection.data, iConfiguration);
 
     connection.data.caller = channel.toString();
 
@@ -231,6 +231,14 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance().debug(this, "Connection shutdowned");
     }
+  }
+
+  public OHttpRequest getRequest() {
+    return request;
+  }
+
+  public OHttpResponse getResponse() {
+    return response;
   }
 
   @Override
@@ -570,6 +578,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       channel.socket.setSoTimeout(socketTimeout);
       connection.data.lastCommandReceived = Orient.instance().getProfiler().startChrono();
 
+      request = new OHttpRequest(this, channel.inStream, connection.data, configuration);
+
       requestContent.setLength(0);
       request.isMultipart = false;
 
@@ -648,6 +658,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             .getProfiler()
             .stopChrono("server.network.requests", "Total received requests", connection.data.lastCommandReceived,
                 "server.network.requests");
+
+      request = null;
+      response = null;
     }
   }
 

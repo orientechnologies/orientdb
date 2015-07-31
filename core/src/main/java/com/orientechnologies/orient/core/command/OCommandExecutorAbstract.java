@@ -24,6 +24,8 @@ import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 
@@ -119,6 +121,20 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
 
   public boolean involveSchema() {
     return false;
+  }
+
+  protected boolean checkInterruption() {
+    return checkInterruption(this.context);
+  }
+
+  public static boolean checkInterruption(final OCommandContext iContext) {
+    if (OExecutionThreadLocal.isInterruptCurrentOperation())
+      throw new OCommandExecutionException("Operation has been interrupted");
+
+    if (iContext != null && !iContext.checkTimeout())
+      return false;
+
+    return true;
   }
 
   protected String upperCase(String text) {

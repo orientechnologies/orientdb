@@ -206,7 +206,7 @@ public class OClientConnectionManager {
       final ONetworkProtocol protocol = connection.protocol;
       if (protocol != null)
         // INTERRUPT THE NEWTORK MANAGER
-        protocol.interrupt();
+        protocol.interruptCurrentOperation();
     }
   }
 

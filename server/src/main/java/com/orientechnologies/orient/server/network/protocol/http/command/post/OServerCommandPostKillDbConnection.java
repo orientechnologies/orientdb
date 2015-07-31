@@ -18,15 +18,15 @@
 
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import java.io.IOException;
-import java.util.List;
-
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+
+import java.io.IOException;
+import java.util.List;
 
 public class OServerCommandPostKillDbConnection extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = { "POST|dbconnection/*" };
@@ -42,24 +42,19 @@ public class OServerCommandPostKillDbConnection extends OServerCommandAuthentica
 
   private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String db, String command) throws IOException {
 
-    List<OClientConnection> connections = server.getClientConnectionManager().getConnections();
+    final List<OClientConnection> connections = server.getClientConnectionManager().getConnections();
     for (OClientConnection connection : connections) {
-      if (checkDbSession(iRequest, db, command, connection)) {
-        server.getClientConnectionManager().kill(connection.id);
+      if (connection.getProtocol() instanceof ONetworkProtocolHttpAbstract) {
+        final ONetworkProtocolHttpAbstract http = (ONetworkProtocolHttpAbstract) connection.getProtocol();
+        final OHttpRequest req = http.getRequest();
+
+        if (req != null && req != iRequest && req.sessionId.equals(iRequest.sessionId)) {
+          server.getClientConnectionManager().interrupt(connection.id);
+        }
       }
     }
     iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
         null, null);
-  }
-
-  public boolean checkDbSession(OHttpRequest iRequest, String db, String command, OClientConnection connection) {
-
-    boolean session = true;
-    session = session && connection.protocol instanceof ONetworkProtocolHttpAbstract;
-    session = session && db.equals(connection.data.lastDatabase);
-    session = session && command.equals(connection.data.commandDetail);
-    session = session && ((ONetworkProtocolHttpAbstract) connection.protocol).getSessionID().equals(iRequest.sessionId);
-    return session;
   }
 
   @Override
