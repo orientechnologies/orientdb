@@ -146,8 +146,8 @@ public class OConsoleDatabaseAppTest {
       }
       OrientGraph graph = new OrientGraph(dbUrl);
       try {
-        Iterable<Vertex> result = graph.command(
-            new OSQLSynchQuery<Vertex>("select expand(out()) from (select from V where name = 'foo')")).execute();
+        Iterable<Vertex> result = graph
+            .command(new OSQLSynchQuery<Vertex>("select expand(out()) from (select from V where name = 'foo')")).execute();
         Iterator<Vertex> iterator = result.iterator();
         Assert.assertTrue(iterator.hasNext());
         Vertex next = iterator.next();
@@ -228,8 +228,12 @@ public class OConsoleDatabaseAppTest {
       console.displayRawRecord(rid);
       result = out.toByteArray();
       resultString = new String(result);
-      Assert.assertTrue(resultString.contains("class name: foo"));
-      Assert.assertTrue(resultString.contains("property value: barbar"));
+      
+      Assert.assertTrue(resultString.contains("Raw record content."));
+      if("ORecordSerializerBinary".equals(((ODatabaseDocumentTx)console.getCurrentDatabase()).getSerializer().toString())){
+        Assert.assertTrue(resultString.contains("class name: foo"));
+        Assert.assertTrue(resultString.contains("property value: barbar"));
+      }
     } catch (IOException e) {
       Assert.fail();
     } finally {
@@ -296,6 +300,5 @@ public class OConsoleDatabaseAppTest {
     }
 
   }
-
 
 }
