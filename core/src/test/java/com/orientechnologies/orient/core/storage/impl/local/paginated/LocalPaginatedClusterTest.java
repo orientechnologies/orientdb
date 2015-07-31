@@ -132,6 +132,8 @@ public class LocalPaginatedClusterTest {
     Assert.assertEquals(physicalPosition.clusterPosition, 0);
     paginatedCluster.deleteRecord(physicalPosition.clusterPosition);
 
+    recordVersion = OVersionFactory.instance().createVersion();
+    Assert.assertEquals(recordVersion.getCounter(), 0);
     physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
     Assert.assertEquals(physicalPosition.clusterPosition, 1);
 
@@ -768,7 +770,7 @@ public class LocalPaginatedClusterTest {
     ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition);
     Assert.assertNotNull(rawBuffer);
 
-    Assert.assertEquals(rawBuffer.version, recordVersion);
+    Assert.assertEquals(rawBuffer.version, updateRecordVersion);
     Assert.assertEquals(rawBuffer.buffer, smallRecord);
     Assert.assertEquals(rawBuffer.recordType, 2);
   }
@@ -791,7 +793,7 @@ public class LocalPaginatedClusterTest {
     ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition);
     Assert.assertNotNull(rawBuffer);
 
-    Assert.assertEquals(rawBuffer.version, recordVersion);
+    Assert.assertEquals(rawBuffer.version, updateRecordVersion);
     Assert.assertEquals(rawBuffer.buffer, smallRecord);
     Assert.assertEquals(rawBuffer.recordType, 2);
   }
