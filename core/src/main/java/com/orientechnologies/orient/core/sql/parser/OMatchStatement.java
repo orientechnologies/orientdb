@@ -132,9 +132,26 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     for (OMatchExpression expr : this.matchExpressions) {
       pattern.addExpression(expr);
     }
-    // TODO CHECK CORRECT RETURN STATEMENT!
+    validateReturn();
 
     return (RET) this;
+  }
+
+  private void validateReturn() {
+    Set<String> aliases = pattern.aliasToNode.keySet();
+    if (returnItems.size() == 1) {
+      String returnAlias = returnItems.iterator().next().getValue();
+      if (!returnAlias.equalsIgnoreCase("$matches") && !returnAlias.equalsIgnoreCase("$paths") && !aliases.contains(returnAlias)) {
+        throw new OCommandSQLParsingException("Invalid return alias: " + returnAlias);
+      }
+      return;
+    }
+    for (OIdentifier s : this.returnItems) {
+      String returnAlias = s.getValue();
+      if (!aliases.contains(returnAlias)) {
+        throw new OCommandSQLParsingException("Invalid return alias: " + returnAlias);
+      }
+    }
   }
 
   private void assignDefaultAliases(List<OMatchExpression> matchExpressions) {
@@ -477,7 +494,6 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   private void addResult(MatchContext matchContext, OSQLAsynchQuery<ODocument> request) {
     if (returnsMatches()) {
       ODocument doc = getDatabase().newInstance();
-      // TODO manage duplicates
       for (Map.Entry<String, OIdentifiable> entry : matchContext.matched.entrySet()) {
         if (isExplicitAlias(entry.getKey())) {
           doc.field(entry.getKey(), entry.getValue());
