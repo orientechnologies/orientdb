@@ -117,7 +117,7 @@ public class OResourcePool<K, V> {
   }
 
   public int getAvailableResources() {
-    return resources.size();
+    return sem.availablePermits();
   }
 
   public boolean returnResource(final V res) {
