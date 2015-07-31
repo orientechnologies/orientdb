@@ -49,12 +49,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * SQL UPDATE command.
@@ -507,9 +502,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         if (coll != null) {
           // containField's condition above does NOT check subdocument's fields so
           Collection<Object> currColl = record.field(entry.getKey());
-          if (currColl == null)
+          if (currColl == null) {
             record.field(entry.getKey(), coll);
-          else
+            coll = record.field(entry.getKey());
+          } else
             coll = currColl;
         }
 
