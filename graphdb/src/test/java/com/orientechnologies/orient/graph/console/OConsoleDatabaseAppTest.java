@@ -280,7 +280,7 @@ public class OConsoleDatabaseAppTest {
   public void testHelp() {
     ConsoleTest c = new ConsoleTest();
     try {
-      c.console().help();
+      c.console().help("select");
       String resultString = c.getConsoleOutput();
       Assert.assertTrue(resultString.contains("connect"));
       Assert.assertTrue(resultString.contains("alter class"));
