@@ -1044,7 +1044,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
           final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
 
-          if (fieldValue != null) {
+          if (fieldValue != null || !indexDefinition.isNullValuesIgnored()) {
             try {
               populateIndex(doc, fieldValue);
             } catch (OIndexException e) {
