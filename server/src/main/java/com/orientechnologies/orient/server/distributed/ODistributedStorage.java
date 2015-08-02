@@ -923,6 +923,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public void commit(final OTransaction iTx, final Runnable callback) {
+    resetLastValidBackup();
+
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED) {
       // ALREADY DISTRIBUTED
       wrapped.commit(iTx, callback);
@@ -1491,7 +1493,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   private void resetLastValidBackup() {
-    if (lastValidBackup != null)
+    if (lastValidBackup != null) {
       lastValidBackup = null;
+    }
   }
 }
