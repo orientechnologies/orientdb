@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.common.console;
 
-import com.orientechnologies.common.console.annotation.ConsoleCommand;
-import com.orientechnologies.common.console.annotation.ConsoleParameter;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.parser.OStringParser;
-import com.orientechnologies.common.util.OArrays;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -34,7 +28,6 @@ import java.io.PrintStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -48,6 +41,12 @@ import java.util.ServiceLoader;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.orientechnologies.common.console.annotation.ConsoleCommand;
+import com.orientechnologies.common.console.annotation.ConsoleParameter;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.common.util.OArrays;
 
 public class OConsoleApplication {
   protected static final String[]   COMMENT_PREFIXS = new String[] { "#", "--", "//" };
@@ -627,10 +626,19 @@ public class OConsoleApplication {
         message(ann.description() + ".");
 
         final StringBuilder syntax = new StringBuilder();
+        final StringBuilder notes = new StringBuilder();
         syntax.append(m.getName());
 
-        for (Parameter p : m.getParameters()) {
-          final ConsoleParameter pAnn = p.getAnnotation(ConsoleParameter.class);
+        int paramCounter = 0;
+        for (Annotation[] paramAnnotations : m.getParameterAnnotations()) {
+          ConsoleParameter pAnn = null;
+
+          for (Annotation a : paramAnnotations) {
+            if (a instanceof ConsoleParameter) {
+              pAnn = (ConsoleParameter) a;
+              break;
+            }
+          }
 
           syntax.append(" ");
 
@@ -638,40 +646,32 @@ public class OConsoleApplication {
             syntax.append("[");
 
           syntax.append("<");
+          notes.append("\n- <");
 
           if (pAnn != null) {
             syntax.append(pAnn.name());
-          } else
-            syntax.append(p.getName());
+            notes.append(pAnn.name());
+          } else {
+            syntax.append("param" + paramCounter++);
+            notes.append("param" + paramCounter++);
+          }
 
           syntax.append(">");
+          notes.append(">: ");
 
-          if (pAnn != null && pAnn.optional())
+          if (pAnn != null && pAnn.optional()) {
             syntax.append("]");
+            notes.append("(optional) ");
+          }
+
+          if (pAnn != null)
+            notes.append(pAnn.description());
         }
 
         message("\n\nSYNTAX: " + syntax + "\n");
 
-        if (m.getParameters().length > 0) {
-          message("\nWHERE:");
-
-          for (Parameter p : m.getParameters()) {
-            final ConsoleParameter pAnn = p.getAnnotation(ConsoleParameter.class);
-
-            message("\n- <");
-            if (pAnn != null) {
-              message(pAnn.name());
-            } else
-              message(p.getName());
-            message(">: ");
-
-            if (pAnn != null && pAnn.optional())
-              message("(optional) ");
-
-            message(pAnn.description());
-          }
-          message("\n");
-        }
+        if (notes.length() > 0)
+          message("\nWHERE:" + notes + "\n");
 
       } else
         message("No description available");
