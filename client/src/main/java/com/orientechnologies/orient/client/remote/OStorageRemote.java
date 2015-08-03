@@ -19,22 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -83,7 +67,6 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -92,6 +75,21 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
+
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -317,8 +315,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       Orient.instance().unregisterStorage(this);
     } catch (Exception e) {
       if (network != null) {
-        OLogManager.instance().debug(this, "Error on closing remote connection: %s", network);
-        network.close();
+        OLogManager.instance().debug(this, "Error on closing remote connection: %s", e, network);
+        try {
+          network.close();
+        } catch (Exception e2) {
+          OLogManager.instance().debug(this, "Error on closing socket: %s", e2, network);
+        }
       }
     } finally {
       stateLock.releaseWriteLock();
@@ -2095,7 +2097,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       try {
         network = engine.getConnectionManager().acquire(lastURL, clientConfiguration, connectionOptions, asynchEventListener);
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during acquiring of connection to URL " + lastURL, e);
+        OLogManager.instance().debug(this, "Error during acquiring of connection to URL " + lastURL, e);
         network = null;
         cause = e;
       }
