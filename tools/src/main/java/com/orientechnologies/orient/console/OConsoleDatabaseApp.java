@@ -2216,11 +2216,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     setResultset(new ArrayList<OIdentifiable>());
 
     // DISABLE THE NETWORK AND STORAGE TIMEOUTS
-    OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.setValue(0);
-    OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.setValue(0);
-    OGlobalConfiguration.CLIENT_CHANNEL_MIN_POOL.setValue(1);
-    OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.setValue(2);
-
     properties.put("limit", "20");
     properties.put("width", "150");
     properties.put("debug", "false");
