@@ -88,7 +88,7 @@ public class OServer {
   private static Map<String, OServer>                      distributedServers     = new ConcurrentHashMap<String, OServer>();
   private final CountDownLatch                             startupLatch           = new CountDownLatch(1);
   protected ReentrantLock                                  lock                   = new ReentrantLock();
-  protected volatile boolean                               running                = true;
+  protected volatile boolean                               running                = false;
   protected OServerConfigurationLoaderXml                  configurationLoader;
   protected OServerConfiguration                           configuration;
   protected OContextConfiguration                          contextConfiguration;
@@ -225,19 +225,18 @@ public class OServer {
     Orient
         .instance()
         .getProfiler()
-        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT,
-            new OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                final StringBuilder dbs = new StringBuilder(64);
-                for (String dbName : getAvailableStorageNames().keySet()) {
-                  if (dbs.length() > 0)
-                    dbs.append(',');
-                  dbs.append(dbName);
-                }
-                return dbs.toString();
+        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT, new OProfilerHookValue() {
+            @Override
+            public Object getValue() {
+              final StringBuilder dbs = new StringBuilder(64);
+              for (String dbName : getAvailableStorageNames().keySet()) {
+                if (dbs.length()>0)
+                  dbs.append(',');
+                dbs.append(dbName);
               }
-            });
+              return dbs.toString();
+            }
+          });
 
     return this;
   }
@@ -340,6 +339,8 @@ public class OServer {
 
       for (OServerLifecycleListener l : lifecycleListeners)
         l.onAfterActivate();
+
+      running = true;
 
       OLogManager.instance().info(this, "OrientDB Server v" + OConstants.getVersion() + " is active.");
     } catch (ClassNotFoundException e) {
