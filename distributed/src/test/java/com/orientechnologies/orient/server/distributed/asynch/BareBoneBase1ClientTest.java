@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import junit.framework.TestCase;
 
@@ -22,6 +23,15 @@ public abstract class BareBoneBase1ClientTest extends TestCase {
 
   protected String getLocalURL() {
     return "plocal:" + DB1_DIR + "/databases/" + getDatabaseName();
+  }
+
+  public void setUp() {
+    OFileUtils.deleteRecursively(new File(DB1_DIR));
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    OFileUtils.deleteRecursively(new File(DB1_DIR));
   }
 
   public void testReplication() throws Throwable {

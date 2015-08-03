@@ -1,6 +1,9 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
+
+import java.io.File;
 
 public abstract class BareBoneBase2ServerTest extends BareBoneBase2ClientTest {
 
@@ -12,6 +15,18 @@ public abstract class BareBoneBase2ServerTest extends BareBoneBase2ClientTest {
 
   protected String getRemoteURL2() {
     return "remote:localhost:2425/" + getDatabaseName();
+  }
+
+
+  public void setUp() {
+    super.setUp();
+    OFileUtils.deleteRecursively(new File(DB2_DIR));
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    OFileUtils.deleteRecursively(new File(DB2_DIR));
   }
 
   public void testReplication() throws Throwable {
