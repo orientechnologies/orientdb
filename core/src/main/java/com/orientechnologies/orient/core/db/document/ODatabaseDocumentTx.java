@@ -497,6 +497,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     db.user = this.user;
     db.properties.putAll(this.properties);
     db.serializer = this.serializer;
+    db.componentsFactory = this.componentsFactory;
     db.metadata = new OMetadataDefault();
     db.initialized = true;
     db.storage = storage;
