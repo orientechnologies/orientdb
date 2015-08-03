@@ -60,12 +60,15 @@ public class OServerConfiguration {
   @XmlElementRef(type = OServerEntryConfiguration.class)
   public OServerEntryConfiguration[]       properties;
 
+  public boolean                           isAfterFirstTime;
+
   public static final String               DEFAULT_CONFIG_FILE  = "config/orientdb-server-config.xml";
 
   public static final String               PROPERTY_CONFIG_FILE = "orientdb.config.file";
 
-  public static final String               SRV_ROOT_ADMIN       = "root";
-  public static final String               SRV_ROOT_GUEST       = "guest";
+  public static final String               DEFAULT_ROOT_USER    = "root";
+  public static final String               GUEST_USER           = "guest";
+  public static final String               GUEST_PASS           = "guest";
 
   /**
    * Empty constructor for JAXB
