@@ -801,15 +801,18 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   public void flush() {
+    LogSegment last;
+
     syncObject.lock();
     try {
       checkForClose();
 
-      LogSegment last = logSegments.get(logSegments.size() - 1);
-      last.flush();
+      last = logSegments.get(logSegments.size() - 1);
     } finally {
       syncObject.unlock();
     }
+
+    last.flush();
   }
 
   @Override
