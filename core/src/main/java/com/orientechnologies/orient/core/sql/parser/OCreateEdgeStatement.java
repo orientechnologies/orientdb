@@ -148,6 +148,9 @@ public class OCreateEdgeStatement extends OStatement {
         rightParamValue = val;
       }
     }
+    if(body!=null){
+      body.replaceParameters(params);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=2d3dc5693940ffa520146f8f7f505128 (do not edit this line) */
