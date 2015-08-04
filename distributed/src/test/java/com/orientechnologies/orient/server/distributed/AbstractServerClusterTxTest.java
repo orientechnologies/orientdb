@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import junit.framework.Assert;
 
 import java.util.Date;
@@ -63,6 +64,13 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
             database.commit();
 
             Assert.assertTrue(person.getIdentity().isPersistent());
+          } catch (ORecordDuplicatedException e) {
+            // IGNORE IT
+          } catch (ODistributedException e) {
+            if (!(e.getCause() instanceof ORecordDuplicatedException)) {
+              database.rollback();
+              throw e;
+            }
           } catch (Exception e) {
             database.rollback();
             throw e;

@@ -19,17 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -88,6 +77,17 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.task.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -264,12 +264,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
           if (nodeClusterMap.size() == 1 && nodeClusterMap.keySet().iterator().next().equals(localNodeName)) {
             // LOCAL NODE, AVOID TO DISTRIBUTE IT
-            result = ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
-              @Override
-              public Object call() throws Exception {
-                return wrapped.command(iCommand);
-              }
-            });
+            // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
+            result = wrapped.command(iCommand);
+
             results = new HashMap<String, Object>(1);
             results.put(localNodeName, result);
 
@@ -286,7 +283,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           } else {
             // MIX & FILTER RESULT SET AVOIDING DUPLICATES
             // TODO: ONCE OPTIMIZED (SEE ABOVE) AVOID TO FILTER HERE
-            final Set<Object> set = new HashSet<Object>();
+
+            final ArrayList<Object> set = new ArrayList<Object>();
             for (Map.Entry<String, Object> entry : ((Map<String, Object>) results).entrySet()) {
               final Object nodeResult = entry.getValue();
               if (nodeResult instanceof Collection)
@@ -320,12 +318,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
           if (executeLocally(localNodeName, dbCfg, exec, involvedClusters, nodes))
             // LOCAL NODE, AVOID TO DISTRIBUTE IT
-            return ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
-              @Override
-              public Object call() throws Exception {
-                return wrapped.command(iCommand);
-              }
-            });
+            // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
+            return wrapped.command(iCommand);
 
           result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
           if (exec.involveSchema())

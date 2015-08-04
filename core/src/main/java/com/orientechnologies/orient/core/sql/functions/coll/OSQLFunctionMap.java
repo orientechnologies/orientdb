@@ -109,11 +109,15 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
   @SuppressWarnings("unchecked")
   @Override
   public Object mergeDistributedResult(final List<Object> resultsToMerge) {
-    final Map<Object, Object> result = new HashMap<Object, Object>();
-    for (Object iParameter : resultsToMerge) {
-      final Map<String, Object> container = (Map<String, Object>) ((Map<Object, Object>) iParameter).get("doc");
-      result.putAll((Map<Object, Object>) container.get("context"));
+    if (returnDistributedResult()) {
+      final Map<Object, Object> result = new HashMap<Object, Object>();
+      for (Object iParameter : resultsToMerge) {
+        final Map<String, Object> container = (Map<String, Object>) ((Map<Object, Object>) iParameter).get("doc");
+        result.putAll((Map<Object, Object>) container.get("context"));
+      }
+      return result;
     }
-    return result;
+
+    return resultsToMerge.get(0);
   }
 }

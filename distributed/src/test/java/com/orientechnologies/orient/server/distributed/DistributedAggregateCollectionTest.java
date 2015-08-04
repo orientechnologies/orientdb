@@ -44,7 +44,7 @@ public class DistributedAggregateCollectionTest extends AbstractServerClusterTes
       Assert.assertEquals(Collections.singleton("foo"), result.iterator().next().field("names"));
 
       result = db.command(new OCommandSQL("select list(name) as names from Item")).execute();
-      Assert.assertEquals(Collections.singleton("foo"), result.iterator().next().field("names"));
+      Assert.assertEquals(Collections.singletonList("foo"), result.iterator().next().field("names"));
 
       db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this")).execute();
 

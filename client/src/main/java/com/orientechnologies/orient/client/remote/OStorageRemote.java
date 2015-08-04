@@ -1756,7 +1756,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       try {
         engine.getConnectionManager().remove(iNetwork);
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Can not remove connection from  connection manager.", e);
+        OLogManager.instance().debug(this, "Can not remove connection from connection manager", e);
       }
     } else {
       OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)",

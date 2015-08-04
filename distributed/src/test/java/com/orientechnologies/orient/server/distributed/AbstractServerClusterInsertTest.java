@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import junit.framework.Assert;
 
@@ -72,7 +73,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       String name = Integer.toString(threadId);
 
       for (int i = 0; i < count; i++) {
-        final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
+        final ODatabaseDocumentTx database = new ODatabaseDocumentTx(databaseUrl).open("admin", "admin");
+
         try {
           final int id = baseCount + i;
 
@@ -97,6 +99,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
               System.out.println("Writer received interrupt (db=" + database.getURL());
               Thread.currentThread().interrupt();
               break;
+            } catch (ORecordDuplicatedException e) {
+              // IGNORE IT
             } catch (ONeedRetryException e) {
               System.out.println("Writer received exception (db=" + database.getURL());
 
@@ -104,6 +108,11 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
                 e.printStackTrace();
 
               break;
+            } catch (ODistributedException e) {
+              if (!(e.getCause() instanceof ORecordDuplicatedException)) {
+                database.rollback();
+                throw e;
+              }
             } catch (Throwable e) {
               System.out.println("Writer received exception (db=" + database.getURL());
               e.printStackTrace();

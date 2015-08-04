@@ -424,7 +424,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         if (cfg == null)
           return;
 
-        if (iDatabase instanceof ODatabase<?> && !(iDatabase.getStorage() instanceof ODistributedStorage)) {
+        if (iDatabase instanceof ODatabase<?>
+            && (!(iDatabase.getStorage() instanceof ODistributedStorage) || ((ODistributedStorage) iDatabase.getStorage())
+                .getDistributedManager().isOffline())) {
           ODistributedStorage storage = storages.get(iDatabase.getURL());
           if (storage == null) {
             storage = new ODistributedStorage(serverInstance, (OAbstractPaginatedStorage) iDatabase.getStorage());
