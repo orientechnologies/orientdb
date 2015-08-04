@@ -214,7 +214,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   private void installProfiler() {
     final OAbstractProfiler currentProfiler = (OAbstractProfiler) Orient.instance().getProfiler();
 
-    Orient.instance().setProfiler(new OEnterpriseProfiler(60, 24, currentProfiler));
+    Orient.instance().setProfiler(new OEnterpriseProfiler(60, 24, currentProfiler, server));
     Orient.instance().getProfiler().startup();
 
     currentProfiler.shutdown();

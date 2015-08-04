@@ -26,6 +26,7 @@ var app = angular.module('MonitorApp',
     'ngAnimate',
     'angularLocalStorage',
     'toggle-switch',
+    'angularValidator',
     'easypiechart',
   ]
 );

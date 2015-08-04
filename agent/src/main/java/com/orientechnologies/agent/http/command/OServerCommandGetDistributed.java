@@ -17,6 +17,7 @@
  */
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
@@ -48,38 +49,41 @@ public class OServerCommandGetDistributed extends OServerCommandAuthenticatedSer
 
       final ODistributedServerManager manager = server.getDistributedManager();
 
-      final ODocument doc;
+      if (manager != null) {
+        final ODocument doc;
 
-      if (command.equalsIgnoreCase("node")) {
+        if (command.equalsIgnoreCase("node")) {
 
-        doc = manager.getClusterConfiguration();
+          doc = manager.getClusterConfiguration();
 
-      } else if (command.equalsIgnoreCase("queue")) {
+        } else if (command.equalsIgnoreCase("queue")) {
 
-        final ODistributedMessageService messageService = manager.getMessageService();
-        if (id == null) {
-          // RETURN QUEUE NAMES
-          final List<String> queues = messageService.getManagedQueueNames();
-          doc = new ODocument();
-          doc.field("queues", queues);
-        } else {
-          doc = messageService.getQueueStats(id);
-        }
+          final ODistributedMessageService messageService = manager.getMessageService();
+          if (id == null) {
+            // RETURN QUEUE NAMES
+            final List<String> queues = messageService.getManagedQueueNames();
+            doc = new ODocument();
+            doc.field("queues", queues);
+          } else {
+            doc = messageService.getQueueStats(id);
+          }
 
-      } else if (command.equalsIgnoreCase("database")) {
+        } else if (command.equalsIgnoreCase("database")) {
 
-        ODistributedConfiguration cfg = manager.getDatabaseConfiguration(id);
-        doc = cfg.serialize();
+          ODistributedConfiguration cfg = manager.getDatabaseConfiguration(id);
+          doc = cfg.serialize();
 
-      } else if (command.equalsIgnoreCase("stats")) {
+        } else if (command.equalsIgnoreCase("stats")) {
 
-        doc = manager.getStats();
+          doc = manager.getStats();
+          doc.field("clusterStats",manager.getConfigurationMap().get("clusterStats"));
+        } else
+          throw new IllegalArgumentException("Command '" + command + "' not supported");
 
-      } else
-        throw new IllegalArgumentException("Command '" + command + "' not supported");
-
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, doc.toJSON(""), null);
-
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, doc.toJSON(""), null);
+      } else {
+        throw new OConfigurationException("Seems that the server is not running in distributed mode");
+      }
     } catch (Exception e) {
       iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
     }

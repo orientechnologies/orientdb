@@ -1,31 +1,31 @@
-<form class="form-horizontal">
+<form class="form-horizontal" name="serverForm">
     <fieldset>
         <div class="control-group">
             <label class="control-label" for="inputName">{{ 'settings.server.name' | i18n }}</label>
 
             <div class="controls">
-                <input type="text" id="inputName" ng-model="server.name" class="input-xlarge">
+                <input type="text" id="inputName" required ng-model="server.name" class="input-xlarge">
             </div>
         </div>
         <div class="control-group">
             <label class="control-label" for="inputURL">{{ 'settings.server.url' | i18n }}</label>
 
             <div class="controls">
-                <input type="text" id="inputURL" ng-model="server.url" class="input-xlarge">
+                <input type="text" id="inputURL" required validator = "validateIpAndPort(serverForm.firstName)" ng-model="server.url" placeholder="ip:port" class="input-xlarge">
             </div>
         </div>
         <div class="control-group">
-            <label class="control-label" for="inputUser">{{ 'settings.server.user' | i18n }}</label>
+            <label class="control-label"  for="inputUser">{{ 'settings.server.user' | i18n }}</label>
 
             <div class="controls">
-                <input type="text" id="inputUser" ng-model="server.user" class="input-xlarge">
+                <input type="text" id="inputUser" required ng-model="server.user" class="input-xlarge">
             </div>
         </div>
         <div class="control-group">
             <label class="control-label" for="inputPassword">{{ 'settings.server.password' | i18n }}</label>
 
             <div class="controls">
-                <input type="password" id="inputPassword" ng-model="server.password" class="input-xlarge">
+                <input type="password" id="inputPassword" required ng-model="server.password" class="input-xlarge">
             </div>
         </div>
 

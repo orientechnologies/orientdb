@@ -10,7 +10,7 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn" ng-click="hide()">Close</button>
-        <button type="button" class="btn" ng-click="test()">Test</button>
-        <button class="btn btn-primary" ng-click="modal.saved=true;hide();save();">Save changes</button>
+        <button type="button" class="btn" ng-disabled="serverForm.$invalid" ng-click="test()">Test</button>
+        <button class="btn btn-primary" ng-disabled="serverForm.$invalid" ng-click="modal.saved=true;save();">Save changes</button>
     </div>
 </div>
