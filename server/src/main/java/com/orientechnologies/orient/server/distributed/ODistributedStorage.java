@@ -247,12 +247,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       switch (executionMode) {
       case LOCAL:
-        return ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
-          @Override
-          public Object call() throws Exception {
-            return wrapped.command(iCommand);
-          }
-        });
+        // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
+        return wrapped.command(iCommand);
 
       case REPLICATE: {
         // REPLICATE IT, GET ALL THE INVOLVED NODES
@@ -508,12 +504,23 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             .getClusterPosition(), masterPlaceholder.getRecordVersion()));
       }
 
+      // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
       final OStorageOperationResult<OPhysicalPosition> localResult;
 
       localResult = (OStorageOperationResult<OPhysicalPosition>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
         @Override
         public Object call() throws Exception {
-          return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
+          // USE THE DATABASE TO CALL HOOKS
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+
+          final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
+          ORecordInternal.fill(record, iRecordId, iRecordVersion, iContent, true);
+          db.save(record);
+
+          final OPhysicalPosition ppos = new OPhysicalPosition(iRecordType);
+          ppos.clusterPosition = record.getIdentity().getClusterPosition();
+          ppos.recordVersion = record.getRecordVersion();
+          return new OStorageOperationResult<OPhysicalPosition>(ppos);
         }
       });
 
@@ -634,11 +641,19 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         return new OStorageOperationResult<ORecordVersion>((ORecordVersion) result);
       }
 
+      // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
       final OStorageOperationResult<ORecordVersion> localResult;
       localResult = (OStorageOperationResult<ORecordVersion>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
         @Override
         public Object call() throws Exception {
-          return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
+          // USE THE DATABASE TO CALL HOOKS
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+
+          final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
+          ORecordInternal.fill(record, iRecordId, iVersion, iContent, true);
+          db.save(record);
+
+          return new OStorageOperationResult<ORecordVersion>(record.getRecordVersion());
         }
       });
 
@@ -706,11 +721,19 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         return new OStorageOperationResult<Boolean>(true);
       }
 
+      // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
       final OStorageOperationResult<Boolean> localResult;
       localResult = (OStorageOperationResult<Boolean>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
         @Override
         public Object call() throws Exception {
-          return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
+           // USE THE DATABASE TO CALL HOOKS
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+          try {
+            db.delete(iRecordId, iVersion);
+            return new OStorageOperationResult<Boolean>(true);
+          } catch (ORecordNotFoundException e) {
+            return new OStorageOperationResult<Boolean>(false);
+          }
         }
       });
 
