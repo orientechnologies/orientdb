@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -35,6 +29,8 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
+import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
@@ -42,6 +38,12 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL CREATE INDEX command: Create a new index against a property.
@@ -242,19 +244,20 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
     }
 
     if (fields == null || fields.length == 0) {
+      OIndexFactory factory = OIndexes.getFactory(indexType.toString(), null);
 
       if (keyTypes != null)
         idx = database
             .getMetadata()
             .getIndexManager()
-            .createIndex(indexName, indexType.toString(), new OSimpleKeyIndexDefinition(keyTypes, collatesList), null, null,
-                metadataDoc, engine);
+            .createIndex(indexName, indexType.toString(),
+                new OSimpleKeyIndexDefinition(keyTypes, collatesList, factory.getLastVersion()), null, null, metadataDoc, engine);
       else if (serializerKeyId != 0) {
         idx = database
             .getMetadata()
             .getIndexManager()
-            .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId), null, null, metadataDoc,
-                engine);
+            .createIndex(indexName, indexType.toString(),
+                new ORuntimeKeyIndexDefinition(serializerKeyId, factory.getLastVersion()), null, null, metadataDoc, engine);
       } else
         idx = database.getMetadata().getIndexManager()
             .createIndex(indexName, indexType.toString(), null, null, null, metadataDoc, engine);
@@ -266,7 +269,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
             .extractFieldTypes(fields);
 
         final OIndexDefinition idxDef = OIndexDefinitionFactory.createIndexDefinition(oClass, Arrays.asList(fields), fieldTypeList,
-            collatesList);
+            collatesList, indexType.toString(), null);
 
         idx = database.getMetadata().getIndexManager()
             .createIndex(indexName, indexType.name(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc, engine);
@@ -277,6 +280,11 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       return idx.getSize();
 
     return null;
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
   }
 
   @Override
@@ -299,7 +307,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
           OPropertyMapIndexDefinition.INDEX_BY.valueOf(fieldNameParts[2].toUpperCase());
         } catch (IllegalArgumentException iae) {
           throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '"
-              + fieldName + "'", text, pos);
+              + fieldName + "'", text, pos, iae);
         }
         return;
       }

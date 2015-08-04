@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.common.reflection;
 
@@ -49,7 +49,6 @@ import com.orientechnologies.common.log.OLogManager;
 public class OReflectionHelper {
   private static final String CLASS_EXTENSION = ".class";
 
-
   public static List<Class<?>> getClassesFor(final Collection<String> classNames, final ClassLoader classLoader)
       throws ClassNotFoundException {
     List<Class<?>> classes = new ArrayList<Class<?>>(classNames.size());
@@ -58,7 +57,7 @@ public class OReflectionHelper {
     }
     return classes;
   }
-  
+
   public static List<Class<?>> getClassesFor(final String iPackageName, final ClassLoader iClassLoader)
       throws ClassNotFoundException {
     // This will hold a list of directories matching the pckgname.
@@ -93,11 +92,11 @@ public class OReflectionHelper {
         }
       }
     } catch (NullPointerException x) {
-      throw new ClassNotFoundException(iPackageName + " does not appear to be " + "a valid package (Null pointer exception)");
+      throw new ClassNotFoundException(iPackageName + " does not appear to be " + "a valid package (Null pointer exception)", x);
     } catch (UnsupportedEncodingException encex) {
-      throw new ClassNotFoundException(iPackageName + " does not appear to be " + "a valid package (Unsupported encoding)");
+      throw new ClassNotFoundException(iPackageName + " does not appear to be " + "a valid package (Unsupported encoding)", encex);
     } catch (IOException ioex) {
-      throw new ClassNotFoundException("IOException was thrown when trying " + "to get all resources for " + iPackageName);
+      throw new ClassNotFoundException("IOException was thrown when trying " + "to get all resources for " + iPackageName, ioex);
     }
 
     // For every directory identified capture all the .class files
@@ -143,16 +142,17 @@ public class OReflectionHelper {
 
     String className;
     final File[] files = iDirectory.listFiles();
-    for (File file : files) {
-      if (file.isDirectory()) {
-        if (file.getName().contains("."))
-          continue;
-        classes.addAll(findClasses(file, iPackageName, iClassLoader));
-      } else if (file.getName().endsWith(CLASS_EXTENSION)) {
-        className = file.getName().substring(0, file.getName().length() - CLASS_EXTENSION.length());
-        classes.add(Class.forName(iPackageName + '.' + className, true, iClassLoader));
+    if (files != null)
+      for (File file : files) {
+        if (file.isDirectory()) {
+          if (file.getName().contains("."))
+            continue;
+          classes.addAll(findClasses(file, iPackageName, iClassLoader));
+        } else if (file.getName().endsWith(CLASS_EXTENSION)) {
+          className = file.getName().substring(0, file.getName().length() - CLASS_EXTENSION.length());
+          classes.add(Class.forName(iPackageName + '.' + className, true, iClassLoader));
+        }
       }
-    }
     return classes;
   }
 

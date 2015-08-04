@@ -20,13 +20,14 @@
 
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+
+import java.util.Map;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -53,6 +54,11 @@ public class OCommandExecutorSQLHide extends OCommandExecutorSQLAbstract {
     recordIdToHide = new ORecordId(subjectName);
 
     return this;
+  }
+
+  @Override
+  public long getDistributedTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
   @Override

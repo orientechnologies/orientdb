@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -66,7 +67,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   protected File                                           defaultDatabaseConfigFile;
   protected ConcurrentHashMap<String, ODistributedStorage> storages                    = new ConcurrentHashMap<String, ODistributedStorage>();
 
-  public static Object runInDistributedMode(Callable iCall) throws Exception {
+  public static Object runInDistributedMode(final Callable iCall) throws Exception {
     final OScenarioThreadLocal.RUN_MODE currentRunningMode = OScenarioThreadLocal.INSTANCE.get();
     if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
       OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
@@ -76,7 +77,21 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     } finally {
 
       if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
-        OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+        OScenarioThreadLocal.INSTANCE.set(currentRunningMode);
+    }
+  }
+
+  public static Object runInDefaultMode(final Callable iCall) throws Exception {
+    final OScenarioThreadLocal.RUN_MODE currentRunningMode = OScenarioThreadLocal.INSTANCE.get();
+    if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
+      OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+
+    try {
+      return iCall.call();
+    } finally {
+
+      if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
+        OScenarioThreadLocal.INSTANCE.set(currentRunningMode);
     }
   }
 
@@ -98,12 +113,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
           enabled = false;
           return;
         }
-      } else if (param.name.equalsIgnoreCase("nodeName"))
+      } else if (param.name.equalsIgnoreCase("nodeName")) {
         nodeName = param.value;
-      else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
+        if (nodeName.contains("."))
+          throw new OConfigurationException("Illegal node name '" + nodeName + "'. '.' is not allowed in node name");
+      } else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
         setDefaultDatabaseConfigFile(param.value);
-      } else if (param.name.equalsIgnoreCase("conflict.resolver.impl")) {
-        // NOT USED ANYMORE
       }
     }
 
@@ -194,6 +209,22 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
    */
   @Override
   public void onClose(final ODatabaseInternal iDatabase) {
+  }
+
+  @Override
+  public void onDrop(final ODatabaseInternal iDatabase) {
+    synchronized (cachedDatabaseConfiguration) {
+      storages.remove(iDatabase.getURL());
+    }
+
+    final ODistributedMessageService msgService = getMessageService();
+    if (msgService != null) {
+      msgService.unregisterDatabase(iDatabase.getName());
+    }
+  }
+
+  @Override
+  public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
   }
 
   @Override
@@ -289,11 +320,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
         cachedDatabaseConfiguration.put(iDatabaseName, cfg);
       }
 
-      final ODistributedConfiguration dCfg = new ODistributedConfiguration(cfg);
-      if (dCfg.upgrade())
-        // UPGRADED, SAVE IT AGAIN
-        updateCachedDatabaseConfiguration(iDatabaseName, dCfg.serialize(), true);
-      return dCfg;
+      return new ODistributedConfiguration(cfg);
     }
   }
 

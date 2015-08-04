@@ -1,30 +1,37 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.tinkerpop.blueprints.impls.orient;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValue;
 import com.orientechnologies.orient.core.index.OIndexTxAwareOneValue;
+import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -37,11 +44,6 @@ import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.WrappingCloseableIterable;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Luca Garulli (http://www.orientechnologies.com)
@@ -158,11 +160,11 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from index:" + recordKeyValueIndex.getName()
         + " where key between [" + element.getIdentity() + "] and [" + element.getIdentity() + "]");
 
-    Collection<ODocument> entries = (Collection<ODocument>) graph.getRawGraph().query(query);
+    final Collection<ODocument> entries = (Collection<ODocument>) graph.getRawGraph().query(query);
 
     for (ODocument entry : entries) {
-      OCompositeKey key = entry.field("key");
-      List<Object> keys = key.getKeys();
+      final OCompositeKey key = entry.field("key");
+      final List<Object> keys = key.getKeys();
       underlying.remove(keys.get(1).toString(), element.getIdentity());
       recordKeyValueIndex.remove(key, element.getIdentity());
     }
@@ -174,12 +176,14 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     if (iKeyType == null)
       iKeyType = OType.STRING;
 
+    final OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.DICTIONARY.toString(), null);
+
     this.recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(), (OIndex<OIdentifiable>) graph
         .getRawGraph()
         .getMetadata()
         .getIndexManager()
         .createIndex("__@recordmap@___" + indexName, OClass.INDEX_TYPE.DICTIONARY.toString(),
-            new OSimpleKeyIndexDefinition(OType.LINK, OType.STRING), null, null, null));
+            new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.LINK, OType.STRING), null, null, null));
 
     final String className;
     if (Vertex.class.isAssignableFrom(indexClass))
@@ -193,13 +197,14 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     metadata.field(CONFIG_CLASSNAME, className);
     metadata.field(CONFIG_RECORD_MAP_NAME, recordKeyValueIndex.getName());
 
+    final OIndexFactory nuFactory = OIndexes.getFactory(OClass.INDEX_TYPE.NOTUNIQUE.toString(), null);
     // CREATE THE MAP
     this.underlying = new OIndexTxAwareMultiValue(graph.getRawGraph(), (OIndex<Set<OIdentifiable>>) graph
         .getRawGraph()
         .getMetadata()
         .getIndexManager()
-        .createIndex(indexName, OClass.INDEX_TYPE.NOTUNIQUE.toString(), new OSimpleKeyIndexDefinition(iKeyType), null, null,
-            metadata));
+        .createIndex(indexName, OClass.INDEX_TYPE.NOTUNIQUE.toString(),
+            new OSimpleKeyIndexDefinition(nuFactory.getLastVersion(), iKeyType), null, null, metadata));
 
   }
 
@@ -217,7 +222,7 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
         this.indexClass = (Class<T>) Class.forName(indexClassName);
       } catch (ClassNotFoundException e) {
         throw new IllegalArgumentException("Index class '" + indexClassName
-            + "' is not registered. Supported ones: Vertex, Edge and custom class that extends them");
+            + "' is not registered. Supported ones: Vertex, Edge and custom class that extends them", e);
       }
 
     if (recordKeyValueMap == null)
@@ -227,13 +232,15 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
           .getMetadata().getIndexManager().getIndex(recordKeyValueMap));
   }
 
-  private OIndex<?> buildKeyValueIndex(ODocument metadata) {
-    OIndex<?> recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(), (OIndex<OIdentifiable>) graph
+  private OIndex<?> buildKeyValueIndex(final ODocument metadata) {
+    final OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.DICTIONARY.toString(), null);
+
+    final OIndex<?> recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(), (OIndex<OIdentifiable>) graph
         .getRawGraph()
         .getMetadata()
         .getIndexManager()
         .createIndex("__@recordmap@___" + underlying.getName(), OClass.INDEX_TYPE.DICTIONARY.toString(),
-            new OSimpleKeyIndexDefinition(OType.LINK, OType.STRING), null, null, null));
+            new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.LINK, OType.STRING), null, null, null));
 
     final List<ODocument> entries = graph.getRawGraph().query(
         new OSQLSynchQuery<Object>("select  from index:" + underlying.getName()));

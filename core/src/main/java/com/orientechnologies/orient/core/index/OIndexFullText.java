@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -33,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -62,12 +60,16 @@ public class OIndexFullText extends OIndexMultiValues {
 
   private Set<String>          stopWords;
 
-  public OIndexFullText(String typeId, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
+  public OIndexFullText(String name, String typeId, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
       String valueContainerAlgorithm, ODocument metadata) {
-    super(typeId, algorithm, indexEngine, valueContainerAlgorithm, metadata);
-    config();
-    configWithMetadata(metadata);
-
+    super(name, typeId, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+    acquireExclusiveLock();
+    try {
+      config();
+      configWithMetadata(metadata);
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   /**
@@ -86,8 +88,9 @@ public class OIndexFullText extends OIndexMultiValues {
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    if (!txIsActive)
+      keyLockManager.acquireExclusiveLock(key);
+
     try {
       modificationLock.requestModificationLock();
 
@@ -96,7 +99,7 @@ public class OIndexFullText extends OIndexMultiValues {
 
         // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
         for (final String word : words) {
-          acquireExclusiveLock();
+          acquireSharedLock();
           startStorageAtomicOperation();
           try {
             Set<OIdentifiable> refs;
@@ -129,7 +132,7 @@ public class OIndexFullText extends OIndexMultiValues {
             rollbackStorageAtomicOperation();
             throw new OIndexException("Error during put of key - value entry", e);
           } finally {
-            releaseExclusiveLock();
+            releaseSharedLock();
           }
         }
         return this;
@@ -137,8 +140,8 @@ public class OIndexFullText extends OIndexMultiValues {
         modificationLock.releaseModificationLock();
       }
     } finally {
-      if (txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      if (!txIsActive)
+        keyLockManager.releaseExclusiveLock(key);
     }
   }
 
@@ -161,8 +164,8 @@ public class OIndexFullText extends OIndexMultiValues {
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    if (!txIsActive)
+      keyLockManager.acquireExclusiveLock(key);
     try {
       modificationLock.requestModificationLock();
 
@@ -171,7 +174,7 @@ public class OIndexFullText extends OIndexMultiValues {
         boolean removed = false;
 
         for (final String word : words) {
-          acquireExclusiveLock();
+          acquireSharedLock();
           startStorageAtomicOperation();
           try {
 
@@ -190,7 +193,7 @@ public class OIndexFullText extends OIndexMultiValues {
             rollbackStorageAtomicOperation();
             throw new OIndexException("Error during removal of entry by key and value", e);
           } finally {
-            releaseExclusiveLock();
+            releaseSharedLock();
           }
         }
 
@@ -199,20 +202,20 @@ public class OIndexFullText extends OIndexMultiValues {
         modificationLock.releaseModificationLock();
       }
     } finally {
-      if (txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      if (!txIsActive)
+        keyLockManager.releaseExclusiveLock(key);
     }
   }
 
   @Override
-  public OIndexInternal<?> create(String name, OIndexDefinition indexDefinition, String clusterIndexName,
-      Set<String> clustersToIndex, boolean rebuild, OProgressListener progressListener, OStreamSerializer valueSerializer) {
+  public OIndexInternal<?> create(OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
+      boolean rebuild, OProgressListener progressListener, OStreamSerializer valueSerializer) {
 
     if (indexDefinition.getFields().size() > 1) {
       throw new OIndexException(type + " indexes cannot be used as composite ones.");
     }
 
-    return super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, valueSerializer);
+    return super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, valueSerializer);
   }
 
   @Override
@@ -225,21 +228,14 @@ public class OIndexFullText extends OIndexMultiValues {
   }
 
   @Override
-  public ODocument updateConfiguration() {
-    super.updateConfiguration();
-    configuration.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+  protected void doConfigurationUpdate(ODocument newConfig) {
+    super.doConfigurationUpdate(newConfig);
 
-    try {
-      configuration.field(CONFIG_SEPARATOR_CHARS, separatorChars);
-      configuration.field(CONFIG_IGNORE_CHARS, ignoreChars);
-      configuration.field(CONFIG_STOP_WORDS, stopWords);
-      configuration.field(CONFIG_MIN_WORD_LEN, minWordLength);
-      configuration.field(CONFIG_INDEX_RADIX, indexRadix);
-
-    } finally {
-      configuration.setInternalStatus(ORecordElement.STATUS.LOADED);
-    }
-    return configuration;
+    newConfig.field(CONFIG_SEPARATOR_CHARS, separatorChars);
+    newConfig.field(CONFIG_IGNORE_CHARS, ignoreChars);
+    newConfig.field(CONFIG_STOP_WORDS, stopWords);
+    newConfig.field(CONFIG_MIN_WORD_LEN, minWordLength);
+    newConfig.field(CONFIG_INDEX_RADIX, indexRadix);
   }
 
   public boolean canBeUsedInEqualityOperators() {
@@ -276,73 +272,6 @@ public class OIndexFullText extends OIndexMultiValues {
     separatorChars = DEF_SEPARATOR_CHARS;
     minWordLength = DEF_MIN_WORD_LENGTH;
     stopWords = new HashSet<String>(OStringSerializerHelper.split(DEF_STOP_WORDS, ' '));
-  }
-
-  @Override
-  protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
-    if (key == null)
-      return;
-
-    key = getCollatingValue(key);
-
-    final Set<String> words = splitIntoWords(key.toString());
-
-    // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
-    for (final String word : words) {
-      Set<OIdentifiable> refs;
-
-      final Object snapshotValue = snapshot.get(word);
-      if (snapshotValue == null)
-        refs = indexEngine.get(word);
-      else if (snapshotValue.equals(RemovedValue.INSTANCE))
-        refs = null;
-      else
-        refs = (Set<OIdentifiable>) snapshotValue;
-
-      if (refs == null) {
-        // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-        if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-          boolean durable = false;
-          if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
-            durable = true;
-
-          refs = new OIndexRIDContainer(getName(), durable);
-        } else {
-          refs = new OMVRBTreeRIDSet();
-          ((OMVRBTreeRIDSet) refs).setAutoConvertToRecord(false);
-        }
-
-        snapshot.put(word, refs);
-      }
-      // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
-      refs.add(value.getIdentity());
-    }
-  }
-
-  @Override
-  protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
-    key = getCollatingValue(key);
-
-    final Set<String> words = splitIntoWords(key.toString());
-    for (final String word : words) {
-      final Set<OIdentifiable> recs;
-      final Object snapshotValue = snapshot.get(word);
-      if (snapshotValue == null)
-        recs = indexEngine.get(word);
-      else if (snapshotValue.equals(RemovedValue.INSTANCE))
-        recs = null;
-      else
-        recs = (Set<OIdentifiable>) snapshotValue;
-
-      if (recs != null && !recs.isEmpty()) {
-        if (recs.remove(value)) {
-          if (recs.isEmpty())
-            snapshot.put(word, RemovedValue.INSTANCE);
-          else
-            snapshot.put(word, recs);
-        }
-      }
-    }
   }
 
   private Set<String> splitIntoWords(final String iKey) {

@@ -165,20 +165,20 @@ public class OPropertyAbstractDelegate implements OProperty {
 
   @Override
   public OProperty setLinkedClass(OClass oClass) {
-	delegate.setLinkedClass(oClass);
-	return this;
+    delegate.setLinkedClass(oClass);
+    return this;
   }
 
   @Override
   public OProperty setLinkedType(OType type) {
-	delegate.setLinkedType(type);
-	return this;
+    delegate.setLinkedType(type);
+    return this;
   }
 
   @Override
   public OProperty setCollate(OCollate collate) {
-	delegate.setCollate(collate);
-	return this;
+    delegate.setCollate(collate);
+    return this;
   }
 
   @Override

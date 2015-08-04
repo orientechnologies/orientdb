@@ -598,7 +598,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertEquals(page.size(), 10);
 
     for (int i = 0; i < page.size(); ++i) {
-      Assert.assertEquals(page.get(i), result.get(10 + i));
+      Assert.assertEquals((Object) page.get(i), (Object) result.get(10 + i));
     }
   }
 
@@ -619,7 +619,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertEquals(page.size(), 10);
 
     for (int i = 0; i < page.size(); ++i) {
-      Assert.assertEquals(page.get(i), result.get(10 + i));
+      Assert.assertEquals((Object) page.get(i), (Object) result.get(10 + i));
     }
   }
 
@@ -631,7 +631,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertEquals(page.size(), 10);
 
     for (int i = 0; i < page.size(); ++i) {
-      Assert.assertEquals(page.get(i), result.get(10 + i));
+      Assert.assertEquals((Object) page.get(i), (Object) result.get(10 + i));
     }
   }
 
@@ -643,7 +643,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertEquals(page.size(), 10);
 
     for (int i = 0; i < page.size(); ++i) {
-      Assert.assertEquals(page.get(i), result.get(10 + i));
+      Assert.assertEquals((Object) page.get(i), (Object) result.get(10 + i));
     }
   }
 
@@ -1014,6 +1014,19 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     for (ODocument d : resultset) {
       Assert.assertFalse(d.containsField("rules"));
+    }
+  }
+
+  @Test
+  public void excludeAttributes() {
+    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+        "select expand( roles.exclude('@rid', '@class') ) from OUser");
+
+    List<ODocument> resultset = database.query(query);
+
+    for (ODocument d : resultset) {
+      Assert.assertFalse(d.getIdentity().isPersistent());
+      Assert.assertNull(d.getSchemaClass());
     }
   }
 

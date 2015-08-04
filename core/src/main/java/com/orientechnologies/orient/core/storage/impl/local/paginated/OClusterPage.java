@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
@@ -24,13 +24,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
@@ -40,10 +40,10 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  */
 public class OClusterPage extends ODurablePage {
 
-  private static final int VERSION_SIZE               = OVersionFactory.instance().getVersionSize();
+  private static final int VERSION_SIZE = OVersionFactory.instance().getVersionSize();
 
-  private static final int NEXT_PAGE_OFFSET           = NEXT_FREE_POSITION;
-  private static final int PREV_PAGE_OFFSET           = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
+  private static final int PREV_PAGE_OFFSET = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
 
   private static final int FREELIST_HEADER_OFFSET     = PREV_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int FREE_POSITION_OFFSET       = FREELIST_HEADER_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -52,17 +52,17 @@ public class OClusterPage extends ODurablePage {
   private static final int PAGE_INDEXES_LENGTH_OFFSET = ENTRIES_COUNT_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int PAGE_INDEXES_OFFSET        = PAGE_INDEXES_LENGTH_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int INDEX_ITEM_SIZE            = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
-  private static final int MARKED_AS_DELETED_FLAG     = 1 << 16;
-  private static final int POSITION_MASK              = 0xFFFF;
-  public static final int  PAGE_SIZE                  = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  private static final int INDEX_ITEM_SIZE        = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
+  private static final int MARKED_AS_DELETED_FLAG = 1 << 16;
+  private static final int POSITION_MASK          = 0xFFFF;
+  public static final int  PAGE_SIZE              = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
-  public static final int  MAX_ENTRY_SIZE             = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
+  public static final int MAX_ENTRY_SIZE = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
 
-  public static final int  MAX_RECORD_SIZE            = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
+  public static final int MAX_RECORD_SIZE = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
 
-  public OClusterPage(OCacheEntry cacheEntry, boolean newPage, TrackMode trackMode) throws IOException {
-    super(cacheEntry, trackMode);
+  public OClusterPage(OCacheEntry cacheEntry, boolean newPage, OWALChangesTree changesTree) throws IOException {
+    super(cacheEntry, changesTree);
 
     if (newPage) {
       setLongValue(NEXT_PAGE_OFFSET, -1);
@@ -73,7 +73,7 @@ public class OClusterPage extends ODurablePage {
     }
   }
 
-  public int appendRecord(ORecordVersion recordVersion, byte[] record, boolean keepTombstoneVersion) throws IOException {
+  public int appendRecord(ORecordVersion recordVersion, byte[] record) throws IOException {
     int freePosition = getIntValue(FREE_POSITION_OFFSET);
     int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
 
@@ -113,23 +113,9 @@ public class OClusterPage extends ODurablePage {
       int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
       setIntValue(entryIndexPosition, freePosition);
 
-      byte[] serializedVersion = getBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, OVersionFactory.instance()
-          .getVersionSize());
-
-      ORecordVersion existingRecordVersion = OVersionFactory.instance().createVersion();
-      existingRecordVersion.getSerializer().fastReadFrom(serializedVersion, 0, existingRecordVersion);
-
-      if (existingRecordVersion.compareTo(recordVersion) < 0) {
-        recordVersion.getSerializer().fastWriteTo(serializedVersion, 0, recordVersion);
-        setBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, serializedVersion);
-      } else {
-        if (!keepTombstoneVersion) {
-          existingRecordVersion.increment();
-          existingRecordVersion.getSerializer().fastWriteTo(serializedVersion, 0, existingRecordVersion);
-          setBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, serializedVersion);
-        }
-      }
-
+      byte[] serializedVersion = new byte[OVersionFactory.instance().getVersionSize()];
+      recordVersion.getSerializer().fastWriteTo(serializedVersion, 0, recordVersion);
+      setBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, serializedVersion);
     } else {
       entryIndex = indexesLength;
 
@@ -167,8 +153,8 @@ public class OClusterPage extends ODurablePage {
     int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
 
     if (recordVersion != null) {
-      byte[] serializedVersion = getBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, OVersionFactory.instance()
-          .getVersionSize());
+      byte[] serializedVersion = getBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE,
+          OVersionFactory.instance().getVersionSize());
 
       ORecordVersion storedRecordVersion = OVersionFactory.instance().createVersion();
       storedRecordVersion.getSerializer().fastReadFrom(serializedVersion, 0, storedRecordVersion);
@@ -203,8 +189,8 @@ public class OClusterPage extends ODurablePage {
       return null;
 
     int entryIndexPosition = PAGE_INDEXES_OFFSET + position * INDEX_ITEM_SIZE;
-    byte[] serializedVersion = getBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, OVersionFactory.instance()
-        .getVersionSize());
+    byte[] serializedVersion = getBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE,
+        OVersionFactory.instance().getVersionSize());
 
     ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
     recordVersion.getSerializer().fastReadFrom(serializedVersion, 0, recordVersion);

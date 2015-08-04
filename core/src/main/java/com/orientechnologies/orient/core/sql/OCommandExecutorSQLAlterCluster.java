@@ -19,16 +19,10 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -36,6 +30,13 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * SQL ALTER PROPERTY command: Changes an attribute of an existent property in the target class.
@@ -93,7 +94,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
       attribute = OCluster.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException e) {
       throw new OCommandSQLParsingException("Unknown class attribute '" + attributeAsString + "'. Supported attributes are: "
-          + Arrays.toString(OCluster.ATTRIBUTES.values()), parserText, oldPos);
+          + Arrays.toString(OCluster.ATTRIBUTES.values()), parserText, oldPos, e);
     }
 
     value = parserText.substring(pos + 1).trim();
@@ -139,6 +140,11 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
     return result;
   }
 
+  @Override
+  public long getDistributedTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
+  }
+
   protected OCluster getCluster() {
     final ODatabaseDocumentInternal database = getDatabase();
     if (clusterId > -1) {
@@ -150,5 +156,10 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
 
   public String getSyntax() {
     return "ALTER CLUSTER <cluster-name>|<cluster-id> <attribute-name> <attribute-value>";
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
   }
 }

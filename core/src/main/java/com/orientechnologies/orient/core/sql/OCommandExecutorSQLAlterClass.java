@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -29,6 +30,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -46,6 +48,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
   private String             className;
   private ATTRIBUTES         attribute;
   private String             value;
+  private boolean            unsafe        = false;
 
   public OCommandExecutorSQLAlterClass parse(final OCommandRequest iRequest) {
     final ODatabaseDocument database = getDatabase();
@@ -82,11 +85,17 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       attribute = OClass.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException e) {
       throw new OCommandSQLParsingException("Unknown class's attribute '" + attributeAsString + "'. Supported attributes are: "
-          + Arrays.toString(OClass.ATTRIBUTES.values()), parserText, oldPos);
+          + Arrays.toString(OClass.ATTRIBUTES.values()), parserText, oldPos, e);
     }
 
     value = parserText.substring(pos + 1).trim();
 
+    if (parserTextUpperCase.endsWith("UNSAFE")) {
+      unsafe = true;
+      value = value.substring(0, value.length() - "UNSAFE".length());
+      for (int i = value.length() - 1; value.charAt(i) == ' ' || value.charAt(i) == '\t'; i--)
+        value = value.substring(0, value.length() - 1);
+    }
     if (value.length() == 0)
       throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", parserText,
           oldPos);
@@ -110,17 +119,56 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
     if (cls == null)
       throw new OCommandExecutionException("Cannot alter class '" + className + "' because not found");
 
+    if (!unsafe && attribute == ATTRIBUTES.NAME && cls.isSubClassOf("E"))
+      throw new OCommandExecutionException("Cannot alter class '" + className
+          + "' because is an Edge class and could break vertices. Use UNSAFE if you want to force it");
+
+    if (value != null && attribute == ATTRIBUTES.SUPERCLASS) {
+      checkClassExists(database, className, value);
+    }
+    if (value != null && attribute == ATTRIBUTES.SUPERCLASSES) {
+      List<String> classes = Arrays.asList(value.split(",\\s*"));
+      for (String cName : classes) {
+        checkClassExists(database, className, cName);
+      }
+    }
+    if (!unsafe && value != null && attribute == ATTRIBUTES.NAME) {
+      if(!cls.getIndexes().isEmpty()){
+        throw new OCommandExecutionException("Cannot rename class '" + className
+            + "' because it has indexes defined on it. Drop indexes before or use UNSAFE (at your won risk)");
+      }
+    }
     cls.set(attribute, value);
 
     return null;
   }
 
+  @Override
+  public long getDistributedTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
+  }
+
+  protected void checkClassExists(ODatabaseDocument database, String targetClass, String superClass) {
+    if (superClass.startsWith("+") || superClass.startsWith("-")) {
+      superClass = superClass.substring(1);
+    }
+    if (database.getMetadata().getSchema().getClass(superClass) == null) {
+      throw new OCommandExecutionException("Cannot alter superClass of '" + targetClass + "' because  " + superClass
+          + " class not found");
+    }
+  }
+
   public String getSyntax() {
-    return "ALTER CLASS <class> <attribute-name> <attribute-value>";
+    return "ALTER CLASS <class> <attribute-name> <attribute-value> [UNSAFE]";
   }
 
   @Override
   public boolean involveSchema() {
     return true;
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
   }
 }

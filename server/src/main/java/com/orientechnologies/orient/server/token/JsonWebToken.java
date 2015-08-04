@@ -92,7 +92,7 @@ public class JsonWebToken implements OJsonWebToken, OToken {
     ORID userRid = ((OrientJwtPayload) payload).getUserRid();
     ODocument result;
     result = db.load(userRid, "roles:1");
-    if (!result.getClassName().equals(OUser.CLASS_NAME)) {
+    if (!result.getSchemaClass().isSubClassOf(OUser.CLASS_NAME)) {
       result = null;
     }
     return new OUser(result);

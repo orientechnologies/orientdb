@@ -23,8 +23,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.Map;
-
 /**
  * Dictionary index similar to unique index but does not check for updates, just executes changes. Last put always wins and override
  * the previous value.
@@ -34,9 +32,9 @@ import java.util.Map;
  */
 public class OIndexDictionary extends OIndexOneValue {
 
-  public OIndexDictionary(String typeId, String algorithm, OIndexEngine<OIdentifiable> engine, String valueContainerAlgorithm,
-      ODocument metadata) {
-    super(typeId, algorithm, engine, valueContainerAlgorithm, metadata);
+  public OIndexDictionary(String name, String typeId, String algorithm, OIndexEngine<OIdentifiable> engine,
+      String valueContainerAlgorithm, ODocument metadata) {
+    super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata);
   }
 
   public OIndexOneValue put(Object key, final OIdentifiable value) {
@@ -46,8 +44,8 @@ public class OIndexDictionary extends OIndexOneValue {
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    if (!txIsActive)
+      keyLockManager.acquireExclusiveLock(key);
 
     try {
       modificationLock.requestModificationLock();
@@ -66,8 +64,8 @@ public class OIndexDictionary extends OIndexOneValue {
         modificationLock.releaseModificationLock();
       }
     } finally {
-      if (txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      if (!txIsActive)
+        keyLockManager.releaseExclusiveLock(key);
     }
   }
 
@@ -85,31 +83,5 @@ public class OIndexDictionary extends OIndexOneValue {
 
   public boolean supportsOrderedIterations() {
     return false;
-  }
-
-  @Override
-  protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
-    key = getCollatingValue(key);
-    snapshot.put(key, value.getIdentity());
-  }
-
-  @Override
-  protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
-    key = getCollatingValue(key);
-    snapshot.put(key, RemovedValue.INSTANCE);
-  }
-
-  @Override
-  protected void commitSnapshot(Map<Object, Object> snapshot) {
-    for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
-      Object key = snapshotEntry.getKey();
-      checkForKeyType(key);
-
-      Object snapshotValue = snapshotEntry.getValue();
-      if (snapshotValue.equals(RemovedValue.INSTANCE))
-        indexEngine.remove(key);
-      else
-        indexEngine.put(key, (OIdentifiable) snapshotValue);
-    }
   }
 }

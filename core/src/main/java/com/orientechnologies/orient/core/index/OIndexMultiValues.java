@@ -50,9 +50,9 @@ import java.util.Set;
  * 
  */
 public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable>> {
-  public OIndexMultiValues(final String type, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
+  public OIndexMultiValues(String name, final String type, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
       String valueContainerAlgorithm, final ODocument metadata) {
-    super(type, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+    super(name, type, algorithm, indexEngine, valueContainerAlgorithm, metadata);
   }
 
   public Set<OIdentifiable> get(Object key) {
@@ -60,18 +60,29 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     key = getCollatingValue(key);
 
-    acquireSharedLock();
+    final ODatabase database = getDatabase();
+    final boolean txIsActive = database.getTransaction().isActive();
+
+    if (!txIsActive)
+      keyLockManager.acquireSharedLock(key);
     try {
 
-      final Set<OIdentifiable> values = indexEngine.get(key);
+      acquireSharedLock();
+      try {
 
-      if (values == null)
-        return Collections.emptySet();
+        final Set<OIdentifiable> values = indexEngine.get(key);
 
-      return new HashSet<OIdentifiable>(values);
+        if (values == null)
+          return Collections.emptySet();
 
+        return new HashSet<OIdentifiable>(values);
+
+      } finally {
+        releaseSharedLock();
+      }
     } finally {
-      releaseSharedLock();
+      if (!txIsActive)
+        keyLockManager.releaseSharedLock(key);
     }
   }
 
@@ -80,19 +91,29 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     key = getCollatingValue(key);
 
-    acquireSharedLock();
+    final ODatabase database = getDatabase();
+    final boolean txIsActive = database.getTransaction().isActive();
+    if (!txIsActive)
+      keyLockManager.acquireSharedLock(key);
     try {
+      acquireSharedLock();
+      try {
 
-      final Set<OIdentifiable> values = indexEngine.get(key);
+        final Set<OIdentifiable> values = indexEngine.get(key);
 
-      if (values == null)
-        return 0;
+        if (values == null)
+          return 0;
 
-      return values.size();
+        return values.size();
 
+      } finally {
+        releaseSharedLock();
+      }
     } finally {
-      releaseSharedLock();
+      if (!txIsActive)
+        keyLockManager.releaseSharedLock(key);
     }
+
   }
 
   public OIndexMultiValues put(Object key, final OIdentifiable iSingleValue) {
@@ -103,13 +124,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    if (!txIsActive)
+      keyLockManager.acquireExclusiveLock(key);
     try {
       modificationLock.requestModificationLock();
       try {
         checkForKeyType(key);
-        acquireExclusiveLock();
+        acquireSharedLock();
         startStorageAtomicOperation();
         try {
           Set<OIdentifiable> values = indexEngine.get(key);
@@ -140,48 +161,15 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           rollbackStorageAtomicOperation();
           throw new OIndexException("Error during insertion of key in index", e);
         } finally {
-          releaseExclusiveLock();
+          releaseSharedLock();
         }
       } finally {
         modificationLock.releaseModificationLock();
       }
     } finally {
-      if (txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      if (!txIsActive)
+        keyLockManager.releaseExclusiveLock(key);
     }
-  }
-
-  @Override
-  protected void putInSnapshot(Object key, OIdentifiable value, final Map<Object, Object> snapshot) {
-    key = getCollatingValue(key);
-
-    Object snapshotValue = snapshot.get(key);
-
-    Set<OIdentifiable> values;
-    if (snapshotValue == null)
-      values = indexEngine.get(key);
-    else if (snapshotValue.equals(RemovedValue.INSTANCE))
-      values = null;
-    else
-      values = (Set<OIdentifiable>) snapshotValue;
-
-    if (values == null) {
-      if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-        boolean durable = false;
-        if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
-          durable = true;
-
-        values = new OIndexRIDContainer(getName(), durable);
-      } else {
-        values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
-        ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
-      }
-
-      snapshot.put(key, values);
-    }
-
-    values.add(value.getIdentity());
-    snapshot.put(key, values);
   }
 
   @Override
@@ -193,13 +181,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    if (!txIsActive)
+      keyLockManager.acquireExclusiveLock(key);
 
     try {
       modificationLock.requestModificationLock();
       try {
-        acquireExclusiveLock();
+        acquireSharedLock();
         startStorageAtomicOperation();
         try {
 
@@ -212,8 +200,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
           if (value == null) {
             indexEngine.remove(key);
-          }
-          else if (values.remove(value)) {
+          } else if (values.remove(value)) {
             if (values.isEmpty())
               indexEngine.remove(key);
             else
@@ -230,61 +217,22 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           rollbackStorageAtomicOperation();
           throw new OIndexException("Error during removal of entry by key", e);
         } finally {
-          releaseExclusiveLock();
+          releaseSharedLock();
         }
       } finally {
         modificationLock.releaseModificationLock();
       }
     } finally {
-      if (txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      if (!txIsActive)
+        keyLockManager.releaseExclusiveLock(key);
     }
 
-  }
-
-  @Override
-  protected void removeFromSnapshot(Object key, final OIdentifiable value, final Map<Object, Object> snapshot) {
-    key = getCollatingValue(key);
-
-    final Object snapshotValue = snapshot.get(key);
-
-    Set<OIdentifiable> values;
-    if (snapshotValue == null)
-      values = indexEngine.get(key);
-    else if (snapshotValue.equals(RemovedValue.INSTANCE))
-      values = null;
-    else
-      values = (Set<OIdentifiable>) snapshotValue;
-
-    if (values == null)
-      return;
-
-    if (values.remove(value)) {
-      if (values.isEmpty())
-        snapshot.put(key, RemovedValue.INSTANCE);
-      else
-        snapshot.put(key, values);
-    }
-  }
-
-  @Override
-  protected void commitSnapshot(Map<Object, Object> snapshot) {
-    for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
-      Object key = snapshotEntry.getKey();
-      Object value = snapshotEntry.getValue();
-      checkForKeyType(key);
-
-      if (value.equals(RemovedValue.INSTANCE))
-        indexEngine.remove(key);
-      else
-        indexEngine.put(key, (Set<OIdentifiable>) value);
-    }
   }
 
   public OIndexMultiValues create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
 
-    return (OIndexMultiValues) super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
+    return (OIndexMultiValues) super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
         determineValueSerializer());
   }
 

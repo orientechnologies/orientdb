@@ -18,7 +18,9 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import junit.framework.Assert;
 
 import java.util.Date;
@@ -29,7 +31,7 @@ import java.util.concurrent.Callable;
  * Test distributed TX
  */
 public abstract class AbstractServerClusterTxTest extends AbstractServerClusterInsertTest {
-	private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
+  private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
 
   class TxWriter implements Callable<Void> {
     private final String databaseUrl;
@@ -49,16 +51,26 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
           if ((i + 1) % 100 == 0)
             System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
 
+          final int id = baseCount + i;
           database.begin();
           try {
-            ODocument person = createRecord(database, serverId, i);
+            ODocument person = createRecord(database, serverId, id);
             updateRecord(database, person);
             checkRecord(database, person);
+            deleteRecord(database, person);
+            checkRecordIsDeleted(database, person);
             // checkIndex(database, (String) person.field("name"), person.getIdentity());
 
             database.commit();
 
             Assert.assertTrue(person.getIdentity().isPersistent());
+          } catch (ORecordDuplicatedException e) {
+            // IGNORE IT
+          } catch (ODistributedException e) {
+            if (!(e.getCause() instanceof ORecordDuplicatedException)) {
+              database.rollback();
+              throw e;
+            }
           } catch (Exception e) {
             database.rollback();
             throw e;
@@ -107,5 +119,14 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
   protected void checkRecord(ODatabaseDocumentTx database, ODocument doc) {
     doc.reload();
     Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
+  }
+
+  protected void deleteRecord(ODatabaseDocumentTx database, ODocument doc) {
+    doc.delete();
+  }
+
+  protected void checkRecordIsDeleted(ODatabaseDocumentTx database, ODocument doc) {
+    final ORecord r = doc.reload();
+    Assert.assertNull(r);
   }
 }

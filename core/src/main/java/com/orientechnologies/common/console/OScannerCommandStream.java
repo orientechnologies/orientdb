@@ -55,7 +55,7 @@ public class OScannerCommandStream implements OCommandStream {
   }
 
   @Override
-  public void close(boolean onDelete) {
+  public void close() {
     scanner.close();
   }
 }

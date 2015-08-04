@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.net.Socket;
-import java.util.logging.Level;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -70,6 +63,10 @@ import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.logging.Level;
+
 /**
  * Abstract base class for binary network implementations.
  *
@@ -97,9 +94,14 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       final OContextConfiguration iConfig) throws IOException {
     server = iServer;
     channel = new OChannelBinaryServer(iSocket, iConfig);
-    tokenHandler = server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
-    if (tokenHandler != null && !tokenHandler.isEnabled())
-      tokenHandler = null;
+
+    try {
+      tokenHandler = server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
+      if (tokenHandler != null && !tokenHandler.isEnabled())
+        tokenHandler = null;
+    } catch (ODatabaseException e) {
+      OLogManager.instance().debug(this, "Error on retrieving plugin '%s'", e, OTokenHandler.TOKEN_HANDLER_NAME);
+    }
   }
 
   @Override
@@ -211,6 +213,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       try {
         onBeforeRequest();
       } catch (Exception e) {
+        sendError(clientTxId, e);
         handleConnectionError(channel, e);
         sendShutdown();
         return;
@@ -296,6 +299,15 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return iDatabase;
   }
 
+  /**
+   * Returns a database instance giving the database name, the database type and storage type.
+   * 
+   * @param dbName
+   * @param dbType
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
+   * @return
+   */
   protected ODatabaseDocumentTx getDatabaseInstance(final String dbName, final String dbType, final String storageType) {
     String path;
 
@@ -389,10 +401,11 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     try {
       channel.flush();
     } catch (IOException e1) {
+      OLogManager.instance().debug(this, "Error during channel flush", e1);
     }
   }
 
-  protected byte[] getRecordBytes(final ORecord iRecord) {
+  public byte[] getRecordBytes(final ORecord iRecord) {
 
     final byte[] stream;
     try {

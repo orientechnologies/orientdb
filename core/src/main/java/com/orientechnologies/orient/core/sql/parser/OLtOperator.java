@@ -25,5 +25,11 @@ class OLtOperator extends SimpleNode  implements OBinaryCompareOperator{
   @Override public String toString() {
     return "<";
   }
+
+  @Override public boolean supportsBasicCalculation() {
+    return true;
+  }
+
+
 }
 /* JavaCC - OriginalChecksum=d8e97d52128198b373bb0c272c72de2c (do not edit this line) */

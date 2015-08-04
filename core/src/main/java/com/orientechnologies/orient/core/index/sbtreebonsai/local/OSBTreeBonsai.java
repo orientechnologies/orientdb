@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
@@ -26,7 +26,7 @@ import java.util.Map;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 
@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
  * The tree that have similar structure to {@link OSBTree} and designed to store small entries. <br>
  * <br>
  * The tree algorithm is the same as in {@link OSBTree}, but it have tiny buckets.<br>
- * The {@link ODiskCache} could contain several buckets. That's why there is no huge resource consuming when you have lots of
+ * The {@link OReadCache} could contain several buckets. That's why there is no huge resource consuming when you have lots of
  * OSBTreeBonsai that contain only few records.<br>
  * <br>
  * <code>
@@ -53,7 +53,7 @@ public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
   /**
    * Gets id of file where this bonsai tree is stored.
    * 
-   * @return id of file in {@link ODiskCache}
+   * @return id of file in {@link OReadCache}
    */
   long getFileId();
 

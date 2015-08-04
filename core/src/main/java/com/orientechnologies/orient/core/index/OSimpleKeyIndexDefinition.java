@@ -20,11 +20,6 @@
 
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -32,17 +27,26 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   private OType[] keyTypes;
 
-  public OSimpleKeyIndexDefinition(final OType... keyTypes) {
+  public OSimpleKeyIndexDefinition(int version, final OType... keyTypes) {
+    super();
+
     this.keyTypes = keyTypes;
   }
 
   public OSimpleKeyIndexDefinition() {
   }
 
-  public OSimpleKeyIndexDefinition(OType[] keyTypes2, List<OCollate> collatesList) {
+  public OSimpleKeyIndexDefinition(OType[] keyTypes2, List<OCollate> collatesList, int version) {
+    super();
+
     this.keyTypes = keyTypes2;
     if (keyTypes.length > 1) {
       OCompositeCollate collate = new OCompositeCollate(this);
@@ -108,22 +112,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   public ODocument toStream() {
     document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
     try {
-
-      final List<String> keyTypeNames = new ArrayList<String>(keyTypes.length);
-
-      for (final OType keyType : keyTypes)
-        keyTypeNames.add(keyType.toString());
-
-      document.field("keyTypes", keyTypeNames, OType.EMBEDDEDLIST);
-      if (collate instanceof OCompositeCollate) {
-        List<String> collatesNames = new ArrayList<String>();
-        for (OCollate curCollate : ((OCompositeCollate) this.collate).getCollates())
-          collatesNames.add(curCollate.getName());
-        document.field("collates", collatesNames, OType.EMBEDDEDLIST);
-      } else
-        document.field("collate", collate.getName());
-      document.field("nullValuesIgnored", isNullValuesIgnored());
-
+      serializeToStream();
       return document;
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
@@ -131,7 +120,35 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   @Override
+  protected void serializeToStream() {
+    super.serializeToStream();
+
+    final List<String> keyTypeNames = new ArrayList<String>(keyTypes.length);
+
+    for (final OType keyType : keyTypes)
+      keyTypeNames.add(keyType.toString());
+
+    document.field("keyTypes", keyTypeNames, OType.EMBEDDEDLIST);
+    if (collate instanceof OCompositeCollate) {
+      List<String> collatesNames = new ArrayList<String>();
+      for (OCollate curCollate : ((OCompositeCollate) this.collate).getCollates())
+        collatesNames.add(curCollate.getName());
+      document.field("collates", collatesNames, OType.EMBEDDEDLIST);
+    } else
+      document.field("collate", collate.getName());
+
+    document.field("nullValuesIgnored", isNullValuesIgnored());
+  }
+
+  @Override
   protected void fromStream() {
+    serializeFromStream();
+  }
+
+  @Override
+  protected void serializeFromStream() {
+    super.serializeFromStream();
+
     final List<String> keyTypeNames = document.field("keyTypes");
     keyTypes = new OType[keyTypeNames.size()];
 
@@ -190,7 +207,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
    * @param indexName
    * @param indexType
    */
-  public String toCreateIndexDDL(final String indexName, final String indexType) {
+  public String toCreateIndexDDL(final String indexName, final String indexType, final String engine) {
     final StringBuilder ddl = new StringBuilder("create index ");
     ddl.append(indexName).append(' ').append(indexType).append(' ');
 

@@ -16,22 +16,19 @@
  */
 package com.orientechnologies.orient.object.enhancement;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.*;
-import javassist.util.proxy.MethodHandler;
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyObject;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
@@ -55,10 +52,25 @@ import com.orientechnologies.orient.object.serialization.OObjectCustomSerializer
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerMap;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerSet;
 import com.orientechnologies.orient.object.serialization.OObjectLazyCustomSerializer;
+import javassist.util.proxy.MethodHandler;
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
+
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
- * 
+ *
  */
 public class OObjectProxyMethodHandler implements MethodHandler {
 
@@ -107,7 +119,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   /**
    * Method that detaches all fields contained in the document to the given object
-   * 
+   *
    * @param self
    *          :- The object containing this handler instance
    * @throws InvocationTargetException
@@ -134,7 +146,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   /**
    * Method that detaches all fields contained in the document to the given object
-   * 
+   *
    * @param self
    *          :- The object containing this handler instance
    * @throws InvocationTargetException
@@ -175,8 +187,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   /**
    * Method that attaches all data contained in the object to the associated document
-   * 
-   * 
+   *
+   *
    * @param self
    *          :- The object containing this handler instance
    * @throws IllegalAccessException
@@ -336,7 +348,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
               Method setMethod = getSetMethod(self.getClass().getSuperclass(), getSetterFieldName(fieldName), value);
               setMethod.invoke(self, value);
             } else if ((value instanceof Set || value instanceof Map)
-                && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) < 0) {
+                && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) < 0
+                && !OReflectionHelper.isJavaType(genericMultiValueType)) {
               if (value instanceof Set)
                 value = new OObjectLazySet(self, (Set<OIdentifiable>) docValue, OObjectEntitySerializer.isCascadeDeleteField(
                     self.getClass(), fieldName));
@@ -359,7 +372,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   }
 
   protected Object getDocFieldValue(final Object self, final String fieldName) {
-    if (doc.getSchemaClass().existsProperty(fieldName))
+    final OClass cls = doc.getSchemaClass();
+    if (cls != null && cls.existsProperty(fieldName))
       return doc.field(fieldName);
     else {
       OType expected = OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName);
@@ -505,7 +519,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         doc.field(f.getName(), doc.field(f.getName()), type);
       Map<Object, OIdentifiable> docMap = doc.field(f.getName(), type);
       if (docMap == null) {
-        docMap = new ORecordLazyMap(doc);
+        if (OType.EMBEDDEDMAP == type)
+          docMap = new OTrackedMap<OIdentifiable>(doc);
+        else
+          docMap = new ORecordLazyMap(doc);
         setDocFieldValue(f.getName(), docMap, type);
       }
       value = new OObjectLazyMap(self, docMap, value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
@@ -544,7 +561,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         OType type = embedded ? OType.EMBEDDEDLIST : OType.LINKLIST;
         List<OIdentifiable> docList = doc.field(f.getName(), type);
         if (docList == null) {
-          docList = new ORecordLazyList(doc);
+          if (embedded)
+            docList = new OTrackedList<OIdentifiable>(doc);
+          else
+            docList = new ORecordLazyList(doc);
           setDocFieldValue(f.getName(), docList, type);
         } else if (isFieldUpdate) {
           docList.clear();
@@ -555,7 +575,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         OType type = embedded ? OType.EMBEDDEDSET : OType.LINKSET;
         Set<OIdentifiable> docSet = doc.field(f.getName(), type);
         if (docSet == null) {
-          docSet = new ORecordLazySet(doc);
+          if (embedded)
+            docSet = new OTrackedSet<OIdentifiable>(doc);
+          else
+            docSet = new ORecordLazySet(doc);
           setDocFieldValue(f.getName(), docSet, type);
         } else if (isFieldUpdate) {
           docSet.clear();
@@ -705,6 +728,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   }
 
   protected Object convertDocumentToObject(final ODocument value, final Object self) {
+    if (value == null)
+      return null;
     return OObjectEntityEnhancer.getInstance().getProxiedInstance(value.getClassName(), getDatabase().getEntityManager(), value,
         (self instanceof ProxyObject ? (ProxyObject) self : null));
   }

@@ -30,7 +30,8 @@ public class ODeleteEdgeStatement extends OStatement {
 
   protected OWhereClause      whereClause;
 
-  protected Integer           limit;
+  protected OLimit            limit;
+  protected OBatch            batch        = null;
 
   public ODeleteEdgeStatement(int id) {
     super(id);
@@ -64,7 +65,7 @@ public class ODeleteEdgeStatement extends OStatement {
       result.append(rid.toString());
     }
     if (rids != null) {
-      result.append("[");
+      result.append(" [");
       boolean first = true;
       for (ORid rid : rids) {
         if (!first) {
@@ -150,9 +151,12 @@ public class ODeleteEdgeStatement extends OStatement {
     }
 
     if (limit != null) {
-      result.append(" LIMIT ");
       result.append(limit);
     }
+    if (batch != null) {
+      result.append(batch);
+    }
+
 
     return result.toString();
   }
@@ -181,6 +185,14 @@ public class ODeleteEdgeStatement extends OStatement {
     if (whereClause != null) {
       whereClause.replaceParameters(params);
     }
+
+    if (limit != null) {
+      limit.replaceParameters(params);
+    }
+    if (batch != null) {
+      batch.replaceParameters(params);
+    }
+
   }
 
 }

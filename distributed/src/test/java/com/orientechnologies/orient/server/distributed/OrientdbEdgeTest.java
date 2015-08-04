@@ -2,11 +2,11 @@
  *
  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
  *  *
- *  *  Licensed under the Apache License, Version 2.1-SNAPSHOT (the "License");
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
  *  *  You may obtain a copy of the License at
  *  *
- *  *       http://www.apache.org/licenses/LICENSE-2.1-SNAPSHOT
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
  *  *
  *  *  Unless required by applicable law or agreed to in writing, software
  *  *  distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,14 +31,14 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import org.apache.commons.configuration.BaseConfiguration;
-import org.apache.commons.configuration.Configuration;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -60,20 +60,21 @@ public class OrientdbEdgeTest {
   }
 
   protected static OrientGraphFactory getGraphFactory() throws Exception {
-    Configuration conf = new BaseConfiguration();
+    Map<String, Object> conf = new HashMap<String, Object>();
 
-    conf.setProperty("storage.url", "remote:localhost/test");
-    conf.setProperty("storage.pool-min", "1");
-    conf.setProperty("storage.pool-max", "10");
-    conf.setProperty("storage.user", "admin");
-    conf.setProperty("storage.password", "admin");
+    conf.put("storage.url", "remote:localhost/test");
+    conf.put("storage.pool-min", 1);
+    conf.put("storage.pool-max", 10);
+    conf.put("storage.user", "admin");
+    conf.put("storage.password", "admin");
 
     OGlobalConfiguration.CLIENT_CONNECT_POOL_WAIT_TIMEOUT.setValue(15000);
 
     verifyDatabaseExists(conf);
 
-    return new OrientGraphFactory(conf.getString("storage.url"), conf.getString("storage.user"), conf.getString("storage.password"))
-        .setupPool(conf.getInt("storage.pool-min"), conf.getInt("storage.pool-max"));
+    return new OrientGraphFactory((String) conf.get("storage.url"), (String) conf.get("storage.user"),
+        (String) conf.get("storage.password")).setupPool((Integer) conf.get("storage.pool-min"),
+        (Integer) conf.get("storage.pool-max"));
   }
 
   @BeforeClass
@@ -85,13 +86,75 @@ public class OrientdbEdgeTest {
 
     server = OServerMain.create();
     server
-        .startup("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" + "<orient-server>\n" + "    <handlers>\n" + "        <!-- GRAPH PLUGIN -->\n" + "        <handler class=\"com.orientechnologies.orient.graph.handler.OGraphServerHandler\">\n" + "            <parameters>\n" + "                <parameter name=\"enabled\" value=\"true\"/>\n" + "                <parameter name=\"graph.pool.max\" value=\"50\"/>\n" + "            </parameters>\n" + "        </handler>\n" + "       \n" + "<handler class=\"com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin\">\n" + "            <parameters>\n" + "                <parameter name=\"nodeName\" value=\"unittest\" />\n" + "                <parameter name=\"enabled\" value=\"true\"/>\n" + "                <parameter name=\"configuration.db.default\"\n" + "                           value=\"src/test/resources/default-distributed-db-config.json\"/>\n" + "                <parameter name=\"configuration.hazelcast\" value=\"config/hazelcast.xml\"/>\n" + "                <parameter name=\"conflict.resolver.impl\"\n" + "                           value=\"com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver\"/>\n" + "\n" + "                <!-- PARTITIONING STRATEGIES -->\n" + "                <parameter name=\"sharding.strategy.round-robin\"\n" + "                           value=\"com.orientechnologies.orient.server.hazelcast.sharding.strategy.ORoundRobinPartitioninStrategy\"/>\n" + "            </parameters>\n" + "        </handler>" + "    </handlers>\n" + "    <network>\n" + "        <protocols>\n" + "            <protocol name=\"binary\"\n" + "                      implementation=\"com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary\"/>\n" + "        </protocols>\n" + "        <listeners>\n" + "            <listener protocol=\"binary\" ip-address=\"0.0.0.0\" port-range=\"2424-2430\"/>\n" + "        </listeners>\n" + "        <cluster>\n" + "        </cluster>\n" + "    </network>\n" + "    <storages>\n" + "    </storages>\n" + "    <users>\n" + "      <user name=\"admin\" password=\"admin\" resources=\"*\"/>\n" + "    </users>\n" + "    <properties>\n" + "\n" + "        <!-- Uses the Hazelcast's distributed cache as 2nd level cache -->\n" + "        <!-- <entry name=\"cache.level2.impl\" value=\"com.orientechnologies.orient.server.hazelcast.OHazelcastCache\" /> -->\n" + "\n" + "        <!-- DATABASE POOL: size min/max -->\n" + "        <entry name=\"db.pool.min\" value=\"1\"/>\n" + "        <entry name=\"db.pool.max\" value=\"20\"/>\n" + "\n" + "        <!-- LEVEL1 AND 2 CACHE: enable/disable and set the size as number of entries -->\n" + "        <entry name=\"cache.level1.enabled\" value=\"false\"/>\n" + "        <entry name=\"cache.level1.size\" value=\"1000\"/>\n" + "        <entry name=\"cache.level2.enabled\" value=\"false\"/>\n" + "        <entry name=\"cache.level2.size\" value=\"1000\"/>\n" + "\n" + "<entry name=\"server.database.path\" value=\"target/databases\" />" + "        <!-- PROFILER: configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size>  -->\n" + "        <entry name=\"profiler.enabled\" value=\"true\"/>\n" + "        <!-- <entry name=\"profiler.config\" value=\"30,10,10\" />  -->\n" + "\n" + "        <!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info, warning -->\n" + "        <entry name=\"log.console.level\" value=\"finest\"/>\n" + "        <entry name=\"log.file.level\" value=\"finest\"/>\n" + "    </properties>\n" + "</orient-server>");
+        .startup("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+            + "<orient-server>\n"
+            + "    <handlers>\n"
+            + "        <!-- GRAPH PLUGIN -->\n"
+            + "        <handler class=\"com.orientechnologies.orient.graph.handler.OGraphServerHandler\">\n"
+            + "            <parameters>\n"
+            + "                <parameter name=\"enabled\" value=\"true\"/>\n"
+            + "                <parameter name=\"graph.pool.max\" value=\"50\"/>\n"
+            + "            </parameters>\n"
+            + "        </handler>\n"
+            + "       \n"
+            + "<handler class=\"com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin\">\n"
+            + "            <parameters>\n"
+            + "                <parameter name=\"nodeName\" value=\"unittest\" />\n"
+            + "                <parameter name=\"enabled\" value=\"true\"/>\n"
+            + "                <parameter name=\"configuration.db.default\"\n"
+            + "                           value=\"src/test/resources/default-distributed-db-config.json\"/>\n"
+            + "                <parameter name=\"configuration.hazelcast\" value=\"config/hazelcast.xml\"/>\n"
+            + "\n"
+            + "                <!-- PARTITIONING STRATEGIES -->\n"
+            + "                <parameter name=\"sharding.strategy.round-robin\"\n"
+            + "                           value=\"com.orientechnologies.orient.server.hazelcast.sharding.strategy.ORoundRobinPartitioninStrategy\"/>\n"
+            + "            </parameters>\n"
+            + "        </handler>"
+            + "    </handlers>\n"
+            + "    <network>\n"
+            + "        <protocols>\n"
+            + "            <protocol name=\"binary\"\n"
+            + "                      implementation=\"com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary\"/>\n"
+            + "        </protocols>\n"
+            + "        <listeners>\n"
+            + "            <listener protocol=\"binary\" ip-address=\"0.0.0.0\" port-range=\"2424-2430\"/>\n"
+            + "        </listeners>\n"
+            + "        <cluster>\n"
+            + "        </cluster>\n"
+            + "    </network>\n"
+            + "    <storages>\n"
+            + "    </storages>\n"
+            + "    <users>\n"
+            + "      <user name=\"admin\" password=\"admin\" resources=\"*\"/>\n"
+            + "    </users>\n"
+            + "    <properties>\n"
+            + "\n"
+            + "        <!-- Uses the Hazelcast's distributed cache as 2nd level cache -->\n"
+            + "        <!-- <entry name=\"cache.level2.impl\" value=\"com.orientechnologies.orient.server.hazelcast.OHazelcastCache\" /> -->\n"
+            + "\n"
+            + "        <!-- DATABASE POOL: size min/max -->\n"
+            + "        <entry name=\"db.pool.min\" value=\"1\"/>\n"
+            + "        <entry name=\"db.pool.max\" value=\"20\"/>\n"
+            + "\n"
+            + "        <!-- LEVEL1 AND 2 CACHE: enable/disable and set the size as number of entries -->\n"
+            + "        <entry name=\"cache.level1.enabled\" value=\"false\"/>\n"
+            + "        <entry name=\"cache.level1.size\" value=\"1000\"/>\n"
+            + "        <entry name=\"cache.level2.enabled\" value=\"false\"/>\n"
+            + "        <entry name=\"cache.level2.size\" value=\"1000\"/>\n"
+            + "\n"
+            + "<entry name=\"server.database.path\" value=\"target/databases\" />"
+            + "        <!-- PROFILER: configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size>  -->\n"
+            + "        <entry name=\"profiler.enabled\" value=\"true\"/>\n"
+            + "        <!-- <entry name=\"profiler.config\" value=\"30,10,10\" />  -->\n" + "\n"
+            + "        <!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info, warning -->\n"
+            + "        <entry name=\"log.console.level\" value=\"finest\"/>\n"
+            + "        <entry name=\"log.file.level\" value=\"finest\"/>\n" + "    </properties>\n" + "</orient-server>");
 
     server.activate();
   }
 
-  private static void verifyDatabaseExists(Configuration conf) {
-    final String url = conf.getString("storage.url");
+  private static void verifyDatabaseExists(Map<String, Object> conf) {
+    final String url = (String) conf.get("storage.url");
 
     if (!url.startsWith("remote:"))
       return;
@@ -99,7 +162,7 @@ public class OrientdbEdgeTest {
     try {
       final OServerAdmin admin = new OServerAdmin(url);
 
-      admin.connect(conf.getString("storage.user"), conf.getString("storage.password"));
+      admin.connect((String) conf.get("storage.user"), (String) conf.get("storage.password"));
 
       if (!admin.existsDatabase()) {
         System.err.println("creating database " + url);
@@ -107,7 +170,7 @@ public class OrientdbEdgeTest {
       }
 
       try {
-        OrientGraph t = new OrientGraph(url, conf.getString("storage.user"), conf.getString("storage.password"));
+        OrientGraph t = new OrientGraph(url, (String) conf.get("storage.user"), (String) conf.get("storage.password"));
         t.command(new OCommandSQL("alter database custom useLightweightEdges=false")).execute();
         t.commit();
         t.shutdown();
@@ -116,7 +179,7 @@ public class OrientdbEdgeTest {
       }
 
       try {
-        OrientGraph t = new OrientGraph(url, conf.getString("storage.user"), conf.getString("storage.password"));
+        OrientGraph t = new OrientGraph(url, (String) conf.get("storage.user"), (String) conf.get("storage.password"));
         t.command(new OCommandSQL("ALTER CLASS V CLUSTERSELECTION balanced")).execute();
         t.commit();
         t.shutdown();
@@ -125,7 +188,7 @@ public class OrientdbEdgeTest {
       }
 
       try {
-        OrientGraph t = new OrientGraph(url, conf.getString("storage.user"), conf.getString("storage.password"));
+        OrientGraph t = new OrientGraph(url, (String) conf.get("storage.user"), (String) conf.get("storage.password"));
         t.command(new OCommandSQL("ALTER CLASS E CLUSTERSELECTION balanced")).execute();
         t.commit();
         t.shutdown();
@@ -148,12 +211,21 @@ public class OrientdbEdgeTest {
     } catch (OSchemaException ex) {
       if (!ex.getMessage().contains("exists"))
         throw (ex);
+      factory.getNoTx().command(new OCommandSQL("delete edge some-label")).execute();
+    }
+
+    try {
+      factory.getNoTx().createVertexType("some-v-label");
+    } catch (OSchemaException ex) {
+      if (!ex.getMessage().contains("exists"))
+        throw (ex);
+      factory.getNoTx().command(new OCommandSQL("delete vertex some-v-label")).execute();
     }
 
     OrientGraph t = factory.getTx();
 
-    Vertex v1 = t.addVertex(null);
-    Vertex v2 = t.addVertex(null);
+    Vertex v1 = t.addVertex("class:some-v-label");
+    Vertex v2 = t.addVertex("class:some-v-label");
     v1.setProperty("_id", "v1");
     v2.setProperty("_id", "v2");
 
@@ -165,7 +237,7 @@ public class OrientdbEdgeTest {
 
     t = factory.getTx();
 
-    assertEquals(2, t.countVertices());
+    assertEquals(2, t.countVertices("some-v-label"));
     assertEquals(1, t.countEdges());
     assertNotNull(t.getVertices("_id", "v1").iterator().next());
     assertNotNull(t.getVertices("_id", "v2").iterator().next());

@@ -7,11 +7,15 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
 
+import com.orientechnologies.orient.core.storage.cache.local.ConcurrentLRUList;
+import com.orientechnologies.orient.core.storage.cache.local.LRUList;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.test.ConcurrentTestHelper;
+import com.orientechnologies.orient.test.TestFactory;
 
 /**
  * Concurrent test for {@link ConcurrentLRUList}.
@@ -112,7 +116,7 @@ public class ConcurrentLRUListConcurrentTest {
     c = c1;
   }
 
-  private class AdderFactory implements ConcurrentTestHelper.TestFactory<Integer> {
+  private class AdderFactory implements TestFactory<Integer> {
     private int j = 0;
 
     @Override
@@ -131,7 +135,7 @@ public class ConcurrentLRUListConcurrentTest {
     }
   }
 
-  private class RemoveLRUFactory implements ConcurrentTestHelper.TestFactory<Integer> {
+  private class RemoveLRUFactory implements TestFactory<Integer> {
     @Override
     public Callable<Integer> createWorker() {
       return new Callable<Integer>() {
@@ -152,7 +156,7 @@ public class ConcurrentLRUListConcurrentTest {
     }
   }
 
-  private class RandomAdderFactory implements ConcurrentTestHelper.TestFactory<Integer> {
+  private class RandomAdderFactory implements TestFactory<Integer> {
 
     @Override
     public Callable<Integer> createWorker() {
@@ -171,7 +175,7 @@ public class ConcurrentLRUListConcurrentTest {
     }
   }
 
-  private class AddSameFactory implements ConcurrentTestHelper.TestFactory<Integer> {
+  private class AddSameFactory implements TestFactory<Integer> {
 
     @Override
     public Callable<Integer> createWorker() {
@@ -190,7 +194,7 @@ public class ConcurrentLRUListConcurrentTest {
     }
   }
 
-  private class RandomRemoveFactory implements ConcurrentTestHelper.TestFactory<Integer> {
+  private class RandomRemoveFactory implements TestFactory<Integer> {
     @Override
     public Callable<Integer> createWorker() {
       return new Callable<Integer>() {

@@ -245,19 +245,24 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   public ORecord reload() {
-    return reload(null);
+    return reload(null, true, true);
   }
 
-  public ORecord reload(final String iFetchPlan) {
-    return reload(null, true);
+  public ORecord reload(final String fetchPlan) {
+    return reload(fetchPlan, true);
   }
 
-  public ORecord reload(final String iFetchPlan, final boolean iIgnoreCache) {
+  public ORecord reload(final String fetchPlan, final boolean ignoreCache) {
+    return reload(fetchPlan, ignoreCache, true);
+  }
+
+  @Override
+  public ORecord reload(String fetchPlan, boolean ignoreCache, boolean force) throws ORecordNotFoundException {
     if (!getIdentity().isValid())
       throw new ORecordNotFoundException("The record has no id. It is probably new or still transient");
 
     try {
-      getDatabase().reload(this, iFetchPlan, iIgnoreCache);
+      getDatabase().reload(this, fetchPlan, ignoreCache, force);
 
       return this;
     } catch (OOfflineClusterException e) {
@@ -297,7 +302,17 @@ public abstract class ORecordAbstract implements ORecord {
   @Override
   public void lock(final boolean iExclusive) {
     ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
-        .lockRecord(this, iExclusive ? OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK);
+        .lockRecord(this, iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
+  }
+
+  @Override
+  public boolean isLocked() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().isLockedRecord(this);
+  }
+
+  @Override
+  public OStorage.LOCKING_STRATEGY lockingStrategy() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockingStrategy(this);
   }
 
   @Override

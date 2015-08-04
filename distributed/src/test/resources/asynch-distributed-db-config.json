@@ -1,0 +1,18 @@
+{
+    "autoDeploy": true,
+    "hotAlignment": false,
+    "executionMode": "asynchronous",
+    "readQuorum": 1,
+    "writeQuorum": 2,
+    "failureAvailableNodesLessQuorum": false,
+    "readYourWrites": true,
+    "clusters": {
+        "internal": {
+        },
+        "index": {
+        },
+        "*": {
+            "servers" : [ "<NEW_NODE>" ]
+        }
+    }
+}

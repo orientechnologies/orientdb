@@ -12,6 +12,7 @@ public class OUpdateItem extends SimpleNode {
   public static final int OPERATOR_SLASHASSIGN = 4;
 
   protected OIdentifier   left;
+  protected OModifier     leftModifier;
   protected int           operator;
   protected OExpression   right;
 
@@ -36,6 +37,9 @@ public class OUpdateItem extends SimpleNode {
   public String toString() {
     StringBuilder result = new StringBuilder();
     result.append(left.toString());
+    if (leftModifier != null) {
+      result.append(leftModifier.toString());
+    }
     switch (operator) {
     case OPERATOR_EQ:
       result.append(" = ");

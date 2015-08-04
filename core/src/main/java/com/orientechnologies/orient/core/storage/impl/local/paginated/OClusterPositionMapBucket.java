@@ -1,33 +1,34 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import java.io.IOException;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -45,8 +46,8 @@ public class OClusterPositionMapBucket extends ODurablePage {
 
   public static final int   MAX_ENTRIES      = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / ENTRY_SIZE;
 
-  public OClusterPositionMapBucket(OCacheEntry cacheEntry, TrackMode trackMode) {
-    super(cacheEntry, trackMode);
+  public OClusterPositionMapBucket(OCacheEntry cacheEntry, OWALChangesTree changesTree) {
+    super(cacheEntry, changesTree);
   }
 
   public int add(long pageIndex, int recordPosition) throws IOException {
@@ -74,6 +75,19 @@ public class OClusterPositionMapBucket extends ODurablePage {
       return null;
 
     return readEntry(position);
+  }
+
+  public void set(int index, PositionEntry entry) throws IOException {
+    int size = getIntValue(SIZE_OFFSET);
+
+    if (index >= size)
+      throw new OStorageException("Provided index " + index + " is out of range.");
+
+    final int position = entryPosition(index);
+    if (getByteValue(position) != FILLED)
+      throw new OStorageException("Provided index " + index + " points to removed entry.");
+
+    updateEntry(position, entry);
   }
 
   private int entryPosition(int index) {
@@ -114,6 +128,15 @@ public class OClusterPositionMapBucket extends ODurablePage {
     position += OIntegerSerializer.INT_SIZE;
 
     return new PositionEntry(pageIndex, pagePosition);
+  }
+
+  private void updateEntry(int position, PositionEntry entry) throws IOException {
+    position += OByteSerializer.BYTE_SIZE;
+
+    setLongValue(position, entry.pageIndex);
+    position += OLongSerializer.LONG_SIZE;
+
+    setIntValue(position, entry.recordPosition);
   }
 
   public boolean exists(int index) {

@@ -154,8 +154,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
     if (!record.getIdentity().isValid())
       // NOTHING TO LOAD
       return;
-    ORawBuffer raw = iSt.readRecord((ORecordId) record.getIdentity(), null, false, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
-        .getResult();
+    ORawBuffer raw = iSt.readRecord((ORecordId) record.getIdentity(), null, false, null).getResult();
     if (raw == null)
       throw new OConfigurationException("Cannot load map with id " + record.getIdentity());
     record.getRecordVersion().copyFrom(raw.version);

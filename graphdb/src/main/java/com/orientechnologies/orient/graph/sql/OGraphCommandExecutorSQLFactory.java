@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -31,6 +26,11 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Graph related command operator executor factory. It's auto-discovered.
@@ -78,6 +78,9 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
 
       if (!graphDb.isClosed()) {
         ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
+        if (autoStartTx)
+          ((OrientGraph) result).begin();
+
         shouldBeShutDown.setValue(false);
         return (OrientGraph) result;
       }
@@ -85,7 +88,11 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
     ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) database);
     shouldBeShutDown.setValue(true);
-    return new OrientGraph((ODatabaseDocumentTx) database, autoStartTx);
+
+    final OrientGraph g = new OrientGraph((ODatabaseDocumentTx) database, false);
+    if (autoStartTx)
+      g.begin();
+    return g;
   }
 
   /**
@@ -137,12 +144,18 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
   public static <T> T runInTx(final GraphCallBack<T> callBack) {
     OModifiableBoolean shutdownFlag = new OModifiableBoolean();
     ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
-    OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
+    final boolean txAlreadyBegun = curDb.getTransaction().isActive();
+    OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(true, shutdownFlag);
     try {
       return runInTx(graph, callBack);
     } finally {
-      if (shutdownFlag.getValue())
-        graph.shutdown(false);
+      if (!txAlreadyBegun) {
+        graph.commit();
+
+        if (shutdownFlag.getValue())
+          graph.shutdown(false, false);
+      }
+
       ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
     }
   }

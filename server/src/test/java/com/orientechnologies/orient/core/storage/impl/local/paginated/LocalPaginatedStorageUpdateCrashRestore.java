@@ -41,7 +41,7 @@ public class LocalPaginatedStorageUpdateCrashRestore {
   private File                          buildDir;
   private int                           idGen           = 0;
 
-  private OLockManager<Integer, Thread> idLockManager   = new OLockManager<Integer, Thread>(true, 1000);
+  private OLockManager<Integer> idLockManager   = new OLockManager<Integer>(true, 1000);
 
   private ExecutorService               executorService = Executors.newCachedThreadPool();
   private Process                       process;
@@ -77,7 +77,7 @@ public class LocalPaginatedStorageUpdateCrashRestore {
       try {
         while (true) {
           final int idToUpdate = random.nextInt(idGen);
-          idLockManager.acquireLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+          idLockManager.acquireLock(idToUpdate, OLockManager.LOCK.EXCLUSIVE);
           try {
             OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from TestClass where id  = " + idToUpdate);
             final List<ODocument> result = baseDB.query(query);
@@ -164,17 +164,15 @@ public class LocalPaginatedStorageUpdateCrashRestore {
     System.out.println("Start documents update.");
 
     List<Future> futures = new ArrayList<Future>();
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 8; i++) {
       futures.add(executorService.submit(new DataUpdateTask(baseDocumentTx, testDocumentTx)));
     }
 
-    Thread.sleep(150000);
+    Thread.sleep(300000);
 
     long lastTs = System.currentTimeMillis();
     System.out.println("Wait for process to destroy");
-    Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
-    p.waitFor();
-
+    // process.destroyForcibly();
     process.waitFor();
     System.out.println("Process was destroyed");
 

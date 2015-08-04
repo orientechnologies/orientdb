@@ -29,7 +29,9 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
@@ -93,8 +95,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           final OIndexInternal<?> index = indexesToCommit.get(indexEntry.getKey()).getInternal();
 
           if (index == null) {
-            OLogManager.instance().error(this, "Index with name " + indexEntry.getKey() + " was not found.");
-            throw new OIndexException("Index with name " + indexEntry.getKey() + " was not found.");
+            OLogManager.instance().error(this, "Index with name '" + indexEntry.getKey() + "' was not found.");
+            throw new OIndexException("Index with name '" + indexEntry.getKey() + "' was not found.");
           } else
             index.addTxOperation((ODocument) indexEntry.getValue());
         }
@@ -115,6 +117,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   }
 
   public void begin() {
+    if (txStartCounter < 0)
+      throw new OTransactionException("Invalid value of TX counter.");
+
     if (txStartCounter == 0)
       status = TXSTATUS.BEGUN;
 
@@ -131,13 +136,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   /**
    * The transaction is reentrant. If {@code begin()} has been called several times, the actual commit happens only after the same
    * amount of {@code commit()} calls
-   * 
+   *
    * @param force
    *          commit transaction even
    */
   @Override
   public void commit(final boolean force) {
     checkTransaction();
+
+    if (txStartCounter < 0)
+      throw new OStorageException("Invalid value of tx counter");
 
     if (force)
       txStartCounter = 0;
@@ -163,6 +171,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   @Override
   public void rollback(boolean force, int commitLevelDiff) {
+    if (txStartCounter < 0)
+      throw new OStorageException("Invalid value of TX counter");
+
     checkTransaction();
 
     txStartCounter += commitLevelDiff;
@@ -201,11 +212,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.ROLLED_BACK;
   }
 
-  public ORecord loadRecord(final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignoreCache,
-      final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public ORecord loadRecord(final ORID rid, final ORecord iRecord, final String fetchPlan, final boolean ignoreCache,
+      final boolean loadTombstone, final OStorage.LOCKING_STRATEGY lockingStrategy) {
+    return loadRecord(rid, iRecord, fetchPlan, ignoreCache, true, loadTombstone, lockingStrategy);
+  }
+
+  public ORecord loadRecord(final ORID rid, final ORecord iRecord, final String fetchPlan, final boolean ignoreCache,
+      final boolean iUpdateCache, final boolean loadTombstone, final OStorage.LOCKING_STRATEGY lockingStrategy) {
     checkTransaction();
 
-    final ORecord txRecord = getRecord(iRid);
+    final ORecord txRecord = getRecord(rid);
     if (txRecord == OTransactionRealAbstract.DELETED_RECORD)
       // DELETED IN TX
       return null;
@@ -220,17 +236,115 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       return txRecord;
     }
 
-    if (iRid.isTemporary())
+    if (rid.isTemporary())
       return null;
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
-    final ORecord record = database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, false, iLockingStrategy);
+    final ORecord record = database.executeReadRecord((ORecordId) rid, iRecord, null, fetchPlan, ignoreCache, iUpdateCache, false,
+        lockingStrategy, new ODatabaseDocumentTx.SimpleRecordReader());
 
     if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ)
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
       addRecord(record, ORecordOperation.LOADED, null);
 
     return record;
+  }
+
+  @Override
+  public ORecord loadRecordIfVersionIsNotLatest(ORID rid, ORecordVersion recordVersion, String fetchPlan, boolean ignoreCache)
+      throws ORecordNotFoundException {
+    checkTransaction();
+
+    final ORecord txRecord = getRecord(rid);
+    if (txRecord == OTransactionRealAbstract.DELETED_RECORD)
+      // DELETED IN TX
+      throw new ORecordNotFoundException("Record with id " + rid + " was not found in database.");
+
+    if (txRecord != null) {
+      if (txRecord.getRecordVersion().compareTo(recordVersion) > 0)
+        return txRecord;
+      else
+        return null;
+    }
+
+    if (rid.isTemporary())
+      throw new ORecordNotFoundException("Record with id " + rid + " was not found in database.");
+
+    // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
+    final ORecord record = database.executeReadRecord((ORecordId) rid, null, recordVersion, fetchPlan, ignoreCache, !ignoreCache,
+        false, OStorage.LOCKING_STRATEGY.NONE, new ODatabaseDocumentTx.SimpleRecordReader());
+
+    if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ)
+      // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
+      addRecord(record, ORecordOperation.LOADED, null);
+
+    return record;
+  }
+
+  @Override
+  public ORecord reloadRecord(ORID rid, ORecord iRecord, String fetchPlan, boolean ignoreCache) {
+    return reloadRecord(rid, iRecord, fetchPlan, ignoreCache, true);
+  }
+
+  @Override
+  public ORecord reloadRecord(ORID rid, ORecord passedRecord, String fetchPlan, boolean ignoreCache, boolean force) {
+    checkTransaction();
+
+    final ORecord txRecord = getRecord(rid);
+    if (txRecord == OTransactionRealAbstract.DELETED_RECORD)
+      // DELETED IN TX
+      return null;
+
+    if (txRecord != null) {
+      if (passedRecord != null && txRecord != passedRecord)
+        OLogManager.instance().warn(
+            this,
+            "Found record in transaction with the same RID %s but different instance. "
+                + "Probably the record has been loaded from another transaction and reused on the current one: reload it "
+                + "from current transaction before to update or delete it", passedRecord.getIdentity());
+      return txRecord;
+    }
+
+    if (rid.isTemporary())
+      return null;
+
+    // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
+    final ORecord record;
+    try {
+      final ODatabaseDocumentTx.RecordReader recordReader;
+      if (force) {
+        recordReader = new ODatabaseDocumentTx.SimpleRecordReader();
+      } else {
+        recordReader = new ODatabaseDocumentTx.LatestVersionRecordReader();
+      }
+
+      ORecord loadedRecord = database.executeReadRecord((ORecordId) rid, passedRecord, null, fetchPlan, ignoreCache, !ignoreCache,
+          false, OStorage.LOCKING_STRATEGY.NONE, recordReader);
+
+      if (force) {
+        record = loadedRecord;
+      } else {
+        if (loadedRecord == null)
+          record = passedRecord;
+        else
+          record = loadedRecord;
+      }
+
+    } catch (ORecordNotFoundException e) {
+      return null;
+    }
+
+    if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ)
+      // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
+      addRecord(record, ORecordOperation.LOADED, null);
+
+    return record;
+
+  }
+
+  @Override
+  public ORecord loadRecord(ORID rid, ORecord record, String fetchPlan, boolean ignoreCache) {
+    return loadRecord(rid, record, fetchPlan, ignoreCache, false, OStorage.LOCKING_STRATEGY.NONE);
   }
 
   public void deleteRecord(final ORecord iRecord, final OPERATION_MODE iMode) {
@@ -270,6 +384,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   public void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName) {
     checkTransaction();
+
+    if (iStatus != ORecordOperation.LOADED)
+      changedDocuments.remove(iRecord);
 
     try {
       switch (iStatus) {
@@ -473,33 +590,35 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     status = TXSTATUS.COMMITTING;
 
-    if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
-        && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
-      database.getStorage().commit(this, null);
-    else {
-      List<OIndexAbstract<?>> lockedIndexes = acquireIndexLocks();
-      try {
-        final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
-        for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
-          indexes.put(index.getName(), index);
+    if (!recordEntries.isEmpty() || !indexEntries.isEmpty()) {
+      if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
+          && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
+        database.getStorage().commit(this, null);
+      else {
+        List<OIndexAbstract<?>> lockedIndexes = acquireIndexLocks();
+        try {
+          final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
+          for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
+            indexes.put(index.getName(), index);
 
-        final Runnable callback = new CommitIndexesCallback(indexes);
+          final Runnable callback = new CommitIndexesCallback(indexes);
 
-        final String storageType = database.getStorage().getUnderlying().getType();
+          final String storageType = database.getStorage().getUnderlying().getType();
 
-        if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
-          database.getStorage().commit(OTransactionOptimistic.this, callback);
-        else {
-          database.getStorage().callInLock(new Callable<Object>() {
-            @Override
-            public Object call() throws Exception {
-              database.getStorage().commit(OTransactionOptimistic.this, callback);
-              return null;
-            }
-          }, true);
+          if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
+            database.getStorage().commit(OTransactionOptimistic.this, callback);
+          else {
+            database.getStorage().callInLock(new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                database.getStorage().commit(OTransactionOptimistic.this, callback);
+                return null;
+              }
+            }, true);
+          }
+        } finally {
+          releaseIndexLocks(lockedIndexes);
         }
-      } finally {
-        releaseIndexLocks(lockedIndexes);
       }
     }
 

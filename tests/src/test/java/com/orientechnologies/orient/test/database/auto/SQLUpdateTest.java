@@ -217,7 +217,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
   }
 
-  @Test
+  @Test(dependsOnMethods = "updateAllOperator")
   public void updateWithWildcards() {
 
     int updated = database.command(new OCommandSQL("update Profile set sex = ? where sex = 'male' limit 1")).execute("male");
@@ -507,14 +507,14 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
     database.command(new OCommandSQL("update UpdateEdgeContentE content {value : 'val'}")).execute();
 
-		result = database.query(new OSQLSynchQuery<ODocument>("select outV(), inV() from UpdateEdgeContentE"));
+    result = database.query(new OSQLSynchQuery<ODocument>("select outV(), inV() from UpdateEdgeContentE"));
 
-		Assert.assertEquals(result.size(), 3);
+    Assert.assertEquals(result.size(), 3);
 
-		for (ODocument doc : result) {
-			Assert.assertEquals(doc.field("outV"), vOneId);
-			Assert.assertEquals(doc.field("inV"), vTwoId);
-		}
+    for (ODocument doc : result) {
+      Assert.assertEquals(doc.field("outV"), vOneId);
+      Assert.assertEquals(doc.field("inV"), vTwoId);
+    }
 
     result = database.query(new OSQLSynchQuery<ODocument>("select from UpdateEdgeContentE"));
     Assert.assertEquals(result.size(), 3);
@@ -543,5 +543,20 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
       positions.add(doc.getIdentity().getClusterPosition());
     }
     return positions;
+  }
+
+  public void testMultiplePut() {
+    final ODocument v = database.newInstance("V").save();
+
+    Integer records = database.command(
+        new OCommandSQL("UPDATE " + v.getIdentity() + " PUT embmap = \"test\", \"Luca\" PUT embmap = \"test2\", \"Alex\""))
+        .execute();
+
+    Assert.assertEquals(records.intValue(), 1);
+
+    v.reload();
+
+    Assert.assertTrue(v.field("embmap") instanceof Map);
+    Assert.assertEquals(((Map) v.field("embmap")).size(), 2);
   }
 }

@@ -58,23 +58,36 @@ public abstract class GraphTxAbstractTest {
     return "plocal";
   }
 
-  @BeforeClass
-  public static void beforeClass() {
+  public static void init(final String dbName) {
     if (graph == null) {
-      final String dbName = GraphTxAbstractTest.class.getSimpleName();
       final String storageType = getStorageType();
       final String buildDirectory = System.getProperty("buildDirectory", ".");
-      graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
-      graph.drop();
-      graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+
+      final String url = System.getProperty("url");
+
+      if (url != null)
+        graph = new OrientGraph(url);
+      else
+        graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+
+      if (!graph.getRawGraph().getURL().startsWith("remote:")) {
+        graph.drop();
+
+        if (url != null)
+          graph = new OrientGraph(url);
+        else
+          graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+      }
     }
 
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    graph.shutdown();
-    graph = null;
+    if (graph != null) {
+      graph.shutdown();
+      graph = null;
+    }
   }
 
 }

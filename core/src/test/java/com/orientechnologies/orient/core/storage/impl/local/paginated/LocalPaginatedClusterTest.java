@@ -1,7 +1,32 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.util.MersenneTwisterFast;
+import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,33 +40,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.util.MersenneTwisterFast;
-import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Andrey Lomakin
@@ -53,14 +53,15 @@ public class LocalPaginatedClusterTest {
                                                                    + OLongSerializer.LONG_SIZE;
   public OPaginatedCluster           paginatedCluster;
   protected String                   buildDirectory;
-  protected OReadWriteDiskCache      diskCache;
+
+  protected O2QCache                 readCache;
+  protected OWriteCache              writeCache;
+
   protected OAtomicOperationsManager atomicOperationsManager;
   private OContextConfiguration      contextConfiguration      = new OContextConfiguration();
 
   @BeforeClass
   public void beforeClass() throws IOException {
-    paginatedCluster = new OPaginatedCluster();
-
     System.out.println("Start LocalPaginatedClusterTest");
     buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null || buildDirectory.isEmpty())
@@ -82,11 +83,16 @@ public class LocalPaginatedClusterTest {
     OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
     when(storage.getVariableParser()).thenReturn(variableParser);
 
-    diskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 2648L * 1024 * 1024,
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, storage, null, false, false);
+    writeCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, null, 100,
+        2648L * 1024 * 1024, 2648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, storage, true, 1);
+
+    readCache = new O2QCache(400L * 1024 * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false);
+
     atomicOperationsManager = new OAtomicOperationsManager(storage);
 
-    when(storage.getDiskCache()).thenReturn(diskCache);
+    when(storage.getReadCache()).thenReturn(readCache);
+    when(storage.getWriteCache()).thenReturn(writeCache);
+
     when(storage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
 
     when(storage.getConfiguration()).thenReturn(storageConfiguration);
@@ -94,6 +100,7 @@ public class LocalPaginatedClusterTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
 
+    paginatedCluster = new OPaginatedCluster("paginatedClusterTest", storage);
     paginatedCluster.configure(storage, 5, "paginatedClusterTest", buildDirectory, -1);
     paginatedCluster.create(-1);
   }
@@ -102,7 +109,7 @@ public class LocalPaginatedClusterTest {
   public void afterClass() throws IOException {
     paginatedCluster.delete();
 
-    diskCache.delete();
+    readCache.deleteStorage(writeCache);
 
     File file = new File(buildDirectory);
     Assert.assertTrue(file.delete());
@@ -125,10 +132,11 @@ public class LocalPaginatedClusterTest {
     Assert.assertEquals(physicalPosition.clusterPosition, 0);
     paginatedCluster.deleteRecord(physicalPosition.clusterPosition);
 
+    recordVersion = OVersionFactory.instance().createVersion();
+    Assert.assertEquals(recordVersion.getCounter(), 0);
     physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
     Assert.assertEquals(physicalPosition.clusterPosition, 1);
 
-    recordVersion.increment();
     Assert.assertEquals(physicalPosition.recordVersion, recordVersion);
   }
 
@@ -172,7 +180,8 @@ public class LocalPaginatedClusterTest {
   public void testAddManySmallRecords() throws IOException {
     final int records = 10000;
 
-    long seed = System.currentTimeMillis();
+    long seed = 1426587095601L;
+    System.currentTimeMillis();
     MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
     System.out.println("testAddManySmallRecords seed : " + seed);
 
@@ -761,7 +770,7 @@ public class LocalPaginatedClusterTest {
     ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition);
     Assert.assertNotNull(rawBuffer);
 
-    Assert.assertEquals(rawBuffer.version, recordVersion);
+    Assert.assertEquals(rawBuffer.version, updateRecordVersion);
     Assert.assertEquals(rawBuffer.buffer, smallRecord);
     Assert.assertEquals(rawBuffer.recordType, 2);
   }
@@ -784,7 +793,7 @@ public class LocalPaginatedClusterTest {
     ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition);
     Assert.assertNotNull(rawBuffer);
 
-    Assert.assertEquals(rawBuffer.version, recordVersion);
+    Assert.assertEquals(rawBuffer.version, updateRecordVersion);
     Assert.assertEquals(rawBuffer.buffer, smallRecord);
     Assert.assertEquals(rawBuffer.recordType, 2);
   }
@@ -1164,22 +1173,22 @@ public class LocalPaginatedClusterTest {
     OPhysicalPosition physicalPosition = paginatedCluster
         .createRecord(record, OVersionFactory.instance().createVersion(), (byte) 1);
 
-    OCacheEntry cacheEntry = diskCache.load(1, 1, false);
-    OClusterPage page = new OClusterPage(cacheEntry, false, ODurablePage.TrackMode.NONE);
+    OCacheEntry cacheEntry = readCache.load(1, 1, false, writeCache);
+    OClusterPage page = new OClusterPage(cacheEntry, false, null);
     int recordIndex = (int) (physicalPosition.clusterPosition & 0xFFFF);
 
     Assert.assertEquals(page.getRecordSize(recordIndex), ((int) (record.length * 1.5)) + RECORD_SYSTEM_INFORMATION);
-    diskCache.release(cacheEntry);
+    readCache.release(cacheEntry, writeCache);
 
     paginatedCluster.set(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR, 2);
     physicalPosition = paginatedCluster.createRecord(record, OVersionFactory.instance().createVersion(), (byte) 1);
 
     recordIndex = (int) (physicalPosition.clusterPosition & 0xFFFF);
-    cacheEntry = diskCache.load(1, 1, false);
-    page = new OClusterPage(cacheEntry, false, ODurablePage.TrackMode.NONE);
+    cacheEntry = readCache.load(1, 1, false, writeCache);
+    page = new OClusterPage(cacheEntry, false, null);
 
     Assert.assertEquals(page.getRecordSize(recordIndex), record.length * 2 + RECORD_SYSTEM_INFORMATION);
-    diskCache.release(cacheEntry);
+    readCache.release(cacheEntry, writeCache);
   }
 
   @Test(enabled = false)
@@ -1200,20 +1209,20 @@ public class LocalPaginatedClusterTest {
 
     paginatedCluster.updateRecord(physicalPosition.clusterPosition, record, version, (byte) 1);
 
-    OCacheEntry cacheEntry = diskCache.load(1, 1, false);
+    OCacheEntry cacheEntry = readCache.load(1, 1, false, writeCache);
     int recordIndex = (int) (physicalPosition.clusterPosition & 0xFFFF);
-    OClusterPage page = new OClusterPage(cacheEntry, false, ODurablePage.TrackMode.NONE);
+    OClusterPage page = new OClusterPage(cacheEntry, false, null);
 
     Assert.assertEquals(page.getRecordSize(recordIndex), record.length + RECORD_SYSTEM_INFORMATION);
-    diskCache.release(cacheEntry);
+    readCache.release(cacheEntry, writeCache);
 
     record = new byte[200];
     random.nextBytes(record);
 
     paginatedCluster.updateRecord(physicalPosition.clusterPosition, record, version, (byte) 1);
 
-    cacheEntry = diskCache.load(1, 1, false);
-    page = new OClusterPage(cacheEntry, false, ODurablePage.TrackMode.NONE);
+    cacheEntry = readCache.load(1, 1, false, writeCache);
+    page = new OClusterPage(cacheEntry, false, null);
 
     int fullContentSize = 500 + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE; // type + real size
 
@@ -1222,6 +1231,6 @@ public class LocalPaginatedClusterTest {
 
     Assert.assertEquals(page.getRecordSize(recordIndex + 1), fullContentSize
         + (OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE));
-    diskCache.release(cacheEntry);
+    readCache.release(cacheEntry, writeCache);
   }
 }

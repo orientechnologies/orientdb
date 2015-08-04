@@ -1,14 +1,5 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -19,6 +10,8 @@ import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClust
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.*;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -45,9 +38,9 @@ public class OImmutableSchema implements OSchema {
     for (OClass oClass : schemaShared.getClasses()) {
       final OImmutableClass immutableClass = new OImmutableClass(oClass, this);
 
-      classes.put(immutableClass.getName().toLowerCase(), immutableClass);
+      classes.put(immutableClass.getName().toLowerCase(Locale.ENGLISH), immutableClass);
       if (immutableClass.getShortName() != null)
-        classes.put(immutableClass.getShortName().toLowerCase(), immutableClass);
+        classes.put(immutableClass.getShortName().toLowerCase(Locale.ENGLISH), immutableClass);
 
       for (int clusterId : immutableClass.getClusterIds())
         clustersToClasses.put(clusterId, immutableClass);
@@ -91,6 +84,11 @@ public class OImmutableSchema implements OSchema {
   public OClass createClass(String iClassName, OClass iSuperClass) {
     throw new UnsupportedOperationException();
   }
+  
+  @Override
+  public OClass createClass(String iClassName, OClass... superClasses) {
+    throw new UnsupportedOperationException();
+  }
 
   @Override
   public OClass createClass(String iClassName, int iDefaultClusterId) {
@@ -106,6 +104,12 @@ public class OImmutableSchema implements OSchema {
   public OClass createClass(String iClassName, OClass iSuperClass, int[] iClusterIds) {
     throw new UnsupportedOperationException();
   }
+  
+  @Override
+	public OClass createClass(String className, int[] clusterIds,
+			OClass... superClasses) {
+	  throw new UnsupportedOperationException();
+	}
 
   @Override
   public OClass createAbstractClass(Class<?> iClass) {
@@ -121,6 +125,11 @@ public class OImmutableSchema implements OSchema {
   public OClass createAbstractClass(String iClassName, OClass iSuperClass) {
     throw new UnsupportedOperationException();
   }
+  
+  @Override
+	public OClass createAbstractClass(String iClassName, OClass... superClasses) {
+	  throw new UnsupportedOperationException();
+	}
 
   @Override
   public void dropClass(String iClassName) {
@@ -134,7 +143,7 @@ public class OImmutableSchema implements OSchema {
 
   @Override
   public boolean existsClass(String iClassName) {
-    return classes.containsKey(iClassName.toLowerCase());
+    return classes.containsKey(iClassName.toLowerCase(Locale.ENGLISH));
   }
 
   @Override
@@ -150,7 +159,7 @@ public class OImmutableSchema implements OSchema {
     if (iClassName == null)
       return null;
 
-    OClass cls = classes.get(iClassName.toLowerCase());
+    OClass cls = classes.get(iClassName.toLowerCase(Locale.ENGLISH));
     if (cls != null)
       return cls;
 
@@ -166,6 +175,11 @@ public class OImmutableSchema implements OSchema {
   public OClass getOrCreateClass(String iClassName, OClass iSuperClass) {
     throw new UnsupportedOperationException();
   }
+  
+  @Override
+	public OClass getOrCreateClass(String iClassName, OClass... superClasses) {
+	  throw new UnsupportedOperationException();
+	}
 
   @Override
   public Collection<OClass> getClasses() {

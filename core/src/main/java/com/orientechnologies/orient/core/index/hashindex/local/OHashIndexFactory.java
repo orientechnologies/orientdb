@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.*;
@@ -32,7 +27,11 @@ import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * 
@@ -77,8 +76,12 @@ public class OHashIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public OIndexInternal<?> createIndex(ODatabaseDocumentInternal database, String indexType, String algorithm,
-      String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException {
+  public OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
+      String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
+
+    if (version < 0)
+      version = getLastVersion();
+
     if (valueContainerAlgorithm == null)
       valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
 
@@ -87,18 +90,9 @@ public class OHashIndexFactory implements OIndexFactory {
 
     Boolean durableInNonTxMode;
     Object durable = null;
-    ODurablePage.TrackMode trackMode = null;
 
     if (metadata != null) {
       durable = metadata.field("durableInNonTxMode");
-
-      if (metadata.field("trackMode") instanceof String) {
-        try {
-          trackMode = ODurablePage.TrackMode.valueOf(metadata.<String> field("trackMode"));
-        } catch (IllegalArgumentException e) {
-          OLogManager.instance().error(this, "Invalid track mode", e);
-        }
-      }
     }
 
     if (durable instanceof Boolean)
@@ -108,24 +102,30 @@ public class OHashIndexFactory implements OIndexFactory {
 
     final String storageType = storage.getType();
     if (storageType.equals("memory") || storageType.equals("plocal"))
-      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, trackMode);
+      indexEngine = new OHashTableIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage(), version);
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, trackMode);
+      indexEngine = new OHashTableIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage()
+          .getUnderlying(), version);
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine();
     else
       throw new OIndexException("Unsupported storage type : " + storageType);
 
     if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexUnique(indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexUnique(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
     else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexNotUnique(indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexNotUnique(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
     else if (OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType))
-      return new OIndexFullText(indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexFullText(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
     else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType))
-      return new OIndexDictionary(indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexDictionary(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
 
     throw new OConfigurationException("Unsupported type : " + indexType);
+  }
+
+  @Override
+  public int getLastVersion() {
+    return OHashTableIndexEngine.VERSION;
   }
 }

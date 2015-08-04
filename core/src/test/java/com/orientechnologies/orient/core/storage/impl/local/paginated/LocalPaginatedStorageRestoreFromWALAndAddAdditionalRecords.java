@@ -56,6 +56,7 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
   public void beforeClass() {
     OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.setValue(-1);
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("nothing");
+    OGlobalConfiguration.FILE_LOCK.setValue(false);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageRestoreFromWALAndAddAdditionalRecords";
@@ -142,7 +143,7 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
             System.out.println(text);
           }
         });
-		databaseCompare.setCompareIndexMetadata(true);
+    databaseCompare.setCompareIndexMetadata(true);
 
     Assert.assertTrue(databaseCompare.compare());
   }
@@ -163,6 +164,25 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
           fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.wmr");
         else if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.0.wal"))
           fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.0.wal");
+        else if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.1.wal"))
+          fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.1.wal");
+        else if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.2.wal"))
+          fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.2.wal");
+        else if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.3.wal"))
+          fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.3.wal");
+        else if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.4.wal"))
+          fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.4.wal");
+        else if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.5.wal"))
+          fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.5.wal");
+        else if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.6.wal"))
+          fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.6.wal");
+        else if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.7.wal"))
+          fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.7.wal");
+        else if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.8.wal"))
+          fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.8.wal");
+
+        if (fileToCopy.endsWith("dirty.fl"))
+          return FileVisitResult.CONTINUE;
 
         Files.copy(file, fileToCopy);
 
@@ -180,7 +200,7 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
     testOneClass.createProperty("intProp", OType.INTEGER);
     testOneClass.createProperty("stringProp", OType.STRING);
     testOneClass.createProperty("stringSet", OType.EMBEDDEDSET, OType.STRING);
-    testOneClass.createProperty("linkMap", OType.LINKMAP, OType.STRING);
+    testOneClass.createProperty("linkMap", OType.LINKMAP);
 
     OClass testTwoClass = schema.createClass("TestTwo");
 

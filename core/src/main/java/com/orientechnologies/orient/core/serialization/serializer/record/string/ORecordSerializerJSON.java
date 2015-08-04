@@ -443,7 +443,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             // TRY TO AUTODETERMINE THE BEST TYPE
             if (ORecordId.isA(iFieldValue))
               iType = OType.LINK;
-            else if (OStringSerializerHelper.contains(iFieldValue, '.')) {
+            else if (iFieldValue.matches(".*[\\.Ee].*")) {
               // DECIMAL FORMAT: DETERMINE IF DOUBLE OR FLOAT
               final Double v = new Double(OStringSerializerHelper.getStringContent(iFieldValue));
 
@@ -680,10 +680,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         // TODO redundant in some cases, owner is already added by getValue in some cases
         if (shouldBeDeserializedAsEmbedded(collectionItem, iType))
           ODocumentInternal.addOwner((ODocument) collectionItem, iRecord);
-
-        if (collectionItem instanceof String && ((String) collectionItem).length() == 0)
-          continue;
-
+        
         visitor.visitItem(collectionItem);
       }
     }

@@ -21,7 +21,9 @@
 package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -80,4 +82,16 @@ public class DocumentTest {
     Assert.assertEquals(map.get("@class"), "V");
     Assert.assertTrue(map.containsKey("@rid"));
   }
+
+  @Test
+  public void testConvertionOnTypeSet() {
+    ODocument doc = new ODocument();
+
+    doc.field("some", 3);
+    doc.setFieldType("some", OType.STRING);
+    Assert.assertEquals(doc.fieldType("some"), OType.STRING);
+    Assert.assertEquals(doc.field("some"), "3");
+
+  }
+
 }

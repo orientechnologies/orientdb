@@ -19,14 +19,14 @@
   */
 package com.orientechnologies.orient.core.cache;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
-import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Cache of documents. Delegates real work on storing to {@link OCache} implementation passed at creation time leaving only DB
@@ -50,6 +50,28 @@ public abstract class OAbstractRecordCache {
     underlying = impl;
   }
 
+
+  /**
+   * Tell whether cache is enabled
+   *
+   * @return {@code true} if cache enabled at call time, otherwise - {@code false}
+   */
+  public boolean isEnabled() {
+    return underlying.isEnabled();
+  }
+
+  /**
+   * Switch cache state between enabled and disabled
+   *
+   * @param enable
+   *          pass {@code true} to enable, otherwise - {@code false}
+   */
+  public void setEnable(final boolean enable) {
+    if (enable)
+      underlying.enable();
+    else
+      underlying.disable();
+  }
 
   /**
    * Remove record with specified identifier

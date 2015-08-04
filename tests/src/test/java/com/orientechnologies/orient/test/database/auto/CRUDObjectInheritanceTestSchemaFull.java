@@ -15,21 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -57,6 +44,17 @@ import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestBaseC
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestClass;
 import com.orientechnologies.orient.test.domain.schemageneration.JavaTestSchemaGeneration;
 import com.orientechnologies.orient.test.domain.schemageneration.TestSchemaGenerationChild;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 @Test(groups = { "crud", "object", "schemafull", "inheritanceSchemaFull" })
 public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
@@ -81,7 +79,7 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
 
     database = new OObjectDatabaseTx(url + "_objectschema");
     ODatabaseHelper.createDatabase(database, url + "_objectschema", getStorageType());
-    database.close();
+
     try {
       ODatabaseDocumentTx exportDatabase = new ODatabaseDocumentTx(url);
       exportDatabase.open("admin", "admin");

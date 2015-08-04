@@ -19,9 +19,9 @@
   */
 package com.orientechnologies.orient.core.serialization;
 
-import java.io.Serializable;
-
 import com.orientechnologies.orient.core.exception.OSerializationException;
+
+import java.io.Serializable;
 
 /**
  * Base interface of serialization.
@@ -38,7 +38,7 @@ public interface OSerializableStream extends Serializable {
 	 * @throws OSerializationException
 	 *           if the marshalling does not succeed
 	 */
-	public byte[] toStream() throws OSerializationException;
+	public byte[]  toStream() throws OSerializationException;
 
 	/**
 	 * Unmarshalls the object. Fills the current object with the values contained in the byte array representation restoring a

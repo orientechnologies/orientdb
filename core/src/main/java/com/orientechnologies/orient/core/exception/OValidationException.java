@@ -19,8 +19,10 @@
   */
 package com.orientechnologies.orient.core.exception;
 
+import com.orientechnologies.common.exception.OException;
+
 @SuppressWarnings("serial")
-public class OValidationException extends RuntimeException {
+public class OValidationException extends OException {
 
 	public OValidationException(String string) {
 		super(string);

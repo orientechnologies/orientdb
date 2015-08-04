@@ -53,6 +53,15 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
     json.beginObject();
     json.writeAttribute("name", cls.getName());
     json.writeAttribute("superClass", cls.getSuperClass() != null ? cls.getSuperClass().getName() : "");
+
+    json.beginCollection("superClasses");
+    int i = 0;
+    for (OClass oClass : cls.getSuperClasses()) {
+      json.write((i > 0 ? "," : "") + "\"" + oClass.getName() + "\"");
+      i++;
+    }
+    json.endCollection();
+
     json.writeAttribute("alias", cls.getShortName());
     json.writeAttribute("abstract", cls.isAbstract());
     json.writeAttribute("strictmode", cls.isStrictMode());
@@ -87,6 +96,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
         json.writeAttribute("notNull", prop.isNotNull());
         json.writeAttribute("min", prop.getMin());
         json.writeAttribute("max", prop.getMax());
+        json.writeAttribute("regexp", prop.getRegexp());
         json.writeAttribute("collate", prop.getCollate() != null ? prop.getCollate().getName() : "default");
 
         if (prop instanceof OPropertyImpl) {
@@ -165,7 +175,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.writeAttribute("javaVersion", System.getProperty("java.vm.version"));
       json.endObject();
 
-      if (((OMetadataInternal)db.getMetadata()).getImmutableSchemaSnapshot().getClasses() != null) {
+      if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClasses() != null) {
         json.beginCollection("classes");
         List<String> classNames = new ArrayList<String>();
 
@@ -288,8 +298,8 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.endCollection();
 
       json.beginCollection("properties");
-      if (db.getStorage().getConfiguration().properties != null)
-        for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
+      if (db.getStorage().getConfiguration().getProperties() != null)
+        for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().getProperties()) {
           if (entry != null) {
             json.beginObject();
             json.writeAttribute("name", entry.name);

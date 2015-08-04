@@ -69,18 +69,19 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       String url = getStoragePath(databaseName, storageMode);
       final String type = urlParts.length > 3 ? urlParts[3] : "document";
       if (url != null) {
-
         final ODatabaseDocumentTx database = Orient.instance().getDatabaseFactory().createDatabase(type, url);
-        if (database.exists())
-          throw new ODatabaseException("Database '" + database.getURL() + "' already exists");
-
-        for (OStorage stg : Orient.instance().getStorages()) {
-          if (stg.getName().equalsIgnoreCase(database.getName()) && stg.exists())
-            throw new ODatabaseException("Database named '" + database.getName() + "' already exists: " + stg);
+        if (database.exists()) {
+          iResponse.send(OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION,
+                  OHttpUtils.CONTENT_TEXT_PLAIN, "Database '" + database.getURL() + "' already exists.", null);
+        } else {
+          for (OStorage stg : Orient.instance().getStorages()) {
+            if (stg.getName().equalsIgnoreCase(database.getName()) && stg.exists())
+              throw new ODatabaseException("Database named '" + database.getName() + "' already exists: " + stg);
+          }
+          OLogManager.instance().info(this, "Creating database " + url);
+          database.create();
+          sendDatabaseInfo(iRequest, iResponse, database);
         }
-        OLogManager.instance().info(this, "Creating database " + url);
-        database.create();
-        sendDatabaseInfo(iRequest, iResponse, database);
       } else {
         throw new OCommandExecutionException("The '" + storageMode + "' storage mode does not exists.");
       }
@@ -195,8 +196,8 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
     json.endCollection(2, true);
 
     json.beginCollection(2, true, "properties");
-    if (db.getStorage().getConfiguration().properties != null)
-      for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
+    if (db.getStorage().getConfiguration().getProperties() != null)
+      for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().getProperties()) {
         if (entry != null) {
           json.beginObject(3, true, null);
           json.writeAttribute(4, false, "name", entry.name);

@@ -28,6 +28,8 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class OClientConnection {
   public final int                         id;
@@ -35,6 +37,7 @@ public class OClientConnection {
   public volatile ONetworkProtocol         protocol;
   public volatile ODatabaseDocumentTx      database;
   public volatile OServerUserConfiguration serverUser;
+  private Lock                             lock = new ReentrantLock();
 
   public ONetworkProtocolData              data = new ONetworkProtocolData();
 
@@ -46,11 +49,27 @@ public class OClientConnection {
 
   public void close() {
     if (database != null) {
-      if (!database.isClosed())
+      if (!database.isClosed()) {
+        database.activateOnCurrentThread();
         database.close();
+      }
 
       database = null;
     }
+  }
+
+  /**
+   * Acquires the connection. This is fundamental to manage concurrent requests using the same session id.
+   */
+  public void acquire() {
+    lock.lock();
+  }
+
+  /**
+   * Releases an acquired connection.
+   */
+  public void release() {
+    lock.unlock();
   }
 
   @Override

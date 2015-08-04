@@ -1,24 +1,25 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
@@ -40,7 +41,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
   private String              databaseName;
   private long                senderThreadId;
   private OAbstractRemoteTask task;
-  private String              userName = "";
+  private ORID                userRID;       // KEEP ALSO THE RID TO AVOID SECURITY PROBLEM ON DELETE & RECREATE USERS
 
   /**
    * Constructor used by serializer.
@@ -97,12 +98,12 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     return this;
   }
 
-  public String getUserName() {
-    return userName;
+  public ORID getUserRID() {
+    return userRID;
   }
 
-  public void setUserName(final String userName) {
-    this.userName = userName;
+  public void setUserRID(final ORID iUserRID) {
+    this.userRID = iUserRID;
   }
 
   @Override
@@ -121,9 +122,8 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     out.writeUTF(senderNodeName);
     out.writeLong(senderThreadId);
     out.writeUTF(databaseName);
-    out.writeUTF(userName);
     out.writeObject(task);
-    out.writeUTF(userName);
+    out.writeObject(userRID);
   }
 
   @Override
@@ -132,9 +132,8 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     senderNodeName = in.readUTF();
     senderThreadId = in.readLong();
     databaseName = in.readUTF();
-    userName = in.readUTF();
     task = (OAbstractRemoteTask) in.readObject();
-    userName = in.readUTF();
+    userRID = (ORID) in.readObject();
   }
 
   @Override
@@ -148,9 +147,9 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
       buffer.append(" task=");
       buffer.append(task.toString());
     }
-    if (userName != null) {
-      buffer.append(" userName=");
-      buffer.append(userName);
+    if (userRID != null) {
+      buffer.append(" user=");
+      buffer.append(userRID);
     }
     return buffer.toString();
   }

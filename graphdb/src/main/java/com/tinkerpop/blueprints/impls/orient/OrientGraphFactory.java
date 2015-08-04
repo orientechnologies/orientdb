@@ -1,11 +1,11 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OrientGraphFactory extends OrientConfigurableGraph {
   protected final String                      url;
@@ -45,8 +45,8 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * Closes all pooled databases and clear the pool.
    */
   public void close() {
-		if (pool != null)
-			pool.close();
+    if (pool != null)
+      pool.close();
 
     pool = null;
   }
@@ -158,7 +158,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * @return this
    */
   public OrientGraphFactory setupPool(final int iMin, final int iMax) {
-    pool = new OPartitionedDatabasePool(url, user, password, iMax);
+    pool = new OPartitionedDatabasePool(url, user, password, iMax).setAutoCreate(true);
     return this;
   }
 
@@ -196,21 +196,17 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
         // COMMIT TX BEFORE ANY SCHEMA CHANGES
         db.commit();
 
-      g.checkForGraphSchema(db);
+      OrientBaseGraph.checkForGraphSchema(db);
 
-      if (txActive)
+      if (txActive) {
         // REOPEN IT AGAIN
         db.begin();
+        db.getTransaction().setUsingLog(settings.isUseLog());
+      }
 
     }
 
     if (intent != null)
       g.declareIntent(intent.copy());
-  }
-
-  @Override
-  protected void finalize() throws Throwable {
-    close();
-    super.finalize();
   }
 }

@@ -42,6 +42,15 @@
         <osgi.import>com.hazelcast.*;resolution:=optional,*</osgi.import>
         <osgi.export>com.orientechnologies.orient.server.hazelcast.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <argLine>-ea -Xmx2048m -Dindex.flushAfterCreate=false
+            -Dstorage.makeFullCheckpointAfterCreate=false
+            -Dstorage.makeFullCheckpointAfterOpen=false
+            -Dstorage.makeFullCheckpointAfterClusterCreate=false
+            -Dstorage.wal.syncOnPageFlush=false
+            -Dstorage.configuration.syncOnUpdate=false
+            -Ddb.makeFullCheckpointOnIndexChange=false
+            -Ddb.makeFullCheckpointOnSchemaChange=false
+        </argLine>
     </properties>
 
     <profiles>
@@ -91,18 +100,18 @@
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-graphdb</artifactId>
             <version>${project.version}</version>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.10</version>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.hazelcast</groupId>
-            <artifactId>hazelcast</artifactId>
-            <version>3.3</version>
+            <artifactId>hazelcast-all</artifactId>
+            <version>3.3.5</version>
         </dependency>
     </dependencies>
 
@@ -124,10 +133,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire.version}</version>
                 <configuration>
-                    <argLine>-ea -Xmx2048m -Dindex.flushAfterCreate=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterOpen=false
-                        -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
-                        -Dstorage.configuration.syncOnUpdate=false -Ddb.makeFullCheckpointOnIndexChange=false -Ddb.makeFullCheckpointOnSchemaChange=false
-                    </argLine>
+
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
                     </systemPropertyVariables>

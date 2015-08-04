@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -48,10 +50,12 @@ public class ODeleteStatementTest {
     ODatabaseDocument database = new ODatabaseDocumentTx("memory:tryMe");
     database.create();
 
+    OIndexFactory factory = OIndexes.getFactory("NOTUNIQUE", null);
     database
         .getMetadata()
         .getIndexManager()
-        .createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null, null);
+        .createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE",
+            new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.BINARY), null, null, null);
 
     OIndex<?> index = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex-notunique");
 
@@ -74,10 +78,11 @@ public class ODeleteStatementTest {
     index.put(key2, doc4);
 
     Assert.assertTrue(index.remove(key1, doc2));
-    database.command(new OCommandSQL("delete from index:byte-array-manualIndex-notunique where key = ? and rid = ?")).execute(key1, doc1);
+    database.command(new OCommandSQL("delete from index:byte-array-manualIndex-notunique where key = ? and rid = ?")).execute(key1,
+        doc1);
 
-//    Assert.assertEquals(((Collection<?>) index.get(key1)).size(), 1);
-//    Assert.assertEquals(((Collection<?>) index.get(key2)).size(), 2);
+    // Assert.assertEquals(((Collection<?>) index.get(key1)).size(), 1);
+    // Assert.assertEquals(((Collection<?>) index.get(key2)).size(), 2);
     database.close();
   }
 

@@ -9,7 +9,8 @@ public class ODeleteVertexStatement extends OStatement {
   protected OFromClause  fromClause;
   protected OWhereClause whereClause;
   protected boolean      returnBefore = false;
-  protected OInteger     limit        = null;
+  protected OLimit       limit        = null;
+  protected OBatch       batch        = null;
 
   public ODeleteVertexStatement(int id) {
     super(id);
@@ -24,16 +25,18 @@ public class ODeleteVertexStatement extends OStatement {
     StringBuilder result = new StringBuilder();
     result.append("DELETE VERTEX ");
     result.append(fromClause.toString());
+    if (returnBefore) {
+      result.append(" RETURN BEFORE");
+    }
     if (whereClause != null) {
       result.append(" WHERE ");
       result.append(whereClause.toString());
     }
-    if (returnBefore) {
-      result.append(" RETURN BEFORE");
-    }
     if (limit != null) {
-      result.append(" LIMIT ");
       result.append(limit);
+    }
+    if (batch != null) {
+      result.append(batch);
     }
     return result.toString();
   }
@@ -43,6 +46,13 @@ public class ODeleteVertexStatement extends OStatement {
 
     if (whereClause != null) {
       whereClause.replaceParameters(params);
+    }
+
+    if (limit != null) {
+      limit.replaceParameters(params);
+    }
+    if (batch != null) {
+      batch.replaceParameters(params);
     }
 
   }

@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.Queue;
@@ -63,7 +65,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This pool has one noticeable difference from other pools. If you perform several subsequent acquire calls in the same thread the
  * <b>same</b> instance of database will be returned, but amount of calls to close method should match to amount of acquire calls to
  * release database back in the pool. It will allow you to use such feature as transaction propagation when you perform call of one
- * service from another one.</p>
+ * service from another one.
+ * </p>
  *
  * <p>
  * </p>
@@ -71,29 +74,27 @@ import java.util.concurrent.atomic.AtomicInteger;
  * automatically split by several partitions, each partition is independent from other which gives us very good multicore
  * scalability. Amount of partitions will be close to amount of cores but it is not mandatory and depends how much application is
  * loaded. Amount of connections which may be hold by single partition is defined by user but we suggest to use default parameters
- * if your application load is not extremely high.</p>
+ * if your application load is not extremely high.
+ * </p>
  *
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 06/11/14
  */
 public class OPartitionedDatabasePool extends OOrientListenerAbstract {
-  private static final int            HASH_INCREMENT = 0x61c88647;
-  private static final int            MIN_POOL_SIZE  = 2;
-  private static final AtomicInteger  nextHashCode   = new AtomicInteger();
-  private final String                url;
-  private final String                userName;
-  private final String                password;
-  private final int                   maxSize;
-  private final ThreadLocal<PoolData> poolData       = new ThreadLocal<PoolData>() {
-                                                       @Override
-                                                       protected PoolData initialValue() {
-                                                         return new PoolData();
-                                                       }
-                                                     };
-  private final AtomicBoolean         poolBusy       = new AtomicBoolean();
-  private final int                   maxPartitions  = Runtime.getRuntime().availableProcessors() << 3;
-  private volatile PoolPartition[]    partitions;
-  private volatile boolean            closed         = false;
+  private static final int           HASH_INCREMENT = 0x61c88647;
+  private static final int           MIN_POOL_SIZE  = 2;
+  private static final AtomicInteger nextHashCode   = new AtomicInteger();
+  private final String               url;
+  private final String               userName;
+  private final String               password;
+  private final int                  maxSize;
+
+  private volatile ThreadLocal<PoolData> poolData      = new ThreadPoolData();
+  private final AtomicBoolean            poolBusy      = new AtomicBoolean();
+  private final int                      maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
+  private volatile PoolPartition[]       partitions;
+  private volatile boolean               closed        = false;
+  private boolean                        autoCreate    = false;
 
   private static final class PoolData {
     private final int                hashCode;
@@ -111,6 +112,13 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     private final ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue               = new ConcurrentLinkedQueue<DatabaseDocumentTxPolled>();
   }
 
+  private static class ThreadPoolData extends ThreadLocal<PoolData> {
+    @Override
+    protected PoolData initialValue() {
+      return new PoolData();
+    }
+  }
+
   private final class DatabaseDocumentTxPolled extends ODatabaseDocumentTx {
     private PoolPartition partition;
 
@@ -119,24 +127,43 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     }
 
     @Override
+    public <DB extends ODatabase> DB open(OToken iToken) {
+      throw new ODatabaseException("Impossible to open a database managed by a pool ");
+    }
+
+    @Override
+    public <DB extends ODatabase> DB open(String iUserName, String iUserPassword) {
+      throw new ODatabaseException("Impossible to open a database managed by a pool ");
+    }
+
+    protected void internalOpen() {
+      super.open(userName, password);
+    }
+
+    @Override
     public void close() {
-      final PoolData data = poolData.get();
-      if (data.acquireCount == 0)
-        return;
+      if (poolData != null) {
+        final PoolData data = poolData.get();
+        if (data.acquireCount == 0)
+          return;
 
-      data.acquireCount--;
+        data.acquireCount--;
 
-      if (data.acquireCount > 0)
-        return;
+        if (data.acquireCount > 0)
+          return;
 
-      PoolPartition p = partition;
-      partition = null;
+        PoolPartition p = partition;
+        partition = null;
 
-      super.close();
-      data.acquiredDatabase = null;
+        super.close();
 
-      p.queue.offer(this);
-      p.acquiredConnections.decrementAndGet();
+        data.acquiredDatabase = null;
+
+        p.queue.offer(this);
+        p.acquiredConnections.decrementAndGet();
+      } else {
+        super.close();
+      }
     }
   }
 
@@ -224,6 +251,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
 
       assert data.acquiredDatabase != null;
 
+      data.acquiredDatabase.activateOnCurrentThread();
       return data.acquiredDatabase;
     }
 
@@ -270,7 +298,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
               throw new IllegalStateException("You have reached maximum pool size for given partition");
 
             db = new DatabaseDocumentTxPolled(url);
-            db.open(userName, password);
+            openDatabase(db);
             db.partition = partition;
 
             data.acquireCount = 1;
@@ -282,7 +310,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
             return db;
           }
         } else {
-          db.open(userName, password);
+          openDatabase(db);
           db.partition = partition;
           partition.acquiredConnections.incrementAndGet();
 
@@ -295,9 +323,36 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     }
   }
 
+  public boolean isAutoCreate() {
+    return autoCreate;
+  }
+
+  public OPartitionedDatabasePool setAutoCreate(final boolean autoCreate) {
+    this.autoCreate = autoCreate;
+    return this;
+  }
+
+  protected void openDatabase(final DatabaseDocumentTxPolled db) {
+    if (autoCreate) {
+      if (!db.getURL().startsWith("remote:") && !db.exists()) {
+        db.create();
+      } else {
+        db.internalOpen();
+      }
+    } else {
+      db.internalOpen();
+    }
+  }
+
   @Override
   public void onShutdown() {
     close();
+  }
+
+  @Override
+  public void onStartup() {
+    if (poolData == null)
+      poolData = new ThreadPoolData();
   }
 
   public void close() {
@@ -319,6 +374,9 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
       }
 
     }
+
+    partitions = null;
+    poolData = null;
   }
 
   private void initQueue(String url, PoolPartition partition) {

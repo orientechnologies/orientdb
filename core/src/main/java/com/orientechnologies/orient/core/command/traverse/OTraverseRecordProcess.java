@@ -1,121 +1,131 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.command.traverse;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAny;
 
-public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
+public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiable> {
   private final OTraversePath path;
 
-  public OTraverseRecordProcess(final OTraverse iCommand, final ODocument iTarget, OTraversePath parentPath) {
+  public OTraverseRecordProcess(final OTraverse iCommand, final OIdentifiable iTarget, OTraversePath parentPath) {
     super(iCommand, iTarget);
     this.path = parentPath.append(iTarget);
   }
 
   public OIdentifiable process() {
     if (target == null)
-      return drop();
+      return pop();
 
-    if (command.getContext().isAlreadyTraversed(target))
+    final int depth = path.getDepth();
+
+    if (command.getContext().isAlreadyTraversed(target, depth))
       // ALREADY EVALUATED, DON'T GO IN DEEP
       return drop();
-
-    if (target.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-      try {
-        target.reload();
-      } catch (final ORecordNotFoundException e) {
-        // INVALID RID
-        return drop();
-      }
 
     if (command.getPredicate() != null) {
       final Object conditionResult = command.getPredicate().evaluate(target, null, command.getContext());
       if (conditionResult != Boolean.TRUE)
-        return drop();
+        return pop();
     }
 
     // UPDATE ALL TRAVERSED RECORD TO AVOID RECURSION
-    command.getContext().addTraversed(target);
+    command.getContext().addTraversed(target, depth);
 
-    // MATCH!
-    final List<Object> fields = new ArrayList<Object>();
+    final int maxDepth = command.getMaxDepth();
+    if (maxDepth > -1 && depth == maxDepth) {
+      // SKIP IT
+      pop();
+    } else {
+      final ORecord targetRec = target.getRecord();
+      if (!(targetRec instanceof ODocument))
+        // SKIP IT
+        return pop();
 
-    // TRAVERSE THE DOCUMENT ITSELF
-    for (Object cfgFieldObject : command.getFields()) {
-      String cfgField = cfgFieldObject.toString();
+      final ODocument targetDoc = (ODocument) targetRec;
 
-      if ("*".equals(cfgField) || OSQLFilterItemFieldAll.FULL_NAME.equalsIgnoreCase(cfgField)
-          || OSQLFilterItemFieldAny.FULL_NAME.equalsIgnoreCase(cfgField)) {
+      // MATCH!
+      final List<Object> fields = new ArrayList<Object>();
 
-        // ADD ALL THE DOCUMENT FIELD
-        Collections.addAll(fields, target.fieldNames());
+      // TRAVERSE THE DOCUMENT ITSELF
+      for (Object cfgFieldObject : command.getFields()) {
+        String cfgField = cfgFieldObject.toString();
 
-        break;
+        if ("*".equals(cfgField) || OSQLFilterItemFieldAll.FULL_NAME.equalsIgnoreCase(cfgField)
+            || OSQLFilterItemFieldAny.FULL_NAME.equalsIgnoreCase(cfgField)) {
 
-      } else {
-        // SINGLE FIELD
-        final int pos = cfgField.indexOf('.');
-        if (pos > -1) {
-          // FOUND <CLASS>.<FIELD>
-          final OClass cls = ODocumentInternal.getImmutableSchemaClass(target);
-          if (cls == null)
-            // JUMP IT BECAUSE NO SCHEMA
-            continue;
+          // ADD ALL THE DOCUMENT FIELD
+          Collections.addAll(fields, targetDoc.fieldNames());
+          break;
 
-          final String className = cfgField.substring(0, pos);
-          if (!cls.isSubClassOf(className))
-            // JUMP IT BECAUSE IT'S NOT A INSTANCEOF THE CLASS
-            continue;
+        } else {
+          // SINGLE FIELD
+          final int pos = cfgField.indexOf('.');
+          if (pos > -1) {
+            // FOUND <CLASS>.<FIELD>
+            final OClass cls = ODocumentInternal.getImmutableSchemaClass(targetDoc);
+            if (cls == null)
+              // JUMP IT BECAUSE NO SCHEMA
+              continue;
 
-          cfgField = cfgField.substring(pos + 1);
+            final String className = cfgField.substring(0, pos);
+            if (!cls.isSubClassOf(className))
+              // JUMP IT BECAUSE IT'S NOT A INSTANCEOF THE CLASS
+              continue;
 
-          fields.add(cfgField);
-        } else
-          fields.add(cfgFieldObject);
+            cfgField = cfgField.substring(pos + 1);
+
+            fields.add(cfgField);
+          } else
+            fields.add(cfgFieldObject);
+        }
       }
+
+      if (command.getStrategy() == OTraverse.STRATEGY.DEPTH_FIRST)
+        // REVERSE NAMES TO BE PROCESSED IN THE RIGHT ORDER
+        Collections.reverse(fields);
+
+      processFields(fields.iterator());
+
+      if (targetDoc.isEmbedded())
+        return null;
     }
-
-    processFields(fields.iterator());
-
-    if (target.isEmbedded())
-      return null;
 
     return target;
   }
 
   private void processFields(Iterator<Object> target) {
-    final ODocument doc = this.target;
+    final ODocument doc = this.target.getRecord();
 
     while (target.hasNext()) {
       Object field = target.next();
@@ -130,9 +140,13 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
         final OTraverseAbstractProcess<?> subProcess;
 
         if (fieldValue instanceof Iterator<?> || OMultiValue.isMultiValue(fieldValue)) {
-          final Iterator<Object> coll = OMultiValue.getMultiValueIterator(fieldValue);
+          final Iterator<?> coll;
+          if (fieldValue instanceof ORecordLazyMultiValue)
+            coll = ((ORecordLazyMultiValue) fieldValue).rawIterator();
+          else
+            coll = OMultiValue.getMultiValueIterator(fieldValue);
 
-          subProcess = new OTraverseMultiValueProcess(command, coll, getPath().appendField(field.toString()));
+          subProcess = new OTraverseMultiValueProcess(command, (Iterator<Object>) coll, getPath().appendField(field.toString()));
         } else if (fieldValue instanceof OIdentifiable && ((OIdentifiable) fieldValue).getRecord() instanceof ODocument) {
           subProcess = new OTraverseRecordProcess(command, (ODocument) ((OIdentifiable) fieldValue).getRecord(), getPath()
               .appendField(field.toString()));
@@ -152,5 +166,16 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
   @Override
   public OTraversePath getPath() {
     return path;
+  }
+
+  public OIdentifiable drop() {
+    command.getContext().pop(null);
+    return null;
+  }
+
+  @Override
+  public OIdentifiable pop() {
+    command.getContext().pop(target);
+    return null;
   }
 }

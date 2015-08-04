@@ -36,10 +36,10 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  */
 public class LockManagerTest {
 
-  public static final int                           THREADS         = 1000;
-  public static int                                 cyclesByProcess = 10000;
+  public static final int                 THREADS         = 64;
+  public static int                       cyclesByProcess = 10000000;
   public static boolean                             verbose         = false;
-  public static OLockManager<Callable<?>, Runnable> lockMgr         = new OLockManager<Callable<?>, Runnable>(
+  public static OLockManager<Callable<?>> lockMgr         = new OLockManager<Callable<?>>(
                                                                         OGlobalConfiguration.ENVIRONMENT_CONCURRENT
                                                                             .getValueAsBoolean(),
                                                                         5000);
@@ -53,7 +53,7 @@ public class LockManagerTest {
 
     @Override
     public Void call() throws Exception {
-      lockMgr.acquireLock(Thread.currentThread(), this, LOCK.SHARED);
+      lockMgr.acquireLock(this, LOCK.SHARED);
       try {
         countRead.incrementAndGet();
         // try {
@@ -75,7 +75,7 @@ public class LockManagerTest {
 
     @Override
     public Void call() throws Exception {
-      lockMgr.acquireLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
+      lockMgr.acquireLock(this, LOCK.EXCLUSIVE);
       try {
         countWrite.incrementAndGet();
         // try {
@@ -111,7 +111,7 @@ public class LockManagerTest {
     }
 
     void read() {
-      lockMgr.acquireLock(Thread.currentThread(), this, LOCK.SHARED);
+      lockMgr.acquireLock(this, LOCK.SHARED);
       try {
         countRead.incrementAndGet();
         if (verbose)
@@ -126,7 +126,7 @@ public class LockManagerTest {
     }
 
     void write() {
-      lockMgr.acquireLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
+      lockMgr.acquireLock(this, LOCK.EXCLUSIVE);
       try {
         countWrite.incrementAndGet();
         // try {
@@ -160,7 +160,7 @@ public class LockManagerTest {
     }
 
     void read() {
-      lockMgr.acquireLock(Thread.currentThread(), this, LOCK.SHARED);
+      lockMgr.acquireLock(this, LOCK.SHARED);
       try {
         countRead.incrementAndGet();
         // while (countRead < 3) {
@@ -178,7 +178,7 @@ public class LockManagerTest {
     }
 
     void reentrantRead() {
-      lockMgr.acquireLock(Thread.currentThread(), this, LOCK.SHARED);
+      lockMgr.acquireLock(this, LOCK.SHARED);
       try {
         countReentrantRead.incrementAndGet();
         // while (countRead < 2) {
@@ -193,7 +193,7 @@ public class LockManagerTest {
     }
 
     void write() {
-      lockMgr.acquireLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
+      lockMgr.acquireLock(this, LOCK.EXCLUSIVE);
       try {
         countWrite.incrementAndGet();
         reentrantWrite();
@@ -209,7 +209,7 @@ public class LockManagerTest {
     }
 
     void reentrantWrite() {
-      lockMgr.acquireLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
+      lockMgr.acquireLock(this, LOCK.EXCLUSIVE);
       try {
         countReentrantWrite.incrementAndGet();
         read();

@@ -110,7 +110,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
     database.close();
 
     database.open("admin", "admin");
-    Assert.assertEquals(((ODocument) adminRecord.reload()).field("user"), "admin");
+    Assert.assertEquals(((ODocument) database.load(adminRecord.getIdentity())).field("user"), "admin");
   }
 
   @Test(dependsOnMethods = "testFilteredDirectUpdateAsWriter")
@@ -265,6 +265,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
 
   }
 
+  @Test(dependsOnMethods = "testTruncateUnderlyingCluster")
   public void testUpdateRestricted() {
     database.open("admin", "admin");
     database.getMetadata().getSchema()
@@ -287,6 +288,8 @@ public class RestrictedTest extends DocumentDBBaseTest {
 
     final ODocument doc = result.get(0);
     Assert.assertEquals(doc.field("data"), "My Test");
+    doc.field("user", "admin");
+    doc.save();
     database.close();
 
     database.open("writer", "writer");

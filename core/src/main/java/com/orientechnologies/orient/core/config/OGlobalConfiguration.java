@@ -21,11 +21,12 @@ package com.orientechnologies.orient.core.config;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -79,13 +80,13 @@ public enum OGlobalConfiguration {
   // STORAGE
   DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 4 * 1024),
 
-  DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percent of disk cache which is use as write cache", Integer.class, 30),
+  DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percent of disk cache which is use as write cache", Integer.class, 15),
 
   DISK_WRITE_CACHE_PAGE_TTL("storage.diskCache.writeCachePageTTL",
       "Max time till page will be flushed from write cache in seconds", Long.class, 24 * 60 * 60),
 
   DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL("storage.diskCache.writeCachePageFlushInterval",
-      "Interval between flushing of pages from write cache in ms.", Integer.class, 100),
+      "Interval between flushing of pages from write cache in ms.", Integer.class, 25),
 
   DISK_WRITE_CACHE_FLUSH_WRITE_INACTIVITY_INTERVAL("storage.diskCache.writeCacheFlushInactivityInterval",
       "Interval between 2 writes to the disk cache,"
@@ -165,6 +166,7 @@ public enum OGlobalConfiguration {
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound", "The minimal amount of free space (in kb)"
       + " in page which is tracked in paginated storage", Integer.class, 16),
 
+  @Deprecated
   STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
       "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
 
@@ -211,6 +213,10 @@ public enum OGlobalConfiguration {
       OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME),
 
   // TRANSACTIONS
+
+  TX_TRACK_ATOMIC_OPERATIONS("tx.trackAtomicOperations",
+      "This setting is used only for debug purpose, it track stac trace of methods where atomic operation is started.",
+      Boolean.class, false),
 
   // INDEX
   INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("index.embeddedToSbtreeBonsaiThreshold",
@@ -270,7 +276,7 @@ public enum OGlobalConfiguration {
   SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE("sbtreebonsai.linkBagCache.evictionSize",
       "How many items of cached LINKBAG collections will be removed when cache limit is reached", Integer.class, 1000),
 
-  SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER("sbtreebonsai.freeeSpaceReuseTrigger",
+  SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER("sbtreebonsai.freeSpaceReuseTrigger",
       "How much free space should be in sbtreebonsai file before it will be reused during next allocation", Float.class, 0.5),
 
   // RIDBAG
@@ -290,6 +296,9 @@ public enum OGlobalConfiguration {
   PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental.", Boolean.class, false),
 
   // FILE
+  TRACK_FILE_CLOSE("file.trackFileClose",
+      "Log all the cases when files are closed. This is needed only for internal debugging purpose", Boolean.class, false),
+
   FILE_LOCK("file.lock", "Locks files when used. Default is true", boolean.class, true),
 
   FILE_DELETE_DELAY("file.deleteDelay", "Delay time in ms to wait for another attempt to delete a locked file", Integer.class, 10),
@@ -334,6 +343,8 @@ public enum OGlobalConfiguration {
       1000000),
 
   NETWORK_HTTP_CONTENT_CHARSET("network.http.charset", "Http response charset", String.class, "utf-8"),
+
+  NETWORK_HTTP_JSON_RESPONSE_ERROR("network.http.jsonResponseError", "Http response error in json", Boolean.class, true),
 
   OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, "utf-8"), NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT(
       "network.http.sessionExpireTimeout", "Timeout after which an http session is considered tp have expired (seconds)",
@@ -423,25 +434,23 @@ public enum OGlobalConfiguration {
 
   SERVER_CACHE_FILE_STATIC("server.cache.staticFile", "Cache static resources loading", Boolean.class, false),
 
-  SERVER_CACHE_INCREASE_ON_DEMAND("server.cache.2q.increaseOnDemand", "Increase 2q cache on demand", Boolean.class, true),
-
-  SERVER_CACHE_INCREASE_STEP("server.cache.2q.increaseStep",
-      "Increase 2q cache step in percent. Will only work if server.cache.2q.increaseOnDemand is true", Float.class, 0.1f),
-
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL(
       "server.log.dumpClientExceptionLevel",
       "Logs client exceptions. Use any level supported by Java java.util.logging.Level class: OFF, FINE, CONFIG, INFO, WARNING, SEVERE",
-      Level.class, Level.SEVERE),
+      Level.class, Level.FINE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
-      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE),
+      "Dumps the full stack trace of the exception to sent to the client", Boolean.class, Boolean.FALSE),
 
   // DISTRIBUTED
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout",
-      "Maximum timeout in milliseconds to wait for CRUD remote tasks", Integer.class, 3000l),
+      "Maximum timeout in milliseconds to wait for CRUD remote tasks", Long.class, 3000l),
 
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
-      "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 60000l),
+      "Maximum timeout in milliseconds to wait for Command remote tasks", Long.class, 10000l),
+
+  DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT("distributed.commandLongTaskTimeout",
+      "Maximum timeout in milliseconds to wait for Long-running remote tasks", Long.class, 24 * 60 * 60 * 1000),
 
   DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout",
       "Maximum timeout in milliseconds to wait for database deployment", Long.class, 1200000l),
@@ -453,13 +462,33 @@ public enum OGlobalConfiguration {
       "Compression level between 0 and 9 to use in backup for database deployment", Integer.class, 7),
 
   DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout", "Maximum timeout in milliseconds to wait for the response in replication",
-      Integer.class, 5000l),
+      Long.class, 5000l),
+
+  DISTRIBUTED_ASYNCH_QUEUE_SIZE("distributed.asynchQueueSize",
+      "Queue size to handle distributed asynchronous operations. 0 = dynamic allocation (up to 2^31-1 entries)", Integer.class, 0),
 
   DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT("distributed.asynchResponsesTimeout",
-      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
+      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Long.class, 15000l),
 
   DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY("distributed.purgeResponsesTimerDelay",
-      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
+      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Long.class, 15000l),
+
+  /**
+   * @Since 2.1
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)
+  DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY(
+      "distributed.concurrentTxMaxAutoRetry",
+      "Maximum retries the transaction coordinator can execute a transaction automatically if records are locked. Minimum is 1 (no retry)",
+      Integer.class, 10),
+
+  /**
+   * @Since 2.1
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)
+  DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY("distributed.concurrentTxAutoRetryDelay",
+      "Delay in ms between attempts on executing a distributed transaction failed because of records locked. 0=no delay",
+      Integer.class, 100),
 
   DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE("db.makeFullCheckpointOnIndexChange",
       "When index metadata is changed full checkpoint is performed", Boolean.class, true),
@@ -566,6 +595,7 @@ public enum OGlobalConfiguration {
   private Object                       value          = null;
   private String                       description;
   private OConfigurationChangeCallback changeCallback = null;
+  private Boolean                      canChange;
 
   // AT STARTUP AUTO-CONFIG
   static {
@@ -575,15 +605,22 @@ public enum OGlobalConfiguration {
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
       final OConfigurationChangeCallback iChangeAction) {
-    this(iKey, iDescription, iType, iDefValue);
+    this(iKey, iDescription, iType, iDefValue, true);
     changeCallback = iChangeAction;
   }
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue) {
+    this(iKey, iDescription, iType, iDefValue, false);
+  }
+
+  OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
+      final Boolean iCanChange) {
     key = iKey;
     description = iDescription;
     defValue = iDefValue;
     type = iType;
+    canChange = iCanChange;
+
   }
 
   public static void dumpConfiguration(final PrintStream out) {
@@ -689,6 +726,7 @@ public enum OGlobalConfiguration {
 
         OLogManager.instance().info(null, "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB disk=%,dMB)", diskCacheInMB,
             jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024, freeSpaceInMB);
+
         DISK_CACHE_SIZE.setValue(diskCacheInMB);
       } else {
         // LOW MEMORY: SET IT TO 256MB ONLY
@@ -697,8 +735,11 @@ public enum OGlobalConfiguration {
             .warn(
                 null,
                 "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE="
-                    + OReadWriteDiskCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
-        DISK_CACHE_SIZE.setValue(OReadWriteDiskCache.MIN_CACHE_SIZE);
+                    + O2QCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+        DISK_CACHE_SIZE.setValue(O2QCache.MIN_CACHE_SIZE);
+
+        OLogManager.instance().info(null, "OrientDB config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB disk=%,dMB)", diskCacheInMB,
+            jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024, freeSpaceInMB);
       }
 
     } catch (NoSuchMethodException e) {
@@ -756,6 +797,14 @@ public enum OGlobalConfiguration {
 
   public String getKey() {
     return key;
+  }
+
+  public Boolean getCanChange() {
+    return canChange;
+  }
+
+  public Object getDefValue() {
+    return defValue;
   }
 
   public Class<?> getType() {

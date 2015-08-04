@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -28,14 +30,22 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.*;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLRetryAbstract;
+import com.orientechnologies.orient.core.sql.OCommandParameters;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL CREATE EDGE command.
@@ -43,13 +53,13 @@ import java.util.Map.Entry;
  * @author Luca Garulli
  */
 public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstract implements OCommandDistributedReplicateRequest {
-  public static final String  NAME = "CREATE EDGE";
+  public static final String          NAME = "CREATE EDGE";
 
-  private String              from;
-  private String              to;
-  private OClass              clazz;
-  private String              clusterName;
-  private Map<String, Object> fields;
+  private String                      from;
+  private String                      to;
+  private OClass                      clazz;
+  private String                      clusterName;
+  private List<OPair<String, Object>> fields;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLCreateEdge parse(final OCommandRequest iRequest) {
@@ -85,7 +95,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
           to = parserRequiredWord(false, "Syntax error", " =><,\r\n");
 
         } else if (temp.equals(KEYWORD_SET)) {
-          fields = new LinkedHashMap<String, Object>();
+          fields = new ArrayList<OPair<String, Object>>();
           parseSetFields(clazz, fields);
 
         } else if (temp.equals(KEYWORD_CONTENT)) {
@@ -106,7 +116,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
 
       if (className == null) {
         // ASSIGN DEFAULT CLASS
-        className = "E";
+        className = OrientEdgeType.CLASS_NAME;
         clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
       }
 
@@ -152,9 +162,9 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
 
             if (fields != null)
               // EVALUATE FIELDS
-              for (Entry<String, Object> f : fields.entrySet()) {
+              for (final OPair<String, Object> f : fields) {
                 if (f.getValue() instanceof OSQLFunctionRuntime)
-                  fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(to, null, context));
+                  f.setValue(((OSQLFunctionRuntime) f.getValue()).getValue(to, null, context));
               }
 
             OrientEdge edge = null;
@@ -163,9 +173,9 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
                 if (content != null) {
                   if (fields != null)
                     // MERGE CONTENT WITH FIELDS
-                    fields.putAll(content.toMap());
+                    fields.addAll(OPair.convertFromMap(content.toMap()));
                   else
-                    fields = content.toMap();
+                    fields = OPair.convertFromMap(content.toMap());
                 }
 
                 edge = fromVertex.addEdge(null, toVertex, clsName, clusterName, fields);
@@ -192,6 +202,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
                   try {
                     Thread.sleep(wait);
                   } catch (InterruptedException e1) {
+                    OLogManager.instance().error(this, "Wait was interrupted.");
                   }
 
                 // RELOAD LAST VERSION
@@ -204,9 +215,22 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
           }
         }
 
+        if (edges.isEmpty()) {
+          if (fromIds.isEmpty())
+            throw new OCommandExecutionException("No edge has been created because no source vertices");
+          else if (toIds.isEmpty())
+            throw new OCommandExecutionException("No edge has been created because no target vertices");
+          throw new OCommandExecutionException("No edge has been created between " + fromIds + " and " + toIds);
+        }
+
         return edges;
       }
     });
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
   }
 
   @Override

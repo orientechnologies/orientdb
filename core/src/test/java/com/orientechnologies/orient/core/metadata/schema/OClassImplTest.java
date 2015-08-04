@@ -1,26 +1,19 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertTrue;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.concurrent.*;
+
+import static org.testng.Assert.*;
 
 public class OClassImplTest {
 
@@ -419,4 +412,108 @@ public class OClassImplTest {
     assertTrue(doc1.field("test6a") instanceof Integer);
   }
 
+  @Test
+  public void testCreatePropertyCastableColectionNoCache() {
+    final OSchema oSchema = db.getMetadata().getSchema();
+    OClass oClass = oSchema.createClass("Test11bis");
+
+    final ODocument document = new ODocument("Test11bis");
+    document.field("test1", new ArrayList<ODocument>(), OType.EMBEDDEDLIST);
+    document.field("test2", new ArrayList<ODocument>(), OType.LINKLIST);
+
+    document.field("test3", new HashSet<ODocument>(), OType.EMBEDDEDSET);
+    document.field("test4", new HashSet<ODocument>(), OType.LINKSET);
+    document.field("test5", new HashMap<String, ODocument>(), OType.EMBEDDEDMAP);
+    document.field("test6", new HashMap<String, ODocument>(), OType.LINKMAP);
+    db.save(document);
+    db.commit();
+    oClass.createProperty("test1", OType.LINKLIST);
+    oClass.createProperty("test2", OType.EMBEDDEDLIST);
+    oClass.createProperty("test3", OType.LINKSET);
+    oClass.createProperty("test4", OType.EMBEDDEDSET);
+    oClass.createProperty("test5", OType.LINKMAP);
+    oClass.createProperty("test6", OType.EMBEDDEDMAP);
+
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    Future<ODocument> future = executor.submit(new Callable<ODocument>() {
+      @Override
+      public ODocument call() throws Exception {
+        ODocument doc1 = db.copy().load(document.getIdentity());
+        assertEquals(doc1.fieldType("test1"), OType.LINKLIST);
+        assertEquals(doc1.fieldType("test2"), OType.EMBEDDEDLIST);
+        assertEquals(doc1.fieldType("test3"), OType.LINKSET);
+        assertEquals(doc1.fieldType("test4"), OType.EMBEDDEDSET);
+        assertEquals(doc1.fieldType("test5"), OType.LINKMAP);
+        assertEquals(doc1.fieldType("test6"), OType.EMBEDDEDMAP);
+        return doc1;
+      }
+    });
+
+    try {
+      future.get();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    } catch (ExecutionException e) {
+      if (e.getCause() instanceof AssertionError) {
+        throw (AssertionError) e.getCause();
+      }
+    }
+
+    executor.shutdown();
+
+  }
+
+  @Test
+  public void testReservedWords() {
+    Set<String> reserved = new HashSet<String>();
+    // reserved.add("select");
+    reserved.add("traverse");
+    reserved.add("insert");
+    reserved.add("update");
+    reserved.add("delete");
+    reserved.add("from");
+    reserved.add("where");
+    reserved.add("skip");
+    reserved.add("limit");
+    reserved.add("timeout");
+
+    final OSchema oSchema = db.getMetadata().getSchema();
+    OClass foo = oSchema.createClass("OClassImplTest_testReservedWords");
+
+    for (String s : reserved) {
+      try {
+        foo.createProperty(s, OType.STRING);
+        fail();
+      } catch (OSchemaException x) {
+        System.out.println(x.getMessage());
+      }
+    }
+
+  }
+
+  @Test
+  public void testClassNameSyntax() {
+
+    final OSchema oSchema = db.getMetadata().getSchema();
+    assertNotNull(oSchema.createClass("OClassImplTesttestClassNameSyntax"));
+    assertNotNull(oSchema.createClass("_OClassImplTesttestClassNameSyntax"));
+    assertNotNull(oSchema.createClass("_OClassImplTesttestClassNameSyntax_"));
+    assertNotNull(oSchema.createClass("_OClassImplTestte_stClassNameSyntax_"));
+    assertNotNull(oSchema.createClass("_OClassImplTesttestClassNameSyntax_12"));
+    assertNotNull(oSchema.createClass("_OClassImplTesttestCla23ssNameSyntax_12"));
+    assertNotNull(oSchema.createClass("$OClassImplTesttestCla23ssNameSyntax_12"));
+    assertNotNull(oSchema.createClass("OClassImplTesttestC$la23ssNameSyntax_12"));
+    assertNotNull(oSchema.createClass("oOClassImplTesttestC$la23ssNameSyntax_12"));
+    String[] invalidClassNames = { "foo bar", "12", "#12", "12AAA", "%adsf", ",asdfasdf", "adsf,asdf", "asdf.sadf", ".asdf", "asdfaf.", "asdf:asdf" };
+    for (String s : invalidClassNames) {
+      try {
+        oSchema.createClass(s);
+        fail("class with invalid name is incorrectly created: '" + s + "'");
+      } catch (Exception e) {
+
+      }
+    }
+
+  }
 }

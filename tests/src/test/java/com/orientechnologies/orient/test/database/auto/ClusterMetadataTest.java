@@ -1,14 +1,14 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -45,6 +45,7 @@ public class ClusterMetadataTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
+    database.activateOnCurrentThread();
 		database.resetInitialization();
     database.open("admin", "admin");
 
