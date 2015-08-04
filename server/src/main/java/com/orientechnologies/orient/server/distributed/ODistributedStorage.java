@@ -292,6 +292,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               else if (nodeResult instanceof Exception)
                 // RECEIVED EXCEPTION
                 throw (Exception) nodeResult;
+              else
+                set.add(nodeResult);
             }
 
             if (result instanceof OResultSet) {
