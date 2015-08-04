@@ -138,7 +138,14 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
         // DON'T PASS THE CURRENT RECORD TO FORCE EVALUATING TEMPORARY RESULT
         method.setParameters(op.getValue(), true);
 
-        ioResult = method.execute(ioResult, iRecord, ioResult, iContext);
+        if (ioResult instanceof List) {
+          List lst = (List)ioResult;
+          for (int i = 0, size = lst.size(); i < size; ++i) {
+            lst.set(i, method.execute(lst.get(i), iRecord, ioResult, iContext));
+          }
+        } else {
+          ioResult = method.execute(ioResult, iRecord, ioResult, iContext);
+        }
       }
     }
 
