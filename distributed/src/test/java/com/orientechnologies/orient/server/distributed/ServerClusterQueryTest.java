@@ -151,9 +151,9 @@ public class ServerClusterQueryTest extends AbstractServerClusterTest {
         OrientVertex r3 = it.next();
         Assert.assertFalse(it.hasNext());
 
-        Assert.assertEquals(r1.getProperty("amount"), 10);
-        Assert.assertEquals(r2.getProperty("amount"), 15);
-        Assert.assertEquals(r3.getProperty("amount"), 21);
+        Assert.assertEquals(10, r1.getProperty("amount"));
+        Assert.assertEquals(15, r2.getProperty("amount"));
+        Assert.assertEquals(21, r3.getProperty("amount"));
 
         result = g.command(new OCommandSQL("select amount from v order by amount desc")).execute(v2.getIdentity());
 
@@ -167,9 +167,9 @@ public class ServerClusterQueryTest extends AbstractServerClusterTest {
         r3 = it.next();
         Assert.assertFalse(it.hasNext());
 
-        Assert.assertEquals(r1.getProperty("amount"), 21);
-        Assert.assertEquals(r2.getProperty("amount"), 15);
-        Assert.assertEquals(r3.getProperty("amount"), 10);
+        Assert.assertEquals(21, r1.getProperty("amount"));
+        Assert.assertEquals(15, r2.getProperty("amount"));
+        Assert.assertEquals(10, r3.getProperty("amount"));
 
       } finally {
         g.shutdown();

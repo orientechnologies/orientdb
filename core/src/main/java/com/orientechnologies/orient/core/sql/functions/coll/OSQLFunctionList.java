@@ -83,12 +83,16 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
   @SuppressWarnings("unchecked")
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
-    final Collection<Object> result = new HashSet<Object>();
-    for (Object iParameter : resultsToMerge) {
-      final Map<String, Object> container = (Map<String, Object>) ((Collection<?>) iParameter).iterator().next();
-      result.addAll((Collection<?>) container.get("context"));
+    if (returnDistributedResult()) {
+      final Collection<Object> result = new HashSet<Object>();
+      for (Object iParameter : resultsToMerge) {
+        final Map<String, Object> container = (Map<String, Object>) ((Collection<?>) iParameter).iterator().next();
+        result.addAll((Collection<?>) container.get("context"));
+      }
+      return result;
     }
-    return result;
+
+    return resultsToMerge.get(0);
   }
 
   protected List<Object> prepareResult(List<Object> res) {
