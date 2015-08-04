@@ -19,6 +19,17 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -58,6 +69,7 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -76,17 +88,6 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.task.*;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -248,6 +249,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       switch (executionMode) {
       case LOCAL:
+        // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
         return wrapped.command(iCommand);
 
       case REPLICATE:
@@ -293,7 +295,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 // RECEIVED EXCEPTION
                 throw (Exception) nodeResult;
             }
-            result = new ArrayList<Object>(set);
+
+            if (result instanceof OResultSet) {
+              // REUSE THE SAME RESULTSET TO AVOID DUPLICATES
+              ((OResultSet) result).clear();
+              ((OResultSet) result).addAll(set);
+            } else
+              result = new ArrayList<Object>(set);
           }
 
         } else {
@@ -551,12 +559,23 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             .getClusterPosition(), masterPlaceholder.getRecordVersion()));
       }
 
+      // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
       final OStorageOperationResult<OPhysicalPosition> localResult;
 
       localResult = (OStorageOperationResult<OPhysicalPosition>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
         @Override
         public Object call() throws Exception {
-          return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
+          // USE THE DATABASE TO CALL HOOKS
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+
+          final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
+          ORecordInternal.fill(record, iRecordId, iRecordVersion, iContent, true);
+          db.save(record);
+
+          final OPhysicalPosition ppos = new OPhysicalPosition(iRecordType);
+          ppos.clusterPosition = record.getIdentity().getClusterPosition();
+          ppos.recordVersion = record.getRecordVersion();
+          return new OStorageOperationResult<OPhysicalPosition>(ppos);
         }
       });
 
@@ -728,11 +747,20 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         return new OStorageOperationResult<ORecordVersion>((ORecordVersion) result);
       }
 
+      // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
       final OStorageOperationResult<ORecordVersion> localResult;
+
       localResult = (OStorageOperationResult<ORecordVersion>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
         @Override
         public Object call() throws Exception {
-          return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
+          // USE THE DATABASE TO CALL HOOKS
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+
+          final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
+          ORecordInternal.fill(record, iRecordId, iVersion, iContent, true);
+          db.save(record);
+
+          return new OStorageOperationResult<ORecordVersion>(record.getRecordVersion());
         }
       });
 
@@ -805,11 +833,20 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         return new OStorageOperationResult<Boolean>(true);
       }
 
+      // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
       final OStorageOperationResult<Boolean> localResult;
+
       localResult = (OStorageOperationResult<Boolean>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
         @Override
         public Object call() throws Exception {
-          return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
+          // USE THE DATABASE TO CALL HOOKS
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+          try {
+            db.delete(iRecordId, iVersion);
+            return new OStorageOperationResult<Boolean>(true);
+          } catch (ORecordNotFoundException e) {
+            return new OStorageOperationResult<Boolean>(false);
+          }
         }
       });
 

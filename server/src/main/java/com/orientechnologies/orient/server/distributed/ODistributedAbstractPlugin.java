@@ -216,7 +216,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     synchronized (cachedDatabaseConfiguration) {
       storages.remove(iDatabase.getURL());
     }
-    getMessageService().unregisterDatabase(iDatabase.getName());
+
+    final ODistributedMessageService msgService = getMessageService();
+    if (msgService != null) {
+      msgService.unregisterDatabase(iDatabase.getName());
+    }
   }
 
   @Override
