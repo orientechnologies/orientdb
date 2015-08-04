@@ -117,7 +117,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
             final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
             try {
-              final List<String> compessedFiles = database.backup(fileOutputStream, null, new Callable<Object>() {
+              final List<String> compressedFiles = database.backup(fileOutputStream, null, new Callable<Object>() {
                 @Override
                 public Object call() throws Exception {
                   lastOperationId.set(database.getStorage().getLastOperationId());
@@ -125,12 +125,11 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
                 }
               }, this, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
 
-              if (compessedFiles.size() < 2) {
-                throw new ODistributedException("Cannot backup database, compressed files: " + compessedFiles);
+              if (compressedFiles.size() < 2) {
+                throw new ODistributedException("Cannot backup database, compressed files: " + compressedFiles);
               }
 
-              ODistributedServerLog.info(this, iManager.getLocalNodeName(), null, DIRECTION.NONE, "compressed %d files",
-                  compessedFiles.size());
+              ODistributedServerLog.info(this, iManager.getLocalNodeName(), null, DIRECTION.NONE, "compressed %d files", compressedFiles.size());
 
             } finally {
               fileOutputStream.close();

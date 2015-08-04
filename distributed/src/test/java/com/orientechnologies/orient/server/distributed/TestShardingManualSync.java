@@ -18,7 +18,6 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
   public void test() throws Exception {
     init(SERVERS);
     prepare(true);
-
     execute();
   }
 

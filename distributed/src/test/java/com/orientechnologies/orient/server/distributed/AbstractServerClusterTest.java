@@ -90,39 +90,43 @@ public abstract class AbstractServerClusterTest {
   public void execute() throws Exception {
     System.out.println("Starting test against " + serverInstance.size() + " server nodes...");
 
-    for (ServerRun server : serverInstance) {
-      log("STARTING SERVER -> " + server.getServerId() + "...");
-      server.startServer(getDistributedServerConfiguration(server));
+    try {
 
-      if (delayServerStartup > 0)
+      for (ServerRun server : serverInstance) {
+        log("STARTING SERVER -> " + server.getServerId() + "...");
+        server.startServer(getDistributedServerConfiguration(server));
+
+        if (delayServerStartup > 0)
+          try {
+            Thread.sleep(delayServerStartup * serverInstance.size());
+          } catch (InterruptedException e) {
+          }
+
+        onServerStarted(server);
+      }
+
+      if (delayServerAlign > 0)
         try {
-          Thread.sleep(delayServerStartup * serverInstance.size());
+          System.out.println("Server started, waiting for synchronization (" + (delayServerAlign * serverInstance.size() / 1000)
+              + "secs)...");
+          Thread.sleep(delayServerAlign * serverInstance.size());
         } catch (InterruptedException e) {
         }
 
-      onServerStarted(server);
-    }
-
-    if (delayServerAlign > 0)
-      try {
-        System.out.println("Server started, waiting for synchronization (" + (delayServerAlign * serverInstance.size() / 1000)
-            + "secs)...");
-        Thread.sleep(delayServerAlign * serverInstance.size());
-      } catch (InterruptedException e) {
+      for (ServerRun server : serverInstance) {
+        final ODocument cfg = server.getServerInstance().getDistributedManager().getClusterConfiguration();
+        Assert.assertNotNull(cfg);
       }
 
-    for (ServerRun server : serverInstance) {
-      final ODocument cfg = server.getServerInstance().getDistributedManager().getClusterConfiguration();
-      Assert.assertNotNull(cfg);
-    }
+      log("Executing test...");
 
-    log("Executing test...");
+      try {
+        executeTest();
+      } finally {
+        onAfterExecution();
+      }
 
-    try {
-      executeTest();
     } finally {
-      onAfterExecution();
-
       log("Shutting down nodes...");
       for (ServerRun server : serverInstance) {
         System.out.println("Shutting down node " + server.getServerId() + "...");
