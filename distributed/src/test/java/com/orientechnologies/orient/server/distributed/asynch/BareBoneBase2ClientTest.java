@@ -45,7 +45,7 @@ public abstract class BareBoneBase2ClientTest extends BareBoneBase1ClientTest {
     endTest(servers);
   }
 
-  protected static void sleep(int i) {
+  protected static void sleep(final int i) {
     try {
       Thread.sleep(i);
     } catch (InterruptedException xcpt) {

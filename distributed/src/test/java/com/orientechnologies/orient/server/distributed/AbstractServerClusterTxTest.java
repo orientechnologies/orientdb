@@ -16,16 +16,17 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.Date;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+
+import junit.framework.Assert;
+
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import junit.framework.Assert;
-
-import java.util.Date;
-import java.util.UUID;
-import java.util.concurrent.Callable;
 
 /**
  * Test distributed TX
@@ -76,7 +77,8 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
             throw e;
           }
 
-          Thread.sleep(delayWriter);
+          if (delayWriter > 0)
+            Thread.sleep(delayWriter);
 
         } catch (InterruptedException e) {
           System.out.println("Writer received interrupt (db=" + database.getURL());

@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.hazelcast.core.Hazelcast;
+import com.hazelcast.instance.GroupProperties;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -79,6 +80,8 @@ public abstract class AbstractServerClusterTest {
   }
 
   public void init(final int servers) {
+    System.setProperty(GroupProperties.PROP_WAIT_SECONDS_BEFORE_JOIN, "1");
+
     Orient.setRegisterDatabaseByPath(true);
     for (int i = 0; i < servers; ++i)
       serverInstance.add(new ServerRun(rootDirectory, "" + i));
@@ -90,20 +93,23 @@ public abstract class AbstractServerClusterTest {
     for (ServerRun server : serverInstance) {
       log("STARTING SERVER -> " + server.getServerId() + "...");
       server.startServer(getDistributedServerConfiguration(server));
-      try {
-        Thread.sleep(delayServerStartup * serverInstance.size());
-      } catch (InterruptedException e) {
-      }
+
+      if (delayServerStartup > 0)
+        try {
+          Thread.sleep(delayServerStartup * serverInstance.size());
+        } catch (InterruptedException e) {
+        }
 
       onServerStarted(server);
     }
 
-    try {
-      System.out.println("Server started, waiting for synchronization (" + (delayServerAlign * serverInstance.size() / 1000)
-          + "secs)...");
-      Thread.sleep(delayServerAlign * serverInstance.size());
-    } catch (InterruptedException e) {
-    }
+    if (delayServerAlign > 0)
+      try {
+        System.out.println("Server started, waiting for synchronization (" + (delayServerAlign * serverInstance.size() / 1000)
+            + "secs)...");
+        Thread.sleep(delayServerAlign * serverInstance.size());
+      } catch (InterruptedException e) {
+      }
 
     for (ServerRun server : serverInstance) {
       final ODocument cfg = server.getServerInstance().getDistributedManager().getClusterConfiguration();

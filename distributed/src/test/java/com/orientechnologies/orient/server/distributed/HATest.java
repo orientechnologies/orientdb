@@ -46,7 +46,7 @@ public class HATest extends AbstractServerClusterTxTest {
     log("RESTARTING SERVER " + (SERVERS - 1) + "...");
     serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
 
-    Thread.sleep(2000);
+    Thread.sleep(1000);
 
     log("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
 

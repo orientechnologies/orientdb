@@ -90,7 +90,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
               if ((i + 1) % 100 == 0)
                 System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
 
-              Thread.sleep(delayWriter);
+              if (delayWriter > 0)
+                Thread.sleep(delayWriter);
 
               // OK
               break;
@@ -132,7 +133,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     private ODocument createRecord(ODatabaseDocumentTx database, int i) {
       final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-//      System.out.println("Creating person " + uniqueId);
+      // System.out.println("Creating person " + uniqueId);
 
       ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "surname",
           "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
@@ -190,7 +191,9 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
         while (runningWriters.getCount() > 0) {
           try {
             printStats(databaseUrl);
-            Thread.sleep(delayReader);
+
+            if (delayReader > 0)
+              Thread.sleep(delayReader);
 
           } catch (Exception e) {
             break;

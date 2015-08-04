@@ -39,6 +39,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
@@ -116,13 +117,21 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
             final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
             try {
-              database.backup(fileOutputStream, null, new Callable<Object>() {
+              final List<String> compessedFiles = database.backup(fileOutputStream, null, new Callable<Object>() {
                 @Override
                 public Object call() throws Exception {
                   lastOperationId.set(database.getStorage().getLastOperationId());
                   return null;
                 }
               }, this, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+
+              if (compessedFiles.size() < 2) {
+                throw new ODistributedException("Cannot backup database, compressed files: " + compessedFiles);
+              }
+
+              ODistributedServerLog.info(this, iManager.getLocalNodeName(), null, DIRECTION.NONE, "compressed %d files",
+                  compessedFiles.size());
+
             } finally {
               fileOutputStream.close();
             }
