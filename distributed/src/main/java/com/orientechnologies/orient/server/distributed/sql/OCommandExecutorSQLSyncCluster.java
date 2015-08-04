@@ -237,7 +237,7 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
   }
 
   @Override
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 

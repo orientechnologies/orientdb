@@ -72,12 +72,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     return (RET) this;
   }
 
-  /**
-   * No timeout bu default.
-   * 
-   * @return
-   */
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
