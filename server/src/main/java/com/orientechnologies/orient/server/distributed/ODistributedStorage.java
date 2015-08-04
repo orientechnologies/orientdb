@@ -248,12 +248,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       switch (executionMode) {
       case LOCAL:
-        return ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
-          @Override
-          public Object call() throws Exception {
-            return wrapped.command(iCommand);
-          }
-        });
+        return wrapped.command(iCommand);
 
       case REPLICATE:
         // REPLICATE IT, GET ALL THE INVOLVED NODES
