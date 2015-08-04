@@ -54,4 +54,11 @@ public interface OCommandDistributedReplicateRequest {
    * </ul>
    */
   QUORUM_TYPE getQuorumType();
+
+  /**
+   * Returns the distributed timeout in milliseconds.
+   * 
+   * @return
+   */
+  long getDistributedTimeout();
 }

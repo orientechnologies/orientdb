@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -38,6 +30,14 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -445,6 +445,9 @@ public enum OGlobalConfiguration {
 
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
       "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 60000),
+
+  DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT("distributed.commandLongTaskTimeout",
+      "Maximum timeout in milliseconds to wait for Long-running remote tasks", Long.class, 24 * 60 * 60 * 1000),
 
   DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout",
       "Maximum timeout in milliseconds to wait for database deployment", Long.class, 1200000l),

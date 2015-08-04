@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.parser.OBaseParser;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -122,5 +123,9 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
       }
     }
     return result.toString();
+  }
+
+  public long getDistributedTimeout(){
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 }

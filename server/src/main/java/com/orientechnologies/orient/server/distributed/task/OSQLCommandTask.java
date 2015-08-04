@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
@@ -50,6 +49,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   protected Map<Object, Object>                             params;
   protected RESULT_STRATEGY                                 resultStrategy;
   protected OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType;
+  protected long                                            timeout;
 
   public OSQLCommandTask() {
   }
@@ -61,6 +61,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
     final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
     executor.parse(iCommand);
     quorumType = ((OCommandDistributedReplicateRequest) executor).getQuorumType();
+    timeout = ((OCommandDistributedReplicateRequest) executor).getDistributedTimeout();
   }
 
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
@@ -97,7 +98,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
 
   @Override
   public long getTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    return timeout;
   }
 
   @Override

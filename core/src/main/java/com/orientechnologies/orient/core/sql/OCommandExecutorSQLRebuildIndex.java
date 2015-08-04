@@ -19,14 +19,15 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
+
+import java.util.Map;
 
 /**
  * SQL REMOVE INDEX command: Remove an index
@@ -104,5 +105,10 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract
   @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
+  }
+
+  @Override
+  public long getDistributedTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 }
