@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLMethodMultiValue;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodEach;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDelegate;
 import com.orientechnologies.orient.core.sql.methods.OSQLMethodRuntime;
@@ -132,13 +133,20 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
       // APPLY OPERATIONS FOLLOWING THE STACK ORDER
       OSQLMethodRuntime method = null;
 
+      boolean processEach = false;
       for (OPair<OSQLMethodRuntime, Object[]> op : operationsChain) {
         method = op.getKey();
 
         // DON'T PASS THE CURRENT RECORD TO FORCE EVALUATING TEMPORARY RESULT
         method.setParameters(op.getValue(), true);
 
-        if (ioResult instanceof List) {
+
+        Object processEachObj = iContext.getVariable(OSQLMethodEach.VARIABLE_PROCESS_EACH);
+        if (processEachObj != null && processEachObj instanceof Boolean) {
+          processEach = (Boolean)processEachObj;
+        }
+
+        if (processEach && (ioResult instanceof List)) {
           List lst = (List)ioResult;
           for (int i = 0, size = lst.size(); i < size; ++i) {
             lst.set(i, method.execute(lst.get(i), iRecord, ioResult, iContext));

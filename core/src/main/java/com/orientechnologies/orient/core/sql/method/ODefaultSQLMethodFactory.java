@@ -89,6 +89,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
     register(OSQLMethodSubString.NAME, new OSQLMethodSubString());
     register(OSQLMethodToJSON.NAME, new OSQLMethodToJSON());
     register(OSQLMethodValues.NAME, new OSQLMethodValues());
+    register(OSQLMethodEach.NAME, new OSQLMethodEach());
   }
 
   public void register(final String iName, final Object iImplementation) {
