@@ -35,6 +35,8 @@ var deps = ['header.controller',
   'pascalprecht.translate',
   'ngTagsInput',
   'frapontillo.bootstrap-switch',
+  'easypiechart',
+  'datatables',
   'smart-table'];
 
 
@@ -135,6 +137,14 @@ App.config(function ($routeProvider, $httpProvider, $translateProvider, $transla
       templateUrl: 'views/database/graph/graph.html',
       controller: 'GraphController',
       resolve: DatabaseResolve
+    })
+    .when('/dashboard', {
+      templateUrl: 'views/server/dashboard.html',
+      controller: 'ServerDashboardController'
+    })
+    .when('/dashboard/:tab', {
+      templateUrl: 'views/server/dashboard.html',
+      controller: 'ServerDashboardController'
     })
     .when('/server', {
       templateUrl: 'views/server/info.html',

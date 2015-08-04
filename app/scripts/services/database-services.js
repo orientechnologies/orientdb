@@ -847,7 +847,7 @@ database.factory('DocumentApi', function ($http, $resource, Database, $q) {
   }
   return resource;
 });
-database.factory('ServerApi', function ($http, $resource) {
+database.factory('ServerApi', function ($http, $resource,$q) {
 
 
   var resource = $resource(API + 'server');
@@ -866,6 +866,17 @@ database.factory('ServerApi', function ($http, $resource) {
     $http.post(API + 'connection/interrupt/' + n).success(function () {
       callback();
     });
+  }
+
+  resource.changeConfiguration = function (name, val) {
+    var deferred = $q.defer();
+    var text = API + 'server/configuration.' + name + '/' + val;
+    $http.post(text).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data) {
+      deferred.reject(data);
+    });
+    return deferred.promise;
   }
   return resource;
 });
@@ -1029,10 +1040,66 @@ database.factory('Profiler', function ($http, $resource, $q) {
     });
     return deferred.promise;
   }
+
+  resource.realtime = function () {
+    var deferred = $q.defer();
+    var text = API + 'profiler/realtime';
+    $http.get(text).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
   return resource
 });
 
 
+database.factory('Cluster', function ($http, $resource, $q) {
+
+
+  var resource = $resource('');
+
+
+  resource.node = function () {
+
+    var deferred = $q.defer();
+    var text = API + 'distributed/node';
+    $http.get(text).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+
+
+  resource.database = function (db) {
+
+    var deferred = $q.defer();
+    var text = API + 'distributed/database/' + db;
+    $http.get(text).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+  resource.stats = function () {
+
+    var deferred = $q.defer();
+    var text = API + 'distributed/stats';
+    $http.get(text).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+
+
+  return resource
+});
 database.factory('Auditing', function ($http, $resource, $q, CommandApi) {
 
 

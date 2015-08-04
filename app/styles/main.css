@@ -161,9 +161,11 @@ div.edge form.bs-docs-example:after {
   top: -13px;
   z-index: -1;
 }
+
 .search-query {
   margin-bottom: 10px;
 }
+
 .query-header {
   background-color: #F5F5F5;
   border: 1px solid #DDDDDD;
@@ -1056,3 +1058,85 @@ span.badge-edge {
 .queryConfigStyle {
   margin-bottom: 3px;
 }
+
+.chart {
+  position: relative;
+  display: block;
+  width: 110px;
+  height: 110px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.chart canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.percent {
+  display: inline-block;
+  line-height: 110px;
+  z-index: 2;
+}
+
+.percent:after {
+  content: '%';
+  margin-left: 0.1em;
+  font-size: .8em;
+}
+
+.angular {
+  margin-top: 100px;
+}
+
+.angular .chart {
+  margin-top: 0;
+}
+
+.thumbnail .chart-label {
+  width: 100%;
+  text-align: center;
+}
+
+.thumbnail h4 {
+  text-align: center;
+}
+
+.widget-server .no-margin {
+  padding: 5px;
+}
+
+.server-thumb hr {
+  margin: 10px 0;
+}
+
+.sidebar {
+  position: fixed;
+  background: #384047;
+  top: 0;
+  bottom: 0;
+  z-index: 1031;
+}
+
+.oaside-small {
+  width: 8% !important;
+}
+
+.dashboard-container {
+  padding: 20px 40px;
+}
+
+.thumbnails {
+  list-style: none;
+  padding-left: 0px;
+}
+
+.table-responsive {
+  overflow: auto;
+}
+
+.daside-list a.list-group-item {
+  text-align: center;
+}
+

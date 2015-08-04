@@ -1,0 +1,11 @@
+<div class="panel panel-default panel-orient">
+  <div class="panel-heading">
+    {{current.name | capitalize}}
+  </div>
+
+  <div class="row">
+    <div class="col-md-12 dashboard-container">
+      <ng-include src="getTemplate(active)"></ng-include>
+    </div>
+  </div>
+</div>

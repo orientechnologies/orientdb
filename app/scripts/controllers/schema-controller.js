@@ -376,7 +376,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
           var val = properties[result][v];
           if (val == 'Case Insensitive')
             val = 'ci';
-          
+
 
           if(!val){
             val = null;

@@ -1,0 +1,95 @@
+<div ng-controller="MultipleServerController">
+  <div class="row">
+    <div class="{{serverClass}}" ng-repeat="server in servers" ng-controller="SingleServerController">
+      <ul class="thumbnails">
+        <li class="">
+          <div class="thumbnail server-thumb">
+            <div class="row">
+              <div class="col-md-12">
+                {{ server.name }}
+              </div>
+              <!--<div class="col-md-6">-->
+              <!--<div class="pull-right">-->
+              <!--<a href="javascript:void(0)" class="btn btn-small" ng-show="!server.attached"-->
+              <!--ng-click="enableServer(server)"><i-->
+              <!--class="icon-play"></i></a>-->
+              <!--<a href="javascript:void(0)" class="btn btn-small" ng-show="server.attached"-->
+              <!--ng-click="disableServer(server)"><i-->
+              <!--class="icon-pause"></i></a>-->
+              <!--</div>-->
+              <!--</div>-->
+
+            </div>
+            <div class="row">
+
+              <div class="col-md-4">
+             <span class="chart" easypiechart percent="cpuPercent" options="cpuOptions">
+			          <span class="percent" ng-bind="cpuPercent"></span>
+		        </span>
+
+                <div class="chart-label">
+                  <span>CPU</span>
+                </div>
+              </div>
+              <div class="col-md-4">
+             <span class="chart" easypiechart percent="ramPercent" options="ramOptions">
+			    <span class="percent" ng-bind="ramPercent"></span>
+		    </span>
+
+                <div class="chart-label">
+                  <span>RAM</span>
+                </div>
+              </div>
+              <div class="col-md-4">
+             <span class="chart" easypiechart percent="diskPercent" options="diskOptions">
+			    <span class="percent" ng-bind="diskPercent"></span>
+		    </span>
+
+                <div class="chart-label">
+                  <span>DISK</span>
+                </div>
+              </div>
+            </div>
+            <hr>
+            <div class="row">
+              <div class="col-md-6">
+                <b>Status:</b> <span ng-class="getStatusLabel(server.status)">{{ server.status }}</span>
+
+                <a ng-show="!polling" href="javascript:void(0)" tabindex="1"
+                   data-trigger="focus" data-placement="bottom"
+                   data-content="{{ 'agent.notFound' | translate:links }}" bs-popover>
+                  <i class="fa fa-question-circle"></i>
+                </a>
+              </div>
+              <div class="col-md-6">
+                <b>Ops/Sec:</b> {{operations}}</span>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <b>Active Connections:</b> {{connections}}</span>
+              </div>
+              <div class="col-md-6">
+                <b>Network Requests:</b> {{requests}}</span>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <b>Average Latency:</b> {{latency}}</span>
+              </div>
+              <div class="col-md-6">
+                <b>Warnings:</b> {{ tips }} </span>
+              </div>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="row">
+    <div class="{{serverClass}}" ng-repeat="server in servers" ng-controller="SingleChartServerController">
+      <div id="{{server.name}}" c3chart></div>
+    </div>
+  </div>
+</div>
