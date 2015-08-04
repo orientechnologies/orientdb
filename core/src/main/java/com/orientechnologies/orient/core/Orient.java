@@ -653,7 +653,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public Iterator<ODatabaseLifecycleListener> getDbLifecycleListeners() {
-    return dbLifecycleListeners.keySet().iterator();
+    return new HashSet<ODatabaseLifecycleListener>(dbLifecycleListeners.keySet()).iterator();
   }
 
   public void addDbLifecycleListener(final ODatabaseLifecycleListener iListener) {
