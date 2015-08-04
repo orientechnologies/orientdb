@@ -139,6 +139,7 @@ public abstract class AbstractServerClusterTest {
     System.out.println(iMessage);
     System.out
         .println("**********************************************************************************************************\n");
+    System.out.flush();
   }
 
   protected void onServerStarted(ServerRun server) {
