@@ -264,12 +264,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
           if (nodeClusterMap.size() == 1 && nodeClusterMap.keySet().iterator().next().equals(localNodeName)) {
             // LOCAL NODE, AVOID TO DISTRIBUTE IT
-            result = ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
-              @Override
-              public Object call() throws Exception {
-                return wrapped.command(iCommand);
-              }
-            });
+            // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
+            result = wrapped.command(iCommand);
+
             results = new HashMap<String, Object>(1);
             results.put(localNodeName, result);
 
@@ -320,12 +317,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
           if (executeLocally(localNodeName, dbCfg, exec, involvedClusters, nodes))
             // LOCAL NODE, AVOID TO DISTRIBUTE IT
-            return ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
-              @Override
-              public Object call() throws Exception {
-                return wrapped.command(iCommand);
-              }
-            });
+            // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
+            return wrapped.command(iCommand);
 
           result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
           if (exec.involveSchema())
