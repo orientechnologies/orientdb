@@ -258,42 +258,44 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
           final Map<String, Collection<String>> nodeClusterMap = dbCfg.getServerClusterMap(involvedClusters, localNodeName);
 
-          if (nodeClusterMap.size() == 1 && nodeClusterMap.keySet().iterator().next().equals(localNodeName))
+          final Map<String, Object> results;
+
+          if (nodeClusterMap.size() == 1 && nodeClusterMap.keySet().iterator().next().equals(localNodeName)) {
             // LOCAL NODE, AVOID TO DISTRIBUTE IT
-            return ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+            result = ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
               @Override
               public Object call() throws Exception {
                 return wrapped.command(iCommand);
               }
             });
+            results = new HashMap<String, Object>(1);
+            results.put(localNodeName, result);
 
-          // SELECT: SPLIT CLASSES/CLUSTER IF ANY
-          final Map<String, Object> results = executeOnServers(iCommand, involvedClusters, nodeClusterMap);
-
-          if (results.size() == 1)
-            // ONE RESULT ONLY: RETURN IT DIRECTLY
-            result = results.values().iterator().next();
-          else {
-            final OCommandExecutorSQLSelect select = exec instanceof OCommandExecutorSQLSelect ? (OCommandExecutorSQLSelect) exec
-                : null;
-
-            if (select != null && select.isAnyFunctionAggregates()) {
-              result = mergeResultByAggegation(select, results);
-            } else {
-              // MIX & FILTER RESULT SET AVOIDING DUPLICATES
-              // TODO: ONCE OPTIMIZED (SEE ABOVE) AVOID TO FILTER HERE
-              final Set<Object> set = new HashSet<Object>();
-              for (Map.Entry<String, Object> entry : ((Map<String, Object>) results).entrySet()) {
-                final Object nodeResult = entry.getValue();
-                if (nodeResult instanceof Collection)
-                  set.addAll((Collection<?>) nodeResult);
-                else if (nodeResult instanceof Exception)
-                  // RECEIVED EXCEPTION
-                  throw (Exception) nodeResult;
-              }
-              result = new ArrayList<Object>(set);
-            }
+          } else {
+            // SELECT: SPLIT CLASSES/CLUSTER IF ANY
+            results = executeOnServers(iCommand, involvedClusters, nodeClusterMap);
           }
+
+          final OCommandExecutorSQLSelect select = exec instanceof OCommandExecutorSQLSelect ? (OCommandExecutorSQLSelect) exec
+              : null;
+
+          if (select != null && select.isAnyFunctionAggregates()) {
+            result = mergeResultByAggegation(select, results);
+          } else {
+            // MIX & FILTER RESULT SET AVOIDING DUPLICATES
+            // TODO: ONCE OPTIMIZED (SEE ABOVE) AVOID TO FILTER HERE
+            final Set<Object> set = new HashSet<Object>();
+            for (Map.Entry<String, Object> entry : ((Map<String, Object>) results).entrySet()) {
+              final Object nodeResult = entry.getValue();
+              if (nodeResult instanceof Collection)
+                set.addAll((Collection<?>) nodeResult);
+              else if (nodeResult instanceof Exception)
+                // RECEIVED EXCEPTION
+                throw (Exception) nodeResult;
+            }
+            result = new ArrayList<Object>(set);
+          }
+
         } else {
           final OAbstractCommandTask task = iCommand instanceof OCommandScript ? new OScriptTask(iCommand) : new OSQLCommandTask(
               iCommand, new HashSet<String>());
