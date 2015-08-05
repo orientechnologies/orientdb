@@ -14,7 +14,7 @@ public class TestDistributeConfigSerialization extends AbstractServerClusterTest
 
   @Test
   public void test() throws Exception {
-    init(2);
+    init(1);
     execute();
   }
 
