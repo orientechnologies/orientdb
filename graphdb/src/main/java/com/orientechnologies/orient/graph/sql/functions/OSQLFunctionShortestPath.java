@@ -22,6 +22,7 @@ package com.orientechnologies.orient.graph.sql.functions;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -141,7 +142,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
         if (Thread.interrupted())
           throw new OCommandExecutionException("The shortestPath() function has been interrupted");
 
-        if (!iContext.checkTimeout())
+        if( !OCommandExecutorAbstract.checkInterruption(iContext) )
           break;
 
         List<ORID> neighborIdentity;

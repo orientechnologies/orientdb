@@ -1030,6 +1030,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     mandatory = document.containsField("mandatory") ? (Boolean) document.field("mandatory") : false;
     readonly = document.containsField("readonly") ? (Boolean) document.field("readonly") : false;
     notNull = document.containsField("notNull") ? (Boolean) document.field("notNull") : false;
+    defaultValue = (String) (document.containsField("defaultValue") ? document.field("defaultValue") : null);
     if (document.containsField("collate"))
       collate = OSQLEngine.getCollate((String) document.field("collate"));
 
@@ -1071,6 +1072,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       document.field("mandatory", mandatory);
       document.field("readonly", readonly);
       document.field("notNull", notNull);
+      document.field("defaultValue", defaultValue);
 
       document.field("min", min);
       document.field("max", max);

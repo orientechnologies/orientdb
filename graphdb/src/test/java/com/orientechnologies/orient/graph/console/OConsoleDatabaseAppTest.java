@@ -29,6 +29,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Iterator;
 import java.util.List;
 
@@ -36,6 +39,52 @@ import java.util.List;
  * @author Luigi Dell'Aquila
  */
 public class OConsoleDatabaseAppTest {
+
+  class ConsoleTest {
+    OConsoleDatabaseApp   console;
+    ByteArrayOutputStream out;
+    PrintStream           stream;
+
+    ConsoleTest() {
+      console = new OConsoleDatabaseApp(null);
+      resetOutput();
+    }
+
+    public OConsoleDatabaseApp console() {
+      return console;
+    }
+
+    public String getConsoleOutput() {
+      byte[] result = out.toByteArray();
+      return new String(result);
+    }
+
+    void resetOutput() {
+      if (out != null) {
+        try {
+          stream.close();
+          out.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+      out = new ByteArrayOutputStream();
+      stream = new PrintStream(out);
+      console.setOutput(stream);
+    }
+
+    void shutdown() {
+      if (out != null) {
+        try {
+          stream.close();
+          out.close();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+      console.close();
+    }
+  }
 
   @Test
   public void testSimple() {
@@ -49,6 +98,7 @@ public class OConsoleDatabaseAppTest {
     builder.append("list clusters;\n");
     builder.append("list indexes;\n");
     builder.append("info class OUser;\n");
+    builder.append("info property OUser.name;\n");
 
     builder.append("begin;\n");
     builder.append("insert into foo set name = 'foo';\n");
@@ -77,32 +127,38 @@ public class OConsoleDatabaseAppTest {
     builder.append("traverse out() from V;\n");
 
     OConsoleDatabaseApp console = new OConsoleDatabaseApp(new String[] { builder.toString() });
-    console.run();
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-    db.open("admin", "admin");
     try {
-      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
-      Assert.assertEquals(1, result.size());
-      ODocument doc = result.get(0);
-      Assert.assertEquals("bar", doc.field("surname"));
+      console.run();
 
-      result = db.query(new OSQLSynchQuery<ODocument>("select from bar"));
-      Assert.assertEquals(0, result.size());
+
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+      db.open("admin", "admin");
+      try {
+        List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
+        Assert.assertEquals(1, result.size());
+        ODocument doc = result.get(0);
+        Assert.assertEquals("bar", doc.field("surname"));
+
+        result = db.query(new OSQLSynchQuery<ODocument>("select from bar"));
+        Assert.assertEquals(0, result.size());
+      } finally {
+        db.close();
+      }
+      OrientGraph graph = new OrientGraph(dbUrl);
+      try {
+        Iterable<Vertex> result = graph
+            .command(new OSQLSynchQuery<Vertex>("select expand(out()) from (select from V where name = 'foo')")).execute();
+        Iterator<Vertex> iterator = result.iterator();
+        Assert.assertTrue(iterator.hasNext());
+        Vertex next = iterator.next();
+        Assert.assertEquals("bar", next.getProperty("name"));
+        Assert.assertFalse(iterator.hasNext());
+      } finally {
+        graph.shutdown();
+      }
     } finally {
-      db.close();
-    }
-    OrientGraph graph = new OrientGraph(dbUrl);
-    try {
-      Iterable<Vertex> result = graph.command(
-          new OSQLSynchQuery<Vertex>("select expand(out()) from (select from V where name = 'foo')")).execute();
-      Iterator<Vertex> iterator = result.iterator();
-      Assert.assertTrue(iterator.hasNext());
-      Vertex next = iterator.next();
-      Assert.assertEquals("bar", next.getProperty("name"));
-      Assert.assertFalse(iterator.hasNext());
-    } finally {
-      graph.shutdown();
+      console.close();
     }
 
   }
@@ -118,17 +174,132 @@ public class OConsoleDatabaseAppTest {
     builder.append("blabla;\n");// <- wrong command, this should break the console
     builder.append("update foo set surname = 'bar' where name = 'foo';\n");
     OConsoleDatabaseApp console = new OConsoleDatabaseApp(new String[] { builder.toString() });
-    console.run();
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-    db.open("admin", "admin");
     try {
-      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
-      Assert.assertEquals(1, result.size());
-      ODocument doc = result.get(0);
-      Assert.assertNull(doc.field("surname"));
+      console.run();
+
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+      db.open("admin", "admin");
+      try {
+        List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
+        Assert.assertEquals(1, result.size());
+        ODocument doc = result.get(0);
+        Assert.assertNull(doc.field("surname"));
+      } finally {
+        db.close();
+      }
     } finally {
-      db.close();
+      console.close();
     }
+
   }
+
+  @Test
+  public void testDisplayRawRecord() {
+    String dbUrl = "memory:OConsoleDatabaseAppTestDisplayRawRecord";
+    StringBuilder builder = new StringBuilder();
+    builder.append("create database " + dbUrl + ";\n");
+    builder.append("create class foo;\n");
+    builder.append("insert into foo set name = 'foo';\n");
+
+    // builder.append("display raw record " + rid);
+
+    // OConsoleDatabaseApp console = new OConsoleDatabaseApp(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = new OConsoleDatabaseApp(null);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    PrintStream stream = new PrintStream(out);
+    console.setOutput(stream);
+    try {
+      console.createDatabase(dbUrl, null, null, null, null);
+      console.createClass("class foo");
+      console.insert("into foo set name = 'barbar'");
+
+      byte[] result = out.toByteArray();
+      out.close();
+      stream.close();
+      out = new ByteArrayOutputStream();
+      stream = new PrintStream(out);
+      console.setOutput(stream);
+      String resultString = new String(result);
+
+      String rid = resultString.substring(resultString.indexOf("#"), resultString.indexOf("#") + 5).trim();
+
+      console.set("maxBinaryDisplay", "10000");
+      console.displayRawRecord(rid);
+      result = out.toByteArray();
+      resultString = new String(result);
+      
+      Assert.assertTrue(resultString.contains("Raw record content."));
+      if("ORecordSerializerBinary".equals(((ODatabaseDocumentTx)console.getCurrentDatabase()).getSerializer().toString())){
+        Assert.assertTrue(resultString.contains("class name: foo"));
+        Assert.assertTrue(resultString.contains("property value: barbar"));
+      }
+    } catch (IOException e) {
+      Assert.fail();
+    } finally {
+      try {
+        out.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      try {
+        stream.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      console.close();
+    }
+
+  }
+
+  @Test
+  public void testDumpRecordDetails() {
+    ConsoleTest c = new ConsoleTest();
+    try {
+      c.console().createDatabase("memory:OConsoleDatabaseAppTestDumpRecordDetails", null, null, null, null);
+      c.console().createClass("class foo");
+      c.console().insert("into foo set name = 'barbar'");
+      c.console().select("from foo limit -1");
+      c.resetOutput();
+
+      c.console().set("maxBinaryDisplay", "10000");
+      c.console().displayRecord("0");
+
+      String resultString = c.getConsoleOutput();
+      Assert.assertTrue(resultString.contains("@class: foo"));
+      Assert.assertTrue(resultString.contains("barbar"));
+    } catch (Exception e) {
+      Assert.fail();
+    } finally {
+      c.shutdown();
+    }
+
+  }
+
+  @Test
+  public void testHelp() {
+    ConsoleTest c = new ConsoleTest();
+    try {
+      c.console().help(null);
+      String resultString = c.getConsoleOutput();
+      Assert.assertTrue(resultString.contains("connect"));
+      Assert.assertTrue(resultString.contains("alter class"));
+      Assert.assertTrue(resultString.contains("create class"));
+      Assert.assertTrue(resultString.contains("select"));
+      Assert.assertTrue(resultString.contains("update"));
+      Assert.assertTrue(resultString.contains("delete"));
+      Assert.assertTrue(resultString.contains("create vertex"));
+      Assert.assertTrue(resultString.contains("create edge"));
+      Assert.assertTrue(resultString.contains("help"));
+      Assert.assertTrue(resultString.contains("exit"));
+
+    } catch (Exception e) {
+      Assert.fail();
+    } finally {
+      c.shutdown();
+    }
+
+  }
+
 }

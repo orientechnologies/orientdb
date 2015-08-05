@@ -131,9 +131,11 @@ public class OSQLHelper {
 
       if (map.containsKey(ODocumentHelper.ATTRIBUTE_TYPE))
         // IT'S A DOCUMENT
-        fieldValue = new ODocument(map);
+        // TODO: IMPROVE THIS CASE AVOIDING DOUBLE PARSING
+        fieldValue = new ODocument().fromJSON(iValue);
       else
         fieldValue = map;
+
     } else if (iValue.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN
         && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.EMBEDDED_END) {
       // SUB-COMMAND

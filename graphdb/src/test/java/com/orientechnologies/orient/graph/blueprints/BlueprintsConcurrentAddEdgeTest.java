@@ -24,7 +24,7 @@ public class BlueprintsConcurrentAddEdgeTest {
   private static final int                                VERTEXES_COUNT    = 100000;
   private static final int                                EDGES_COUNT       = 5 * VERTEXES_COUNT;
   private static final int                                THREADS           = 16;
-  private static final String                             URL               = "plocal:./blueprintsConcurrentAddEdgeTest";
+  private static final String                             URL               = "plocal:./target/databases/blueprintsConcurrentAddEdgeTest";
 
   private final ConcurrentSkipListMap<String, TestVertex> vertexesToCreate  = new ConcurrentSkipListMap<String, TestVertex>();
   private final List<TestVertex>                          vertexes          = new ArrayList<TestVertex>();

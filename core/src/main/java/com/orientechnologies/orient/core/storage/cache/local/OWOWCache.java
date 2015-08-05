@@ -61,6 +61,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
@@ -651,7 +652,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     filesLock.acquireReadLock();
     try {
-      return files.get(intId).getFilledUpTo() / pageSize;
+      return files.get(intId).getFileSize() / pageSize;
     } finally {
       filesLock.releaseReadLock();
     }
@@ -880,7 +881,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
           long time = System.currentTimeMillis();
 
-          long filledUpTo = fileClassic.getFilledUpTo();
+          long filledUpTo = fileClassic.getFileSize();
           fileIsCorrect = true;
 
           for (long pos = 0; pos < filledUpTo; pos += pageSize) {
@@ -1120,9 +1121,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private OFileClassic createFile(String fileName) {
-    OFileClassic fileClassic = new OFileClassic();
     String path = storageLocal.getVariableParser().resolveVariables(storageLocal.getStoragePath() + File.separator + fileName);
-    fileClassic.init(path, storageLocal.getMode());
+    OFileClassic fileClassic = new OFileClassic(path, storageLocal.getMode());
     return fileClassic;
   }
 
@@ -1240,23 +1240,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     else
       lastLsn = new OLogSequenceNumber(-1, -1);
 
-    if (fileClassic.getFilledUpTo() >= endPosition) {
-      final int length = content.length - 2 * PAGE_PADDING;
+    if (fileClassic.getFileSize() >= endPosition) {
+      fileClassic.read(startPosition, content, content.length - 2 * PAGE_PADDING, PAGE_PADDING);
 
-      if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Loading page from disk: file=%s, offset=%d, size=%d", fileClassic.getName(),
-            startPosition, length);
-
-      fileClassic.read(startPosition, content, length, PAGE_PADDING);
       final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
 
       dataPointer = new OCachePointer(pointer, lastLsn, fileId, pageIndex);
     } else if (addNewPages) {
-      final int space = (int) (endPosition - fileClassic.getFilledUpTo());
-
-      if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Allocation space to disk: file=%s, space=%d", fileClassic, space);
-
+      final int space = (int) (endPosition - fileClassic.getFileSize());
       fileClassic.allocateSpace(space);
 
       addAllocatedSpace(space);
@@ -1782,7 +1773,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     @Override
     public Thread newThread(Runnable r) {
-      Thread thread = new Thread(r);
+      Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
       thread.setPriority(Thread.MAX_PRIORITY);
       thread.setName("OrientDB Write Cache Flush Task (" + storageName + ")");
@@ -1799,7 +1790,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     @Override
     public Thread newThread(Runnable r) {
-      Thread thread = new Thread(r);
+      Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
       thread.setName("OrientDB Low Disk Space Publisher (" + storageName + ")");
       return thread;

@@ -183,7 +183,7 @@ public class OIndexDefinitionFactory {
           return OPropertyMapIndexDefinition.INDEX_BY.valueOf(fieldNameParts[2].toUpperCase());
         } catch (IllegalArgumentException iae) {
           throw new IllegalArgumentException("Illegal field name format, should be '<property> [by key|value]' but was '"
-              + fieldName + '\'');
+              + fieldName + '\'', iae);
         }
     }
 

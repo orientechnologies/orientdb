@@ -88,7 +88,7 @@ public class OServer {
   private static Map<String, OServer>                      distributedServers     = new ConcurrentHashMap<String, OServer>();
   private final CountDownLatch                             startupLatch           = new CountDownLatch(1);
   protected ReentrantLock                                  lock                   = new ReentrantLock();
-  protected volatile boolean                               running                = true;
+  protected volatile boolean                               running                = false;
   protected OServerConfigurationLoaderXml                  configurationLoader;
   protected OServerConfiguration                           configuration;
   protected OContextConfiguration                          contextConfiguration;
@@ -106,8 +106,9 @@ public class OServer {
   private String                                           serverRootDirectory;
   private String                                           databaseDirectory;
   private final boolean                                    shutdownEngineOnExit;
+  private OClientConnectionManager                         clientConnectionManager;
 
-  private ClassLoader extensionClassLoader;
+  private ClassLoader                                      extensionClassLoader;
 
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -141,7 +142,7 @@ public class OServer {
    *
    * @since 2.1
    */
-  public void setExtensionClassLoader(/*@Nullable*/ final ClassLoader extensionClassLoader) {
+  public void setExtensionClassLoader(/* @Nullable */final ClassLoader extensionClassLoader) {
     this.extensionClassLoader = extensionClassLoader;
   }
 
@@ -150,9 +151,17 @@ public class OServer {
    *
    * @since 2.1
    */
-  /*@Nullable*/
+  /* @Nullable */
   public ClassLoader getExtensionClassLoader() {
     return extensionClassLoader;
+  }
+
+  public boolean isActive() {
+    return running;
+  }
+
+  public OClientConnectionManager getClientConnectionManager() {
+    return clientConnectionManager;
   }
 
   /**
@@ -175,13 +184,12 @@ public class OServer {
   /**
    * Attempt to load a class from given class-loader.
    */
-  /*@Nullable*/
-  private Class<?> tryLoadClass(/*@Nullable*/ final ClassLoader classLoader, final String name) {
+  /* @Nullable */
+  private Class<?> tryLoadClass(/* @Nullable */final ClassLoader classLoader, final String name) {
     if (classLoader != null) {
       try {
         return classLoader.loadClass(name);
-      }
-      catch (ClassNotFoundException e) {
+      } catch (ClassNotFoundException e) {
         // ignore
       }
     }
@@ -217,19 +225,18 @@ public class OServer {
     Orient
         .instance()
         .getProfiler()
-        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT,
-            new OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                final StringBuilder dbs = new StringBuilder(64);
-                for (String dbName : getAvailableStorageNames().keySet()) {
-                  if (dbs.length() > 0)
-                    dbs.append(',');
-                  dbs.append(dbName);
-                }
-                return dbs.toString();
+        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT, new OProfilerHookValue() {
+            @Override
+            public Object getValue() {
+              final StringBuilder dbs = new StringBuilder(64);
+              for (String dbName : getAvailableStorageNames().keySet()) {
+                if (dbs.length()>0)
+                  dbs.append(',');
+                dbs.append(dbName);
               }
-            });
+              return dbs.toString();
+            }
+          });
 
     return this;
   }
@@ -265,6 +272,8 @@ public class OServer {
 
     Orient.instance();
 
+    clientConnectionManager = new OClientConnectionManager();
+
     loadConfiguration(iConfiguration);
 
     if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean()) {
@@ -292,28 +301,32 @@ public class OServer {
       for (OServerLifecycleListener l : lifecycleListeners)
         l.onBeforeActivate();
 
-      // REGISTER/CREATE SOCKET FACTORIES
-      if (configuration.network.sockets != null) {
-        for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
-          Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) loadClass(f.implementation);
-          OServerSocketFactory factory = fClass.newInstance();
-          try {
-            factory.config(f.name, f.parameters);
-            networkSocketFactories.put(f.name, factory);
-          } catch (OConfigurationException e) {
-            OLogManager.instance().error(this, "Error creating socket factory", e);
+      if (configuration.network != null) {
+        // REGISTER/CREATE SOCKET FACTORIES
+        if (configuration.network.sockets != null) {
+          for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
+            Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) loadClass(f.implementation);
+            OServerSocketFactory factory = fClass.newInstance();
+            try {
+              factory.config(f.name, f.parameters);
+              networkSocketFactories.put(f.name, factory);
+            } catch (OConfigurationException e) {
+              OLogManager.instance().error(this, "Error creating socket factory", e);
+            }
           }
         }
-      }
 
-      // REGISTER PROTOCOLS
-      for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
-        networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) loadClass(p.implementation));
+        // REGISTER PROTOCOLS
+        for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
+          networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) loadClass(p.implementation));
 
-      // STARTUP LISTENERS
-      for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-        networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
-            l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
+        // STARTUP LISTENERS
+        for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
+          networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
+              l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
+
+      } else
+        OLogManager.instance().warn(this, "Network configuration was not found");
 
       try {
         loadStorages();
@@ -326,6 +339,8 @@ public class OServer {
 
       for (OServerLifecycleListener l : lifecycleListeners)
         l.onAfterActivate();
+
+      running = true;
 
       OLogManager.instance().info(this, "OrientDB Server v" + OConstants.getVersion() + " is active.");
     } catch (ClassNotFoundException e) {
@@ -402,7 +417,7 @@ public class OServer {
       if (pluginManager != null)
         pluginManager.shutdown();
 
-      OClientConnectionManager.instance().shutdown();
+      clientConnectionManager.shutdown();
 
     } finally {
       lock.unlock();
@@ -621,7 +636,7 @@ public class OServer {
       Thread.currentThread().interrupt();
     }
     if (!running)
-      throw new ODatabaseException("Error on plugin lookup the server didn't start correcty.");
+      throw new ODatabaseException("Error on plugin lookup: the server did not start correctly");
 
     final OServerPluginInfo p = pluginManager.getPluginByName(iName);
     if (p != null)

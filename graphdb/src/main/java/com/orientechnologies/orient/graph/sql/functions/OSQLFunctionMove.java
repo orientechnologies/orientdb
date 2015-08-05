@@ -136,8 +136,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
           result.add(edge.getVertex(Direction.IN));
           return result;
         } else {
-          final OrientVertex out = (OrientVertex) edge.getVertex(iDirection);
-          return out;
+          return edge.getVertex(iDirection);
         }
       }
     }

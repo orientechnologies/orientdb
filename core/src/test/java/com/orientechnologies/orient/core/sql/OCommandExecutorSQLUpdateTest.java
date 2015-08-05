@@ -153,5 +153,22 @@ public class OCommandExecutorSQLUpdateTest {
     }
 
 
+  @Test
+  public void testUpsertSetPut() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateUpsertSetPut");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE CLASS test")).execute();
+      db.command(new OCommandSQL("CREATE PROPERTY test.id integer")).execute();
+      db.command(new OCommandSQL("CREATE PROPERTY test.addField EMBEDDEDSET string")).execute();
+      db.command(new OCommandSQL("UPDATE test SET id = 1 ADD addField=\"xxxx\" UPSERT WHERE id = 1")).execute();
+      Iterable result = db.query(new OSQLSynchQuery<Object>("select from test"));
+      ODocument doc = (ODocument) result.iterator().next();
+      Set<?> set = doc.field("addField");
+      assertEquals(set.size(), 1);
+    } finally {
+      db.close();
+    }
+  }
 
 }

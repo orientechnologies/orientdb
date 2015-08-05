@@ -25,7 +25,7 @@ import com.orientechnologies.common.util.OService;
 public abstract class OSoftThread extends Thread implements OService {
   private volatile boolean shutdownFlag;
 
-  private boolean          dumpExceptions = true;
+  private boolean dumpExceptions = true;
 
   public OSoftThread() {
   }
@@ -45,6 +45,7 @@ public abstract class OSoftThread extends Thread implements OService {
     setDaemon(true);
   }
 
+
   protected abstract void execute() throws Exception;
 
   public void startup() {
@@ -54,6 +55,11 @@ public abstract class OSoftThread extends Thread implements OService {
   }
 
   public void sendShutdown() {
+    shutdownFlag = true;
+    interrupt();
+  }
+
+  public void interruptCurrentOperation() {
     shutdownFlag = true;
   }
 
@@ -87,7 +93,7 @@ public abstract class OSoftThread extends Thread implements OService {
    */
   public static boolean pauseCurrentThread(long iTime) {
     try {
-      if (iTime <= 0)
+      if (iTime<=0)
         iTime = Long.MAX_VALUE;
 
       Thread.sleep(iTime);

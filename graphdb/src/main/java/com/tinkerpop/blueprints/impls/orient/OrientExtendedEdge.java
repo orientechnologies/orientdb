@@ -29,5 +29,5 @@ import com.tinkerpop.blueprints.Edge;
  */
 @SuppressWarnings("unchecked")
 public interface OrientExtendedEdge extends Edge {
-  public void reload();
+  void reload();
 }

@@ -51,12 +51,13 @@ import java.io.IOException;
 import java.util.concurrent.Callable;
 
 public class OMetadataDefault implements OMetadataInternal {
-  public static final String            CLUSTER_INTERNAL_NAME     = "internal";
-  public static final String            CLUSTER_INDEX_NAME        = "index";
-  public static final String            CLUSTER_MANUAL_INDEX_NAME = "manindex";
+  public static final String        CLUSTER_INTERNAL_NAME     = "internal";
+  public static final String        CLUSTER_INDEX_NAME        = "index";
+  public static final String        CLUSTER_MANUAL_INDEX_NAME = "manindex";
 
-  protected int                         schemaClusterId;
+  protected int                     schemaClusterId;
 
+<<<<<<< HEAD
   protected OSchemaProxy                schema;
   protected OSecurity                   security;
   protected OIndexManagerProxy          indexManager;
@@ -65,9 +66,18 @@ public class OMetadataDefault implements OMetadataInternal {
 
   protected OCommandCache               commandCache;
   protected static final OProfiler  PROFILER                  = Orient.instance().getProfiler();
+=======
+  protected OSchemaProxy            schema;
+  protected OSecurity               security;
+  protected OIndexManagerProxy      indexManager;
+  protected OFunctionLibraryProxy   functionLibrary;
+  protected OSchedulerListenerProxy scheduler;
+>>>>>>> develop
 
-  private OImmutableSchema              immutableSchema           = null;
-  private int                           immutableCount            = 0;
+  protected static final OProfiler  PROFILER                  = Orient.instance().getProfiler();
+
+  private OImmutableSchema          immutableSchema           = null;
+  private int                       immutableCount            = 0;
 
   public OMetadataDefault() {
   }

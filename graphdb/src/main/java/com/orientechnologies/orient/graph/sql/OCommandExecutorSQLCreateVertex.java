@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -42,6 +35,14 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL CREATE VERTEX command.
@@ -97,7 +98,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
       if (className == null)
         // ASSIGN DEFAULT CLASS
-        className = "V";
+        className = OrientVertexType.CLASS_NAME;
 
       // GET/CHECK CLASS NAME
       clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
@@ -124,8 +125,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
         if (fields != null)
           // EVALUATE FIELDS
-          for (Iterator<OPair<String, Object>> it = fields.iterator(); it.hasNext();) {
-            final OPair<String, Object> f = it.next();
+          for (final OPair<String, Object> f : fields) {
             if (f.getValue() instanceof OSQLFunctionRuntime)
               f.setValue(((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), null, context));
           }

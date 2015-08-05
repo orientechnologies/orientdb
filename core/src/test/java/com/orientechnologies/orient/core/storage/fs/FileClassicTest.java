@@ -27,8 +27,7 @@ public class FileClassicTest {
   }
 
   public void testSoftlyClosedFailed() throws Exception {
-    OFileClassic fileClassicOne = new OFileClassic();
-    fileClassicOne.init(buildDirectory + File.separator + "file.tst", "rw");
+    OFileClassic fileClassicOne = new OFileClassic(buildDirectory + File.separator + "file.tst", "rw");
     fileClassicOne.create();
 
     Assert.assertFalse(fileClassicOne.isSoftlyClosed());
@@ -37,8 +36,7 @@ public class FileClassicTest {
     fileClassicOne.allocateSpace(OIntegerSerializer.INT_SIZE);
     fileClassicOne.writeInt(0, 12);
 
-    OFileClassic fileClassicTwo = new OFileClassic();
-    fileClassicTwo.init(buildDirectory + File.separator + "file.tst", "rw");
+    OFileClassic fileClassicTwo = new OFileClassic(buildDirectory + File.separator + "file.tst", "rw");
     Assert.assertFalse(fileClassicTwo.open());
 
     Assert.assertFalse(fileClassicTwo.isSoftlyClosed());
@@ -49,8 +47,7 @@ public class FileClassicTest {
   }
 
   public void testSoftlyClosedSuccess() throws Exception {
-    OFileClassic fileClassicOne = new OFileClassic();
-    fileClassicOne.init(buildDirectory + File.separator + "file.tst", "rw");
+    OFileClassic fileClassicOne = new OFileClassic(buildDirectory + File.separator + "file.tst", "rw");
     fileClassicOne.create();
 
     Assert.assertFalse(fileClassicOne.isSoftlyClosed());
@@ -60,8 +57,7 @@ public class FileClassicTest {
     fileClassicOne.writeInt(0, 12);
     fileClassicOne.close();
 
-    OFileClassic fileClassicTwo = new OFileClassic();
-    fileClassicTwo.init(buildDirectory + File.separator + "file.tst", "rw");
+    OFileClassic fileClassicTwo = new OFileClassic(buildDirectory + File.separator + "file.tst", "rw");
     Assert.assertTrue(fileClassicTwo.open());
 
     Assert.assertFalse(fileClassicTwo.isSoftlyClosed());

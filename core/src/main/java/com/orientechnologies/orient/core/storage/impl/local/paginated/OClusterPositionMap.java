@@ -159,7 +159,7 @@ public class OClusterPositionMap extends ODurableComponent {
       throw ioe;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw new OStorageException("Error during rename of cluster position - physical position map.");
+      throw new OStorageException("Error during rename of cluster position - physical position map.", e);
     } finally {
       releaseExclusiveLock();
     }

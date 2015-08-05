@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.command.script;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -38,22 +39,14 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
-import javax.script.Bindings;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
+import javax.script.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Executes Script Commands.
@@ -318,11 +311,21 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     try {
       Thread.sleep(new Random().nextInt(MAX_DELAY - 1) + 1);
     } catch (InterruptedException e) {
+      OLogManager.instance().error(this, "Wait was interrupted", e);
     }
   }
 
   private Object executeCommand(final String lastCommand, final ODatabaseDocument db) {
-    return db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute(parameters);
+    return db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute(toMap(parameters));
+  }
+
+  private Object toMap(Object parameters) {
+    if (parameters instanceof SimpleBindings) {
+      HashMap<Object, Object> result = new LinkedHashMap<Object, Object>();
+      result.putAll((SimpleBindings) parameters);
+      return result;
+    }
+    return parameters;
   }
 
   private Object executeReturn(String lastCommand, Object lastResult) {
@@ -404,6 +407,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     try {
       Thread.sleep(Integer.parseInt(sleepTimeInMs));
     } catch (InterruptedException e) {
+      OLogManager.instance().error(this, "Sleep was interrupted", e);
     }
   }
 

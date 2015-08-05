@@ -76,8 +76,8 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>fluent-hc</artifactId>
             <version>4.4</version>
+            <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>

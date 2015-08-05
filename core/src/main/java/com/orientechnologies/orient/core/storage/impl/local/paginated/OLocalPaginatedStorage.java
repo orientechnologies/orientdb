@@ -33,9 +33,9 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
@@ -48,6 +48,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -76,7 +77,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   private final OStorageVariableParser     variableParser;
   private final OPaginatedStorageDirtyFlag dirtyFlag;
 
-  private String                           storagePath;
+  private final String                     storagePath;
   private ExecutorService                  checkpointExecutor;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id, OReadCache readCache)
@@ -87,15 +88,16 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
     File f = new File(url);
 
+    String sp;
     if (f.exists() || !exists(f.getParent())) {
       // ALREADY EXISTS OR NOT LEGACY
-      storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
+      sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
     } else {
       // LEGACY DB
-      storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
+      sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
     }
 
-    storagePath = OIOUtils.getPathFromDatabaseName(storagePath);
+    storagePath = OIOUtils.getPathFromDatabaseName(sp);
     variableParser = new OStorageVariableParser(storagePath);
 
     configuration = new OStorageConfigurationSegment(this);
@@ -116,6 +118,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   public boolean exists() {
+    if (status == STATUS.OPEN)
+      return true;
+
     return exists(storagePath);
   }
 
@@ -138,7 +143,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
+  public List<String> backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iOutput, final int compressionLevel, final int bufferSize) throws IOException {
     freeze(false);
     try {
@@ -151,8 +156,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
       final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
       try {
-        OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" }, iOutput,
-            compressionLevel);
+        return OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" },
+            iOutput, compressionLevel);
       } finally {
         if (bufferSize > 0) {
           bo.flush();

@@ -20,13 +20,6 @@
 
 package com.orientechnologies.orient.core.db.document;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -116,6 +109,13 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
@@ -279,7 +279,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw e;
     } catch (Exception e) {
       close();
-      throw new ODatabaseException("Cannot open database", e);
+      throw new ODatabaseException("Cannot open database url=" + getURL(), e);
     }
     return (DB) this;
   }
@@ -500,10 +500,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     db.user = this.user;
     db.properties.putAll(this.properties);
     db.serializer = this.serializer;
+    db.componentsFactory = this.componentsFactory;
     db.metadata = new OMetadataDefault();
     db.initialized = true;
     db.storage = storage;
-    db.storage.addUser();
+
+    if (storage instanceof OStorageProxy)
+      ((OStorageProxy) db.storage).addUser();
+
     db.setStatus(STATUS.OPEN);
     db.activateOnCurrentThread();
     db.metadata.load();
@@ -2499,7 +2503,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         throw new ODatabaseException("Error on deleting record " + record.getIdentity() + " of class '"
             + ((ODocument) record).getClassName() + "'", e);
       else
-        throw new ODatabaseException("Error on deleting record " + record.getIdentity());
+        throw new ODatabaseException("Error on deleting record " + record.getIdentity(), e);
     }
     return this;
   }
@@ -2697,19 +2701,19 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
+  public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
     return storage.callInLock(iCallable, iExclusiveLock);
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener,
-      int compressionLevel, int bufferSize) throws IOException {
-    storage.backup(out, options, callable, iListener, compressionLevel, bufferSize);
+  public List<String> backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener, final int compressionLevel, final int bufferSize) throws IOException {
+    return storage.backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener)
-      throws IOException {
+  public void restore(final InputStream in, final Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
     if (storage == null)
       storage = Orient.instance().loadStorage(url);
 
@@ -2863,6 +2867,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     sbTreeCollectionManager = sbTreeCM != null ? new OSBTreeCollectionManagerProxy(this, sbTreeCM) : null;
 
     localCache.startup();
+
+    user = null;
 
     metadata = new OMetadataDefault();
     metadata.load();

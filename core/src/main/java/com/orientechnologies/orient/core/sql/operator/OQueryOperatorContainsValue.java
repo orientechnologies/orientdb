@@ -179,7 +179,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
       try {
         o = record.<ORecord> load();
       } catch (ORecordNotFoundException e) {
-        throw new OException("Error during loading record with id : " + record.getIdentity());
+        throw new OException("Error during loading record with id : " + record.getIdentity(), e);
       }
     }
     return o;

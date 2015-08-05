@@ -2,6 +2,7 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
@@ -76,7 +77,7 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
 
     final File file = new File(serverHome);
     deleteDirectory(file);
-
+    OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.setValue(15000);
     Orient.instance().startup();
   }
 

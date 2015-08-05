@@ -293,7 +293,7 @@ public final class CronExpression implements Serializable, Cloneable {
         try {
             buildExpression(cronExpression);
         } catch (ParseException ex) {
-            throw new AssertionError();
+      throw new AssertionError(ex);
         }
         if (expression.getTimeZone() != null) {
             setTimeZone((TimeZone) expression.getTimeZone().clone());

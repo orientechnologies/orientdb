@@ -227,7 +227,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     try {
       // System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-      // System.out.println("NEW PARSER   TO: " + queryText);
+      // System.out.println("NEW PARSER TO: " + queryText);
       textRequest.setText(queryText);
 
       super.parse(iRequest);
@@ -501,10 +501,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         uniqueResult.put(identity, identity);
     }
 
-    if (Thread.interrupted())
-      throw new OCommandExecutionException("The select execution has been interrupted");
-
-    if (!iContext.checkTimeout())
+    if (!checkInterruption()) {
       return false;
 
     final LOCKING_STRATEGY contextLockingStrategy = iContext.getVariable("$locking") != null ? (LOCKING_STRATEGY) iContext
@@ -715,9 +712,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       String firstField = unwindFields.get(0);
       final List<String> nextFields = unwindFields.subList(1, unwindFields.size());
 
-      final Object fieldValue = doc.field(firstField);
-      if (fieldValue == null || !(fieldValue instanceof Iterable)) {
+      Object fieldValue = doc.field(firstField);
+      if (fieldValue == null || !(fieldValue instanceof Iterable) || fieldValue instanceof ODocument) {
         result.addAll(unwind(doc, nextFields, iContext));
+
       } else {
         for (Object o : (Iterable) fieldValue) {
           final ODocument unwindedDoc = new ODocument();
@@ -2098,7 +2096,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           key = index.getLastKey();
         }
 
-        if (key == null) {
+        if (index.getKeySize() == 0) {
           return null;
         }
 
@@ -2117,14 +2115,32 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           idxNames.add(index.getName());
         }
 
-        final OIndexCursor cursor;
-        if (ascSortOrder) {
-          cursor = index.iterateEntriesMajor(key, true, true);
-        } else {
-          cursor = index.iterateEntriesMinor(key, true, false);
+        final List<OIndexCursor> cursors = new ArrayList<OIndexCursor>();
+
+        OIndexCursor cursor = null;
+
+        if (key != null) {
+          if (ascSortOrder) {
+            cursor = index.iterateEntriesMajor(key, true, true);
+          } else {
+            cursor = index.iterateEntriesMinor(key, true, false);
+          }
         }
 
-        return cursor;
+        if (cursor != null)
+          cursors.add(cursor);
+
+        if (index.getMetadata() != null && !index.getDefinition().isNullValuesIgnored()) {
+          Object nullValue = index.get(null);
+          if (nullValue != null) {
+            if (nullValue instanceof Collection)
+              cursors.add(new OIndexCursorCollectionValue(((Collection) nullValue).iterator(), null));
+            else
+              cursors.add(new OIndexCursorSingleValue((OIdentifiable) nullValue, null));
+          }
+        }
+
+        return new OCompositeIndexCursor(cursors);
       }
     }
 

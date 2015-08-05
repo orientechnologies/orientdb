@@ -41,7 +41,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,7 +61,7 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
   private OClass                      clazz;
   private List<OPair<String, Object>> fields;
   private ODocument                   merge;
-  private int                         batch         = -1;
+  private int                         batch         = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLMoveVertex parse(final OCommandRequest iRequest) {
@@ -149,8 +148,7 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
 
         if (fields != null) {
           // EVALUATE FIELDS
-          for (Iterator<OPair<String, Object>> it = fields.iterator(); it.hasNext();) {
-            final OPair<String, Object> f = it.next();
+          for (final OPair<String, Object> f : fields) {
             if (f.getValue() instanceof OSQLFunctionRuntime)
               f.setValue(((OSQLFunctionRuntime) f.getValue()).getValue(newVertex.getRecord(), null, context));
           }

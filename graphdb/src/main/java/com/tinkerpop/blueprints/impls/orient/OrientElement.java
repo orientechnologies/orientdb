@@ -108,7 +108,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     try {
       getRecord().load();
     } catch (ORecordNotFoundException e) {
-      throw new IllegalStateException("The elements " + getIdentity() + " has already been deleted");
+      throw new IllegalStateException("The elements " + getIdentity() + " has already been deleted", e);
     }
 
     getRecord().delete();

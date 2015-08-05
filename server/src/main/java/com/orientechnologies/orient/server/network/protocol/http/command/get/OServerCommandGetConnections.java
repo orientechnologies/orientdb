@@ -75,7 +75,7 @@ public class OServerCommandGetConnections extends OServerCommandAuthenticatedSer
   protected void writeConnections(final OJSONWriter json, final String databaseName) throws IOException {
     json.beginCollection(1, true, "connections");
 
-    final List<OClientConnection> conns = OClientConnectionManager.instance().getConnections();
+    final List<OClientConnection> conns = server.getClientConnectionManager().getConnections();
     for (OClientConnection c : conns) {
       final ONetworkProtocolData data = c.data;
 

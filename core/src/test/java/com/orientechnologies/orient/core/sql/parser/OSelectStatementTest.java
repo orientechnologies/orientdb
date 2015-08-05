@@ -148,7 +148,14 @@ public class OSelectStatementTest {
   @Test
   public void testIndex1() {
     SimpleNode result = checkRightSyntax("select from index:collateCompositeIndexCS where key = ['VAL', 'VaL']");
-    // result.dump("    ");
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
+  }
+
+  @Test
+  public void testIndex2() {
+    SimpleNode result = checkRightSyntax("select from index:collateCompositeIndexCS where key between ['VAL', 'VaL'] and ['zz', 'zz']");
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
 
@@ -424,7 +431,7 @@ public class OSelectStatementTest {
         "select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo')))) or select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo'))))");
 
     checkWrongSyntax("select from cluster:foo where a lucene 'b'");
-    checkWrongSyntax("select from index:foo where a lucene 'b'");
+    checkRightSyntax("select from index:foo where a lucene 'b'");
     checkWrongSyntax("select from #12:0 where a lucene 'b'");
     checkWrongSyntax("select from [#12:0, #12:1] where a lucene 'b'");
 

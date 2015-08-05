@@ -199,7 +199,7 @@ public class ODocumentHelper {
         } catch (ParseException pe) {
           final String dateFormat = ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat
               : config.dateFormat;
-          throw new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat);
+          throw new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat, pe);
         }
       }
     }

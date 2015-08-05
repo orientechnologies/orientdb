@@ -32,7 +32,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -43,14 +45,18 @@ import java.util.zip.ZipOutputStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OZIPCompressionUtil {
-  public static int compressDirectory(final String sourceFolderName, final OutputStream output, final String[] iSkipFileExtensions,
-      final OCommandOutputListener iOutput, int compressionLevel) throws IOException {
+  public static List<String> compressDirectory(final String sourceFolderName, final OutputStream output,
+      final String[] iSkipFileExtensions, final OCommandOutputListener iOutput, int compressionLevel) throws IOException {
+
+    final List<String> compressedFiles = new ArrayList<String>();
 
     final ZipOutputStream zos = new ZipOutputStream(output);
     zos.setComment("OrientDB Backup executed on " + new Date());
     try {
       zos.setLevel(compressionLevel);
-      return addFolder(zos, sourceFolderName, sourceFolderName, iSkipFileExtensions, iOutput);
+      addFolder(zos, sourceFolderName, sourceFolderName, iSkipFileExtensions, iOutput, compressedFiles);
+
+      return compressedFiles;
     } finally {
       zos.close();
     }
@@ -110,16 +116,15 @@ public class OZIPCompressionUtil {
     return s == -1 ? null : name.substring(0, s);
   }
 
-  private static int addFolder(ZipOutputStream zos, String path, String baseFolderName, final String[] iSkipFileExtensions,
-      final OCommandOutputListener iOutput) throws IOException {
-    int total = 0;
+  private static void addFolder(ZipOutputStream zos, String path, String baseFolderName, final String[] iSkipFileExtensions,
+      final OCommandOutputListener iOutput, final List<String> iCompressedFiles) throws IOException {
 
     File f = new File(path);
     if (f.exists()) {
       if (f.isDirectory()) {
         File f2[] = f.listFiles();
         for (int i = 0; i < f2.length; i++) {
-          total += addFolder(zos, f2[i].getAbsolutePath(), baseFolderName, iSkipFileExtensions, iOutput);
+          addFolder(zos, f2[i].getAbsolutePath(), baseFolderName, iSkipFileExtensions, iOutput, iCompressedFiles);
         }
       } else {
         // add file
@@ -129,16 +134,16 @@ public class OZIPCompressionUtil {
         if (iSkipFileExtensions != null)
           for (String skip : iSkipFileExtensions)
             if (entryName.endsWith(skip))
-              return 0;
+              return;
+
+        iCompressedFiles.add(path);
 
         addFile(zos, path, entryName, iOutput);
-
-        total++;
       }
+
     } else {
       throw new IllegalArgumentException("Directory " + path + " not found");
     }
-    return total;
   }
 
   public static void compressFile(final String folderName, final String entryName, final OutputStream output,

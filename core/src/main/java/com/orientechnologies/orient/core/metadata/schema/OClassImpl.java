@@ -560,6 +560,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public OClass setName(final String name) {
+    if (getName().equals(name))
+      return this;
+
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(name);
     OClass oClass = getDatabase().getMetadata().getSchema().getClass(name);
@@ -1813,8 +1816,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void checkEmbedded() {
-    if (!(getDatabase().getStorage().getUnderlying().getUnderlying() instanceof OAbstractPaginatedStorage))
-      throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
+    owner.checkEmbedded(getDatabase().getStorage().getUnderlying().getUnderlying());
   }
 
   public void setClusterSelectionInternal(final String clusterSelection) {
@@ -2056,11 +2058,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       String oldName = null;
 
       if (this.shortName != null)
-        oldName = this.shortName.toLowerCase();
+        oldName = this.shortName;
+
+      owner.changeClassName(oldName, iShortName, this);
 
       this.shortName = iShortName;
-
-      owner.changeClassName(oldName, shortName, this);
     } finally {
       releaseSchemaWriteLock();
     }

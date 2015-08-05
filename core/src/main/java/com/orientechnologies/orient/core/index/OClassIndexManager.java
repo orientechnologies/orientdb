@@ -395,7 +395,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
       try {
         return (ODocument) iRecord.load();
       } catch (final ORecordNotFoundException e) {
-        throw new OIndexException("Error during loading of record with id : " + iRecord.getIdentity());
+        throw new OIndexException("Error during loading of record with id : " + iRecord.getIdentity(), e);
       }
     }
     return iRecord;
