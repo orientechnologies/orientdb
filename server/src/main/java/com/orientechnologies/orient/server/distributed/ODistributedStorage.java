@@ -1028,7 +1028,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
             if (previousContent.getResult() == null)
               // DELETED
-              throw new OTransactionException("Cannot update record '" + rid + "' because has been deleted");
+              throw new ORecordNotFoundException("Cannot update record '" + rid + "' because has been deleted");
 
             final ORecordVersion v = executionModeSynch ? record.getRecordVersion() : record.getRecordVersion().copy();
 
