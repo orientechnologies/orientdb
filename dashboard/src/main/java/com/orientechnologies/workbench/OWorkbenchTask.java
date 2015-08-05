@@ -2,6 +2,7 @@ package com.orientechnologies.workbench;
 
 import com.orientechnologies.common.io.OUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -30,6 +31,7 @@ public final class OWorkbenchTask extends TimerTask {
     try {
       OLogManager.instance().info(this, "MONITOR contacting configured servers...");
 
+      ODatabaseRecordThreadLocal.INSTANCE.set(handler.getDb());
       handler.updateActiveServerList();
 
       for (Entry<String, OMonitoredServer> serverEntry : handler.getMonitoredServers()) {
@@ -41,18 +43,18 @@ public final class OWorkbenchTask extends TimerTask {
 
           updateDictionary(server);
           Map<String, Object> cfg = server.field("configuration");
-//          if (cfg != null) {
-//            String license = (String) cfg.get("license");
-//            int idC = OL.getClientId(license);
-//            int idS = OL.getServerId(license);
-//
-//            // TO REMOVE
-//            if (handler.getKeyMap().size() > 1 && handler.getKeyMap().get(idC).size() > 1) {
-//              updateServerStatus(server, OWorkbenchPlugin.STATUS.LICENSE_INVALID);
-//              log(server, OWorkbenchPlugin.STATUS.LICENSE_INVALID, "License " + license + " invalid");
-//              continue;
-//            }
-//          }
+          // if (cfg != null) {
+          // String license = (String) cfg.get("license");
+          // int idC = OL.getClientId(license);
+          // int idS = OL.getServerId(license);
+          //
+          // // TO REMOVE
+          // if (handler.getKeyMap().size() > 1 && handler.getKeyMap().get(idC).size() > 1) {
+          // updateServerStatus(server, OWorkbenchPlugin.STATUS.LICENSE_INVALID);
+          // log(server, OWorkbenchPlugin.STATUS.LICENSE_INVALID, "License " + license + " invalid");
+          // continue;
+          // }
+          // }
           createSnapshot(serverEntry.getValue(), fetchSnapshots(server, since));
 
           // UPDATE SERVER STATUS TO ONLINE

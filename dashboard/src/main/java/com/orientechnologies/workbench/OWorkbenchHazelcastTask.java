@@ -1,6 +1,7 @@
 package com.orientechnologies.workbench;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
@@ -29,8 +30,11 @@ public class OWorkbenchHazelcastTask extends TimerTask {
 
     if (!pause.get()) {
       OLogManager.instance().info(this, "WORKBENCH looking for hazelcast cluster...");
-      String osql = "select from Cluster ";
+      String osql = "select from Cluster";
       OSQLQuery<ORecordSchemaAware> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(osql);
+
+
+      ODatabaseRecordThreadLocal.INSTANCE.set(this.handler.getDb());
       final List<ODocument> response = this.handler.getDb().query(osqlQuery);
       for (ODocument cluster : response) {
         String clusterName = cluster.field("name");
