@@ -97,6 +97,9 @@
               <div class="form-group">
                 <textarea class="form-control" placeholder="Message" ng-disabled="!v.onUpdateEnabled"
                           ng-model="v.onUpdateMessage"></textarea>
+
+                <input type="checkbox" ng-disabled="!v.onUpdateEnabled" ng-model="v.onUpdateChanges">
+                <label> Track Changes</label>
               </div>
             </form>
           </td>
