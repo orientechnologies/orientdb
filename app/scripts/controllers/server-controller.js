@@ -33,6 +33,8 @@ ctrl.controller("ServerController", ['$scope', '$routeParams', 'ServerApi', 'Dat
         var orderedData = (params.sorting() && !emtpy) ?
           $filter('orderBy')($scope.connections, params.orderBy()) :
           $scope.connections;
+
+
         $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
       }
     });
@@ -74,6 +76,8 @@ ctrl.controller('MultipleServerController', function ($scope, $rootScope, $locat
 
   $scope.clustered = false;
 
+  $scope.polling = true;
+  $scope.agent = true;
 
   var singlePoll = function () {
     Profiler.realtime().then(function (data) {
@@ -196,18 +200,29 @@ ctrl.controller('MultipleServerController', function ($scope, $rootScope, $locat
 
         }).catch(function (err) {
           if (err.status == 500) {
+            $scope.servers = [];
+            $scope.agent = false;
             $scope.servers.push({status: 'AGENT NOT FOUND'});
           }
         })
+      } else if (err.status = 405) {
+        $scope.servers = [];
+        $scope.agent = false;
+        $scope.servers.push({status: 'AGENT NOT FOUND'});
       }
     })
   }
 
 
+  $rootScope.$on("$routeChangeStart", function (event, next, current) {
+    $scope.polling = false;
+  });
   var statsWatching = function (polling) {
     $timeout(function () {
-      polling();
-      statsWatching(polling);
+      if ($scope.polling) {
+        polling();
+        statsWatching(polling);
+      }
     }, 2000);
   }
   initMonitoring();
@@ -353,25 +368,14 @@ ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside',
         return p.canChange;
       })
     }
-    $scope.tableParams = new ngTableParams({
-      page: 1,            // show first page
-      count: 10          // count per page
 
-    }, {
-      total: $scope.connections.length, // length of data
-      getData: function ($defer, params) {
-//            use build-in angular filter
-        var emtpy = !params.orderBy() || params.orderBy().length == 0;
-        var orderedData = (params.sorting() && !emtpy) ?
-          $filter('orderBy')($scope.connections, params.orderBy()) :
-          $scope.connections;
-        $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
-      }
-    });
+
   });
+
+
   $scope.menus = [
     {name: "stats", template: 'stats', icon: 'fa-bar-chart'},
-    {name: "cluster", template: 'distributed', icon: 'fa-sitemap'},
+    //{name: "cluster", template: 'distributed', icon: 'fa-sitemap'},
     {name: "connections", template: 'conn', icon: 'fa-plug'},
     {name: "configuration", template: 'config', icon: 'fa-cogs'},
     {name: "storage", template: 'storage', icon: 'fa-database'}
@@ -418,6 +422,40 @@ ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside',
 
 }]);
 
+ctrl.controller('ServerConnectionController', function ($scope, $filter, ngTableParams) {
+
+
+  $scope.init = false;
+
+  $scope.$watch('connections', function () {
+    if ($scope.connections) {
+      $scope.tableParams = new ngTableParams({
+        page: 1,            // show first page
+        count: 10          // count per page
+
+      }, {
+        total: $scope.connections.length, // length of data
+        getData: function ($defer, params) {
+//            use build-in angular filter
+          var emtpy = !params.orderBy() || params.orderBy().length == 0;
+
+          var orderedData = $scope.query ?
+            $filter('filter')($scope.connections, $scope.query) :
+            $scope.connections;
+          orderedData = (params.sorting() && !emtpy) ?
+            $filter('orderBy')(orderedData, params.orderBy()) :
+            orderedData;
+          $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
+          $scope.init = true;
+        }
+      });
+      $scope.$watch("query", function (e) {
+        if (e || $scope.init)
+          $scope.tableParams.reload();
+      });
+    }
+  })
+})
 
 ctrl.controller('ClusterController', function ($scope, Cluster, Notification) {
 

@@ -102,7 +102,7 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
 
   }
   $scope.manageServer = function () {
-    $location.path("/server");
+    $location.path("/dashboard");
   }
   $rootScope.$on('request:logout', function () {
     $scope.logout()
