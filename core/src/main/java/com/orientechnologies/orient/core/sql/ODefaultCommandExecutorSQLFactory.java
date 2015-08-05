@@ -80,6 +80,10 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
         OCommandExecutorSQLTruncateRecord.class);
     commands.put(OCommandExecutorSQLAlterCluster.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterCluster.KEYWORD_CLUSTER,
         OCommandExecutorSQLAlterCluster.class);
+    commands.put(OCommandExecutorSQLCreateSequence.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateSequence.KEYWORD_SEQUENCE,
+        OCommandExecutorSQLCreateSequence.class);
+    commands.put(OCommandExecutorSQLDropSequence.KEYWORD_DROP + " " + OCommandExecutorSQLDropSequence.KEYWORD_SEQUENCE,
+        OCommandExecutorSQLDropSequence.class);
     commands.put(OCommandExecutorSQLExplain.KEYWORD_EXPLAIN, OCommandExecutorSQLExplain.class);
     commands.put(OCommandExecutorSQLTransactional.KEYWORD_TRANSACTIONAL, OCommandExecutorSQLTransactional.class);
     commands.put(OCommandExecutorSQLOptimizeDatabase.KEYWORD_OPTIMIZE, OCommandExecutorSQLOptimizeDatabase.class);

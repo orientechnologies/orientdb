@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+import com.orientechnologies.orient.core.sql.sequence.OSQLSequenceItem;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -231,6 +232,10 @@ public class OSQLHelper {
     if (iWord.startsWith("$"))
       // CONTEXT VARIABLE
       return new OSQLFilterItemVariable(iCommand, iWord);
+
+    if (iWord.startsWith(OSQLSequenceItem.PREFIX)) {
+      return new OSQLSequenceItem(iCommand, iWord);
+    }
 
     // PARSE AS FIELD
     return new OSQLFilterItemField(iCommand, iWord);
