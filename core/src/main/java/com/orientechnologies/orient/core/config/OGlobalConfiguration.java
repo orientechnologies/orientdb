@@ -411,7 +411,7 @@ public enum OGlobalConfiguration {
    * Maximum time which client should wait a connection from the pool when all connection are used.
    */
   CLIENT_CONNECT_POOL_WAIT_TIMEOUT("client.connectionPool.waitTimeout",
-      "Maximum time which client should wait a connection from the pool when all connection are used", Integer.class, 5000),
+      "Maximum time which client should wait a connection from the pool when all connection are used", Integer.class, 5000,true),
 
   CLIENT_DB_RELEASE_WAIT_TIMEOUT("client.channel.dbReleaseWaitTimeout",
       "Delay in ms. after which data modification command will be resent if DB was frozen", Integer.class, 10000),
@@ -767,8 +767,13 @@ public enum OGlobalConfiguration {
       else
         value = iValue;
 
-    if (changeCallback != null)
-      changeCallback.change(oldValue, value);
+    if (changeCallback != null) {
+        try {
+            changeCallback.change(oldValue, value);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
   }
 
   public boolean getValueAsBoolean() {
