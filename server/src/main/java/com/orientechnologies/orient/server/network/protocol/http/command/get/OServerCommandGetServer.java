@@ -111,7 +111,7 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
       writeField(json, 2, "type", s.getClass().getSimpleName());
       writeField(json, 2, "path",
           s instanceof OLocalPaginatedStorage ? ((OLocalPaginatedStorage) s).getStoragePath().replace('\\', '/') : "");
-      writeField(json, 2, "activeUsers", s instanceof OLocalPaginatedStorage ? s.getUsers() : 1);
+      writeField(json, 2, "activeUsers", "n.a.");
       json.endObject(2);
     }
     json.endCollection(1, false);

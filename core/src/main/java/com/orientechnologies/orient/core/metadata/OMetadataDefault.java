@@ -57,23 +57,13 @@ public class OMetadataDefault implements OMetadataInternal {
 
   protected int                     schemaClusterId;
 
-<<<<<<< HEAD
-  protected OSchemaProxy                schema;
-  protected OSecurity                   security;
-  protected OIndexManagerProxy          indexManager;
-  protected OFunctionLibraryProxy       functionLibrary;
-  protected OSchedulerListenerProxy     scheduler;
-
-  protected OCommandCache               commandCache;
-  protected static final OProfiler  PROFILER                  = Orient.instance().getProfiler();
-=======
   protected OSchemaProxy            schema;
   protected OSecurity               security;
   protected OIndexManagerProxy      indexManager;
   protected OFunctionLibraryProxy   functionLibrary;
   protected OSchedulerListenerProxy scheduler;
->>>>>>> develop
 
+  protected OCommandCache           commandCache;
   protected static final OProfiler  PROFILER                  = Orient.instance().getProfiler();
 
   private OImmutableSchema          immutableSchema           = null;
