@@ -527,5 +527,9 @@ public abstract class ORecordAbstract implements ORecord {
   protected void track(OIdentifiable id) {
     this.getDirtyManager().track(this, id);
   }
+  
+  protected void unTrack(OIdentifiable id) {
+    this.getDirtyManager().unTrack(this, id);
+  }
 
 }

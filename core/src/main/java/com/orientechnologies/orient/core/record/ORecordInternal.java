@@ -135,5 +135,7 @@ public class ORecordInternal {
   public static void track(ORecord pointer, OIdentifiable pointed) {
     ((ORecordAbstract) pointer).track(pointed);
   }
-
+  public static void unTrack(ORecord pointer, OIdentifiable pointed) {
+    ((ORecordAbstract) pointer).unTrack(pointed);
+  }
 }

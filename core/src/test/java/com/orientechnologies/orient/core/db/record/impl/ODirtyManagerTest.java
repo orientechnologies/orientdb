@@ -60,6 +60,30 @@ public class ODirtyManagerTest {
   }
 
   @Test
+  public void testRemoveLink() {
+    ODocument doc = new ODocument();
+    doc.field("test", "ddd");
+    ODocument doc2 = new ODocument();
+    doc.field("test1", doc2);
+    doc.removeField("test1");
+    ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
+    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(0, manager.getPointed(doc).size());
+  }
+
+  @Test
+  public void testSetToNullLink() {
+    ODocument doc = new ODocument();
+    doc.field("test", "ddd");
+    ODocument doc2 = new ODocument();
+    doc.field("test1", doc2);
+    doc.field("test1", (Object) null);
+    ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
+    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(0, manager.getPointed(doc).size());
+  }
+
+  @Test
   public void testLinkOther() {
     ODocument doc = new ODocument();
     doc.field("test", "ddd");
@@ -91,6 +115,28 @@ public class ODirtyManagerTest {
     assertEquals(2, manager.getPointed(doc).size());
     assertTrue(manager.getPointed(doc).contains(doc1));
     assertTrue(manager.getPointed(doc).contains(doc2));
+  }
+
+  @Test
+  public void testLinkCollectionRemove() {
+    ODocument doc = new ODocument();
+    doc.field("test", "ddd");
+    List<ODocument> lst = new ArrayList<ODocument>();
+    ODocument doc1 = new ODocument();
+    lst.add(doc1);
+    doc.field("list", lst);
+    doc.removeField("list");
+
+    Set<ODocument> set = new HashSet<ODocument>();
+    ODocument doc2 = new ODocument();
+    set.add(doc2);
+    doc.field("set", set);
+    doc.removeField("set");
+
+    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
+    ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
+    assertEquals(1, manager.getNewRecord().size());
+    assertEquals(null, manager.getPointed(doc));
   }
 
   @Test
@@ -304,10 +350,25 @@ public class ODirtyManagerTest {
     ODocument link = new ODocument();
     set.add(link);
     doc.field("set", set, OType.LINKSET);
-    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
     assertEquals(2, manager.getNewRecord().size());
     assertEquals(1, manager.getPointed(doc).size());
+    assertTrue(manager.getPointed(doc).contains(link));
+  }
+  
+  @Test(enabled =false)
+  public void testLinkSetNoConvertRemove() {
+    ODocument doc = new ODocument();
+    doc.field("test", "ddd");
+    Set<OIdentifiable> set = new ORecordLazySet(doc);
+    ODocument link = new ODocument();
+    set.add(link);
+    doc.field("set", set, OType.LINKSET);
+    doc.removeField("set");
+    
+    ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
+    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(0, manager.getPointed(doc).size());
     assertTrue(manager.getPointed(doc).contains(link));
   }
 
@@ -363,7 +424,7 @@ public class ODirtyManagerTest {
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
     assertEquals(2, manager.getNewRecord().size());
     assertEquals(1, manager.getPointed(doc).size());
-    //TODO: double check this, it's an overhead
+    // TODO: double check this, it's an overhead
     assertEquals(1, manager.getPointed(embeddedMapDoc).size());
     assertTrue(manager.getPointed(doc).contains(link));
 

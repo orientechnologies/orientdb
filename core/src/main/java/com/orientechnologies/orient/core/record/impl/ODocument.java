@@ -1058,7 +1058,11 @@ public class ODocument extends ORecordAbstract
       final ORidBag ridBag = (ORidBag) oldValue;
       ridBag.setOwner(null);
     } else if (oldValue instanceof ODocument) {
-      ODocumentInternal.removeOwner((ODocument) oldValue, this);
+      ((ODocument)oldValue).removeOwner(this);
+    }
+    
+    if (oldValue instanceof OIdentifiable) {
+      unTrack((OIdentifiable) oldValue);
     }
 
     if (iPropertyValue != null) {
@@ -1133,7 +1137,10 @@ public class ODocument extends ORecordAbstract
     _fieldSize--;
 
     removeCollectionChangeListener(entry, oldValue);
-
+    if (oldValue instanceof OIdentifiable )
+      unTrack((OIdentifiable) oldValue);
+    if(oldValue instanceof ORidBag)
+      ((ORidBag) oldValue).setOwner(null);
     setDirty();
     return oldValue;
   }

@@ -114,7 +114,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
       size--;
       contentWasChanged = true;
-
+      if (OEmbeddedRidBag.this.owner != null)
+        ORecordInternal.unTrack(OEmbeddedRidBag.this.owner, nextValue);
+      
       if (!changeListeners.isEmpty())
         fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
             OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null, nextValue));
@@ -156,7 +158,15 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       throw new IllegalStateException("This data structure is owned by document " + owner
           + " if you want to use it in other document create new rid bag instance and copy content of current one.");
     }
-
+    if(this.owner != null){
+      for (int i = 0; i < entriesLength; i++) {
+        final Object entry = entries[i];
+        if (entry instanceof OIdentifiable) {
+          ORecordInternal.unTrack(this.owner, (OIdentifiable) entry);
+        }
+      }
+    }
+    
     this.owner = owner;
     if (this.owner != null) {
       for (int i = 0; i < entriesLength; i++) {
@@ -208,6 +218,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       size--;
       contentWasChanged = true;
 
+      if (this.owner != null)
+        ORecordInternal.unTrack(this.owner, identifiable);
+      
       if (!changeListeners.isEmpty())
         fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
             OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable));

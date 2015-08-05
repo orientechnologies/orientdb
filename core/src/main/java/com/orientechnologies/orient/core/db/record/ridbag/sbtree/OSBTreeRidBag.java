@@ -390,6 +390,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
           size = -1;
         }
       }
+      
+      if (OSBTreeRidBag.this.owner != null)
+        ORecordInternal.unTrack(OSBTreeRidBag.this.owner, currentValue);
 
       if (updateOwner && !changeListeners.isEmpty())
         fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
@@ -544,7 +547,15 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       throw new IllegalStateException("This data structure is owned by document " + owner
           + " if you want to use it in other document create new rid bag instance and copy content of current one.");
     }
-
+    if(this.owner != null){
+      for (OIdentifiable entry : newEntries.keySet()) {
+        ORecordInternal.unTrack(this.owner, entry);
+      }
+      for (OIdentifiable entry : changes.keySet()) {
+        ORecordInternal.unTrack(this.owner, entry);
+      }
+    }
+    
     this.owner = owner;
     if (this.owner != null) {
       for (OIdentifiable entry : newEntries.keySet()) {
@@ -713,6 +724,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
             size--;
       }
     }
+
+    if (this.owner != null)
+      ORecordInternal.unTrack(this.owner, identifiable);
 
     if (updateOwner && !changeListeners.isEmpty())
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(

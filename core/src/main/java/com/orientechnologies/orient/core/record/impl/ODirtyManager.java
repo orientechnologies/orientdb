@@ -93,6 +93,24 @@ public class ODirtyManager {
     getReal().internalTrack(pointing, pointed);
   }
 
+  public void unTrack(ORecord pointing, OIdentifiable pointed) {
+    getReal().internalUnTrack(pointing, pointed);
+  }
+
+  private void internalUnTrack(ORecord pointing, OIdentifiable pointed) {
+    if (references == null)
+      return;
+
+    if (pointed.getIdentity().isNew()) {
+      List<OIdentifiable> refs = references.get(pointing);
+      if (refs == null)
+        return;
+      if (!(pointed instanceof ODocument) || !((ODocument) pointed).isEmbedded()) {
+        refs.remove(pointed);
+      }
+    }
+  }
+
   private void internalTrack(ORecord pointing, OIdentifiable pointed) {
     if (pointing instanceof ODocument) {
       if (((ODocument) pointing).isEmbedded()) {
