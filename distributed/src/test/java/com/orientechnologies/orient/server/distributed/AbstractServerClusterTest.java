@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.instance.GroupProperties;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -93,7 +94,7 @@ public abstract class AbstractServerClusterTest {
     try {
 
       for (ServerRun server : serverInstance) {
-        log("STARTING SERVER -> " + server.getServerId() + "...");
+        banner("STARTING SERVER -> " + server.getServerId() + "...");
         server.startServer(getDistributedServerConfiguration(server));
 
         if (delayServerStartup > 0)
@@ -118,7 +119,8 @@ public abstract class AbstractServerClusterTest {
         Assert.assertNotNull(cfg);
       }
 
-      log("Executing test...");
+      OLogManager.instance().flush();
+      banner("Executing test...");
 
       try {
         executeTest();
@@ -127,28 +129,38 @@ public abstract class AbstractServerClusterTest {
       }
 
     } finally {
-      log("Shutting down nodes...");
+      banner("Test finished");
+
+      OLogManager.instance().flush();
+      banner("Shutting down nodes...");
       for (ServerRun server : serverInstance) {
         System.out.println("Shutting down node " + server.getServerId() + "...");
         server.shutdownServer();
       }
 
-      log("Test finished");
-
       onTestEnded();
 
+      banner("Shutdown HZ...");
       Hazelcast.shutdownAll();
 
+      banner("Clean server directories...");
       deleteServers();
     }
   }
 
-  protected void log(final String iMessage) {
+  protected void banner(final String iMessage) {
+    OLogManager.instance().flush();
     System.out
         .println("\n**********************************************************************************************************");
     System.out.println(iMessage);
     System.out
         .println("**********************************************************************************************************\n");
+    System.out.flush();
+  }
+
+  protected void log(final String iMessage) {
+    OLogManager.instance().flush();
+    System.out.println("\n"+iMessage);
     System.out.flush();
   }
 

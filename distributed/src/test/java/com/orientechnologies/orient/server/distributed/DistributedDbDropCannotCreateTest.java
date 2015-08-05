@@ -42,10 +42,10 @@ public class DistributedDbDropCannotCreateTest extends AbstractServerClusterTxTe
       final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(s));
       db.open("admin", "admin");
 
-      log("DROPPING DATABASE ON SERVER " + s.getServerId());
+      banner("DROPPING DATABASE ON SERVER " + s.getServerId());
       db.drop();
 
-      log("RE-CREATING DATABASE ON SERVER " + s.getServerId());
+      banner("RE-CREATING DATABASE ON SERVER " + s.getServerId());
       try {
         db.create();
         Assert.fail("Creation of database after drop was allowed");
