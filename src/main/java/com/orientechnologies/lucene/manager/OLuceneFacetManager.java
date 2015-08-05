@@ -142,7 +142,7 @@ public class OLuceneFacetManager {
         if (s instanceof String) {
           values.add((String) s);
         } else {
-          throw new OIndexEngineException("Cannot facet value " + val + " because it is not a string");
+          throw new OIndexEngineException("Cannot facet value " + val + " because it is not a string", null);
         }
       }
       path = values.toArray(new String[values.size()]);

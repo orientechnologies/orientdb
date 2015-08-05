@@ -16,33 +16,6 @@
 
 package com.orientechnologies.lucene.manager;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.TrackingIndexWriter;
-import org.apache.lucene.search.ControlledRealTimeReopenThread;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.SearcherManager;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.NIOFSDirectory;
-import org.apache.lucene.store.RAMDirectory;
-import org.apache.lucene.util.Version;
-
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.OLuceneIndexType;
@@ -56,17 +29,30 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.TrackingIndexWriter;
+import org.apache.lucene.search.*;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.NIOFSDirectory;
+import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.util.Version;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.util.*;
 
 public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
 
@@ -106,8 +92,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   public void createIndex(OIndexDefinition indexDefinition, String clusterIndexName, OStreamSerializer valueSerializer,
       boolean isAutomatic, ODocument metadata) {
     // PREVENT EXCEPTION
-    if (mgrWriter == null)
-      initIndex(indexName, indexDefinition, clusterIndexName, valueSerializer, isAutomatic, metadata);
+    initIndex(indexName, indexDefinition, clusterIndexName, valueSerializer, isAutomatic, metadata);
   }
 
   public abstract IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException;
@@ -153,6 +138,32 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
       mgrWriter.getIndexWriter().commit();
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on committing Lucene index", e);
+    }
+  }
+
+  @Override
+  public void deleteWithoutLoad(String indexName) {
+    internalDelete(indexName);
+  }
+
+  protected void internalDelete(String indexName) {
+    try {
+      if (mgrWriter != null && mgrWriter.getIndexWriter() != null) {
+        closeIndex();
+      }
+      ODatabaseDocumentInternal database = getDatabase();
+      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
+      if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
+
+        OLocalPaginatedStorage localAbstract = (OLocalPaginatedStorage) storageLocalAbstract;
+
+        File f = new File(getIndexPath(localAbstract, indexName));
+        OLuceneIndexUtils.deleteFolder(f);
+        f = new File(getIndexBasePath(localAbstract));
+        OLuceneIndexUtils.deleteFolderIfEmpty(f);
+      }
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error on deleting Lucene index", e);
     }
   }
 
@@ -450,8 +461,12 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     }
   }
 
-  private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract) {
+  private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract, String indexName) {
     return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR + File.separator + indexName;
+  }
+
+  private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract) {
+    return getIndexPath(storageLocalAbstract, indexName);
   }
 
   protected String getIndexBasePath(OLocalPaginatedStorage storageLocalAbstract) {

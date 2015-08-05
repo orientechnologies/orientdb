@@ -98,11 +98,6 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   @Override
-  public void deleteWithoutLoad(String indexName) {
-
-  }
-
-  @Override
   public boolean contains(Object key) {
     return false;
   }
