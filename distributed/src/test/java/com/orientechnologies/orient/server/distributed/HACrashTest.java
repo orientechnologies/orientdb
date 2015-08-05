@@ -60,7 +60,7 @@ public class HACrashTest extends AbstractServerClusterTxTest {
             public void run() {
               Assert.assertTrue("Insert was too fast", inserting);
 
-              log("RESTART SERVER " + (SERVERS - 1));
+              banner("RESTART SERVER " + (SERVERS - 1));
               try {
                 serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
                 lastServerOn = true;
@@ -70,7 +70,7 @@ public class HACrashTest extends AbstractServerClusterTxTest {
             }
           }, 10000);
 
-          log("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
+          banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
           serverInstance.get(SERVERS - 1).crashServer();
           lastServerOn = false;
         }

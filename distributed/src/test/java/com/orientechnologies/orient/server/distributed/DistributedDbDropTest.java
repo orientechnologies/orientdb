@@ -40,7 +40,7 @@ public class DistributedDbDropTest extends AbstractServerClusterTxTest {
       final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(s));
       db.open("admin", "admin");
 
-      log("DROPPING DATABASE ON SERVER " + s.getServerId());
+      banner("DROPPING DATABASE ON SERVER " + s.getServerId());
       db.drop();
     }
   }

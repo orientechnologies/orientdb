@@ -43,7 +43,7 @@ public class DistributedDbDropAndResyncTest extends AbstractServerClusterTxTest 
       final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(s));
       db.open("admin", "admin");
 
-      log("RE-SYNC DATABASE ON SERVER " + s.getServerId());
+      banner("RE-SYNC DATABASE ON SERVER " + s.getServerId());
       db.command(new OCommandSQL("sync database FULL_REPLACE")).execute();
 
       ODistributedServerManager.DB_STATUS currentStatus = null;

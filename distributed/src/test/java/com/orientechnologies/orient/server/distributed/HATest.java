@@ -32,23 +32,23 @@ public class HATest extends AbstractServerClusterTxTest {
 
   @Override
   protected void onAfterExecution() throws Exception {
-    log("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
+    banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
     serverInstance.get(SERVERS - 1).shutdownServer();
 
     Thread.sleep(1000);
 
-    log("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " DOWN...");
+    banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " DOWN...");
 
     // count = 1000;
 
     executeMultipleTest();
 
-    log("RESTARTING SERVER " + (SERVERS - 1) + "...");
+    banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
     serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
 
     Thread.sleep(1000);
 
-    log("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
+    banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
 
     // count = 1000;
 
