@@ -17,7 +17,6 @@
 package com.orientechnologies.agent.hook;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -31,45 +30,77 @@ import java.util.concurrent.BlockingQueue;
  *
  * @author Luca Garulli
  */
-public class OAuditingLoggingThread extends OSoftThread {
+public class OAuditingLoggingThread extends Thread {
+  public static final String             FROM_AUDITING  = "FROM_AUDITING";
   private final String                   databaseURL;
   private final BlockingQueue<ODocument> auditingQueue;
   private ODatabaseDocumentTx            db;
+  private volatile boolean               running        = true;
+  private volatile boolean               waitForAllLogs = true;
 
   public OAuditingLoggingThread(final String iDatabaseURL, final String iDatabaseName, final BlockingQueue auditingQueue) {
     super(Orient.instance().getThreadGroup(), "OrientDB Auditing Logging Thread - " + iDatabaseName);
 
-    setDumpExceptions(true);
     this.databaseURL = iDatabaseURL;
     this.auditingQueue = auditingQueue;
   }
 
   @Override
-  public void startup() {
+  public void run() {
     db = new ODatabaseDocumentTx(databaseURL);
-    db.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
-    try {
-      db.open("admin", "any");
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "Cannot open database '%s'", e, databaseURL);
+    openDatabase();
+
+    while (running || waitForAllLogs) {
+      try {
+        if (!running && auditingQueue.isEmpty()) {
+          break;
+        }
+
+        final ODocument log = auditingQueue.take();
+
+        db.activateOnCurrentThread();
+        db.save(log);
+
+      } catch (InterruptedException e) {
+        // IGNORE AND SOFTLY EXIT
+      }
+    }
+
+    if (db != null) {
+      db.activateOnCurrentThread();
+      db.close();
     }
   }
 
-  @Override
-  public void shutdown() {
-    if (db != null)
-      db.close();
+  public void sendShutdown(final boolean iWaitForAllLogs) {
+    this.waitForAllLogs = iWaitForAllLogs;
+    running = false;
+    interrupt();
   }
 
-  @Override
-  protected void execute() throws Exception {
+  protected void openDatabase() {
+    db.setProperty(FROM_AUDITING, true);
+    db.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
     try {
-      final ODocument log = auditingQueue.take();
-      db.save(log);
+      db.open("admin", "any");
 
-    } catch (InterruptedException e) {
-      // IGNORE AND SOFTLY EXIT
-      interruptCurrentOperation();
+      // synchronized (getClass()) {
+      // // CHANGE ALL THE ROLE BUT ADMIN TO AVOIDING ACTING ON AUDITING RESOURCES
+      // final List<ODocument> roles = db.query(new OSQLSynchQuery<ODocument>("select from ORole"));
+      //
+      // for (ODocument r : roles) {
+      // final ORole role = new ORole(r);
+      // if (!"admin".equalsIgnoreCase(role.getName())) {
+      // if (role.allow(ORule.ResourceGeneric.CLASS, OAuditingHook.AUDITING_LOG_DEF_CLASSNAME, ORole.PERMISSION_READ)) {
+      // role.addRule(ORule.ResourceGeneric.CLASS, OAuditingHook.AUDITING_LOG_DEF_CLASSNAME, ORole.PERMISSION_NONE);
+      // role.addRule(ORule.ResourceGeneric.CLUSTER, OAuditingHook.AUDITING_LOG_DEF_CLASSNAME, ORole.PERMISSION_NONE);
+      // }
+      // role.save();
+      // }
+      // }
+      // }
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Cannot open database '%s'", e, databaseURL);
     }
   }
 }

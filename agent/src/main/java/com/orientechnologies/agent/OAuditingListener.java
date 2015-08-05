@@ -6,8 +6,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.File;
@@ -46,7 +44,6 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
     hooks.put(iDatabase.getName(), hook);
     iDatabase.registerHook(hook);
     iDatabase.registerListener(hook);
-    installSecurityPolicies(iDatabase);
   }
 
   private OAuditingHook defaultHook(final ODatabaseInternal iDatabase) {
@@ -116,7 +113,6 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
     }
     iDatabase.registerHook(oAuditingHook);
     iDatabase.registerListener(oAuditingHook);
-    installSecurityPolicies(iDatabase);
   }
 
   @Override
@@ -161,16 +157,5 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
 
   public ODocument getConfig(final String iDatabaseName) {
     return hooks.get(iDatabaseName).getiConfiguration();
-  }
-
-  protected void installSecurityPolicies(final ODatabaseInternal iDatabase) {
-    // CHANGE ALL THE ROLE BUT ADMIN TO AVOIDING ACTING ON AUDITING RESOURCES
-    for (ODocument r : iDatabase.getMetadata().getSecurity().getAllRoles()) {
-      final ORole role = new ORole(r);
-      if (!"admin".equalsIgnoreCase(role.getName())) {
-        role.addRule(ORule.ResourceGeneric.CLASS, OAuditingHook.AUDITING_LOG_DEF_CLASSNAME, ORole.PERMISSION_NONE);
-        role.addRule(ORule.ResourceGeneric.CLUSTER, OAuditingHook.AUDITING_LOG_DEF_CLASSNAME, ORole.PERMISSION_NONE);
-      }
-    }
   }
 }

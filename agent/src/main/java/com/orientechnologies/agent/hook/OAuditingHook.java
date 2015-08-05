@@ -18,7 +18,6 @@ package com.orientechnologies.agent.hook;
 
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
-import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -48,7 +47,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
   public static final String                      AUDITING_LOG_DEF_CLASSNAME = "AuditingLog";
   private final String                            auditClassName;
   private final Map<String, OAuditingClassConfig> classes                    = new HashMap<String, OAuditingClassConfig>(20);
-  private final OSoftThread                       auditingThread;
+  private final OAuditingLoggingThread            auditingThread;
   private final LinkedBlockingQueue<ODocument>    auditingQueue;
   private Set<OAuditingCommandConfig>             commands                   = new HashSet<OAuditingCommandConfig>();
   private boolean                                 onGlobalCreate;
@@ -379,9 +378,9 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     return cfg;
   }
 
-  public void shutdown() {
+  public void shutdown(final boolean waitForAllLogs) {
     if (auditingThread != null)
-      auditingThread.sendShutdown();
+      auditingThread.sendShutdown(waitForAllLogs);
   }
 
   @Override
@@ -391,8 +390,11 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
 
   @Override
   public void onDelete(final ODatabase iDatabase) {
+    if (iDatabase != null)
+      iDatabase.unregisterHook(this);
+
     if (auditingThread != null)
-      auditingThread.sendShutdown();
+      auditingThread.sendShutdown(false);
   }
 
   @Override
@@ -427,8 +429,11 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
 
   @Override
   public void onClose(ODatabase iDatabase) {
+    if (iDatabase != null)
+      iDatabase.unregisterHook(this);
+
     if (auditingThread != null)
-      auditingThread.sendShutdown();
+      auditingThread.sendShutdown(true);
   }
 
   @Override

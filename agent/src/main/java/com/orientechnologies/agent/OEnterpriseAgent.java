@@ -18,6 +18,7 @@
 package com.orientechnologies.agent;
 
 import com.orientechnologies.agent.hook.OAuditingHook;
+import com.orientechnologies.agent.hook.OAuditingLoggingThread;
 import com.orientechnologies.agent.http.command.OServerCommandAuditing;
 import com.orientechnologies.agent.http.command.OServerCommandConfiguration;
 import com.orientechnologies.agent.http.command.OServerCommandGetDeployDb;
@@ -150,6 +151,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
    */
   @Override
   public void onOpen(final ODatabaseInternal iDatabase) {
+    if (iDatabase.getProperty(OAuditingLoggingThread.FROM_AUDITING) != null)
+      // DON'T INSTALL HOOK ON THE DB OPEN INSIDE THE AUDITING THREAD
+      return;
+
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
     // REGISTER AUDITING
@@ -171,7 +176,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks = iDatabase.getHooks();
     for (ORecordHook h : hooks.keySet())
       if (h instanceof OAuditingHook)
-        ((OAuditingHook) h).shutdown();
+        ((OAuditingHook) h).shutdown(true);
   }
 
   @Override
@@ -179,7 +184,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks = iDatabase.getHooks();
     for (ORecordHook h : hooks.keySet())
       if (h instanceof OAuditingHook)
-        ((OAuditingHook) h).shutdown();
+        ((OAuditingHook) h).shutdown(false);
   }
 
   @Override
