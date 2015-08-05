@@ -31,7 +31,8 @@ import junit.framework.TestCase;
 import java.util.Date;
 
 /**
- *
+ * Tests against Auditing.
+ * 
  * @author Luca Garulli
  */
 public class AuditingTest extends TestCase {
@@ -52,6 +53,8 @@ public class AuditingTest extends TestCase {
     // TEST CASE OF USER CLASS
     OrientVertex v = graph.addVertex("class:User", "name", "Jill");
 
+    waitForPropagation();
+
     assertEquals(1, graph.getRawGraph().countClass("AuditingLog"));
     ODocument log = getLastLog();
 
@@ -64,6 +67,8 @@ public class AuditingTest extends TestCase {
 
     // TEST CASE OF V CLASS
     v = graph.addVertex(null, "name", "Jill");
+
+    waitForPropagation();
 
     assertEquals(2, graph.getRawGraph().countClass("AuditingLog"));
     log = getLastLog();
@@ -78,6 +83,8 @@ public class AuditingTest extends TestCase {
     // TEST NO LOG HAS BEEN CREATED
     new ODocument("Test").field("name", "Jill");
 
+    waitForPropagation();
+
     assertEquals(2, graph.getRawGraph().countClass("AuditingLog"));
   }
 
@@ -88,6 +95,8 @@ public class AuditingTest extends TestCase {
 
     // TEST CASE OF USER CLASS
     OrientVertex v = graph.addVertex("class:User", "name", "Jill");
+
+    waitForPropagation();
 
     assertEquals(1, graph.getRawGraph().countClass("AuditingLog"));
     ODocument log = getLastLog();
@@ -109,6 +118,8 @@ public class AuditingTest extends TestCase {
     // TEST CASE OF USER CLASS
     OrientVertex v = graph.addVertex("class:User", "name", "Jill");
 
+    waitForPropagation();
+
     assertEquals(0, graph.getRawGraph().countClass("AuditingLog"));
   }
 
@@ -121,6 +132,8 @@ public class AuditingTest extends TestCase {
 
     // TEST CREATE
     OrientVertex v = graph.addVertex("class:User", "name", "Jill");
+
+    waitForPropagation();
 
     assertEquals(1, graph.getRawGraph().countClass("AuditingLog"));
     ODocument log = getLastLog();
@@ -135,6 +148,8 @@ public class AuditingTest extends TestCase {
     // TEST UPDATE
     v.setProperty("name", "Jay");
 
+    waitForPropagation();
+
     assertEquals(2, graph.getRawGraph().countClass("AuditingLog"));
     log = getLastLog();
 
@@ -143,10 +158,12 @@ public class AuditingTest extends TestCase {
     assertEquals(ORecordOperation.UPDATED, log.field("operation"));
     assertEquals(v.getIdentity(), log.rawField("record"));
     assertEquals("Updated vertex of class User", log.field("note"));
-    assertNull(log.field("changes"));
+    assertNotNull(log.field("changes"));
 
     // TEST READ
     v.reload();
+
+    waitForPropagation();
 
     assertEquals(3, graph.getRawGraph().countClass("AuditingLog"));
     log = getLastLog();
@@ -160,6 +177,8 @@ public class AuditingTest extends TestCase {
 
     // TEST DELETE
     v.remove();
+
+    waitForPropagation();
 
     // NOTE: DELETE EXECUTES ALSO A READ
     assertTrue(graph.getRawGraph().countClass("AuditingLog") >= 4);
@@ -181,12 +200,13 @@ public class AuditingTest extends TestCase {
     // TEST CREATE
     OrientVertex v = graph.addVertex("class:User", "name", "Jill");
 
+    waitForPropagation();
+
     graph.command(new OSQLSynchQuery<Object>("select from User")).execute();
     assertEquals(1, graph.getRawGraph().countClass("AuditingLog"));
     ODocument log = getLastLog();
 
     assertEquals("select from User", log.field("note"));
-
   }
 
   public void testCommandAuditingFormatted() {
@@ -197,12 +217,13 @@ public class AuditingTest extends TestCase {
     // TEST CREATE
     OrientVertex v = graph.addVertex("class:User", "name", "Jill");
 
+    waitForPropagation();
+
     graph.command(new OSQLSynchQuery<Object>("select from User")).execute();
     assertEquals(1, graph.getRawGraph().countClass("AuditingLog"));
     ODocument log = getLastLog();
 
     assertEquals("executed : select from User", log.field("note"));
-
   }
 
   @Override
@@ -219,5 +240,12 @@ public class AuditingTest extends TestCase {
       log = logs.next();
 
     return log;
+  }
+
+  protected void waitForPropagation() {
+    try {
+      Thread.sleep(500);
+    } catch (InterruptedException e) {
+    }
   }
 }

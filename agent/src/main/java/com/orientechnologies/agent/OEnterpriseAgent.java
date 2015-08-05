@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
@@ -87,6 +88,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
       auditingListener = new OAuditingListener(this);
       Orient.instance().addDbLifecycleListener(auditingListener);
+
       Thread installer = new Thread(new Runnable() {
         @Override
         public void run() {
@@ -166,20 +168,27 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
    */
   @Override
   public void onClose(final ODatabaseInternal iDatabase) {
+    final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks = iDatabase.getHooks();
+    for (ORecordHook h : hooks.keySet())
+      if (h instanceof OAuditingHook)
+        ((OAuditingHook) h).shutdown();
   }
 
   @Override
-  public void onDrop(ODatabaseInternal iDatabase) {
+  public void onDrop(final ODatabaseInternal iDatabase) {
+    final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks = iDatabase.getHooks();
+    for (ORecordHook h : hooks.keySet())
+      if (h instanceof OAuditingHook)
+        ((OAuditingHook) h).shutdown();
+  }
+
+  @Override
+  public void onCreateClass(final ODatabaseInternal iDatabase, final OClass iClass) {
 
   }
 
   @Override
-  public void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {
-
-  }
-
-  @Override
-  public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
+  public void onDropClass(final ODatabaseInternal iDatabase, final OClass iClass) {
 
   }
 

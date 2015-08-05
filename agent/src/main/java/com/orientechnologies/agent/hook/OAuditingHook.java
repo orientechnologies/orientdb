@@ -18,6 +18,7 @@ package com.orientechnologies.agent.hook;
 
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
+import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -36,6 +37,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Hook to audit database access.
@@ -43,16 +45,19 @@ import java.util.Set;
  * @author Luca Garulli
  */
 public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListener {
+  public static final String                      AUDITING_LOG_DEF_CLASSNAME = "AuditingLog";
   private final String                            auditClassName;
-  private final Map<String, OAuditingClassConfig> classes       = new HashMap<String, OAuditingClassConfig>(20);
-  private Set<OAuditingCommandConfig>             commands      = new HashSet<OAuditingCommandConfig>();
+  private final Map<String, OAuditingClassConfig> classes                    = new HashMap<String, OAuditingClassConfig>(20);
+  private final OSoftThread                       auditingThread;
+  private final LinkedBlockingQueue<ODocument>    auditingQueue;
+  private Set<OAuditingCommandConfig>             commands                   = new HashSet<OAuditingCommandConfig>();
   private boolean                                 onGlobalCreate;
   private boolean                                 onGlobalRead;
   private boolean                                 onGlobalUpdate;
   private boolean                                 onGlobalDelete;
 
-  public static final byte                        COMMAND       = 4;
-  private OAuditingClassConfig                    defaultConfig = new OAuditingClassConfig();
+  public static final byte                        COMMAND                    = 4;
+  private OAuditingClassConfig                    defaultConfig              = new OAuditingClassConfig();
   private ODocument                               iConfiguration;
 
   private static class OAuditingCommandConfig {
@@ -122,7 +127,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     if (iConfiguration.containsField("auditClassName"))
       auditClassName = iConfiguration.field("auditClassName");
     else
-      auditClassName = "AuditingLog";
+      auditClassName = AUDITING_LOG_DEF_CLASSNAME;
 
     onGlobalCreate = onGlobalRead = onGlobalUpdate = onGlobalDelete = false;
 
@@ -161,6 +166,11 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
         createClassIfNotExists();
       }
     }
+
+    auditingQueue = new LinkedBlockingQueue<ODocument>();
+    auditingThread = new OAuditingLoggingThread(ODatabaseRecordThreadLocal.INSTANCE.get().getURL(),
+        ODatabaseRecordThreadLocal.INSTANCE.get().getName(), auditingQueue);
+    auditingThread.start();
   }
 
   private void createClassIfNotExists() {
@@ -300,6 +310,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     }
 
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+
     final ODocument doc = new ODocument(auditClassName);
     doc.field("date", System.currentTimeMillis());
     final OSecurityUser user = db.getUser();
@@ -312,7 +323,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     if (note != null)
       doc.field("note", formatNote(iRecord, note));
 
-    doc.save();
+    auditingQueue.offer(doc);
   }
 
   private String formatNote(final ORecord iRecord, final String iNote) {
@@ -368,14 +379,20 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     return cfg;
   }
 
+  public void shutdown() {
+    if (auditingThread != null)
+      auditingThread.sendShutdown();
+  }
+
   @Override
   public void onCreate(ODatabase iDatabase) {
 
   }
 
   @Override
-  public void onDelete(ODatabase iDatabase) {
-
+  public void onDelete(final ODatabase iDatabase) {
+    if (auditingThread != null)
+      auditingThread.sendShutdown();
   }
 
   @Override
@@ -410,7 +427,8 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
 
   @Override
   public void onClose(ODatabase iDatabase) {
-
+    if (auditingThread != null)
+      auditingThread.sendShutdown();
   }
 
   @Override

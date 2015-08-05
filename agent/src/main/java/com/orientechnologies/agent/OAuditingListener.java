@@ -2,12 +2,19 @@ package com.orientechnologies.agent;
 
 import com.orientechnologies.agent.hook.OAuditingHook;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,9 +29,10 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
   protected static final String      FILE_AUDITING_DB_CONFIG         = "auditing-config.json";
   private OEnterpriseAgent           oEnterpriseAgent;
 
-  public OAuditingListener(OEnterpriseAgent oEnterpriseAgent) {
-    this.oEnterpriseAgent = oEnterpriseAgent;
+  public OAuditingListener(final OEnterpriseAgent iEnterpriseAgent) {
+    this.oEnterpriseAgent = iEnterpriseAgent;
     hooks = new ConcurrentHashMap<String, OAuditingHook>(20);
+    Orient.instance().addDbLifecycleListener(this);
   }
 
   @Override
@@ -33,27 +41,29 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
   }
 
   @Override
-  public void onCreate(ODatabaseInternal iDatabase) {
-    OAuditingHook hook = defaultHook(iDatabase);
+  public void onCreate(final ODatabaseInternal iDatabase) {
+    final OAuditingHook hook = defaultHook(iDatabase);
     hooks.put(iDatabase.getName(), hook);
     iDatabase.registerHook(hook);
     iDatabase.registerListener(hook);
+    installSecurityPolicies(iDatabase);
   }
 
-  private OAuditingHook defaultHook(ODatabaseInternal iDatabase) {
-    File auditingFileConfig = getAuditingFileConfig(iDatabase.getName());
+  private OAuditingHook defaultHook(final ODatabaseInternal iDatabase) {
+    final File auditingFileConfig = getAuditingFileConfig(iDatabase.getName());
     String content = null;
     if (auditingFileConfig.exists()) {
       content = getContent(auditingFileConfig);
 
     } else {
-      InputStream resourceAsStream = OEnterpriseAgent.class.getClassLoader().getResourceAsStream(DEFAULT_FILE_AUDITING_DB_CONFIG);
+      final InputStream resourceAsStream = OEnterpriseAgent.class.getClassLoader().getResourceAsStream(
+          DEFAULT_FILE_AUDITING_DB_CONFIG);
       content = getString(resourceAsStream);
       try {
         auditingFileConfig.getParentFile().mkdirs();
         auditingFileConfig.createNewFile();
 
-        FileOutputStream f = new FileOutputStream(auditingFileConfig);
+        final FileOutputStream f = new FileOutputStream(auditingFileConfig);
         f.write(content.getBytes());
         f.flush();
       } catch (IOException e) {
@@ -61,7 +71,7 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
         OLogManager.instance().error(this, "Cannot save auditing file configuration", e);
       }
     }
-    ODocument cfg = new ODocument().fromJSON(content, "noMap");
+    final ODocument cfg = new ODocument().fromJSON(content, "noMap");
     return new OAuditingHook(cfg);
   }
 
@@ -86,7 +96,7 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
 
     try {
       int ch;
-      StringBuilder sb = new StringBuilder();
+      final StringBuilder sb = new StringBuilder();
       while ((ch = is.read()) != -1)
         sb.append((char) ch);
       return sb.toString();
@@ -99,7 +109,6 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
 
   @Override
   public void onOpen(ODatabaseInternal iDatabase) {
-
     OAuditingHook oAuditingHook = hooks.get(iDatabase.getName());
     if (oAuditingHook == null) {
       oAuditingHook = defaultHook(iDatabase);
@@ -107,11 +116,12 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
     }
     iDatabase.registerHook(oAuditingHook);
     iDatabase.registerListener(oAuditingHook);
+    installSecurityPolicies(iDatabase);
   }
 
   @Override
   public void onClose(ODatabaseInternal iDatabase) {
-    OAuditingHook oAuditingHook = hooks.get(iDatabase.getName());
+    final OAuditingHook oAuditingHook = hooks.get(iDatabase.getName());
     if (oAuditingHook != null) {
       iDatabase.unregisterHook(oAuditingHook);
       iDatabase.unregisterListener(oAuditingHook);
@@ -137,19 +147,30 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
     return new File(oEnterpriseAgent.server.getDatabaseDirectory() + iDatabaseName + "/" + FILE_AUDITING_DB_CONFIG);
   }
 
-  public void changeConfig(final String iDatabaseName, ODocument cfg) throws IOException {
+  public void changeConfig(final String iDatabaseName, final ODocument cfg) throws IOException {
     hooks.put(iDatabaseName, new OAuditingHook(cfg));
     updateConfigOnDisk(iDatabaseName, cfg);
   }
 
-  protected void updateConfigOnDisk(String iDatabaseName, ODocument cfg) throws IOException {
-    File auditingFileConfig = getAuditingFileConfig(iDatabaseName);
-    FileOutputStream f = new FileOutputStream(auditingFileConfig);
+  protected void updateConfigOnDisk(final String iDatabaseName, final ODocument cfg) throws IOException {
+    final File auditingFileConfig = getAuditingFileConfig(iDatabaseName);
+    final FileOutputStream f = new FileOutputStream(auditingFileConfig);
     f.write(cfg.toJSON("prettyPrint=true").getBytes());
     f.flush();
   }
 
   public ODocument getConfig(final String iDatabaseName) {
     return hooks.get(iDatabaseName).getiConfiguration();
+  }
+
+  protected void installSecurityPolicies(final ODatabaseInternal iDatabase) {
+    // CHANGE ALL THE ROLE BUT ADMIN TO AVOIDING ACTING ON AUDITING RESOURCES
+    for (ODocument r : iDatabase.getMetadata().getSecurity().getAllRoles()) {
+      final ORole role = new ORole(r);
+      if (!"admin".equalsIgnoreCase(role.getName())) {
+        role.addRule(ORule.ResourceGeneric.CLASS, OAuditingHook.AUDITING_LOG_DEF_CLASSNAME, ORole.PERMISSION_NONE);
+        role.addRule(ORule.ResourceGeneric.CLUSTER, OAuditingHook.AUDITING_LOG_DEF_CLASSNAME, ORole.PERMISSION_NONE);
+      }
+    }
   }
 }
