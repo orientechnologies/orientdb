@@ -25,6 +25,14 @@
 
 
 This document contains the last changes of OrientDB Community Edition.
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1.0 (GA) - (August, 5 2015)
+- New Studio Server Management console
+- 31 issues resolved from OrientDB 2.1-rc6.
+
+CHANGELOG:
+- Core (30)..: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A%222.1+GA%22+is%3Aclosed
+- Studio (1).: https://github.com/orientechnologies/orientdb-studio/issues?q=is%3Aissue+milestone%3A%222.1+GA%22+is%3Aclosed
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 2.1-rc6 - (July, 28th 2015)
