@@ -18,7 +18,7 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
 
 
     $scope.links = {
-      ee: "http://www.orientechnologies.com/orientdb-enterprise"
+      ee: "http://www.orientdb.com/orientdb-enterprise"
     }
     if (data != null) {
 

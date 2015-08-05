@@ -235,7 +235,7 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
 
 
   $scope.links = {
-    ee: "http://www.orientechnologies.com/orientdb-enterprise"
+    ee: "http://www.orientdb.com/orientdb-enterprise"
   }
   $scope.polling = true;
   $scope.operations = 0;
@@ -341,7 +341,7 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
 });
 
 
-ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside', 'ServerApi', 'ngTableParams', '$q', 'Notification', function ($scope, $routeParams, Aside, ServerApi, ngTableParams, $q, Notification) {
+ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside', 'ServerApi', 'ngTableParams', '$q', 'Notification','Database', function ($scope, $routeParams, Aside, ServerApi, ngTableParams, $q, Notification,Database) {
 
   Aside.show({
     scope: $scope,
@@ -354,6 +354,8 @@ ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside',
     cls: 'oaside-small'
   });
 
+
+  $scope.version = Database.getVersion();
 
   $scope.dirtyProperties = [];
   ServerApi.getServerInfo(function (data) {
