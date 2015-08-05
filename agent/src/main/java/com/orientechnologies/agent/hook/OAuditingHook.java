@@ -16,11 +16,6 @@
 
 package com.orientechnologies.agent.hook;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -36,6 +31,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Hook to audit database access.
@@ -73,7 +73,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     public String  onReadMessage;
     public boolean onUpdateEnabled = false;
     public String  onUpdateMessage;
-    public boolean onUpdateChanges = false;
+    public boolean onUpdateChanges = true;
     public boolean onDeleteEnabled = false;
     public String  onDeleteMessage;
 
