@@ -15,22 +15,24 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.database.base.SetupTest;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
 @Test(groups = "db")
 public class DbClosedTest extends DocumentDBBaseTest {
   @Parameters(value = { "url" })
   public DbClosedTest(@Optional String url) {
     super(url);
+    setAutoManageDatabase(false);
+    setDropDb(true);
   }
 
   public void testDoubleDb() {
@@ -40,6 +42,7 @@ public class DbClosedTest extends DocumentDBBaseTest {
     OObjectDatabaseTx dbAnother = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     dbAnother.close();
 
+    db.activateOnCurrentThread();
     db.close();
   }
 
@@ -50,6 +53,7 @@ public class DbClosedTest extends DocumentDBBaseTest {
     OObjectDatabaseTx dbAnother = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     dbAnother.close();
 
+    db.activateOnCurrentThread();
     db.close();
   }
 
@@ -57,9 +61,6 @@ public class DbClosedTest extends DocumentDBBaseTest {
   public void testStorageClosed() {
     if (SetupTest.instance().isReuseDatabase())
       return;
-
-    ODatabaseDocumentPool.global().close();
-    OObjectDatabasePool.global().close();
   }
 
   @Test

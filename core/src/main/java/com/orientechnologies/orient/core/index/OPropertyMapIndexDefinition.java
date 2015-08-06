@@ -19,15 +19,11 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.*;
 
 /**
  * Index implementation bound to one schema class property that presents
@@ -49,9 +45,8 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
   public OPropertyMapIndexDefinition() {
   }
 
-  public OPropertyMapIndexDefinition(final String iClassName, final String iField, final OType iType, final INDEX_BY indexBy,
-      int version) {
-    super(iClassName, iField, iType, version);
+  public OPropertyMapIndexDefinition(final String iClassName, final String iField, final OType iType, final INDEX_BY indexBy) {
+    super(iClassName, iField, iType);
 
     if (indexBy == null)
       throw new NullPointerException("You have to provide way by which map entries should be mapped");
@@ -201,7 +196,7 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
   }
 
   @Override
-  public String toCreateIndexDDL(String indexName, String indexType) {
+  public String toCreateIndexDDL(String indexName, String indexType,String engine) {
     final StringBuilder ddl = new StringBuilder("create index ");
 
     ddl.append(indexName).append(" on ");

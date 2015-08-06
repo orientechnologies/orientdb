@@ -19,14 +19,14 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Index implementation bound to one schema class property that presents
@@ -37,8 +37,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiValue implements OIndexDefinitionMultiValue {
 
-  public OPropertyListIndexDefinition(final String iClassName, final String iField, final OType iType, int version) {
-    super(iClassName, iField, iType, version);
+  public OPropertyListIndexDefinition(final String iClassName, final String iField, final OType iType) {
+    super(iClassName, iField, iType);
   }
 
   public OPropertyListIndexDefinition() {
@@ -102,7 +102,7 @@ public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiV
   }
 
   @Override
-  public String toCreateIndexDDL(String indexName, String indexType) {
-    return createIndexDDLWithoutFieldType(indexName, indexType).toString();
+  public String toCreateIndexDDL(String indexName, String indexType,String engine) {
+    return createIndexDDLWithoutFieldType(indexName, indexType,engine).toString();
   }
 }

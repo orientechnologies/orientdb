@@ -19,15 +19,15 @@
  */
 package com.orientechnologies.orient.core.metadata;
 
-import java.io.IOException;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OCommandCache;
+import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
-import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.metadata.security.OSecurityProxy;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener;
@@ -48,22 +47,27 @@ import com.orientechnologies.orient.core.schedule.OSchedulerListenerImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerProxy;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
+import java.io.IOException;
+import java.util.concurrent.Callable;
+
 public class OMetadataDefault implements OMetadataInternal {
-  public static final String            CLUSTER_INTERNAL_NAME     = "internal";
-  public static final String            CLUSTER_INDEX_NAME        = "index";
-  public static final String            CLUSTER_MANUAL_INDEX_NAME = "manindex";
+  public static final String        CLUSTER_INTERNAL_NAME     = "internal";
+  public static final String        CLUSTER_INDEX_NAME        = "index";
+  public static final String        CLUSTER_MANUAL_INDEX_NAME = "manindex";
 
-  protected int                         schemaClusterId;
+  protected int                     schemaClusterId;
 
-  protected OSchemaProxy                schema;
-  protected OSecurity                   security;
-  protected OIndexManagerProxy          indexManager;
-  protected OFunctionLibraryProxy       functionLibrary;
-  protected OSchedulerListenerProxy     scheduler;
-  protected static final OProfilerMBean PROFILER                  = Orient.instance().getProfiler();
+  protected OSchemaProxy            schema;
+  protected OSecurity               security;
+  protected OIndexManagerProxy      indexManager;
+  protected OFunctionLibraryProxy   functionLibrary;
+  protected OSchedulerListenerProxy scheduler;
 
-  private OImmutableSchema              immutableSchema           = null;
-  private int                           immutableCount            = 0;
+  protected OCommandCache           commandCache;
+  protected static final OProfiler  PROFILER                  = Orient.instance().getProfiler();
+
+  private OImmutableSchema          immutableSchema           = null;
+  private int                       immutableCount            = 0;
 
   public OMetadataDefault() {
   }
@@ -96,6 +100,11 @@ public class OMetadataDefault implements OMetadataInternal {
 
   public OSchemaProxy getSchema() {
     return schema;
+  }
+
+  @Override
+  public OCommandCache getCommandCache() {
+    return commandCache;
   }
 
   @Override
@@ -172,22 +181,35 @@ public class OMetadataDefault implements OMetadataInternal {
           }
         }), database);
 
-    final Boolean enableSecurity = (Boolean) database.getProperty(ODatabase.OPTIONS.SECURITY.toString());
-    if (enableSecurity != null && !enableSecurity)
-      // INSTALL NO SECURITY IMPL
-      security = new OSecurityNull();
-    else
-      security = new OSecurityProxy(database.getStorage().getResource(OSecurity.class.getSimpleName(),
-          new Callable<OSecurityShared>() {
-            public OSecurityShared call() {
-              final OSecurityShared instance = new OSecurityShared();
-              if (iLoad) {
-                security = instance;
-                instance.load();
-              }
-              return instance;
+    security = new OSecurityProxy(database.getStorage().getResource(OSecurity.class.getSimpleName(),
+        new Callable<OSecurityShared>() {
+          public OSecurityShared call() {
+            final OSecurityShared instance = new OSecurityShared();
+            if (iLoad) {
+              security = instance;
+              instance.load();
             }
-          }), database);
+            return instance;
+          }
+        }), database);
+
+    commandCache = database.getStorage().getResource(OCommandCache.class.getSimpleName(), new Callable<OCommandCache>() {
+      public OCommandCache call() {
+        return new OCommandCacheSoftRefs(database.getName());
+      }
+    });
+
+    final Class<? extends OSecurity> securityClass = (Class<? extends OSecurity>) database.getProperty(ODatabase.OPTIONS.SECURITY
+        .toString());
+    if (securityClass != null)
+      // INSTALL CUSTOM WRAPPED SECURITY
+      try {
+        final OSecurity wrapped = security;
+        security = securityClass.getDeclaredConstructor(OSecurity.class, ODatabaseDocumentInternal.class).newInstance(wrapped,
+            database);
+      } catch (Exception e) {
+        throw new OSecurityException("Cannot install custom security implementation (" + securityClass + ")", e);
+      }
 
     functionLibrary = new OFunctionLibraryProxy(database.getStorage().getResource(OFunctionLibrary.class.getSimpleName(),
         new Callable<OFunctionLibrary>() {
@@ -221,6 +243,8 @@ public class OMetadataDefault implements OMetadataInternal {
       security.load();
     if (functionLibrary != null)
       functionLibrary.load();
+    if (commandCache != null)
+      commandCache.clear();
   }
 
   /**
@@ -231,6 +255,8 @@ public class OMetadataDefault implements OMetadataInternal {
       schema.close();
     if (security != null)
       security.close(false);
+    if (commandCache != null)
+      commandCache.clear();
   }
 
   protected ODatabaseDocumentInternal getDatabase() {

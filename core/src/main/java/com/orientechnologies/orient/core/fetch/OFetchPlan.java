@@ -94,9 +94,14 @@ public class OFetchPlan {
               final int v = Integer.parseInt(range);
               fp = new OFetchPlanLevel(v, v, level);
             }
-          } else
-            // CREATE FETCH PLAN FOR FIRST LEVEL ONLY
-            fp = new OFetchPlanLevel(0, 0, level);
+          } else {
+            if (level == -1)
+              // CREATE FETCH PLAN FOR INFINITE LEVEL
+              fp = new OFetchPlanLevel(0, -1, level);
+            else
+              // CREATE FETCH PLAN FOR FIRST LEVEL ONLY
+              fp = new OFetchPlanLevel(0, 0, level);
+          }
 
           if (key.length() > 1 && key.endsWith(ANY_WILDCARD)) {
             fetchPlanStartsWith.put(key.substring(0, key.length() - 1), fp);

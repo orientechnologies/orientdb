@@ -47,9 +47,9 @@ public class OIndexRebuildOutputListener implements OProgressListener {
     rebuild = (Boolean) iRebuild;
     if (iTotal > 0)
       if (rebuild)
-        OLogManager.instance().info(this, "- Rebuilding index %s.%s (estimated %d items)...", idx.getDatabaseName(), idx.getName(), iTotal);
+        OLogManager.instance().info(this, "- Rebuilding index %s.%s (estimated %,d items)...", idx.getDatabaseName(), idx.getName(), iTotal);
       else
-        OLogManager.instance().debug(this, "- Building index %s.%s (estimated %d items)...", idx.getDatabaseName(), idx.getName(), iTotal);
+        OLogManager.instance().debug(this, "- Building index %s.%s (estimated %,d items)...", idx.getDatabaseName(), idx.getName(), iTotal);
   }
 
   @Override

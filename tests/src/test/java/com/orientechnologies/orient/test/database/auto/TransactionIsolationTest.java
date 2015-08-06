@@ -49,9 +49,6 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(url);
     db1.open("admin", "admin");
 
-    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
-    db2.open("admin", "admin");
-
     ODocument record1 = new ODocument();
     record1.field("name", "This is the first version").save();
 
@@ -63,9 +60,15 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
       record1.getIdentity().getRecord();
 
       // CHANGE THE RECORD FROM DB2
+      ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
+      db2.open("admin", "admin");
+
       ODocument record2 = db2.load(record1.getIdentity());
       record2.field("name", "This is the second version").save();
 
+      db2.close();
+
+      db1.activateOnCurrentThread();
       db1.reload(record1, null, true);
 
       Assert.assertEquals(record1.field("name"), "This is the first version");
@@ -74,17 +77,14 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
         // NOT SUPPORTED IN REMOTE MODE
         Assert.assertFalse(true);
     }
+
     db1.close();
-    db2.close();
   }
 
   @Test
   public void testIsolationReadCommitted() throws IOException {
     ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(url);
     db1.open("admin", "admin");
-
-    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
-    db2.open("admin", "admin");
 
     ODocument record1 = new ODocument();
     record1.field("name", "This is the first version").save();
@@ -96,14 +96,20 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     record1.getIdentity().getRecord();
 
     // CHANGE THE RECORD FROM DB2
+    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
+    db2.open("admin", "admin");
+
     ODocument record2 = db2.load(record1.getIdentity());
     record2.field("name", "This is the second version").save();
 
+    db1.activateOnCurrentThread();
     db1.reload(record1, null, true);
 
     Assert.assertEquals(record1.field("name"), "This is the second version");
 
     db1.close();
+
+    db2.activateOnCurrentThread();
     db2.close();
   }
 
@@ -111,9 +117,6 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
   public void testIsolationRepeatableReadScript() throws ExecutionException, InterruptedException {
     final ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(url);
     db1.open("admin", "admin");
-
-    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
-    db2.open("admin", "admin");
 
     final ODocument record1 = new ODocument();
     record1.field("name", "This is the first version").save();
@@ -129,6 +132,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
         cmd += "commit;";
         cmd += "return $r2;";
 
+        db1.activateOnCurrentThread();
         return db1.command(new OCommandScript("sql", cmd)).execute();
       }
     });
@@ -136,27 +140,29 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     Thread.sleep(500);
 
     // CHANGE THE RECORD FROM DB2
+    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
+    db2.open("admin", "admin");
+
     ODocument record2 = db2.load(record1.getIdentity());
     record2.field("name", "This is the second version").save();
 
     List<OIdentifiable> txRecord = txFuture.get();
 
     Assert.assertNotNull(txRecord);
-    Assert.assertEquals(txRecord.size(),1);
+    Assert.assertEquals(txRecord.size(), 1);
     Assert.assertEquals(((ODocument) txRecord.get(0).getRecord()).field("name"), "This is the first version");
 
+    db1.activateOnCurrentThread();
     db1.close();
+
+    db2.activateOnCurrentThread();
     db2.close();
   }
-
 
   @Test
   public void testIsolationReadCommittedScript() throws ExecutionException, InterruptedException {
     final ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(url);
     db1.open("admin", "admin");
-
-    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
-    db2.open("admin", "admin");
 
     final ODocument record1 = new ODocument();
     record1.field("name", "This is the first version").save();
@@ -172,6 +178,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
         cmd += "commit;";
         cmd += "return $r2;";
 
+        db1.activateOnCurrentThread();
         return db1.command(new OCommandScript("sql", cmd)).execute();
       }
     });
@@ -179,16 +186,21 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     Thread.sleep(500);
 
     // CHANGE THE RECORD FROM DB2
+    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
+    db2.open("admin", "admin");
+
     ODocument record2 = db2.load(record1.getIdentity());
     record2.field("name", "This is the second version").save();
 
     List<OIdentifiable> txRecord = txFuture.get();
 
     Assert.assertNotNull(txRecord);
-    Assert.assertEquals(txRecord.size(),1);
+    Assert.assertEquals(txRecord.size(), 1);
     Assert.assertEquals(((ODocument) txRecord.get(0).getRecord()).field("name"), "This is the second version");
 
-    db1.close();
     db2.close();
+
+    db1.activateOnCurrentThread();
+    db1.close();
   }
 }

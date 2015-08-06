@@ -11,15 +11,15 @@ import java.util.concurrent.atomic.AtomicLong;
  * * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  */
 public class ODistributedCounter extends OOrientListenerAbstract {
-  private static final int           HASH_INCREMENT = 0x61c88647;
+  private static final int              HASH_INCREMENT = 0x61c88647;
 
-  private static final AtomicInteger nextHashCode   = new AtomicInteger();
-  private final AtomicBoolean        poolBusy       = new AtomicBoolean();
-  private final int                  maxPartitions  = Runtime.getRuntime().availableProcessors() << 3;
-  private final int                  MAX_RETRIES    = 8;
+  private static final AtomicInteger    nextHashCode   = new AtomicInteger();
+  private final AtomicBoolean           poolBusy       = new AtomicBoolean();
+  private final int                     maxPartitions  = Runtime.getRuntime().availableProcessors() << 3;
+  private final int                     MAX_RETRIES    = 8;
 
-  private final ThreadLocal<Integer> threadHashCode = new ThreadHashCode();
-  private volatile AtomicLong[]      counters       = new AtomicLong[2];
+  private volatile ThreadLocal<Integer> threadHashCode = new ThreadHashCode();
+  private volatile AtomicLong[]         counters       = new AtomicLong[2];
 
   public ODistributedCounter() {
     for (int i = 0; i < counters.length; i++) {
@@ -30,6 +30,17 @@ public class ODistributedCounter extends OOrientListenerAbstract {
     Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
+  @Override
+  public void onStartup() {
+    if (threadHashCode == null)
+      threadHashCode = new ThreadHashCode();
+  }
+
+  @Override
+  public void onShutdown() {
+    threadHashCode = null;
+  }
+
   public void increment() {
     updateCounter(+1);
   }
@@ -38,7 +49,25 @@ public class ODistributedCounter extends OOrientListenerAbstract {
     updateCounter(-1);
   }
 
-  private void updateCounter(int delta) {
+  public void add(long delta) {
+    updateCounter(delta);
+  }
+
+  public void clear() {
+    while (!poolBusy.compareAndSet(false, true))
+      ;
+
+    final AtomicLong[] cts = new AtomicLong[counters.length];
+    for (int i = 0; i < counters.length; i++) {
+      cts[i] = new AtomicLong();
+    }
+
+    counters = cts;
+
+    poolBusy.set(true);
+  }
+
+  private void updateCounter(long delta) {
     final int hashCode = threadHashCode.get();
 
     while (true) {
@@ -95,20 +124,24 @@ public class ODistributedCounter extends OOrientListenerAbstract {
   }
 
   public boolean isEmpty() {
+    return get() == 0;
+  }
+
+  public long get() {
     long sum = 0;
 
     for (AtomicLong counter : counters)
       if (counter != null)
         sum += counter.get();
 
-    return sum == 0;
+    return sum;
   }
 
   private static int nextHashCode() {
     return nextHashCode.getAndAdd(HASH_INCREMENT);
   }
 
-  private static class ThreadHashCode extends ThreadLocal<Integer> {
+  private static final class ThreadHashCode extends ThreadLocal<Integer> {
     @Override
     protected Integer initialValue() {
       return nextHashCode();

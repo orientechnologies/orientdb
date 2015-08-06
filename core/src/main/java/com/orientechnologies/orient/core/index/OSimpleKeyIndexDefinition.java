@@ -20,11 +20,6 @@
 
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -32,11 +27,16 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   private OType[] keyTypes;
 
   public OSimpleKeyIndexDefinition(int version, final OType... keyTypes) {
-    super(version);
+    super();
 
     this.keyTypes = keyTypes;
   }
@@ -45,7 +45,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   public OSimpleKeyIndexDefinition(OType[] keyTypes2, List<OCollate> collatesList, int version) {
-    super(version);
+    super();
 
     this.keyTypes = keyTypes2;
     if (keyTypes.length > 1) {
@@ -207,7 +207,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
    * @param indexName
    * @param indexType
    */
-  public String toCreateIndexDDL(final String indexName, final String indexType) {
+  public String toCreateIndexDDL(final String indexName, final String indexType, final String engine) {
     final StringBuilder ddl = new StringBuilder("create index ");
     ddl.append(indexName).append(' ').append(indexType).append(' ');
 

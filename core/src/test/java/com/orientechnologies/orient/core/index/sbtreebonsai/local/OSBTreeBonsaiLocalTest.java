@@ -48,9 +48,9 @@ public class OSBTreeBonsaiLocalTest {
 
     databaseDocumentTx.create();
 
-    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".irs", false,
+    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>("OSBTreeBonsaiLocalTest", ".irs", false,
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
-    sbTree.create("OSBTreeBonsaiLocalTest", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
+    sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
   }
 
   @AfterMethod

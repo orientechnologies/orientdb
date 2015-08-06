@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 
 /**
  * Generic proxy abstratc class.
@@ -29,15 +28,11 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
  * 
  */
 public abstract class OProxedResource<T> {
-  protected T                         delegate;
-  protected ODatabaseDocumentInternal database;
+  protected final T                         delegate;
+  protected final ODatabaseDocumentInternal database;
 
-  public OProxedResource(final T iDelegate, final ODatabaseDocumentInternal iDatabase) {
+  protected OProxedResource(final T iDelegate, final ODatabaseDocumentInternal iDatabase) {
     this.delegate = iDelegate;
     this.database = iDatabase;
-  }
-
-  protected void setCurrentDatabaseInThreadLocal() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
   }
 }

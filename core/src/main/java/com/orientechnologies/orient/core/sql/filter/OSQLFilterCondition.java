@@ -1,28 +1,23 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.filter;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.regex.Pattern;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.collate.OCollate;
@@ -43,6 +38,16 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+
 /**
  * Run-time query condition evaluator.
  *
@@ -50,10 +55,10 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
  */
 public class OSQLFilterCondition {
   private static final String NULL_VALUE = "null";
-  protected Object         left;
-  protected OQueryOperator operator;
-  protected Object         right;
-  protected boolean inBraces = false;
+  protected Object            left;
+  protected OQueryOperator    operator;
+  protected Object            right;
+  protected boolean           inBraces   = false;
 
   public OSQLFilterCondition(final Object iLeft, final OQueryOperator iOperator) {
     this.left = iLeft;
@@ -71,12 +76,16 @@ public class OSQLFilterCondition {
     if (left instanceof OSQLQuery<?>) {
       left = ((OSQLQuery<?>) left).setContext(iContext).execute();
     }
+    Object l = evaluate(iCurrentRecord, iCurrentResult, left, iContext);
+
+    if (operator != null && operator.canShortCircuit(l)) {
+      return l;
+    }
 
     if (right instanceof OSQLQuery<?>) {
       right = ((OSQLQuery<?>) right).setContext(iContext).execute();
     }
 
-    Object l = evaluate(iCurrentRecord, iCurrentResult, left, iContext);
     Object r = evaluate(iCurrentRecord, iCurrentResult, right, iContext);
 
     final OCollate collate = getCollate();
@@ -281,13 +290,16 @@ public class OSQLFilterCondition {
         return new Date(new Double(stringValue).longValue());
       } catch (Exception pe2) {
         throw new OQueryParsingException("Error on conversion of date '" + stringValue + "' using the format: "
-            + formatter.toPattern());
+            + formatter.toPattern(), pe2);
       }
     }
   }
 
   protected Object evaluate(OIdentifiable iCurrentRecord, final ODocument iCurrentResult, final Object iValue,
       final OCommandContext iContext) {
+    if (iValue == null)
+      return null;
+
     if (iCurrentRecord != null && iCurrentRecord.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
       try {
         iCurrentRecord = iCurrentRecord.getRecord().load();
@@ -297,19 +309,11 @@ public class OSQLFilterCondition {
     }
 
     if (iValue instanceof OSQLFilterItem) {
-      if (iCurrentResult != null) {
-        final Object v = ((OSQLFilterItem) iValue).getValue(iCurrentResult, iCurrentResult, iContext);
-        if (v != null) {
-          return v;
-        }
-      }
-
       return ((OSQLFilterItem) iValue).getValue(iCurrentRecord, iCurrentResult, iContext);
     }
 
-    if (iValue instanceof OSQLFilterCondition)
-    // NESTED CONDITION: EVALUATE IT RECURSIVELY
-    {
+    if (iValue instanceof OSQLFilterCondition) {
+      // NESTED CONDITION: EVALUATE IT RECURSIVELY
       return ((OSQLFilterCondition) iValue).evaluate(iCurrentRecord, iCurrentResult, iContext);
     }
 
@@ -319,9 +323,9 @@ public class OSQLFilterCondition {
       return f.execute(iCurrentRecord, iCurrentRecord, iCurrentResult, iContext);
     }
 
-    final Iterable<?> multiValue = OMultiValue.getMultiValueIterable(iValue);
+    if (OMultiValue.isMultiValue(iValue)) {
+      final Iterable<?> multiValue = OMultiValue.getMultiValueIterable(iValue);
 
-    if (multiValue != null) {
       // MULTI VALUE: RETURN A COPY
       final ArrayList<Object> result = new ArrayList<Object>(OMultiValue.getSize(iValue));
 
@@ -358,12 +362,14 @@ public class OSQLFilterCondition {
 
     try {
       // DEFINED OPERATOR
-      if ((oldR instanceof String && oldR.equals(OSQLHelper.DEFINED)) || (oldL instanceof String && oldL.equals(OSQLHelper.DEFINED))) {
+      if ((oldR instanceof String && oldR.equals(OSQLHelper.DEFINED))
+          || (oldL instanceof String && oldL.equals(OSQLHelper.DEFINED))) {
         result = new Object[] { ((OSQLFilterItemAbstract) this.left).getRoot(), r };
       }
 
       // NOT_NULL OPERATOR
-      else if ((oldR instanceof String && oldR.equals(OSQLHelper.NOT_NULL)) || (oldL instanceof String && oldL.equals(OSQLHelper.NOT_NULL))) {
+      else if ((oldR instanceof String && oldR.equals(OSQLHelper.NOT_NULL))
+          || (oldL instanceof String && oldL.equals(OSQLHelper.NOT_NULL))) {
         result = null;
       } else if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass())
           && !r.getClass().isAssignableFrom(l.getClass()))

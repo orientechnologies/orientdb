@@ -89,7 +89,7 @@ public abstract class OrientElementType extends OClassAbstractDelegate {
       public OIndex<?> call(final OrientBaseGraph g) {
         return OrientElementType.super.createIndex(iName, iType, fields);
       }
-    }, "create index '", iName, "' as type '", iType.toString(), "' on fields: " + Arrays.toString(fields));
+    }, "create index '", iName, "' as type '", iType, "' on fields: " + Arrays.toString(fields));
   }
 
   @Override
@@ -111,7 +111,7 @@ public abstract class OrientElementType extends OClassAbstractDelegate {
       public OIndex<?> call(final OrientBaseGraph g) {
         return OrientElementType.super.createIndex(iName, iType, iProgressListener, metadata, algorithm, fields);
       }
-    }, "create index '", iName, "' as type '", iType.toString(), "' on fields: " + Arrays.toString(fields));
+    }, "create index '", iName, "' as type '", iType, "' on fields: " + Arrays.toString(fields));
   }
 
   @Override
@@ -122,7 +122,7 @@ public abstract class OrientElementType extends OClassAbstractDelegate {
       public OIndex<?> call(final OrientBaseGraph g) {
         return OrientElementType.super.createIndex(iName, iType, iProgressListener, metadata, fields);
       }
-    }, "create index '", iName, "' as type '", iType.toString(), "' on fields: " + Arrays.toString(fields));
+    }, "create index '", iName, "' as type '", iType, "' on fields: " + Arrays.toString(fields));
   }
 
   protected abstract String getTypeName();

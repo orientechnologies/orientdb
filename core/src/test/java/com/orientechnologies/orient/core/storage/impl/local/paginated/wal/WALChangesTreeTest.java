@@ -257,7 +257,7 @@ public class WALChangesTreeTest {
     final byte[] data = new byte[30];
 
     final long ts = System.currentTimeMillis();
-    System.out.println("TestInsertRandom seed : " + ts);
+    System.out.println("TestInsertRandomDM seed : " + ts);
 
     final MersenneTwisterFast rnd = new MersenneTwisterFast(ts);
     for (int i = 0; i < 100; i++) {

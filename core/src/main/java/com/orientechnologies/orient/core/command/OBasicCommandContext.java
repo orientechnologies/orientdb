@@ -271,6 +271,23 @@ public class OBasicCommandContext implements OCommandContext {
     return true;
   }
 
+  @Override
+  public OCommandContext copy() {
+    final OBasicCommandContext copy = new OBasicCommandContext();
+    copy.init();
+    copy.variables.putAll(variables);
+
+    copy.recordMetrics = recordMetrics;
+    copy.parent = parent;
+    copy.child = child;
+    return copy;
+  }
+
+  @Override
+  public void merge(final OCommandContext iContext) {
+    // TODO: SOME VALUES NEED TO BE MERGED
+  }
+
   private void init() {
     if (variables == null)
       variables = new HashMap<String, Object>();

@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class ONotInCondition extends OBooleanExpression {
@@ -85,5 +87,49 @@ public class ONotInCondition extends OBooleanExpression {
     }
 
   }
+
+  @Override
+  public boolean supportsBasicCalculation() {
+
+    if (operator != null && !operator.supportsBasicCalculation()) {
+      return false;
+    }
+    if (left != null && !left.supportsBasicCalculation()) {
+      return false;
+    }
+    if (rightMathExpression != null && !rightMathExpression.supportsBasicCalculation()) {
+      return false;
+    }
+    return true;
+
+  }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    int total = 0;
+    if (operator != null && !operator.supportsBasicCalculation()) {
+      total++;
+    }
+    if (left != null && !left.supportsBasicCalculation()) {
+      total++;
+    }
+    if (rightMathExpression != null && !rightMathExpression.supportsBasicCalculation()) {
+      total++;
+    }
+    return total;
+  }
+
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
+    List<Object> result = new ArrayList<Object>();
+    if (operator != null && !operator.supportsBasicCalculation()) {
+      result.add(this);
+    }
+    if (rightMathExpression != null && !rightMathExpression.supportsBasicCalculation()) {
+      result.add(rightMathExpression);
+    }
+    return result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=8fb82bf72cc7d9cbdf2f9e2323ca8ee1 (do not edit this line) */

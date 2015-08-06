@@ -37,20 +37,37 @@ public class OProjection extends SimpleNode {
     }
     boolean first = true;
     StringBuilder builder = new StringBuilder();
+
+    // print * before
     for (OProjectionItem item : items) {
-      if (!first) {
-        builder.append(", ");
+      if (item.isAll()) {
+        if (!first) {
+          builder.append(", ");
+        }
+
+        builder.append(item.toString());
+        first = false;
       }
-      builder.append(item.toString());
-      first = false;
+    }
+
+    // and then the rest of the projections
+    for (OProjectionItem item : items) {
+      if (!item.isAll()) {
+        if (!first) {
+          builder.append(", ");
+        }
+
+        builder.append(item.toString());
+        first = false;
+      }
     }
 
     return builder.toString();
   }
 
   public void replaceParameters(Map<Object, Object> params) {
-    if(items!=null){
-      for(OProjectionItem item:items){
+    if (items != null) {
+      for (OProjectionItem item : items) {
         item.replaceParameters(params);
       }
     }

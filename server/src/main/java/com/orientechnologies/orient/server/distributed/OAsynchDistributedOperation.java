@@ -19,10 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+
 import java.util.Collection;
 import java.util.Set;
-
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 /**
  * Asynchronous sistributed operation.
@@ -34,13 +35,20 @@ public class OAsynchDistributedOperation {
   private final Set<String>         clusterNames;
   private final Collection<String>  nodes;
   private final OAbstractRemoteTask task;
+  private final OCallable           callback;
 
   public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final Collection<String> iNodes,
       final OAbstractRemoteTask iTask) {
+    this(iDatabaseName, iClusterNames, iNodes, iTask, null);
+  }
+
+  public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final Collection<String> iNodes,
+      final OAbstractRemoteTask iTask, final OCallable iCallback) {
     databaseName = iDatabaseName;
     clusterNames = iClusterNames;
     nodes = iNodes;
     task = iTask;
+    callback = iCallback;
   }
 
   public Set<String> getClusterNames() {
@@ -57,5 +65,9 @@ public class OAsynchDistributedOperation {
 
   public String getDatabaseName() {
     return databaseName;
+  }
+
+  public OCallable getCallback() {
+    return callback;
   }
 }

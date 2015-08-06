@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -97,7 +97,7 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
   public void testSubclassesIndexes() throws Exception {
     database.begin();
 
-    OProfilerMBean profiler = Orient.instance().getProfiler();
+    OProfiler profiler = Orient.instance().getProfiler();
 
     long indexUsage = profiler.getCounter("db.demo.query.indexUsed");
     long indexUsageReverted = profiler.getCounter("db.demo.query.indexUseAttemptedAndReverted");
@@ -159,7 +159,7 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
   public void testBaseWithoutIndexAndSubclassesIndexes() throws Exception {
     database.begin();
 
-    OProfilerMBean profiler = Orient.instance().getProfiler();
+    OProfiler profiler = Orient.instance().getProfiler();
 
     long indexUsage = profiler.getCounter("db.demo.query.indexUsed");
     long indexUsageReverted = profiler.getCounter("db.demo.query.indexUseAttemptedAndReverted");
@@ -224,7 +224,7 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
   public void testSubclassesIndexesFailed() throws Exception {
     database.begin();
 
-    OProfilerMBean profiler = Orient.instance().getProfiler();
+    OProfiler profiler = Orient.instance().getProfiler();
     profiler.startRecording();
 
     for (int i = 0; i < 10000; i++) {

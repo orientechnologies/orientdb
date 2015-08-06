@@ -20,19 +20,17 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
-import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
@@ -48,34 +46,42 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   public static final String                         INDEX_FILE_EXTENSION = ".irs";
   private OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree;
 
-  protected static final OProfilerMBean              PROFILER             = Orient.instance().getProfiler();
+  protected static final OProfiler                   PROFILER             = Orient.instance().getProfiler();
 
   public OIndexRIDContainerSBTree(long fileId, boolean durableMode, OAbstractPaginatedStorage storage) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode, storage);
+    String fileName;
 
-    tree.create(fileId, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
+    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+    if (atomicOperation == null)
+      fileName = storage.getWriteCache().fileNameById(fileId);
+    else
+      fileName = atomicOperation.fileNameById(fileId);
+
+    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
+        INDEX_FILE_EXTENSION, durableMode, storage);
+
+    tree.create(OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
   }
 
   public OIndexRIDContainerSBTree(long fileId, OBonsaiBucketPointer rootPointer, boolean durableMode,
       OAbstractPaginatedStorage storage) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode, storage);
-    tree.load(fileId, rootPointer);
+    String fileName;
+
+    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+    if (atomicOperation == null)
+      fileName = storage.getWriteCache().fileNameById(fileId);
+    else
+      fileName = atomicOperation.fileNameById(fileId);
+
+    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
+        INDEX_FILE_EXTENSION, durableMode, storage);
+    tree.load(rootPointer);
   }
 
   public OIndexRIDContainerSBTree(String file, OBonsaiBucketPointer rootPointer, boolean durableMode,
       OAbstractPaginatedStorage storage) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode, storage);
-    final long fileId;
-    try {
-      OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-      if (atomicOperation == null)
-        fileId = storage.getDiskCache().openFile(file + INDEX_FILE_EXTENSION);
-      else
-        fileId = atomicOperation.openFile(file + INDEX_FILE_EXTENSION, storage.getDiskCache());
-    } catch (IOException e) {
-      throw new OSBTreeException("Exception during loading of sbtree " + file, e);
-    }
-    tree.load(fileId, rootPointer);
+    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(file, INDEX_FILE_EXTENSION, durableMode, storage);
+    tree.load(rootPointer);
   }
 
   public OBonsaiBucketPointer getRootPointer() {

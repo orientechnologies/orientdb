@@ -70,7 +70,7 @@ import java.util.Set;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
- * 
+ *
  */
 public class OObjectProxyMethodHandler implements MethodHandler {
 
@@ -119,7 +119,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   /**
    * Method that detaches all fields contained in the document to the given object
-   * 
+   *
    * @param self
    *          :- The object containing this handler instance
    * @throws InvocationTargetException
@@ -146,7 +146,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   /**
    * Method that detaches all fields contained in the document to the given object
-   * 
+   *
    * @param self
    *          :- The object containing this handler instance
    * @throws InvocationTargetException
@@ -187,8 +187,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   /**
    * Method that attaches all data contained in the object to the associated document
-   * 
-   * 
+   *
+   *
    * @param self
    *          :- The object containing this handler instance
    * @throws IllegalAccessException
@@ -348,7 +348,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
               Method setMethod = getSetMethod(self.getClass().getSuperclass(), getSetterFieldName(fieldName), value);
               setMethod.invoke(self, value);
             } else if ((value instanceof Set || value instanceof Map)
-                && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) < 0) {
+                && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) < 0
+                && !OReflectionHelper.isJavaType(genericMultiValueType)) {
               if (value instanceof Set)
                 value = new OObjectLazySet(self, (Set<OIdentifiable>) docValue, OObjectEntitySerializer.isCascadeDeleteField(
                     self.getClass(), fieldName));
@@ -518,7 +519,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         doc.field(f.getName(), doc.field(f.getName()), type);
       Map<Object, OIdentifiable> docMap = doc.field(f.getName(), type);
       if (docMap == null) {
-        docMap = new ORecordLazyMap(doc);
+        if (OType.EMBEDDEDMAP == type)
+          docMap = new OTrackedMap<OIdentifiable>(doc);
+        else
+          docMap = new ORecordLazyMap(doc);
         setDocFieldValue(f.getName(), docMap, type);
       }
       value = new OObjectLazyMap(self, docMap, value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
@@ -557,7 +561,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         OType type = embedded ? OType.EMBEDDEDLIST : OType.LINKLIST;
         List<OIdentifiable> docList = doc.field(f.getName(), type);
         if (docList == null) {
-          docList = new ORecordLazyList(doc);
+          if (embedded)
+            docList = new OTrackedList<OIdentifiable>(doc);
+          else
+            docList = new ORecordLazyList(doc);
           setDocFieldValue(f.getName(), docList, type);
         } else if (isFieldUpdate) {
           docList.clear();
@@ -568,7 +575,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         OType type = embedded ? OType.EMBEDDEDSET : OType.LINKSET;
         Set<OIdentifiable> docSet = doc.field(f.getName(), type);
         if (docSet == null) {
-          docSet = new ORecordLazySet(doc);
+          if (embedded)
+            docSet = new OTrackedSet<OIdentifiable>(doc);
+          else
+            docSet = new ORecordLazySet(doc);
           setDocFieldValue(f.getName(), docSet, type);
         } else if (isFieldUpdate) {
           docSet.clear();
@@ -718,6 +728,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   }
 
   protected Object convertDocumentToObject(final ODocument value, final Object self) {
+    if (value == null)
+      return null;
     return OObjectEntityEnhancer.getInstance().getProxiedInstance(value.getClassName(), getDatabase().getEntityManager(), value,
         (self instanceof ProxyObject ? (ProxyObject) self : null));
   }

@@ -34,8 +34,8 @@ public class OCompositeIndexDefinitionTest {
   public void beforeMethod() {
     compositeIndex = new OCompositeIndexDefinition("testClass", -1);
 
-    compositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER, -1));
-    compositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "fTwo", OType.STRING, -1));
+    compositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER));
+    compositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "fTwo", OType.STRING));
   }
 
   @Test
@@ -58,9 +58,9 @@ public class OCompositeIndexDefinitionTest {
   public void testCreateMapValueSuccessful() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
     compositeIndexDefinition.addIndex(new OPropertyMapIndexDefinition("testCollectionClass", "fTwo", OType.STRING,
-        OPropertyMapIndexDefinition.INDEX_BY.KEY, -1));
+        OPropertyMapIndexDefinition.INDEX_BY.KEY));
 
     final Map<String, String> stringMap = new HashMap<String, String>();
     stringMap.put("key1", "val1");
@@ -79,8 +79,8 @@ public class OCompositeIndexDefinitionTest {
   public void testCreateCollectionValueSuccessfulOne() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER));
 
     final Object result = compositeIndexDefinition.createValue(12, Arrays.asList(1, 2));
 
@@ -96,8 +96,8 @@ public class OCompositeIndexDefinitionTest {
   public void testCreateRidBagValueSuccessfulOne() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo", -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo"));
 
     ORidBag ridBag = new ORidBag();
     ridBag.setAutoConvertToRecord(false);
@@ -120,8 +120,8 @@ public class OCompositeIndexDefinitionTest {
   public void testCreateCollectionValueSuccessfulTwo() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
 
     final Object result = compositeIndexDefinition.createValue(Arrays.asList(Arrays.asList(1, 2), 12));
 
@@ -137,8 +137,8 @@ public class OCompositeIndexDefinitionTest {
   public void testCreateRidBagValueSuccessfulTwo() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo", -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo"));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
 
     ORidBag ridBag = new ORidBag();
     ridBag.setAutoConvertToRecord(false);
@@ -161,9 +161,9 @@ public class OCompositeIndexDefinitionTest {
   public void testCreateCollectionValueSuccessfulThree() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.STRING, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.STRING));
 
     final Object result = compositeIndexDefinition.createValue(12, Arrays.asList(1, 2), "test");
 
@@ -179,9 +179,9 @@ public class OCompositeIndexDefinitionTest {
   public void testCreateRidBagValueSuccessfulThree() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo", -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.STRING, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo"));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.STRING));
 
     ORidBag ridBag = new ORidBag();
     ridBag.setAutoConvertToRecord(false);
@@ -204,8 +204,8 @@ public class OCompositeIndexDefinitionTest {
   public void testCreateCollectionValueTwoCollections() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
 
     compositeIndexDefinition.createValue(Arrays.asList(1, 2), Arrays.asList(12));
   }
@@ -229,7 +229,7 @@ public class OCompositeIndexDefinitionTest {
 
   @Test
   public void testCreateValueDefinitionsMoreThanParams() {
-    compositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "fThree", OType.STRING, -1));
+    compositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "fThree", OType.STRING));
 
     final Object result = compositeIndex.createValue("12", "test");
     Assert.assertEquals(result, new OCompositeKey(Arrays.asList(12, "test")));
@@ -239,8 +239,8 @@ public class OCompositeIndexDefinitionTest {
   public void testCreateValueIndexItemWithTwoParams() {
     final OCompositeIndexDefinition anotherCompositeIndex = new OCompositeIndexDefinition("testClass", -1);
 
-    anotherCompositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "f11", OType.STRING, -1));
-    anotherCompositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "f22", OType.STRING, -1));
+    anotherCompositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "f11", OType.STRING));
+    anotherCompositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "f22", OType.STRING));
 
     compositeIndex.addIndex(anotherCompositeIndex);
 
@@ -272,9 +272,9 @@ public class OCompositeIndexDefinitionTest {
 
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
     compositeIndexDefinition.addIndex(new OPropertyMapIndexDefinition("testCollectionClass", "fTwo", OType.STRING,
-        OPropertyMapIndexDefinition.INDEX_BY.KEY, -1));
+        OPropertyMapIndexDefinition.INDEX_BY.KEY));
 
     final Object result = compositeIndexDefinition.getDocumentValueToIndex(document);
     final Collection<OCompositeKey> collectionResult = (Collection<OCompositeKey>) result;
@@ -293,8 +293,8 @@ public class OCompositeIndexDefinitionTest {
 
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER));
 
     final Object result = compositeIndexDefinition.getDocumentValueToIndex(document);
 
@@ -321,8 +321,8 @@ public class OCompositeIndexDefinitionTest {
 
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo", -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo"));
 
     final Object result = compositeIndexDefinition.getDocumentValueToIndex(document);
 
@@ -344,8 +344,8 @@ public class OCompositeIndexDefinitionTest {
 
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
 
     final Object result = compositeIndexDefinition.getDocumentValueToIndex(document);
 
@@ -372,8 +372,8 @@ public class OCompositeIndexDefinitionTest {
 
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo", -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo"));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
 
     final Object result = compositeIndexDefinition.getDocumentValueToIndex(document);
 
@@ -396,9 +396,9 @@ public class OCompositeIndexDefinitionTest {
 
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.STRING, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.STRING));
 
     final Object result = compositeIndexDefinition.getDocumentValueToIndex(document);
 
@@ -426,9 +426,9 @@ public class OCompositeIndexDefinitionTest {
 
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo", -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.STRING, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo"));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.STRING));
 
     final Object result = compositeIndexDefinition.getDocumentValueToIndex(document);
 
@@ -450,8 +450,8 @@ public class OCompositeIndexDefinitionTest {
 
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass", -1);
 
-    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER));
     compositeIndexDefinition.getDocumentValueToIndex(document);
   }
 
@@ -488,8 +488,8 @@ public class OCompositeIndexDefinitionTest {
 
     final OCompositeIndexDefinition emptyCompositeIndex = new OCompositeIndexDefinition("testClass", -1);
 
-    emptyCompositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER, -1));
-    emptyCompositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "fTwo", OType.STRING, -1));
+    emptyCompositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER));
+    emptyCompositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "fTwo", OType.STRING));
 
     final ODocument docToStore = emptyCompositeIndex.toStream();
     database.save(docToStore);
@@ -519,13 +519,13 @@ public class OCompositeIndexDefinitionTest {
     database.create();
 
     final OCompositeIndexDefinition emptyCompositeIndex = new OCompositeIndexDefinition("testClass", Arrays.asList(
-        new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER, -1), new OPropertyIndexDefinition("testClass", "fTwo",
-            OType.STRING, -1)), -1);
+        new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER), new OPropertyIndexDefinition("testClass", "fTwo",
+            OType.STRING)), -1);
 
     final OCompositeIndexDefinition emptyCompositeIndexTwo = new OCompositeIndexDefinition("testClass", -1);
 
-    emptyCompositeIndexTwo.addIndex(new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER, -1));
-    emptyCompositeIndexTwo.addIndex(new OPropertyIndexDefinition("testClass", "fTwo", OType.STRING, -1));
+    emptyCompositeIndexTwo.addIndex(new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER));
+    emptyCompositeIndexTwo.addIndex(new OPropertyIndexDefinition("testClass", "fTwo", OType.STRING));
 
     Assert.assertEquals(emptyCompositeIndex, emptyCompositeIndexTwo);
 
@@ -544,9 +544,9 @@ public class OCompositeIndexDefinitionTest {
   public void testProcessChangeListEventsOne() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition();
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.STRING, -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.STRING));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER));
 
     final ODocument doc = new ODocument();
     ORecordInternal.unsetDirty(doc);
@@ -582,9 +582,9 @@ public class OCompositeIndexDefinitionTest {
   public void testProcessChangeRidBagEventsOne() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition();
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo", -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo"));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER));
 
     final ORidBag ridBag = new ORidBag();
     final List<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> firedEvents = new ArrayList<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>>();
@@ -618,9 +618,9 @@ public class OCompositeIndexDefinitionTest {
   public void testProcessChangeListEventsTwo() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition();
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.STRING, -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.STRING));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER));
 
     final ODocument doc = new ODocument();
     ORecordInternal.unsetDirty(doc);
@@ -659,9 +659,9 @@ public class OCompositeIndexDefinitionTest {
   public void testProcessChangeRidBagEventsTwo() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition();
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo", -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyRidBagIndexDefinition("testCollectionClass", "fTwo"));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER));
 
     final ORidBag ridBag = new ORidBag();
     final List<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> firedEvents = new ArrayList<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>>();
@@ -696,9 +696,9 @@ public class OCompositeIndexDefinitionTest {
   public void testProcessChangeSetEventsOne() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition();
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.STRING, -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.STRING));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER));
 
     final ODocument doc = new ODocument();
     ORecordInternal.unsetDirty(doc);
@@ -734,9 +734,9 @@ public class OCompositeIndexDefinitionTest {
   public void testProcessChangeSetEventsTwo() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition();
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
-    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.STRING, -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
+    compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fTwo", OType.STRING));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER));
 
     final ODocument doc = new ODocument();
     ORecordInternal.unsetDirty(doc);
@@ -775,10 +775,10 @@ public class OCompositeIndexDefinitionTest {
   public void testProcessChangeKeyMapEventsOne() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition();
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
     compositeIndexDefinition.addIndex(new OPropertyMapIndexDefinition("testCollectionClass", "fTwo", OType.STRING,
-        OPropertyMapIndexDefinition.INDEX_BY.KEY, -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER, -1));
+        OPropertyMapIndexDefinition.INDEX_BY.KEY));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER));
 
     final ODocument doc = new ODocument();
     ORecordInternal.unsetDirty(doc);
@@ -814,10 +814,10 @@ public class OCompositeIndexDefinitionTest {
   public void testProcessChangeKeyMapEventsTwo() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition();
 
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER, -1));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
     compositeIndexDefinition.addIndex(new OPropertyMapIndexDefinition("testCollectionClass", "fTwo", OType.STRING,
-        OPropertyMapIndexDefinition.INDEX_BY.KEY, -1));
-    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER, -1));
+        OPropertyMapIndexDefinition.INDEX_BY.KEY));
+    compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER));
 
     final ODocument doc = new ODocument();
     ORecordInternal.unsetDirty(doc);

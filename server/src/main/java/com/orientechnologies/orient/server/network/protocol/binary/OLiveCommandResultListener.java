@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
-import com.orientechnologies.orient.server.OClientConnectionManager;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -56,14 +55,13 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
   private final ONetworkProtocolBinary protocol;
   private final AtomicBoolean          empty       = new AtomicBoolean(true);
   private final int                    txId;
-  private final OCommandResultListener resultListener;
   private final Set<ORID>              alreadySent = new HashSet<ORID>();
 
   public OLiveCommandResultListener(final ONetworkProtocolBinary iNetworkProtocolBinary, final int txId,
-      OCommandResultListener resultListener) {
+      OCommandResultListener wrappedResultListener) {
+    super(wrappedResultListener);
     this.protocol = iNetworkProtocolBinary;
     this.txId = txId;
-    this.resultListener = resultListener;
   }
 
   @Override
@@ -102,13 +100,6 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     return true;
   }
 
-  @Override
-  public void end() {
-    super.end();
-    if (resultListener != null)
-      resultListener.end();
-  }
-
   public boolean isEmpty() {
     return empty.get();
   }
@@ -143,7 +134,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e,
           protocol.connection.getRemoteAddress());
-      OClientConnectionManager.instance().disconnect(protocol.connection);
+      protocol.getServer().getClientConnectionManager().disconnect(protocol.connection);
       OLiveQueryHook.unsubscribe(iToken);
     }
 
@@ -163,5 +154,4 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     out.writeInt(bytes.length);
     out.write(bytes);
   }
-
 }

@@ -18,7 +18,7 @@ public class OPropertyIndexDefinitionTest {
 
   @BeforeMethod
   public void beforeMethod() {
-    propertyIndex = new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER, -1);
+    propertyIndex = new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER);
   }
 
   @Test
@@ -85,7 +85,7 @@ public class OPropertyIndexDefinitionTest {
     final ODatabaseDocumentTx database = new ODatabaseDocumentTx("memory:propertytest");
     database.create();
 
-    propertyIndex = new OPropertyIndexDefinition("tesClass", "fOne", OType.INTEGER, -1);
+    propertyIndex = new OPropertyIndexDefinition("tesClass", "fOne", OType.INTEGER);
 
     final ODocument docToStore = propertyIndex.toStream();
     database.save(docToStore);

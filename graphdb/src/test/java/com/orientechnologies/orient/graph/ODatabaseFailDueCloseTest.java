@@ -1,19 +1,17 @@
 package com.orientechnologies.orient.graph;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.List;
-
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.List;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class ODatabaseFailDueCloseTest {
 
@@ -24,12 +22,11 @@ public class ODatabaseFailDueCloseTest {
     createGraph();
 
     pool = new OrientGraphFactory("memory:temp", "admin", "admin").setupPool(1, 10);
-    ODatabaseDocumentTx db = pool.getDatabase();
+    OrientGraph graph = pool.getTx();
     try {
-      OrientGraph graph = new OrientGraph(db);
       fillTheGraph(graph);
     } finally {
-      db.close();
+      graph.shutdown();
     }
   }
 
@@ -66,33 +63,34 @@ public class ODatabaseFailDueCloseTest {
 
   @Test()
   public void test1() {
-    ODatabaseDocumentTx db = pool.getDatabase();
+    final OrientGraph graph = pool.getTx();
     try {
 
       String queryText = "SELECT @rid as rid, localName FROM Person WHERE ( 'milano' IN out('lives').localName OR 'roma' IN out('lives').localName ) ORDER BY age ASC";
       OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(queryText);
-      List<ODocument> results = db.query(query);
+      List<ODocument> results = graph.getRawGraph().query(query);
       assertNotNull(results);
       assertTrue(results.size() > 0);
 
     } finally {
-      db.close();
+      graph.shutdown();
     }
   }
 
   @Test
   public void test2() {
-    ODatabaseDocumentTx db = pool.getDatabase();
+    final OrientGraph graph = pool.getTx();
+
     try {
 
       String queryText = "SELECT @rid as rid, localName FROM Person WHERE age > 30";
       OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(queryText);
-      List<ODocument> results = db.query(query);
+      List<ODocument> results = graph.getRawGraph().query(query);
       assertNotNull(results);
       assertTrue(results.size() > 0);
 
     } finally {
-      db.close();
+      graph.shutdown();
     }
   }
 }

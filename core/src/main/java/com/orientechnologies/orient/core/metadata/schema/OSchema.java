@@ -19,51 +19,51 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
 public interface OSchema {
 
-  public int countClasses();
+  int countClasses();
 
-  public OClass createClass(final Class<?> iClass);
+  OClass createClass(Class<?> iClass);
 
-  public OClass createClass(final Class<?> iClass, final int iDefaultClusterId);
+  OClass createClass(Class<?> iClass, int iDefaultClusterId);
 
-  public OClass createClass(final String iClassName);
+  OClass createClass(String iClassName);
 
-  public OClass createClass(final String iClassName, final OClass iSuperClass);
-  
-  public OClass createClass(final String iClassName, final OClass... superClasses);
+  OClass createClass(String iClassName, OClass iSuperClass);
 
-  public OClass createClass(final String iClassName, final int iDefaultClusterId);
+  OClass createClass(String iClassName, OClass... superClasses);
 
-  public OClass createClass(final String iClassName, final OClass iSuperClass, final int iDefaultClusterId);
+  OClass createClass(String iClassName, int iDefaultClusterId);
 
-  public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds);
-  
-  public OClass createClass(final String className, int[] clusterIds, OClass... superClasses);
+  OClass createClass(String iClassName, OClass iSuperClass, int iDefaultClusterId);
 
-  public OClass createAbstractClass(final Class<?> iClass);
+  OClass createClass(String iClassName, OClass iSuperClass, int[] iClusterIds);
 
-  public OClass createAbstractClass(final String iClassName);
+  OClass createClass(String className, int[] clusterIds, OClass... superClasses);
 
-  public OClass createAbstractClass(final String iClassName, final OClass iSuperClass);
-  
-  public OClass createAbstractClass(final String iClassName, final OClass... superClasses);
+  OClass createAbstractClass(Class<?> iClass);
 
-  public void dropClass(final String iClassName);
+  OClass createAbstractClass(String iClassName);
 
-  public <RET extends ODocumentWrapper> RET reload();
+  OClass createAbstractClass(String iClassName, OClass iSuperClass);
 
-  public boolean existsClass(final String iClassName);
+  OClass createAbstractClass(String iClassName, OClass... superClasses);
 
-  public OClass getClass(final Class<?> iClass);
+  void dropClass(String iClassName);
+
+  <RET extends ODocumentWrapper> RET reload();
+
+  boolean existsClass(String iClassName);
+
+  OClass getClass(Class<?> iClass);
 
   /**
    * Returns the OClass instance by class name.
@@ -77,22 +77,22 @@ public interface OSchema {
    *          Name of the class to retrieve
    * @return class instance or null if class with given name is not configured.
    */
-  public OClass getClass(final String iClassName);
+  OClass getClass(String iClassName);
 
-  public OClass getOrCreateClass(final String iClassName);
+  OClass getOrCreateClass(String iClassName);
 
-  public OClass getOrCreateClass(final String iClassName, final OClass iSuperClass);
-  
-  public OClass getOrCreateClass(final String iClassName, final OClass... superClasses);
+  OClass getOrCreateClass(String iClassName, OClass iSuperClass);
 
-  public Collection<OClass> getClasses();
+  OClass getOrCreateClass(String iClassName, OClass... superClasses);
 
-  public void create();
+  Collection<OClass> getClasses();
+
+  void create();
 
   @Deprecated
-  public int getVersion();
+  int getVersion();
 
-  public ORID getIdentity();
+  ORID getIdentity();
 
   /**
    * Do nothing. Starting from 1.0rc2 the schema is auto saved!
@@ -100,7 +100,7 @@ public interface OSchema {
    * @COMPATIBILITY 1.0rc1
    */
   @Deprecated
-  public <RET extends ODocumentWrapper> RET save();
+  <RET extends ODocumentWrapper> RET save();
 
   /**
    * Returns all the classes that rely on a cluster
@@ -108,19 +108,19 @@ public interface OSchema {
    * @param iClusterName
    *          Cluster name
    */
-  public Set<OClass> getClassesRelyOnCluster(String iClusterName);
+  Set<OClass> getClassesRelyOnCluster(String iClusterName);
 
-  public OClass getClassByClusterId(int clusterId);
+  OClass getClassByClusterId(int clusterId);
 
-  public OGlobalProperty getGlobalPropertyById(int id);
+  OGlobalProperty getGlobalPropertyById(int id);
 
-  public List<OGlobalProperty> getGlobalProperties();
+  List<OGlobalProperty> getGlobalProperties();
 
-  public OGlobalProperty createGlobalProperty(String name, OType type, Integer id);
+  OGlobalProperty createGlobalProperty(String name, OType type, Integer id);
 
-  public OClusterSelectionFactory getClusterSelectionFactory();
+  OClusterSelectionFactory getClusterSelectionFactory();
 
-  public OImmutableSchema makeSnapshot();
+  OImmutableSchema makeSnapshot();
 
   /**
    * IMPORTANT! Only for internal usage.

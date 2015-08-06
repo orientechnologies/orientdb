@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class OInCondition extends OBooleanExpression {
@@ -48,7 +50,7 @@ public class OInCondition extends OBooleanExpression {
         inputFinalValue = result;
       }
     }
-    if(rightMathExpression!=null){
+    if (rightMathExpression != null) {
       rightMathExpression.replaceParameters(params);
     }
   }
@@ -65,13 +67,13 @@ public class OInCondition extends OBooleanExpression {
       result.append(convertToString(right));
     } else if (rightParam != null) {
       if (inputFinalValue == UNSET) {
-        result.append( rightParam.toString());
+        result.append(rightParam.toString());
       } else if (inputFinalValue == null) {
         result.append("NULL");
       } else {
         result.append(inputFinalValue.toString());
       }
-    }else if (rightMathExpression != null) {
+    } else if (rightMathExpression != null) {
       result.append(rightMathExpression.toString());
     }
     return result.toString();
@@ -83,5 +85,52 @@ public class OInCondition extends OBooleanExpression {
     }
     return o.toString();
   }
+
+  @Override
+  public boolean supportsBasicCalculation() {
+    if (!left.supportsBasicCalculation()) {
+      return false;
+    }
+    if (!rightMathExpression.supportsBasicCalculation()) {
+      return false;
+    }
+    if (!operator.supportsBasicCalculation()) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    int total = 0;
+    if (operator != null && !operator.supportsBasicCalculation()) {
+      total++;
+    }
+    if (!left.supportsBasicCalculation()) {
+      total++;
+    }
+    if (rightMathExpression != null && !rightMathExpression.supportsBasicCalculation()) {
+      total++;
+    }
+    return total;
+  }
+
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
+    List<Object> result = new ArrayList<Object>();
+
+    if (operator != null) {
+      result.add(this);
+    }
+    if (!left.supportsBasicCalculation()) {
+      result.add(left);
+    }
+    if (rightMathExpression != null && !rightMathExpression.supportsBasicCalculation()) {
+      result.add(rightMathExpression);
+    }
+    return result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=00df7cb1877c0a12d24205c1700653c7 (do not edit this line) */

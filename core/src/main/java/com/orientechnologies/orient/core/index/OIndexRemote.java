@@ -1,23 +1,34 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.index;
+
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -26,17 +37,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 /**
  * Proxied abstract index.
@@ -73,16 +73,18 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   private final static String   QUERY_DROP                                        = "drop index %s";
   protected final String        databaseName;
   private final String          wrappedType;
+  private final String          algorithm;
   private final ORID            rid;
   protected OIndexDefinition    indexDefinition;
   protected String              name;
   protected ODocument           configuration;
   protected Set<String>         clustersToIndex;
 
-  public OIndexRemote(final String iName, final String iWrappedType, final ORID iRid, final OIndexDefinition iIndexDefinition,
-      final ODocument iConfiguration, final Set<String> clustersToIndex) {
+  public OIndexRemote(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
+      final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex) {
     this.name = iName;
     this.wrappedType = iWrappedType;
+    this.algorithm = algorithm;
     this.rid = iRid;
     this.indexDefinition = iIndexDefinition;
     this.configuration = iConfiguration;
@@ -228,6 +230,10 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   public String getType() {
     return wrappedType;
+  }
+
+  public String getAlgorithm() {
+    return algorithm;
   }
 
   public ODocument getConfiguration() {
@@ -446,19 +452,18 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     };
   }
 
-	@Override
-	public int compareTo(OIndex<T> index) {
-		final String name = index.getName();
-		return this.name.compareTo(name);
-	}
+  @Override
+  public int compareTo(OIndex<T> index) {
+    final String name = index.getName();
+    return this.name.compareTo(name);
+  }
 
-
-	protected OCommandRequest formatCommand(final String iTemplate, final Object... iArgs) {
+  protected OCommandRequest formatCommand(final String iTemplate, final Object... iArgs) {
     final String text = String.format(iTemplate, iArgs);
     return new OCommandSQL(text);
   }
 
-  protected ODatabase<ORecord> getDatabase() {
+  protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }

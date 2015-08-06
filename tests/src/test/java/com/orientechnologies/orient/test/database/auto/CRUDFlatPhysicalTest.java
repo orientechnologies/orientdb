@@ -15,16 +15,17 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.HashSet;
-import java.util.Set;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
+import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 @Test(groups = { "crud", "record-csv" }, sequential = true)
 public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
@@ -68,7 +69,7 @@ public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
       ids.add(i);
 
     for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, database, database.getClusterIdByName(CLUSTER_NAME),
-        true)) {
+        true, true)) {
       fields = rec.value().split("-");
 
       int i = Integer.parseInt(fields[0]);
@@ -83,7 +84,7 @@ public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
     String[] fields;
 
     for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, database, database.getClusterIdByName(CLUSTER_NAME),
-        true)) {
+        true, true)) {
       fields = rec.value().split("-");
       int i = Integer.parseInt(fields[0]);
       if (i % 2 == 0) {
@@ -102,7 +103,7 @@ public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
       ids.add(i);
 
     for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, database, database.getClusterIdByName(CLUSTER_NAME),
-        true)) {
+        true, true)) {
       fields = rec.value().split("-");
 
       int i = Integer.parseInt(fields[0]);

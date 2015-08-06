@@ -9,6 +9,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -18,7 +19,7 @@ public class TestMultiSuperClasses {
 
 	  @BeforeMethod
 	  public void setUp() {
-	    db = new ODatabaseDocumentTx("memory:" + TestMultiSuperClasses.class.getSimpleName());
+	    db = Orient.instance().getDatabaseFactory().createDatabase("graph", "memory:" + TestMultiSuperClasses.class.getSimpleName());
 	    if (db.exists()) {
 	      db.open("admin", "admin");
 	    } else
@@ -155,5 +156,18 @@ public class TestMultiSuperClasses {
 		  OClass bClass = oSchema.createAbstractClass("impactBadB");
 		  bClass.createProperty("property", OType.INTEGER);
 		  oSchema.createAbstractClass("impactBadC", aClass, bClass);
+	  }
+	  
+	  @Test
+	  public void testCreationOfClassWithV()
+	  {
+	    final OSchema oSchema = db.getMetadata().getSchema();
+	    OClass oRestrictedClass = oSchema.getClass("ORestricted");
+      OClass vClass = oSchema.getClass("V");
+      vClass.setSuperClasses(Arrays.asList(oRestrictedClass));
+      OClass dummy1Class = oSchema.createClass("Dummy1", oRestrictedClass, vClass);
+      OClass dummy2Class = oSchema.createClass("Dummy2");
+      OClass dummy3Class = oSchema.createClass("Dummy3", dummy1Class, dummy2Class);
+      assertNotNull(dummy3Class);
 	  }
 }

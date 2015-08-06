@@ -27,23 +27,15 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
  * Abstract index definiton implementation.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public abstract class OAbstractIndexDefinition extends ODocumentWrapperNoClass implements OIndexDefinition {
   protected OCollate collate           = new ODefaultCollate();
   private boolean    nullValuesIgnored = true;
-  private int        version           = -1;
 
   protected OAbstractIndexDefinition() {
-    super(new ODocument());
-  }
-
-  public OAbstractIndexDefinition(int version) {
-    super(new ODocument());
-
-    this.version = version;
+    super(new ODocument().setTrackingChanges(false));
   }
 
   public OCollate getCollate() {
@@ -98,18 +90,9 @@ public abstract class OAbstractIndexDefinition extends ODocumentWrapperNoClass i
     nullValuesIgnored = value;
   }
 
-  @Override
-  public int getVersion() {
-    return version;
-  }
-
   protected void serializeToStream() {
-    document.field("version", version);
   }
 
   protected void serializeFromStream() {
-    final Integer ver = document.field("version");
-    if (ver != null)
-      version = ver;
   }
 }

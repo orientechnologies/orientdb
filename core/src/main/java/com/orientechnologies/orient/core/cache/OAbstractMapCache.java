@@ -20,18 +20,19 @@
 
 package com.orientechnologies.orient.core.cache;
 
+import com.orientechnologies.orient.core.id.ORID;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.orientechnologies.orient.core.id.ORID;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public abstract class OAbstractMapCache<T extends Map<ORID, ?>> implements OCache {
-  protected final T cache;
+public abstract class OAbstractMapCache<T extends Map<ORID, ?>> implements ORecordCache {
+  protected T     cache;
+
+  private boolean enabled = true;
 
   public OAbstractMapCache(T cache) {
     this.cache = cache;
@@ -54,6 +55,21 @@ public abstract class OAbstractMapCache<T extends Map<ORID, ?>> implements OCach
   @Override
   public int size() {
     return cache.size();
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  @Override
+  public boolean disable() {
+    return enabled = false;
+  }
+
+  @Override
+  public boolean enable() {
+    return enabled = true;
   }
 
   @Override

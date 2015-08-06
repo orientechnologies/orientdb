@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
@@ -35,8 +36,8 @@ public class OLocalRecordCache extends OAbstractRecordCache {
   private String CACHE_HIT;
   private String CACHE_MISS;
 
-  public OLocalRecordCache(OCacheLevelOneLocator cacheLocator) {
-    super(cacheLocator.threadLocalCache());
+  public OLocalRecordCache() {
+    super(Orient.instance().getLocalRecordCache().newInstance(OGlobalConfiguration.CACHE_LOCAL_IMPL.getValueAsString()));
   }
 
   @Override
@@ -59,7 +60,7 @@ public class OLocalRecordCache extends OAbstractRecordCache {
    *          record that should be cached
    */
   public void updateRecord(final ORecord record) {
-    if (record.getIdentity().getClusterId() != excludedCluster && record.getIdentity().isValid()
+    if (record.getIdentity().getClusterId() != excludedCluster && record.getIdentity().isValid() && !record.isDirty()
         && !record.getRecordVersion().isTombstone()) {
       if (underlying.get(record.getIdentity()) != record)
         underlying.put(record);

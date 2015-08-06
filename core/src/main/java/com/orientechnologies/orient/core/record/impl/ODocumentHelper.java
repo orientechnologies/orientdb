@@ -32,14 +32,15 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 import java.lang.reflect.Array;
@@ -198,7 +199,7 @@ public class ODocumentHelper {
         } catch (ParseException pe) {
           final String dateFormat = ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat
               : config.dateFormat;
-          throw new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat);
+          throw new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat, pe);
         }
       }
     }
@@ -226,6 +227,7 @@ public class ODocumentHelper {
 
     int beginPos = iFieldName.charAt(0) == '.' ? 1 : 0;
     int nextSeparatorPos = iFieldName.charAt(0) == '.' ? 1 : 0;
+    boolean firstInChain = true;
     do {
       char nextSeparator = ' ';
       for (; nextSeparatorPos < fieldNameLength; ++nextSeparatorPos) {
@@ -459,7 +461,7 @@ public class ODocumentHelper {
 
             if (values.isEmpty())
               // RETURNS NULL
-              value = null;
+              value = values;
             else if (values.size() == 1)
               // RETURNS THE SINGLE ODOCUMENT
               value = values.iterator().next();
@@ -477,9 +479,19 @@ public class ODocumentHelper {
 
         if (fieldName.startsWith("$"))
           value = iContext.getVariable(fieldName);
-        else if (fieldName.contains("("))
-          value = evaluateFunction(value, fieldName, iContext);
-        else {
+        else if (fieldName.contains("(")) {
+          boolean executedMethod = false;
+          if (!firstInChain && fieldName.endsWith("()")) {
+            OSQLMethod method = OSQLEngine.getInstance().getMethod(fieldName.substring(0, fieldName.length() - 2));
+            if (method != null) {
+              value = method.execute(value, currentRecord, iContext, value, new Object[] {});
+              executedMethod = true;
+            }
+          }
+          if (!executedMethod) {
+            value = evaluateFunction(value, fieldName, iContext);
+          }
+        } else {
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(fieldName, '=', ' ');
 
           if (indexCondition.size() == 2) {
@@ -533,6 +545,7 @@ public class ODocumentHelper {
         currentRecord = null;
 
       beginPos = ++nextSeparatorPos;
+      firstInChain = false;
     } while (nextSeparatorPos < fieldNameLength && value != null);
 
     return (RET) value;
@@ -540,7 +553,7 @@ public class ODocumentHelper {
 
   protected static Object getIndexPart(final OCommandContext iContext, final String indexPart) {
     Object index = indexPart;
-    if (indexPart.indexOf(',') == -1 && ( indexPart.charAt(0) == '"' || indexPart.charAt(0) == '\'') )
+    if (indexPart.indexOf(',') == -1 && (indexPart.charAt(0) == '"' || indexPart.charAt(0) == '\''))
       index = OStringSerializerHelper.getStringContent(indexPart);
     else if (indexPart.charAt(0) == '$') {
       final Object ctxValue = iContext.getVariable(indexPart);
@@ -1396,7 +1409,7 @@ public class ODocumentHelper {
   }
 
   public static <T> T makeDbCall(final ODatabaseDocumentInternal databaseRecord, final ODbRelatedCall<T> function) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(databaseRecord);
+    databaseRecord.activateOnCurrentThread();
     return function.call();
   }
 }

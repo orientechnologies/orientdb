@@ -19,12 +19,11 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.all;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestWrapper;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -32,6 +31,8 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponseWr
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+
+import java.io.IOException;
 
 public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenticatedDbAbstract {
   @Override
@@ -53,7 +54,7 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
         return false;
       }
 
-      final Object[] args = new String[parts.length - 3];
+      Object[] args = new String[parts.length - 3];
       for (int i = 3; i < parts.length; ++i)
         args[i - 3] = parts[i];
 
@@ -63,7 +64,19 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
       context.setVariable("request", new OHttpRequestWrapper(iRequest, (String[]) args));
       context.setVariable("response", new OHttpResponseWrapper(iResponse));
 
-      handleResult(iRequest, iResponse, f.executeInContext(context, args));
+      final Object functionResult;
+      if (args.length == 0 && iRequest.content != null && !iRequest.content.isEmpty()) {
+        // PARSE PARAMETERS FROM CONTENT PAYLOAD
+        try {
+          final ODocument params = new ODocument().fromJSON(iRequest.content);
+          functionResult = f.executeInContext(context, params.toMap());
+        } catch (Exception e) {
+          throw new OCommandScriptException("Error on parsing parameters from request body", e);
+        }
+      } else
+        functionResult = f.executeInContext(context, args);
+
+      handleResult(iRequest, iResponse, functionResult);
 
     } catch (OCommandScriptException e) {
       // EXCEPTION
@@ -75,8 +88,13 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
         msg.append(currentException.getMessage());
       }
 
-      iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          msg.toString(), null);
+      if (isJsonResponse(iResponse)) {
+        sendJsonError(iResponse, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION,
+            OHttpUtils.CONTENT_TEXT_PLAIN, msg.toString(), null);
+      } else {
+        iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+            msg.toString(), null);
+      }
 
     } finally {
       if (db != null)

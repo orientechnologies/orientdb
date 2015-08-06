@@ -9,15 +9,15 @@ public class OBaseExpression extends OMathExpression {
   private static final Object UNSET           = new Object();
   private Object              inputFinalValue = UNSET;
 
-  protected ONumber         number;
+  protected ONumber           number;
 
-  protected OBaseIdentifier identifier;
+  protected OBaseIdentifier   identifier;
 
-  protected OInputParameter inputParam;
+  protected OInputParameter   inputParam;
 
-  OModifier                 modifier;
+  protected String            string;
 
-
+  OModifier                   modifier;
 
   public OBaseExpression(int id) {
     super(id);
@@ -39,13 +39,21 @@ public class OBaseExpression extends OMathExpression {
       result.append(number.toString());
     } else if (identifier != null) {
       result.append(identifier.toString());
+    } else if (string != null) {
+      result.append(string);
     } else if (inputParam != null) {
       if (inputFinalValue == UNSET) {
         result.append(inputParam.toString());
       } else if (inputFinalValue == null) {
         result.append("NULL");
       } else {
-        result.append(inputFinalValue.toString());
+        if (inputFinalValue instanceof String) {
+          result.append("\"");
+          result.append(OExpression.encode(inputFinalValue.toString()));
+          result.append("\"");
+        } else {
+          result.append(inputFinalValue.toString());
+        }
       }
     }
 
@@ -61,13 +69,17 @@ public class OBaseExpression extends OMathExpression {
     }
     if (inputParam != null) {
       Object result = inputParam.bindFromInputParams(params);
-      if(inputParam!=result){
+      if (inputParam != result) {
         inputFinalValue = result;
       }
     }
     if (modifier != null) {
       modifier.replaceParameters(params);
     }
+  }
+
+  @Override protected boolean supportsBasicCalculation() {
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=71b3e2d1b65c923dc7cfe11f9f449d2b (do not edit this line) */

@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.List;
 import java.util.Map;
 
 public class OParenthesisBlock extends OBooleanExpression {
@@ -37,6 +38,21 @@ public class OParenthesisBlock extends OBooleanExpression {
   @Override
   public String toString() {
     return "(" + subElement.toString() + " )";
+  }
+
+  @Override public boolean supportsBasicCalculation() {
+    return subElement.supportsBasicCalculation();
+  }
+
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    return subElement.getNumberOfExternalCalculations();
+  }
+
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
+    return subElement.getExternalCalculationConditions();
   }
 }
 /* JavaCC - OriginalChecksum=9a16b6cf7d051382acb94c45067631a9 (do not edit this line) */

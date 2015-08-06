@@ -15,12 +15,11 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
@@ -29,6 +28,8 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
 
 /**
  * Represents an offline cluster, created with the "alter cluster X status offline" command. To restore the original cluster assure
@@ -149,6 +150,12 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
+  public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, ORecordVersion recordVersion) throws IOException,
+      ORecordNotFoundException {
+    throw new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'");
+  }
+
+  @Override
   public boolean exists() {
     return true;
   }
@@ -171,6 +178,11 @@ public class OOfflineCluster implements OCluster {
   @Override
   public long getLastPosition() throws IOException {
     return ORID.CLUSTER_POS_INVALID;
+  }
+
+  @Override
+  public String getFileName() {
+    throw new OOfflineClusterException("Cannot return filename of offline cluster '" + name + "'");
   }
 
   @Override

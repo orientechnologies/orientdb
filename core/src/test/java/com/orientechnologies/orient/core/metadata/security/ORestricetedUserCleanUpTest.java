@@ -18,45 +18,49 @@ public class ORestricetedUserCleanUpTest {
   public void testAutoCleanUserAfterDelate() {
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ORestricetedUserCleanUpTest.class.getSimpleName());
     db.create();
-    OSchema schema = db.getMetadata().getSchema();
-    schema.createClass("TestRecord", schema.getClass(OSecurityShared.RESTRICTED_CLASSNAME));
+    try {
+      OSchema schema = db.getMetadata().getSchema();
+      schema.createClass("TestRecord", schema.getClass(OSecurityShared.RESTRICTED_CLASSNAME));
 
-    OSecurity security = db.getMetadata().getSecurity();
-    OUser auser = security.createUser("auser", "whereever", new String[] {});
-    OUser reader = security.getUser("admin");
-    ODocument doc = new ODocument("TestRecord");
-    Set<OIdentifiable> users = new HashSet<OIdentifiable>();
-    users.add(auser.getIdentity());
-    users.add(reader.getIdentity());
-    doc.field(OSecurityShared.ALLOW_READ_FIELD, users);
-    doc.field(OSecurityShared.ALLOW_UPDATE_FIELD, users);
-    doc.field(OSecurityShared.ALLOW_DELETE_FIELD, users);
-    doc.field(OSecurityShared.ALLOW_ALL_FIELD, users);
-    ODocument rid = db.save(doc);
+      OSecurity security = db.getMetadata().getSecurity();
+      OUser auser = security.createUser("auser", "whereever", new String[] {});
+      OUser reader = security.getUser("admin");
+      ODocument doc = new ODocument("TestRecord");
+      Set<OIdentifiable> users = new HashSet<OIdentifiable>();
+      users.add(auser.getIdentity());
+      users.add(reader.getIdentity());
+      doc.field(OSecurityShared.ALLOW_READ_FIELD, users);
+      doc.field(OSecurityShared.ALLOW_UPDATE_FIELD, users);
+      doc.field(OSecurityShared.ALLOW_DELETE_FIELD, users);
+      doc.field(OSecurityShared.ALLOW_ALL_FIELD, users);
+      ODocument rid = db.save(doc);
 
-    security.dropUser("auser");
-    db.getLocalCache().clear();
-    doc = db.load(rid.getIdentity());
-    Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_ALL_FIELD)).size(), 2);
-    Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_UPDATE_FIELD)).size(), 2);
-    Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_DELETE_FIELD)).size(), 2);
-    Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_ALL_FIELD)).size(), 2);
-    doc.field("abc", "abc");
-    doc.save();
+      security.dropUser("auser");
+      db.getLocalCache().clear();
+      doc = db.load(rid.getIdentity());
+      Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_ALL_FIELD)).size(), 2);
+      Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_UPDATE_FIELD)).size(), 2);
+      Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_DELETE_FIELD)).size(), 2);
+      Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_ALL_FIELD)).size(), 2);
+      doc.field("abc", "abc");
+      doc.save();
 
-    db.getLocalCache().clear();
-    doc = db.load(rid.getIdentity());
-    ((Set<?>) doc.field(OSecurityShared.ALLOW_ALL_FIELD)).remove(null);
-    ((Set<?>) doc.field(OSecurityShared.ALLOW_UPDATE_FIELD)).remove(null);
-    ((Set<?>) doc.field(OSecurityShared.ALLOW_DELETE_FIELD)).remove(null);
-    ((Set<?>) doc.field(OSecurityShared.ALLOW_ALL_FIELD)).remove(null);
+      db.getLocalCache().clear();
+      doc = db.load(rid.getIdentity());
+      ((Set<?>) doc.field(OSecurityShared.ALLOW_ALL_FIELD)).remove(null);
+      ((Set<?>) doc.field(OSecurityShared.ALLOW_UPDATE_FIELD)).remove(null);
+      ((Set<?>) doc.field(OSecurityShared.ALLOW_DELETE_FIELD)).remove(null);
+      ((Set<?>) doc.field(OSecurityShared.ALLOW_ALL_FIELD)).remove(null);
 
-    Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_ALL_FIELD)).size(), 1);
-    Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_UPDATE_FIELD)).size(), 1);
-    Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_DELETE_FIELD)).size(), 1);
-    Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_ALL_FIELD)).size(), 1);
-    doc.field("abc", "abc");
-    doc.save();
+      Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_ALL_FIELD)).size(), 1);
+      Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_UPDATE_FIELD)).size(), 1);
+      Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_DELETE_FIELD)).size(), 1);
+      Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_ALL_FIELD)).size(), 1);
+      doc.field("abc", "abc");
+      doc.save();
+    } finally {
+      db.drop();
+    }
 
   }
 

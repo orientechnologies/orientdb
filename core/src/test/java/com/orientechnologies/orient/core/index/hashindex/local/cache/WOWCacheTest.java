@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.zip.CRC32;
 
+import com.orientechnologies.orient.core.storage.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -36,7 +39,7 @@ public class WOWCacheTest {
 
   private ODiskWriteAheadLog     writeAheadLog;
 
-  private OWOWCache              wowCache;
+  private OWriteCache            wowCache;
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -93,7 +96,7 @@ public class WOWCacheTest {
   }
 
   private void initBuffer() throws IOException {
-    wowCache = new OWOWCache(true, pageSize, 10000, writeAheadLog, 10, 100, storageLocal, false);
+    wowCache = new OWOWCache(true, pageSize, 10000, writeAheadLog, 10, 100, 100, storageLocal, false, 1);
   }
 
   public void testLoadStore() throws IOException {
@@ -239,7 +242,7 @@ public class WOWCacheTest {
       Assert.assertEquals(dataTwo, dataOne);
     }
 
-    Thread.sleep(5000);
+    Thread.sleep(10000);
 
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataContent = pageData[i];
@@ -250,8 +253,7 @@ public class WOWCacheTest {
   private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn) throws IOException {
     String path = storageLocal.getConfiguration().getDirectory() + File.separator + fileName;
 
-    OFileClassic fileClassic = new OFileClassic();
-    fileClassic.init(path, "r");
+    OFileClassic fileClassic = new OFileClassic(path, "r");
     fileClassic.open();
     byte[] content = new byte[8 + systemOffset];
     fileClassic.read(pageIndex * (8 + systemOffset), content, 8 + systemOffset);

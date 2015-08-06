@@ -74,7 +74,8 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
             throw e;
           }
 
-          Thread.sleep(delayWriter);
+          if (delayWriter > 0)
+            Thread.sleep(delayWriter);
 
         } catch (InterruptedException e) {
           System.out.println("Writer received interrupt (db=" + databaseUrl);

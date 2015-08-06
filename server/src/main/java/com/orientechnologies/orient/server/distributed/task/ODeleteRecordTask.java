@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -26,6 +27,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -64,25 +66,37 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "delete record %s/%s v.%s",
         database.getName(), rid.toString(), version.toString());
 
-    final ORecord record = database.load(rid);
-    if (record != null) {
-      if (delayed)
-        if (record.getRecordVersion().equals(version))
-          // POSTPONE DELETION TO BE UNDO IN CASE QUORUM IS NOT RESPECTED
-          ((ODistributedStorage) database.getStorage()).pushDeletedRecord(rid, version);
+    // TRY LOCKING RECORD
+    final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
+    if (!inTx) {
+      if (!ddb.lockRecord(rid, nodeSource))
+        throw new ODistributedRecordLockedException(rid);
+    }
+
+    try {
+      final ORecord record = database.load(rid);
+      if (record != null) {
+        if (delayed)
+          if (record.getRecordVersion().equals(version))
+            // POSTPONE DELETION TO BE UNDO IN CASE QUORUM IS NOT RESPECTED
+            ((ODistributedStorage) database.getStorage()).pushDeletedRecord(rid, version);
+          else
+            throw new OConcurrentModificationException(rid, record.getRecordVersion(), version, ORecordOperation.DELETED);
         else
-          throw new OConcurrentModificationException(rid, record.getRecordVersion(), version, ORecordOperation.DELETED);
-      else
-        // DELETE IT RIGHT NOW
-        record.delete();
+          // DELETE IT RIGHT NOW
+          record.delete();
+      }
+    } finally {
+      if (!inTx)
+        ddb.unlockRecord(rid);
     }
 
     return true;
   }
 
   @Override
-  public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.WRITE;
+  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
+    return OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   }
 
   @Override
@@ -120,6 +134,6 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public String toString() {
-    return super.toString() + " delayed=" + delayed;
+    return getName() + "(" + rid + " delayed=" + delayed + ")";
   }
 }

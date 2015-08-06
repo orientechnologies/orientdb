@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.Map;
+import java.util.Random;
+
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -36,23 +40,16 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-import com.orientechnologies.orient.core.sql.query.OLiveResultSet;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
-
-import java.util.Map;
-import java.util.Random;
 
 /**
  * @author Luigi Dell'Aquila
  */
 public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect implements OLiveQueryListener {
-  public static final String KEYWORD_LIVE_SELECT = "LIVE SELECT";
-  private OLiveResultSet     liveResultSet;
-  private ODatabaseDocument  execDb;
-  private int                token;
-  static Random              random              = new Random();
-
-  protected String           unsubscribeToken;
+  public static final String  KEYWORD_LIVE_SELECT = "LIVE SELECT";
+  private ODatabaseDocument   execDb;
+  private int                 token;
+  private static final Random random              = new Random();
 
   public OCommandExecutorSQLLiveSelect() {
 
@@ -60,8 +57,12 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
 
   public Object execute(final Map<Object, Object> iArgs) {
     try {
-
-      execDb = ((ODatabaseDocumentTx) getDatabase()).copy();
+      execInSeparateDatabase(new OCallable() {
+        @Override
+        public Object call(Object iArgument) {
+          return execDb = ((ODatabaseDocumentTx) getDatabase()).copy();
+        }
+      });
 
       synchronized (random) {
         token = random.nextInt();// TODO do something better ;-)!
@@ -97,10 +98,9 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     OLiveQueryHook.subscribe(token, this);
   }
 
-  public void onLiveResult(ORecordOperation iOp) {
+  public void onLiveResult(final ORecordOperation iOp) {
 
-    ODocument doc = new ODocument();
-    OIdentifiable value = iOp.getRecord();
+    final OIdentifiable value = iOp.getRecord();
 
     if (!matchesTarget(value)) {
       return;
@@ -112,11 +112,24 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
       return;
     }
 
-    OCommandResultListener listener = request.getResultListener();
+    final OCommandResultListener listener = request.getResultListener();
     if (listener instanceof OLiveResultListener) {
-      ODatabaseDocumentInternal prevDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      ((ODatabaseDocumentTx) execDb).setCurrentDatabaseInThreadLocal();
-      ((OLiveResultListener) listener).onLiveResult(token, iOp);
+      execInSeparateDatabase(new OCallable() {
+        @Override
+        public Object call(Object iArgument) {
+          execDb.activateOnCurrentThread();
+          ((OLiveResultListener) listener).onLiveResult(token, iOp);
+          return null;
+        }
+      });
+    }
+  }
+
+  protected void execInSeparateDatabase(final OCallable iCallback) {
+    final ODatabaseDocumentInternal prevDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    try {
+      iCallback.call(null);
+    } finally {
       if (prevDb != null) {
         ODatabaseRecordThreadLocal.INSTANCE.set(prevDb);
       } else {
@@ -149,17 +162,17 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     if (!(value instanceof ODocument)) {
       return false;
     }
-    String className = ((ODocument) value).getClassName();
+    final String className = ((ODocument) value).getClassName();
     if (className == null) {
       return false;
     }
-    OClass docClass = execDb.getMetadata().getSchema().getClass(className);
+    final OClass docClass = execDb.getMetadata().getSchema().getClass(className);
     if (docClass == null) {
       return false;
     }
 
     if (this.parsedTarget.getTargetClasses() != null) {
-      for (OClass clazz : parsedTarget.getTargetClasses().keySet()) {
+      for (String clazz : parsedTarget.getTargetClasses().keySet()) {
         if (docClass.isSubClassOf(clazz)) {
           return true;
         }
@@ -173,7 +186,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
       }
     }
     if (this.parsedTarget.getTargetClusters() != null) {
-      String clusterName = execDb.getClusterNameById(value.getIdentity().getClusterId());
+      final String clusterName = execDb.getClusterNameById(value.getIdentity().getClusterId());
       if (clusterName != null) {
         for (String cluster : parsedTarget.getTargetClusters().keySet()) {
           if (clusterName.equals(cluster)) {
@@ -190,16 +203,21 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
   }
 
   @Override
-  public OCommandExecutorSQLSelect parse(OCommandRequest iRequest) {
-    OCommandRequestText requestText = (OCommandRequestText) iRequest;
-    String originalText = requestText.getText();
-    String remainingText = requestText.getText().trim().substring(5).trim();
+  public OCommandExecutorSQLSelect parse(final OCommandRequest iRequest) {
+    final OCommandRequestText requestText = (OCommandRequestText) iRequest;
+    final String originalText = requestText.getText();
+    final String remainingText = requestText.getText().trim().substring(5).trim();
     requestText.setText(remainingText);
     try {
       return super.parse(iRequest);
     } finally {
       requestText.setText(originalText);
     }
-
   }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.NONE;
+  }
+
 }

@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -77,49 +78,63 @@ public interface OTransaction {
 
   public void clearRecordEntries();
 
-  public ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache, boolean loadTombstone,
+  @Deprecated
+  ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache, boolean loadTombstone,
       final OStorage.LOCKING_STRATEGY iLockingStrategy);
 
-  public ORecord saveRecord(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+  @Deprecated
+  ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache, boolean iUpdateCache, boolean loadTombstone,
+                      final OStorage.LOCKING_STRATEGY iLockingStrategy);
+
+  ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache);
+
+  ORecord reloadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache);
+
+  ORecord reloadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache, boolean force);
+
+  ORecord loadRecordIfVersionIsNotLatest(ORID rid, ORecordVersion recordVersion, String fetchPlan, boolean ignoreCache)
+      throws ORecordNotFoundException;
+
+  ORecord saveRecord(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
 
-  public void deleteRecord(ORecord iRecord, OPERATION_MODE iMode);
+  void deleteRecord(ORecord iRecord, OPERATION_MODE iMode);
 
-  public int getId();
+  int getId();
 
-  public TXSTATUS getStatus();
+  TXSTATUS getStatus();
 
-  public Iterable<? extends ORecordOperation> getCurrentRecordEntries();
+  Iterable<? extends ORecordOperation> getCurrentRecordEntries();
 
-  public Iterable<? extends ORecordOperation> getAllRecordEntries();
+  Iterable<? extends ORecordOperation> getAllRecordEntries();
 
-  public List<ORecordOperation> getNewRecordEntriesByClass(OClass iClass, boolean iPolymorphic);
+  List<ORecordOperation> getNewRecordEntriesByClass(OClass iClass, boolean iPolymorphic);
 
-  public List<ORecordOperation> getNewRecordEntriesByClusterIds(int[] iIds);
+  List<ORecordOperation> getNewRecordEntriesByClusterIds(int[] iIds);
 
-  public ORecord getRecord(ORID iRid);
+  ORecord getRecord(ORID iRid);
 
-  public ORecordOperation getRecordEntry(ORID rid);
+  ORecordOperation getRecordEntry(ORID rid);
 
-  public List<String> getInvolvedIndexes();
+  List<String> getInvolvedIndexes();
 
-  public ODocument getIndexChanges();
+  ODocument getIndexChanges();
 
-  public void addIndexEntry(OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
+  void addIndexEntry(OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
       final Object iKey, final OIdentifiable iValue);
 
-  public void clearIndexEntries();
+  void clearIndexEntries();
 
-  public OTransactionIndexChanges getIndexChanges(String iName);
+  OTransactionIndexChanges getIndexChanges(String iName);
 
   /**
    * Tells if the transaction is active.
    * 
    * @return
    */
-  public boolean isActive();
+  boolean isActive();
 
-  public boolean isUsingLog();
+  boolean isUsingLog();
 
   /**
    * If you set this flag to false, you are unable to
@@ -130,9 +145,9 @@ public interface OTransaction {
    * 
    * So you practically unable to work in multithreaded environment and keep data consistent.
    */
-  public void setUsingLog(boolean useLog);
+  void setUsingLog(boolean useLog);
 
-  public void close();
+  void close();
 
   /**
    * When commit in transaction is performed all new records will change their identity, but index values will contain stale links,
@@ -143,21 +158,21 @@ public interface OTransaction {
    * @param newRid
    *          Record identity after commit.
    */
-  public void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid);
+  void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid);
 
-  public int amountOfNestedTxs();
-  
-  public boolean isLockedRecord(OIdentifiable iRecord);
+  int amountOfNestedTxs();
+
+  boolean isLockedRecord(OIdentifiable iRecord);
 
   OStorage.LOCKING_STRATEGY lockingStrategy(OIdentifiable iRecord);
 
-  public OTransaction lockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY iLockingStrategy);
+  OTransaction lockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY iLockingStrategy);
 
-  public OTransaction unlockRecord(OIdentifiable iRecord);
+  OTransaction unlockRecord(OIdentifiable iRecord);
 
-  public HashMap<ORID, OStorage.LOCKING_STRATEGY> getLockedRecords();
+  HashMap<ORID, OStorage.LOCKING_STRATEGY> getLockedRecords();
 
-  public int getEntryCount();
+  int getEntryCount();
 
-  public boolean hasRecordCreation();
+  boolean hasRecordCreation();
 }

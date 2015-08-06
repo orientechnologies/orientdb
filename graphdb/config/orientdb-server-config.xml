@@ -49,6 +49,7 @@
             <parameters>
                 <parameter name="enabled" value="false"/>
                 <parameter name="delay" value="4h"/>
+                <parameter name="firstTime" value="23:00:00"/>
                 <parameter name="target.directory" value="backup"/>
                 <parameter name="target.fileName" value="${DBNAME}-${DATE:yyyyMMddHHmmss}.zip"/>
                 <parameter name="compressionLevel" value="9"/>
@@ -129,6 +130,7 @@
                     <!-- Connection's custom parameters. If not specified the global configuration
                         will be taken -->
                     <parameter name="network.http.charset" value="utf-8"/>
+                    <parameter value="true" name="network.http.jsonResponseError"/>
                     <!-- Define additional HTTP headers to always send as response -->
                     <!-- Allow cross-site scripting -->
                     <!-- parameter name="network.http.additionalResponseHeaders" value="Access-Control-Allow-Origin:
@@ -136,7 +138,7 @@
                 </parameters>
                 <commands>
                     <command
-                            pattern="GET|www GET|studio/ GET| GET|*.htm GET|*.html GET|*.xml GET|*.jpeg GET|*.jpg GET|*.png GET|*.gif GET|*.js GET|*.css GET|*.swf GET|*.ico GET|*.txt GET|*.otf GET|*.pjs GET|*.svg GET|*.json GET|*.woff GET|*.ttf GET|*.svgz"
+                            pattern="GET|www GET|studio/ GET| GET|*.htm GET|*.html GET|*.xml GET|*.jpeg GET|*.jpg GET|*.png GET|*.gif GET|*.js GET|*.css GET|*.swf GET|*.ico GET|*.txt GET|*.otf GET|*.pjs GET|*.svg GET|*.json GET|*.woff GET|*.woff2 GET|*.ttf GET|*.svgz"
                             implementation="com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent">
                         <parameters>
                             <!-- Don't cache html resources in development mode -->

@@ -34,7 +34,7 @@ public class OLiveQueryTest {
     OLiveCommandExecutorSQLFactory.init();
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
-    db.setCurrentDatabaseInThreadLocal();
+    db.activateOnCurrentThread();
     db.registerHook(new OLiveQueryHook(db));
     db.create();
     try {

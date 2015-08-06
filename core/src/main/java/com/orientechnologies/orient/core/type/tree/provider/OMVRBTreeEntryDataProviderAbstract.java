@@ -94,8 +94,7 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
   }
 
   protected void load(final OStorage iStorage) {
-    final ORawBuffer raw = iStorage.readRecord((ORecordId) record.getIdentity(), null, false, null, false,
-        OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
+    final ORawBuffer raw = iStorage.readRecord((ORecordId) record.getIdentity(), null, false, null).getResult();
     ORecordInternal.fill(record, (ORecordId) record.getIdentity(), raw.version, raw.buffer, false);
     fromStream(raw.buffer);
   }

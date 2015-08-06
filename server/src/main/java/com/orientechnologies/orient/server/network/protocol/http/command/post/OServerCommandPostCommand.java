@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -31,6 +27,10 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = { "GET|command/*", "POST|command/*" };
@@ -78,6 +78,9 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       if (!executor.isIdempotent() && iRequest.httpMethod.equals("GET"))
         throw new OCommandExecutionException("Cannot execute non idempotent command using HTTP GET");
 
+      // REQUEST CAN'T MODIFY THE RESULT, SO IT'S CACHEABLE
+      cmd.setCacheableResult(true);
+      
       response = db.command(cmd).execute();
 
       fetchPlan = executor.getFetchPlan();
