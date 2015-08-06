@@ -753,6 +753,10 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return false;
   }
 
+  @Override public long getDistributedTimeout() {
+    return -1;
+  }
+
   @Override
   public String toString() {
     StringBuilder result = new StringBuilder();

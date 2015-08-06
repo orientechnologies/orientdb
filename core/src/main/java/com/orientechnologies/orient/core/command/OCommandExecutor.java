@@ -104,4 +104,5 @@ public interface OCommandExecutor {
    */
   boolean isCacheable();
 
+  long getDistributedTimeout();
 }

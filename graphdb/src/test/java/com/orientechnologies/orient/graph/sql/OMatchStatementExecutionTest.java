@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.graph.sql;
 
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -587,7 +587,7 @@ public class OMatchStatementExecutionTest {
     return -1l;
   }
 
-  private static OProfilerMBean getProfilerInstance() throws Exception {
+  private static OProfiler getProfilerInstance() throws Exception {
     return Orient.instance().getProfiler();
 
   }
