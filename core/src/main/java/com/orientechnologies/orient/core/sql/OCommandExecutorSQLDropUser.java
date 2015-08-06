@@ -60,4 +60,9 @@ public class OCommandExecutorSQLDropUser extends OCommandExecutorSQLAbstract imp
   public String getSyntax() {
     return SYNTAX;
   }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
+  }
 }

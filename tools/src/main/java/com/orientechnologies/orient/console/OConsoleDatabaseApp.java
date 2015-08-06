@@ -592,7 +592,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         storageType = "plocal";
 
       new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseDatabase(
-              storageType);
+        storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.release();
@@ -646,7 +646,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         storageType = "plocal";
 
       new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseCluster(
-              clusterId, storageType);
+        clusterId, storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.releaseCluster(clusterId);

@@ -6,6 +6,8 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,7 +35,7 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
 
   private String userName;
   private String pass;
-  private String role;
+  private List<String> roles;
 
   @Override
   public OCommandExecutorSQLCreateUser parse(OCommandRequest iRequest) {
@@ -47,6 +49,8 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
     parserRequiredKeyword(KEYWORD_BY);
     this.pass = parserRequiredWord(false, "Expected <user password>");
 
+    this.roles = new ArrayList<String>();
+
     String temp;
     while ((temp = parseOptionalWord(true)) != null) {
       if (parserIsEnded()) {
@@ -54,7 +58,21 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
       }
 
       if (temp.equals(KEYWORD_ROLE)) {
-        this.role = parserRequiredWord(false, "Expected <role name>");
+        String role = parserRequiredWord(false, "Expected <role name>");
+        int roleLen = (role != null) ? role.length() : 0;
+        if (roleLen > 0) {
+          if (role.charAt(0) == '[' && role.charAt(roleLen-1) == ']') {
+            role = role.substring(1, role.length() - 1);
+            String[] splits = role.split("[, ]");
+            for (String spl : splits) {
+              if (spl.length() > 0) {
+                this.roles.add(spl);
+              }
+            }
+          } else {
+            this.roles.add(role);
+          }
+        }
       }
     }
 
@@ -68,9 +86,8 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
     }
 
     // Build following command:
-    //    INSERT INTO OUser SET name='<name>',password='<pass>',status='ACTIVE'
-    // with optinoal:
-    //    ,role=(SELECT FROM ORole WHERE name='<role>')
+    //    INSERT INTO OUser SET name='<name>', password='<pass>', status='ACTIVE',
+    //    role=(SELECT FROM ORole WHERE name in ['<role1>', '<role2>', ...])
 
     // INSERT INTO OUser SET
     StringBuilder sb = new StringBuilder();
@@ -98,9 +115,9 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
     sb.append(DEFAULT_STATUS);
     sb.append("'");
 
-    // role=(select from ORole where name = <input_role || 'writer'>)
-    if (this.role == null) {
-      this.role = DEFAULT_ROLE;
+    // role=(select from ORole where name in [<input_role || 'writer'>)]
+    if (this.roles.size() == 0) {
+      this.roles.add(DEFAULT_ROLE);
     }
 
     sb.append(',');
@@ -109,9 +126,15 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
     sb.append(ROLE_CLASS);
     sb.append(" WHERE ");
     sb.append(ROLE_FIELD_NAME);
-    sb.append("='");
-    sb.append(this.role);
-    sb.append("')");
+    sb.append(" IN [");
+    for (int i = 0; i < this.roles.size() - 1; ++i) {
+      sb.append("'");
+      sb.append(this.roles.get(i));
+      sb.append("', ");
+    }
+    sb.append("'");
+    sb.append(this.roles.get(this.roles.size()-1));
+    sb.append("'])");
 
     return getDatabase().command(new OCommandSQL(sb.toString())).execute();
   }
@@ -119,5 +142,10 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
   @Override
   public String getSyntax() {
     return SYNTAX;
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
   }
 }
