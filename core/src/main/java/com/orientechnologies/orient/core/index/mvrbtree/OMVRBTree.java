@@ -34,6 +34,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.index.OAlwaysGreaterKey;
 import com.orientechnologies.orient.core.index.OAlwaysLessKey;
 import com.orientechnologies.orient.core.index.OCompositeKey;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Base abstract class of MVRB-Tree algorithm.
@@ -462,6 +463,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
       }
     }
 
+    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT")
     NavigableSubMap(final OMVRBTree<K, V> m, final boolean fromStart, K lo, final boolean loInclusive, final boolean toEnd, K hi,
         final boolean hiInclusive) {
       if (!fromStart && !toEnd) {
@@ -1507,6 +1509,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     return getEntry(key, false, partialSearchMode);
   }
 
+  @SuppressFBWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
   final OMVRBTreeEntry<K, V> getEntry(final Object key, final boolean iGetContainer, final PartialSearchMode partialSearchMode) {
     if (key == null)
       return setLastSearchNode(null, null);
@@ -2104,6 +2107,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    * <tt>removeAll</tt>, <tt>retainAll</tt> and <tt>clear</tt> operations. It does not support the <tt>add</tt> or <tt>addAll</tt>
    * operations.
    */
+  @SuppressFBWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
   @Override
   public Collection<V> values() {
     final Collection<V> vs = new Values();

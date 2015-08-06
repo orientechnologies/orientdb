@@ -38,66 +38,61 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This is implementation which is based on B+-tree implementation threaded tree.
- * 
+ * <p>
  * The main differences are:
  * <ol>
  * <li>Buckets are not compacted/removed if they are empty after deletion of item. They reused later when new items are added.</li>
  * <li>All non-leaf buckets have links to neighbor buckets which contain keys which are less/more than keys contained in current
  * bucket</li>
  * <ol/>
- * 
- * 
+ * <p>
+ * <p>
  * There is support of null values for keys, but values itself can not be null. Null keys support is switched off by default if null
  * keys are supported value which is related to null key will be stored in separate file which has only one page.
- * 
+ * <p>
  * Buckets/pages for usual (non-null) key-value entries can be considered as sorted array. The first bytes of page contains such
  * auxiliary information as size of entries contained in bucket, links to neighbors which contain entries with keys less/more than
  * keys in current bucket.
- * 
+ * <p>
  * The next bytes contain sorted array of entries. Array itself is split on two parts. First part is growing from start to end, and
  * second part is growing from end to start.
- * 
+ * <p>
  * First part is array of offsets to real key-value entries which are stored in second part of array which grows from end to start.
  * This array of offsets is sorted by accessing order according to key value. So we can use binary search to find requested key.
  * When new key-value pair is added we append binary presentation of this pair to the second part of array which grows from end of
  * page to start, remember value of offset for this pair, and find proper position of this offset inside of first part of array.
  * Such approach allows to minimize amount of memory involved in performing of operations and as result speed up data processing.
- * 
+ *
  * @author Andrey Lomakin
  * @since 8/7/13
  */
 public class OSBTree<K, V> extends ODurableComponent {
-  private static final int               MAX_KEY_SIZE            = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
-  private static final int               MAX_EMBEDDED_VALUE_SIZE = OGlobalConfiguration.SBTREE_MAX_EMBEDDED_VALUE_SIZE
-                                                                     .getValueAsInteger();
-  private static final OAlwaysLessKey    ALWAYS_LESS_KEY         = new OAlwaysLessKey();
-  private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY      = new OAlwaysGreaterKey();
+  private static final int MAX_KEY_SIZE = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
+  private static final int MAX_EMBEDDED_VALUE_SIZE = OGlobalConfiguration.SBTREE_MAX_EMBEDDED_VALUE_SIZE
+      .getValueAsInteger();
+  private static final OAlwaysLessKey ALWAYS_LESS_KEY = new OAlwaysLessKey();
+  private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
 
-  private static final int               MAX_PATH_LENGTH         = OGlobalConfiguration.SBTREE_MAX_DEPTH.getValueAsInteger();
+  private static final int MAX_PATH_LENGTH = OGlobalConfiguration.SBTREE_MAX_DEPTH.getValueAsInteger();
 
-  private final static long              ROOT_INDEX              = 0;
-  private final Comparator<? super K>    comparator              = ODefaultComparator.INSTANCE;
-  private final String                   nullFileExtension;
-  private final boolean                  durableInNonTxMode;
-  private long                           fileId;
-  private long                           nullBucketFileId        = -1;
-  private int                            keySize;
-  private OBinarySerializer<K>           keySerializer;
-  private OType[]                        keyTypes;
-  private OBinarySerializer<V>           valueSerializer;
-  private boolean                        nullPointerSupport;
+  private final static long ROOT_INDEX = 0;
+  private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
+  private final String nullFileExtension;
+  private final boolean durableInNonTxMode;
+  private long fileId;
+  private long nullBucketFileId = -1;
+  private int keySize;
+  private OBinarySerializer<K> keySerializer;
+  private OType[] keyTypes;
+  private OBinarySerializer<V> valueSerializer;
+  private boolean nullPointerSupport;
 
   public OSBTree(String name, String dataFileExtension, boolean durableInNonTxMode, String nullFileExtension,
-      OAbstractPaginatedStorage storage) {
+                 OAbstractPaginatedStorage storage) {
     super(storage, name, dataFileExtension);
     acquireExclusiveLock();
     try {
@@ -109,7 +104,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   public void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes, int keySize,
-      boolean nullPointerSupport) {
+                     boolean nullPointerSupport) {
     assert keySerializer != null;
     final OAtomicOperation atomicOperation;
     try {
@@ -122,7 +117,10 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
 
       this.keySize = keySize;
-      this.keyTypes = keyTypes;
+      if (keyTypes != null)
+        this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
+      else
+        this.keyTypes = null;
 
       this.keySerializer = keySerializer;
 
@@ -470,11 +468,14 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   public void load(String name, OBinarySerializer<K> keySerializer, OStreamSerializer valueSerializer, OType[] keyTypes,
-      int keySize, boolean nullPointerSupport) {
+                   int keySize, boolean nullPointerSupport) {
     acquireExclusiveLock();
     try {
       this.keySize = keySize;
-      this.keyTypes = keyTypes;
+      if (keyTypes != null)
+        this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
+      else
+        this.keyTypes = null;
 
       this.nullPointerSupport = nullPointerSupport;
 
@@ -733,7 +734,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   public OSBTreeCursor<K, V> iterateEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
-      boolean ascSortOrder) {
+                                                   boolean ascSortOrder) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -1220,7 +1221,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   private OSBTreeCursor<K, V> iterateEntriesBetweenAscOrder(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
-      OAtomicOperation atomicOperation) throws IOException {
+                                                            OAtomicOperation atomicOperation) throws IOException {
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
     keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
 
@@ -1242,7 +1243,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   private OSBTreeCursor<K, V> iterateEntriesBetweenDescOrder(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
-      OAtomicOperation atomicOperation) throws IOException {
+                                                             OAtomicOperation atomicOperation) throws IOException {
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
     keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
 
@@ -1344,8 +1345,8 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   private BucketSearchResult splitNonRootBucket(List<Long> path, int keyIndex, K keyToInsert, long pageIndex,
-      OSBTreeBucket<K, V> bucketToSplit, boolean splitLeaf, int indexToSplit, K separationKey,
-      List<OSBTreeBucket.SBTreeEntry<K, V>> rightEntries, OAtomicOperation atomicOperation) throws IOException {
+                                                OSBTreeBucket<K, V> bucketToSplit, boolean splitLeaf, int indexToSplit, K separationKey,
+                                                List<OSBTreeBucket.SBTreeEntry<K, V>> rightEntries, OAtomicOperation atomicOperation) throws IOException {
     OCacheEntry rightBucketEntry = addPage(atomicOperation, fileId);
     rightBucketEntry.acquireExclusiveLock();
 
@@ -1435,8 +1436,8 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   private BucketSearchResult splitRootBucket(List<Long> path, int keyIndex, K keyToInsert, long pageIndex, OCacheEntry bucketEntry,
-      OSBTreeBucket<K, V> bucketToSplit, boolean splitLeaf, int indexToSplit, K separationKey,
-      List<OSBTreeBucket.SBTreeEntry<K, V>> rightEntries, OAtomicOperation atomicOperation) throws IOException {
+                                             OSBTreeBucket<K, V> bucketToSplit, boolean splitLeaf, int indexToSplit, K separationKey,
+                                             List<OSBTreeBucket.SBTreeEntry<K, V>> rightEntries, OAtomicOperation atomicOperation) throws IOException {
     final long freeListPage = bucketToSplit.getValuesFreeListFirstIndex();
     final long treeSize = bucketToSplit.getTreeSize();
 
@@ -1645,7 +1646,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   private static class BucketSearchResult {
-    private final int             itemIndex;
+    private final int itemIndex;
     private final ArrayList<Long> path;
 
     private BucketSearchResult(int itemIndex, ArrayList<Long> path) {
@@ -1660,7 +1661,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
   private static final class PagePathItemUnit {
     private final long pageIndex;
-    private final int  itemIndex;
+    private final int itemIndex;
 
     private PagePathItemUnit(long pageIndex, int itemIndex) {
       this.pageIndex = pageIndex;
@@ -1669,10 +1670,10 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   public class OSBTreeFullKeyCursor implements OSBTreeKeyCursor<K> {
-    private long        pageIndex;
-    private int         itemIndex;
+    private long pageIndex;
+    private int itemIndex;
 
-    private List<K>     keysCache    = new ArrayList<K>();
+    private List<K> keysCache = new ArrayList<K>();
     private Iterator<K> keysIterator = new OEmptyIterator<K>();
 
     public OSBTreeFullKeyCursor(long startPageIndex) {
@@ -1750,19 +1751,19 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   private final class OSBTreeCursorForward implements OSBTreeCursor<K, V> {
-    private final K                   fromKey;
-    private final K                   toKey;
-    private final boolean             fromKeyInclusive;
-    private final boolean             toKeyInclusive;
+    private final K fromKey;
+    private final K toKey;
+    private final boolean fromKeyInclusive;
+    private final boolean toKeyInclusive;
 
-    private long                      pageIndex;
-    private int                       itemIndex;
+    private long pageIndex;
+    private int itemIndex;
 
-    private List<Map.Entry<K, V>>     dataCache         = new ArrayList<Map.Entry<K, V>>();
+    private List<Map.Entry<K, V>> dataCache = new ArrayList<Map.Entry<K, V>>();
     private Iterator<Map.Entry<K, V>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
 
     private OSBTreeCursorForward(long startPageIndex, int startItemIndex, K fromKey, K toKey, boolean fromKeyInclusive,
-        boolean toKeyInclusive) {
+                                 boolean toKeyInclusive) {
       this.fromKey = fromKey;
       this.toKey = toKey;
       this.fromKeyInclusive = fromKeyInclusive;
@@ -1818,12 +1819,12 @@ public class OSBTree<K, V> extends ODurableComponent {
 
               if (fromKey != null
                   && (fromKeyInclusive ? comparator.compare(entry.getKey(), fromKey) < 0 : comparator.compare(entry.getKey(),
-                      fromKey) <= 0))
+                  fromKey) <= 0))
                 continue;
 
               if (toKey != null
                   && (toKeyInclusive ? comparator.compare(entry.getKey(), toKey) > 0
-                      : comparator.compare(entry.getKey(), toKey) >= 0)) {
+                  : comparator.compare(entry.getKey(), toKey) >= 0)) {
                 pageIndex = -1;
                 break;
               }
@@ -1854,19 +1855,19 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   private final class OSBTreeCursorBackward implements OSBTreeCursor<K, V> {
-    private final K                   fromKey;
-    private final K                   toKey;
-    private final boolean             fromKeyInclusive;
-    private final boolean             toKeyInclusive;
+    private final K fromKey;
+    private final K toKey;
+    private final boolean fromKeyInclusive;
+    private final boolean toKeyInclusive;
 
-    private long                      pageIndex;
-    private int                       itemIndex;
+    private long pageIndex;
+    private int itemIndex;
 
-    private List<Map.Entry<K, V>>     dataCache         = new ArrayList<Map.Entry<K, V>>();
+    private List<Map.Entry<K, V>> dataCache = new ArrayList<Map.Entry<K, V>>();
     private Iterator<Map.Entry<K, V>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
 
     private OSBTreeCursorBackward(long endPageIndex, int endItemIndex, K fromKey, K toKey, boolean fromKeyInclusive,
-        boolean toKeyInclusive) {
+                                  boolean toKeyInclusive) {
       this.fromKey = fromKey;
       this.toKey = toKey;
       this.fromKeyInclusive = fromKeyInclusive;
@@ -1920,12 +1921,12 @@ public class OSBTree<K, V> extends ODurableComponent {
 
               if (toKey != null
                   && (toKeyInclusive ? comparator.compare(entry.getKey(), toKey) > 0
-                      : comparator.compare(entry.getKey(), toKey) >= 0))
+                  : comparator.compare(entry.getKey(), toKey) >= 0))
                 continue;
 
               if (fromKey != null
                   && (fromKeyInclusive ? comparator.compare(entry.getKey(), fromKey) < 0 : comparator.compare(entry.getKey(),
-                      fromKey) <= 0)) {
+                  fromKey) <= 0)) {
                 pageIndex = -1;
                 break;
               }

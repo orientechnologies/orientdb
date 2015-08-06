@@ -30,19 +30,24 @@ import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 8/18/14
  */
 public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implements OOrientStartupListener, OOrientShutdownListener {
-  private final ODistributedCounter                distributedCounter = new ODistributedCounter();
+  private static final long serialVersionUID = 7975120282194559960L;
 
-  private final AtomicReference<WNode>             tail               = new AtomicReference<WNode>();
-  private volatile ThreadLocal<OModifiableInteger> lockHolds          = new InitOModifiableInteger();
+  @SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
+  private final transient ODistributedCounter distributedCounter = new ODistributedCounter();
 
-  private volatile ThreadLocal<WNode>              myNode             = new InitWNode();
-  private volatile ThreadLocal<WNode>              predNode           = new ThreadLocal<WNode>();
+  @SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
+  private final transient AtomicReference<WNode> tail = new AtomicReference<WNode>();
+  private transient volatile ThreadLocal<OModifiableInteger> lockHolds = new InitOModifiableInteger();
+
+  private transient volatile ThreadLocal<WNode> myNode = new InitWNode();
+  private transient volatile ThreadLocal<WNode> predNode = new ThreadLocal<WNode>();
 
   public OReadersWriterSpinLock() {
     final WNode wNode = new WNode();
@@ -206,7 +211,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
   private final static class WNode {
     private final Queue<Thread> waitingReaders = new ConcurrentLinkedQueue<Thread>();
 
-    private volatile boolean    locked         = true;
-    private volatile Thread     waitingWriter;
+    private volatile boolean locked = true;
+    private volatile Thread waitingWriter;
   }
 }

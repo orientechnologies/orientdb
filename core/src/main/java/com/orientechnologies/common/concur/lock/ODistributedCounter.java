@@ -12,11 +12,12 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ODistributedCounter extends OOrientListenerAbstract {
   private static final int              HASH_INCREMENT = 0x61c88647;
+  private static final int                     MAX_RETRIES    = 8;
 
   private static final AtomicInteger    nextHashCode   = new AtomicInteger();
   private final AtomicBoolean           poolBusy       = new AtomicBoolean();
   private final int                     maxPartitions  = Runtime.getRuntime().availableProcessors() << 3;
-  private final int                     MAX_RETRIES    = 8;
+
 
   private volatile ThreadLocal<Integer> threadHashCode = new ThreadHashCode();
   private volatile AtomicLong[]         counters       = new AtomicLong[2];

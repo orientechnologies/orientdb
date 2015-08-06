@@ -25,9 +25,11 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.*;
 
+@SuppressFBWarnings("EQ_COMPARETO_USE_OBJECT_EQUALS")
 public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OIdentifiable> {
   private final OIndexInternal<OIdentifiable> delegate;
 

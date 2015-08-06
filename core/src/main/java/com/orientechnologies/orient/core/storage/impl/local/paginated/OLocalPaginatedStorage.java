@@ -61,24 +61,24 @@ import java.util.concurrent.TimeUnit;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage, OBackupable {
-  private static String[]                  ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
+  private static String[] ALL_FILE_EXTENSIONS = {".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
       ".oem", ".oet", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION,
       OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
-      OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION           };
+      OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION};
 
-  private static final int                 ONE_KB              = 1024;
+  private static final int ONE_KB = 1024;
 
-  private final int                        DELETE_MAX_RETRIES;
-  private final int                        DELETE_WAIT_TIME;
+  private final int DELETE_MAX_RETRIES;
+  private final int DELETE_WAIT_TIME;
 
-  private final OStorageVariableParser     variableParser;
+  private final OStorageVariableParser variableParser;
   private final OPaginatedStorageDirtyFlag dirtyFlag;
 
-  private final String                     storagePath;
-  private ExecutorService                  checkpointExecutor;
+  private final String storagePath;
+  private ExecutorService checkpointExecutor;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id, OReadCache readCache)
       throws IOException {
@@ -112,7 +112,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   public void create(final Map<String, Object> iProperties) {
     final File storageFolder = new File(storagePath);
     if (!storageFolder.exists())
-      storageFolder.mkdirs();
+      if (!storageFolder.mkdirs())
+        throw new OStorageException("Can not crate folders in storage with path " + storagePath);
 
     super.create(iProperties);
   }
@@ -144,7 +145,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   @Override
   public List<String> backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
-      final OCommandOutputListener iOutput, final int compressionLevel, final int bufferSize) throws IOException {
+                             final OCommandOutputListener iOutput, final int compressionLevel, final int bufferSize) throws IOException {
     freeze(false);
     try {
       if (callable != null)
@@ -156,7 +157,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
       final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
       try {
-        return OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" },
+        return OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[]{".wal"},
             iOutput, compressionLevel);
       } finally {
         if (bufferSize > 0) {
@@ -171,7 +172,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   @Override
   public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable,
-      final OCommandOutputListener iListener) throws IOException {
+                      final OCommandOutputListener iListener) throws IOException {
     if (!isClosed())
       close(true, false);
 
@@ -245,8 +246,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       if (dbDir != null && dbDir.exists() && dbDir.isDirectory()) {
         int notDeletedFiles = 0;
 
+        final File[] storageFiles = dbDir.listFiles();
+        if(storageFiles == null)
+          continue;
+
         // TRY TO DELETE ALL THE FILES
-        for (File f : dbDir.listFiles()) {
+        for (File f : storageFiles) {
           // DELETE ONLY THE SUPPORTED FILES
           for (String ext : ALL_FILE_EXTENSIONS)
             if (f.getPath().endsWith(ext)) {
@@ -259,7 +264,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
         if (notDeletedFiles == 0) {
           // TRY TO DELETE ALSO THE DIRECTORY IF IT'S EMPTY
-          dbDir.delete();
+          if (!dbDir.delete())
+            OLogManager.instance().error(this, "Can not delete storage directory with path " + dbDir.getAbsolutePath());
           return;
         }
       } else

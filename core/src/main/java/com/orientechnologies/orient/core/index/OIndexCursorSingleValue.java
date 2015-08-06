@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * Implementation of index cursor in case of only single entree should be returned.
@@ -46,7 +47,7 @@ public class OIndexCursorSingleValue extends OIndexAbstractCursor {
   @Override
   public OIdentifiable next() {
     if (identifiable == null)
-      return null;
+      throw new NoSuchElementException();
 
     final OIdentifiable value = identifiable;
     identifiable = null;

@@ -120,7 +120,6 @@ public class OIndexDefinitionFactory {
   private static OIndexDefinition createSingleFieldIndexDefinition(OClass oClass, final String field, final OType type,
       OCollate collate, String indexKind, String algorithm) {
 
-    final OIndexFactory factory = OIndexes.getFactory(indexKind, algorithm);
     final String fieldName = adjustFieldName(oClass, extractFieldName(field));
     final OIndexDefinition indexDefinition;
 

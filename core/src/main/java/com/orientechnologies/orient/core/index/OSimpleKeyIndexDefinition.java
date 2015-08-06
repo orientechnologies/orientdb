@@ -47,7 +47,8 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   public OSimpleKeyIndexDefinition(OType[] keyTypes2, List<OCollate> collatesList, int version) {
     super();
 
-    this.keyTypes = keyTypes2;
+    this.keyTypes = Arrays.copyOf(keyTypes2, keyTypes2.length);
+
     if (keyTypes.length > 1) {
       OCompositeCollate collate = new OCompositeCollate(this);
       if (collatesList != null) {
@@ -105,7 +106,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   public OType[] getTypes() {
-    return keyTypes;
+    return Arrays.copyOf(keyTypes, keyTypes.length);
   }
 
   @Override
@@ -168,7 +169,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
       this.collate = collates;
     }
 
-    setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean> field("nullValuesIgnored")));
+    setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean>field("nullValuesIgnored")));
   }
 
   public Object getDocumentValueToIndex(final ODocument iDocument) {
@@ -203,7 +204,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * @param indexName
    * @param indexType
    */

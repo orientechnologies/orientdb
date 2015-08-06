@@ -31,16 +31,16 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 public class OPhysicalPosition implements OSerializableStream, Externalizable {
-  public static int      binarySize;
-  private static boolean binarySizeKnown = false;
+  public static final int binarySize = OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE + OBinaryProtocol.SIZE_INT
+      + OBinaryProtocol.SIZE_INT;
   // POSITION IN THE CLUSTER
-  public long            clusterPosition;
+  public long clusterPosition;
   // TYPE
-  public byte            recordType;
+  public byte recordType;
   // VERSION
-  public ORecordVersion  recordVersion   = OVersionFactory.instance().createVersion();
+  public ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
   // SIZE IN BYTES OF THE RECORD. USED ONLY IN MEMORY
-  public int             recordSize;
+  public int recordSize;
 
   public OPhysicalPosition() {
   }
@@ -59,13 +59,6 @@ public class OPhysicalPosition implements OSerializableStream, Externalizable {
   }
 
   public static int binarySize() {
-    if (binarySizeKnown)
-      return binarySize;
-
-    binarySizeKnown = true;
-    binarySize = OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE + OVersionFactory.instance().getVersionSize()
-        + OBinaryProtocol.SIZE_INT;
-
     return binarySize;
   }
 

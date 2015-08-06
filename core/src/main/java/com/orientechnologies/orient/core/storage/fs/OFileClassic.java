@@ -36,36 +36,36 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
 public class OFileClassic implements OFile {
-  private static final boolean trackFileClose           = OGlobalConfiguration.TRACK_FILE_CLOSE.getValueAsBoolean();
+  private static final boolean trackFileClose = OGlobalConfiguration.TRACK_FILE_CLOSE.getValueAsBoolean();
 
-  public final static String   NAME                     = "classic";
-  public static final int      HEADER_SIZE              = 1024;
-  private static final int     SOFTLY_CLOSED_OFFSET_V_0 = 8;
-  private static final int     SOFTLY_CLOSED_OFFSET     = 16;
-  private static final int     VERSION_OFFSET           = 48;
-  private static final int     CURRENT_VERSION          = 1;
-  private static final int     OPEN_RETRY_MAX           = 10;
-  private static final int     OPEN_DELAY_RETRY         = 100;
-  private static final long    LOCK_WAIT_TIME           = 300;
-  private static final int     LOCK_MAX_RETRIES         = 10;
-  private final ReadWriteLock  lock                     = new ReentrantReadWriteLock();
-  private ByteBuffer           internalWriteBuffer      = ByteBuffer.allocate(OBinaryProtocol.SIZE_LONG);
+  public final static String NAME = "classic";
+  public static final int HEADER_SIZE = 1024;
+  private static final int SOFTLY_CLOSED_OFFSET_V_0 = 8;
+  private static final int SOFTLY_CLOSED_OFFSET = 16;
+  private static final int VERSION_OFFSET = 48;
+  private static final int CURRENT_VERSION = 1;
+  private static final int OPEN_RETRY_MAX = 10;
+  private static final int OPEN_DELAY_RETRY = 100;
+  private static final long LOCK_WAIT_TIME = 300;
+  private static final int LOCK_MAX_RETRIES = 10;
+  private final ReadWriteLock lock = new ReentrantReadWriteLock();
+  private ByteBuffer internalWriteBuffer = ByteBuffer.allocate(OBinaryProtocol.SIZE_LONG);
 
-  private volatile File        osFile;
-  private final String         mode;
+  private volatile File osFile;
+  private final String mode;
 
-  private RandomAccessFile     accessFile;
-  private FileChannel          channel;
-  private volatile boolean     dirty                    = false;
-  private volatile boolean     headerDirty              = false;
-  private int                  version;
+  private RandomAccessFile accessFile;
+  private FileChannel channel;
+  private volatile boolean dirty = false;
+  private volatile boolean headerDirty = false;
+  private int version;
 
-  private boolean              failCheck                = true;
-  private volatile long        size;                                                                                // PART OF
-                                                                                                                     // HEADER (4
-                                                                                                                     // bytes)
-  private FileLock             fileLock;
-  private boolean              wasSoftlyClosed          = true;
+  private boolean failCheck = true;
+  private volatile long size;                                                                                // PART OF
+  // HEADER (4
+  // bytes)
+  private FileLock fileLock;
+  private boolean wasSoftlyClosed = true;
 
   public OFileClassic(String osFile, String mode) {
     this.mode = mode;
@@ -398,9 +398,8 @@ public class OFileClassic implements OFile {
 
   /**
    * Synchronizes the buffered changes to disk.
-   * 
+   *
    * @throws IOException
-   * 
    */
   @Override
   public boolean synch() throws IOException {
@@ -753,12 +752,12 @@ public class OFileClassic implements OFile {
 
           // TRY TO RE-CREATE THE DIRECTORY (THIS HAPPENS ON WINDOWS AFTER A DELETE IS PENDING, USUALLY WHEN REOPEN THE DB VERY
           // FREQUENTLY)
-          osFile.getParentFile().mkdirs();
-          try {
-            Thread.sleep(OPEN_DELAY_RETRY);
-          } catch (InterruptedException e1) {
-            Thread.currentThread().interrupt();
-          }
+          if (!osFile.getParentFile().mkdirs())
+            try {
+              Thread.sleep(OPEN_DELAY_RETRY);
+            } catch (InterruptedException e1) {
+              Thread.currentThread().interrupt();
+            }
         }
 
       if (accessFile == null)

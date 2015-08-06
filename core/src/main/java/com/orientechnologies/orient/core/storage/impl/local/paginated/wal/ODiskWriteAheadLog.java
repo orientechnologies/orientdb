@@ -166,9 +166,9 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
                   pendingLSNToFlush = null;
                 } else
-                  lastLSNToFlush = new OLogSequenceNumber(order, filePointer + flushedPages * OWALPage.PAGE_SIZE + pos);
+                  lastLSNToFlush = new OLogSequenceNumber(order, filePointer + flushedPages * (long)OWALPage.PAGE_SIZE + pos);
               } else if (pendingLSNToFlush == null)
-                pendingLSNToFlush = new OLogSequenceNumber(order, filePointer + flushedPages * OWALPage.PAGE_SIZE + pos);
+                pendingLSNToFlush = new OLogSequenceNumber(order, filePointer + flushedPages * (long)OWALPage.PAGE_SIZE + pos);
 
               pos += page.getSerializedRecordSize(pos);
             }
@@ -288,6 +288,22 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         return -1;
 
       return 0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      LogSegment that = (LogSegment) o;
+
+      return order == that.order;
+
+    }
+
+    @Override
+    public int hashCode() {
+      return (int) (order ^ (order >>> 32));
     }
 
     public long filledUpTo() throws IOException {
@@ -1171,7 +1187,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private OLogSequenceNumber readMasterRecord(String storageName, int index) throws IOException {
     final CRC32 crc32 = new CRC32();
     try {
-      masterRecordLSNHolder.seek(index * (OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE));
+      masterRecordLSNHolder.seek(index * (OIntegerSerializer.INT_SIZE + 2L * OLongSerializer.LONG_SIZE));
 
       int firstCRC = masterRecordLSNHolder.readInt();
       final long segment = masterRecordLSNHolder.readLong();
@@ -1196,7 +1212,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   private void writeMasterRecord(int index, OLogSequenceNumber masterRecord) throws IOException {
-    masterRecordLSNHolder.seek(index * (OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE));
+    masterRecordLSNHolder.seek(index * (OIntegerSerializer.INT_SIZE + 2L * OLongSerializer.LONG_SIZE));
     final CRC32 crc32 = new CRC32();
 
     final byte[] serializedLSN = new byte[2 * OLongSerializer.LONG_SIZE];

@@ -45,17 +45,17 @@ public class OClusterPage extends ODurablePage {
   private static final int NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
   private static final int PREV_PAGE_OFFSET = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
 
-  private static final int FREELIST_HEADER_OFFSET     = PREV_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int FREE_POSITION_OFFSET       = FREELIST_HEADER_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int FREE_SPACE_COUNTER_OFFSET  = FREE_POSITION_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int ENTRIES_COUNT_OFFSET       = FREE_SPACE_COUNTER_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int FREELIST_HEADER_OFFSET = PREV_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int FREE_POSITION_OFFSET = FREELIST_HEADER_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int FREE_SPACE_COUNTER_OFFSET = FREE_POSITION_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int ENTRIES_COUNT_OFFSET = FREE_SPACE_COUNTER_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int PAGE_INDEXES_LENGTH_OFFSET = ENTRIES_COUNT_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int PAGE_INDEXES_OFFSET        = PAGE_INDEXES_LENGTH_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int PAGE_INDEXES_OFFSET = PAGE_INDEXES_LENGTH_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int INDEX_ITEM_SIZE        = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
+  private static final int INDEX_ITEM_SIZE = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
   private static final int MARKED_AS_DELETED_FLAG = 1 << 16;
-  private static final int POSITION_MASK          = 0xFFFF;
-  public static final int  PAGE_SIZE              = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  private static final int POSITION_MASK = 0xFFFF;
+  public static final int PAGE_SIZE = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
   public static final int MAX_ENTRY_SIZE = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
 
@@ -221,7 +221,7 @@ public class OClusterPage extends ODurablePage {
     int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * position;
     int entryPointer = getIntValue(entryIndexPosition);
 
-    if ((entryPointer & MARKED_AS_DELETED_FLAG) > 0)
+    if ((entryPointer & MARKED_AS_DELETED_FLAG) != 0)
       return false;
 
     int entryPosition = entryPointer & POSITION_MASK;
@@ -253,7 +253,7 @@ public class OClusterPage extends ODurablePage {
     int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * position;
     int entryPointer = getIntValue(entryIndexPosition);
 
-    return (entryPointer & MARKED_AS_DELETED_FLAG) > 0;
+    return (entryPointer & MARKED_AS_DELETED_FLAG) != 0;
   }
 
   public int getRecordSize(int position) {
@@ -263,7 +263,7 @@ public class OClusterPage extends ODurablePage {
 
     int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * position;
     int entryPointer = getIntValue(entryIndexPosition);
-    if ((entryPointer & MARKED_AS_DELETED_FLAG) > 0)
+    if ((entryPointer & MARKED_AS_DELETED_FLAG) != 0)
       return -1;
 
     int entryPosition = entryPointer & POSITION_MASK;
@@ -275,7 +275,7 @@ public class OClusterPage extends ODurablePage {
     for (int i = position; i < indexesLength; i++) {
       int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * i;
       int entryPointer = getIntValue(entryIndexPosition);
-      if ((entryPointer & MARKED_AS_DELETED_FLAG) > 0)
+      if ((entryPointer & MARKED_AS_DELETED_FLAG) != 0)
         return i;
     }
 

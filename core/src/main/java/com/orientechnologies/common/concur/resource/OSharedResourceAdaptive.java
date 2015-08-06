@@ -45,7 +45,6 @@ public class OSharedResourceAdaptive {
   private final boolean                concurrent;
   private final int                    timeout;
   private final boolean                ignoreThreadInterruption;
-  private int                          scaledUpCount = 0;
 
   protected OSharedResourceAdaptive() {
     this.concurrent = true;

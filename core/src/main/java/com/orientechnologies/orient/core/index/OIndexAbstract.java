@@ -73,38 +73,38 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Luca Garulli
  */
 public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientStartupListener, OOrientShutdownListener {
-  protected static final String                 CONFIG_MAP_RID   = "mapRid";
-  protected static final String                 CONFIG_CLUSTERS  = "clusters";
-  protected final OModificationLock             modificationLock = new OModificationLock();
-  protected final OIndexEngine<T>               indexEngine;
-  private final String                          databaseName;
-  protected String                              type;
-  protected String                              valueContainerAlgorithm;
-  protected final ONewLockManager<Object>       keyLockManager   = new ONewLockManager<Object>();
+  protected static final String CONFIG_MAP_RID = "mapRid";
+  protected static final String CONFIG_CLUSTERS = "clusters";
+  protected final OModificationLock modificationLock = new OModificationLock();
+  protected final OIndexEngine<T> indexEngine;
+  private final String databaseName;
+  protected String type;
+  protected String valueContainerAlgorithm;
+  protected final ONewLockManager<Object> keyLockManager = new ONewLockManager<Object>();
 
   @ODocumentInstance
-  protected final AtomicReference<ODocument>    configuration    = new AtomicReference<ODocument>();
-  protected ODocument                           metadata;
-  private final String                          name;
-  private String                                algorithm;
-  private Set<String>                           clustersToIndex  = new HashSet<String>();
+  protected final AtomicReference<ODocument> configuration = new AtomicReference<ODocument>();
+  protected ODocument metadata;
+  private final String name;
+  private String algorithm;
+  private Set<String> clustersToIndex = new HashSet<String>();
 
-  private volatile OIndexDefinition             indexDefinition;
-  private volatile boolean                      rebuilding       = false;
+  private volatile OIndexDefinition indexDefinition;
+  private volatile boolean rebuilding = false;
 
-  private Thread                                rebuildThread    = null;
+  private Thread rebuildThread = null;
 
-  private volatile ThreadLocal<IndexTxSnapshot> txSnapshot       = new IndexTxSnapshotThreadLocal();
+  private volatile ThreadLocal<IndexTxSnapshot> txSnapshot = new IndexTxSnapshotThreadLocal();
 
-  private final OReadersWriterSpinLock          rwLock           = new OReadersWriterSpinLock();
+  private final OReadersWriterSpinLock rwLock = new OReadersWriterSpinLock();
 
   protected static final class IndexTxSnapshot {
     public Map<Object, Object> indexSnapshot = new HashMap<Object, Object>();
-    public boolean             clear         = false;
+    public boolean clear = false;
   }
 
   public OIndexAbstract(String name, final String type, String algorithm, final OIndexEngine<T> indexEngine,
-      String valueContainerAlgorithm, ODocument metadata) {
+                        String valueContainerAlgorithm, ODocument metadata) {
     acquireExclusiveLock();
     try {
       databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
@@ -137,7 +137,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   public static IndexMetadata loadMetadataInternal(final ODocument config, final String type, final String algorithm,
-      final String valueContainerAlgorithm) {
+                                                   final String valueContainerAlgorithm) {
     String indexName = config.field(OIndexInternal.CONFIG_NAME);
 
     final ODocument indexDefinitionDoc = config.field(OIndexInternal.INDEX_DEFINITION);
@@ -217,16 +217,15 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   /**
    * Creates the index.
-   * 
-   * @param clusterIndexName
-   *          Cluster name where to place the TreeMap
+   *
+   * @param clusterIndexName Cluster name where to place the TreeMap
    * @param clustersToIndex
    * @param rebuild
    * @param progressListener
    */
   public OIndexInternal<?> create(final OIndexDefinition indexDefinition, final String clusterIndexName,
-      final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener,
-      final OStreamSerializer valueSerializer) {
+                                  final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener,
+                                  final OStreamSerializer valueSerializer) {
     acquireExclusiveLock();
     try {
       configuration.set(new ODocument().setTrackingChanges(false));
@@ -867,12 +866,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   public void releaseModificationLock() {
-    try {
-      modificationLock.releaseModificationLock();
-    } catch (IllegalMonitorStateException e) {
-      OLogManager.instance().error(this, "Error on releasing index lock against %s", e, getName());
-      throw e;
-    }
+    modificationLock.releaseModificationLock();
   }
 
   @Override
@@ -1029,7 +1023,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   protected long[] indexCluster(final String clusterName, final OProgressListener iProgressListener, long documentNum,
-      long documentIndexed, long documentTotal) {
+                                long documentIndexed, long documentTotal) {
     try {
       for (final ORecord record : getDatabase().browseCluster(clusterName)) {
         if (Thread.interrupted())
@@ -1066,7 +1060,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       // END OF CLUSTER REACHED, IGNORE IT
     }
 
-    return new long[] { documentNum, documentIndexed };
+    return new long[]{documentNum, documentIndexed};
   }
 
   private OAbstractPaginatedStorage getStorage() {
@@ -1141,6 +1135,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
         } else if (serKey instanceof ODocument) {
           keyContainer = (ODocument) serKey;
         }
+
+        if (keyContainer == null)
+          throw new OTransactionException("Key was not provided during key-value pair insertion");
+
         final Object storedKey = keyContainer.field("key");
         if (storedKey instanceof List)
           key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);

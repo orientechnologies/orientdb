@@ -419,9 +419,6 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   public void onRecordAfterCreate(ODocument document) {
     document = checkForLoading(document);
 
-    // STORE THE RECORD IF NEW, OTHERWISE ITS RID
-    final OIdentifiable rid = document.getIdentity();
-
     final OClass cls = ODocumentInternal.getImmutableSchemaClass(document);
     if (cls != null) {
       final Collection<OIndex<?>> indexes = cls.getIndexes();

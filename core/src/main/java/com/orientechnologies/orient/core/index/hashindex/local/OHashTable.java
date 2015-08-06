@@ -4,6 +4,7 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.Comparator;
 
@@ -90,6 +91,7 @@ public interface OHashTable<K, V> {
     public final boolean allLeftHashMapsEqual;
     public final boolean allRightHashMapsEqual;
 
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
     public NodeSplitResult(long[] newNode, boolean allLeftHashMapsEqual, boolean allRightHashMapsEqual) {
       this.newNode = newNode;
       this.allLeftHashMapsEqual = allLeftHashMapsEqual;

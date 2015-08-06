@@ -25,6 +25,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import com.orientechnologies.common.io.OIOUtils;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class OBuffer implements Externalizable {
   public byte[] buffer;

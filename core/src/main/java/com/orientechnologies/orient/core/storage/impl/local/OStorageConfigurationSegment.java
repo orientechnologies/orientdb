@@ -35,8 +35,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
  */
 @SuppressWarnings("serial")
 public class OStorageConfigurationSegment extends OStorageConfiguration {
-  private static final int         START_SIZE = 10000;
-  private final OSingleFileSegment segment;
+  private static final int START_SIZE = 10000;
+  private final transient OSingleFileSegment segment;
 
   public OStorageConfigurationSegment(final OLocalPaginatedStorage iStorage) throws IOException {
     super(iStorage);

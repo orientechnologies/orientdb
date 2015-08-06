@@ -506,7 +506,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             endAtomicOperation(false, null);
 
             return createPhysicalPosition(recordType, clusterPosition, version);
-          } catch (Exception e) {
+          } catch (RuntimeException e) {
             endAtomicOperation(true, e);
             throw new OStorageException(null, e);
           }
@@ -966,7 +966,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         updateClusterState(0, sizeDiff, atomicOperation);
 
         endAtomicOperation(false, null);
-      } catch (Exception e) {
+      } catch (RuntimeException e) {
         endAtomicOperation(true, e);
         throw new OStorageException("Error during record update.", e);
       } finally {

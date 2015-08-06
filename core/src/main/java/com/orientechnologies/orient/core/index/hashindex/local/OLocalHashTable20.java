@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Iterator;
 
 /**
@@ -41,12 +42,12 @@ import java.util.Iterator;
  * to classic algorithm because of its big memory consumption in case of non-uniform data distribution instead it is implemented
  * according too "Multilevel Extendible Hashing Sven Helmer, Thomas Neumann, Guido Moerkotte April 17, 2002". Which has much less
  * memory consumption in case of nonuniform data distribution.
- * 
+ * <p>
  * Index itself uses so called "muiltilevel  schema" when first level contains 256 buckets, when bucket is split it is put at the
  * end of other file which represents second level. So if data which are put has distribution close to uniform (this index was
  * designed to be use as rid index for DHT storage) buckets split will be preformed in append only manner to speed up index write
  * speed.
- * 
+ * <p>
  * So hash index bucket itself has following structure:
  * <ol>
  * <li>Bucket depth - 1 byte.</li>
@@ -55,30 +56,30 @@ import java.util.Iterator;
  * <li>Offsets of entities stored in this bucket relatively to it's beginning. It is array of int values of undefined size.</li>
  * <li>Entities itself</li>
  * </ol>
- * 
+ * <p>
  * So if 1-st and 2-nd fields are clear. We should discuss the last ones.
- * 
- * 
+ * <p>
+ * <p>
  * Entities in bucket are sorted by key's hash code so each entity has following storage format in bucket: key's hash code (8
  * bytes), key, value. Because entities are stored in sorted order it means that every time when we insert new entity old ones
  * should be moved.
- * 
+ * <p>
  * There are 2 reasons why it is bad:
  * <ol>
  * <li>It will generate write ahead log of enormous size.</li>
  * <li>The more amount of memory is affected in operation the less speed we will have. In worst case 60 kb of memory should be
  * moved.</li>
  * </ol>
- * 
+ * <p>
  * To avoid disadvantages listed above entries ara appended to the end of bucket, but their offsets are stored at the beginning of
  * bucket. Offsets are stored in sorted order (ordered by hash code of entity's key) so we need to move only small amount of memory
  * to store entities in sorted order.
- * 
+ * <p>
  * About indexes of parents of current bucket. When item is removed from bucket we check space which is needed to store all entities
  * of this bucket, it's buddy bucket (bucket which was also created from parent bucket during split) and if space of single bucket
  * is enough to save all entities from both buckets we remove these buckets and put all content in parent bucket. That is why we
  * need indexes of parents of current bucket.
- * 
+ * <p>
  * Also hash index has special file of one page long which contains information about state of each level of buckets in index. This
  * information is stored as array index of which equals to file level. All array item has following structure:
  * <ol>
@@ -87,49 +88,48 @@ import java.util.Iterator;
  * <li>Amount of buckets in given level - 8 bytes.</li>
  * <li>Index of page of first removed bucket (not splitted but removed) - 8 bytes</li>
  * </ol>
- * 
- * 
+ *
  * @author Andrey Lomakin
  * @since 12.03.13
  */
 public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashTable<K, V> {
-  private static final double            MERGE_THRESHOLD     = 0.2;
+  private static final double MERGE_THRESHOLD = 0.2;
 
-  private static final long              HASH_CODE_MIN_VALUE = 0;
-  private static final long              HASH_CODE_MAX_VALUE = 0xFFFFFFFFFFFFFFFFL;
+  private static final long HASH_CODE_MIN_VALUE = 0;
+  private static final long HASH_CODE_MAX_VALUE = 0xFFFFFFFFFFFFFFFFL;
 
-  private final String                   metadataConfigurationFileExtension;
-  private final String                   treeStateFileExtension;
+  private final String metadataConfigurationFileExtension;
+  private final String treeStateFileExtension;
 
-  public static final int                HASH_CODE_SIZE      = 64;
-  public static final int                MAX_LEVEL_DEPTH     = 8;
-  public static final int                MAX_LEVEL_SIZE      = 1 << MAX_LEVEL_DEPTH;
+  public static final int HASH_CODE_SIZE = 64;
+  public static final int MAX_LEVEL_DEPTH = 8;
+  public static final int MAX_LEVEL_SIZE = 1 << MAX_LEVEL_DEPTH;
 
-  public static final int                LEVEL_MASK          = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
+  public static final int LEVEL_MASK = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
 
-  private final OHashFunction<K>         keyHashFunction;
+  private final OHashFunction<K> keyHashFunction;
 
-  private OBinarySerializer<K>           keySerializer;
-  private OBinarySerializer<V>           valueSerializer;
-  private OType[]                        keyTypes;
+  private OBinarySerializer<K> keySerializer;
+  private OBinarySerializer<V> valueSerializer;
+  private OType[] keyTypes;
 
   private final KeyHashCodeComparator<K> comparator;
 
-  private boolean                        nullKeyIsSupported;
-  private long                           nullBucketFileId    = -1;
-  private final String                   nullBucketFileExtension;
+  private boolean nullKeyIsSupported;
+  private long nullBucketFileId = -1;
+  private final String nullBucketFileExtension;
 
-  private long                           fileStateId;
+  private long fileStateId;
 
-  private long                           hashStateEntryIndex;
+  private long hashStateEntryIndex;
 
-  private OHashTableDirectory            directory;
+  private OHashTableDirectory directory;
 
-  private final boolean                  durableInNonTxMode;
+  private final boolean durableInNonTxMode;
 
   public OLocalHashTable20(String name, String metadataConfigurationFileExtension, String treeStateFileExtension,
-      String bucketFileExtension, String nullBucketFileExtension, OHashFunction<K> keyHashFunction, boolean durableInNonTxMode,
-      OAbstractPaginatedStorage abstractPaginatedStorage) {
+                           String bucketFileExtension, String nullBucketFileExtension, OHashFunction<K> keyHashFunction, boolean durableInNonTxMode,
+                           OAbstractPaginatedStorage abstractPaginatedStorage) {
     super(abstractPaginatedStorage, name, bucketFileExtension);
 
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
@@ -143,7 +143,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
   @Override
   public void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
-      boolean nullKeyIsSupported) {
+                     boolean nullKeyIsSupported) {
     final OAtomicOperation atomicOperation;
     try {
       atomicOperation = startAtomicOperation();
@@ -155,7 +155,11 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
     try {
       try {
 
-        this.keyTypes = keyTypes;
+        if (keyTypes != null)
+          this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
+        else
+          this.keyTypes = null;
+
         this.nullKeyIsSupported = nullKeyIsSupported;
 
         this.directory = new OHashTableDirectory(treeStateFileExtension, getName(), durableInNonTxMode, storage);
@@ -650,7 +654,11 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
   public void load(String name, OType[] keyTypes, boolean nullKeyIsSupported) {
     acquireExclusiveLock();
     try {
-      this.keyTypes = keyTypes;
+      if (keyTypes != null)
+        this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
+      else
+        this.keyTypes = null;
+
       this.nullKeyIsSupported = nullKeyIsSupported;
 
       OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
@@ -789,7 +797,8 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
   }
 
   private BucketPath nextNonEmptyNode(BucketPath bucketPath) throws IOException {
-    nextBucketLoop: while (bucketPath != null) {
+    nextBucketLoop:
+    while (bucketPath != null) {
       final long[] node = directory.getNode(bucketPath.nodeIndex);
       final int startIndex = bucketPath.itemIndex + bucketPath.hashMapOffset;
       final int endIndex = MAX_LEVEL_SIZE;
@@ -1179,7 +1188,8 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
   }
 
   private BucketPath prevNonEmptyNode(BucketPath nodePath) throws IOException {
-    prevBucketLoop: while (nodePath != null) {
+    prevBucketLoop:
+    while (nodePath != null) {
       final long[] node = directory.getNode(nodePath.nodeIndex);
       final int startIndex = 0;
       final int endIndex = nodePath.itemIndex + nodePath.hashMapOffset;
@@ -1670,7 +1680,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
   }
 
   private void updateNodesAfterSplit(BucketPath bucketPath, int nodeIndex, long[] newNode, int nodeLocalDepth, int hashMapSize,
-      boolean allLeftHashMapEquals, boolean allRightHashMapsEquals, int newNodeIndex) throws IOException {
+                                     boolean allLeftHashMapEquals, boolean allRightHashMapsEquals, int newNodeIndex) throws IOException {
 
     final int startIndex = findParentNodeStartIndex(bucketPath);
 
@@ -1945,7 +1955,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
   }
 
   private void splitBucketContent(OHashIndexBucket<K, V> bucket, OHashIndexBucket<K, V> updatedBucket,
-      OHashIndexBucket<K, V> newBucket, int newBucketDepth) throws IOException {
+                                  OHashIndexBucket<K, V> newBucket, int newBucketDepth) throws IOException {
     assert checkBucketDepth(bucket);
 
     for (OHashIndexBucket.Entry<K, V> entry : bucket) {
@@ -1963,7 +1973,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
   }
 
   private BucketSplitResult splitBucket(OHashIndexBucket<K, V> bucket, int fileLevel, long pageIndex,
-      OAtomicOperation atomicOperation) throws IOException {
+                                        OAtomicOperation atomicOperation) throws IOException {
     int bucketDepth = bucket.getDepth();
     int newBucketDepth = bucketDepth + 1;
 

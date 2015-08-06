@@ -65,7 +65,6 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
             if (e.value == null)
               // KEY REMOVED
               tot--;
-          } else if (e.operation == OPERATION.PUT) {
           }
         }
       }
@@ -75,7 +74,6 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
           if (e.value == null)
             // KEY REMOVED
             tot--;
-        } else if (e.operation == OPERATION.PUT) {
         }
       }
     }

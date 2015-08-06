@@ -96,8 +96,6 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       final ORecordBytes identityRecord = new ORecordBytes();
       ODatabaseDocumentInternal database = getDatabase();
 
-      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
-
       database.save(identityRecord, clusterIndexName);
       identity = identityRecord.getIdentity();
 
@@ -158,9 +156,6 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       boolean isAutomatic) {
     acquireExclusiveLock();
     try {
-      ODatabaseDocumentInternal database = getDatabase();
-      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
-
       sbTree.load(indexName, determineKeySerializer(indexDefinition), valueSerializer,
           indexDefinition != null ? indexDefinition.getTypes() : null, determineKeySize(indexDefinition), indexDefinition != null
               && !indexDefinition.isNullValuesIgnored());

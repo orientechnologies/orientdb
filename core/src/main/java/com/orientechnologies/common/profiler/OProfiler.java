@@ -26,6 +26,7 @@ import java.util.Map;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public interface OProfiler extends OService {
 
@@ -47,6 +48,7 @@ public interface OProfiler extends OService {
 
   long startChrono();
 
+  @SuppressFBWarnings(value = "RV - RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT")
   long stopChrono(String iName, String iDescription, long iStartTime);
 
   long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary);
