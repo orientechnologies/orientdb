@@ -4,38 +4,39 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
+ * Creates a new user.
+ * 
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 4/22/2015
  */
 public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_CREATE = "CREATE";
-  public static final String KEYWORD_USER = "USER";
-  public static final String KEYWORD_IDENTIFIED = "IDENTIFIED";
-  public static final String KEYWORD_BY = "BY";
-  public static final String KEYWORD_ROLE = "ROLE";
-  public static final String SYNTAX = "CREATE USER <user name> IDENTIFIED BY <user password> [ ROLE <role name> ]";
+  public static final String  KEYWORD_CREATE      = "CREATE";
+  public static final String  KEYWORD_USER        = "USER";
+  public static final String  KEYWORD_IDENTIFIED  = "IDENTIFIED";
+  public static final String  KEYWORD_BY          = "BY";
+  public static final String  KEYWORD_ROLE        = "ROLE";
+  public static final String  SYNTAX              = "CREATE USER <user-name> IDENTIFIED BY <user-password> [ ROLE <role-name> ]";
 
-  private static final String USER_CLASS = "OUser";
-  private static final String USER_FIELD_NAME = "name";
+  private static final String USER_CLASS          = "OUser";
+  private static final String USER_FIELD_NAME     = "name";
   private static final String USER_FIELD_PASSWORD = "password";
-  private static final String USER_FIELD_STATUS = "status";
-  private static final String USER_FIELD_ROLES = "roles";
+  private static final String USER_FIELD_STATUS   = "status";
+  private static final String USER_FIELD_ROLES    = "roles";
 
-  private static final String DEFAULT_STATUS = "ACTIVE";
-  private static final String DEFAULT_ROLE = "writer";
-  private static final String ROLE_CLASS = "ORole";
-  private static final String ROLE_FIELD_NAME = "name";
+  private static final String DEFAULT_STATUS      = "ACTIVE";
+  private static final String DEFAULT_ROLE        = "writer";
+  private static final String ROLE_CLASS          = "ORole";
+  private static final String ROLE_FIELD_NAME     = "name";
 
-  private String userName;
-  private String pass;
-  private List<String> roles;
+  private String              userName;
+  private String              pass;
+  private List<String>        roles;
 
   @Override
   public OCommandExecutorSQLCreateUser parse(OCommandRequest iRequest) {
@@ -43,11 +44,11 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
 
     parserRequiredKeyword(KEYWORD_CREATE);
     parserRequiredKeyword(KEYWORD_USER);
-    this.userName = parserRequiredWord(false, "Expected <user name>");
+    this.userName = parserRequiredWord(false, "Expected <user-name>");
 
     parserRequiredKeyword(KEYWORD_IDENTIFIED);
     parserRequiredKeyword(KEYWORD_BY);
-    this.pass = parserRequiredWord(false, "Expected <user password>");
+    this.pass = parserRequiredWord(false, "Expected <user-password>");
 
     this.roles = new ArrayList<String>();
 
@@ -58,10 +59,10 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
       }
 
       if (temp.equals(KEYWORD_ROLE)) {
-        String role = parserRequiredWord(false, "Expected <role name>");
+        String role = parserRequiredWord(false, "Expected <role-name>");
         int roleLen = (role != null) ? role.length() : 0;
         if (roleLen > 0) {
-          if (role.charAt(0) == '[' && role.charAt(roleLen-1) == ']') {
+          if (role.charAt(0) == '[' && role.charAt(roleLen - 1) == ']') {
             role = role.substring(1, role.length() - 1);
             String[] splits = role.split("[, ]");
             for (String spl : splits) {
@@ -86,8 +87,8 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
     }
 
     // Build following command:
-    //    INSERT INTO OUser SET name='<name>', password='<pass>', status='ACTIVE',
-    //    role=(SELECT FROM ORole WHERE name in ['<role1>', '<role2>', ...])
+    // INSERT INTO OUser SET name='<name>', password='<pass>', status='ACTIVE',
+    // role=(SELECT FROM ORole WHERE name in ['<role1>', '<role2>', ...])
 
     // INSERT INTO OUser SET
     StringBuilder sb = new StringBuilder();
@@ -133,7 +134,7 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
       sb.append("', ");
     }
     sb.append("'");
-    sb.append(this.roles.get(this.roles.size()-1));
+    sb.append(this.roles.get(this.roles.size() - 1));
     sb.append("'])");
 
     return getDatabase().command(new OCommandSQL(sb.toString())).execute();

@@ -36,6 +36,8 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
+ * Test cases against OrientDB console.
+ * 
  * @author Luigi Dell'Aquila
  */
 public class OConsoleDatabaseAppTest {
@@ -126,11 +128,14 @@ public class OConsoleDatabaseAppTest {
 
     builder.append("traverse out() from V;\n");
 
+    builder.append("create user TestUser identified by passwd ROLE ['reader','writer'];\n");
+
+    builder.append("drop user TestUser;\n");
+
     OConsoleDatabaseApp console = new OConsoleDatabaseApp(new String[] { builder.toString() });
 
     try {
       console.run();
-
 
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
       db.open("admin", "admin");
@@ -147,8 +152,7 @@ public class OConsoleDatabaseAppTest {
       }
       OrientGraph graph = new OrientGraph(dbUrl);
       try {
-        Iterable<Vertex> result = graph
-            .command(new OSQLSynchQuery<Vertex>("select expand(out()) from (select from V where name = 'foo')")).execute();
+        Iterable<Vertex> result = graph.command(new OSQLSynchQuery<Vertex>("select expand(out()) from (select from V where name = 'foo')")).execute();
         Iterator<Vertex> iterator = result.iterator();
         Assert.assertTrue(iterator.hasNext());
         Vertex next = iterator.next();
@@ -229,9 +233,9 @@ public class OConsoleDatabaseAppTest {
       console.displayRawRecord(rid);
       result = out.toByteArray();
       resultString = new String(result);
-      
+
       Assert.assertTrue(resultString.contains("Raw record content."));
-      if("ORecordSerializerBinary".equals(((ODatabaseDocumentTx)console.getCurrentDatabase()).getSerializer().toString())){
+      if ("ORecordSerializerBinary".equals(((ODatabaseDocumentTx) console.getCurrentDatabase()).getSerializer().toString())) {
         Assert.assertTrue(resultString.contains("class name: foo"));
         Assert.assertTrue(resultString.contains("property value: barbar"));
       }
