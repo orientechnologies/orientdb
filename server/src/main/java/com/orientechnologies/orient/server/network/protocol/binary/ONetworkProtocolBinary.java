@@ -19,18 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -107,6 +95,18 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
+
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -1171,8 +1171,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String key = channel.readString();
     final String value = channel.readString();
     final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
-    if (cfg != null)
+
+    if (cfg != null) {
       cfg.setValue(value);
+      if (!cfg.isChangeableAtRuntime())
+        throw new OConfigurationException("Property '" + key + "' cannot be changed at runtime. Change the setting at startup");
+    } else
+      throw new OConfigurationException("Property '" + key + "' was not found in global configuration");
 
     beginResponse();
     try {
