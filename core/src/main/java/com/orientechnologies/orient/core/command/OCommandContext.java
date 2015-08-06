@@ -74,7 +74,11 @@ public interface OCommandContext {
    * @exception OTimeoutException
    *              if the strategy is "exception" (default)
    */
-  boolean checkTimeout();
+  public boolean checkTimeout();
+
+  public Map<Object, Object> getInputParameters();
+
+  public void setInputParameters(Map<Object, Object> inputParameters);
 
   /**
    * Creates a copy of execution context.
@@ -87,4 +91,5 @@ public interface OCommandContext {
    * @param iContext
    */
   void merge(OCommandContext iContext);
+
 }

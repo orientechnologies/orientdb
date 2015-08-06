@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * SQL INSERT command.
- * 
+ *
  * @author Luca Garulli
  * @author Johann Sorel (Geomatys)
  */

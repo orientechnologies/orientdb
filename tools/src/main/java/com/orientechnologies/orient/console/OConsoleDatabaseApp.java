@@ -592,7 +592,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         storageType = "plocal";
 
       new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseDatabase(
-          storageType);
+        storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.release();
@@ -646,7 +646,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         storageType = "plocal";
 
       new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseCluster(
-          clusterId, storageType);
+        clusterId, storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.releaseCluster(clusterId);
@@ -681,6 +681,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(splitInWords = false, description = "Create a class", onlineHelp = "SQL-Create-Class")
   public void createClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
     sqlCommand("create", iCommandText, "\nClass created successfully. Total classes in database now: %d\n", true);
+    updateDatabaseInfo();
+  }
+
+  @ConsoleCommand(splitInWords = false, description = "Create a user", onlineHelp = "SQL-Create-User")
+  public void createUser(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+    sqlCommand("create", iCommandText, "\nUser created successfully.\n", false);
+    updateDatabaseInfo();
+  }
+
+  @ConsoleCommand(splitInWords = false, description = "Drop a user", onlineHelp = "SQL-Drop-User")
+  public void dropUser(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+    sqlCommand("drop", iCommandText, "\nUser dropped successfully.\n", false);
     updateDatabaseInfo();
   }
 
@@ -1980,24 +1992,24 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       final Map<String, String> values = serverAdmin.getGlobalConfigurations();
 
       message("\nREMOTE SERVER CONFIGURATION:");
-      message("\n+--------------------------------------------------------+---------------------------+");
-      message("\n| %-55s| %-25s |", "NAME", "VALUE");
-      message("\n+--------------------------------------------------------+---------------------------+");
+      message("\n+--------------------------------------------------------------------------------------+---------------------------+");
+      message("\n| %-85s| %-25s |", "NAME", "VALUE");
+      message("\n+--------------------------------------------------------------------------------------+---------------------------+");
       for (Entry<String, String> p : values.entrySet()) {
-        message("\n| %-55s| %-25s |", p.getKey(), p.getValue());
+        message("\n| %-85s| %-25s |", p.getKey(), p.getValue());
       }
     } else {
       // LOCAL STORAGE
       message("\nLOCAL SERVER CONFIGURATION:");
-      message("\n+--------------------------------------------------------+---------------------------+");
-      message("\n| %-55s| %-25s |", "NAME", "VALUE");
-      message("\n+--------------------------------------------------------+---------------------------+");
+      message("\n+--------------------------------------------------------------------------------------+---------------------------+");
+      message("\n| %-85s| %-25s |", "NAME", "VALUE");
+      message("\n+--------------------------------------------------------------------------------------+---------------------------+");
       for (OGlobalConfiguration cfg : OGlobalConfiguration.values()) {
-        message("\n| %-55s| %-25s |", cfg.getKey(), cfg.getValue());
+        message("\n| %-85s| %-25s |", cfg.getKey(), cfg.getValue());
       }
     }
 
-    message("\n+--------------------------------------------------------+---------------------------+");
+    message("\n+--------------------------------------------------------------------------------------+---------------------------+");
   }
 
   /** Should be used only by console commands */

@@ -1,15 +1,35 @@
+/*
+ *
+ *  *  Copyright 2015 Orient Technologies LTD (info(at)orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientdb.com
+ *
+ */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static org.testng.Assert.*;
+import org.testng.annotations.Test;
+
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class OCommandExecutorSQLUpdateTest {
   @Test
@@ -116,56 +136,38 @@ public class OCommandExecutorSQLUpdateTest {
     }
 
   }
-    @Test
-    public void testNamedParamsSyntax() {
-      //issue #4470
-      String className = getClass().getSimpleName() + "_NamedParamsSyntax";
-      final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:"+className);
-      db.create();
-
-      try {
-        db.command(new OCommandSQL("create class " + className)).execute();
-
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("name", "foo");
-        params.put("full_name", "foo");
-        params.put("html_url", "foo");
-        params.put("description", "foo");
-        params.put("git_url", "foo");
-        params.put("ssh_url", "foo");
-        params.put("clone_url", "foo");
-        params.put("svn_url", "foo");
-
-        OCommandSQL sql1 = new OCommandSQL("update " + className
-            + " SET name = :name, full_name = :full_name, html_url = :html_url, description = :description, "
-            + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
-            + "UPSERT WHERE full_name = :full_name");
-        db.command(sql1).execute(params);
-
-        OCommandSQL sql2 = new OCommandSQL("update " + className
-            + " SET name = :name, html_url = :html_url, description = :description, "
-            + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
-            + "UPSERT WHERE full_name = :full_name");
-        db.command(sql2).execute(params);
-      }finally{
-        db.close();
-      }
-    }
-
 
   @Test
-  public void testUpsertSetPut() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateUpsertSetPut");
+  public void testNamedParamsSyntax() {
+    // issue #4470
+    String className = getClass().getSimpleName() + "_NamedParamsSyntax";
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + className);
     db.create();
+
     try {
-      db.command(new OCommandSQL("CREATE CLASS test")).execute();
-      db.command(new OCommandSQL("CREATE PROPERTY test.id integer")).execute();
-      db.command(new OCommandSQL("CREATE PROPERTY test.addField EMBEDDEDSET string")).execute();
-      db.command(new OCommandSQL("UPDATE test SET id = 1 ADD addField=\"xxxx\" UPSERT WHERE id = 1")).execute();
-      Iterable result = db.query(new OSQLSynchQuery<Object>("select from test"));
-      ODocument doc = (ODocument) result.iterator().next();
-      Set<?> set = doc.field("addField");
-      assertEquals(set.size(), 1);
+      db.command(new OCommandSQL("create class " + className)).execute();
+
+      Map<String, Object> params = new HashMap<String, Object>();
+      params.put("name", "foo");
+      params.put("full_name", "foo");
+      params.put("html_url", "foo");
+      params.put("description", "foo");
+      params.put("git_url", "foo");
+      params.put("ssh_url", "foo");
+      params.put("clone_url", "foo");
+      params.put("svn_url", "foo");
+
+      OCommandSQL sql1 = new OCommandSQL("update " + className
+          + " SET name = :name, full_name = :full_name, html_url = :html_url, description = :description, "
+          + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
+          + "UPSERT WHERE full_name = :full_name");
+      db.command(sql1).execute(params);
+
+      OCommandSQL sql2 = new OCommandSQL("update " + className
+          + " SET name = :name, html_url = :html_url, description = :description, "
+          + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
+          + "UPSERT WHERE full_name = :full_name");
+      db.command(sql2).execute(params);
     } finally {
       db.close();
     }

@@ -28,6 +28,7 @@ import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.collate.OCollateFactory;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -405,7 +406,8 @@ public class OSQLEngine {
     ODynamicSQLElementFactory.FUNCTIONS.remove(iName);
   }
 
-  public OCommandExecutorSQLAbstract getCommand(String candidate) {
+
+  public OCommandExecutor getCommand(String candidate) {
     candidate = candidate.trim();
     final Set<String> names = getCommandNames();
     String commandName = candidate;

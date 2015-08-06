@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.Map;
 
 public class OBaseExpression extends OMathExpression {
@@ -63,6 +66,23 @@ public class OBaseExpression extends OMathExpression {
     return result.toString();
   }
 
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    Object result = null;
+    if (number != null) {
+      result = number.getValue();
+    }
+    if (identifier != null) {
+      result = identifier.execute(iCurrentRecord, ctx);
+    }
+    if (string != null && string.length() > 1) {
+      result = string.substring(1, string.length() - 1);
+    }
+    if (modifier != null) {
+      result = modifier.execute(iCurrentRecord, result, ctx);
+    }
+    return result;
+  }
+
   public void replaceParameters(Map<Object, Object> params) {
     if (identifier != null) {
       identifier.replaceParameters(params);
@@ -78,7 +98,8 @@ public class OBaseExpression extends OMathExpression {
     }
   }
 
-  @Override protected boolean supportsBasicCalculation() {
+  @Override
+  protected boolean supportsBasicCalculation() {
     return true;
   }
 }

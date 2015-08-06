@@ -51,7 +51,7 @@ import java.util.concurrent.locks.Lock;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OCommandOutputListener {
-  public final static int    CHUNK_MAX_SIZE = 1048576;    // 1MB
+  public final static int    CHUNK_MAX_SIZE = 4194304;    // 4MB
   public static final String DEPLOYDB       = "deploydb.";
 
   public enum MODE {
@@ -106,8 +106,11 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
             // CREATE A BACKUP OF DATABASE FROM SCRATCH
             backupFile = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
 
+            final int compressionRate = OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger();
+
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "creating backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
+                "creating backup of database '%s' (compressionRate=%d) in directory: %s...", databaseName, compressionRate,
+                backupFile.getAbsolutePath());
 
             if (backupFile.exists())
               backupFile.delete();
@@ -123,13 +126,14 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
                   lastOperationId.set(database.getStorage().getLastOperationId());
                   return null;
                 }
-              }, this, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+              }, this, compressionRate, CHUNK_MAX_SIZE);
 
               if (compressedFiles.size() < 2) {
                 throw new ODistributedException("Cannot backup database, compressed files: " + compressedFiles);
               }
 
-              ODistributedServerLog.info(this, iManager.getLocalNodeName(), null, DIRECTION.NONE, "compressed %d files", compressedFiles.size());
+              ODistributedServerLog.info(this, iManager.getLocalNodeName(), null, DIRECTION.NONE, "compressed %d files",
+                  compressedFiles.size());
 
             } finally {
               fileOutputStream.close();
