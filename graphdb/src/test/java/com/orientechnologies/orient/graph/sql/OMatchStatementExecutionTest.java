@@ -209,6 +209,21 @@ public class OMatchStatementExecutionTest {
   }
 
   @Test
+  public void testSimpleUnnamedParams() throws Exception {
+    List<ODocument> qResult = db.command(
+        new OCommandSQL("match {class:Person, as: person, where: (name = ? or name = ?)} return person")).execute("n1", "n2");
+
+    assertEquals(2, qResult.size());
+    for (ODocument doc : qResult) {
+      assertTrue(doc.fieldNames().length == 1);
+      OIdentifiable personId = doc.field("person");
+      ODocument person = personId.getRecord();
+      String name = person.field("name");
+      assertTrue(name.equals("n1") || name.equals("n2"));
+    }
+  }
+
+  @Test
   public void testCommonFriends() throws Exception {
 
     List<ODocument> qResult = db
