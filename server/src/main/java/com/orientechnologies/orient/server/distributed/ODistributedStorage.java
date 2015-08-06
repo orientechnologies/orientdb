@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
@@ -59,6 +58,7 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -249,6 +249,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       switch (executionMode) {
       case LOCAL:
+        // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
         return wrapped.command(iCommand);
 
       case REPLICATE:
@@ -259,37 +260,50 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
           final Map<String, Collection<String>> nodeClusterMap = dbCfg.getServerClusterMap(involvedClusters, localNodeName);
 
-          if (nodeClusterMap.size() == 1 && nodeClusterMap.keySet().iterator().next().equals(localNodeName))
+          final Map<String, Object> results;
+
+          if (nodeClusterMap.size() == 1 && nodeClusterMap.keySet().iterator().next().equals(localNodeName)) {
             // LOCAL NODE, AVOID TO DISTRIBUTE IT
-            return wrapped.command(iCommand);
+            // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
+            result = wrapped.command(iCommand);
 
-          // SELECT: SPLIT CLASSES/CLUSTER IF ANY
-          final Map<String, Object> results = executeOnServers(iCommand, involvedClusters, nodeClusterMap);
+            results = new HashMap<String, Object>(1);
+            results.put(localNodeName, result);
 
-          if (results.size() == 1)
-            // ONE RESULT ONLY: RETURN IT DIRECTLY
-            result = results.values().iterator().next();
-          else {
-            final OCommandExecutorSQLSelect select = exec instanceof OCommandExecutorSQLSelect ? (OCommandExecutorSQLSelect) exec
-                : null;
-
-            if (select != null && select.isAnyFunctionAggregates()) {
-              result = mergeResultByAggegation(select, results);
-            } else {
-              // MIX & FILTER RESULT SET AVOIDING DUPLICATES
-              // TODO: ONCE OPTIMIZED (SEE ABOVE) AVOID TO FILTER HERE
-              final Set<Object> set = new HashSet<Object>();
-              for (Map.Entry<String, Object> entry : ((Map<String, Object>) results).entrySet()) {
-                final Object nodeResult = entry.getValue();
-                if (nodeResult instanceof Collection)
-                  set.addAll((Collection<?>) nodeResult);
-                else if (nodeResult instanceof Exception)
-                  // RECEIVED EXCEPTION
-                  throw (Exception) nodeResult;
-              }
-              result = new ArrayList<Object>(set);
-            }
+          } else {
+            // SELECT: SPLIT CLASSES/CLUSTER IF ANY
+            results = executeOnServers(iCommand, involvedClusters, nodeClusterMap);
           }
+
+          final OCommandExecutorSQLSelect select = exec instanceof OCommandExecutorSQLSelect ? (OCommandExecutorSQLSelect) exec
+              : null;
+
+          if (select != null && select.isAnyFunctionAggregates()) {
+            result = mergeResultByAggegation(select, results);
+          } else {
+            // MIX & FILTER RESULT SET AVOIDING DUPLICATES
+            // TODO: ONCE OPTIMIZED (SEE ABOVE) AVOID TO FILTER HERE
+
+            final ArrayList<Object> set = new ArrayList<Object>();
+            for (Map.Entry<String, Object> entry : ((Map<String, Object>) results).entrySet()) {
+              final Object nodeResult = entry.getValue();
+              if (nodeResult instanceof Collection)
+                set.addAll((Collection<?>) nodeResult);
+              else if (nodeResult instanceof Exception)
+                // RECEIVED EXCEPTION
+                throw (Exception) nodeResult;
+              else
+                set.add(nodeResult);
+            }
+
+            if (result instanceof OResultSet) {
+              // REUSE THE SAME RESULTSET TO AVOID DUPLICATES
+              ((OResultSet) result).clear();
+              ((OResultSet) result).addAll(set);
+            } else
+              result = new ArrayList<Object>(set);
+          }
+
         } else {
           final OAbstractCommandTask task = iCommand instanceof OCommandScript ? new OScriptTask(iCommand) : new OSQLCommandTask(
               iCommand, new HashSet<String>());
@@ -306,6 +320,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
           if (executeLocally(localNodeName, dbCfg, exec, involvedClusters, nodes))
             // LOCAL NODE, AVOID TO DISTRIBUTE IT
+            // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
             return wrapped.command(iCommand);
 
           result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
@@ -333,23 +348,39 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     }
   }
 
-  protected Map<String, Object> executeOnServers(OCommandRequestText iCommand, Collection<String> involvedClusters,
-      Map<String, Collection<String>> nodeClusterMap) {
+  protected Map<String, Object> executeOnServers(final OCommandRequestText iCommand, final Collection<String> involvedClusters,
+      final Map<String, Collection<String>> nodeClusterMap) {
+
     final Map<String, Object> results = new HashMap<String, Object>(nodeClusterMap.size());
 
     // EXECUTE DIFFERENT TASK ON EACH SERVER
     final List<String> nodes = new ArrayList<String>(1);
     for (Map.Entry<String, Collection<String>> c : nodeClusterMap.entrySet()) {
+      final String nodeName = c.getKey();
 
-      final OAbstractCommandTask task = iCommand instanceof OCommandScript ? new OScriptTask(iCommand) : new OSQLCommandTask(
-          iCommand, c.getValue());
-      task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
+      if (!dManager.isNodeAvailable(nodeName, getName())) {
 
-      nodes.clear();
-      nodes.add(c.getKey());
+        ODistributedServerLog.warn(this, dManager.getLocalNodeName(), nodeName, ODistributedServerLog.DIRECTION.OUT,
+            "Node '%s' is involved in the command '%s' against database '%s', but the node is not active. Excluding it", nodeName,
+            iCommand, wrapped.getName());
 
-      results.put(c.getKey(), dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE));
+      } else {
+
+        final OAbstractCommandTask task = iCommand instanceof OCommandScript ? new OScriptTask(iCommand) : new OSQLCommandTask(
+            iCommand, c.getValue());
+        task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
+
+        nodes.clear();
+        nodes.add(nodeName);
+
+        results.put(nodeName, dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE));
+
+      }
     }
+
+    if (results.isEmpty())
+      throw new ODistributedException("No active nodes found to execute command: " + iCommand);
+
     return results;
   }
 
@@ -524,12 +555,23 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             .getClusterPosition(), masterPlaceholder.getRecordVersion()));
       }
 
+      // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
       final OStorageOperationResult<OPhysicalPosition> localResult;
 
       localResult = (OStorageOperationResult<OPhysicalPosition>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
         @Override
         public Object call() throws Exception {
-          return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
+          // USE THE DATABASE TO CALL HOOKS
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+
+          final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
+          ORecordInternal.fill(record, iRecordId, iRecordVersion, iContent, true);
+          db.save(record);
+
+          final OPhysicalPosition ppos = new OPhysicalPosition(iRecordType);
+          ppos.clusterPosition = record.getIdentity().getClusterPosition();
+          ppos.recordVersion = record.getRecordVersion();
+          return new OStorageOperationResult<OPhysicalPosition>(ppos);
         }
       });
 
@@ -701,11 +743,20 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         return new OStorageOperationResult<ORecordVersion>((ORecordVersion) result);
       }
 
+      // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
       final OStorageOperationResult<ORecordVersion> localResult;
+
       localResult = (OStorageOperationResult<ORecordVersion>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
         @Override
         public Object call() throws Exception {
-          return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
+          // USE THE DATABASE TO CALL HOOKS
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+
+          final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
+          ORecordInternal.fill(record, iRecordId, iVersion, iContent, true);
+          db.save(record);
+
+          return new OStorageOperationResult<ORecordVersion>(record.getRecordVersion());
         }
       });
 
@@ -778,11 +829,20 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         return new OStorageOperationResult<Boolean>(true);
       }
 
+      // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
       final OStorageOperationResult<Boolean> localResult;
+
       localResult = (OStorageOperationResult<Boolean>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
         @Override
         public Object call() throws Exception {
-          return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
+          // USE THE DATABASE TO CALL HOOKS
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+          try {
+            db.delete(iRecordId, iVersion);
+            return new OStorageOperationResult<Boolean>(true);
+          } catch (ORecordNotFoundException e) {
+            return new OStorageOperationResult<Boolean>(false);
+          }
         }
       });
 
@@ -893,6 +953,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public void commit(final OTransaction iTx, final Runnable callback) {
+    resetLastValidBackup();
+
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED) {
       // ALREADY DISTRIBUTED
       wrapped.commit(iTx, callback);
@@ -966,7 +1028,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
             if (previousContent.getResult() == null)
               // DELETED
-              throw new OTransactionException("Cannot update record '" + rid + "' because has been deleted");
+              throw new ORecordNotFoundException("Cannot update record '" + rid + "' because has been deleted");
 
             final ORecordVersion v = executionModeSynch ? record.getRecordVersion() : record.getRecordVersion().copy();
 
@@ -1295,21 +1357,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
-  public int getUsers() {
-    return wrapped.getUsers();
-  }
-
-  @Override
-  public int addUser() {
-    return wrapped.addUser();
-  }
-
-  @Override
-  public int removeUser() {
-    return wrapped.removeUser();
-  }
-
-  @Override
   public long[] getClusterDataRange(final int currentClusterId) {
     return wrapped.getClusterDataRange(currentClusterId);
   }
@@ -1333,6 +1380,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return wrapped.higherPhysicalPositions(currentClusterId, entry);
   }
 
+  public OServer getServer() {
+    return serverInstance;
+  }
+
+  public ODistributedServerManager getDistributedManager() {
+    return dManager;
+  }
+
   @Override
   public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
     return wrapped.ceilingPhysicalPositions(clusterId, physicalPosition);
@@ -1346,11 +1401,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   @Override
   public OPhysicalPosition[] lowerPhysicalPositions(int currentClusterId, OPhysicalPosition entry) {
     return wrapped.lowerPhysicalPositions(currentClusterId, entry);
-  }
-
-  @Override
-  public OSharedResourceAdaptiveExternal getLock() {
-    return wrapped.getLock();
   }
 
   public OStorage getUnderlying() {
@@ -1378,9 +1428,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
-  public void backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
+  public List<String> backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener, final int compressionLevel, final int bufferSize) throws IOException {
-    wrapped.backup(out, options, callable, iListener, compressionLevel, bufferSize);
+    return wrapped.backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
   @Override
@@ -1473,7 +1523,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   private void resetLastValidBackup() {
-    if (lastValidBackup != null)
+    if (lastValidBackup != null) {
       lastValidBackup = null;
+    }
   }
 }

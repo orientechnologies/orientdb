@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.command.traverse;
 
 import com.orientechnologies.orient.core.command.OCommand;
+import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -78,7 +79,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     if (lastTraversed == null && !context.isEmpty())
       throw new IllegalStateException("Traverse ended abnormally");
 
-    if (!context.checkTimeout())
+    if (!OCommandExecutorAbstract.checkInterruption(context))
       return false;
 
     // BROWSE ALL THE RECORDS

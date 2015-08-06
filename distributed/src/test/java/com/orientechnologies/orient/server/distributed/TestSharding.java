@@ -161,9 +161,9 @@ public class TestSharding extends AbstractServerClusterTest {
           e.getInVertex().getRecord().reload();
           Assert.assertEquals(fishing.getRecord().getVersion() + i + 1, e.getInVertex().getRecord().getVersion());
 
-          final OrientVertex explain = graph.command(new OCommandSQL("explain select from " + e.getIdentity())).execute();
-          System.out
-              .println("explain select from " + e.getIdentity() + " -> " + ((ODocument) explain.getRecord()).field("servers"));
+          final Iterable<OrientVertex> explain = graph.command(new OCommandSQL("explain select from " + e.getIdentity())).execute();
+
+          System.out.println("explain select from " + e.getIdentity() + " -> " + ((ODocument) explain.iterator().next().getRecord()).field("servers"));
 
           result = graph.command(new OCommandSQL("select from " + e.getIdentity())).execute();
 
@@ -374,7 +374,7 @@ public class TestSharding extends AbstractServerClusterTest {
       e.printStackTrace();
 
       // WAIT FOR TERMINATION
-      Thread.sleep(10000);
+      Thread.sleep(2000);
       throw e;
     }
   }

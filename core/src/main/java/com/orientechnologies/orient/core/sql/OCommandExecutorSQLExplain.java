@@ -80,4 +80,9 @@ public class OCommandExecutorSQLExplain extends OCommandExecutorSQLDelegate {
   public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
     return DISTRIBUTED_RESULT_MGMT.MERGE;
   }
+
+  @Override
+  public boolean isCacheable() {
+    return false;
+  }
 }

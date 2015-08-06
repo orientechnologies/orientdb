@@ -2,8 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class OInstanceofCondition extends OBooleanExpression {
@@ -26,7 +29,7 @@ public class OInstanceofCondition extends OBooleanExpression {
   }
 
   @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return false;
   }
 
@@ -43,8 +46,31 @@ public class OInstanceofCondition extends OBooleanExpression {
     return builder.toString();
   }
 
-  @Override public void replaceParameters(Map<Object, Object> params) {
+  @Override
+  public void replaceParameters(Map<Object, Object> params) {
     left.replaceParameters(params);
   }
+
+  @Override
+  public boolean supportsBasicCalculation() {
+    return left.supportsBasicCalculation();
+  }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    if (!left.supportsBasicCalculation()) {
+      return 1;
+    }
+    return 0;
+  }
+
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
+    if (!left.supportsBasicCalculation()) {
+      return (List) Collections.singletonList(left);
+    }
+    return Collections.EMPTY_LIST;
+  }
+
 }
 /* JavaCC - OriginalChecksum=0b5eb529744f307228faa6b26f0592dc (do not edit this line) */

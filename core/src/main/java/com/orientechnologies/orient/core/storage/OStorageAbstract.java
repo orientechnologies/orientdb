@@ -19,8 +19,10 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.*;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -38,9 +40,35 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class OStorageAbstract implements OStorage, OSharedContainer {
+  public final static ThreadGroup                     storageThreadGroup;
+
+  static {
+    ThreadGroup parentThreadGroup = Thread.currentThread().getThreadGroup();
+
+    final ThreadGroup parentThreadGroupBackup = parentThreadGroup;
+
+    boolean found = false;
+
+    while (parentThreadGroup.getParent() != null) {
+      if (parentThreadGroup.equals(Orient.instance().getThreadGroup())) {
+        parentThreadGroup = parentThreadGroup.getParent();
+        found = true;
+        break;
+      } else
+        parentThreadGroup = parentThreadGroup.getParent();
+    }
+
+    if (!found)
+      parentThreadGroup = parentThreadGroupBackup;
+
+    storageThreadGroup = new ThreadGroup(parentThreadGroup, "OrientDB Storage");
+  }
+
   protected final String                              url;
   protected final String                              mode;
-  protected final OSharedResourceAdaptiveExternal     lock;
+  protected final OSharedResourceAdaptiveExternal dataLock;
+  protected final OReadersWriterSpinLock          stateLock;
+
   protected volatile OStorageConfiguration            configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
   protected String                                    name;
@@ -61,7 +89,8 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     url = iURL;
     this.mode = mode;
 
-    lock = new OSharedResourceAdaptiveExternal(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), timeout, true);
+    dataLock = new OSharedResourceAdaptiveExternal(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), timeout, true);
+    stateLock = new OReadersWriterSpinLock();
   }
 
   public abstract OCluster getClusterByName(final String iClusterName);
@@ -124,21 +153,6 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     return dropCluster(getClusterIdByName(iClusterName), iTruncate);
   }
 
-  public int getUsers() {
-    return lock.getUsers();
-  }
-
-  public int addUser() {
-    return lock.addUser();
-  }
-
-  public int removeUser() {
-    return lock.removeUser();
-  }
-
-  public OSharedResourceAdaptiveExternal getLock() {
-    return lock;
-  }
 
   public long countRecords() {
     long tot = 0;
@@ -151,21 +165,26 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   }
 
   public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
-    if (iExclusiveLock)
-      lock.acquireExclusiveLock();
-    else
-      lock.acquireSharedLock();
+    stateLock.acquireReadLock();
     try {
-      return iCallable.call();
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new OException("Error on nested call in lock", e);
-    } finally {
       if (iExclusiveLock)
-        lock.releaseExclusiveLock();
+        dataLock.acquireExclusiveLock();
       else
-        lock.releaseSharedLock();
+        dataLock.acquireSharedLock();
+      try {
+        return iCallable.call();
+      } catch (RuntimeException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new OException("Error on nested call in lock", e);
+      } finally {
+        if (iExclusiveLock)
+          dataLock.releaseExclusiveLock();
+        else
+          dataLock.releaseSharedLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
     }
   }
 
@@ -212,20 +231,4 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     return 0;
   }
 
-  protected boolean checkForClose(final boolean force) {
-    if (status == STATUS.CLOSED)
-      return false;
-
-    lock.acquireSharedLock();
-    try {
-      if (status == STATUS.CLOSED)
-        return false;
-
-      final int remainingUsers = getUsers() > 0 ? removeUser() : 0;
-
-      return force || (!(this instanceof OAbstractPaginatedStorage) && remainingUsers == 0);
-    } finally {
-      lock.releaseSharedLock();
-    }
-  }
 }

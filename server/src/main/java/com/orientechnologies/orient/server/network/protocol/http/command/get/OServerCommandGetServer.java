@@ -24,6 +24,7 @@ import java.io.StringWriter;
 import java.util.Collection;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -55,7 +56,7 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
       writeDatabases(json);
       writeStorages(json);
       writeProperties(json);
-
+      writeGlobalProperties(json);
       json.endObject();
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
@@ -63,6 +64,22 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
     } finally {
     }
     return false;
+  }
+
+  private void writeGlobalProperties(OJSONWriter json) throws IOException {
+    json.beginCollection(2, true, "globalProperties");
+
+    for (OGlobalConfiguration c : OGlobalConfiguration.values()) {
+      json.beginObject(3, true, null);
+      json.writeAttribute(4, false, "key", c.getKey());
+      json.writeAttribute(4, false, "description", c.getDescription());
+      json.writeAttribute(4, false, "value", c.getValue());
+      json.writeAttribute(4, false, "defaultValue", c.getDefValue());
+      json.writeAttribute(4, false, "canChange", c.isChangeableAtRuntime());
+      json.endObject(3, true);
+    }
+
+    json.endCollection(2, true);
   }
 
   @Override
@@ -94,6 +111,7 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
       writeField(json, 2, "type", s.getClass().getSimpleName());
       writeField(json, 2, "path",
           s instanceof OLocalPaginatedStorage ? ((OLocalPaginatedStorage) s).getStoragePath().replace('\\', '/') : "");
+      writeField(json, 2, "activeUsers", "n.a.");
       json.endObject(2);
     }
     json.endCollection(1, false);

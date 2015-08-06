@@ -56,9 +56,9 @@ public class OUnsafeBinaryConverter implements OBinaryConverter {
           }
 
         } catch (NoSuchFieldException e) {
-          throw new Error();
+          throw new Error(e);
         } catch (IllegalAccessException e) {
-          throw new Error();
+          throw new Error(e);
         }
       }
     });

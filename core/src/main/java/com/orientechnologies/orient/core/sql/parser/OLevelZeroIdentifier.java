@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.Map;
 
 public class OLevelZeroIdentifier extends SimpleNode {
@@ -36,12 +39,19 @@ public class OLevelZeroIdentifier extends SimpleNode {
   }
 
   public void replaceParameters(Map<Object, Object> params) {
-    if(functionCall!=null){
+    if (functionCall != null) {
       functionCall.replaceParameters(params);
     }
-    if(collection!=null){
+    if (collection != null) {
       collection.replaceParameters(params);
     }
+  }
+
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    if (functionCall != null) {
+      return functionCall.execute(iCurrentRecord, ctx);
+    }
+    throw new UnsupportedOperationException();
   }
 }
 /* JavaCC - OriginalChecksum=0305fcf120ba9395b4c975f85cdade72 (do not edit this line) */

@@ -25,11 +25,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * Index implementation that allows only one value for a key.
  * 
@@ -37,9 +32,9 @@ import java.util.Set;
  * 
  */
 public class OIndexUnique extends OIndexOneValue {
-  public OIndexUnique(String typeId, String algorithm, OIndexEngine<OIdentifiable> engine, String valueContainerAlgorithm,
-      ODocument metadata) {
-    super(typeId, algorithm, engine, valueContainerAlgorithm, metadata);
+  public OIndexUnique(String name, String typeId, String algorithm, OIndexEngine<OIdentifiable> engine,
+      String valueContainerAlgorithm, ODocument metadata) {
+    super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata);
   }
 
   @Override

@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.Map;
 
 public class OBaseExpression extends OMathExpression {
@@ -9,15 +12,15 @@ public class OBaseExpression extends OMathExpression {
   private static final Object UNSET           = new Object();
   private Object              inputFinalValue = UNSET;
 
-  protected ONumber         number;
+  protected ONumber           number;
 
-  protected OBaseIdentifier identifier;
+  protected OBaseIdentifier   identifier;
 
-  protected OInputParameter inputParam;
+  protected OInputParameter   inputParam;
 
-  OModifier                 modifier;
+  protected String            string;
 
-
+  OModifier                   modifier;
 
   public OBaseExpression(int id) {
     super(id);
@@ -39,13 +42,21 @@ public class OBaseExpression extends OMathExpression {
       result.append(number.toString());
     } else if (identifier != null) {
       result.append(identifier.toString());
+    } else if (string != null) {
+      result.append(string);
     } else if (inputParam != null) {
       if (inputFinalValue == UNSET) {
         result.append(inputParam.toString());
       } else if (inputFinalValue == null) {
         result.append("NULL");
       } else {
-        result.append(inputFinalValue.toString());
+        if (inputFinalValue instanceof String) {
+          result.append("\"");
+          result.append(OExpression.encode(inputFinalValue.toString()));
+          result.append("\"");
+        } else {
+          result.append(inputFinalValue.toString());
+        }
       }
     }
 
@@ -55,19 +66,41 @@ public class OBaseExpression extends OMathExpression {
     return result.toString();
   }
 
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    Object result = null;
+    if (number != null) {
+      result = number.getValue();
+    }
+    if (identifier != null) {
+      result = identifier.execute(iCurrentRecord, ctx);
+    }
+    if (string != null && string.length() > 1) {
+      result = string.substring(1, string.length() - 1);
+    }
+    if (modifier != null) {
+      result = modifier.execute(iCurrentRecord, result, ctx);
+    }
+    return result;
+  }
+
   public void replaceParameters(Map<Object, Object> params) {
     if (identifier != null) {
       identifier.replaceParameters(params);
     }
     if (inputParam != null) {
       Object result = inputParam.bindFromInputParams(params);
-      if(inputParam!=result){
+      if (inputParam != result) {
         inputFinalValue = result;
       }
     }
     if (modifier != null) {
       modifier.replaceParameters(params);
     }
+  }
+
+  @Override
+  protected boolean supportsBasicCalculation() {
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=71b3e2d1b65c923dc7cfe11f9f449d2b (do not edit this line) */

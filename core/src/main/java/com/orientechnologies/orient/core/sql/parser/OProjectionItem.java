@@ -26,7 +26,13 @@ public class OProjectionItem extends SimpleNode {
   }
 
   public boolean isAll() {
-    return all;
+    if (all) {
+      return true;
+    }
+    if (expression != null && "*".equals(expression.toString())) {
+      return true;
+    }
+    return false;
   }
 
   public void setAll(boolean all) {
@@ -64,7 +70,8 @@ public class OProjectionItem extends SimpleNode {
     return builder.toString();
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return toString("");
   }
 
@@ -76,7 +83,7 @@ public class OProjectionItem extends SimpleNode {
   }
 
   public void replaceParameters(Map<Object, Object> params) {
-    if(expression!=null){
+    if (expression != null) {
       expression.replaceParameters(params);
     }
   }

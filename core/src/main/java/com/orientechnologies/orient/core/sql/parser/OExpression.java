@@ -2,6 +2,10 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORecordId;
+
 import java.util.Map;
 
 public class OExpression extends SimpleNode {
@@ -22,16 +26,14 @@ public class OExpression extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public Object createExecutorFilter() {
-
-    // TODO create an interface for this;
-
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     if (value instanceof ORid) {
-      return null;// TODO
+      ORid v = (ORid) value;
+      return new ORecordId(v.cluster.getValue().intValue(), v.position.getValue().longValue());
     } else if (value instanceof OInputParameter) {
-      return null;// TODO
+      return ((OInputParameter) value).bindFromInputParams(ctx.getInputParameters());
     } else if (value instanceof OMathExpression) {
-      return ((OMathExpression) value).createExecutorFilter();
+      return ((OMathExpression) value).execute(iCurrentRecord, ctx);
     } else if (value instanceof OJson) {
       return null;// TODO
     } else if (value instanceof String) {
@@ -90,7 +92,18 @@ public class OExpression extends SimpleNode {
       value = ((OInputParameter) value).bindFromInputParams(params);
     } else if (value instanceof OBaseExpression) {
       ((OBaseExpression) value).replaceParameters(params);
+    } else if (value instanceof OParenthesisExpression) {
+      ((OParenthesisExpression) value).replaceParameters(params);
+    } else if (value instanceof OMathExpression) {
+      ((OMathExpression) value).replaceParameters(params);
     }
+  }
+
+  public boolean supportsBasicCalculation() {
+    if(value instanceof OMathExpression) {
+      return ((OMathExpression)value).supportsBasicCalculation();
+    }
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

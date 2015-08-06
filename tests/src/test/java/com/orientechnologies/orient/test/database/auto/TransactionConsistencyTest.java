@@ -15,18 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.Vector;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
+import com.orientechnologies.DatabaseAbstractTest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -45,6 +34,19 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.Address;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.Vector;
+
+import static com.orientechnologies.DatabaseAbstractTest.getEnvironment;
 
 @Test
 public class TransactionConsistencyTest extends DocumentDBBaseTest {
@@ -440,10 +442,12 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     database.close();
 
     database.open("admin", "admin");
-    int chunkSize = 500;
+    int chunkSize = getEnvironment() == DatabaseAbstractTest.ENV.DEV ? 10 : 500;
     for (int initialValue = 0; initialValue < 10; initialValue++) {
       // System.out.println("initialValue = " + initialValue);
       Assert.assertEquals(database.countClusterElements("MyFruit"), 0);
+
+      System.out.println("[testTransactionPopulateDelete] Populating chunk " + initialValue + "... (chunk=" + chunkSize + ")");
 
       // do insert
       Vector<ODocument> v = new Vector<ODocument>();
@@ -452,10 +456,15 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
         ODocument d = new ODocument("MyFruit").field("name", "" + i).field("color", "FOO").field("flavor", "BAR" + i);
         d.save();
         v.addElement(d);
-
       }
+
+      System.out.println("[testTransactionPopulateDelete] Committing chunk " + initialValue + "...");
+
       // System.out.println("populate commit");
       database.commit();
+
+      System.out.println("[testTransactionPopulateDelete] Committed chunk " + initialValue
+          + ", starting to delete all the new entries (" + v.size() + ")...");
 
       // do delete
       database.begin();
@@ -466,8 +475,12 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
       // System.out.println("delete commit");
       database.commit();
 
+      System.out.println("[testTransactionPopulateDelete] Deleted executed successfully");
+
       Assert.assertEquals(database.countClusterElements("MyFruit"), 0);
     }
+
+    System.out.println("[testTransactionPopulateDelete] End of the test");
 
     database.close();
   }

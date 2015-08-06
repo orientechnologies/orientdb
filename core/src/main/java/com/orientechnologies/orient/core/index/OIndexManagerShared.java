@@ -411,32 +411,48 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   }
 
   public void removeClassPropertyIndex(final OIndex<?> idx) {
-    final OIndexDefinition indexDefinition = idx.getDefinition();
-    if (indexDefinition == null || indexDefinition.getClassName() == null)
-      return;
+    acquireExclusiveLock();
+    try {
+      final OIndexDefinition indexDefinition = idx.getDefinition();
+      if (indexDefinition == null || indexDefinition.getClassName() == null)
+        return;
 
-    final Map<OMultiKey, Set<OIndex<?>>> map = classPropertyIndex.get(indexDefinition.getClassName().toLowerCase());
+      Map<OMultiKey, Set<OIndex<?>>> map = classPropertyIndex.get(indexDefinition.getClassName().toLowerCase());
 
-    if (map == null) {
-      return;
-    }
-
-    final int paramCount = indexDefinition.getParamCount();
-
-    for (int i = 1; i <= paramCount; i++) {
-      final List<String> fields = normalizeFieldNames(indexDefinition.getFields().subList(0, i));
-      final OMultiKey multiKey = new OMultiKey(fields);
-      final Set<OIndex<?>> indexSet = map.get(multiKey);
-      if (indexSet == null)
-        continue;
-      indexSet.remove(idx);
-      if (indexSet.isEmpty()) {
-        map.remove(multiKey);
+      if (map == null) {
+        return;
       }
-    }
 
-    if (map.isEmpty())
-      classPropertyIndex.remove(indexDefinition.getClassName().toLowerCase());
+      map = new HashMap<OMultiKey, Set<OIndex<?>>>(map);
+
+      final int paramCount = indexDefinition.getParamCount();
+
+      for (int i = 1; i <= paramCount; i++) {
+        final List<String> fields = normalizeFieldNames(indexDefinition.getFields().subList(0, i));
+        final OMultiKey multiKey = new OMultiKey(fields);
+
+        Set<OIndex<?>> indexSet = map.get(multiKey);
+        if (indexSet == null)
+          continue;
+
+        indexSet = new HashSet<OIndex<?>>(indexSet);
+        indexSet.remove(idx);
+
+        if (indexSet.isEmpty()) {
+          map.remove(multiKey);
+        } else {
+          map.put(multiKey, indexSet);
+        }
+      }
+
+      if (map.isEmpty())
+        classPropertyIndex.remove(indexDefinition.getClassName().toLowerCase());
+      else
+        classPropertyIndex.put(indexDefinition.getClassName().toLowerCase(), copyPropertyMap(map));
+
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   private class RecreateIndexesTask implements Runnable {

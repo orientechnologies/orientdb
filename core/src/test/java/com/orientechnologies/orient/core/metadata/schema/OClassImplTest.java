@@ -1,31 +1,19 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertTrue;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.concurrent.*;
+
+import static org.testng.Assert.*;
 
 public class OClassImplTest {
 
@@ -473,6 +461,59 @@ public class OClassImplTest {
     }
 
     executor.shutdown();
+
+  }
+
+  @Test
+  public void testReservedWords() {
+    Set<String> reserved = new HashSet<String>();
+    // reserved.add("select");
+    reserved.add("traverse");
+    reserved.add("insert");
+    reserved.add("update");
+    reserved.add("delete");
+    reserved.add("from");
+    reserved.add("where");
+    reserved.add("skip");
+    reserved.add("limit");
+    reserved.add("timeout");
+
+    final OSchema oSchema = db.getMetadata().getSchema();
+    OClass foo = oSchema.createClass("OClassImplTest_testReservedWords");
+
+    for (String s : reserved) {
+      try {
+        foo.createProperty(s, OType.STRING);
+        fail();
+      } catch (OSchemaException x) {
+        System.out.println(x.getMessage());
+      }
+    }
+
+  }
+
+  @Test
+  public void testClassNameSyntax() {
+
+    final OSchema oSchema = db.getMetadata().getSchema();
+    assertNotNull(oSchema.createClass("OClassImplTesttestClassNameSyntax"));
+    assertNotNull(oSchema.createClass("_OClassImplTesttestClassNameSyntax"));
+    assertNotNull(oSchema.createClass("_OClassImplTesttestClassNameSyntax_"));
+    assertNotNull(oSchema.createClass("_OClassImplTestte_stClassNameSyntax_"));
+    assertNotNull(oSchema.createClass("_OClassImplTesttestClassNameSyntax_12"));
+    assertNotNull(oSchema.createClass("_OClassImplTesttestCla23ssNameSyntax_12"));
+    assertNotNull(oSchema.createClass("$OClassImplTesttestCla23ssNameSyntax_12"));
+    assertNotNull(oSchema.createClass("OClassImplTesttestC$la23ssNameSyntax_12"));
+    assertNotNull(oSchema.createClass("oOClassImplTesttestC$la23ssNameSyntax_12"));
+    String[] invalidClassNames = { "foo bar", "12", "#12", "12AAA", "%adsf", ",asdfasdf", "adsf,asdf", "asdf.sadf", ".asdf", "asdfaf.", "asdf:asdf" };
+    for (String s : invalidClassNames) {
+      try {
+        oSchema.createClass(s);
+        fail("class with invalid name is incorrectly created: '" + s + "'");
+      } catch (Exception e) {
+
+      }
+    }
 
   }
 }

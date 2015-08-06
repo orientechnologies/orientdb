@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -34,11 +35,13 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -47,10 +50,10 @@ import java.util.Set;
  * @author Luca Garulli
  */
 public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest {
-  public static final String            NAME = "CREATE VERTEX";
-  private OClass                        clazz;
-  private String                        clusterName;
-  private LinkedHashMap<String, Object> fields;
+  public static final String          NAME = "CREATE VERTEX";
+  private OClass                      clazz;
+  private String                      clusterName;
+  private List<OPair<String, Object>> fields;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLCreateVertex parse(final OCommandRequest iRequest) {
@@ -79,7 +82,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
           clusterName = parserRequiredWord(false);
 
         } else if (temp.equals(KEYWORD_SET)) {
-          fields = new LinkedHashMap<String, Object>();
+          fields = new ArrayList<OPair<String, Object>>();
           parseSetFields(clazz, fields);
 
         } else if (temp.equals(KEYWORD_CONTENT)) {
@@ -95,7 +98,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
       if (className == null)
         // ASSIGN DEFAULT CLASS
-        className = "V";
+        className = OrientVertexType.CLASS_NAME;
 
       // GET/CHECK CLASS NAME
       clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
@@ -122,9 +125,9 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
         if (fields != null)
           // EVALUATE FIELDS
-          for (Entry<String, Object> f : fields.entrySet()) {
+          for (final OPair<String, Object> f : fields) {
             if (f.getValue() instanceof OSQLFunctionRuntime)
-              fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), null, context));
+              f.setValue(((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), null, context));
           }
 
         OSQLHelper.bindParameters(vertex.getRecord(), fields, new OCommandParameters(iArgs), context);

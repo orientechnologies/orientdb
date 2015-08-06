@@ -317,7 +317,11 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         releaseReadLock();
       }
 
-    super.close();
+    try {
+      super.close();
+    } catch (Exception e) {
+      // IGNORE IT
+    }
 
     if (serviceThread != null) {
       final OAsynchChannelServiceThread s = serviceThread;

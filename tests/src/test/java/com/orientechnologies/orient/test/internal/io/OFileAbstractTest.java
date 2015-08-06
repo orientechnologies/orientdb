@@ -44,7 +44,7 @@ public abstract class OFileAbstractTest extends SpeedTestMonoThread {
 			f.delete();
 
 		file = getFileImpl();
-		file.create(START_SIZE);
+    file.create();
 	}
 
 	@Override

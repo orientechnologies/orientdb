@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.Map;
+import java.util.Random;
+
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -38,9 +41,6 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
-
-import java.util.Map;
-import java.util.Random;
 
 /**
  * @author Luigi Dell'Aquila
@@ -172,7 +172,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     }
 
     if (this.parsedTarget.getTargetClasses() != null) {
-      for (OClass clazz : parsedTarget.getTargetClasses().keySet()) {
+      for (String clazz : parsedTarget.getTargetClasses().keySet()) {
         if (docClass.isSubClassOf(clazz)) {
           return true;
         }

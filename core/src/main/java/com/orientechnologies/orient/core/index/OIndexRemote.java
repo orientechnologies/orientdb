@@ -73,16 +73,18 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   private final static String   QUERY_DROP                                        = "drop index %s";
   protected final String        databaseName;
   private final String          wrappedType;
+  private final String          algorithm;
   private final ORID            rid;
   protected OIndexDefinition    indexDefinition;
   protected String              name;
   protected ODocument           configuration;
   protected Set<String>         clustersToIndex;
 
-  public OIndexRemote(final String iName, final String iWrappedType, final ORID iRid, final OIndexDefinition iIndexDefinition,
-      final ODocument iConfiguration, final Set<String> clustersToIndex) {
+  public OIndexRemote(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
+      final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex) {
     this.name = iName;
     this.wrappedType = iWrappedType;
+    this.algorithm = algorithm;
     this.rid = iRid;
     this.indexDefinition = iIndexDefinition;
     this.configuration = iConfiguration;
@@ -228,6 +230,10 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   public String getType() {
     return wrappedType;
+  }
+
+  public String getAlgorithm() {
+    return algorithm;
   }
 
   public ODocument getConfiguration() {

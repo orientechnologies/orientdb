@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -71,7 +71,7 @@ public class OCommandExecutorSQLScriptTest {
     return -1l;
   }
 
-  private OProfilerMBean getProfilerInstance() throws Exception {
+  private OProfiler getProfilerInstance() throws Exception {
     return Orient.instance().getProfiler();
 
   }

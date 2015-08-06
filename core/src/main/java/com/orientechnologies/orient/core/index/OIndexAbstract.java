@@ -19,6 +19,41 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.concur.lock.OModificationLock;
+import com.orientechnologies.common.concur.lock.ONewLockManager;
+import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.annotation.ODocumentInstance;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
@@ -32,82 +67,49 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.orientechnologies.common.concur.lock.OModificationLock;
-import com.orientechnologies.common.concur.lock.ONewLockManager;
-import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.annotation.ODocumentInstance;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-
 /**
  * Handles indexing when records change.
  *
  * @author Luca Garulli
  */
-public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
-  protected static final String              CONFIG_MAP_RID   = "mapRid";
-  protected static final String              CONFIG_CLUSTERS  = "clusters";
-  protected final OModificationLock          modificationLock = new OModificationLock();
-  protected final OIndexEngine<T>            indexEngine;
-  private final String                       databaseName;
-  protected String                           type;
-  protected String                           valueContainerAlgorithm;
-  protected final ONewLockManager<Object>    keyLockManager   = new ONewLockManager<Object>();
+public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientStartupListener, OOrientShutdownListener {
+  protected static final String                 CONFIG_MAP_RID   = "mapRid";
+  protected static final String                 CONFIG_CLUSTERS  = "clusters";
+  protected final OModificationLock             modificationLock = new OModificationLock();
+  protected final OIndexEngine<T>               indexEngine;
+  private final String                          databaseName;
+  protected String                              type;
+  protected String                              valueContainerAlgorithm;
+  protected final ONewLockManager<Object>       keyLockManager   = new ONewLockManager<Object>();
 
   @ODocumentInstance
-  protected final AtomicReference<ODocument> configuration    = new AtomicReference<ODocument>();
-  protected ODocument                        metadata;
-  private String                             name;
-  private String                             algorithm;
-  private Set<String>                        clustersToIndex  = new HashSet<String>();
+  protected final AtomicReference<ODocument>    configuration    = new AtomicReference<ODocument>();
+  protected ODocument                           metadata;
+  private final String                          name;
+  private String                                algorithm;
+  private Set<String>                           clustersToIndex  = new HashSet<String>();
 
-  private volatile OIndexDefinition          indexDefinition;
-  private volatile boolean                   rebuilding       = false;
+  private volatile OIndexDefinition             indexDefinition;
+  private volatile boolean                      rebuilding       = false;
 
-  private Thread                             rebuildThread    = null;
+  private Thread                                rebuildThread    = null;
 
-  private final ThreadLocal<IndexTxSnapshot> txSnapshot       = new IndexTxSnapshotThreadLocal();
-  private final OReadersWriterSpinLock       rwLock           = new OReadersWriterSpinLock();
+  private volatile ThreadLocal<IndexTxSnapshot> txSnapshot       = new IndexTxSnapshotThreadLocal();
 
-  protected static final class RemovedValue {
-    public static final RemovedValue INSTANCE = new RemovedValue();
-  }
+  private final OReadersWriterSpinLock          rwLock           = new OReadersWriterSpinLock();
 
   protected static final class IndexTxSnapshot {
     public Map<Object, Object> indexSnapshot = new HashMap<Object, Object>();
     public boolean             clear         = false;
   }
 
-  public OIndexAbstract(final String type, String algorithm, final OIndexEngine<T> indexEngine, String valueContainerAlgorithm,
-      ODocument metadata) {
+  public OIndexAbstract(String name, final String type, String algorithm, final OIndexEngine<T> indexEngine,
+      String valueContainerAlgorithm, ODocument metadata) {
     acquireExclusiveLock();
     try {
       databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
+
+      this.name = name;
       this.type = type;
       this.indexEngine = indexEngine;
       this.algorithm = algorithm;
@@ -115,9 +117,23 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       this.valueContainerAlgorithm = valueContainerAlgorithm;
 
       indexEngine.init();
+
+      Orient.instance().registerWeakOrientStartupListener(this);
+      Orient.instance().registerWeakOrientShutdownListener(this);
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  @Override
+  public void onShutdown() {
+    txSnapshot = null;
+  }
+
+  @Override
+  public void onStartup() {
+    if (txSnapshot == null)
+      txSnapshot = new IndexTxSnapshotThreadLocal();
   }
 
   public static IndexMetadata loadMetadataInternal(final ODocument config, final String type, final String algorithm,
@@ -201,19 +217,18 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   /**
    * Creates the index.
-   *
+   * 
    * @param clusterIndexName
    *          Cluster name where to place the TreeMap
    * @param clustersToIndex
    * @param rebuild
    * @param progressListener
    */
-  public OIndexInternal<?> create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
+  public OIndexInternal<?> create(final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener,
       final OStreamSerializer valueSerializer) {
     acquireExclusiveLock();
     try {
-      this.name = name;
       configuration.set(new ODocument().setTrackingChanges(false));
 
       this.indexDefinition = indexDefinition;
@@ -266,7 +281,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       clustersToIndex.clear();
 
       IndexMetadata indexMetadata = loadMetadata(configuration.get());
-      name = indexMetadata.getName();
       indexDefinition = indexMetadata.getIndexDefinition();
       clustersToIndex.addAll(indexMetadata.getClustersToIndex());
       algorithm = indexMetadata.getAlgorithm();
@@ -418,8 +432,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         // INDEX ALL CLUSTERS
         for (final String clusterName : clustersToIndex) {
           final long[] metrics = indexCluster(clusterName, iProgressListener, documentNum, documentIndexed, documentTotal);
-          documentNum += metrics[0];
-          documentIndexed += metrics[1];
+          documentNum = metrics[0];
+          documentIndexed = metrics[1];
         }
 
         if (iProgressListener != null)
@@ -901,8 +915,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   protected void startStorageAtomicOperation() {
     try {
-      getStorage().startAtomicOperation();
+      getStorage().startAtomicOperation(true);
     } catch (IOException e) {
+      OLogManager.instance().error(this, "Error during start of atomic operation", e);
+
       throw new OIndexException("Error during start of atomic operation", e);
     }
   }
@@ -911,6 +927,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     try {
       getStorage().commitAtomicOperation();
     } catch (IOException e) {
+      OLogManager.instance().error(this, "Error during commit of atomic operation", e);
+
       throw new OIndexException("Error during commit of atomic operation", e);
     }
   }
@@ -919,6 +937,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     try {
       getStorage().rollbackAtomicOperation();
     } catch (IOException e) {
+      OLogManager.instance().error(this, "Error during rollback of atomic operation", e);
+
       throw new OIndexException("Error during rollback of atomic operation", e);
     }
   }
@@ -1024,7 +1044,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
           final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
 
-          if (fieldValue != null) {
+          if (fieldValue != null || !indexDefinition.isNullValuesIgnored()) {
             try {
               populateIndex(doc, fieldValue);
             } catch (OIndexException e) {

@@ -18,7 +18,6 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
   public void test() throws Exception {
     init(SERVERS);
     prepare(true);
-
     execute();
   }
 
@@ -54,6 +53,7 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
     try {
       Assert.assertEquals(1, graphNoTxUsa.countVertices());
 
+      // SHUTDOWN USA SERVER
       serverInstance.get(1).shutdownServer();
 
     } finally {
@@ -62,8 +62,13 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
 
     graphNoTxEurope = localFactoryEurope.getNoTx();
     try {
+      log("Adding vertex to europe node...");
+
       final OrientVertex v2 = graphNoTxEurope.addVertex("class:Client");
 
+      log("Restarting USA server...");
+
+      // RESTART USA SERVER
       serverInstance.get(1).startServer(getDistributedServerConfiguration(serverInstance.get(1)));
 
       Assert.assertEquals(2, graphNoTxEurope.countVertices());
@@ -77,6 +82,7 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
     try {
       Assert.assertEquals(1, graphNoTxUsa.countVertices());
 
+      log("Manually syncing cluster client of node USA...");
       graphNoTxUsa.command(new OCommandSQL("sync cluster client")).execute();
 
       Assert.assertEquals(2, graphNoTxUsa.countVertices());

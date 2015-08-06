@@ -196,7 +196,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
         // COMMIT TX BEFORE ANY SCHEMA CHANGES
         db.commit();
 
-      g.checkForGraphSchema(db);
+      OrientBaseGraph.checkForGraphSchema(db);
 
       if (txActive) {
         // REOPEN IT AGAIN

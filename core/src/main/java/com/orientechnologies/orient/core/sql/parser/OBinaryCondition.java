@@ -2,8 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class OBinaryCondition extends OBooleanExpression {
@@ -25,11 +28,12 @@ public class OBinaryCondition extends OBooleanExpression {
   }
 
   @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
-    return false;
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    return operator.execute(left.execute(currentRecord, ctx), right.execute(currentRecord, ctx));
   }
 
-  @Override public void replaceParameters(Map<Object, Object> params) {
+  @Override
+  public void replaceParameters(Map<Object, Object> params) {
     left.replaceParameters(params);
     right.replaceParameters(params);
   }
@@ -37,6 +41,44 @@ public class OBinaryCondition extends OBooleanExpression {
   @Override
   public String toString() {
     return left.toString() + " " + operator.toString() + " " + right.toString();
+  }
+
+  protected boolean supportsBasicCalculation() {
+    if (!operator.supportsBasicCalculation()) {
+      return false;
+    }
+    return left.supportsBasicCalculation() && right.supportsBasicCalculation();
+
+  }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    int total = 0;
+    if (!operator.supportsBasicCalculation()) {
+      total++;
+    }
+    if (!left.supportsBasicCalculation()) {
+      total++;
+    }
+    if (!right.supportsBasicCalculation()) {
+      total++;
+    }
+    return total;
+  }
+
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
+    List<Object> result = new ArrayList<Object>();
+    if (!operator.supportsBasicCalculation()) {
+      result.add(this);
+    }
+    if (!left.supportsBasicCalculation()) {
+      result.add(left);
+    }
+    if (!right.supportsBasicCalculation()) {
+      result.add(right);
+    }
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

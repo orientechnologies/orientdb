@@ -10,6 +10,7 @@ public class ODeleteVertexStatement extends OStatement {
   protected OWhereClause whereClause;
   protected boolean      returnBefore = false;
   protected OLimit       limit        = null;
+  protected OBatch       batch        = null;
 
   public ODeleteVertexStatement(int id) {
     super(id);
@@ -34,6 +35,9 @@ public class ODeleteVertexStatement extends OStatement {
     if (limit != null) {
       result.append(limit);
     }
+    if (batch != null) {
+      result.append(batch);
+    }
     return result.toString();
   }
 
@@ -47,6 +51,10 @@ public class ODeleteVertexStatement extends OStatement {
     if (limit != null) {
       limit.replaceParameters(params);
     }
+    if (batch != null) {
+      batch.replaceParameters(params);
+    }
+
   }
 }
 /* JavaCC - OriginalChecksum=b62d3046f4bd1b9c1f78ed4f125b06d3 (do not edit this line) */

@@ -135,7 +135,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
       else
         traverse.limit(limit);
 
-      iRequest.getContext().setChild(traverse.getContext());
+      traverse.getContext().setChild(iRequest.getContext());
     } finally {
       textRequest.setText(originalQuery);
     }
@@ -162,17 +162,16 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
+    context.beginExecution(timeoutMs, timeoutStrategy);
+
     if (!assignTarget(iArgs))
       throw new OQueryParsingException("No source found in query: specify class, cluster(s) or single record(s)");
-
-    context = traverse.getContext();
-    context.beginExecution(timeoutMs, timeoutStrategy);
 
     try {
       // BROWSE ALL THE RECORDS AND COLLECTS RESULT
       final List<OIdentifiable> result = traverse.execute();
       for (OIdentifiable r : result)
-        if (!handleResult(r))
+        if (!handleResult(r, context))
           // LIMIT REACHED
           break;
 

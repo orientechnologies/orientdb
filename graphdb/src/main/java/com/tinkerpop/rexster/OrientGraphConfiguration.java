@@ -20,7 +20,6 @@
 
 package com.tinkerpop.rexster;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.rexster.config.GraphConfiguration;
@@ -73,7 +72,7 @@ public class OrientGraphConfiguration implements GraphConfiguration {
       orientDbSpecificConfiguration = graphSectionConfig.configurationAt(Tokens.REXSTER_GRAPH_PROPERTIES);
     } catch (IllegalArgumentException iae) {
       throw new GraphConfigurationException("Check graph configuration. Missing or empty configuration element: "
-          + Tokens.REXSTER_GRAPH_PROPERTIES);
+          + Tokens.REXSTER_GRAPH_PROPERTIES, iae);
     }
 
     try {

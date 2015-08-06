@@ -130,7 +130,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
   }
 
   @Override
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 

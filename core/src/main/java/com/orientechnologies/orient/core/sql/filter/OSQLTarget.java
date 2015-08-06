@@ -19,6 +19,14 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -35,14 +43,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OCommandSQLResultset;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
 /**
  * Target parser.
  * 
@@ -56,7 +56,7 @@ public class OSQLTarget extends OBaseParser {
   protected String                            targetQuery;
   protected Iterable<? extends OIdentifiable> targetRecords;
   protected Map<String, String>               targetClusters;
-  protected Map<OClass, String>               targetClasses;
+  protected Map<String, String>               targetClasses;
 
   protected String                            targetIndex;
 
@@ -101,7 +101,7 @@ public class OSQLTarget extends OBaseParser {
     return targetClusters;
   }
 
-  public Map<OClass, String> getTargetClasses() {
+  public Map<String, String> getTargetClasses() {
     return targetClasses;
   }
 
@@ -269,13 +269,14 @@ public class OSQLTarget extends OBaseParser {
 
           // REGISTER AS CLASS
           if (targetClasses == null)
-            targetClasses = new HashMap<OClass, String>();
+            targetClasses = new HashMap<String, String>();
 
           final OClass cls = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(subjectName);
           if (cls == null)
-            throw new OCommandExecutionException("Class '" + subjectName + "' was not found in current database");
+            throw new OCommandExecutionException("Class '" + subjectName + "' was not found in database '"
+                + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + "'");
 
-          targetClasses.put(cls, alias);
+          targetClasses.put(cls.getName(), alias);
         }
       }
     }

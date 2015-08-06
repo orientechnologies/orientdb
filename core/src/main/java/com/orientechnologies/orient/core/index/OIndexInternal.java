@@ -19,13 +19,10 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Interface to handle index.
@@ -206,8 +203,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
   public void setRebuildingFlag();
 
   public void close();
-
-  public String getAlgorithm();
 
   public void preCommit();
 

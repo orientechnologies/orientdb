@@ -19,19 +19,18 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
@@ -134,17 +133,18 @@ public class ODistributedWorker extends Thread {
       } catch (HazelcastInstanceNotActiveException e) {
         Thread.interrupted();
         break;
-      } catch (HazelcastException e) {
+      } catch (Throwable e) {
         if (e.getCause() instanceof InterruptedException)
           Thread.interrupted();
         else
           ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
               "error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
               message != null ? message.getTask() : "-");
-      } catch (Throwable e) {
-        ODistributedServerLog.error(this, getLocalNodeName(), senderNode, DIRECTION.IN,
-            "error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
-            message != null ? message.getTask() : "-");
+      } finally {
+        // CLEAR SERIALIZATION TL TO AVOID MEMORY LEAKS
+        if (OSerializationSetThreadLocal.INSTANCE != null) {
+          OSerializationSetThreadLocal.clear();
+        }
       }
     }
 
@@ -276,7 +276,7 @@ public class ODistributedWorker extends Thread {
         if (task.isRequiredOpenDatabase())
           initDatabaseInstance();
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(database);
+        database.activateOnCurrentThread();
 
         task.setNodeSource(iRequest.getSenderNodeName());
 
@@ -297,6 +297,7 @@ public class ODistributedWorker extends Thread {
 
       } finally {
         if (database != null) {
+          database.activateOnCurrentThread();
           database.rollback();
           database.getLocalCache().clear();
           database.setUser(origin);

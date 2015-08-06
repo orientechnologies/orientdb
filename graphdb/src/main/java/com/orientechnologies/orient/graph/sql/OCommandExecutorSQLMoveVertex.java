@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.graph.sql;
 
 import com.orientechnologies.common.types.OModifiableBoolean;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -40,10 +41,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -53,16 +52,16 @@ import java.util.Set;
  * 
  */
 public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest {
-  public static final String            NAME          = "MOVE VERTEX";
-  private static final String           KEYWORD_MERGE = "MERGE";
-  private static final String           KEYWORD_BATCH = "BATCH";
-  private String                        source        = null;
-  private String                        clusterName;
-  private String                        className;
-  private OClass                        clazz;
-  private LinkedHashMap<String, Object> fields;
-  private ODocument                     merge;
-  private int                           batch         = -1;
+  public static final String          NAME          = "MOVE VERTEX";
+  private static final String         KEYWORD_MERGE = "MERGE";
+  private static final String         KEYWORD_BATCH = "BATCH";
+  private String                      source        = null;
+  private String                      clusterName;
+  private String                      className;
+  private OClass                      clazz;
+  private List<OPair<String, Object>> fields;
+  private ODocument                   merge;
+  private int                         batch         = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLMoveVertex parse(final OCommandRequest iRequest) {
@@ -102,7 +101,7 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
           throw new OCommandSQLParsingException("Class '" + className + "' was not found");
 
       } else if (temp.equals(KEYWORD_SET)) {
-        fields = new LinkedHashMap<String, Object>();
+        fields = new ArrayList<OPair<String, Object>>();
         parseSetFields(clazz, fields);
 
       } else if (temp.equals(KEYWORD_MERGE)) {
@@ -149,9 +148,9 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
 
         if (fields != null) {
           // EVALUATE FIELDS
-          for (Entry<String, Object> f : fields.entrySet()) {
+          for (final OPair<String, Object> f : fields) {
             if (f.getValue() instanceof OSQLFunctionRuntime)
-              fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(newVertex.getRecord(), null, context));
+              f.setValue(((OSQLFunctionRuntime) f.getValue()).getValue(newVertex.getRecord(), null, context));
           }
 
           OSQLHelper.bindParameters(newVertexDoc, fields, new OCommandParameters(iArgs), context);
@@ -167,8 +166,10 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
         result.add(new ODocument().setTrackingChanges(false).field("old", oldVertex, OType.LINK)
             .field("new", newVertex, OType.LINK));
 
-        if (batch > 0 && result.size() % batch == 0)
+        if (batch > 0 && result.size() % batch == 0) {
           graph.commit();
+          graph.begin();
+        }
       }
 
       graph.commit();

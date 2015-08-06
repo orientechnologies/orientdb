@@ -544,6 +544,23 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
   /**
    * Loads a record using a fetch plan.
    *
+   *
+   * @param iObject
+   *          Record to load
+   * @param iFetchPlan
+   *          Fetch plan used
+   * @param iLockingStrategy
+   * @return The record received
+   *
+   * @deprecated Usage of this method may lead to deadlocks.
+   */
+  @Deprecated
+  <RET extends T> RET load(T iObject, String iFetchPlan, boolean iIgnoreCache, boolean iUpdateCache, boolean loadTombstone,
+      OStorage.LOCKING_STRATEGY iLockingStrategy);
+
+  /**
+   * Loads a record using a fetch plan.
+   *
    * @param iObject
    *          Record to load
    * @param iFetchPlan
@@ -622,6 +639,13 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
    * @deprecated Usage of this method may lead to deadlocks.
    */
   <RET extends T> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
+      OStorage.LOCKING_STRATEGY iLockingStrategy);
+
+  @Deprecated
+  /**
+   * @deprecated Usage of this method may lead to deadlocks.
+   */
+  <RET extends T> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean iUpdateCache, boolean loadTombstone,
       OStorage.LOCKING_STRATEGY iLockingStrategy);
 
   /**

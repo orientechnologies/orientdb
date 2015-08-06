@@ -27,57 +27,77 @@ import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEG
  * @author Luca Garulli
  */
 public interface OCommandRequest {
-  public <RET> RET execute(Object... iArgs);
+  <RET> RET execute(Object... iArgs);
 
   /**
+   * This api is deprecated use sql keyword "LIMIT" instead
+   * 
    * Returns the limit of result set. -1 means no limits.
    * 
    */
-  public int getLimit();
+
+  int getLimit();
 
   /**
+   * This api is deprecated use sql keyword "LIMIT" instead
+   * 
    * Sets the maximum items the command can returns. -1 means no limits.
    * 
    * @param iLimit
    *          -1 = no limit. 1 to N to limit the result set.
    * @return
    */
-  public OCommandRequest setLimit(int iLimit);
+  @Deprecated
+  OCommandRequest setLimit(int iLimit);
 
   /**
+   * This api is deprecated use sql keyword "TIMEOUT" instead
+   * 
    * Returns the command timeout. 0 means no timeout.
    * 
    * @return
    */
-  public long getTimeoutTime();
+  @Deprecated
+  long getTimeoutTime();
 
   /**
+   * This api is deprecated use sql keyword "TIMEOUT" instead
+   * 
    * Returns the command timeout strategy between the defined ones.
    * 
    * @return
    */
-  public TIMEOUT_STRATEGY getTimeoutStrategy();
+  @Deprecated
+  TIMEOUT_STRATEGY getTimeoutStrategy();
 
   /**
+   * This api is deprecated use sql keyword "TIMEOUT" instead
+   * 
    * Sets the command timeout. When the command execution time is major than the timeout the command returns
    * 
    * @param timeout
    */
-  public void setTimeout(long timeout, TIMEOUT_STRATEGY strategy);
+  @Deprecated
+  void setTimeout(long timeout, TIMEOUT_STRATEGY strategy);
 
   /**
    * Returns true if the command doesn't change the database, otherwise false.
    */
-  public boolean isIdempotent();
+  boolean isIdempotent();
 
   /**
+   * This api is deprecated use sql keyword "FETCHPLAN" instead
+   * 
    * Returns the fetch plan if any
    * 
    * @return Fetch plan as unique string or null if it was not defined.
    */
-  public String getFetchPlan();
+  @Deprecated
+  String getFetchPlan();
 
   /**
+   * This api is deprecated use sql keyword "FETCHPLAN" instead
+   * 
    * Set the fetch plan. The format is:
    * 
    * <pre>
@@ -101,11 +121,12 @@ public interface OCommandRequest {
    * @param iFetchPlan
    * @return
    */
-  public <RET extends OCommandRequest> RET setFetchPlan(String iFetchPlan);
+  @Deprecated
+  <RET extends OCommandRequest> RET setFetchPlan(String iFetchPlan);
 
-  public void setUseCache(boolean iUseCache);
+  void setUseCache(boolean iUseCache);
 
-  public OCommandContext getContext();
+  OCommandContext getContext();
 
-  public OCommandRequest setContext(final OCommandContext iContext);
+  OCommandRequest setContext(final OCommandContext iContext);
 }

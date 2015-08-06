@@ -29,6 +29,7 @@ import com.orientechnologies.common.collection.ONavigableMap;
 import com.orientechnologies.common.collection.ONavigableSet;
 import com.orientechnologies.common.collection.OSimpleImmutableEntry;
 import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.index.OAlwaysGreaterKey;
 import com.orientechnologies.orient.core.index.OAlwaysLessKey;
@@ -1909,7 +1910,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     try {
       clone = (OMVRBTree<K, V>) super.clone();
     } catch (CloneNotSupportedException e) {
-      throw new InternalError();
+      throw new OException(e);
     }
 
     // Put clone into "virgin" state (except for comparator)

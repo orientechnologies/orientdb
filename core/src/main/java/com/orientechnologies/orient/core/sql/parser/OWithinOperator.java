@@ -18,13 +18,18 @@ public class OWithinOperator extends SimpleNode implements OBinaryCompareOperato
 
   @Override
   public boolean execute(Object left, Object right) {
-    return false;
+    throw new UnsupportedOperationException(toString() + " operator cannot be evaluated in this context");
   }
 
   @Override
   public String toString() {
     return "WITHIN";
   }
+
+  @Override public boolean supportsBasicCalculation() {
+    return false;
+  }
+
 
 }
 /* JavaCC - OriginalChecksum=e627b2d87bdac6de681d462e4b764288 (do not edit this line) */

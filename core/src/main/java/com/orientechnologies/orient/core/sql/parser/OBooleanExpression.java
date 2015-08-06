@@ -1,7 +1,10 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -11,12 +14,24 @@ public abstract class OBooleanExpression extends SimpleNode {
 
   public static OBooleanExpression TRUE = new OBooleanExpression(0) {
     @Override
-    public boolean evaluate(OIdentifiable currentRecord) {
+    public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
       return true;
     }
 
     @Override public void replaceParameters(Map<Object, Object> params) {
 
+    }
+
+    @Override protected boolean supportsBasicCalculation() {
+      return true;
+    }
+
+    @Override protected int getNumberOfExternalCalculations() {
+      return 0;
+    }
+
+    @Override protected List<Object> getExternalCalculationConditions() {
+      return Collections.EMPTY_LIST;
     }
 
     @Override
@@ -27,13 +42,26 @@ public abstract class OBooleanExpression extends SimpleNode {
 
   public static OBooleanExpression FALSE = new OBooleanExpression(0) {
     @Override
-    public boolean evaluate(OIdentifiable currentRecord) {
+    public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
       return false;
     }
 
     @Override public void replaceParameters(Map<Object, Object> params) {
 
     }
+
+    @Override protected boolean supportsBasicCalculation() {
+      return true;
+    }
+
+    @Override protected int getNumberOfExternalCalculations() {
+      return 0;
+    }
+
+    @Override protected List<Object> getExternalCalculationConditions() {
+      return Collections.EMPTY_LIST;
+    }
+
 
     @Override
     public String toString() {
@@ -55,7 +83,25 @@ public abstract class OBooleanExpression extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public abstract boolean evaluate(OIdentifiable currentRecord);
+  public abstract boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx);
 
   public abstract void replaceParameters(Map<Object, Object> params);
+
+  /**
+   *
+   * @return true if this expression can be calculated in plain Java, false otherwise (eg. LUCENE operator)
+   */
+  protected abstract boolean supportsBasicCalculation();
+
+  /**
+   *
+   * @return the number of sub-expressions that have to be calculated using an external engine (eg. LUCENE)
+   */
+  protected abstract int getNumberOfExternalCalculations();
+
+  /**
+   *
+   * @return the sub-expressions that have to be calculated using an external engine (eg. LUCENE)
+   */
+  protected abstract List<Object> getExternalCalculationConditions();
 }

@@ -34,7 +34,10 @@ import com.tinkerpop.blueprints.util.StringFactory;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * OrientDB Edge implementation of TinkerPop Blueprints standard. Edges can be classic or lightweight. Lightweight edges have no
@@ -227,7 +230,6 @@ public class OrientEdge extends OrientElement implements Edge {
    */
   @Override
   public String getLabel() {
-    final OrientBaseGraph graph = getGraph();
     if (label != null)
       // LIGHTWEIGHT EDGE
       return label;
@@ -241,7 +243,7 @@ public class OrientEdge extends OrientElement implements Edge {
 
       setCurrentGraphInThreadLocal();
 
-      final ODocument doc = (ODocument) rawElement.getRecord();
+      final ODocument doc = rawElement.getRecord();
       if (doc == null)
         return null;
 
@@ -256,7 +258,7 @@ public class OrientEdge extends OrientElement implements Edge {
   public boolean equals(final Object object) {
     if (rawElement == null && object instanceof OrientEdge) {
       final OrientEdge other = (OrientEdge) object;
-      return vOut.equals(other.vOut) && vIn.equals(other.vIn) && ((label == other.label) || (label != null && label.equals(other.label)));
+      return vOut.equals(other.vOut) && vIn.equals(other.vIn) && (label != null && label.equals(other.label));
     }
     return super.equals(object);
   }
@@ -266,7 +268,6 @@ public class OrientEdge extends OrientElement implements Edge {
    */
   @Override
   public Object getId() {
-    final OrientBaseGraph graph = getGraph();
     if (rawElement == null)
       // CREATE A TEMPORARY ID
       return vOut.getIdentity() + "->" + vIn.getIdentity();

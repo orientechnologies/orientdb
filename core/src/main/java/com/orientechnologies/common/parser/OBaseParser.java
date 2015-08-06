@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.common.parser;
 
 import java.util.Arrays;
@@ -31,11 +31,11 @@ public abstract class OBaseParser {
   public String                   parserText;
   public String                   parserTextUpperCase;
 
-  private transient StringBuilder parserLastWord      = new StringBuilder(256);
-  private transient int 		  parserEscapeSequnceCount  = 0;
-  private transient int           parserCurrentPos    = 0;
-  private transient int           parserPreviousPos   = 0;
-  private transient char          parserLastSeparator = ' ';
+  private transient StringBuilder parserLastWord            = new StringBuilder(256);
+  private transient int           parserEscapeSequenceCount = 0;
+  private transient int           parserCurrentPos          = 0;
+  private transient int           parserPreviousPos         = 0;
+  private transient char          parserLastSeparator       = ' ';
 
   public static int nextWord(final String iText, final String iTextUpperCase, int ioCurrentPosition, final StringBuilder ioWord,
       final boolean iForceUpperCase) {
@@ -182,8 +182,10 @@ public abstract class OBaseParser {
   public String parserGetLastWord() {
     return parserLastWord.toString();
   }
-  
-  public int getLastWordLength(){ return parserLastWord.length() + parserEscapeSequnceCount; }
+
+  public int getLastWordLength() {
+    return parserLastWord.length() + parserEscapeSequenceCount;
+  }
 
   /**
    * Throws a syntax error exception.
@@ -330,7 +332,7 @@ public abstract class OBaseParser {
     parserPreviousPos = parserCurrentPos;
     parserSkipWhiteSpaces();
 
-    parserEscapeSequnceCount = 0;
+    parserEscapeSequenceCount = 0;
     parserLastWord.setLength(0);
 
     final String[] processedWords = Arrays.copyOf(iCandidateWords, iCandidateWords.length);
@@ -339,7 +341,7 @@ public abstract class OBaseParser {
     final String text2Use = iUpperCase ? parserTextUpperCase : parserText;
     final int max = text2Use.length();
 
-    parserCurrentPos=parserCurrentPos+parserTextUpperCase.length()-parserText.length();
+    parserCurrentPos = parserCurrentPos + parserTextUpperCase.length() - parserText.length();
     // PARSE TILL 1 CHAR AFTER THE END TO SIMULATE A SEPARATOR AS EOF
     for (int i = 0; parserCurrentPos <= max; ++i) {
       final char ch = parserCurrentPos < max ? text2Use.charAt(parserCurrentPos) : '\n';
@@ -475,14 +477,15 @@ public abstract class OBaseParser {
 
   /**
    * Parses the next word.
-   *  @param iForceUpperCase
+   * 
+   * @param iForceUpperCase
    *          True if must return UPPERCASE, otherwise false
    * @param iSeparatorChars
    */
   protected String parserNextWord(final boolean iForceUpperCase, final String iSeparatorChars) {
     parserPreviousPos = parserCurrentPos;
     parserLastWord.setLength(0);
-    parserEscapeSequnceCount = 0;
+    parserEscapeSequenceCount = 0;
 
     parserSkipWhiteSpaces();
     if (parserCurrentPos == -1)
@@ -526,22 +529,22 @@ public abstract class OBaseParser {
 
             if (nextChar == 'u') {
               parserCurrentPos = OStringParser.readUnicode(text2Use, parserCurrentPos + 2, parserLastWord);
-              parserEscapeSequnceCount+=5;
+              parserEscapeSequenceCount += 5;
             } else {
-							if (nextChar == 'n')
-								parserLastWord.append('\n');
-							else if (nextChar == 'r')
-								parserLastWord.append('\r');
-							else if (nextChar == 't')
-								parserLastWord.append('\t');
-							else if(nextChar == 'b')
-								parserLastWord.append('\b');
-							else if(nextChar == 'f')
-								parserLastWord.append('\f');
-							else{
-								parserLastWord.append(nextChar);
-								parserEscapeSequnceCount++;
-							}
+              if (nextChar == 'n')
+                parserLastWord.append('\n');
+              else if (nextChar == 'r')
+                parserLastWord.append('\r');
+              else if (nextChar == 't')
+                parserLastWord.append('\t');
+              else if (nextChar == 'b')
+                parserLastWord.append('\b');
+              else if (nextChar == 'f')
+                parserLastWord.append('\f');
+              else {
+                parserLastWord.append(nextChar);
+                parserEscapeSequenceCount++;
+              }
 
               parserCurrentPos++;
             }
@@ -588,8 +591,8 @@ public abstract class OBaseParser {
         }
 
         if (escapePos != -1)
-        	parserEscapeSequnceCount++;
-        
+          parserEscapeSequenceCount++;
+
         if (escapePos != parserCurrentPos)
           escapePos = -1;
 

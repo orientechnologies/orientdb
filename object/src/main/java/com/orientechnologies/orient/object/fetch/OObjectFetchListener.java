@@ -16,10 +16,6 @@
  */
 package com.orientechnologies.orient.object.fetch;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
@@ -35,11 +31,18 @@ import com.orientechnologies.orient.object.db.OObjectLazySet;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * @author luca.molino
  * 
  */
 public class OObjectFetchListener implements OFetchListener {
+  public boolean requireFieldProcessing() {
+    return true;
+  }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public void processStandardField(final ODocument iRecord, final Object iFieldValue, final String iFieldName,

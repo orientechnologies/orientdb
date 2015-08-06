@@ -54,6 +54,11 @@ public class SQLAsynchQuerySpeedTest extends SpeedTestMonoThread {
               @Override
               public void end() {
               }
+
+              @Override
+              public Object getResult() {
+                return null;
+              }
             })).execute());
   }
 }

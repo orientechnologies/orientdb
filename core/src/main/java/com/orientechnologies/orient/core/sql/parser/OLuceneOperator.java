@@ -18,13 +18,18 @@ public class OLuceneOperator extends SimpleNode implements OBinaryCompareOperato
 
   @Override
   public boolean execute(Object left, Object right) {
-    return false;
+    throw new UnsupportedOperationException(toString() + " operator cannot be evaluated in this context");
   }
 
   @Override
   public String toString() {
     return "LUCENE";
   }
+
+  @Override public boolean supportsBasicCalculation() {
+    return false;
+  }
+
 
 }
 /* JavaCC - OriginalChecksum=bda1e010e6ba48c815829b22ce458b9d (do not edit this line) */
