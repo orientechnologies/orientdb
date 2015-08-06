@@ -72,7 +72,7 @@ public class OObjectLazyListIterator<TYPE> implements Iterator<TYPE>, Serializab
         cursor--;
       lastRet = -1;
     } catch (IndexOutOfBoundsException e) {
-      throw new ConcurrentModificationException();
+      throw new ConcurrentModificationException(e);
     }
     if (sourceRecord != null) {
       ((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();

@@ -78,8 +78,8 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract imp
   }
 
   @Override
-  public long getTimeout() {
-    return delegate.getTimeout();
+  public long getDistributedTimeout() {
+    return delegate.getDistributedTimeout();
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
@@ -111,6 +111,11 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract imp
 
   public OCommandExecutor getDelegate() {
     return delegate;
+  }
+
+  @Override
+  public boolean isCacheable() {
+    return delegate.isCacheable();
   }
 
   @Override

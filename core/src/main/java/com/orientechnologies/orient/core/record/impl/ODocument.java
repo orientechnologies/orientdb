@@ -1530,7 +1530,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     if (_fields != null) {
       final ODocumentEntry value = _fields.get(field);
-      if(value!=null) {
+      if (value != null) {
         if (value.created) {
           _fields.remove(field);
         }

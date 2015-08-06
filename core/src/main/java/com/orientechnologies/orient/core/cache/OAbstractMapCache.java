@@ -25,12 +25,11 @@ import com.orientechnologies.orient.core.id.ORID;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public abstract class OAbstractMapCache<T extends Map<ORID, ?>> implements OCache {
+public abstract class OAbstractMapCache<T extends Map<ORID, ?>> implements ORecordCache {
   protected T     cache;
 
   private boolean enabled = true;

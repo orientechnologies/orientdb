@@ -29,9 +29,9 @@ import java.util.WeakHashMap;
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, WeakReference<ORecord>>> implements OCache {
+public class ORecordCacheWeakRefs extends OAbstractMapCache<WeakHashMap<ORID, WeakReference<ORecord>>> implements ORecordCache {
 
-  public OUnboundedWeakCache() {
+  public ORecordCacheWeakRefs() {
     super(new WeakHashMap<ORID, WeakReference<ORecord>>());
   }
 

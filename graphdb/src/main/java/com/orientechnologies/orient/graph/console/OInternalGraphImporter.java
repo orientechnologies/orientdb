@@ -1,17 +1,16 @@
 package com.orientechnologies.orient.graph.console;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.util.io.graphml.GraphMLReader;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class OInternalGraphImporter {
 
@@ -40,7 +39,8 @@ public class OInternalGraphImporter {
 
     final long startTime = System.currentTimeMillis();
 
-    GraphMLReader.inputGraph(g, new FileInputStream(inputFile), 10000, null, null, null);
+    OConsoleDatabaseApp console = new OGremlinConsole(new String[] { "import database " + inputFile }).setCurrentDatabase(g.getRawGraph());
+    console.run();
 
     System.out.println("Imported in " + (System.currentTimeMillis() - startTime) + "ms. Vertexes: " + g.countVertices());
 

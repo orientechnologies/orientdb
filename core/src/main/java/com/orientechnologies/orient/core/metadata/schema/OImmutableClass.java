@@ -63,7 +63,7 @@ public class OImmutableClass implements OClass {
     this.schema = schema;
 
     superClassesNames = oClass.getSuperClassesNames();
-    superClasses = new ArrayList<OImmutableClass>();
+    superClasses = new ArrayList<OImmutableClass>(superClassesNames.size());
 
     name = oClass.getName();
     streamAbleName = oClass.getStreamableName();

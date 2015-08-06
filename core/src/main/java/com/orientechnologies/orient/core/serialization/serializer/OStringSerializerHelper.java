@@ -693,7 +693,7 @@ public abstract class OStringSerializerHelper {
     try {
       getParameters(iText, 0, -1, params);
     } catch (Exception e) {
-      throw new OCommandSQLParsingException("Error on reading parameters in: " + iText);
+      throw new OCommandSQLParsingException("Error on reading parameters in: " + iText, e);
     }
     return params;
   }

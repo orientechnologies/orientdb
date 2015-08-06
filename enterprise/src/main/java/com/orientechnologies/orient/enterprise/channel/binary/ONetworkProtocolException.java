@@ -28,9 +28,4 @@ public class ONetworkProtocolException extends OException {
 	public ONetworkProtocolException(String string) {
 		super(string);
 	}
-
-	public ONetworkProtocolException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
 }

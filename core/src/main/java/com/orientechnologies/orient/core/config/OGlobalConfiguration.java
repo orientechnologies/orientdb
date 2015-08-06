@@ -24,6 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
@@ -166,6 +167,7 @@ public enum OGlobalConfiguration {
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound", "The minimal amount of free space (in kb)"
       + " in page which is tracked in paginated storage", Integer.class, 16),
 
+  @Deprecated
   STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
       "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
 
@@ -388,10 +390,32 @@ public enum OGlobalConfiguration {
     }
   }),
 
+  // CACHE
+  CACHE_LOCAL_IMPL("cache.local.impl", "Local Record cache implementation", String.class, ORecordCacheWeakRefs.class.getName()),
+
   // COMMAND
   COMMAND_TIMEOUT("command.timeout", "Default timeout for commands expressed in milliseconds", Long.class, 0),
 
+  COMMAND_CACHE_ENABLED("command.cache.enabled", "Enable command cache", Boolean.class, false),
+
+  COMMAND_CACHE_EVICT_STRATEGY("command.cache.evictStrategy", "Command cache strategy between: [INVALIDATE_ALL,PER_CLUSTER]",
+      String.class, "PER_CLUSTER"),
+
+  COMMAND_CACHE_MIN_EXECUTION_TIME("command.cache.minExecutionTime", "Minimum execution time to consider caching result set",
+      Integer.class, 10),
+
+  COMMAND_CACHE_MAX_RESULSET_SIZE("command.cache.maxResultsetSize", "Maximum resultset time to consider caching result set",
+      Integer.class, 500),
+
   // QUERY
+  QUERY_PARALLEL_AUTO("query.parallelAuto", "Auto enable parallel query if requirement are met", Boolean.class, Runtime
+      .getRuntime().availableProcessors() > 1),
+
+  QUERY_PARALLEL_MINIMUM_RECORDS("query.parallelMinimumRecords",
+      "Minimum number of records to activate parallel query automatically", Long.class, 300000),
+
+  QUERY_PARALLEL_SCAN_CHUNK("query.parallelScanChunk", "Maximum number of records to scan in single operation", Integer.class, 1024),
+
   QUERY_SCAN_THRESHOLD_TIP("query.scanThresholdTip",
       "If total number of records scanned in a query is major than this threshold a warning is given. Use 0 to disable it",
       Long.class, 50000),
@@ -410,7 +434,7 @@ public enum OGlobalConfiguration {
    * Maximum time which client should wait a connection from the pool when all connection are used.
    */
   CLIENT_CONNECT_POOL_WAIT_TIMEOUT("client.connectionPool.waitTimeout",
-      "Maximum time which client should wait a connection from the pool when all connection are used", Integer.class, 5000),
+      "Maximum time which client should wait a connection from the pool when all connection are used", Integer.class, 5000,true),
 
   CLIENT_DB_RELEASE_WAIT_TIMEOUT("client.channel.dbReleaseWaitTimeout",
       "Delay in ms. after which data modification command will be resent if DB was frozen", Integer.class, 10000),
@@ -594,6 +618,7 @@ public enum OGlobalConfiguration {
   private Object                       value          = null;
   private String                       description;
   private OConfigurationChangeCallback changeCallback = null;
+  private Boolean                      canChange;
 
   // AT STARTUP AUTO-CONFIG
   static {
@@ -603,15 +628,22 @@ public enum OGlobalConfiguration {
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
       final OConfigurationChangeCallback iChangeAction) {
-    this(iKey, iDescription, iType, iDefValue);
+    this(iKey, iDescription, iType, iDefValue, true);
     changeCallback = iChangeAction;
   }
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue) {
+    this(iKey, iDescription, iType, iDefValue, false);
+  }
+
+  OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
+      final Boolean iCanChange) {
     key = iKey;
     description = iDescription;
     defValue = iDefValue;
     type = iType;
+    canChange = iCanChange;
+
   }
 
   public static void dumpConfiguration(final PrintStream out) {
@@ -758,8 +790,13 @@ public enum OGlobalConfiguration {
       else
         value = iValue;
 
-    if (changeCallback != null)
-      changeCallback.change(oldValue, value);
+    if (changeCallback != null) {
+        try {
+            changeCallback.change(oldValue, value);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
   }
 
   public boolean getValueAsBoolean() {
@@ -788,6 +825,14 @@ public enum OGlobalConfiguration {
 
   public String getKey() {
     return key;
+  }
+
+  public Boolean getCanChange() {
+    return canChange;
+  }
+
+  public Object getDefValue() {
+    return defValue;
   }
 
   public Class<?> getType() {

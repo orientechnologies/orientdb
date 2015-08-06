@@ -33,8 +33,9 @@ public class OImmutableSchema implements OSchema {
     clustersCanNotBeSharedAmongClasses = schemaShared.isClustersCanNotBeSharedAmongClasses();
     clusterSelectionFactory = schemaShared.getClusterSelectionFactory();
 
-    clustersToClasses = new HashMap<Integer, OClass>();
-    classes = new HashMap<String, OClass>();
+    clustersToClasses = new HashMap<Integer, OClass>(schemaShared.getClasses().size() * 3);
+    classes = new HashMap<String, OClass>(schemaShared.getClasses().size());
+
     for (OClass oClass : schemaShared.getClasses()) {
       final OImmutableClass immutableClass = new OImmutableClass(oClass, this);
 
@@ -84,7 +85,7 @@ public class OImmutableSchema implements OSchema {
   public OClass createClass(String iClassName, OClass iSuperClass) {
     throw new UnsupportedOperationException();
   }
-  
+
   @Override
   public OClass createClass(String iClassName, OClass... superClasses) {
     throw new UnsupportedOperationException();
@@ -104,12 +105,11 @@ public class OImmutableSchema implements OSchema {
   public OClass createClass(String iClassName, OClass iSuperClass, int[] iClusterIds) {
     throw new UnsupportedOperationException();
   }
-  
+
   @Override
-	public OClass createClass(String className, int[] clusterIds,
-			OClass... superClasses) {
-	  throw new UnsupportedOperationException();
-	}
+  public OClass createClass(String className, int[] clusterIds, OClass... superClasses) {
+    throw new UnsupportedOperationException();
+  }
 
   @Override
   public OClass createAbstractClass(Class<?> iClass) {
@@ -125,11 +125,11 @@ public class OImmutableSchema implements OSchema {
   public OClass createAbstractClass(String iClassName, OClass iSuperClass) {
     throw new UnsupportedOperationException();
   }
-  
+
   @Override
-	public OClass createAbstractClass(String iClassName, OClass... superClasses) {
-	  throw new UnsupportedOperationException();
-	}
+  public OClass createAbstractClass(String iClassName, OClass... superClasses) {
+    throw new UnsupportedOperationException();
+  }
 
   @Override
   public void dropClass(String iClassName) {
@@ -175,11 +175,11 @@ public class OImmutableSchema implements OSchema {
   public OClass getOrCreateClass(String iClassName, OClass iSuperClass) {
     throw new UnsupportedOperationException();
   }
-  
+
   @Override
-	public OClass getOrCreateClass(String iClassName, OClass... superClasses) {
-	  throw new UnsupportedOperationException();
-	}
+  public OClass getOrCreateClass(String iClassName, OClass... superClasses) {
+    throw new UnsupportedOperationException();
+  }
 
   @Override
   public Collection<OClass> getClasses() {

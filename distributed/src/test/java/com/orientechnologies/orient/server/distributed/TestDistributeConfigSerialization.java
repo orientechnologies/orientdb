@@ -1,18 +1,20 @@
 package com.orientechnologies.orient.server.distributed;
 
+import junit.framework.Assert;
+
+import org.junit.Test;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import junit.framework.Assert;
-import org.junit.Test;
 
 public class TestDistributeConfigSerialization extends AbstractServerClusterTest {
 
   @Test
   public void test() throws Exception {
-    init(2);
+    init(1);
     execute();
   }
 
@@ -29,7 +31,7 @@ public class TestDistributeConfigSerialization extends AbstractServerClusterTest
       db.close();
     } catch (OException e) {
       e.printStackTrace();
-      Assert.fail("error creating a csv database in distributed environment");
+      Assert.fail("error on creating a csv database in distributed environment");
     }
     try {
       db = new ODatabaseDocumentTx("remote:localhost/" + getDatabaseName());
@@ -38,7 +40,7 @@ public class TestDistributeConfigSerialization extends AbstractServerClusterTest
       db.close();
     } catch (OException e) {
       e.printStackTrace();
-      Assert.fail("error creating a csv database in distributed environment");
+      Assert.fail("error on creating a csv database in distributed environment");
     }
 
   }

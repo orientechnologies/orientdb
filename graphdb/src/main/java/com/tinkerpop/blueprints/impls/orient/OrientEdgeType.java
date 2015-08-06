@@ -18,7 +18,6 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Represents an Edge class.
@@ -37,7 +36,7 @@ public class OrientEdgeType extends OrientElementType {
     super(graph, graph.getRawGraph().getMetadata().getSchema().getClass(CLASS_NAME));
   }
 
-  protected static final void checkType(final OClass iType) {
+  protected static void checkType(final OClass iType) {
     if (iType == null)
       throw new IllegalArgumentException("Edge class is null");
 

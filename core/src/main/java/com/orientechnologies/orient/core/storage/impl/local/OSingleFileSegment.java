@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.File;
@@ -27,7 +27,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.storage.fs.OFile;
-import com.orientechnologies.orient.core.storage.fs.OFileFactory;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 public class OSingleFileSegment {
@@ -35,10 +35,6 @@ public class OSingleFileSegment {
   protected OFile                     file;
   protected OStorageFileConfiguration config;
   private boolean                     wasSoftlyClosedAtPreviousTime = true;
-
-  public OSingleFileSegment(final String iPath, final String iType) throws IOException {
-    file = OFileFactory.instance().create(iType, OSystemVariableResolver.resolveSystemVariables(iPath), "rw");
-  }
 
   public OSingleFileSegment(final OLocalPaginatedStorage iStorage, final OStorageFileConfiguration iConfig) throws IOException {
     this(iStorage, iConfig, iConfig.type);
@@ -48,9 +44,7 @@ public class OSingleFileSegment {
       throws IOException {
     config = iConfig;
     storage = iStorage;
-    file = OFileFactory.instance().create(iType, iStorage.getVariableParser().resolveVariables(iConfig.path), iStorage.getMode());
-    file.setMaxSize((int) OFileUtils.getSizeAsNumber(iConfig.maxSize));
-    file.setIncrementSize((int) OFileUtils.getSizeAsNumber(iConfig.incrementSize));
+    file = new OFileClassic(iStorage.getVariableParser().resolveVariables(iConfig.path), iStorage.getMode());
   }
 
   public boolean open() throws IOException {
@@ -92,7 +86,7 @@ public class OSingleFileSegment {
   }
 
   public long getFilledUpTo() {
-    return file.getFilledUpTo();
+    return file.getFileSize();
   }
 
   public OStorageFileConfiguration getConfig() {

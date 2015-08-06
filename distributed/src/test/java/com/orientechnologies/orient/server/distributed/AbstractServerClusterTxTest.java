@@ -16,15 +16,17 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.Date;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+
+import junit.framework.Assert;
+
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import junit.framework.Assert;
-
-import java.util.Date;
-import java.util.UUID;
-import java.util.concurrent.Callable;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 /**
  * Test distributed TX
@@ -50,9 +52,10 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
           if ((i + 1) % 100 == 0)
             System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
 
+          final int id = baseCount + i;
           database.begin();
           try {
-            ODocument person = createRecord(database, serverId, i);
+            ODocument person = createRecord(database, serverId, id);
             updateRecord(database, person);
             checkRecord(database, person);
             deleteRecord(database, person);
@@ -62,12 +65,20 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
             database.commit();
 
             Assert.assertTrue(person.getIdentity().isPersistent());
+          } catch (ORecordDuplicatedException e) {
+            // IGNORE IT
+          } catch (ODistributedException e) {
+            if (!(e.getCause() instanceof ORecordDuplicatedException)) {
+              database.rollback();
+              throw e;
+            }
           } catch (Exception e) {
             database.rollback();
             throw e;
           }
 
-          Thread.sleep(delayWriter);
+          if (delayWriter > 0)
+            Thread.sleep(delayWriter);
 
         } catch (InterruptedException e) {
           System.out.println("Writer received interrupt (db=" + database.getURL());

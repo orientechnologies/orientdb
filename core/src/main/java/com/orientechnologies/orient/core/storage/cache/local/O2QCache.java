@@ -34,6 +34,7 @@ import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.*;
@@ -309,6 +310,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       fileLock = fileLockManager.acquireExclusiveLock(fileId);
       try {
         final long filledUpTo = writeCache.getFilledUpTo(fileId);
+        assert filledUpTo >= 0;
         cacheResult = doLoad(fileId, filledUpTo, false, true, writeCache);
       } finally {
         fileLockManager.releaseLock(fileLock);
@@ -810,6 +812,9 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
               final OCachePointer cachePointer = removedFromAInEntry.getCachePointer();
               cachePointer.decrementReadersReferrer();
               removedFromAInEntry.clearCachePointer();
+
+              if (OLogManager.instance().isDebugEnabled())
+                OLogManager.instance().debug(this, "Moving page in disk cache from a1in to a1out area: %s", removedFromAInEntry);
 
               a1out.putToMRU(removedFromAInEntry);
             } finally {

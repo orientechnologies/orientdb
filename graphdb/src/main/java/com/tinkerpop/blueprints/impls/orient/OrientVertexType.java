@@ -57,7 +57,7 @@ public class OrientVertexType extends OrientElementType {
     super(graph, delegate);
   }
 
-  protected static final void checkType(final OClass iType) {
+  protected static void checkType(final OClass iType) {
     if (iType == null)
       throw new IllegalArgumentException("Vertex class is null");
 

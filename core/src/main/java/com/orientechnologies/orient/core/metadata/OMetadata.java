@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.metadata;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -35,6 +36,8 @@ public interface OMetadata {
   public void create() throws IOException;
 
   public OSchema getSchema();
+
+  OCommandCache getCommandCache();
 
   public OSecurity getSecurity();
 

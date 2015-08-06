@@ -119,7 +119,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       modificationCounter = new OModificationsCounter();
   }
 
-  public static Character checkClassNameIfValid(String iName) {
+  public static Character checkClassNameIfValid(String iName) throws OSchemaException {
     if (iName == null)
       throw new IllegalArgumentException("Name is null");
 
@@ -132,7 +132,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
     for (int i = 0; i < nameSize; ++i) {
       final char c = iName.charAt(i);
-      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '%' || c == '@' || c == '=' || c == '.')
+      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '%' || c == '@' || c == '=' || c == '.' || c == '#')
         // INVALID CHARACTER
         return c;
     }
@@ -423,7 +423,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return result;
   }
 
-  public void checkEmbedded(OStorage storage) {
+  public void checkEmbedded(final OStorage storage) {
     if (!(storage.getUnderlying() instanceof OAbstractPaginatedStorage))
       throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
   }
@@ -657,10 +657,17 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }
   }
 
-  void changeClassName(final String oldName, final String newName, OClass cls) {
+  void changeClassName(final String oldName, final String newName, final OClass cls) {
+
+    if (oldName != null && oldName.equalsIgnoreCase(newName))
+      throw new IllegalArgumentException("Class '" + oldName + "' cannot be renamed with the same name");
+
     acquireSchemaWriteLock();
     try {
       checkEmbedded(getDatabase().getStorage());
+
+      if (newName != null && classes.containsKey(newName.toLowerCase()))
+        throw new IllegalArgumentException("Class '" + newName + "' is already present in schema");
 
       if (oldName != null)
         classes.remove(oldName.toLowerCase());
@@ -1085,9 +1092,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       OClassImpl cls = new OClassImpl(this, className, clusterIds);
 
       classes.put(key, cls);
-      if (cls.getShortName() != null)
-        // BIND SHORT NAME TOO
-        classes.put(cls.getShortName().toLowerCase(), cls);
 
       if (superClasses != null && superClasses.size() > 0) {
         cls.setSuperClassesInternal(superClasses);

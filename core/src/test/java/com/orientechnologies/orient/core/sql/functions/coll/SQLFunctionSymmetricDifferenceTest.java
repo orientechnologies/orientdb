@@ -18,7 +18,11 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -53,7 +57,13 @@ public class SQLFunctionSymmetricDifferenceTest {
 
   @Test
   public void testOperatorMerge() {
-    final OSQLFunctionSymmetricDifference merger = new OSQLFunctionSymmetricDifference();
+    final OSQLFunctionSymmetricDifference merger = new OSQLFunctionSymmetricDifference() {
+      @Override
+      protected boolean returnDistributedResult() {
+        return true;
+      }
+    };
+    
     final List<OSQLFunctionSymmetricDifference> differences = new ArrayList<OSQLFunctionSymmetricDifference>(3);
     for (int i = 0; i < 3; i++) {
       differences.add(new OSQLFunctionSymmetricDifference() {
@@ -90,7 +100,8 @@ public class SQLFunctionSymmetricDifferenceTest {
 
     final Set<Object> expectedResult = new HashSet<Object>(Arrays.<Object> asList(4, 7, 8, 9, 0));
 
-    final Set<Object> actualResult = (Set<Object>) function.execute(null, null, null, incomes.toArray(), new OBasicCommandContext());
+    final Set<Object> actualResult = (Set<Object>) function
+        .execute(null, null, null, incomes.toArray(), new OBasicCommandContext());
 
     assertSetEquals(actualResult, expectedResult);
   }

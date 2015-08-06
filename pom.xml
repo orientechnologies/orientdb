@@ -15,7 +15,7 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-parent</artifactId>
-    <version>2.1-SNAPSHOT</version>
+    <version>2.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>OrientDB</name>
@@ -241,6 +241,23 @@
                         <arguments>-Prelease</arguments>
                     </configuration>
                 </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>animal-sniffer-maven-plugin</artifactId>
+                    <version>1.13</version>
+                    <configuration>
+                        <!--
+                        Keep aligned with the maven-compiler-plugins source/target, ATM this is 1.6,
+                        so we use the java16 signature.
+                        -->
+                        <signature>
+                            <groupId>org.codehaus.mojo.signature</groupId>
+                            <artifactId>java16</artifactId>
+                            <version>1.1</version>
+                        </signature>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -428,6 +445,28 @@
     </reporting>
 
     <profiles>
+        <!--
+        Enable animal-sniffer to verify JDK compatibility.
+        -->
+        <profile>
+            <id>animalsniffer</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>animal-sniffer-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <profile>
             <id>java6</id>
             <activation>

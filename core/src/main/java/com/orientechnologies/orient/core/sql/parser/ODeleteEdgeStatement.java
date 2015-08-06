@@ -31,6 +31,7 @@ public class ODeleteEdgeStatement extends OStatement {
   protected OWhereClause      whereClause;
 
   protected OLimit            limit;
+  protected OBatch            batch        = null;
 
   public ODeleteEdgeStatement(int id) {
     super(id);
@@ -152,6 +153,10 @@ public class ODeleteEdgeStatement extends OStatement {
     if (limit != null) {
       result.append(limit);
     }
+    if (batch != null) {
+      result.append(batch);
+    }
+
 
     return result.toString();
   }
@@ -184,6 +189,10 @@ public class ODeleteEdgeStatement extends OStatement {
     if (limit != null) {
       limit.replaceParameters(params);
     }
+    if (batch != null) {
+      batch.replaceParameters(params);
+    }
+
   }
 
 }

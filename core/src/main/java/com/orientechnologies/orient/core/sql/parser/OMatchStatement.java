@@ -17,7 +17,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OIterableRecordSource;
 import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
+import com.orientechnologies.orient.core.sql.query.OBasicResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -191,7 +191,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
       Map<String, Long> estimatedRootEntries = estimateRootEntries(aliasClasses, aliasFilters);
       if (estimatedRootEntries.values().contains(0l)) {
-        return new OResultSet();// some aliases do not match on any classes
+        return new OBasicResultSet();// some aliases do not match on any classes
       }
 
       List<EdgeTraversal> sortedEdges = sortEdges(estimatedRootEntries, pattern);
@@ -739,14 +739,18 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return false;
   }
 
-  @Override
-  public long getTimeout() {
-    return -1;
-  }
 
   @Override
   public String getSyntax() {
     return "MATCH <match-statement> [, <match-statement] RETURN <alias>[, <alias>]";
+  }
+
+  @Override public boolean isLocalExecution() {
+    return true;
+  }
+
+  @Override public boolean isCacheable() {
+    return false;
   }
 
   @Override

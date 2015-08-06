@@ -42,8 +42,18 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
@@ -483,8 +493,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           writer.writeAttribute(0, false, "oversize", cls.getClassOverSize());
         if (cls.isStrictMode())
           writer.writeAttribute(0, false, "strictMode", cls.isStrictMode());
-        if (cls.getSuperClass() != null)
-          writer.writeAttribute(0, false, "super-class", cls.getSuperClass().getName());
+        if (!cls.getSuperClasses().isEmpty())
+          writer.writeAttribute(0, false, "super-classes", cls.getSuperClassesNames());
         if (cls.getShortName() != null)
           writer.writeAttribute(0, false, "short-name", cls.getShortName());
         if (cls.isAbstract())

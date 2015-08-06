@@ -30,25 +30,25 @@ import java.util.Map;
  * 
  */
 public interface OCommandContext {
-  public enum TIMEOUT_STRATEGY {
+  enum TIMEOUT_STRATEGY {
     RETURN, EXCEPTION
   }
 
-  public Object getVariable(String iName);
+  Object getVariable(String iName);
 
-  public Object getVariable(String iName, Object iDefaultValue);
+  Object getVariable(String iName, Object iDefaultValue);
 
-  public OCommandContext setVariable(String iName, Object iValue);
+  OCommandContext setVariable(String iName, Object iValue);
 
-  public OCommandContext incrementVariable(String getNeighbors);
+  OCommandContext incrementVariable(String getNeighbors);
 
-  public Map<String, Object> getVariables();
+  Map<String, Object> getVariables();
 
-  public OCommandContext getParent();
+  OCommandContext getParent();
 
-  public OCommandContext setParent(OCommandContext iParentContext);
+  OCommandContext setParent(OCommandContext iParentContext);
 
-  public OCommandContext setChild(OCommandContext context);
+  OCommandContext setChild(OCommandContext context);
 
   /**
    * Updates a counter. Used to record metrics.
@@ -59,13 +59,13 @@ public interface OCommandContext {
    *          delta to add or subtract
    * @return
    */
-  public long updateMetric(String iName, long iValue);
+  long updateMetric(String iName, long iValue);
 
-  public boolean isRecordingMetrics();
+  boolean isRecordingMetrics();
 
-  public OCommandContext setRecordingMetrics(boolean recordMetrics);
+  OCommandContext setRecordingMetrics(boolean recordMetrics);
 
-  public void beginExecution(long timeoutMs, TIMEOUT_STRATEGY iStrategy);
+  void beginExecution(long timeoutMs, TIMEOUT_STRATEGY iStrategy);
 
   /**
    * Check if timeout is elapsed, if defined.
@@ -79,5 +79,17 @@ public interface OCommandContext {
   public Map<Object, Object> getInputParameters();
 
   public void setInputParameters(Map<Object, Object> inputParameters);
+
+  /**
+   * Creates a copy of execution context.
+   */
+  OCommandContext copy();
+
+  /**
+   * Merges a context with current one.
+   * 
+   * @param iContext
+   */
+  void merge(OCommandContext iContext);
 
 }

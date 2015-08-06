@@ -123,7 +123,7 @@ public class OSharedResourceAdaptive {
           }
 
           throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
-              + timeout);
+              + timeout, e);
         }
         throwTimeoutException(lock.writeLock());
       } else {
@@ -156,7 +156,7 @@ public class OSharedResourceAdaptive {
             }
           }
           throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
-              + timeout);
+              + timeout, e);
         }
 
         throwTimeoutException(lock.readLock());

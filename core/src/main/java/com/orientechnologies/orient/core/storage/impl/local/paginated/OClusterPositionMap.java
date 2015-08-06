@@ -159,7 +159,7 @@ public class OClusterPositionMap extends ODurableComponent {
       throw ioe;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw new OStorageException("Error during rename of cluster position - physical position map.");
+      throw new OStorageException("Error during rename of cluster position - physical position map.", e);
     } finally {
       releaseExclusiveLock();
     }
@@ -206,6 +206,39 @@ public class OClusterPositionMap extends ODurableComponent {
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  public void update(long clusterPosition, OClusterPositionMapBucket.PositionEntry entry) throws IOException {
+    OAtomicOperation atomicOperation = startAtomicOperation();
+
+    acquireExclusiveLock();
+    try {
+      long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
+      int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
+
+      if (pageIndex >= getFilledUpTo(atomicOperation, fileId))
+        throw new OStorageException("Passed in cluster position " + clusterPosition
+            + " is outside of range of cluster-position map.");
+
+      final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
+      cacheEntry.acquireExclusiveLock();
+      try {
+        final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, getChangesTree(atomicOperation,
+            cacheEntry));
+        bucket.set(index, entry);
+      } finally {
+        cacheEntry.releaseExclusiveLock();
+        releasePage(atomicOperation, cacheEntry);
+      }
+
+      endAtomicOperation(false, null);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
+      throw new OStorageException("Error of update of mapping between logical adn physical record position.", e);
+    } finally {
+      releaseExclusiveLock();
+    }
+
   }
 
   public OClusterPositionMapBucket.PositionEntry get(final long clusterPosition) throws IOException {

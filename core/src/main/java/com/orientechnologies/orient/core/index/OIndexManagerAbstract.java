@@ -64,7 +64,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass implements OIndexManager, OCloseable {
   public static final String                                  CONFIG_INDEXES         = "indexes";
   public static final String                                  DICTIONARY_NAME        = "dictionary";
-  protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex     = new HashMap<String, Map<OMultiKey, Set<OIndex<?>>>>();
+
+  // values of this Map should be IMMUTABLE !! for thread safety reasons.
+  protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex     = new ConcurrentHashMap<String, Map<OMultiKey, Set<OIndex<?>>>>();
   protected Map<String, OIndex<?>>                            indexes                = new ConcurrentHashMap<String, OIndex<?>>();
   protected String                                            defaultClusterName     = OMetadataDefault.CLUSTER_INDEX_NAME;
   protected String                                            manualClusterName      = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
@@ -292,26 +294,21 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   public Set<OIndex<?>> getClassInvolvedIndexes(final String className, Collection<String> fields) {
-    acquireSharedLock();
-    try {
-      fields = normalizeFieldNames(fields);
+    fields = normalizeFieldNames(fields);
 
-      final OMultiKey multiKey = new OMultiKey(fields);
+    final OMultiKey multiKey = new OMultiKey(fields);
 
-      final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(className.toLowerCase());
+    final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(className.toLowerCase());
 
-      if (propertyIndex == null || !propertyIndex.containsKey(multiKey))
-        return Collections.emptySet();
+    if (propertyIndex == null || !propertyIndex.containsKey(multiKey))
+      return Collections.emptySet();
 
-      final Set<OIndex<?>> rawResult = propertyIndex.get(multiKey);
-      final Set<OIndex<?>> transactionalResult = new HashSet<OIndex<?>>(rawResult.size());
-      for (final OIndex<?> index : rawResult)
-        transactionalResult.add(preProcessBeforeReturn(index));
+    final Set<OIndex<?>> rawResult = propertyIndex.get(multiKey);
+    final Set<OIndex<?>> transactionalResult = new HashSet<OIndex<?>>(rawResult.size());
+    for (final OIndex<?> index : rawResult)
+      transactionalResult.add(preProcessBeforeReturn(index));
 
-      return transactionalResult;
-    } finally {
-      releaseSharedLock();
-    }
+    return transactionalResult;
   }
 
   public Set<OIndex<?>> getClassInvolvedIndexes(final String className, final String... fields) {
@@ -319,21 +316,16 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   public boolean areIndexed(final String className, Collection<String> fields) {
-    acquireSharedLock();
-    try {
-      fields = normalizeFieldNames(fields);
+    fields = normalizeFieldNames(fields);
 
-      final OMultiKey multiKey = new OMultiKey(fields);
+    final OMultiKey multiKey = new OMultiKey(fields);
 
-      final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(className.toLowerCase());
+    final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(className.toLowerCase());
 
-      if (propertyIndex == null)
-        return false;
+    if (propertyIndex == null)
+      return false;
 
-      return propertyIndex.containsKey(multiKey) && !propertyIndex.get(multiKey).isEmpty();
-    } finally {
-      releaseSharedLock();
-    }
+    return propertyIndex.containsKey(multiKey) && !propertyIndex.get(multiKey).isEmpty();
   }
 
   public boolean areIndexed(final String className, final String... fields) {
@@ -348,19 +340,14 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   @Override
   public void getClassIndexes(final String className, final Collection<OIndex<?>> indexes) {
-    acquireSharedLock();
-    try {
-      final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(className.toLowerCase());
+    final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(className.toLowerCase());
 
-      if (propertyIndex == null)
-        return;
+    if (propertyIndex == null)
+      return;
 
-      for (final Set<OIndex<?>> propertyIndexes : propertyIndex.values())
-        for (final OIndex<?> index : propertyIndexes)
-          indexes.add(preProcessBeforeReturn(index));
-    } finally {
-      releaseSharedLock();
-    }
+    for (final Set<OIndex<?>> propertyIndexes : propertyIndex.values())
+      for (final OIndex<?> index : propertyIndexes)
+        indexes.add(preProcessBeforeReturn(index));
   }
 
   public OIndex<?> getClassIndex(String className, String indexName) {
@@ -414,7 +401,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     }
   }
 
-  protected ODatabaseDocumentInternal getDatabase() {
+  protected static ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
@@ -435,7 +422,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
       if (propertyIndex == null) {
         propertyIndex = new HashMap<OMultiKey, Set<OIndex<?>>>();
-        classPropertyIndex.put(indexDefinition.getClassName().toLowerCase(), propertyIndex);
+      } else {
+        propertyIndex = new HashMap<OMultiKey, Set<OIndex<?>>>(propertyIndex);
       }
 
       final int paramCount = indexDefinition.getParamCount();
@@ -444,14 +432,35 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         final List<String> fields = indexDefinition.getFields().subList(0, i);
         final OMultiKey multiKey = new OMultiKey(normalizeFieldNames(fields));
         Set<OIndex<?>> indexSet = propertyIndex.get(multiKey);
+
         if (indexSet == null)
           indexSet = new HashSet<OIndex<?>>();
+        else
+          indexSet = new HashSet<OIndex<?>>(indexSet);
+
         indexSet.add(index);
         propertyIndex.put(multiKey, indexSet);
       }
+
+      classPropertyIndex.put(indexDefinition.getClassName().toLowerCase(), copyPropertyMap(propertyIndex));
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  protected static Map<OMultiKey, Set<OIndex<?>>> copyPropertyMap(Map<OMultiKey, Set<OIndex<?>>> original) {
+    final Map<OMultiKey, Set<OIndex<?>>> result = new HashMap<OMultiKey, Set<OIndex<?>>>();
+
+    for (Map.Entry<OMultiKey, Set<OIndex<?>>> entry : original.entrySet()) {
+      Set<OIndex<?>> indexes = new HashSet<OIndex<?>>(entry.getValue());
+      assert indexes.equals(entry.getValue());
+
+      result.put(entry.getKey(), Collections.unmodifiableSet(indexes));
+    }
+
+    assert result.equals(original);
+
+    return Collections.unmodifiableMap(result);
   }
 
   protected List<String> normalizeFieldNames(final Collection<String> fieldNames) {
@@ -461,7 +470,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     return result;
   }
 
-  protected OIndex<?> preProcessBeforeReturn(final OIndex<?> index) {
+  protected static OIndex<?> preProcessBeforeReturn(final OIndex<?> index) {
     if (!(getDatabase().getStorage() instanceof OStorageProxy)) {
       if (index instanceof OIndexMultiValues)
         return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);

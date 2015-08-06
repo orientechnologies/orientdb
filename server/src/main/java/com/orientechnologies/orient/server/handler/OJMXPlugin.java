@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.managed.OrientServer;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 import javax.management.MBeanServer;
@@ -34,10 +33,8 @@ import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 
 public class OJMXPlugin extends OServerPluginAbstract {
-  private OrientServer managedServer;
-  private ObjectName   onProfiler;
-  private ObjectName   onServer;
-  private boolean      profilerManaged;
+  private ObjectName onProfiler;
+  private boolean    profilerManaged;
 
   public OJMXPlugin() {
   }
@@ -60,18 +57,11 @@ public class OJMXPlugin extends OServerPluginAbstract {
     try {
       if (profilerManaged) {
         // REGISTER THE PROFILER
-        onProfiler = new ObjectName("OrientDB:type=Profiler");
+        onProfiler = new ObjectName("com.orientechnologies.common.profiler:type=OProfilerMXBean");
         if (mBeanServer.isRegistered(onProfiler))
           mBeanServer.unregisterMBean(onProfiler);
         mBeanServer.registerMBean(Orient.instance().getProfiler(), onProfiler);
       }
-
-      // REGISTER SERVER
-      onServer = new ObjectName("OrientDB:type=Server");
-      managedServer = new OrientServer();
-      if (mBeanServer.isRegistered(onServer))
-        mBeanServer.unregisterMBean(onServer);
-      mBeanServer.registerMBean(managedServer, onServer);
 
     } catch (Exception e) {
       throw new OConfigurationException("Cannot initialize JMX server", e);
@@ -91,9 +81,6 @@ public class OJMXPlugin extends OServerPluginAbstract {
         if (mBeanServer.isRegistered(onProfiler))
           mBeanServer.unregisterMBean(onProfiler);
 
-      if (onServer != null)
-        if (mBeanServer.isRegistered(onServer))
-          mBeanServer.unregisterMBean(onServer);
     } catch (Exception e) {
       OLogManager.instance().error(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " unregisterMBean error.", e);
     }
@@ -103,9 +90,5 @@ public class OJMXPlugin extends OServerPluginAbstract {
   @Override
   public String getName() {
     return "jmx";
-  }
-
-  public OrientServer getManagedServer() {
-    return managedServer;
   }
 }

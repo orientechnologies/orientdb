@@ -65,7 +65,7 @@ public class OUpdateStatementTest {
     checkRightSyntax("update Foo put a = 'b', 'c'");
   }
 
-  public void testJson(){
+  public void testJson() {
     checkRightSyntax("update Foo merge {'a':'b', 'c':{'d':'e'}} where name = 'foo'");
     checkRightSyntax("update Foo content {'a':'b', 'c':{'d':'e', 'f': ['a', 'b', 4]}} where name = 'foo'");
   }

@@ -9,7 +9,7 @@
 	the specific language governing permissions and ~ limitations under the License. -->
 
 <hazelcast
-	xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-2.1.xsd"
+	xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.0.xsd"
 	xmlns="http://www.hazelcast.com/schema/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<group>
 		<name>orientdb</name>
@@ -24,6 +24,7 @@
                 <multicast-timeout-seconds>1</multicast-timeout-seconds>
             </multicast>
             <tcp-ip enabled="true">
+                <connection-timeout-seconds>1</connection-timeout-seconds>
                 <member>127.0.0.1:2434</member>
                 <member>127.0.0.1:2435</member>
             </tcp-ip>

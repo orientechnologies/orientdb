@@ -67,7 +67,7 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
         try {
           Mac.getInstance(algorithm);
         } catch (NoSuchAlgorithmException nsa) {
-          throw new IllegalArgumentException("Can't find encryption algorithm '" + algorithm + "'");
+          throw new IllegalArgumentException("Can't find encryption algorithm '" + algorithm + "'", nsa);
         }
       }
 
@@ -409,7 +409,7 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
       try {
         return Mac.getInstance(algorithm);
       } catch (NoSuchAlgorithmException nsa) {
-        throw new IllegalArgumentException("Can't find encryption algorithm '" + algorithm + "'");
+        throw new IllegalArgumentException("Can't find encryption algorithm '" + algorithm + "'", nsa);
       }
     }
   }

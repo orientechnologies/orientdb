@@ -17,7 +17,11 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -129,18 +133,18 @@ public class SecurityTest extends DocumentDBBaseTest {
 
     database.close();
     if (!(database.getStorage() instanceof OStorageProxy)) {
-			database.open("writerChild", "writerChild");
+      database.open("writerChild", "writerChild");
 
-			OSecurityUser user = database.getUser();
-			Assert.assertTrue(user.hasRole("writer", true));
-			Assert.assertFalse(user.hasRole("wrter", true));
+      OSecurityUser user = database.getUser();
+      Assert.assertTrue(user.hasRole("writer", true));
+      Assert.assertFalse(user.hasRole("wrter", true));
 
-			database.close();
-		}
+      database.close();
+    }
   }
 
   @Test
-  public void testQuotedUserName(){
+  public void testQuotedUserName() {
     database.open("admin", "admin");
 
     OSecurity security = database.getMetadata().getSecurity();
@@ -161,11 +165,28 @@ public class SecurityTest extends DocumentDBBaseTest {
 
     database.close();
 
-    try{
+    try {
       database.open("user'quoted", "foobar");
       Assert.fail();
-    }catch(Exception e){
+    } catch (Exception e) {
 
+    }
+  }
+
+  @Test
+  public void testUserNoRole() {
+    database.open("admin", "admin");
+
+    OSecurity security = database.getMetadata().getSecurity();
+
+    OUser newUser = security.createUser("noRole", "noRole", (String[]) null);
+
+    database.close();
+
+    try {
+      database.open("noRole", "noRole");
+      Assert.fail();
+    } catch (OSecurityAccessException e) {
     }
   }
 }

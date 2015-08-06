@@ -92,8 +92,16 @@ public interface OCommandExecutor {
 
   boolean involveSchema();
 
-  long getTimeout();
-
   String getSyntax();
+
+  /**
+   * Returns true if the command must be executed on local node on distributed configuration.
+   */
+  boolean isLocalExecution();
+
+  /**
+   * Returns true if the command results can be cached.
+   */
+  boolean isCacheable();
 
 }

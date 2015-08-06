@@ -19,19 +19,6 @@
  */
 package com.orientechnologies.orient.graph.gremlin;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.Map.Entry;
-
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-
-import com.orientechnologies.common.concur.resource.OReentrantResourcePool;
-import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -46,6 +33,22 @@ import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine;
 import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
 
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 public class OGremlinHelper {
   private static final String                     PARAM_OUTPUT = "output";
   private static GremlinGroovyScriptEngineFactory factory      = new GremlinGroovyScriptEngineFactory();
@@ -53,16 +56,14 @@ public class OGremlinHelper {
 
   private int                                     maxPool      = 50;
 
-  private long                                    timeout;
-
-  public static interface OGremlinCallback {
-    public boolean call(ScriptEngine iEngine, OrientBaseGraph iGraph);
+  public interface OGremlinCallback {
+    boolean call(ScriptEngine iEngine, OrientBaseGraph iGraph);
   }
 
   public OGremlinHelper() {
     OCommandManager.instance().registerRequester("gremlin", OCommandGremlin.class);
     OCommandManager.instance().registerExecutor(OCommandGremlin.class, OCommandGremlinExecutor.class);
-    timeout = OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsLong();
+    final long timeout = OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsLong();
   }
 
   @SuppressWarnings("unchecked")
@@ -225,15 +226,14 @@ public class OGremlinHelper {
       return objectToClone;
       // Clone Date
     } else if (objectToClone instanceof Date) {
-      Date clonedDate = (Date) ((Date) objectToClone).clone();
-      return clonedDate;
+      return (Date) ((Date) objectToClone).clone();
 
     } else {
       // ***************************************************************************************************************************************
       // 2. Polymorphic clone (by reflection, looks for a clone() method in hierarchy and invoke it)
       // ***************************************************************************************************************************************
       try {
-        Object newClone = null;
+        Object newClone;
         for (Class<?> obj = objectToClone.getClass(); !obj.equals(Object.class); obj = obj.getSuperclass()) {
           Method m[] = obj.getDeclaredMethods();
           for (int i = 0; i < m.length; i++) {
