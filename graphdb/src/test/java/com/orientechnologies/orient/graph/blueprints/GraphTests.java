@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -275,4 +276,32 @@ public class GraphTests {
       orientGraphFactory.close();
     }
   }
+
+  @Test
+  public void testPropertyWithDash() {
+    OrientGraphFactory orientGraphFactory = new OrientGraphFactory("memory:GraphTestsTestPropertyWithDash");
+    final OrientGraphNoTx graphDbNoTx = orientGraphFactory.getNoTx();
+    try {
+      graphDbNoTx.addVertex("class:Test");
+      OrientVertexType vertex = graphDbNoTx.getVertexType("Test");
+      if (vertex.getProperty("vdevicedataKey") == null) {
+        vertex.createProperty("vdevicedataKey", OType.STRING);
+      }
+
+      try {
+
+        if (vertex.getProperty("vdevice-dataKey") == null) {
+          vertex.createProperty("vdevice-dataKey", OType.STRING);
+        }
+        fail();
+      }catch(OSchemaException e){
+
+      }
+    } finally {
+      graphDbNoTx.shutdown();
+      orientGraphFactory.close();
+    }
+  }
+
+
 }

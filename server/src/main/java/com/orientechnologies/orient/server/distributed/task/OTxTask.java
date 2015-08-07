@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -49,6 +43,12 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Distributed transaction task.
@@ -253,7 +253,7 @@ public class OTxTask extends OAbstractReplicatedTask {
    * @return
    */
   @Override
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     final long to = OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong();
     return to + ((to / 2) * tasks.size());
   }
