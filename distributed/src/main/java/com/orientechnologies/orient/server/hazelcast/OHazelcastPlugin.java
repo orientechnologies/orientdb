@@ -981,10 +981,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   protected Set<String> installDatabaseFromNetwork(final String dbPath, final String databaseName,
       final OHazelcastDistributedDatabase distrDatabase, final ODistributedConfiguration cfg, final String iNode,
       final ODistributedDatabaseChunk value) {
-    ODistributedDatabaseChunk chunk = value;
-
     // DISCARD ALL THE MESSAGES BEFORE THE BACKUP
-    distrDatabase.setWaitForMessage(chunk.getLastOperationId());
+    distrDatabase.setWaitForMessage(value.getLastOperationId());
 
     final String fileName = Orient.getTempPath() + "install_" + databaseName + ".zip";
 
@@ -1004,41 +1002,65 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       throw new ODistributedException("Error on creating temp database file to install locally", e);
     }
 
-    FileOutputStream out = null;
+    // DELETE ANY PREVIOUS .COMPLETED FILE
+    final File completedFile = new File(file.getAbsolutePath() + ".completed");
+    if (completedFile.exists())
+      completedFile.delete();
+
     try {
-      out = new FileOutputStream(fileName, false);
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            Thread.currentThread().setName("OrientDB installDatabase node=" + nodeName + " db=" + databaseName);
+            ODistributedDatabaseChunk chunk = value;
 
-      long fileSize = writeDatabaseChunk(1, chunk, out);
-      for (int chunkNum = 2; !chunk.last; chunkNum++) {
-        final Object result = sendRequest(databaseName, null, Collections.singleton(iNode), new OCopyDatabaseChunkTask(
-            chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length), EXECUTION_MODE.RESPONSE);
+            final FileOutputStream fOut = new FileOutputStream(fileName, false);
+            try {
 
-        if (result instanceof Boolean)
-          continue;
-        else if (result instanceof Exception) {
-          ODistributedServerLog.error(this, localNodeName, iNode, DIRECTION.IN,
-              "error on installing database %s in %s (chunk #%d)", (Exception) result, databaseName, dbPath, chunkNum);
-        } else if (result instanceof ODistributedDatabaseChunk) {
-          chunk = (ODistributedDatabaseChunk) result;
-          fileSize += writeDatabaseChunk(chunkNum, chunk, out);
+              long fileSize = writeDatabaseChunk(1, chunk, fOut);
+              for (int chunkNum = 2; !chunk.last; chunkNum++) {
+                final Object result = sendRequest(databaseName, null, Collections.singleton(iNode), new OCopyDatabaseChunkTask(
+                    chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length), EXECUTION_MODE.RESPONSE);
+
+                if (result instanceof Boolean)
+                  continue;
+                else if (result instanceof Exception) {
+                  ODistributedServerLog.error(this, getLocalNodeName(), iNode, DIRECTION.IN,
+                      "error on installing database %s in %s (chunk #%d)", (Exception) result, databaseName, dbPath, chunkNum);
+                } else if (result instanceof ODistributedDatabaseChunk) {
+                  chunk = (ODistributedDatabaseChunk) result;
+                  fileSize += writeDatabaseChunk(chunkNum, chunk, fOut);
+                }
+              }
+
+              fOut.flush();
+
+              // CREATE THE .COMPLETED FILE TO SIGNAL EOF
+              new File(file.getAbsolutePath() + ".completed").createNewFile();
+
+              ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "database copied correctly, size=%s",
+                  OFileUtils.getSizeAsString(fileSize));
+            } finally {
+              try {
+                fOut.flush();
+                fOut.close();
+              } catch (IOException e) {
+              }
+            }
+
+          } catch (Exception e) {
+            ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
+                "error on transferring database '%s' to '%s'", e, databaseName, fileName);
+            throw new ODistributedException("Error on transferring database", e);
+          }
         }
-      }
-
-      ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, "database copied correctly, size=%s",
-          OFileUtils.getSizeAsString(fileSize));
+      }).start();
 
     } catch (Exception e) {
-      ODistributedServerLog.error(this, localNodeName, null, DIRECTION.NONE, "error on transferring database '%s' to '%s'", e,
+      ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE, "error on transferring database '%s' to '%s'", e,
           databaseName, fileName);
       throw new ODistributedException("Error on transferring database", e);
-    } finally {
-      try {
-        if (out != null) {
-          out.flush();
-          out.close();
-        }
-      } catch (IOException e) {
-      }
     }
 
     final ODatabaseDocumentTx db = installDatabaseOnLocalNode(distrDatabase, databaseName, dbPath, iNode, fileName);
@@ -1370,12 +1392,32 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         dbPath);
 
     try {
-      File f = new File(iDatabaseCompressedFile);
+      final File f = new File(iDatabaseCompressedFile);
+      final File fCompleted = new File(iDatabaseCompressedFile + ".completed");
 
       new File(dbPath).mkdirs();
       final ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dbPath);
 
-      final FileInputStream in = new FileInputStream(f);
+      // USES A CUSTOM WRAPPER OF IS TO WAIT FOR FILE IS WRITTEN (ASYNCH)
+      final FileInputStream in = new FileInputStream(f) {
+        @Override
+        public int read(final byte[] b, final int off, final int len) throws IOException {
+          while (true) {
+            final int read = super.read(b, off, len);
+            if (read > 0)
+              return read;
+
+            if (fCompleted.exists())
+              return 0;
+
+            try {
+              Thread.sleep(100);
+            } catch (InterruptedException e) {
+            }
+          }
+        }
+      };
+
       try {
         db.restore(in, null, null, this);
       } finally {
