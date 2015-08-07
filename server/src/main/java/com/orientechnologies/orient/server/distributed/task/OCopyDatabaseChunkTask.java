@@ -85,7 +85,7 @@ import java.io.ObjectOutput;
    }
 
    @Override
-   public long getTimeout() {
+   public long getDistributedTimeout() {
      return OGlobalConfiguration.DISTRIBUTED_DEPLOYCHUNK_TASK_SYNCH_TIMEOUT.getValueAsLong();
    }
 

@@ -65,6 +65,11 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract imp
   }
 
   @Override
+  public long getDistributedTimeout() {
+    return delegate.getDistributedTimeout();
+  }
+
+  @Override
   public OCommandContext getContext() {
     return delegate.getContext();
   }
