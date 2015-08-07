@@ -899,7 +899,7 @@ public class OServer {
         rootPassword = null;
     }
 
-    if (rootPassword != null && !isUserExists(OServerConfiguration.DEFAULT_ROOT_USER)) {
+    if (rootPassword == null) {
       try {
         // WAIT ANY LOG IS PRINTED
         Thread.sleep(1000);
