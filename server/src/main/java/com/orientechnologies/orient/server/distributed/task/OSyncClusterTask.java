@@ -188,7 +188,7 @@ public class OSyncClusterTask extends OAbstractReplicatedTask implements OComman
   }
 
   @Override
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 

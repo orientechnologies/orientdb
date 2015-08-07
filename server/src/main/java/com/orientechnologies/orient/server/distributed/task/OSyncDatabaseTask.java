@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -33,17 +43,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedStorage;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Ask for synchronization of database from a remote node.
@@ -70,7 +69,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
   }
 
   @Override
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+  public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
 
     if (!getNodeSource().equals(iManager.getLocalNodeName())) {
@@ -119,25 +118,52 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
             backupFile.createNewFile();
 
             final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
-            try {
-              final List<String> compressedFiles = database.backup(fileOutputStream, null, new Callable<Object>() {
-                @Override
-                public Object call() throws Exception {
-                  lastOperationId.set(database.getStorage().getLastOperationId());
-                  return null;
+
+            final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
+            if (completedFile.exists())
+              completedFile.delete();
+
+            new Thread(new Runnable() {
+              @Override
+              public void run() {
+                Thread.currentThread().setName("OrientDB SyncDatabase node=" + iManager.getLocalNodeName() + " db=" + databaseName);
+
+                try {
+                  database.backup(fileOutputStream, null, new Callable<Object>() {
+                    @Override
+                    public Object call() throws Exception {
+                      lastOperationId.set(database.getStorage().getLastOperationId());
+                      return null;
+                    }
+                  }, new OCommandOutputListener() {
+                    @Override
+                    public void onMessage(String iText) {
+                      if (iText.startsWith("\n"))
+                        iText = iText.substring(1);
+
+                      OLogManager.instance().info(this, iText);
+                    }
+                  }, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+
+                  ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                      "backup of database '%s' completed. lastOperationId=%d...", databaseName, lastOperationId.get());
+
+                } catch (IOException e) {
+                  OLogManager.instance().error(this, "Cannot execute backup of database %s for deploy database", e, databaseName);
+                } finally {
+                  try {
+                    fileOutputStream.close();
+                  } catch (IOException e) {
+                  }
+
+                  try {
+                    completedFile.createNewFile();
+                  } catch (IOException e) {
+                    OLogManager.instance().error(this, "Cannot create file of backup completed: %s", e, completedFile);
+                  }
                 }
-              }, this, compressionRate, CHUNK_MAX_SIZE);
-
-              if (compressedFiles.size() < 2) {
-                throw new ODistributedException("Cannot backup database, compressed files: " + compressedFiles);
               }
-
-              ODistributedServerLog.info(this, iManager.getLocalNodeName(), null, DIRECTION.NONE, "compressed %d files",
-                  compressedFiles.size());
-
-            } finally {
-              fileOutputStream.close();
-            }
+            }).start();
 
             // RECORD LAST BACKUP TO BE REUSED IN CASE ANOTHER NODE ASK FOR THE SAME IN SHORT TIME WHILE THE DB IS NOT UPDATED
             ((ODistributedStorage) database.getStorage()).setLastValidBackup(backupFile);
@@ -145,11 +171,10 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                 "reusing last backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
 
-          final long fileSize = backupFile.length();
-
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-              "sending the compressed database '%s' over the NETWORK to node '%s', size=%s, lastOperationId=%d...", databaseName,
-              getNodeSource(), OFileUtils.getSizeAsString(fileSize), lastOperationId.get());
+          // WAIT UNTIL THE lastOperationId IS SET
+          while (lastOperationId.get() < 0) {
+            Thread.sleep(100);
+          }
 
           final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), backupFile, 0,
               CHUNK_MAX_SIZE);
@@ -196,7 +221,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
   }
 
   @Override
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
