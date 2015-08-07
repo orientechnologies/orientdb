@@ -2285,6 +2285,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           + "' is a reserved keyword, it cannot be used as a property name");
     }
 
+    if(getDatabase().getStorage().getConfiguration().isStrictSql()){
+      validatePropertyName(propertyName);
+    }
     if (getDatabase().getTransaction().isActive())
       throw new OSchemaException("Cannot create property '" + propertyName + "' inside a transaction");
 
@@ -2344,6 +2347,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
 
     return property;
+  }
+
+  private void validatePropertyName(String propertyName) {
+    if(propertyName.contains("-")){
+      throw new OSchemaException("Character '-' not allowed in property name ("+propertyName+") when strictSql is enabled");
+    }
   }
 
   private int getClusterId(final String stringValue) {
