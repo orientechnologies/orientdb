@@ -821,20 +821,36 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         Orient.instance().unregisterStorageByName(databaseName);
 
         // MOVE DIRECTORY TO ../backup/databases/<db-name>
-        final String backupPath = serverInstance.getDatabaseDirectory() + "/" + BACKUP_DIR + "/" + databaseName;
-        final File f = new File(BACKUP_DIR);
-        if (f.exists())
-          OFileUtils.deleteRecursively(new File(backupPath));
-        else
-          f.mkdirs();
+        final File backupFullPath = new File(serverInstance.getDatabaseDirectory() + BACKUP_DIR + "/" + databaseName);
+        final File backupParentPath = new File(serverInstance.getDatabaseDirectory() + BACKUP_DIR);
+
+        if (!backupParentPath.exists())
+          // CREATE THE DIRECTORY STRUCTURE
+          backupParentPath.mkdirs();
+        else if (backupFullPath.exists()) {
+          // DELETE PREVIOUS BACKUP
+          OFileUtils.deleteRecursively(backupFullPath);
+        }
 
         // MOVE THE DATABASE ON CURRENT NODE
         ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "moving existent database '%s' in '%s' t '%s' and get a fresh copy from a remote node...", databaseName, dbPath,
-            backupPath);
+            "moving existent database '%s' located in '%s' to '%s' and get a fresh copy from a remote node...", databaseName,
+            dbPath, backupFullPath);
 
         final File oldDirectory = new File(dbPath);
-        oldDirectory.renameTo(new File(backupPath));
+        if (!oldDirectory.renameTo(backupFullPath)) {
+          ODistributedServerLog
+              .error(
+                  this,
+                  getLocalNodeName(),
+                  null,
+                  DIRECTION.NONE,
+                  "error on moving existent database '%s' located in '%s' to '%s'. Try to move the database directory manually and retry",
+                  databaseName, dbPath, backupFullPath);
+
+          throw new ODistributedException("Error on moving existent database '" + databaseName + "' located in '" + dbPath
+              + "' to '" + backupFullPath + "'. Try to move the database directory manually and retry");
+        }
 
       } else
         // HOT ALIGNMENT RUNNING, DON'T INSTALL THE DB FROM SCRATCH BUT RATHER LET TO THE NODE TO ALIGN BY READING THE QUEUE

@@ -108,8 +108,8 @@ public class OWOWCache {
 
   private final AtomicLong                                  allocatedSpace        = new AtomicLong();
 
-  public OWOWCache(boolean syncOnPageFlush, int pageSize, long groupTTL, OWriteAheadLog writeAheadLog, long pageFlushInterval,
-      int cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize) {
+  public OWOWCache(final boolean syncOnPageFlush, final int pageSize, final long groupTTL, final OWriteAheadLog writeAheadLog,
+      final long pageFlushInterval, final int cacheMaxSize, final OLocalPaginatedStorage storageLocal, boolean checkMinSize) {
     filesLock.acquireWriteLock();
     try {
       this.files = new ConcurrentHashMap<Long, OFileClassic>();
@@ -148,12 +148,12 @@ public class OWOWCache {
     }
   }
 
-  public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
+  public void addLowDiskSpaceListener(final OLowDiskSpaceListener listener) {
     listeners.add(new WeakReference<OLowDiskSpaceListener>(listener));
   }
 
-  public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {
-    List<WeakReference<OLowDiskSpaceListener>> itemsToRemove = new ArrayList<WeakReference<OLowDiskSpaceListener>>();
+  public void removeLowDiskSpaceListener(final OLowDiskSpaceListener listener) {
+    final List<WeakReference<OLowDiskSpaceListener>> itemsToRemove = new ArrayList<WeakReference<OLowDiskSpaceListener>>();
 
     for (WeakReference<OLowDiskSpaceListener> ref : listeners) {
       final OLowDiskSpaceListener lowDiskSpaceListener = ref.get();
@@ -166,7 +166,7 @@ public class OWOWCache {
       listeners.remove(ref);
   }
 
-  private void addAllocatedSpace(long diff) {
+  private void addAllocatedSpace(final long diff) {
     if (diff == 0)
       return;
 
@@ -178,8 +178,8 @@ public class OWOWCache {
     if (ts - lastSpaceCheck > diskSizeCheckInterval) {
       final File storageDir = new File(storagePath);
 
-      long freeSpace = storageDir.getFreeSpace();
-      long effectiveFreeSpace = freeSpace - allocatedSpace.get();
+      final long freeSpace = storageDir.getFreeSpace();
+      final long effectiveFreeSpace = freeSpace - allocatedSpace.get();
 
       if (effectiveFreeSpace < freeSpaceLimit)
         callLowSpaceListeners(new OLowDiskSpaceInformation(effectiveFreeSpace, freeSpaceLimit));
@@ -208,7 +208,7 @@ public class OWOWCache {
     });
   }
 
-  private static int calculatePageCrc(byte[] pageData) {
+  private static int calculatePageCrc(final byte[] pageData) {
     int systemSize = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
 
     final CRC32 crc32 = new CRC32();
@@ -217,11 +217,11 @@ public class OWOWCache {
     return (int) crc32.getValue();
   }
 
-  public long bookFileId(String fileName) throws IOException {
+  public long bookFileId(final String fileName) throws IOException {
     filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
-      Long fileId = nameIdMap.get(fileName);
+      final Long fileId = nameIdMap.get(fileName);
 
       if (fileId != null && fileId < 0)
         return -fileId;
@@ -233,7 +233,7 @@ public class OWOWCache {
     }
   }
 
-  public long openFile(String fileName) throws IOException {
+  public long openFile(final String fileName) throws IOException {
     filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
@@ -249,28 +249,26 @@ public class OWOWCache {
       if (fileClassic == null) {
         fileClassic = createFile(fileName);
         if (!fileClassic.exists())
-          throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
+          throw new OStorageException("File with name '" + fileName + "' does not exist in storage '" + storageLocal.getName()
+              + "'");
         else {
-          // workaround of bug in distributed storage https://github.com/orientechnologies/orientdb/issues/4439
+          throw new OStorageException("File '" + fileName
+              + "' is not registered in 'file name - id' map, but exists in file system");
 
-          OLogManager
-              .instance()
-              .error(
-                  this,
-                  "File "
-                      + fileName
-                      + " is not registered in 'file name - id' map but exists in file system, "
-                      + "probably you work in distributed storage. If it is not true, please create bug in bug tracker https://github.com/orientechnologies/orientdb/issues .");
-
-          if (fileId == null) {
-            ++fileCounter;
-            fileId = fileCounter;
-          } else
-            fileId = -fileId;
-
-          files.put(fileId, fileClassic);
-          nameIdMap.put(fileName, fileId);
-          writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+          // IT WAS MANAGED AS SPECIAL "DISTRIBUTED CASE", BUT IT WAS A BUG:
+          // https://github.com/orientechnologies/orientdb/issues/4439
+          // OLogManager.instance().error(this,
+          // "File '" + fileName + "' is not registered in 'file name - id' map, but exists in file system");
+          //
+          // if (fileId == null) {
+          // ++fileCounter;
+          // fileId = fileCounter;
+          // } else
+          // fileId = -fileId;
+          //
+          // files.put(fileId, fileClassic);
+          // nameIdMap.put(fileName, fileId);
+          // writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
         }
       }
 
@@ -292,7 +290,7 @@ public class OWOWCache {
       OFileClassic fileClassic;
 
       if (fileId != null && fileId >= 0)
-        throw new OStorageException("File with name " + fileName + " already exists in storage " + storageLocal.getName());
+        throw new OStorageException("File with name '" + fileName + "' already exists in storage '" + storageLocal.getName() + "'");
 
       if (fileId == null) {
         ++fileCounter;
@@ -331,7 +329,7 @@ public class OWOWCache {
           throw new OStorageException("File with given name already exists but has different id " + existingFileId
               + " vs. proposed " + fileId);
       } else {
-        throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
+        throw new OStorageException("File with name '" + fileName + "' does not exist in storage '" + storageLocal.getName() + "'");
       }
 
       openFile(fileClassic);
@@ -351,7 +349,8 @@ public class OWOWCache {
 
       if (existingFileId != null && existingFileId >= 0) {
         if (existingFileId == fileId)
-          throw new OStorageException("File with name " + fileName + " already exists in storage " + storageLocal.getName());
+          throw new OStorageException("File with name '" + fileName + "' already exists in storage '" + storageLocal.getName()
+              + "'");
         else
           throw new OStorageException("File with given name already exists but has different id " + existingFileId
               + " vs. proposed " + fileId);
@@ -360,8 +359,8 @@ public class OWOWCache {
       fileClassic = files.get(fileId);
 
       if (fileClassic != null)
-        throw new OStorageException("File with given id exists but has different name " + fileClassic.getName() + " vs. proposed "
-            + fileName);
+        throw new OStorageException("File with given id exists but has different name '" + fileClassic.getName()
+            + "' vs. proposed " + fileName);
 
       if (fileCounter < fileId)
         fileCounter = fileId;
@@ -394,7 +393,7 @@ public class OWOWCache {
       try {
         future.get();
       } catch (Exception e) {
-        throw new OStorageException("Error during fuzzy checkpoint execution for storage " + storageLocal.getName(), e);
+        throw new OStorageException("Error during fuzzy checkpoint execution for storage '" + storageLocal.getName() + "'", e);
       }
     }
   }
@@ -788,8 +787,8 @@ public class OWOWCache {
             if (storedCRC32 != calculatedCRC32) {
               checkSumIncorrect = true;
               if (commandOutputListener != null)
-                commandOutputListener.onMessage("Error: Checksum for page " + (pos / pageSize) + " in file "
-                    + fileClassic.getName() + " is incorrect !!!");
+                commandOutputListener.onMessage("Error: Checksum for page " + (pos / pageSize) + " in file '"
+                    + fileClassic.getName() + "' is incorrect !!!");
               fileIsCorrect = false;
             }
 
@@ -804,7 +803,7 @@ public class OWOWCache {
           }
         } catch (IOException ioe) {
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Error: Error during processing of file " + fileClassic.getName() + ". "
+            commandOutputListener.onMessage("Error: Error during processing of file '" + fileClassic.getName() + "'. "
                 + ioe.getMessage());
 
           fileIsCorrect = false;
@@ -812,10 +811,10 @@ public class OWOWCache {
 
         if (!fileIsCorrect) {
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Verification of file " + fileClassic.getName() + " is finished with errors.");
+            commandOutputListener.onMessage("Verification of file '" + fileClassic.getName() + "' is finished with errors.");
         } else {
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Verification of file " + fileClassic.getName() + " is successfully finished.");
+            commandOutputListener.onMessage("Verification of file '" + fileClassic.getName() + "' is successfully finished.");
         }
       }
 
@@ -874,7 +873,7 @@ public class OWOWCache {
       if (!fileClassic.isOpen())
         fileClassic.open();
     } else {
-      throw new OStorageException("File " + fileClassic + " does not exist.");
+      throw new OStorageException("File '" + fileClassic + "' does not exist.");
     }
 
   }
@@ -884,7 +883,7 @@ public class OWOWCache {
       fileClassic.create(-1);
       fileClassic.synch();
     } else {
-      throw new OStorageException("File " + fileClassic + " already exists.");
+      throw new OStorageException("File '" + fileClassic + "' already exists.");
     }
   }
 
@@ -893,7 +892,7 @@ public class OWOWCache {
       final File storagePath = new File(storageLocal.getStoragePath());
       if (!storagePath.exists())
         if (!storagePath.mkdirs())
-          throw new OStorageException("Can not create directories for the path " + storagePath);
+          throw new OStorageException("Can not create directories for the path '" + storagePath + "'");
 
       nameIdMapHolderFile = new File(storagePath, NAME_ID_MAP);
 
@@ -1004,7 +1003,7 @@ public class OWOWCache {
     final OFileClassic fileClassic = files.get(fileId);
 
     if (fileClassic == null)
-      throw new IllegalArgumentException("File with id " + fileId + " not found in WOW Cache");
+      throw new IllegalArgumentException("File with id '" + fileId + "' not found in WOW Cache");
 
     OLogSequenceNumber lastLsn;
     if (writeAheadLog != null)
