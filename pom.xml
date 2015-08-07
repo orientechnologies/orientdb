@@ -22,7 +22,7 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-lucene</artifactId>
-    <version>2.2-SNAPSHOT</version>
+    <version>2.1.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -30,7 +30,7 @@
         <jdkVersion>1.6</jdkVersion>
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
-        <orientdb.version>2.1.0</orientdb.version>
+        <orientdb.version>${version}</orientdb.version>
         <lucene.version>4.7.0</lucene.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
