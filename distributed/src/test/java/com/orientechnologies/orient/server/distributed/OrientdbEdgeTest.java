@@ -148,7 +148,7 @@ public class OrientdbEdgeTest {
             + "        <!-- <entry name=\"profiler.config\" value=\"30,10,10\" />  -->\n" + "\n"
             + "        <!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info, warning -->\n"
             + "        <entry name=\"log.console.level\" value=\"finest\"/>\n"
-            + "        <entry name=\"log.file.level\" value=\"finest\"/>\n" + "    </properties>\n" + "</orient-server>");
+            + "        <entry name=\"log.file.level\" value=\"finest\"/>\n" + "    </properties>\n" + " <isAfterFirstTime>true</isAfterFirstTime></orient-server>");
 
     server.activate();
   }

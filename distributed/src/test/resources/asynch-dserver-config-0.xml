@@ -70,4 +70,5 @@
         <hook class="com.orientechnologies.orient.server.distributed.asynch.UpdateHook"
             position="REGULAR" />
    </hooks>
+   <isAfterFirstTime>true</isAfterFirstTime>
 </orient-server>
