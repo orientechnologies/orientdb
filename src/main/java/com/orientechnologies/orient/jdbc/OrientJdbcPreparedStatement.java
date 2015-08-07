@@ -17,12 +17,6 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -30,10 +24,15 @@ import java.net.URL;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
  * 
@@ -55,6 +54,7 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   @SuppressWarnings("unchecked")
   public ResultSet executeQuery() throws SQLException {
     if (sql.equalsIgnoreCase("select 1")) {
+      // OPTIMIZATION
       documents = new ArrayList<ODocument>();
       documents.add(new ODocument().field("1", 1));
     } else {
@@ -72,17 +72,12 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   }
 
   public int executeUpdate() throws SQLException {
-    query = new OCommandSQL(sql);
-    rawResult = database.command(query).execute(params.values().toArray());
+    return this.executeUpdate(sql);
+  }
 
-    if (rawResult instanceof ODocument)
-      return 1;
-    else if (rawResult instanceof Integer)
-      return (Integer) rawResult;
-    else if (rawResult instanceof Collection)
-      return ((Collection) rawResult).size();
-
-    return 0;
+  @Override
+  public <RET> RET executeCommand(OCommandRequest query) {
+    return database.command(query).execute(params.values().toArray());
   }
 
   public void setNull(int parameterIndex, int sqlType) throws SQLException {
@@ -195,7 +190,10 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   }
 
   public ResultSetMetaData getMetaData() throws SQLException {
-    throw new UnsupportedOperationException();
+    if (this.getResultSet() != null) {
+      return this.getResultSet().getMetaData();
+    }
+    return null;
   }
 
   public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
