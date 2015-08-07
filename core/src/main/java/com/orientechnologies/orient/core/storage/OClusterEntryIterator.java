@@ -27,19 +27,17 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 
 public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
-  private final OCluster         cluster;
+  private final OCluster cluster;
 
-  private final long max;
   private final long min;
 
-  private OPhysicalPosition[]    positionsToProcess;
-  private int                    positionsIndex;
+  private OPhysicalPosition[] positionsToProcess;
+  private int positionsIndex;
 
   public OClusterEntryIterator(final OCluster iCluster) {
     cluster = iCluster;
     try {
       min = cluster.getFirstPosition();
-      max = cluster.getLastPosition();
     } catch (IOException ioe) {
       throw new IllegalStateException("Exception during iterator creation", ioe);
     }

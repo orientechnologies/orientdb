@@ -65,7 +65,6 @@ public class OWALPage {
     position += OIntegerSerializer.INT_SIZE;
 
     pagePointer.set(position, content, 0, content.length);
-    position += content.length;
 
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(freeSpace - 2 - OIntegerSerializer.INT_SIZE - content.length, pagePointer,
         FREE_SPACE_OFFSET);

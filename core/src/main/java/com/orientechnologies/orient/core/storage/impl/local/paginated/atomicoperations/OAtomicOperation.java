@@ -328,7 +328,7 @@ public class OAtomicOperation {
   public void commitChanges(OWriteAheadLog writeAheadLog) throws IOException {
     if (!rollbackOnlyMode) {
       for (long deletedFileId : deletedFiles) {
-        writeAheadLog.log(new OFileDeletedWALRecord(operationUnitId, startLSN, deletedFileId));
+        writeAheadLog.log(new OFileDeletedWALRecord(operationUnitId, deletedFileId));
       }
 
       for (Map.Entry<Long, FileChanges> fileChangesEntry : fileChanges.entrySet()) {
@@ -336,16 +336,16 @@ public class OAtomicOperation {
         final long fileId = fileChangesEntry.getKey();
 
         if (fileChanges.isNew)
-          writeAheadLog.log(new OFileCreatedWALRecord(operationUnitId, fileChanges.fileName, fileId, startLSN));
+          writeAheadLog.log(new OFileCreatedWALRecord(operationUnitId, fileChanges.fileName, fileId));
         else if (fileChanges.truncate)
-          writeAheadLog.log(new OFileTruncatedWALRecord(operationUnitId, startLSN, fileId));
+          writeAheadLog.log(new OFileTruncatedWALRecord(operationUnitId, fileId));
 
         for (Map.Entry<Long, FilePageChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
           final long pageIndex = filePageChangesEntry.getKey();
           final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
 
           filePageChanges.lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId,
-              filePageChanges.changesTree, startLSN));
+              filePageChanges.changesTree));
         }
       }
     }

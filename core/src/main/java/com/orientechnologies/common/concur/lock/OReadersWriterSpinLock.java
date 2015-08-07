@@ -36,27 +36,22 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 8/18/14
  */
-public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implements OOrientStartupListener, OOrientShutdownListener {
+@SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
+public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
   private static final long serialVersionUID = 7975120282194559960L;
 
-  @SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
   private final transient ODistributedCounter distributedCounter = new ODistributedCounter();
-
-  @SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
   private final transient AtomicReference<WNode> tail = new AtomicReference<WNode>();
-  private transient volatile ThreadLocal<OModifiableInteger> lockHolds = new InitOModifiableInteger();
+  private final transient ThreadLocal<OModifiableInteger> lockHolds = new InitOModifiableInteger();
 
-  private transient volatile ThreadLocal<WNode> myNode = new InitWNode();
-  private transient volatile ThreadLocal<WNode> predNode = new ThreadLocal<WNode>();
+  private final transient ThreadLocal<WNode> myNode = new InitWNode();
+  private final transient ThreadLocal<WNode> predNode = new ThreadLocal<WNode>();
 
   public OReadersWriterSpinLock() {
     final WNode wNode = new WNode();
     wNode.locked = false;
 
     tail.set(wNode);
-
-    Orient.instance().registerWeakOrientStartupListener(this);
-    Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
   public void acquireReadLock() {
@@ -172,26 +167,6 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
 
     lHolds.increment();
     assert lHolds.intValue() == 0;
-  }
-
-  @Override
-  public void onShutdown() {
-    lockHolds = null;
-    myNode = null;
-    predNode = null;
-  }
-
-  @Override
-  public void onStartup() {
-    if (lockHolds == null)
-      lockHolds = new InitOModifiableInteger();
-
-    if (myNode == null)
-      myNode = new InitWNode();
-
-    if (predNode == null)
-      predNode = new ThreadLocal<WNode>();
-
   }
 
   private static final class InitWNode extends ThreadLocal<WNode> {

@@ -92,14 +92,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
@@ -145,12 +138,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
 
     this.id = id;
-    lockManager = new OLockManager<ORID>(true, -1) {
-      @Override
-      protected ORID getImmutableResourceId(ORID iResourceId) {
-        return new ORecordId(iResourceId);
-      }
-    };
+    lockManager = new ORIDOLockManager();
 
     PROFILER_CREATE_RECORD = "db." + this.name + ".createRecord";
     PROFILER_READ_RECORD = "db." + this.name + ".readRecord";
@@ -220,7 +208,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             OLogManager.instance().warn(this, "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i
                 + "): file not found. It will be excluded from current database '" + getName() + "'.");
 
-            clusterMap.remove(clusters.get(i).getName().toLowerCase());
+            clusterMap.remove(clusters.get(i).getName().toLowerCase(configuration.getLocaleInstance()));
 
             setCluster(i, null);
           }
@@ -483,7 +471,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       makeStorageDirty();
       return doAddCluster(clusterName, true, parameters);
 
-    } catch (Exception e) {
+    } catch (IOException e) {
       throw new OStorageException("Error in creation of new cluster '" + clusterName, e);
     } finally {
       stateLock.releaseWriteLock();
@@ -508,7 +496,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       makeStorageDirty();
       return addClusterInternal(clusterName, requestedId, true, parameters);
 
-    } catch (Exception e) {
+    } catch (IOException e) {
       throw new OStorageException("Error in creation of new cluster '" + clusterName + "'", e);
     } finally {
       stateLock.releaseWriteLock();
@@ -536,7 +524,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       cluster.delete();
 
       makeStorageDirty();
-      clusterMap.remove(cluster.getName().toLowerCase());
+      clusterMap.remove(cluster.getName().toLowerCase(configuration.getLocaleInstance()));
       clusters.set(clusterId, null);
 
       // UPDATE CONFIGURATION
@@ -585,7 +573,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         newCluster.open();
       }
 
-      clusterMap.put(cluster.getName().toLowerCase(), newCluster);
+      clusterMap.put(cluster.getName().toLowerCase(configuration.getLocaleInstance()), newCluster);
       clusters.set(clusterId, newCluster);
 
       // UPDATE CONFIGURATION
@@ -1064,7 +1052,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       // SEARCH IT BETWEEN PHYSICAL CLUSTERS
 
-      final OCluster segment = clusterMap.get(clusterName.toLowerCase());
+      final OCluster segment = clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
       if (segment != null)
         return segment.getId();
 
@@ -1079,10 +1067,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     checkOpeness();
     checkLowDiskSpaceAndFullCheckpointRequests();
 
-    @SuppressFBWarnings(value = "RCN - RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
     final ODatabaseDocumentInternal databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (databaseRecord != null)
-      ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
+    ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
 
     stateLock.acquireReadLock();
     try {
@@ -1128,15 +1114,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
             OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), true);
 
-          } catch (Exception e) {
-            // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
-            OLogManager.instance().debug(this, "Error during transaction commit, transaction will be rolled back (tx-id=%d)", e,
-                clientTx.getId());
-            rollback(clientTx);
-            if (e instanceof OException)
-              throw ((OException) e);
-            else
-              throw new OStorageException("Error during transaction commit.", e);
+          } catch (IOException ioe) {
+            makeRollback(clientTx, ioe);
+          } catch (RuntimeException e) {
+            makeRollback(clientTx, e);
           } finally {
             transaction.set(null);
             dataLock.releaseExclusiveLock();
@@ -1145,13 +1126,23 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           modificationLock.releaseModificationLock();
         }
       } finally {
-        if (databaseRecord != null)
-          ((OMetadataInternal) databaseRecord.getMetadata()).clearThreadLocalSchemaSnapshot();
+        ((OMetadataInternal) databaseRecord.getMetadata()).clearThreadLocalSchemaSnapshot();
       }
 
     } finally {
       stateLock.releaseReadLock();
     }
+  }
+
+  private void makeRollback(OTransaction clientTx, Exception e) {
+    // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
+    OLogManager.instance().debug(this, "Error during transaction commit, transaction will be rolled back (tx-id=%d)", e,
+        clientTx.getId());
+    rollback(clientTx);
+    if (e instanceof OException)
+      throw ((OException) e);
+    else
+      throw new OStorageException("Error during transaction commit.", e);
   }
 
   public void rollback(final OTransaction clientTx) {
@@ -1290,7 +1281,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     stateLock.acquireReadLock();
     try {
       checkOpeness();
-      final OCluster cluster = clusterMap.get(clusterName.toLowerCase());
+      final OCluster cluster = clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
 
       if (cluster == null)
         throw new IllegalArgumentException("Cluster " + clusterName + " does not exist in database '" + name + "'");
@@ -1352,7 +1343,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
    * INTERNAL MAPPING</strong>
    */
   public void renameCluster(final String oldName, final String newName) {
-    clusterMap.put(newName.toLowerCase(), clusterMap.remove(oldName.toLowerCase()));
+    clusterMap.put(newName.toLowerCase(configuration.getLocaleInstance()), clusterMap.remove(oldName.toLowerCase(configuration.getLocaleInstance())));
   }
 
   @Override
@@ -1528,7 +1519,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   @Override
   public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
     if (currentClusterId == -1)
-      return null;
+      return new OPhysicalPosition[0];
 
     checkOpeness();
 
@@ -1553,7 +1544,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   @Override
   public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
     if (clusterId == -1)
-      return null;
+      return new OPhysicalPosition[0];
 
     checkOpeness();
 
@@ -1579,7 +1570,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   @Override
   public OPhysicalPosition[] lowerPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
     if (currentClusterId == -1)
-      return null;
+      return new OPhysicalPosition[0];
 
     checkOpeness();
 
@@ -1605,7 +1596,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   @Override
   public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
     if (clusterId == -1)
-      return null;
+      return new OPhysicalPosition[0];
 
     checkOpeness();
 
@@ -2131,7 +2122,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   private int createClusterFromConfig(final OStorageClusterConfiguration config) throws IOException {
-    OCluster cluster = clusterMap.get(config.getName().toLowerCase());
+    OCluster cluster = clusterMap.get(config.getName().toLowerCase(configuration.getLocaleInstance()));
 
     if (cluster != null) {
       cluster.configure(this, config);
@@ -2169,11 +2160,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     if (cluster != null) {
       // CHECK FOR DUPLICATION OF NAMES
-      if (clusterMap.containsKey(cluster.getName().toLowerCase()))
+      if (clusterMap.containsKey(cluster.getName().toLowerCase(configuration.getLocaleInstance())))
         throw new OConfigurationException(
             "Cannot add cluster '" + cluster.getName() + "' because it is already registered in database '" + name + "'");
       // CREATE AND ADD THE NEW REF SEGMENT
-      clusterMap.put(cluster.getName().toLowerCase(), cluster);
+      clusterMap.put(cluster.getName().toLowerCase(configuration.getLocaleInstance()), cluster);
       id = cluster.getId();
     } else {
       id = clusters.size();
@@ -2202,12 +2193,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     final OCluster cluster;
     if (clusterName != null) {
-      clusterName = clusterName.toLowerCase();
+      clusterName = clusterName.toLowerCase(configuration.getLocaleInstance());
 
       cluster = OPaginatedClusterFactory.INSTANCE.createCluster(clusterName, configuration.version, this);
       cluster.configure(this, clusterPos, clusterName, parameters);
 
-      if (clusterName.equals(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME.toLowerCase())) {
+      if (clusterName.equals(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME.toLowerCase(configuration.getLocaleInstance()))) {
         cluster.set(OCluster.ATTRIBUTES.USE_WAL, false);
         cluster.set(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR, 5);
         cluster.set(OCluster.ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR, 2);
@@ -2300,6 +2291,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
+  @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")
   private byte[] checkAndIncrementVersion(final OCluster iCluster, final ORecordId rid, final ORecordVersion version,
                                           final ORecordVersion iDatabaseVersion, final byte[] iRecordContent, final byte iRecordType) {
     // VERSION CONTROL CHECK
@@ -2662,7 +2654,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     } catch (OWALPageBrokenException e) {
       OLogManager.instance().error(this,
           "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.");
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       OLogManager.instance().error(this,
           "Data restore was paused because of exception. The rest of changes will be rolled back and WAL files will be backed up."
               + " Please report issue about this exception to bug tracker and provide WAL files which are backed up in 'wal_backup' directory.");
@@ -2719,7 +2711,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       archiveEntry(archiveZipOutputStream, ((ODiskWriteAheadLog) writeAheadLog).getWMRFile());
 
       archiveZipOutputStream.close();
-    } catch (Exception ioe) {
+    } catch (IOException ioe) {
       OLogManager.instance().error(this, "Error during WAL backup.", ioe);
     }
 
@@ -2729,20 +2721,26 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     final File walFile = new File(walSegment);
     final ZipEntry walZipEntry = new ZipEntry(walFile.getName());
     archiveZipOutputStream.putNextEntry(walZipEntry);
+    try {
+      final FileInputStream walInputStream = new FileInputStream(walFile);
+      try {
+        final BufferedInputStream walBufferedInputStream = new BufferedInputStream(walInputStream);
+        try {
+          final byte[] buffer = new byte[1024];
+          int readBytes = 0;
 
-    final FileInputStream walInputStream = new FileInputStream(walFile);
-    final BufferedInputStream walBufferedInputStream = new BufferedInputStream(walInputStream);
-
-    final byte[] buffer = new byte[1024];
-    int readBytes = 0;
-
-    while ((readBytes = walBufferedInputStream.read(buffer)) > -1) {
-      archiveZipOutputStream.write(buffer, 0, readBytes);
+          while ((readBytes = walBufferedInputStream.read(buffer)) > -1) {
+            archiveZipOutputStream.write(buffer, 0, readBytes);
+          }
+        } finally {
+          walBufferedInputStream.close();
+        }
+      } finally {
+        walInputStream.close();
+      }
+    } finally {
+      archiveZipOutputStream.closeEntry();
     }
-
-    walBufferedInputStream.close();
-
-    archiveZipOutputStream.closeEntry();
   }
 
   protected void restoreAtomicUnit(List<OWALRecord> atomicUnit, OModifiableBoolean atLeastOnePageUpdate) throws IOException {
@@ -2851,6 +2849,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           checkpointInProgress.set(false);
         }
       }
+    }
+  }
+
+  private static class ORIDOLockManager extends OLockManager<ORID> {
+    public ORIDOLockManager() {
+      super(true, -1);
+    }
+
+    @Override
+    protected ORID getImmutableResourceId(ORID iResourceId) {
+      return new ORecordId(iResourceId);
     }
   }
 }

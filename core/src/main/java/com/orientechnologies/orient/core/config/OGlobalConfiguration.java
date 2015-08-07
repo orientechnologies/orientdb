@@ -223,11 +223,11 @@ public enum OGlobalConfiguration {
   // INDEX
   INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("index.embeddedToSbtreeBonsaiThreshold",
       "Amount of values after which index implementation will use sbtree as values container. Set to -1 to force always using it",
-      Integer.class, 40),
+      Integer.class, 40, true),
 
   INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("index.sbtreeBonsaiToEmbeddedThreshold",
       "Amount of values after which index implementation will use embedded values container (disabled by default)", Integer.class,
-      -1),
+      -1, true),
 
   HASH_TABLE_SPLIT_BUCKETS_BUFFER_LENGTH("hashTable.slitBucketsBuffer.length", "Length of buffer (in pages) where buckets "
       + "that were splited but not flushed to the disk are kept. This buffer is used to minimize random IO overhead.",
@@ -368,10 +368,10 @@ public enum OGlobalConfiguration {
 
   PROFILER_CONFIG("profiler.config", "Configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size>",
       String.class, null, new OConfigurationChangeCallback() {
-        public void change(final Object iCurrentValue, final Object iNewValue) {
-          Orient.instance().getProfiler().configure(iNewValue.toString());
-        }
-      }),
+    public void change(final Object iCurrentValue, final Object iNewValue) {
+      Orient.instance().getProfiler().configure(iNewValue.toString());
+    }
+  }),
 
   PROFILER_AUTODUMP_INTERVAL("profiler.autoDump.interval",
       "Dumps the profiler values at regular intervals. Time is expressed in seconds", Integer.class, 0,
@@ -610,19 +610,19 @@ public enum OGlobalConfiguration {
 
   @Deprecated
   // DEPRECATED IN 2.0
-  STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
+      STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
 
   // DEPRECATED IN 2.0, LEVEL1 CACHE CANNOT BE DISABLED ANYMORE
   @Deprecated
   CACHE_LOCAL_ENABLED("cache.local.enabled", "Deprecated, Level1 cache cannot be disabled anymore", Boolean.class, true);
 
-  private final String                 key;
-  private final Object                 defValue;
-  private final Class<?>               type;
-  private Object                       value          = null;
-  private String                       description;
+  private final String key;
+  private final Object defValue;
+  private final Class<?> type;
+  private Object value = null;
+  private String description;
   private OConfigurationChangeCallback changeCallback = null;
-  private Boolean                      canChangeAtRuntime;
+  private Boolean canChangeAtRuntime;
 
   // AT STARTUP AUTO-CONFIG
   static {
@@ -631,7 +631,7 @@ public enum OGlobalConfiguration {
   }
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
-      final OConfigurationChangeCallback iChangeAction) {
+                       final OConfigurationChangeCallback iChangeAction) {
     this(iKey, iDescription, iType, iDefValue, true);
     changeCallback = iChangeAction;
   }
@@ -641,7 +641,7 @@ public enum OGlobalConfiguration {
   }
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
-      final Boolean iCanChange) {
+                       final Boolean iCanChange) {
     key = iKey;
     description = iDescription;
     defValue = iDefValue;
@@ -674,8 +674,7 @@ public enum OGlobalConfiguration {
   /**
    * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
    *
-   * @param iKey
-   *          Key to find. It's case insensitive.
+   * @param iKey Key to find. It's case insensitive.
    * @return OGlobalConfiguration instance if found, otherwise null
    */
   public static OGlobalConfiguration findByKey(final String iKey) {

@@ -97,7 +97,10 @@ public class OOfflineCluster implements OCluster {
 
       switch (attribute) {
       case STATUS: {
-        return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase()));
+        if (stringValue == null)
+          throw new IllegalStateException("Value of attribute is null.");
+
+        return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase(storageLocal.getConfiguration().getLocaleInstance())));
       }
       default:
         throw new IllegalArgumentException("Runtime change of attribute '" + attribute + " is not supported on Offline cluster "

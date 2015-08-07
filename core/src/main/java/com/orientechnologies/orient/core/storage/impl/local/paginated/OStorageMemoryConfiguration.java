@@ -31,6 +31,8 @@ import java.io.IOException;
  * @since 7/15/14
  */
 public class OStorageMemoryConfiguration extends OStorageConfiguration {
+  private static final long serialVersionUID = 7001342008735208586L;
+
   private byte[] serializedContent;
 
   public OStorageMemoryConfiguration(OStorage iStorage) {
