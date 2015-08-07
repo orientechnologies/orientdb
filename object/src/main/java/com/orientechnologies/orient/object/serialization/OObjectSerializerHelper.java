@@ -19,23 +19,6 @@
  */
 package com.orientechnologies.orient.object.serialization;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.io.OUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
@@ -61,9 +44,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.fetch.OFetchContext;
-import com.orientechnologies.orient.core.fetch.OFetchHelper;
-import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -81,8 +61,22 @@ import com.orientechnologies.orient.object.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.object.db.OObjectLazyList;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
 import com.orientechnologies.orient.object.db.OObjectNotDetachedException;
-import com.orientechnologies.orient.object.fetch.OObjectFetchContext;
-import com.orientechnologies.orient.object.fetch.OObjectFetchListener;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 @SuppressWarnings("unchecked")
 /**
@@ -230,158 +224,6 @@ public class OObjectSerializerHelper {
       throw new OSchemaException(
           "Cannot set the value '" + iValue + "' to the property '" + iProperty + "' for the pojo: " + iPojo, e);
     }
-  }
-
-  @SuppressWarnings("rawtypes")
-  public static Object fromStream(final ODocument iRecord, final Object iPojo, final OEntityManager iEntityManager,
-      final OUserObject2RecordHandler iObj2RecHandler, final String iFetchPlan, final boolean iLazyLoading) {
-    OFetchHelper.checkFetchPlanValid(iFetchPlan);
-    final long timer = Orient.instance().getProfiler().startChrono();
-
-    final Class<?> pojoClass = iPojo.getClass();
-
-    final List<Field> properties = getClassFields(pojoClass);
-
-    String fieldName;
-    Object fieldValue;
-
-    final String idFieldName = setObjectID(iRecord.getIdentity(), iPojo);
-    final String vFieldName = setObjectVersion(iRecord.getRecordVersion(), iPojo);
-
-    // CALL BEFORE UNMARSHALLING
-    invokeCallback(iPojo, iRecord, OBeforeDeserialization.class);
-
-    final String[] fieldNames = new String[properties.size()];
-
-    // BIND BASIC FIELDS, LINKS WILL BE BOUND BY THE FETCH API
-    int f = 0;
-    for (Field p : properties) {
-      fieldName = p.getName();
-      fieldNames[f++] = fieldName;
-
-      if (fieldName.equals(idFieldName) || fieldName.equals(vFieldName))
-        continue;
-
-      if (iRecord.containsField(fieldName)) {
-        // BIND ONLY THE SPECIFIED FIELDS
-        fieldValue = iRecord.field(fieldName);
-
-        Object value = fieldValue;
-        Type type = null;
-
-        if (fieldValue == null
-            || !(fieldValue instanceof ODocument)
-            || (fieldValue instanceof Collection<?> && (((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
-                .iterator().next() instanceof ODocument)))
-            || (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
-                .iterator().next() instanceof ODocument))) {
-
-          final Class<?> genericTypeClass = OReflectionHelper.getGenericMultivalueType(p);
-
-          if (genericTypeClass != null)
-            if (genericTypeClass.isEnum()) {
-              // TRANSFORM THE MULTI-VALUE
-              if (fieldValue instanceof List) {
-                // LIST: TRANSFORM EACH SINGLE ITEM
-                final List<Object> list = (List<Object>) fieldValue;
-                Object v;
-                for (int i = 0; i < list.size(); ++i) {
-                  v = list.get(i);
-                  if (v != null) {
-                    v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
-                    list.set(i, v);
-                  }
-                }
-                value = list;
-                type = List.class;
-              } else if (fieldValue instanceof Set) {
-                // SET: CREATE A TEMP SET TO WORK WITH ITEMS
-                final Set<Object> newColl = new HashSet<Object>();
-                final Set<Object> set = (Set<Object>) fieldValue;
-                for (Object v : set) {
-                  if (v != null) {
-                    v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
-                    newColl.add(v);
-                  }
-                }
-
-                value = newColl;
-                type = Set.class;
-              } else if (fieldValue instanceof Map) {
-                // MAP: TRANSFORM EACH SINGLE ITEM
-                final Map<String, Object> map = (Map<String, Object>) fieldValue;
-                Object v;
-                for (Entry<String, ?> entry : map.entrySet()) {
-                  v = entry.getValue();
-                  if (v != null) {
-                    v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
-                    map.put(entry.getKey(), v);
-                  }
-                }
-                type = Map.class;
-                value = map;
-              }
-
-            } else {
-              // TRANSFORM THE MULTI-VALUE
-              if (fieldValue instanceof List) {
-                // LIST: TRANSFORM EACH SINGLE ITEM
-                final List<Object> list = (List<Object>) fieldValue;
-                Object v;
-                for (int i = 0; i < list.size(); ++i) {
-                  v = list.get(i);
-                  if (v != null)
-                    list.set(i, unserializeFieldValue(genericTypeClass, v));
-                }
-                value = list;
-                type = List.class;
-              } else if (fieldValue instanceof Set) {
-                // SET: CREATE A TEMP SET TO WORK WITH ITEMS
-                final Set<Object> newColl = new HashSet<Object>();
-                final Set<Object> set = (Set<Object>) fieldValue;
-                for (Object v : set)
-                  if (v != null)
-                    newColl.add(unserializeFieldValue(genericTypeClass, v));
-
-                value = newColl;
-                type = Set.class;
-              } else if (fieldValue instanceof Map) {
-                // MAP: TRANSFORM EACH SINGLE ITEM
-                final Map<String, Object> map = (Map<String, Object>) fieldValue;
-                Object v;
-                for (Entry<String, ?> entry : map.entrySet()) {
-                  v = entry.getValue();
-                  if (v != null)
-                    map.put(entry.getKey(), unserializeFieldValue(genericTypeClass, v));
-
-                }
-                value = map;
-                type = Map.class;
-              }
-            }
-
-          if (type == null) {
-            type = p.getGenericType();
-            value = unserializeFieldValue((Class<?>) (type != null && type instanceof Class<?> ? type : null), fieldValue);
-          }
-
-          setFieldValue(iPojo, fieldName, value);
-        }
-      }
-
-    }
-
-    final OFetchListener listener = new OObjectFetchListener();
-    final OFetchContext context = new OObjectFetchContext(iFetchPlan, iLazyLoading, iEntityManager, iObj2RecHandler);
-    // BIND LINKS FOLLOWING THE FETCHING PLAN
-    OFetchHelper.fetch(iRecord, iPojo, OFetchHelper.buildFetchPlan(iFetchPlan), listener, context, "");
-
-    // CALL AFTER UNMARSHALLING
-    invokeCallback(iPojo, iRecord, OAfterDeserialization.class);
-
-    Orient.instance().getProfiler().stopChrono("Object.fromStream", "Deserialize object from stream", timer);
-
-    return iPojo;
   }
 
   public static String setObjectID(final ORID iIdentity, final Object iPojo) {
