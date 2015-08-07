@@ -53,8 +53,8 @@ import java.util.concurrent.locks.Lock;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCommandOutputListener {
-  public final static int    CHUNK_MAX_SIZE        = 1048576;        // 1MB
+public class ODeployDatabaseTask extends OAbstractReplicatedTask {
+  public final static int    CHUNK_MAX_SIZE        = 4194304;        // 4 MB
   public static final String DEPLOYDB              = "deploydb.";
   protected final ODocument  databaseConfiguration = new ODocument();
   protected long             random;
@@ -90,7 +90,7 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
   }
 
   @Override
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+  public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
 
     if (!getNodeSource().equals(iManager.getLocalNodeName())) {
@@ -136,17 +136,52 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
             backupFile.createNewFile();
 
             final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
-            try {
-              database.backup(fileOutputStream, null, new Callable<Object>() {
-                @Override
-                public Object call() throws Exception {
-                  lastOperationId.set(database.getStorage().getLastOperationId());
-                  return null;
+
+            final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
+            if (completedFile.exists())
+              completedFile.delete();
+
+            new Thread(new Runnable() {
+              @Override
+              public void run() {
+                Thread.currentThread().setName("OrientDB SyncDatabase node=" + iManager.getLocalNodeName() + " db=" + databaseName);
+
+                try {
+                  database.backup(fileOutputStream, null, new Callable<Object>() {
+                    @Override
+                    public Object call() throws Exception {
+                      lastOperationId.set(database.getStorage().getLastOperationId());
+                      return null;
+                    }
+                  }, new OCommandOutputListener() {
+                    @Override
+                    public void onMessage(String iText) {
+                      if (iText.startsWith("\n"))
+                        iText = iText.substring(1);
+
+                      OLogManager.instance().info(this, iText);
+                    }
+                  }, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+
+                  ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                      "backup of database '%s' completed. lastOperationId=%d...", databaseName, lastOperationId.get());
+
+                } catch (IOException e) {
+                  OLogManager.instance().error(this, "Cannot execute backup of database %s for deploy database", e, databaseName);
+                } finally {
+                  try {
+                    fileOutputStream.close();
+                  } catch (IOException e) {
+                  }
+
+                  try {
+                    completedFile.createNewFile();
+                  } catch (IOException e) {
+                    OLogManager.instance().error(this, "Cannot create file of backup completed: %s", e, completedFile);
+                  }
                 }
-              }, this, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
-            } finally {
-              fileOutputStream.close();
-            }
+              }
+            }).start();
 
             // RECORD LAST BACKUP TO BE REUSED IN CASE ANOTHER NODE ASK FOR THE SAME IN SHORT TIME WHILE THE DB IS NOT UPDATED
             ((ODistributedStorage) database.getStorage()).setLastValidBackup(backupFile);
@@ -154,11 +189,10 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                 "reusing last backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
 
-          final long fileSize = backupFile.length();
-
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-              "sending the compressed database '%s' over the NETWORK to node '%s', size=%s, lastOperationId=%d...", databaseName,
-              getNodeSource(), OFileUtils.getSizeAsString(fileSize), lastOperationId.get());
+          // WAIT UNTIL THE lastOperationId IS SET
+          while (lastOperationId.get() < 0) {
+            Thread.sleep(100);
+          }
 
           final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), backupFile, 0,
               CHUNK_MAX_SIZE);
@@ -205,7 +239,7 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
   }
 
   @Override
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
@@ -234,14 +268,6 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
     final byte[] buffer = new byte[bufferLength];
     in.read(buffer);
     databaseConfiguration.fromStream(buffer);
-  }
-
-  @Override
-  public void onMessage(String iText) {
-    if (iText.startsWith("\n"))
-      iText = iText.substring(1);
-
-    OLogManager.instance().info(this, iText);
   }
 
   @Override
