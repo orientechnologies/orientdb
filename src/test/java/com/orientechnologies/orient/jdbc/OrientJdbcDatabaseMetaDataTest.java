@@ -1,23 +1,25 @@
 package com.orientechnologies.orient.jdbc;
 
-import com.orientechnologies.orient.core.OConstants;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.orientechnologies.orient.core.OConstants;
 
 public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
 
@@ -142,7 +144,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     }
     assertEquals(1, colCount);
   }
-  
+
   @Test
   public void getAllColumns() throws SQLException {
     ResultSet rs = this.metaData.getColumns(null, null, "Article", null);
@@ -152,6 +154,17 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
       colCount += 1;
     }
     assertTrue(colCount > 1);
+  }
+
+  @Test
+  public void getAllFields() throws SQLException {
+    ResultSet rsmc = conn.getMetaData().getColumns(null, null, "OUser", null);
+    Set<String> fieldNames = new HashSet<String>();
+    while (rsmc.next()) {
+      fieldNames.add(rsmc.getString("COLUMN_NAME"));
+    }
+
+    fieldNames.removeAll(Arrays.asList("name", "password", "roles", "status"));
   }
 
 }

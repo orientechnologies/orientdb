@@ -1,17 +1,18 @@
 package com.orientechnologies.orient.jdbc;
 
-import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createSchemaDB;
-import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
-import static java.lang.Class.forName;
-
-import java.sql.DriverManager;
-import java.util.Properties;
-
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import java.io.File;
+import java.sql.DriverManager;
+import java.util.Properties;
+
+import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createSchemaDB;
+import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
+import static java.lang.Class.forName;
 
 public abstract class OrientJdbcBaseTest {
 
@@ -40,6 +41,10 @@ public abstract class OrientJdbcBaseTest {
     db.create();
 
     createSchemaDB(db);
+
+    if (!new File("./src/test/resources/file.pdf").exists())
+      OLogManager.instance().warn(this, "TEST IS NOT RUNNING UNDER distributed folder, attachment will be not loaded!");
+
     loadDB(db, 20);
 
     Properties info = new Properties();

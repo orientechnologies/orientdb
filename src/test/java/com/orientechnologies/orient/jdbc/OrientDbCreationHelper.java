@@ -158,16 +158,22 @@ public class OrientDbCreationHelper {
     article.field("uuid", 1000000);
     article.field("title", "the title 2");
     article.field("content", "the content 2");
-    article.field("attachment", loadFile(db, "./src/test/resources/file.pdf", 256));
+    if (new File("./src/test/resources/file.pdf").exists())
+      article.field("attachment", loadFile(db, "./src/test/resources/file.pdf", 256));
     db.save(article);
     return article;
   }
 
   private static ORecordBytes loadFile(ODatabaseDocumentInternal database, String filePath) throws IOException {
-    BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(new File(filePath)));
-    ORecordBytes record = new ORecordBytes(database);
-    record.fromInputStream(inputStream);
-    return record;
+    final File f = new File(filePath);
+    if (f.exists()) {
+      BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(f));
+      ORecordBytes record = new ORecordBytes(database);
+      record.fromInputStream(inputStream);
+      return record;
+    }
+
+    return null;
   }
 
   private static List<ORID> loadFile(ODatabaseDocumentInternal database, String filePath, int bufferSize) throws IOException {
