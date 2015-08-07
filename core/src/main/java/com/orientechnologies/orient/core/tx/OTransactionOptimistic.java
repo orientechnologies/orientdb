@@ -384,7 +384,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           if (rec instanceof ODocument)
             ODocumentInternal.convertAllMultiValuesToTrackedVersions((ODocument) rec);
           if (rec == iRecord) {
-            addRecord(rec, ORecordOperation.UPDATED, iClusterName);
+            final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED
+                : ORecordOperation.CREATED;
+            addRecord(rec, operation, iClusterName);
             originalSaved = true;
           } else
             addRecord(rec, ORecordOperation.UPDATED, getClusterName(rec));

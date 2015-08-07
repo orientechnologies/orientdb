@@ -208,7 +208,10 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
         try {
           // OVERWRITE IT
           ORecord record = rid.getRecord();
-          ORecordInternal.setDirtyManager(record, ORecordInternal.getDirtyManager(sourceRecord));
+          if(record != null){
+              ORecordInternal.unTrack(sourceRecord, rid);
+              ORecordInternal.track(sourceRecord, record);
+          }
           super.put(iKey, record);
         } catch (ORecordNotFoundException e) {
           // IGNORE THIS

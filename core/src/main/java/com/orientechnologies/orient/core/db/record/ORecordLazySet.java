@@ -151,15 +151,15 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
 
   public void convertLinks2Records() {
     final Iterator<Entry<OIdentifiable, Object>> all = map.entrySet().iterator();
-    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(sourceRecord);
     while (all.hasNext()) {
       Entry<OIdentifiable, Object> entry = all.next();
       if (entry.getValue() == ENTRY_REMOVAL) {
         try {
           ORecord record = entry.getKey().getRecord();
-
-          ORecordInternal.setDirtyManager(record, dirtyManager);
-
+          if (record != null) {
+            ORecordInternal.unTrack(sourceRecord, entry.getKey());
+            ORecordInternal.track(sourceRecord, record);
+          }
           entry.setValue(record);
         } catch (ORecordNotFoundException e) {
           // IGNORE THIS

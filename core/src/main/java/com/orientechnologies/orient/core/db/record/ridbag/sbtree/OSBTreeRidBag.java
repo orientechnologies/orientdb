@@ -583,6 +583,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     TreeMap<OIdentifiable, Change> newChanges = new TreeMap<OIdentifiable, Change>();
     for (Map.Entry<OIdentifiable, Change> entry : changes.entrySet()) {
       final OIdentifiable key = entry.getKey().getRecord();
+      if (key != null && this.owner != null) {
+        ORecordInternal.unTrack(this.owner, entry.getKey());
+        ORecordInternal.track(this.owner, key);
+      }
       newChanges.put((key == null) ? entry.getKey() : key, entry.getValue());
     }
 

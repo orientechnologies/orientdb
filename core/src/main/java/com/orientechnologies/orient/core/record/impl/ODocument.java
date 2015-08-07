@@ -803,6 +803,8 @@ public class ODocument extends ORecordAbstract
       // CREATE THE DOCUMENT OBJECT IN LAZY WAY
       RET newValue = (RET) getDatabase().load((ORID) value);
       if (newValue != null) {
+        unTrack((ORID) value);
+        track((OIdentifiable) newValue);
         value = newValue;
         ORecordInternal.setDirtyManager((ORecord) value, this.getDirtyManager());
 

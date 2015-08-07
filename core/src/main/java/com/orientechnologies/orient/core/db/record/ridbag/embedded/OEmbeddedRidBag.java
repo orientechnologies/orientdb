@@ -256,8 +256,13 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       if (entry instanceof OIdentifiable) {
         final OIdentifiable identifiable = (OIdentifiable) entry;
         ORecord record = identifiable.getRecord();
-        if (record != null)
+        if (record != null){
+          if (this.owner != null){
+            ORecordInternal.unTrack(this.owner, identifiable);
+            ORecordInternal.track(this.owner, record);
+          }
           entries[i] = record;
+        }
       }
     }
   }
