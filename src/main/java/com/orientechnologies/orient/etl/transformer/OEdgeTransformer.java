@@ -126,23 +126,27 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
       // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
       switch (unresolvedLinkAction) {
       case CREATE:
-        if (lookup != null) {
-          final String[] lookupParts = lookup.split("\\.");
-          final OrientVertex linkedV = pipeline.getGraphDatabase().addTemporaryVertex(lookupParts[0]);
-          linkedV.setProperty(lookupParts[1], joinCurrentValue);
+        //Don't try to create a Vertex with a null value
+        if (joinCurrentValue != null) {
+          if (lookup != null) {
+            final String[] lookupParts = lookup.split("\\.");
+            final OrientVertex linkedV = pipeline.getGraphDatabase().addTemporaryVertex(lookupParts[0]);
+            linkedV.setProperty(lookupParts[1], joinCurrentValue);
 
-          if (targetVertexFields != null) {
-            for (String f : targetVertexFields.fieldNames())
-              linkedV.setProperty(f, resolve(targetVertexFields.field(f)));
+            if (targetVertexFields != null) {
+              for (String f : targetVertexFields.fieldNames())
+                linkedV.setProperty(f, resolve(targetVertexFields.field(f)));
+            }
+
+            linkedV.save();
+
+            log(OETLProcessor.LOG_LEVELS.DEBUG, "created new vertex=%s", linkedV.getRecord());
+
+            result = linkedV;
+          } else {
+            throw new OConfigurationException("Cannot create linked document because target class is unknown. Use 'lookup' field");
           }
-
-          linkedV.save();
-
-          log(OETLProcessor.LOG_LEVELS.DEBUG, "created new vertex=%s", linkedV.getRecord());
-
-          result = linkedV;
-        } else
-          throw new OConfigurationException("Cannot create linked document because target class is unknown. Use 'lookup' field");
+        }
         break;
       case ERROR:
         processor.getStats().incrementErrors();
