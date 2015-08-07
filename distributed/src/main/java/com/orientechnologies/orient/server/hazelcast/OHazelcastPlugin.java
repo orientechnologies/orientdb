@@ -19,6 +19,18 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
@@ -62,18 +74,6 @@ import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTa
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.OSyncDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -951,22 +951,33 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     Orient.instance().unregisterStorageByName(iDatabaseName);
 
     // MOVE DIRECTORY TO ../backup/databases/<db-name>
-    final String backupPath = serverInstance.getDatabaseDirectory() + "/" + BACKUP_DIR + "/" + iDatabaseName;
-    final File f = new File(BACKUP_DIR);
-    if (f.exists())
-      OFileUtils.deleteRecursively(new File(backupPath));
-    else
-      f.mkdirs();
+    final File backupFullPath = new File(serverInstance.getDatabaseDirectory() + BACKUP_DIR + "/" + iDatabaseName);
+    final File backupParentPath = new File(serverInstance.getDatabaseDirectory() + BACKUP_DIR);
+
+    if (!backupParentPath.exists())
+      // CREATE THE DIRECTORY STRUCTURE
+      backupParentPath.mkdirs();
+    else if (backupFullPath.exists()) {
+      // DELETE PREVIOUS BACKUP
+      OFileUtils.deleteRecursively(backupFullPath);
+    }
 
     final String dbPath = serverInstance.getDatabaseDirectory() + iDatabaseName;
 
     // MOVE THE DATABASE ON CURRENT NODE
     ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
-        "moving existent database '%s' in '%s' to '%s' and get a fresh copy from a remote node...", iDatabaseName, dbPath,
-        backupPath);
+        "moving existent database '%s' located in '%s' to '%s' and get a fresh copy from a remote node...", iDatabaseName, dbPath,
+        backupFullPath);
 
     final File oldDirectory = new File(dbPath);
-    oldDirectory.renameTo(new File(backupPath));
+    if (!oldDirectory.renameTo(backupFullPath)) {
+      ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "error on moving existent database '%s' located in '%s' to '%s'. Try to move the database directory manually and retry",
+          iDatabaseName, dbPath, backupFullPath);
+
+      throw new ODistributedException("Error on moving existent database '" + iDatabaseName + "' located in '" + dbPath + "' to '"
+          + backupFullPath + "'. Try to move the database directory manually and retry");
+    }
   }
 
   /**
