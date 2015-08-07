@@ -656,22 +656,6 @@ public class OServer {
     return this;
   }
 
-  private boolean isUserExists(final String iName) {
-    if (iName == null || iName.length() == 0) {
-      throw new IllegalArgumentException("User name null or empty");
-    }
-
-    if (configuration.users != null) {
-      for (OServerUserConfiguration user : configuration.users) {
-        if (iName.equals(user.name)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
   public void addUser(final String iName, String iPassword, final String iPermissions) throws IOException {
     if (iName == null || iName.length() == 0)
       throw new IllegalArgumentException("User name null or empty");
@@ -826,11 +810,14 @@ public class OServer {
   }
 
   protected void loadUsers() throws IOException {
-    if (configuration.isAfterFirstTime) {
-      return;
+    if (configuration.users != null && configuration.users.length > 0) {
+      for (OServerUserConfiguration u : configuration.users) {
+        if (u.name.equals(OServerConfiguration.SRV_ROOT_ADMIN))
+          // FOUND
+          return;
+      }
     }
 
-    configuration.isAfterFirstTime = true;
     createDefaultServerUsers();
   }
 
@@ -929,12 +916,8 @@ public class OServer {
       }
     }
 
-    if (!isUserExists(OServerConfiguration.DEFAULT_ROOT_USER)) {
-      addUser(OServerConfiguration.DEFAULT_ROOT_USER, rootPassword, "*");
-    }
-    if (!isUserExists(OServerConfiguration.GUEST_USER)) {
-      addUser(OServerConfiguration.GUEST_USER, OServerConfiguration.GUEST_PASS, "connect,server.listDatabases,server.dblist");
-    }
+    addUser(OServerConfiguration.SRV_ROOT_ADMIN, rootPassword, "*");
+    addUser(OServerConfiguration.SRV_ROOT_GUEST, OServerConfiguration.SRV_ROOT_GUEST, "connect,server.listDatabases,server.dblist");
     saveConfiguration();
   }
 
