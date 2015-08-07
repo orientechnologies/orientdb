@@ -23,13 +23,11 @@
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-jdbc</artifactId>
     <packaging>jar</packaging>
-
     <version>2.2.0-SNAPSHOT</version>
 
     <properties>
         <orient.version>${version}</orient.version>
     </properties>
-
 
     <description>JDBC Driver for OrientDB NoSQL document graph dbms</description>
     <url>http://www.orientechnologies.com</url>

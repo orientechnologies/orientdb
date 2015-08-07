@@ -17,15 +17,15 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-
 import java.sql.*;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 /**
  * 
@@ -70,8 +70,11 @@ public class OrientJdbcConnection implements Connection {
 
   public void close() throws SQLException {
     status = ODatabase.STATUS.CLOSED;
-    database.activateOnCurrentThread();
-    database.close();
+    if (database != null) {
+      database.activateOnCurrentThread();
+      database.close();
+      database = null;
+    }
   }
 
   public void commit() throws SQLException {
