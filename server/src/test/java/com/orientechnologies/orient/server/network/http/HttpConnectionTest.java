@@ -20,7 +20,7 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
     Assert.assertEquals(get("connect/" + getDatabaseName()).getResponse().getStatusLine().getStatusCode(), 204);
   }
 
-  @Test
+  @Test(enabled =false)
   public void testTooManyConnect() throws Exception {
     final int originalMax = OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
     try {
@@ -51,13 +51,13 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
     }
   }
 
-  @Test
+  @Test(enabled =false)
   public void testConnectAutoDisconnectKeepAlive() throws Exception {
     setKeepAlive(true);
     testConnectAutoDisconnect();
   }
 
-  @Test
+  @Test(enabled =false)
   public void testConnectAutoDisconnectNoKeepAlive() throws Exception {
     setKeepAlive(false);
     testConnectAutoDisconnect();
