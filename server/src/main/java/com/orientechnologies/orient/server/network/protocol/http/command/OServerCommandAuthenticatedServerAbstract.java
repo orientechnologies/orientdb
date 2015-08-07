@@ -87,7 +87,7 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
   }
 
   protected boolean checkGuestAccess() {
-    return server.isAllowed(OServerConfiguration.SRV_ROOT_GUEST, resource);
+    return server.isAllowed(OServerConfiguration.GUEST_USER, resource);
   }
 
   protected void sendNotAuthorizedResponse(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
