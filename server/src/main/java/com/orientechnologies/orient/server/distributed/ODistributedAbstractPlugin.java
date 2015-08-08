@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
@@ -35,15 +44,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -126,7 +126,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       // CREATE THE REPLICATOR USER
       try {
         serverInstance.addUser(REPLICATOR_USER, null, "database.passthrough");
-        serverInstance.saveConfiguration();
       } catch (IOException e) {
         throw new OConfigurationException("Error on creating 'replicator' user", e);
       }

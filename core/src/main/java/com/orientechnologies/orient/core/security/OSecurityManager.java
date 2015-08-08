@@ -107,7 +107,7 @@ public class OSecurityManager {
    * @return
    */
   public String digest2String(final String iInput, final boolean iIncludeAlgorithm) {
-    final String transformed = OSecurityManager.instance().digest2String(iInput);
+    final String transformed = digest2String(iInput);
 
     // OPTIMIZE STRING BUILDE CREATION PASSING THE SIZE
     final StringBuilder buffer = new StringBuilder(ALGORITHM_PREFIX.length() + transformed.length());

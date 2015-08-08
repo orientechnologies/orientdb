@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -65,6 +66,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -84,6 +86,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPa
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedClusterDebug;
+import com.orientechnologies.orient.server.config.OServerConfigurationManager;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -592,7 +596,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         storageType = "plocal";
 
       new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseDatabase(
-        storageType);
+          storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.release();
@@ -646,7 +650,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         storageType = "plocal";
 
       new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseCluster(
-        clusterId, storageType);
+          clusterId, storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.releaseCluster(clusterId);
@@ -865,6 +869,94 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     executeServerSideScript("javascript", iText);
 
+  }
+
+  @SuppressWarnings("unchecked")
+  @ConsoleCommand(description = "Set a server user. If the user already exists, the password and permissions are updated. For more information look at http://orientdb.com/docs/last/Security.html#orientdb-server-security", onlineHelp = "Console-Command-Set-Server-User")
+  public void setServerUser(
+      @ConsoleParameter(name = "user-name", description = "User name") String iServerUserName,
+      @ConsoleParameter(name = "user-password", description = "User password") String iServerUserPasswd,
+      @ConsoleParameter(name = "user-permissions", description = "Permissions, look at http://orientdb.com/docs/last/Security.html#servers-resources") String iPermissions,
+      @ConsoleParameter(name = "encryption", description = "Encryption between the available. Default is SHA-256", optional = true) String iEncryption) {
+
+    if (iServerUserName == null || iServerUserName.length() == 0)
+      throw new IllegalArgumentException("User name null or empty");
+
+    if (iPermissions == null || iPermissions.length() == 0)
+      throw new IllegalArgumentException("User permissions null or empty");
+
+    final File serverCfgFile = new File("../config/orientdb-server-config.xml");
+    if (!serverCfgFile.exists())
+      throw new OConfigurationException("Cannot access to file " + serverCfgFile);
+
+    try {
+      final OServerConfigurationManager serverCfg = new OServerConfigurationManager(serverCfgFile);
+
+      // AUTO GENERATE PASSWORD
+      final String hashedPassword = OSecurityManager.instance().digest2String(iServerUserPasswd, true);
+
+      serverCfg.setUser(iServerUserName, hashedPassword, iPermissions);
+      serverCfg.saveConfiguration();
+
+      message("\nServer user '%s' set correctly", iServerUserName);
+
+    } catch (Exception e) {
+      error("\nError on loading %s file: %s", serverCfgFile, e.toString());
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @ConsoleCommand(description = "Drop a server user. For more information look at http://orientdb.com/docs/last/Security.html#orientdb-server-security", onlineHelp = "Console-Command-Drop-Server-User")
+  public void dropServerUser(@ConsoleParameter(name = "user-name", description = "User name") String iServerUserName) {
+
+    if (iServerUserName == null || iServerUserName.length() == 0)
+      throw new IllegalArgumentException("User name null or empty");
+
+    final File serverCfgFile = new File("../config/orientdb-server-config.xml");
+    if (!serverCfgFile.exists())
+      throw new OConfigurationException("Cannot access to file " + serverCfgFile);
+
+    try {
+      final OServerConfigurationManager serverCfg = new OServerConfigurationManager(serverCfgFile);
+
+      if (!serverCfg.existsUser(iServerUserName)) {
+        error("\nServer user '%s' not found in configuration", iServerUserName);
+        return;
+      }
+
+      serverCfg.dropUser(iServerUserName);
+      serverCfg.saveConfiguration();
+
+      message("\nServer user '%s' dropped correctly", iServerUserName);
+
+    } catch (Exception e) {
+      error("\nError on loading %s file: %s", serverCfgFile, e.toString());
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @ConsoleCommand(description = "Display all the server user names. For more information look at http://orientdb.com/docs/last/Security.html#orientdb-server-security", onlineHelp = "Console-Command-List-Server-User")
+  public void listServerUsers() {
+
+    final File serverCfgFile = new File("../config/orientdb-server-config.xml");
+    if (!serverCfgFile.exists())
+      throw new OConfigurationException("Cannot access to file " + serverCfgFile);
+
+    try {
+      final OServerConfigurationManager serverCfg = new OServerConfigurationManager(serverCfgFile);
+
+      message("\nSERVER USERS\n");
+      final Set<OServerUserConfiguration> users = serverCfg.getUsers();
+      if (users.isEmpty())
+        message("\nNo users found");
+      else
+        for (OServerUserConfiguration u : users) {
+          message("\n- '%s', permissions: %s", u.name, u.resources);
+        }
+
+    } catch (Exception e) {
+      error("\nError on loading %s file: %s", serverCfgFile, e.toString());
+    }
   }
 
   @ConsoleCommand(splitInWords = false, description = "Create an index against a property", onlineHelp = "SQL-Create-Index")

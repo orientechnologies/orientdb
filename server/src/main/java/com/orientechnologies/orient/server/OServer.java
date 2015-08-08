@@ -72,7 +72,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -89,8 +88,7 @@ public class OServer {
   private final CountDownLatch                             startupLatch           = new CountDownLatch(1);
   protected ReentrantLock                                  lock                   = new ReentrantLock();
   protected volatile boolean                               running                = false;
-  protected OServerConfigurationLoaderXml                  configurationLoader;
-  protected OServerConfiguration                           configuration;
+  protected OServerConfigurationManager                    serverCfg;
   protected OContextConfiguration                          contextConfiguration;
   protected OServerShutdownHook                            shutdownHook;
   protected Map<String, Class<? extends ONetworkProtocol>> networkProtocols       = new HashMap<String, Class<? extends ONetworkProtocol>>();
@@ -164,6 +162,10 @@ public class OServer {
     return clientConnectionManager;
   }
 
+  public void saveConfiguration() throws IOException {
+    serverCfg.saveConfiguration();
+  }
+
   /**
    * Load an extension class by name.
    */
@@ -225,18 +227,19 @@ public class OServer {
     Orient
         .instance()
         .getProfiler()
-        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT, new OProfilerHookValue() {
-            @Override
-            public Object getValue() {
-              final StringBuilder dbs = new StringBuilder(64);
-              for (String dbName : getAvailableStorageNames().keySet()) {
-                if (dbs.length()>0)
-                  dbs.append(',');
-                dbs.append(dbName);
+        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT,
+            new OProfilerHookValue() {
+              @Override
+              public Object getValue() {
+                final StringBuilder dbs = new StringBuilder(64);
+                for (String dbName : getAvailableStorageNames().keySet()) {
+                  if (dbs.length() > 0)
+                    dbs.append(',');
+                  dbs.append(dbName);
+                }
+                return dbs.toString();
               }
-              return dbs.toString();
-            }
-          });
+            });
 
     return this;
   }
@@ -244,7 +247,15 @@ public class OServer {
   public OServer startup(final File iConfigurationFile) throws InstantiationException, IllegalAccessException,
       ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
     // Startup function split to allow pre-activation changes
-    return startup(loadConfigurationFromFile(iConfigurationFile));
+    try {
+      serverCfg = new OServerConfigurationManager(iConfigurationFile);
+      return startupFromConfiguration();
+
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error on reading server configuration from file: " + iConfigurationFile, e,
+          OConfigurationException.class);
+    }
+    return this;
   }
 
   public OServer startup(final String iConfiguration) throws InstantiationException, IllegalAccessException,
@@ -259,22 +270,27 @@ public class OServer {
     if (iInputStream == null)
       throw new OConfigurationException("Configuration file is null");
 
-    configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, iInputStream);
-    configuration = configurationLoader.load();
+    serverCfg = new OServerConfigurationManager(iInputStream);
 
     // Startup function split to allow pre-activation changes
-    return startup(configuration);
+    return startupFromConfiguration();
   }
 
   public OServer startup(final OServerConfiguration iConfiguration) throws IllegalArgumentException, SecurityException,
       InvocationTargetException, NoSuchMethodException {
+    serverCfg = new OServerConfigurationManager(iConfiguration);
+    return startupFromConfiguration();
+  }
+
+  public OServer startupFromConfiguration() throws IllegalArgumentException, SecurityException, InvocationTargetException,
+      NoSuchMethodException {
     OLogManager.instance().info(this, "OrientDB Server v" + OConstants.getVersion() + " is starting up...");
 
     Orient.instance();
 
     clientConnectionManager = new OClientConnectionManager();
 
-    loadConfiguration(iConfiguration);
+    initFromConfiguration();
 
     if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean()) {
       System.out.println("Dumping environment after server startup...");
@@ -300,6 +316,8 @@ public class OServer {
     try {
       for (OServerLifecycleListener l : lifecycleListeners)
         l.onBeforeActivate();
+
+      final OServerConfiguration configuration = serverCfg.getConfiguration();
 
       if (configuration.network != null) {
         // REGISTER/CREATE SOCKET FACTORIES
@@ -451,6 +469,7 @@ public class OServer {
       return stg.getURL();
 
     // SEARCH IN CONFIGURED PATHS
+    final OServerConfiguration configuration = serverCfg.getConfiguration();
     String dbURL = configuration.getStoragePath(name);
     if (dbURL == null) {
       // SEARCH IN DEFAULT DATABASE DIRECTORY
@@ -465,6 +484,8 @@ public class OServer {
   }
 
   public Map<String, String> getAvailableStorageNames() {
+    final OServerConfiguration configuration = serverCfg.getConfiguration();
+
     // SEARCH IN CONFIGURED PATHS
     final Map<String, String> storages = new HashMap<String, String>();
     if (configuration.storages != null && configuration.storages.length > 0)
@@ -487,6 +508,8 @@ public class OServer {
   }
 
   public String getStorageURL(final String iName) {
+    final OServerConfiguration configuration = serverCfg.getConfiguration();
+
     // SEARCH IN CONFIGURED PATHS
     if (configuration.storages != null && configuration.storages.length > 0)
       for (OServerStorageConfiguration s : configuration.storages)
@@ -529,15 +552,26 @@ public class OServer {
   public boolean authenticate(final String iUserName, final String iPassword, final String iResourceToCheck) {
     final OServerUserConfiguration user = getUser(iUserName);
 
-    if (user != null && user.password.equals(iPassword)) {
-      if (user.resources.equals("*"))
-        // ACCESS TO ALL
-        return true;
+    if (user != null && user.password != null) {
 
-      String[] resourceParts = user.resources.split(",");
-      for (String r : resourceParts)
-        if (r.equals(iResourceToCheck))
+      final String passwordToMatch;
+      if (user.password.startsWith(OSecurityManager.ALGORITHM_PREFIX))
+        // HASH PASSWD
+        passwordToMatch = OSecurityManager.instance().digest2String(iPassword, true);
+      else
+        // USE PASSWD IN CLEAR
+        passwordToMatch = iPassword;
+
+      if (user.password.equals(passwordToMatch)) {
+        if (user.resources.equals("*"))
+          // ACCESS TO ALL
           return true;
+
+        String[] resourceParts = user.resources.split(",");
+        for (String r : resourceParts)
+          if (r.equals(iResourceToCheck))
+            return true;
+      }
     }
 
     // WRONG PASSWORD OR NO AUTHORIZATION
@@ -570,20 +604,15 @@ public class OServer {
   }
 
   public OServerUserConfiguration getUser(final String iUserName) {
-    return configuration.getUser(iUserName);
+    return serverCfg.getUser(iUserName);
   }
 
   public boolean existsStoragePath(final String iURL) {
-    return configuration.getStoragePath(iURL) != null;
+    return serverCfg.getConfiguration().getStoragePath(iURL) != null;
   }
 
   public OServerConfiguration getConfiguration() {
-    return configuration;
-  }
-
-  public void saveConfiguration() throws IOException {
-    if (configurationLoader != null)
-      configurationLoader.save(configuration);
+    return serverCfg.getConfiguration();
   }
 
   public Map<String, Class<? extends ONetworkProtocol>> getNetworkProtocols() {
@@ -656,41 +685,13 @@ public class OServer {
     return this;
   }
 
-  private boolean isUserExists(final String iName) {
-    if (iName == null || iName.length() == 0) {
-      throw new IllegalArgumentException("User name null or empty");
-    }
-
-    if (configuration.users != null) {
-      for (OServerUserConfiguration user : configuration.users) {
-        if (iName.equals(user.name)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
   public void addUser(final String iName, String iPassword, final String iPermissions) throws IOException {
-    if (iName == null || iName.length() == 0)
-      throw new IllegalArgumentException("User name null or empty");
-
-    if (iPermissions == null || iPermissions.length() == 0)
-      throw new IllegalArgumentException("User permissions null or empty");
-
-    if (configuration.users == null)
-      configuration.users = new OServerUserConfiguration[1];
-    else
-      configuration.users = Arrays.copyOf(configuration.users, configuration.users.length + 1);
-
     if (iPassword == null)
       // AUTO GENERATE PASSWORD
       iPassword = OSecurityManager.instance().digest2String(String.valueOf(random.nextLong()), false);
 
-    configuration.users[configuration.users.length - 1] = new OServerUserConfiguration(iName, iPassword, iPermissions);
-
-    saveConfiguration();
+    serverCfg.setUser(iName, iPassword, iPermissions);
+    serverCfg.saveConfiguration();
   }
 
   public OServer registerLifecycleListener(final OServerLifecycleListener iListener) {
@@ -801,31 +802,22 @@ public class OServer {
     this.serverRootDirectory = rootDirectory;
   }
 
-  protected void loadConfiguration(final OServerConfiguration iConfiguration) {
-    configuration = iConfiguration;
+  protected void initFromConfiguration() {
+    final OServerConfiguration cfg = serverCfg.getConfiguration();
 
     // FILL THE CONTEXT CONFIGURATION WITH SERVER'S PARAMETERS
     contextConfiguration = new OContextConfiguration();
-    if (iConfiguration.properties != null)
-      for (OServerEntryConfiguration prop : iConfiguration.properties)
+
+    if (cfg.properties != null)
+      for (OServerEntryConfiguration prop : cfg.properties)
         contextConfiguration.setValue(prop.name, prop.value);
 
-    hookManager = new OConfigurableHooksManager(iConfiguration);
-  }
-
-  protected OServerConfiguration loadConfigurationFromFile(final File iFile) {
-    try {
-      configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, iFile);
-      return configurationLoader.load();
-
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on reading server configuration from file: " + iFile, e,
-          OConfigurationException.class);
-    }
-    return null;
+    hookManager = new OConfigurableHooksManager(cfg);
   }
 
   protected void loadUsers() throws IOException {
+    final OServerConfiguration configuration = serverCfg.getConfiguration();
+
     if (configuration.isAfterFirstTime) {
       return;
     }
@@ -838,6 +830,8 @@ public class OServer {
    * Load configured storages.
    */
   protected void loadStorages() {
+    final OServerConfiguration configuration = serverCfg.getConfiguration();
+
     if (configuration.storages == null)
       return;
 
@@ -899,7 +893,7 @@ public class OServer {
         rootPassword = null;
     }
 
-    if (rootPassword != null && !isUserExists(OServerConfiguration.DEFAULT_ROOT_USER)) {
+    if (rootPassword != null && !serverCfg.existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
       try {
         // WAIT ANY LOG IS PRINTED
         Thread.sleep(1000);
@@ -929,13 +923,12 @@ public class OServer {
       }
     }
 
-    if (!isUserExists(OServerConfiguration.DEFAULT_ROOT_USER)) {
+    if (!serverCfg.existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
       addUser(OServerConfiguration.DEFAULT_ROOT_USER, rootPassword, "*");
     }
-    if (!isUserExists(OServerConfiguration.GUEST_USER)) {
+    if (!serverCfg.existsUser(OServerConfiguration.GUEST_USER)) {
       addUser(OServerConfiguration.GUEST_USER, OServerConfiguration.GUEST_PASS, "connect,server.listDatabases,server.dblist");
     }
-    saveConfiguration();
   }
 
   public OServerPluginManager getPluginManager() {
@@ -948,6 +941,8 @@ public class OServer {
     pluginManager.startup();
 
     // PLUGINS CONFIGURED IN XML
+    final OServerConfiguration configuration = serverCfg.getConfiguration();
+
     if (configuration.handlers != null) {
       // ACTIVATE PLUGINS
       OServerPlugin handler;
