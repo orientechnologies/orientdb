@@ -138,10 +138,25 @@ public class OTableFormatter {
         value = "<binary> (size=" + ((ORecordBytes) rec).toStream().length + " bytes)";
     }
 
+    return getPrettyFieldValue(value);
+  }
+
+  private Object getPrettyFieldMultiValue(Iterator<?> iterator) {
+    String value = "";
+    while (iterator.hasNext()) {
+      value += "," + getPrettyFieldValue(iterator.next());
+    }
+    if (value.length() > 0) {
+      value = value.substring(1);
+    }
+    return "[" + value + "]";
+  }
+
+  private Object getPrettyFieldValue(Object value) {
     if (value instanceof OMultiCollectionIterator<?>)
-      value = "[" + ((OMultiCollectionIterator<?>) value).size() + "]";
+      value = getPrettyFieldMultiValue(((OMultiCollectionIterator<?>) value).iterator());
     else if (value instanceof Collection<?>)
-      value = "[" + ((Collection<?>) value).size() + "]";
+      value = getPrettyFieldMultiValue(((Collection<?>) value).iterator());
     else if (value instanceof ORecord) {
       if (((ORecord) value).getIdentity().equals(ORecordId.EMPTY_RECORD_ID)) {
         value = ((ORecord) value).toString();
