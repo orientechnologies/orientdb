@@ -1,10 +1,10 @@
 # ETL
 
 The OrientDB-ETL module is an amazing tool to move data from and to OrientDB by executing an [ETL process](http://en.wikipedia.org/wiki/Extract,_transform,_load). It's super easy to use. OrientDB ETL is based on the following principles:
-- one [configuration file](http://www.orientechnologies.com/docs/last/orientdb-etl.wiki/Configuration-File.html) in [JSON](http://en.wikipedia.org/wiki/JSON) format
-- one [Extractor](http://www.orientechnologies.com/docs/last/orientdb-etl.wiki/Extractor.html) is allowed to extract data from a source
-- one [Loader](http://www.orientechnologies.com/docs/last/orientdb-etl.wiki/Loader.html) is allowed to load data to a destination
-- multiple [Transformers](http://www.orientechnologies.com/docs/last/orientdb-etl.wiki/Transformer.html) that transform data in pipeline. They receive something in input, do something, return something as output that will be processed as input by the next component
+- one [configuration file](http://www.orientechnologies.com/docs/last/Configuration-File.html) in [JSON](http://en.wikipedia.org/wiki/JSON) format
+- one [Extractor](http://www.orientechnologies.com/docs/last/Extractor.html) is allowed to extract data from a source
+- one [Loader](http://www.orientechnologies.com/docs/last/Loader.html) is allowed to load data to a destination
+- multiple [Transformers](http://www.orientechnologies.com/docs/last/Transformer.html) that transform data in pipeline. They receive something in input, do something, return something as output that will be processed as input by the next component
 
 ## How ETL works
 ```
@@ -41,15 +41,15 @@ $ ./oetl.sh config-dbpedia.json
 ```
 
 ## Available Components
-- [Blocks](http://www.orientechnologies.com/docs/last/orientdb-etl.wiki/Block.html)
-- [Sources](http://www.orientechnologies.com/docs/last/orientdb-etl.wiki/Source.html)
-- [Extractors](http://www.orientechnologies.com/docs/last/orientdb-etl.wiki/Extractor.html)
-- [Transformers](http://www.orientechnologies.com/docs/last/orientdb-etl.wiki/Transformer.html)
-- [Loaders](http://www.orientechnologies.com/docs/last/orientdb-etl.wiki/Loader.html)
+- [Blocks](http://www.orientechnologies.com/docs/last/Block.html)
+- [Sources](http://www.orientechnologies.com/docs/last/Source.html)
+- [Extractors](http://www.orientechnologies.com/docs/last/Extractor.html)
+- [Transformers](http://www.orientechnologies.com/docs/last/Transformer.html)
+- [Loaders](http://www.orientechnologies.com/docs/last/Loader.html)
 
 Examples:
-- [Import DBPedia](http://www.orientechnologies.com/docs/last/orientdb-etl.wiki/Import-from-DBPedia.html)
-- [Import from a DBMS](http://www.orientechnologies.com/docs/last/orientdb-etl.wiki/Import-from-DBMS.html)
+- [Import DBPedia](http://www.orientechnologies.com/docs/last/Import-from-DBPedia.html)
+- [Import from a DBMS](http://www.orientechnologies.com/docs/last/Import-from-DBMS.html)
 
 
-Look to the [Documentation](http://www.orientechnologies.com/docs/last/orientdb-etl.wiki/Introduction.html) for more information.
+Look to the [Documentation](http://www.orientechnologies.com/docs/last/Introduction.html) for more information.
