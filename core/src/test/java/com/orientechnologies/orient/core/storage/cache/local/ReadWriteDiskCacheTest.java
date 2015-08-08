@@ -8,9 +8,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.storage.cache.*;
-import com.orientechnologies.orient.core.storage.cache.local.LRUList;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -761,7 +758,7 @@ public class ReadWriteDiskCacheTest {
 
     Thread.sleep(1000);
 
-    Assert.assertEquals(writeAheadLog.getFlushedLSN(), lsnToFlush);
+    Assert.assertEquals(writeAheadLog.getFlushedLsn(), lsnToFlush);
   }
 
   private void updateFilePage(long pageIndex, long offset, byte[] value) throws IOException {

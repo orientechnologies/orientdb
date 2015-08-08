@@ -74,33 +74,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.lang.management.ManagementFactory;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.zip.CRC32;
-
 /**
  * @author Andrey Lomakin
  * @since 7/23/13
@@ -124,7 +97,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       .getValueAsLong() * 1024L * 1024L;
 
   private final long diskSizeCheckInterval = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL
-      .getValueAsInteger() * 1000;
+      .getValueAsInteger() * 1000L;
   private final List<WeakReference<OLowDiskSpaceListener>> listeners = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
 
   private final AtomicLong lastDiskSpaceCheck = new AtomicLong(System.currentTimeMillis());
@@ -1234,7 +1207,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     OLogSequenceNumber lastLsn;
     if (writeAheadLog != null)
-      lastLsn = writeAheadLog.getFlushedLSN();
+      lastLsn = writeAheadLog.getFlushedLsn();
     else
       lastLsn = new OLogSequenceNumber(-1, -1);
 
@@ -1261,7 +1234,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private void flushPage(int fileId, long pageIndex, ODirectMemoryPointer dataPointer) throws IOException {
     if (writeAheadLog != null) {
       OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(dataPointer);
-      OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLSN();
+      OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLsn();
       if (flushedLSN == null || flushedLSN.compareTo(lsn) < 0)
         writeAheadLog.flush();
     }
@@ -1436,7 +1409,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         }
 
         lastAmountOfFlushedPages.lazySet(flushedPages);
-      } catch (Exception e) {
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Exception during data flush.", e);
+      } catch (RuntimeException e) {
         OLogManager.instance().error(this, "Exception during data flush.", e);
       } finally {
         final long end = System.currentTimeMillis();
@@ -1622,7 +1597,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     @Override
     public void run() {
-      OLogSequenceNumber minLsn = writeAheadLog.getFlushedLSN();
+      OLogSequenceNumber minLsn = writeAheadLog.getFlushedLsn();
 
       minLsn = findMinLsn(minLsn, writeCachePages);
 

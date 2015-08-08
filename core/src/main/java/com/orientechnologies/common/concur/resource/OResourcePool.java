@@ -93,7 +93,7 @@ public class OResourcePool<K, V> {
         res = listener.createNewResource(key, additionalArgs);
         created.incrementAndGet();
         if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this, "pool:'%s' created new resource '%s', new resource count '%d'", this, res, created);
+          OLogManager.instance().debug(this, "pool:'%s' created new resource '%s', new resource count '%d'", this, res, created.get());
       }
       resourcesOut.add(res);
       if (OLogManager.instance().isDebugEnabled())

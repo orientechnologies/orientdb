@@ -119,11 +119,13 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
 
   protected void writeDatabases(final OJSONWriter json) throws IOException {
     json.beginCollection(1, true, "dbs");
-    Collection<OPartitionedDatabasePool> dbPools = server.getDatabasePoolFactory().getPools();
-    for (OPartitionedDatabasePool pool : dbPools) {
-      writeField(json, 2, "db", pool.getUrl());
-      writeField(json, 2, "user", pool.getUserName());
-      json.endObject(2);
+    if (!server.getDatabasePoolFactory().isClosed()) {
+      Collection<OPartitionedDatabasePool> dbPools = server.getDatabasePoolFactory().getPools();
+      for (OPartitionedDatabasePool pool : dbPools) {
+        writeField(json, 2, "db", pool.getUrl());
+        writeField(json, 2, "user", pool.getUserName());
+        json.endObject(2);
+      }
     }
     json.endCollection(1, false);
   }

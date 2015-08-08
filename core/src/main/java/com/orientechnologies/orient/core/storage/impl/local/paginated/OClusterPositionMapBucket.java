@@ -57,7 +57,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
 
     position += setByteValue(position, FILLED);
     position += setLongValue(position, pageIndex);
-    position += setIntValue(position, recordPosition);
+    setIntValue(position, recordPosition);
 
     setIntValue(SIZE_OFFSET, size + 1);
 

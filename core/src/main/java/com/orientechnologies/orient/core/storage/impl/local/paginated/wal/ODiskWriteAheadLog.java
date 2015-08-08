@@ -30,10 +30,12 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.EOFException;
 import java.io.File;
@@ -59,67 +61,80 @@ import java.util.zip.CRC32;
  * @since 25.04.13
  */
 public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
-  public static final String                                        MASTER_RECORD_EXTENSION = ".wmr";
-  public static final String                                        WAL_SEGMENT_EXTENSION   = ".wal";
-  private static final long                                         ONE_KB                  = 1024L;
+  public static final String MASTER_RECORD_EXTENSION = ".wmr";
+  public static final String WAL_SEGMENT_EXTENSION = ".wal";
+  private static final long ONE_KB = 1024L;
 
-  private final long                                                freeSpaceLimit          = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT
-                                                                                                .getValueAsLong() * 1024L * 1024L;
-  private final long                                                walSizeLimit            = OGlobalConfiguration.WAL_MAX_SIZE
-                                                                                                .getValueAsLong() * 1024L * 1024L;
+  private final long freeSpaceLimit = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT
+      .getValueAsLong() * 1024L * 1024L;
+  private final long walSizeLimit = OGlobalConfiguration.WAL_MAX_SIZE
+      .getValueAsLong() * 1024L * 1024L;
 
-  private final List<LogSegment>                                    logSegments             = new ArrayList<LogSegment>();
-  private final int                                                 maxPagesCacheSize;
-  private final int                                                 commitDelay;
-  private final long                                                maxSegmentSize;
-  private final File                                                walLocation;
-  private final RandomAccessFile                                    masterRecordLSNHolder;
-  private final OLocalPaginatedStorage                              storage;
-  private boolean                                                   useFirstMasterRecord    = true;
-  private long                                                      logSize;
-  private File                                                      masterRecordFile;
-  private OLogSequenceNumber                                        firstMasterRecord;
-  private OLogSequenceNumber                                        secondMasterRecord;
-  private volatile OLogSequenceNumber                               flushedLsn;
+  private final List<LogSegment> logSegments = new ArrayList<LogSegment>();
+  private final int maxPagesCacheSize;
+  private final int commitDelay;
+  private final long maxSegmentSize;
+  private final File walLocation;
+  private final RandomAccessFile masterRecordLSNHolder;
+  private final OLocalPaginatedStorage storage;
+  private boolean useFirstMasterRecord = true;
+  private long logSize;
+  private File masterRecordFile;
+  private OLogSequenceNumber firstMasterRecord;
+  private OLogSequenceNumber secondMasterRecord;
+  private volatile OLogSequenceNumber flushedLsn;
 
-  private boolean                                                   segmentCreationFlag     = false;
-  private final Condition                                           segmentCreationComplete = syncObject.newCondition();
+  private boolean segmentCreationFlag = false;
+  private final Condition segmentCreationComplete = syncObject.newCondition();
 
-  private final Set<OOperationUnitId>                               activeOperations        = new HashSet<OOperationUnitId>();
-  private final List<WeakReference<OLowDiskSpaceListener>>          lowDiskSpaceListeners   = Collections
-                                                                                                .synchronizedList(new ArrayList<WeakReference<OLowDiskSpaceListener>>());
+  private final Set<OOperationUnitId> activeOperations = new HashSet<OOperationUnitId>();
+  private final List<WeakReference<OLowDiskSpaceListener>> lowDiskSpaceListeners = Collections
+      .synchronizedList(new ArrayList<WeakReference<OLowDiskSpaceListener>>());
   private final List<WeakReference<OFullCheckpointRequestListener>> fullCheckpointListeners = Collections
-                                                                                                .synchronizedList(new ArrayList<WeakReference<OFullCheckpointRequestListener>>());
+      .synchronizedList(new ArrayList<WeakReference<OFullCheckpointRequestListener>>());
+
+  private static class FilenameFilter implements java.io.FilenameFilter {
+    private final OLocalPaginatedStorage storage;
+
+    public FilenameFilter(OLocalPaginatedStorage storage) {
+      this.storage = storage;
+    }
+
+    @Override
+    public boolean accept(File dir, String name) {
+      return validateName(name, storage);
+    }
+  }
 
   private final class LogSegment implements Comparable<LogSegment> {
-    private final RandomAccessFile                           rndFile;
-    private final File                                       file;
-    private final long                                       order;
-    private final int                                        maxPagesCacheSize;
-    private final ConcurrentLinkedQueue<OWALPage>            pagesCache     = new ConcurrentLinkedQueue<OWALPage>();
-    private final ScheduledExecutorService                   commitExecutor = Executors
-                                                                                .newSingleThreadScheduledExecutor(new ThreadFactory() {
-                                                                                  @Override
-                                                                                  public Thread newThread(Runnable r) {
-                                                                                    final Thread thread = new Thread(
-                                                                                        OStorageAbstract.storageThreadGroup, r);
-                                                                                    thread.setDaemon(true);
-                                                                                    thread.setName("OrientDB WAL Flush Task ("
-                                                                                        + storage.getName() + ")");
-                                                                                    return thread;
-                                                                                  }
-                                                                                });
-    private long                                             filledUpTo;
-    private boolean                                          closed;
-    private OWALPage                                         currentPage;
-    private long                                             nextPositionToFlush;
-    private OLogSequenceNumber                               last           = null;
-    private OLogSequenceNumber                               pendingLSNToFlush;
+    private final RandomAccessFile rndFile;
+    private final File file;
+    private final long order;
+    private final int maxPagesCacheSize;
+    private final ConcurrentLinkedQueue<OWALPage> pagesCache = new ConcurrentLinkedQueue<OWALPage>();
+    private final ScheduledExecutorService commitExecutor = Executors
+        .newSingleThreadScheduledExecutor(new ThreadFactory() {
+          @Override
+          public Thread newThread(Runnable r) {
+            final Thread thread = new Thread(
+                OStorageAbstract.storageThreadGroup, r);
+            thread.setDaemon(true);
+            thread.setName("OrientDB WAL Flush Task ("
+                + storage.getName() + ")");
+            return thread;
+          }
+        });
+    private long filledUpTo;
+    private boolean closed;
+    private OWALPage currentPage;
+    private long nextPositionToFlush;
+    private OLogSequenceNumber last = null;
+    private OLogSequenceNumber pendingLSNToFlush;
 
-    private volatile boolean                                 flushNewData   = true;
+    private volatile boolean flushNewData = true;
 
     private WeakReference<OPair<OLogSequenceNumber, byte[]>> lastReadRecord = new WeakReference<OPair<OLogSequenceNumber, byte[]>>(
-                                                                                null);
+        null);
 
     private final class FlushTask implements Runnable {
       private FlushTask() {
@@ -166,9 +181,9 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
                   pendingLSNToFlush = null;
                 } else
-                  lastLSNToFlush = new OLogSequenceNumber(order, filePointer + flushedPages * (long)OWALPage.PAGE_SIZE + pos);
+                  lastLSNToFlush = new OLogSequenceNumber(order, filePointer + flushedPages * (long) OWALPage.PAGE_SIZE + pos);
               } else if (pendingLSNToFlush == null)
-                pendingLSNToFlush = new OLogSequenceNumber(order, filePointer + flushedPages * (long)OWALPage.PAGE_SIZE + pos);
+                pendingLSNToFlush = new OLogSequenceNumber(order, filePointer + flushedPages * (long) OWALPage.PAGE_SIZE + pos);
 
               pos += page.getSerializedRecordSize(pos);
             }
@@ -415,6 +430,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       return last;
     }
 
+    @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")
     public byte[] readRecord(OLogSequenceNumber lsn) throws IOException {
       final OPair<OLogSequenceNumber, byte[]> lastRecord = lastReadRecord.get();
       if (lastRecord != null && lastRecord.getKey().equals(lsn))
@@ -666,7 +682,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       fullCheckpointListeners.remove(ref);
   }
 
-  public ODiskWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, OLocalPaginatedStorage storage)
+  public ODiskWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, final OLocalPaginatedStorage storage)
       throws IOException {
     this.maxPagesCacheSize = maxPagesCacheSize;
     this.commitDelay = commitDelay;
@@ -676,12 +692,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     try {
       this.walLocation = new File(calculateWalPath(this.storage));
 
-      File[] walFiles = this.walLocation.listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          return validateName(name);
-        }
-      });
+      File[] walFiles = this.walLocation.listFiles(new FilenameFilter(storage));
 
       if (walFiles == null)
         throw new IllegalStateException(
@@ -755,8 +766,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     return walPath;
   }
 
-  public static boolean validateName(String name) {
-    if (!name.toLowerCase().endsWith(".wal"))
+  public static boolean validateName(String name, OAbstractPaginatedStorage storage) {
+    if (!name.toLowerCase(storage.getConfiguration().getLocaleInstance()).endsWith(".wal"))
       return false;
 
     int walOrderStartIndex = name.indexOf('.');
@@ -847,12 +858,12 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback,
-      OLogSequenceNumber startLsn) throws IOException {
+                                                        OLogSequenceNumber startLsn) throws IOException {
     syncObject.lock();
     try {
       checkForClose();
 
-      final OLogSequenceNumber lsn = log(new OAtomicUnitEndRecord(operationUnitId, rollback, startLsn));
+      final OLogSequenceNumber lsn = log(new OAtomicUnitEndRecord(operationUnitId, rollback));
       activeOperations.remove(operationUnitId);
 
       return lsn;
@@ -1092,7 +1103,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
-  public OLogSequenceNumber getFlushedLSN() {
+  public OLogSequenceNumber getFlushedLsn() {
     return flushedLsn;
   }
 

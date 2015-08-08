@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,30 +57,30 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGI
  * @since 10/7/13
  */
 public class OPaginatedCluster extends ODurableComponent implements OCluster {
-  public static final String                    DEF_EXTENSION            = ".pcl";
-  private static final int                      DISK_PAGE_SIZE           = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
-  private static final int                      LOWEST_FREELIST_BOUNDARY = PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY
+  public static final String DEF_EXTENSION = ".pcl";
+  private static final int DISK_PAGE_SIZE = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
+  private static final int LOWEST_FREELIST_BOUNDARY = PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY
       .getValueAsInteger();
-  private final static int                      FREE_LIST_SIZE           = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
-  private static final int                      PAGE_INDEX_OFFSET        = 16;
-  private static final int                      RECORD_POSITION_MASK     = 0xFFFF;
-  private static final int                      ONE_KB                   = 1024;
-  private final OModificationLock               externalModificationLock = new OModificationLock();
-  private volatile OCompression                 compression;
-  private OClusterPositionMap                   clusterPositionMap;
-  private OAbstractPaginatedStorage             storageLocal;
-  private volatile int                          id;
-  private long                                  fileId;
+  private final static int FREE_LIST_SIZE = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
+  private static final int PAGE_INDEX_OFFSET = 16;
+  private static final int RECORD_POSITION_MASK = 0xFFFF;
+  private static final int ONE_KB = 1024;
+  private final OModificationLock externalModificationLock = new OModificationLock();
+  private volatile OCompression compression;
+  private OClusterPositionMap clusterPositionMap;
+  private OAbstractPaginatedStorage storageLocal;
+  private volatile int id;
+  private long fileId;
   private OStoragePaginatedClusterConfiguration config;
-  private long                                  pinnedStateEntryIndex;
-  private ORecordConflictStrategy               recordConflictStrategy;
+  private long pinnedStateEntryIndex;
+  private ORecordConflictStrategy recordConflictStrategy;
 
   private static final class AddEntryResult {
     private final long pageIndex;
-    private final int  pagePosition;
+    private final int pagePosition;
 
     private final ORecordVersion recordVersion;
-    private final int            recordsSizeDiff;
+    private final int recordsSizeDiff;
 
     public AddEntryResult(long pageIndex, int pagePosition, ORecordVersion recordVersion, int recordsSizeDiff) {
       this.pageIndex = pageIndex;
@@ -91,7 +92,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   private static final class FindFreePageResult {
     private final long pageIndex;
-    private final int  freePageIndex;
+    private final int freePageIndex;
 
     private FindFreePageResult(long pageIndex, int freePageIndex) {
       this.pageIndex = pageIndex;
@@ -301,32 +302,35 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       try {
 
         switch (attribute) {
-        case NAME:
-          setNameInternal(stringValue);
-          break;
-        case USE_WAL:
-          setUseWalInternal(stringValue);
-          break;
-        case RECORD_GROW_FACTOR:
-          setRecordGrowFactorInternal(stringValue);
-          break;
-        case RECORD_OVERFLOW_GROW_FACTOR:
-          setRecordOverflowGrowFactorInternal(stringValue);
-          break;
-        case COMPRESSION:
-          if (getEntries() > 0)
-            throw new IllegalArgumentException(
-                "Cannot change compression setting on cluster '" + getName() + "' because it is not empty");
-          setCompressionInternal(stringValue);
-          break;
-        case CONFLICTSTRATEGY:
-          setRecordConflictStrategy(stringValue);
-          break;
-        case STATUS: {
-          return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase()));
-        }
-        default:
-          throw new IllegalArgumentException("Runtime change of attribute '" + attribute + " is not supported");
+          case NAME:
+            setNameInternal(stringValue);
+            break;
+          case USE_WAL:
+            setUseWalInternal(stringValue);
+            break;
+          case RECORD_GROW_FACTOR:
+            setRecordGrowFactorInternal(stringValue);
+            break;
+          case RECORD_OVERFLOW_GROW_FACTOR:
+            setRecordOverflowGrowFactorInternal(stringValue);
+            break;
+          case COMPRESSION:
+            if (getEntries() > 0)
+              throw new IllegalArgumentException(
+                  "Cannot change compression setting on cluster '" + getName() + "' because it is not empty");
+            setCompressionInternal(stringValue);
+            break;
+          case CONFLICTSTRATEGY:
+            setRecordConflictStrategy(stringValue);
+            break;
+          case STATUS: {
+            if (stringValue == null)
+              throw new IllegalStateException("Value of attribute is null.");
+
+            return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase(storageLocal.getConfiguration().getLocaleInstance())));
+          }
+          default:
+            throw new IllegalArgumentException("Runtime change of attribute '" + attribute + " is not supported");
         }
 
       } finally {
@@ -526,6 +530,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     return entryContentLength;
   }
 
+  @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")
   public ORawBuffer readRecord(long clusterPosition) throws IOException {
     atomicOperationsManager.acquireReadLock(this);
     try {
@@ -644,7 +649,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           return false;
         }
 
-        long nextPagePointer = -1;
+        long nextPagePointer;
         int removedContentSize = 0;
 
         do {
@@ -695,7 +700,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         endAtomicOperation(false, null);
 
         return true;
-      } catch (Exception e) {
+      } catch (IOException e) {
+        endAtomicOperation(true, e);
+        throw new OStorageException(null, e);
+      } catch (RuntimeException e) {
         endAtomicOperation(true, e);
         throw new OStorageException(null, e);
       } finally {
@@ -1405,6 +1413,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     return physicalPosition;
   }
 
+  @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")
   private byte[] readFullEntry(long clusterPosition, long pageIndex, int recordPosition, OAtomicOperation atomicOperation)
       throws IOException {
     if (getFilledUpTo(atomicOperation, fileId) <= pageIndex)
@@ -1413,7 +1422,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     final List<byte[]> recordChunks = new ArrayList<byte[]>();
     int contentSize = 0;
 
-    long nextPagePointer = -1;
+    long nextPagePointer;
     boolean firstEntry = true;
     do {
       OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
@@ -1719,7 +1728,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     OPaginatedClusterDebug debug = new OPaginatedClusterDebug();
     debug.clusterPosition = clusterPosition;
     debug.fileId = fileId;
-    OAtomicOperation atomicOperation = null;
+    OAtomicOperation atomicOperation = storageLocal.getAtomicOperationsManager().getCurrentOperation();
+
     OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
     if (positionEntry == null) {
       debug.empty = true;
@@ -1736,7 +1746,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     debug.pages = new ArrayList<OClusterPageDebug>();
     int contentSize = 0;
 
-    long nextPagePointer = -1;
+    long nextPagePointer;
     boolean firstEntry = true;
     do {
       OClusterPageDebug debugPage = new OClusterPageDebug();

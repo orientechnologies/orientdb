@@ -29,12 +29,16 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Handles the database configuration in one big record.
  */
 @SuppressWarnings("serial")
+@SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED")
 public class OStorageConfigurationSegment extends OStorageConfiguration {
+  private static final long serialVersionUID = 638874446554389034L;
+
   private static final int START_SIZE = 10000;
   private final transient OSingleFileSegment segment;
 
@@ -80,7 +84,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
       segment.getFile().read(OBinaryProtocol.SIZE_INT, buffer, size);
 
       fromStream(buffer);
-    } catch (Exception e) {
+    } catch (IOException e) {
       throw new OSerializationException("Cannot load database's configuration. The database seems to be corrupted.", e);
     }
     return this;

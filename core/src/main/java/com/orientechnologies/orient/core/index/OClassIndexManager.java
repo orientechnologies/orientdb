@@ -64,7 +64,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * @author Andrey Lomakin, Artem Orobets
  */
 public class OClassIndexManager extends ODocumentHookAbstract implements OOrientStartupListener, OOrientShutdownListener {
-  private volatile ThreadLocal<Deque<TreeMap<OIndex<?>, List<Object>>>> lockedKeys = new ThreadLocal<Deque<TreeMap<OIndex<?>, List<Object>>>>();
+  private Deque<TreeMap<OIndex<?>, List<Object>>> lockedKeys = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
 
   public OClassIndexManager(ODatabaseDocument database) {
     super(database);
@@ -81,7 +81,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   @Override
   public void onStartup() {
     if (lockedKeys == null)
-      lockedKeys = new ThreadLocal<Deque<TreeMap<OIndex<?>, List<Object>>>>();
+      lockedKeys = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
   }
 
   private static void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
@@ -310,11 +310,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   private ODocument checkIndexedPropertiesOnCreation(final ODocument record, final Collection<OIndex<?>> indexes) {
     ODocument replaced = null;
 
-    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys.get();
-    if (indexKeysMapQueue == null) {
-      indexKeysMapQueue = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
-      lockedKeys.set(indexKeysMapQueue);
-    }
+    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
 
     final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
 
@@ -352,11 +348,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   }
 
   private void checkIndexedPropertiesOnUpdate(final ODocument record, final Collection<OIndex<?>> indexes) {
-    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys.get();
-    if (indexKeysMapQueue == null) {
-      indexKeysMapQueue = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
-      lockedKeys.set(indexKeysMapQueue);
-    }
+    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
 
     final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
 
@@ -603,7 +595,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   }
 
   private void unlockKeys() {
-    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys.get();
+    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
     if (indexKeysMapQueue == null)
       return;
 

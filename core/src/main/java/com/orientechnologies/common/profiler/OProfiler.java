@@ -28,6 +28,10 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import javax.annotation.CheckReturnValue;
+import javax.annotation.meta.When;
+
+
 public interface OProfiler extends OService {
 
   enum METRIC_TYPE {
@@ -48,13 +52,16 @@ public interface OProfiler extends OService {
 
   long startChrono();
 
-  @SuppressFBWarnings(value = "RV - RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT")
+  @CheckReturnValue(when = When.NEVER)
   long stopChrono(String iName, String iDescription, long iStartTime);
 
+  @CheckReturnValue(when = When.NEVER)
   long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary);
 
+  @CheckReturnValue(when = When.NEVER)
   long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload);
 
+  @CheckReturnValue(when = When.NEVER)
   long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload, String user);
 
   String dumpChronos();

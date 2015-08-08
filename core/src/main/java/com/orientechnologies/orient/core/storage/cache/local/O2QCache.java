@@ -592,9 +592,6 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     }
 
     cacheEntry = a1in.get(fileId, pageIndex);
-    if (cacheEntry != null) {
-
-    }
     return cacheEntry;
   }
 

@@ -78,15 +78,15 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * be added at run-time. Instances can be reused across calls by using the reset() before to re-use.
  */
 @SuppressWarnings({ "unchecked" })
-public class ODocument extends ORecordAbstract implements Iterable<Entry<String, Object>>, ORecordSchemaAware, ODetachable,
-    Externalizable {
+public class ODocument extends ORecordAbstract
+    implements Iterable<Entry<String, Object>>, ORecordSchemaAware, ODetachable, Externalizable {
 
-  public static final byte                                RECORD_TYPE             = 'd';
-  protected static final String[]                         EMPTY_STRINGS           = new String[] {};
-  private static final long                               serialVersionUID        = 1L;
-  protected int                                           _fieldSize;
+  public static final byte        RECORD_TYPE      = 'd';
+  protected static final String[] EMPTY_STRINGS    = new String[] {};
+  private static final long       serialVersionUID = 1L;
+  protected int                   _fieldSize;
 
-  protected Map<String, ODocumentEntry>                   _fields;
+  protected Map<String, ODocumentEntry> _fields;
 
   protected boolean                                       _trackingChanges        = true;
   protected boolean                                       _ordered                = true;
@@ -164,8 +164,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       final OSchema schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
       final OClass cls = schema.getClassByClusterId(_recordId.clusterId);
       if (cls != null && !cls.getName().equals(iClassName))
-        throw new IllegalArgumentException("Cluster id does not correspond class name should be " + iClassName + " but found "
-            + cls.getName());
+        throw new IllegalArgumentException(
+            "Cluster id does not correspond class name should be " + iClassName + " but found " + cls.getName());
     }
 
     _dirty = false;
@@ -346,7 +346,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       if (p.getMinComparable().compareTo(fieldValue) > 0) {
         switch (p.getType()) {
         case STRING:
-          throw new OValidationException("The field '" + p.getFullName() + "' contains fewer characters than " + min + " requested");
+          throw new OValidationException(
+              "The field '" + p.getFullName() + "' contains fewer characters than " + min + " requested");
         case DATE:
         case DATETIME:
           throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
@@ -399,8 +400,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         boolean simple = fieldValue != null ? OType.isSimpleType(fieldValue) : OType.isSimpleType(orgVal);
         if ((simple) || (fieldValue != null && orgVal == null) || (fieldValue == null && orgVal != null)
             || (fieldValue != null && !fieldValue.equals(orgVal)))
-          throw new OValidationException("The field '" + p.getFullName() + "' is immutable and cannot be altered. Field value is: "
-              + entry.value);
+          throw new OValidationException(
+              "The field '" + p.getFullName() + "' is immutable and cannot be altered. Field value is: " + entry.value);
       }
     }
   }
@@ -793,9 +794,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         if (!iFieldName.contains(".")) {
           ODocumentEntry entry = _fields.get(iFieldName);
           removeCollectionChangeListener(entry, entry.value);
-          removeCollectionTimeLine(entry);
           entry.value = value;
-          addCollectionChangeListener(iFieldName, entry, value);
+          addCollectionChangeListener(entry);
         }
       }
     }
@@ -1064,13 +1064,12 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         entry.type = fieldType;
     }
     removeCollectionChangeListener(entry, oldValue);
-    removeCollectionTimeLine(entry);
     entry.value = iPropertyValue;
     if (!entry.exist()) {
       entry.setExist(true);
       _fieldSize++;
     }
-    addCollectionChangeListener(iFieldName, entry, iPropertyValue);
+    addCollectionChangeListener(entry);
 
     if (_status != STATUS.UNMARSHALLING) {
       setDirty();
@@ -1112,7 +1111,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
     _fieldSize--;
 
-    removeCollectionTimeLine(entry);
     removeCollectionChangeListener(entry, oldValue);
 
     setDirty();
@@ -1214,7 +1212,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     final Iterator<Entry<String, ODocumentEntry>> iterator = _fields.entrySet().iterator();
     return new Iterator<Entry<String, Object>>() {
       private Entry<String, ODocumentEntry> current;
-      private boolean                       read = true;
+      private boolean read = true;
 
       public boolean hasNext() {
         while (iterator.hasNext()) {
@@ -1267,7 +1265,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
           iterator.remove();
         _fieldSize--;
         removeCollectionChangeListener(current.getValue(), current.getValue().value);
-        removeCollectionTimeLine(current.getValue());
       }
     };
   }
@@ -1612,7 +1609,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
           cur.getValue().timeLine = null;
           if (cur.getValue().value instanceof OTrackedMultiValue<?, ?>) {
             removeCollectionChangeListener(cur.getValue(), cur.getValue().value);
-            addCollectionChangeListener(cur.getKey(), cur.getValue(), cur.getValue().value);
+            addCollectionChangeListener(cur.getValue());
           }
         }
       }
@@ -2119,27 +2116,17 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   protected OImmutableClass getImmutableSchemaClass() {
-    if (_className == null)
-      fetchClassName();
+    if (_immutableClazz == null) {
+      if (_className == null)
+        fetchClassName();
+      final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
 
-    if (_className == null)
-      return null;
-
-    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
-
-    if (databaseRecord != null && !databaseRecord.isClosed()) {
-      final OSchema immutableSchema = ((OMetadataInternal) databaseRecord.getMetadata()).getImmutableSchemaSnapshot();
-      if (immutableSchema == null)
-        return null;
-
-      if (_immutableClazz == null) {
+      if (databaseRecord != null && !databaseRecord.isClosed()) {
+        final OSchema immutableSchema = ((OMetadataInternal) databaseRecord.getMetadata()).getImmutableSchemaSnapshot();
+        if (immutableSchema == null)
+          return null;
         _immutableSchemaVersion = immutableSchema.getVersion();
         _immutableClazz = (OImmutableClass) immutableSchema.getClass(_className);
-      } else {
-        if (_immutableSchemaVersion < immutableSchema.getVersion()) {
-          _immutableSchemaVersion = immutableSchema.getVersion();
-          _immutableClazz = (OImmutableClass) immutableSchema.getClass(_className);
-        }
       }
     }
 
@@ -2153,7 +2140,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     ODocumentEntry entry = getOrCreate(iFieldName);
     entry.value = iFieldValue;
     entry.type = iFieldType;
-    addCollectionChangeListener(iFieldName, entry, iFieldValue);
+    addCollectionChangeListener(entry);
   }
 
   protected ODocumentEntry getOrCreate(String key) {
@@ -2295,8 +2282,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       final Object fieldValue = fieldEntry.getValue().value;
       if (!(fieldValue instanceof Collection<?>) && !(fieldValue instanceof Map<?, ?>))
         continue;
-      if (fieldValue instanceof OTrackedMultiValue) {
-        addCollectionChangeListener(fieldEntry.getKey(), fieldEntry.getValue(), (OTrackedMultiValue<Object, Object>) fieldValue);
+      if (addCollectionChangeListener(fieldEntry.getValue())) {
         continue;
       }
 
@@ -2311,25 +2297,38 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       if (fieldType == null)
         fieldType = OType.getTypeByValue(fieldValue);
 
-      if (fieldType == null
-          || !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType)
-              || OType.LINKSET.equals(fieldType) || OType.LINKLIST.equals(fieldType) || OType.LINKMAP.equals(fieldType)))
-        continue;
       Object newValue = null;
-      if (fieldValue instanceof List && fieldType.equals(OType.EMBEDDEDLIST))
-        newValue = new OTrackedList<Object>(this, (List<?>) fieldValue, null);
-      else if (fieldValue instanceof Set && fieldType.equals(OType.EMBEDDEDSET))
-        newValue = new OTrackedSet<Object>(this, (Set<OIdentifiable>) fieldValue, null);
-      else if (fieldValue instanceof Map && fieldType.equals(OType.EMBEDDEDMAP))
-        newValue = new OTrackedMap<OIdentifiable>(this, (Map<Object, OIdentifiable>) fieldValue, null);
-      else if (fieldValue instanceof Set && fieldType.equals(OType.LINKSET))
-        newValue = new ORecordLazySet(this, (Collection<OIdentifiable>) fieldValue);
-      else if (fieldValue instanceof List && fieldType.equals(OType.LINKLIST))
-        newValue = new ORecordLazyList(this, (List<OIdentifiable>) fieldValue);
-      else if (fieldValue instanceof Map && fieldType.equals(OType.LINKMAP))
-        newValue = new ORecordLazyMap(this, (Map<Object, OIdentifiable>) fieldValue);
+      switch (fieldType) {
+      case EMBEDDEDLIST:
+        if (fieldValue instanceof List<?>)
+          newValue = new OTrackedList<Object>(this, (List<?>) fieldValue, null);
+        break;
+      case EMBEDDEDSET:
+        if (fieldValue instanceof Set<?>)
+          newValue = new OTrackedSet<Object>(this, (Set<OIdentifiable>) fieldValue, null);
+        break;
+      case EMBEDDEDMAP:
+        if (fieldValue instanceof Map<?, ?>)
+          newValue = new OTrackedMap<OIdentifiable>(this, (Map<Object, OIdentifiable>) fieldValue, null);
+        break;
+      case LINKLIST:
+        if (fieldValue instanceof List<?>)
+          newValue = new ORecordLazyList(this, (List<OIdentifiable>) fieldValue);
+        break;
+      case LINKSET:
+        if (fieldValue instanceof Set<?>)
+          newValue = new ORecordLazySet(this, (Collection<OIdentifiable>) fieldValue);
+        break;
+      case LINKMAP:
+        if (fieldValue instanceof Map<?, ?>)
+          newValue = new ORecordLazyMap(this, (Map<Object, OIdentifiable>) fieldValue);
+        break;
+      default:
+        break;
+      }
+
       if (newValue != null) {
-        addCollectionChangeListener(fieldEntry.getKey(), fieldEntry.getValue(), (OTrackedMultiValue<Object, Object>) newValue);
+        addCollectionChangeListener(fieldEntry.getValue());
         fieldEntry.getValue().value = newValue;
       }
     }
@@ -2412,7 +2411,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   private void fetchClassName() {
     final ODatabaseDocumentInternal database = getDatabaseIfDefinedInternal();
-    if (database != null && database.getStorageVersions() != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
+    if (database != null && database.getStorageVersions() != null
+        && database.getStorageVersions().classesAreDetectedByClusterId()) {
       if (_recordId.clusterId < 0) {
         checkForLoading();
         checkForFields("@class");
@@ -2471,21 +2471,16 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return fieldType;
   }
 
-  private void addCollectionChangeListener(final String fieldName, final ODocumentEntry entry, final Object fieldValue) {
-    if (!(fieldValue instanceof OTrackedMultiValue))
-      return;
-    addCollectionChangeListener(fieldName, entry, (OTrackedMultiValue<Object, Object>) fieldValue);
-  }
-
-  private void addCollectionChangeListener(final String fieldName, final ODocumentEntry entry,
-      final OTrackedMultiValue<Object, Object> multiValue) {
-
+  private boolean addCollectionChangeListener(final ODocumentEntry entry) {
+    if (!(entry.value instanceof OTrackedMultiValue))
+      return false;
     if (entry.changeListener == null) {
       final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<Object, Object>(this,
           entry);
-      multiValue.addChangeListener(listener);
+      ((OTrackedMultiValue<Object, Object>) entry.value).addChangeListener(listener);
       entry.changeListener = listener;
     }
+    return true;
   }
 
   private void removeAllCollectionChangeListeners() {
@@ -2502,26 +2497,40 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       return;
 
     for (final Map.Entry<String, ODocumentEntry> field : _fields.entrySet()) {
-      addCollectionChangeListener(field.getKey(), field.getValue(), field.getValue().value);
+      addCollectionChangeListener(field.getValue());
     }
   }
 
   private void removeCollectionChangeListener(ODocumentEntry entry, Object fieldValue) {
-    if (entry != null) {
+    if (entry != null && entry.changeListener != null) {
       final OMultiValueChangeListener<Object, Object> changeListener = entry.changeListener;
       entry.changeListener = null;
+      entry.timeLine = null;
       if (!(fieldValue instanceof OTrackedMultiValue))
         return;
 
-      if (changeListener != null) {
-        final OTrackedMultiValue<Object, Object> multiValue = (OTrackedMultiValue<Object, Object>) fieldValue;
-        multiValue.removeRecordChangeListener(changeListener);
-      }
+      final OTrackedMultiValue<Object, Object> multiValue = (OTrackedMultiValue<Object, Object>) fieldValue;
+      multiValue.removeRecordChangeListener(changeListener);
     }
   }
 
-  private void removeCollectionTimeLine(final ODocumentEntry entry) {
-    if (entry != null)
-      entry.timeLine = null;
+  protected void checkClass(ODatabaseDocumentTx database) {
+    if (_className == null)
+      fetchClassName();
+
+    final OSchema immutableSchema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
+    if (immutableSchema == null)
+      return;
+
+    if (_immutableClazz == null) {
+      _immutableSchemaVersion = immutableSchema.getVersion();
+      _immutableClazz = (OImmutableClass) immutableSchema.getClass(_className);
+    } else {
+      if (_immutableSchemaVersion < immutableSchema.getVersion()) {
+        _immutableSchemaVersion = immutableSchema.getVersion();
+        _immutableClazz = (OImmutableClass) immutableSchema.getClass(_className);
+      }
+    }
+
   }
 }

@@ -38,8 +38,8 @@ import java.util.Arrays;
 public class OClusterPositionMap extends ODurableComponent {
   public static final String DEF_EXTENSION = ".cpm";
 
-  private long               fileId;
-  private boolean            useWal;
+  private long fileId;
+  private boolean useWal;
 
   public OClusterPositionMap(OAbstractPaginatedStorage storage, String name, boolean useWal) {
     super(storage, name, DEF_EXTENSION);
@@ -232,7 +232,10 @@ public class OClusterPositionMap extends ODurableComponent {
       }
 
       endAtomicOperation(false, null);
-    } catch (Exception e) {
+    } catch (IOException e) {
+      endAtomicOperation(true, e);
+      throw new OStorageException("Error of update of mapping between logical adn physical record position.", e);
+    } catch (RuntimeException e) {
       endAtomicOperation(true, e);
       throw new OStorageException("Error of update of mapping between logical adn physical record position.", e);
     } finally {

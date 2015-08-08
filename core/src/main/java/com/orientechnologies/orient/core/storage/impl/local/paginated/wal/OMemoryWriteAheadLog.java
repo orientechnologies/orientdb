@@ -23,8 +23,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -53,7 +51,7 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   @Override
   public OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback,
       OLogSequenceNumber startLsn) throws IOException {
-    return log(new OAtomicUnitEndRecord(operationUnitId, rollback, startLsn));
+    return log(new OAtomicUnitEndRecord(operationUnitId, rollback));
   }
 
   @Override
@@ -93,7 +91,7 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber getFlushedLSN() {
+  public OLogSequenceNumber getFlushedLsn() {
     throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 

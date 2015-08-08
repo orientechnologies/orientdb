@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -74,7 +75,16 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
+import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.metadata.security.OSecurityTrackerHook;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -154,6 +164,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private boolean                                           initialized       = false;
   private OTransaction                                      currentTx;
   private boolean                                           keepStorageOpen   = false;
+  private ORecordHook[]                                     defaultHooks;
+  private ORecordHook[]                                     distributedHooks;
 
   /**
    * Creates a new connection to the database.
@@ -411,7 +423,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         installHooks();
 
       // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
-      metadata = new OMetadataDefault();
+      metadata = new OMetadataDefault(this);
       metadata.create();
 
       if (!(getStorage() instanceof OStorageProxy))
@@ -500,8 +512,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     db.user = this.user;
     db.properties.putAll(this.properties);
     db.serializer = this.serializer;
+
     db.componentsFactory = this.componentsFactory;
-    db.metadata = new OMetadataDefault();
+    db.metadata = new OMetadataDefault(db);
+
     db.initialized = true;
     db.storage = storage;
 
@@ -960,7 +974,23 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           hooks.put(e.getKey(), e.getValue());
       }
     }
+    generateHookArray();
     return (DB) this;
+  }
+
+  private void generateHookArray() {
+    List<ORecordHook> defaults = new ArrayList<ORecordHook>();
+    List<ORecordHook> distributed = new ArrayList<ORecordHook>();
+    for (Map.Entry<ORecordHook, ORecordHook.HOOK_POSITION> oRecordHook : hooks.entrySet()) {
+      if (!getStorage().isDistributed()
+          || oRecordHook.getKey().getDistributedExecutionMode() != ORecordHook.DISTRIBUTED_EXECUTION_MODE.TARGET_NODE)
+        defaults.add(oRecordHook.getKey());
+      if (oRecordHook.getKey().getDistributedExecutionMode() != ORecordHook.DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE)
+        // CHECK IF EXECUTE THE TRIGGER BASED ON STORAGE TYPE: DISTRIBUTED OR NOT
+        distributed.add(oRecordHook.getKey());
+    }
+    this.defaultHooks = defaults.toArray(new ORecordHook[defaults.size()]);
+    this.distributedHooks = distributed.toArray(new ORecordHook[distributed.size()]);
   }
 
   /**
@@ -978,6 +1008,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (iHookImpl != null) {
       iHookImpl.onUnregister();
       hooks.remove(iHookImpl);
+      generateHookArray();
     }
     return (DB) this;
   }
@@ -1019,20 +1050,17 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         return ORecordHook.RESULT.RECORD_NOT_CHANGED;
 
       final OScenarioThreadLocal.RUN_MODE runMode = OScenarioThreadLocal.INSTANCE.get();
+      if (runMode != RUN_MODE.RUNNING_DISTRIBUTED && getStorage().isDistributed())
+        return ORecordHook.RESULT.RECORD_NOT_CHANGED;
+
+      ORecordHook[] hooksToRun = null;
+      if (runMode == RUN_MODE.RUNNING_DISTRIBUTED)
+        hooksToRun = distributedHooks;
+      else
+        hooksToRun = defaultHooks;
 
       boolean recordChanged = false;
-      for (ORecordHook hook : hooks.keySet()) {
-        switch (runMode) {
-        case DEFAULT: // NON_DISTRIBUTED OR PROXIED DB
-          if (getStorage().isDistributed()
-              && hook.getDistributedExecutionMode() == ORecordHook.DISTRIBUTED_EXECUTION_MODE.TARGET_NODE)
-            // SKIP
-            continue;
-          break; // TARGET NODE
-        case RUNNING_DISTRIBUTED:
-          if (hook.getDistributedExecutionMode() == ORecordHook.DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE)
-            continue;
-        }
+      for (ORecordHook hook : hooksToRun) {
 
         final ORecordHook.RESULT res = hook.onTrigger(type, rec);
 
@@ -1726,6 +1754,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         }
 
         callbackHooks(ORecordHook.TYPE.AFTER_READ, record);
+        if (record instanceof ODocument)
+          ODocumentInternal.checkClass((ODocument) record, this);
         return (RET) record;
       }
 
@@ -1754,6 +1784,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType);
 
       ORecordInternal.fill(iRecord, rid, recordBuffer.version, recordBuffer.buffer, false);
+
+      if (iRecord instanceof ODocument)
+        ODocumentInternal.checkClass((ODocument) iRecord, this);
 
       if (iRecord.getRecordVersion().isTombstone())
         return (RET) iRecord;
@@ -1827,6 +1860,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       final OStorageOperationResult<ORecordVersion> operationResult;
 
       ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
+      if (record instanceof ODocument)
+        ODocumentInternal.checkClass((ODocument) record, this);
       ORecordSerializationContext.pushContext();
       try {
         // STREAM.LENGTH == 0 -> RECORD IN STACK: WILL BE SAVED AFTER
@@ -1979,9 +2014,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     ORecordSerializationContext.pushContext();
     ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
     try {
-      if (record instanceof ODocument)
+      if (record instanceof ODocument) {
         acquireIndexModificationLock((ODocument) record, lockedIndexes);
-
+        ODocumentInternal.checkClass((ODocument) record, this);
+      }
       try {
         // if cache is switched off record will be unreachable after delete.
         ORecord rec = record.getRecord();
@@ -2060,6 +2096,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
 
     ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
+    if (record instanceof ODocument)
+      ODocumentInternal.checkClass((ODocument) record, this);
     ORecordSerializationContext.pushContext();
     try {
 
@@ -2413,10 +2451,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       return (RET) currentTx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
     ODocument doc = (ODocument) iRecord;
+    ODocumentInternal.checkClass(doc, this);
     if (!getTransaction().isActive() || getTransaction().getStatus() == OTransaction.TXSTATUS.COMMITTING)
       // EXECUTE VALIDATION ONLY IF NOT IN TX
       doc.validate();
-
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
 
     if (iForceCreate || !doc.getIdentity().isValid()) {
@@ -2870,7 +2908,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     user = null;
 
-    metadata = new OMetadataDefault();
+    metadata = new OMetadataDefault(this);
     metadata.load();
 
     recordFormat = DEF_RECORD_FORMAT;

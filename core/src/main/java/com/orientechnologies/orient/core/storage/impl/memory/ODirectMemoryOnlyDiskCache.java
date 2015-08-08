@@ -281,7 +281,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public long[] close() {
-    return null;
+    return new long[0];
   }
 
   @Override
@@ -303,7 +303,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
       metadataLock.unlock();
     }
 
-    return null;
+    return new long[0];
   }
 
   @Override
