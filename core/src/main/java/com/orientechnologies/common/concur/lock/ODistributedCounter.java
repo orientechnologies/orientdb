@@ -60,8 +60,7 @@ public class ODistributedCounter extends OOrientListenerAbstract {
   }
 
   public void clear() {
-    while (!poolBusy.compareAndSet(false, true))
-      ;
+    while (!poolBusy.compareAndSet(false, true)) ;
 
     final AtomicLong[] cts = new AtomicLong[counters.length];
     for (int i = 0; i < counters.length; i++) {
@@ -70,7 +69,7 @@ public class ODistributedCounter extends OOrientListenerAbstract {
 
     counters = cts;
 
-    poolBusy.set(true);
+    poolBusy.set(false);
   }
 
   private void updateCounter(long delta) {
