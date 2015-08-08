@@ -47,6 +47,12 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-tools</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>javax.mail</groupId>
             <artifactId>mail</artifactId>
             <version>1.4</version>

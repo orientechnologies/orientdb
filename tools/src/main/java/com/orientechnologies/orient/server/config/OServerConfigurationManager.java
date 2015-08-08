@@ -19,14 +19,14 @@
  */
 package com.orientechnologies.orient.server.config;
 
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 /**
  * Server configuration manager. It manages the orientdb-server-config.xml file.
@@ -39,12 +39,12 @@ public class OServerConfigurationManager {
 
   public OServerConfigurationManager(final InputStream iInputStream) throws IOException {
     configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, iInputStream);
-    checkForAutoReloading();
+    configuration = configurationLoader.load();
   }
 
   public OServerConfigurationManager(final File iFile) throws IOException {
     configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, iFile);
-    checkForAutoReloading();
+    configuration = configurationLoader.load();
   }
 
   public OServerConfigurationManager(final OServerConfiguration iConfiguration) {
