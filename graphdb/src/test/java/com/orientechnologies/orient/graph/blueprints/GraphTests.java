@@ -26,7 +26,9 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Parameter;
+import com.tinkerpop.blueprints.Predicate;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
@@ -294,7 +296,7 @@ public class GraphTests {
           vertex.createProperty("vdevice-dataKey", OType.STRING);
         }
         fail();
-      }catch(OSchemaException e){
+      } catch (OSchemaException e) {
 
       }
     } finally {
@@ -303,5 +305,35 @@ public class GraphTests {
     }
   }
 
+  @Test
+  public void testCustomPredicate() {
+    OrientGraphFactory orientGraphFactory = new OrientGraphFactory("memory:testCustomPredicate");
+    final OrientGraphNoTx g = orientGraphFactory.getNoTx();
+    try {
+      g.addVertex(null).setProperty("test", true);
+      g.addVertex(null).setProperty("test", false);
+      g.addVertex(null).setProperty("no", true);
 
+      g.commit();
+
+      GraphQuery query = g.query();
+      query.has("test", new Predicate() {
+        @Override
+        public boolean evaluate(Object first, Object second) {
+          return first != null && first.equals(second);
+        }
+      }, true);
+
+      Iterable<Vertex> vertices = query.vertices();
+
+      final Iterator<Vertex> it = vertices.iterator();
+      Assert.assertTrue(it.hasNext());
+      Assert.assertTrue((Boolean) it.next().getProperty("test"));
+      Assert.assertFalse(it.hasNext());
+
+    } finally {
+      g.shutdown();
+      orientGraphFactory.close();
+    }
+  }
 }
