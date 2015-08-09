@@ -213,4 +213,10 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     return QUORUM_TYPE.WRITE;
   }
 
+  @Override
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return query != null && !getDatabase().getTransaction().isActive() ? DISTRIBUTED_EXECUTION_MODE.REPLICATE
+        : DISTRIBUTED_EXECUTION_MODE.LOCAL;
+  }
+
 }

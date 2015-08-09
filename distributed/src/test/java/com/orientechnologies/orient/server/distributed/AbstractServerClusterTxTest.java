@@ -16,6 +16,7 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -29,7 +30,7 @@ import java.util.concurrent.Callable;
  * Test distributed TX
  */
 public abstract class AbstractServerClusterTxTest extends AbstractServerClusterInsertTest {
-	private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
+  private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
 
   class TxWriter implements Callable<Void> {
     private final String databaseUrl;
@@ -55,6 +56,11 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
             updateRecord(database, person);
             checkRecord(database, person);
             // checkIndex(database, (String) person.field("name"), person.getIdentity());
+
+            // ASSURE THE UPDATE IS EXECUTED CORRECTLY IN TX
+            String sql = "UPDATE Person SET PostalCode = \"78001\" WHERE id = \"" + person.field("id") + "\"";
+            OCommandScript cmdScript = new OCommandScript("sql", sql);
+            database.command(cmdScript).execute();
 
             database.commit();
 
