@@ -73,6 +73,10 @@ WWW_PATH=$ORIENTDB_HOME/www
 ORIENTDB_SETTINGS="-Dprofiler.enabled=true"
 JAVA_OPTS_SCRIPT="-Djna.nosys=true -XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9"
 
+# TO DEBUG ORIENTDB SERVER RUN IT WITH THESE OPTIONS:
+# -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=1044
+# AND ATTACH TO THE CURRENT HOST, PORT 1044
+
 # ORIENTDB MAXIMUM HEAP. USE SYNTAX -Xmx<memory>, WHERE <memory> HAS THE TOTAL MEMORY AND SIZE UNIT. EXAMPLE: -Xmx512m
 MAXHEAP=-Xmx512m
 # ORIENTDB MAXIMUM DISKCACHE IN MB, EXAMPLE, ENTER -Dstorage.diskCache.bufferSize=8192 FOR 8GB
