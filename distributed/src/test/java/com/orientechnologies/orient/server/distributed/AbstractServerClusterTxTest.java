@@ -22,6 +22,7 @@ import java.util.concurrent.Callable;
 
 import junit.framework.Assert;
 
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -61,6 +62,11 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
             deleteRecord(database, person);
             checkRecordIsDeleted(database, person);
             // checkIndex(database, (String) person.field("name"), person.getIdentity());
+
+            // ASSURE THE UPDATE IS EXECUTED CORRECTLY IN TX
+            String sql = "UPDATE Person SET PostalCode = \"78001\" WHERE id = \"" + person.field("id") + "\"";
+            OCommandScript cmdScript = new OCommandScript("sql", sql);
+            database.command(cmdScript).execute();
 
             database.commit();
 

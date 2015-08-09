@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -46,12 +52,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * SQL DELETE VERTEX command.
@@ -305,10 +305,6 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     return QUORUM_TYPE.WRITE;
   }
 
-  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return query == null ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
-  }
-
   public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
     return getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.LOCAL ? DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS
         : DISTRIBUTED_RESULT_MGMT.MERGE;
@@ -329,4 +325,9 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     return result;
   }
 
+  @Override
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return query != null && !getDatabase().getTransaction().isActive() ? DISTRIBUTED_EXECUTION_MODE.REPLICATE
+        : DISTRIBUTED_EXECUTION_MODE.LOCAL;
+  }
 }
