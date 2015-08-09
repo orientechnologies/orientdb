@@ -56,7 +56,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.*;
 /**
  * SQL UPDATE command.
  * 
@@ -323,7 +322,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     if (distributedMode == null)
       // REPLICATE MODE COULD BE MORE EFFICIENT ON MASSIVE UPDATES
-      distributedMode = upsertMode || query == null ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+      distributedMode = upsertMode || query == null || getDatabase().getTransaction().isActive() ? DISTRIBUTED_EXECUTION_MODE.LOCAL
+          : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
     return distributedMode;
   }
 

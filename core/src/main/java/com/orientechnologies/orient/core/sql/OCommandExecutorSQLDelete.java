@@ -358,8 +358,10 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     return QUORUM_TYPE.WRITE;
   }
 
+  @Override
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return indexName != null || query != null ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+    return (indexName != null || query != null) && !getDatabase().getTransaction().isActive() ? DISTRIBUTED_EXECUTION_MODE.REPLICATE
+        : DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
   public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
