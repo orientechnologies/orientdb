@@ -40,7 +40,11 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.*;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -323,5 +327,11 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
   @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.WRITE;
+  }
+
+  @Override
+  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return query != null && !getDatabase().getTransaction().isActive() ? DISTRIBUTED_EXECUTION_MODE.REPLICATE
+        : DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 }
