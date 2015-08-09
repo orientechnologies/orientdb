@@ -81,20 +81,27 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
          throw new OHttpRequestException("Syntax error: property named " + propertyName + " is declared as " + propertyType
              + " but linked type is not declared: property/<database>/<class-name>/<property-name>/<property-type>/<link-type>");
        }
-       final OType linkType = OType.valueOf(urlParts[5]);
-       final OClass linkClass = db.getMetadata().getSchema().getClass(urlParts[5]);
-       if (linkType != null && linkClass != null) {
-         throw new IllegalArgumentException(
-             "linked type declared as "
-                 + urlParts[5]
-                 + " can be either a Type or a Class, use the JSON document usage instead. See 'http://code.google.com/p/orient/w/edit/OrientDB_REST'");
-       } else if (linkType != null) {
+
+       /* try link as OType */
+       OType linkType = null;
+       try {
+         linkType = OType.valueOf(urlParts[5]);
+       } catch (IllegalArgumentException ex) { }
+
+       if (linkType != null) {
          final OProperty prop = cls.createProperty(propertyName, propertyType, linkType);
-       } else if (linkClass != null) {
-         final OProperty prop = cls.createProperty(propertyName, propertyType, linkClass);
        } else {
-         throw new IllegalArgumentException("property named " + propertyName + " is declared as " + propertyType
-             + " but linked type is not declared");
+         /* try link as class */
+         final OClass linkClass = db.getMetadata().getSchema().getClass(urlParts[5]);
+         if (linkClass != null) {
+           final OProperty prop = cls.createProperty(propertyName, propertyType, linkClass);
+         } else {
+           /* None worked, exception */
+           throw new IllegalArgumentException(
+             "linked type declared as "
+               + urlParts[5]
+               + " can be either a Type or a Class, use the JSON document usage instead. See 'http://code.google.com/p/orient/w/edit/OrientDB_REST'");
+         }
        }
      }
        break;
