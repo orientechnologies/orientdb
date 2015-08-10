@@ -176,7 +176,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         // TODO: CAN I MOVE THIS OUTSIDE?
         msgService.registerRequest(iRequest.getId(), currentResponseMgr);
 
-        for (IQueue<ODistributedRequest> queue : reqQueues) {
+        for (IQueue queue : reqQueues) {
           if (queue != null)
             queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
         }
