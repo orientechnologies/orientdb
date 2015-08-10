@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.tinkerpop.blueprints.impls.orient;
 
@@ -154,7 +154,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     if (limit == 0)
       return Collections.emptyList();
 
-    if (((OrientBaseGraph) graph).getRawGraph().getTransaction().isActive())
+    if (((OrientBaseGraph) graph).getRawGraph().getTransaction().isActive() || hasCustomPredicate())
       // INSIDE TRANSACTION QUERY DOESN'T SEE IN MEMORY CHANGES, UNTIL
       // SUPPORTED USED THE BASIC IMPL
       return new OrientGraphQueryIterable<Vertex>(true, labels);
@@ -212,7 +212,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     if (limit == 0)
       return Collections.emptyList();
 
-    if (((OrientBaseGraph) graph).getRawGraph().getTransaction().isActive())
+    if (((OrientBaseGraph) graph).getRawGraph().getTransaction().isActive() || hasCustomPredicate())
       // INSIDE TRANSACTION QUERY DOESN'T SEE IN MEMORY CHANGES, UNTIL
       // SUPPORTED USED THE BASIC IMPL
       return new OrientGraphQueryIterable<Edge>(false, labels);
@@ -269,7 +269,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
   protected void manageLabels(final boolean usedWhere, final StringBuilder text) {
     if (labels != null && labels.length > 0) {
 
-      if( !usedWhere ){
+      if (!usedWhere) {
         // APPEND WHERE
         text.append(QUERY_WHERE);
       } else
@@ -285,6 +285,14 @@ public class OrientGraphQuery extends DefaultGraphQuery {
       }
       text.append(QUERY_LABEL_END);
     }
+  }
+
+  protected boolean hasCustomPredicate() {
+    for (HasContainer has : hasContainers) {
+      if (!(has.predicate instanceof Contains) && !(has.predicate instanceof com.tinkerpop.blueprints.Compare))
+        return true;
+    }
+    return false;
   }
 
   @SuppressWarnings("unchecked")
