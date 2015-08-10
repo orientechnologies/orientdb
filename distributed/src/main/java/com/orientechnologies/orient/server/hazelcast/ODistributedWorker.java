@@ -74,7 +74,7 @@ public class ODistributedWorker extends Thread {
   protected boolean                                   restoringMessages;
   protected volatile boolean                          running             = true;
 
-  public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final IQueue<ODistributedRequest> iRequestQueue,
+  public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final IQueue iRequestQueue,
       final String iDatabaseName, final int i, final boolean iRestoringMessages) {
     setName("OrientDB DistributedWorker node=" + iDistributed.getLocalNodeName() + " db=" + iDatabaseName + " id=" + i);
     distributed = iDistributed;
