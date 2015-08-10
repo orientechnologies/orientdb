@@ -382,8 +382,8 @@ TOKEN :
 TOKEN :
 {
   < IDENTIFIER: ( (<DOLLAR>)? <LETTER> (<PART_LETTER>)* ) >
-//|
-//  < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
+|
+  < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
 |
   < INDEX_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ":" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
 |
@@ -436,7 +436,7 @@ OStatement parse() :
 
 OIdentifier Identifier():
 {
-    //Token quotedToken = null;
+    Token quotedToken = null;
     Token token = null;
 
 }
@@ -480,6 +480,8 @@ OIdentifier Identifier():
     |
     token = <EXCEPTION>
     |
+    quotedToken = <QUOTED_IDENTIFIER>
+    /*
     (
     //TODO REPLACE THIS WITH <QUOTED_IDENTIFIER>
         <BACKTICK>
@@ -630,21 +632,22 @@ OIdentifier Identifier():
         )
         <BACKTICK>
     )
+    */
 ) {
 
-    //if(token!=null){
-    jjtThis.value = token.image;
-    /*
+    if(token!=null){
+        jjtThis.value = token.image;
     }else{
+        jjtThis.quoted = true;
         jjtThis.value = quotedToken.image;
         jjtThis.value = jjtThis.value.substring(1, jjtThis.value.length() - 1);
-        try{
+        /*try{
             jjtThis.value = java.net.URLEncoder.encode(jjtThis.value, null);
         }catch(Exception e){
 
-        }
+        }*/
     }
-    */
+
     return jjtThis;
 
 
