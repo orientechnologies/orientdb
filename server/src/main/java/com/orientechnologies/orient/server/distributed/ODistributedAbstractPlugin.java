@@ -118,6 +118,16 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
         setDefaultDatabaseConfigFile(param.value);
       }
     }
+
+    if (serverInstance.getUser("replicator") == null)
+      // DROP THE REPLICATOR USER. THIS USER WAS NEEDED BEFORE 2.2, BUT IT'S NOT REQUIRED ANYMORE
+      OLogManager.instance().config(this,
+          "Found 'replicator' user. Starting from OrientDB v2.2 this internal user is no needed anymore. Removing it...");
+    try {
+      serverInstance.dropUser("replicator");
+    } catch (IOException e) {
+      throw new OConfigurationException("Error on deleting 'replicator' user", e);
+    }
   }
 
   public void setDefaultDatabaseConfigFile(final String iFile) {

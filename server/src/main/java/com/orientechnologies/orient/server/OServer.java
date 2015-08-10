@@ -606,6 +606,11 @@ public class OServer {
     return serverCfg.getUser(iUserName);
   }
 
+  public void dropUser(final String iUserName) throws IOException {
+    serverCfg.dropUser(iUserName);
+    serverCfg.saveConfiguration();
+  }
+
   public boolean existsStoragePath(final String iURL) {
     return serverCfg.getConfiguration().getStoragePath(iURL) != null;
   }
