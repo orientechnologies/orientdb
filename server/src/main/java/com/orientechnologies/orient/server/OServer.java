@@ -556,7 +556,7 @@ public class OServer {
     if (user != null && user.password != null) {
 
       final String passwordToMatch;
-      if (user.password.startsWith(OSecurityManager.ALGORITHM_PREFIX))
+      if (user.password.startsWith(OSecurityManager.ALGORITHM_PREFIX) && !iPassword.startsWith(OSecurityManager.ALGORITHM_PREFIX))
         // HASH PASSWD
         passwordToMatch = OSecurityManager.instance().digest2String(iPassword, true);
       else
