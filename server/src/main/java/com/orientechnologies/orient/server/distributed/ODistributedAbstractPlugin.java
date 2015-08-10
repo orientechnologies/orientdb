@@ -19,15 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
@@ -45,6 +36,15 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Abstract plugin to manage the distributed environment.
  *
@@ -53,9 +53,6 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
  */
 public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract implements ODistributedServerManager,
     ODatabaseLifecycleListener {
-  public static final String                               REPLICATOR_USER             = "replicator";
-  protected static final String                            MASTER_AUTO                 = "$auto";
-
   protected static final String                            PAR_DEF_DISTRIB_DB_CONFIG   = "configuration.db.default";
   protected static final String                            FILE_DISTRIBUTED_DB_CONFIG  = "distributed-config.json";
 
@@ -121,14 +118,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
         setDefaultDatabaseConfigFile(param.value);
       }
     }
-
-    if (serverInstance.getUser(REPLICATOR_USER) == null)
-      // CREATE THE REPLICATOR USER
-      try {
-        serverInstance.addUser(REPLICATOR_USER, null, "database.passthrough");
-      } catch (IOException e) {
-        throw new OConfigurationException("Error on creating 'replicator' user", e);
-      }
   }
 
   public void setDefaultDatabaseConfigFile(final String iFile) {
