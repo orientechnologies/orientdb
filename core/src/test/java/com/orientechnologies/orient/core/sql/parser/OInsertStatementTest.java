@@ -56,7 +56,11 @@ public class OInsertStatementTest {
 
   }
 
-
+  public void testInsertSelectTimeout() {
+    checkRightSyntax("insert into foo return foo select from bar TIMEOUT 10 ");
+    checkRightSyntax("insert into foo return foo select from bar TIMEOUT 10 return");
+    checkRightSyntax("insert into foo return foo select from bar TIMEOUT 10 exception");
+  }
 
 
   private void printTree(String s) {

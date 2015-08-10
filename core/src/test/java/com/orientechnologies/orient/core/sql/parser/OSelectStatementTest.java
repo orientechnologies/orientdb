@@ -560,6 +560,13 @@ public class OSelectStatementTest {
 
   }
 
+  @Test
+  public void testReturn(){
+    checkRightSyntax("select from ouser timeout 1 exception");
+    checkRightSyntax("select from ouser timeout 1 return");
+
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {
