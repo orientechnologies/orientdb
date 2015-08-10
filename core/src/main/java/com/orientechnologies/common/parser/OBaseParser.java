@@ -295,6 +295,9 @@ public abstract class OBaseParser {
     parserNextWord(iUpperCase, iSeparators);
     if (parserLastWord.length() == 0)
       throwSyntaxErrorException(iCustomMessage);
+    if (parserLastWord.charAt(0) == '`' && parserLastWord.charAt(parserLastWord.length() - 1) == '`') {
+      return parserLastWord.substring(1, parserLastWord.length() - 1);
+    }
     return parserLastWord.toString();
   }
 

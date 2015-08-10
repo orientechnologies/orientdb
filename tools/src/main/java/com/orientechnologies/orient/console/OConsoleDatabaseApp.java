@@ -876,8 +876,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void setServerUser(
       @ConsoleParameter(name = "user-name", description = "User name") String iServerUserName,
       @ConsoleParameter(name = "user-password", description = "User password") String iServerUserPasswd,
-      @ConsoleParameter(name = "user-permissions", description = "Permissions, look at http://orientdb.com/docs/last/Security.html#servers-resources") String iPermissions,
-      @ConsoleParameter(name = "encryption", description = "Encryption between the available. Default is SHA-256", optional = true) String iEncryption) {
+      @ConsoleParameter(name = "user-permissions", description = "Permissions, look at http://orientdb.com/docs/last/Security.html#servers-resources") String iPermissions) {
 
     if (iServerUserName == null || iServerUserName.length() == 0)
       throw new IllegalArgumentException("User name null or empty");

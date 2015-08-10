@@ -65,8 +65,8 @@ public class OrientdbEdgeTest {
     conf.put("storage.url", "remote:localhost/test");
     conf.put("storage.pool-min", 1);
     conf.put("storage.pool-max", 10);
-    conf.put("storage.user", "admin");
-    conf.put("storage.password", "admin");
+    conf.put("storage.user", "root");
+    conf.put("storage.password", "root");
 
     OGlobalConfiguration.CLIENT_CONNECT_POOL_WAIT_TIMEOUT.setValue(15000);
 
@@ -125,7 +125,7 @@ public class OrientdbEdgeTest {
             + "    <storages>\n"
             + "    </storages>\n"
             + "    <users>\n"
-            + "      <user name=\"admin\" password=\"admin\" resources=\"*\"/>\n"
+            + "      <user name=\"root\" password=\"root\" resources=\"*\"/>\n"
             + "    </users>\n"
             + "    <properties>\n"
             + "\n"
