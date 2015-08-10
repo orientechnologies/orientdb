@@ -859,8 +859,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
               int currentEntrySize = localPage.getRecordSize(nextRecordPosition);
               nextEntryPointer = localPage.getRecordLongValue(nextRecordPosition, currentEntrySize - OLongSerializer.LONG_SIZE);
 
-              assert nextEntryPointer >= 0 && currentEntrySize == OClusterPage.MAX_RECORD_SIZE || nextEntryPointer < 0;
-
               if (currentEntrySize == entrySize) {
                 localPage.replaceRecord(nextRecordPosition, updateEntry, recordVersion);
                 updatedEntryPosition = nextRecordPosition;
