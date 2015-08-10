@@ -127,5 +127,10 @@
             <artifactId>orientdb-graphdb</artifactId>
             <version>${orientdb.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-tools</artifactId>
+            <version>${orientdb.version}</version>
+        </dependency>
     </dependencies>
 </project>
