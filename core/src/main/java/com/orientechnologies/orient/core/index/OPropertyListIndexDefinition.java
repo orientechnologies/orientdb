@@ -37,6 +37,8 @@ import java.util.Map;
  */
 public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiValue implements OIndexDefinitionMultiValue {
 
+  private static final long serialVersionUID = -6499782365051906190L;
+
   public OPropertyListIndexDefinition(final String iClassName, final String iField, final OType iType) {
     super(iClassName, iField, iType);
   }

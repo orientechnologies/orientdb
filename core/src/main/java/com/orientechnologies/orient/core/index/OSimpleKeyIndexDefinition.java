@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
+  private static final long serialVersionUID = -1264300379465791244L;
   private OType[] keyTypes;
 
   public OSimpleKeyIndexDefinition(int version, final OType... keyTypes) {

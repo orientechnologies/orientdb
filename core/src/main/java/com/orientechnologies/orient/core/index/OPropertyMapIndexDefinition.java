@@ -33,6 +33,8 @@ import java.util.*;
  */
 public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiValue implements OIndexDefinitionMultiValue {
 
+  private static final long serialVersionUID = 275241019910834466L;
+
   /**
    * Indicates whether Map will be indexed using its keys or values.
    */

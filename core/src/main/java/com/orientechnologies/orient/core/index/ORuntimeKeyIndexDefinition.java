@@ -34,12 +34,12 @@ import java.util.List;
 /**
  * Index definition that use the serializer specified at run-time not based on type. This is useful to have custom type keys for
  * indexes.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
-  private OBinarySerializer<T> serializer;
+  private static final long              serialVersionUID = -8855918974071833818L;
+  private transient OBinarySerializer<T> serializer;
 
   @SuppressWarnings("unchecked")
   public ORuntimeKeyIndexDefinition(final byte iId, int version) {
@@ -153,11 +153,11 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * @param indexName
    * @param indexType
    */
-  public String toCreateIndexDDL(final String indexName, final String indexType,String engine) {
+  public String toCreateIndexDDL(final String indexName, final String indexType, String engine) {
     final StringBuilder ddl = new StringBuilder("create index ");
     ddl.append(indexName).append(' ').append(indexType).append(' ');
     ddl.append("runtime ").append(serializer.getId());

@@ -38,15 +38,15 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Base abstract class of MVRB-Tree algorithm.
- * 
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
+ *
  * @param <K>
  *          Key type
  * @param <V>
  *          Value type
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 @SuppressWarnings({ "unchecked", "serial" })
+@SuppressFBWarnings(value = { "IT_NO_SUCH_ELEMENT", "SE_BAD_FIELD" })
 public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavigableMap<K, V>, Cloneable, java.io.Serializable {
   public static final boolean              RED                 = false;
   public static final boolean              BLACK               = true;
@@ -54,7 +54,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   private static final OAlwaysGreaterKey   ALWAYS_GREATER_KEY  = new OAlwaysGreaterKey();
   /**
    * The comparator used to maintain order in this tree map, or null if it uses the natural ordering of its keys.
-   * 
+   *
    * @serial
    */
   protected final Comparator<? super K>    comparator;
@@ -85,7 +85,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   /**
    * Indicates search behavior in case of {@link com.orientechnologies.orient.core.index.OCompositeKey} keys that have less amount
    * of internal keys are used, whether lowest or highest partially matched key should be used. Such keys is allowed to use only in
-   * 
+   *
    * @link OMVRBTree#subMap(K, boolean, K, boolean)}, {@link OMVRBTree#tailMap(Object, boolean)} and
    *       {@link OMVRBTree#headMap(Object, boolean)} .
    */
@@ -229,7 +229,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     /**
      * The backing map.
      */
-    final OMVRBTree<K, V>         m;
+    final OMVRBTree<K, V> m;
 
     /**
      * Endpoints are represented as triples (fromStart, lo, loInclusive) and (toEnd, hi, hiInclusive). If fromStart is true, then
@@ -240,11 +240,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     final boolean                 fromStart, toEnd;
     final boolean                 loInclusive, hiInclusive;
     // Views
-    transient ONavigableMap<K, V> descendingMapView   = null;
+    transient ONavigableMap<K, V> descendingMapView = null;
 
     // internal utilities
-    transient EntrySetView        entrySetView        = null;
-    transient KeySet<K>           navigableKeySetView = null;
+    transient EntrySetView entrySetView        = null;
+    transient KeySet<K>    navigableKeySetView = null;
 
     abstract class EntrySetView extends AbstractSet<Map.Entry<K, V>> {
       private transient int size = -1, sizeModCount;
@@ -558,7 +558,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
       return (e == null || tooLow(e.getKey())) ? null : new OMVRBTreeEntryPosition<K, V>(e);
     }
 
-    /** Returns the absolute high fence for ascending traversal */
+    /**
+     * Returns the absolute high fence for ascending traversal
+     */
     final OMVRBTreeEntryPosition<K, V> absHighFence() {
       return (toEnd ? null : new OMVRBTreeEntryPosition<K, V>(hiInclusive ? m.getHigherEntry(hi) : m.getCeilingEntry(hi,
           PartialSearchMode.LOWEST_BOUNDARY)));
@@ -566,7 +568,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
     // public methods
 
-    /** Return the absolute low fence for descending traversal */
+    /**
+     * Return the absolute low fence for descending traversal
+     */
     final OMVRBTreeEntryPosition<K, V> absLowFence() {
       return (fromStart ? null : new OMVRBTreeEntryPosition<K, V>(loInclusive ? m.getLowerEntry(lo) : m.getFloorEntry(lo,
           PartialSearchMode.HIGHEST_BOUNDARY)));
@@ -584,10 +588,14 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
     abstract OMVRBTreeEntry<K, V> subLower(K key);
 
-    /** Returns ascending iterator from the perspective of this submap */
+    /**
+     * Returns ascending iterator from the perspective of this submap
+     */
     abstract OLazyIterator<K> keyIterator();
 
-    /** Returns descending iterator from the perspective of this submap */
+    /**
+     * Returns descending iterator from the perspective of this submap
+     */
     abstract OLazyIterator<K> descendingKeyIterator();
 
     @Override
@@ -1091,7 +1099,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    * k2)</tt> must not throw a <tt>ClassCastException</tt> for any keys <tt>k1</tt> and <tt>k2</tt> in the map. If the user attempts
    * to put a key into the map that violates this constraint, the <tt>put(Object
    * key, Object value)</tt> call will throw a <tt>ClassCastException</tt>.
-   * 
+   *
    * @param iComparator
    *          the comparator that will be used to order this map. If <tt>null</tt>, the {@linkplain Comparable natural ordering} of
    *          the keys will be used.
@@ -1106,7 +1114,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    * its keys. All keys inserted into the new map must implement the {@link Comparable} interface. Furthermore, all such keys must
    * be <i>mutually comparable</i>: <tt>k1.compareTo(k2)</tt> must not throw a <tt>ClassCastException</tt> for any keys <tt>k1</tt>
    * and <tt>k2</tt> in the map. This method runs in n*log(n) time.
-   * 
+   *
    * @param m
    *          the map whose mappings are to be placed in this map
    * @throws ClassCastException
@@ -1124,7 +1132,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   /**
    * Constructs a new tree map containing the same mappings and using the same ordering as the specified sorted map. This method
    * runs in linear time.
-   * 
+   *
    * @param m
    *          the sorted map whose mappings are to be placed in this map, and whose comparator is to be used to sort this map
    * @throws NullPointerException
@@ -1177,7 +1185,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
   /**
    * Returns the key corresponding to the specified Entry.
-   * 
+   *
    * @throws NoSuchElementException
    *           if the Entry is null
    */
@@ -1303,7 +1311,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
   /**
    * Balancing operations.
-   * 
+   * <p>
    * Implementations of rebalancings during insertion and deletion are slightly different than the CLR version. Rather than using
    * dummy nilnodes, we use a set of accessors that deal properly with null. They are used to avoid messiness surrounding nullness
    * checks in the main algorithms.
@@ -1359,7 +1367,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
   /**
    * Returns <tt>true</tt> if this map contains a mapping for the specified key.
-   * 
+   *
    * @param key
    *          key whose presence in this map is to be tested
    * @return <tt>true</tt> if this map contains a mapping for the specified key
@@ -1378,7 +1386,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    * only if this map contains at least one mapping to a value <tt>v</tt> such that
    * <tt>(value==null ? v==null : value.equals(v))</tt>. This operation will probably require time linear in the map size for most
    * implementations.
-   * 
+   *
    * @param value
    *          value whose presence in this map is to be tested
    * @return <tt>true</tt> if a mapping to <tt>value</tt> exists; <tt>false</tt> otherwise
@@ -1401,17 +1409,17 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
   /**
    * Returns the value to which the specified key is mapped, or {@code null} if this map contains no mapping for the key.
-   * 
+   * <p>
    * <p>
    * More formally, if this map contains a mapping from a key {@code k} to a value {@code v} such that {@code key} compares equal to
    * {@code k} according to the map's ordering, then this method returns {@code v}; otherwise it returns {@code null}. (There can be
    * at most one such mapping.)
-   * 
+   * <p>
    * <p>
    * A return value of {@code null} does not <i>necessarily</i> indicate that the map contains no mapping for the key; it's also
    * possible that the map explicitly maps the key to {@code null}. The {@link #containsKey containsKey} operation may be used to
    * distinguish these two cases.
-   * 
+   *
    * @throws ClassCastException
    *           if the specified key cannot be compared with the keys currently in the map
    * @throws NullPointerException
@@ -1462,7 +1470,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   /**
    * Copies all of the mappings from the specified map to this map. These mappings replace any mappings that this map had for any of
    * the keys currently in the specified map.
-   * 
+   *
    * @param map
    *          mappings to be stored in this map
    * @throws ClassCastException
@@ -1490,15 +1498,14 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
   /**
    * Returns this map's entry for the given key, or <tt>null</tt> if the map does not contain an entry for the key.
-   * 
+   * <p>
    * In case of {@link com.orientechnologies.orient.core.index.OCompositeKey} keys you can specify which key can be used: lowest,
    * highest, any.
-   * 
+   *
    * @param key
    *          Key to search.
    * @param partialSearchMode
    *          Which key can be used in case of {@link com.orientechnologies.orient.core.index.OCompositeKey} key is passed in.
-   * 
    * @return this map's entry for the given key, or <tt>null</tt> if the map does not contain an entry for the key
    * @throws ClassCastException
    *           if the specified key cannot be compared with the keys currently in the map
@@ -1654,7 +1661,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    * Gets the entry corresponding to the specified key; if no such entry exists, returns the entry for the least key greater than
    * the specified key; if no such entry exists (i.e., the greatest key in the Tree is less than the specified key), returns
    * <tt>null</tt>.
-   * 
+   *
    * @param key
    *          Key to search.
    * @param partialSearchMode
@@ -1682,7 +1689,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   /**
    * Gets the entry corresponding to the specified key; if no such entry exists, returns the entry for the greatest key less than
    * the specified key; if no such entry exists, returns <tt>null</tt>.
-   * 
+   *
    * @param key
    *          Key to search.
    * @param partialSearchMode
@@ -1744,12 +1751,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   /**
    * Associates the specified value with the specified key in this map. If the map previously contained a mapping for the key, the
    * old value is replaced.
-   * 
+   *
    * @param key
    *          key with which the specified value is to be associated
    * @param value
    *          value to be associated with the specified key
-   * 
    * @return the previous value associated with <tt>key</tt>, or <tt>null</tt> if there was no mapping for <tt>key</tt>. (A
    *         <tt>null</tt> return can also indicate that the map previously associated <tt>null</tt> with <tt>key</tt>.)
    * @throws ClassCastException
@@ -1867,7 +1873,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
   /**
    * Removes the mapping for this key from this OMVRBTree if present.
-   * 
+   *
    * @param key
    *          key for which mapping should be removed
    * @return the previous value associated with <tt>key</tt>, or <tt>null</tt> if there was no mapping for <tt>key</tt>. (A
@@ -1904,7 +1910,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
   /**
    * Returns a shallow copy of this <tt>OMVRBTree</tt> instance. (The keys and values themselves are not cloned.)
-   * 
+   *
    * @return a shallow copy of this map
    */
   @Override
@@ -2271,7 +2277,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
   /**
    * Delete node p, and then re-balance the tree.
-   * 
+   *
    * @param p
    *          node to delete
    * @return
@@ -2295,12 +2301,16 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     return next;
   }
 
-  /** Intended to be called only from OTreeSet.readObject */
+  /**
+   * Intended to be called only from OTreeSet.readObject
+   */
   void readOTreeSet(int iSize, ObjectInputStream s, V defaultVal) throws java.io.IOException, ClassNotFoundException {
     buildFromSorted(iSize, null, s, defaultVal);
   }
 
-  /** Intended to be called only from OTreeSet.addAll */
+  /**
+   * Intended to be called only from OTreeSet.addAll
+   */
   void addAllForOTreeSet(SortedSet<? extends K> set, V defaultVal) {
     try {
       buildFromSorted(set.size(), set.iterator(), null, defaultVal);
@@ -2420,7 +2430,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     return root;
   }
 
-  /** From CLR */
+  /**
+   * From CLR
+   */
   protected void rotateLeft(final OMVRBTreeEntry<K, V> p) {
     if (p != null) {
       OMVRBTreeEntry<K, V> r = p.getRight();
@@ -2439,7 +2451,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     }
   }
 
-  /** From CLR */
+  /**
+   * From CLR
+   */
   protected void rotateRight(final OMVRBTreeEntry<K, V> p) {
     if (p != null) {
       OMVRBTreeEntry<K, V> l = p.getLeft();
@@ -2460,10 +2474,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
   /**
    * Remove a node from the tree.
-   * 
+   *
    * @param p
    *          Node to remove
-   * 
    * @return Node that was removed. Passed and removed nodes may be different in case node to remove contains two children. In this
    *         case node successor will be found and removed but it's content will be copied to the node that was passed in method.
    */
@@ -2721,7 +2734,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     }
   }
 
-  /** From CLR */
+  /**
+   * From CLR
+   */
   private void fixAfterDeletion(OMVRBTreeEntry<K, V> x) {
     while (x != root && colorOf(x) == BLACK) {
       if (x == leftOf(parentOf(x))) {
@@ -2784,7 +2799,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
   /**
    * Save the state of the <tt>OMVRBTree</tt> instance to a stream (i.e., serialize it).
-   * 
+   *
    * @serialData The <i>size</i> of the OMVRBTree (the number of key-value mappings) is emitted (int), followed by the key (Object)
    *             and value (Object) for each key-value mapping represented by the OMVRBTree. The key-value mappings are emitted in
    *             key-order (as determined by the OMVRBTree's Comparator, or by the keys' natural ordering if the OMVRBTree has no
@@ -2821,13 +2836,13 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   /**
    * Linear time tree building algorithm from sorted data. Can accept keys and/or values from iterator or stream. This leads to too
    * many parameters, but seems better than alternatives. The four formats that this method accepts are:
-   * 
+   * <p>
    * 1) An iterator of Map.Entries. (it != null, defaultVal == null). 2) An iterator of keys. (it != null, defaultVal != null). 3) A
    * stream of alternating serialized keys and values. (it == null, defaultVal == null). 4) A stream of serialized keys. (it ==
    * null, defaultVal != null).
-   * 
+   * <p>
    * It is assumed that the comparator of the OMVRBTree is already set prior to calling this method.
-   * 
+   *
    * @param size
    *          the number of keys (or key-value pairs) to be read from the iterator or stream
    * @param it
@@ -2853,7 +2868,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    * Recursive "helper method" that does the real work of the previous method. Identically named parameters have identical
    * definitions. Additional parameters are documented below. It is assumed that the comparator and size fields of the OMVRBTree are
    * already set prior to calling this method. (It ignores both fields.)
-   * 
+   *
    * @param level
    *          the current level of tree. Initial call should be 0.
    * @param lo
@@ -2864,7 +2879,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    *          the level at which nodes should be red. Must be equal to computeRedLevel for tree of this size.
    */
   private final OMVRBTreeEntry<K, V> buildFromSorted(final int level, final int lo, final int hi, final int redLevel,
-      final Iterator<?> it, final java.io.ObjectInputStream str, final V defaultVal) throws java.io.IOException,
+      final Iterator<?> it, final java.io.ObjectInputStream str, final V defaultVal)
+          throws java.io.IOException,
       ClassNotFoundException {
     /*
      * Strategy: The root is the middlemost element. To get to it, we have to first recursively construct the entire left subtree,

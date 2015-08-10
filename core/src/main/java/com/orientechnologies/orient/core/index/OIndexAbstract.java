@@ -73,24 +73,24 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Luca Garulli
  */
 public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientStartupListener, OOrientShutdownListener {
-  protected static final String CONFIG_MAP_RID = "mapRid";
-  protected static final String CONFIG_CLUSTERS = "clusters";
-  protected final OModificationLock modificationLock = new OModificationLock();
-  protected final OIndexEngine<T> indexEngine;
-  private final String databaseName;
-  protected String type;
-  protected String valueContainerAlgorithm;
-  protected final ONewLockManager<Object> keyLockManager = new ONewLockManager<Object>();
+  protected static final String           CONFIG_MAP_RID   = "mapRid";
+  protected static final String           CONFIG_CLUSTERS  = "clusters";
+  protected final OModificationLock       modificationLock = new OModificationLock();
+  protected final OIndexEngine<T>         indexEngine;
+  private final String                    databaseName;
+  protected String                        type;
+  protected String                        valueContainerAlgorithm;
+  protected final ONewLockManager<Object> keyLockManager   = new ONewLockManager<Object>();
 
   @ODocumentInstance
-  protected final AtomicReference<ODocument> configuration = new AtomicReference<ODocument>();
-  protected ODocument metadata;
-  private final String name;
-  private String algorithm;
-  private Set<String> clustersToIndex = new HashSet<String>();
+  protected final AtomicReference<ODocument> configuration   = new AtomicReference<ODocument>();
+  protected ODocument                        metadata;
+  private final String                       name;
+  private String                             algorithm;
+  private Set<String>                        clustersToIndex = new HashSet<String>();
 
   private volatile OIndexDefinition indexDefinition;
-  private volatile boolean rebuilding = false;
+  private volatile boolean          rebuilding = false;
 
   private Thread rebuildThread = null;
 
@@ -100,11 +100,11 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   protected static final class IndexTxSnapshot {
     public Map<Object, Object> indexSnapshot = new HashMap<Object, Object>();
-    public boolean clear = false;
+    public boolean             clear         = false;
   }
 
   public OIndexAbstract(String name, final String type, String algorithm, final OIndexEngine<T> indexEngine,
-                        String valueContainerAlgorithm, ODocument metadata) {
+      String valueContainerAlgorithm, ODocument metadata) {
     acquireExclusiveLock();
     try {
       databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
@@ -137,7 +137,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   public static IndexMetadata loadMetadataInternal(final ODocument config, final String type, final String algorithm,
-                                                   final String valueContainerAlgorithm) {
+      final String valueContainerAlgorithm) {
     String indexName = config.field(OIndexInternal.CONFIG_NAME);
 
     final ODocument indexDefinitionDoc = config.field(OIndexInternal.INDEX_DEFINITION);
@@ -167,8 +167,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       if (Boolean.TRUE.equals(isAutomatic)) {
         final int pos = indexName.lastIndexOf('.');
         if (pos < 0)
-          throw new OIndexException("Can not convert from old index model to new one. "
-              + "Invalid index name. Dot (.) separator should be present.");
+          throw new OIndexException(
+              "Can not convert from old index model to new one. " + "Invalid index name. Dot (.) separator should be present.");
         final String className = indexName.substring(0, pos);
         final String propertyName = indexName.substring(pos + 1);
 
@@ -218,14 +218,15 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   /**
    * Creates the index.
    *
-   * @param clusterIndexName Cluster name where to place the TreeMap
+   * @param clusterIndexName
+   *          Cluster name where to place the TreeMap
    * @param clustersToIndex
    * @param rebuild
    * @param progressListener
    */
   public OIndexInternal<?> create(final OIndexDefinition indexDefinition, final String clusterIndexName,
-                                  final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener,
-                                  final OStreamSerializer valueSerializer) {
+      final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener,
+      final OStreamSerializer valueSerializer) {
     acquireExclusiveLock();
     try {
       configuration.set(new ODocument().setTrackingChanges(false));
@@ -292,10 +293,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error during load of index %s .", e, name != null ? name : "null");
 
-        if (isAutomatic() && getStorage() instanceof OAbstractPaginatedStorage) {
+        if (isAutomatic()) {
           // AUTOMATIC REBUILD IT
-          OLogManager.instance()
-              .warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(), rid);
+          OLogManager.instance().warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(),
+              rid);
           try {
             rebuild();
           } catch (Throwable t) {
@@ -445,6 +446,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
         try {
           indexEngine.clear();
         } catch (Exception e2) {
+          OLogManager.instance().error(this, "Error during index rebuild", e2);
           // IGNORE EXCEPTION: IF THE REBUILD WAS LAUNCHED IN CASE OF RID INVALID CLEAR ALWAYS GOES IN ERROR
         }
 
@@ -1023,7 +1025,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   protected long[] indexCluster(final String clusterName, final OProgressListener iProgressListener, long documentNum,
-                                long documentIndexed, long documentTotal) {
+      long documentIndexed, long documentTotal) {
     try {
       for (final ORecord record : getDatabase().browseCluster(clusterName)) {
         if (Thread.interrupted())
@@ -1033,8 +1035,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
           final ODocument doc = (ODocument) record;
 
           if (indexDefinition == null)
-            throw new OConfigurationException("Index '" + name + "' cannot be rebuilt because has no a valid definition ("
-                + indexDefinition + ")");
+            throw new OConfigurationException(
+                "Index '" + name + "' cannot be rebuilt because has no a valid definition (" + indexDefinition + ")");
 
           final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
 
@@ -1042,10 +1044,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
             try {
               populateIndex(doc, fieldValue);
             } catch (OIndexException e) {
-              OLogManager.instance().error(
-                  this,
+              OLogManager.instance().error(this,
                   "Exception during index rebuild. Exception was caused by following key/ value pair - key %s, value %s."
-                      + " Rebuild will continue from this point.", e, fieldValue, doc.getIdentity());
+                      + " Rebuild will continue from this point.",
+                  e, fieldValue, doc.getIdentity());
             }
 
             ++documentIndexed;
@@ -1060,7 +1062,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       // END OF CLUSTER REACHED, IGNORE IT
     }
 
-    return new long[]{documentNum, documentIndexed};
+    return new long[] { documentNum, documentIndexed };
   }
 
   private OAbstractPaginatedStorage getStorage() {
@@ -1085,36 +1087,35 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   private void removeValuesContainer() {
     if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
-      final OStorage storage = getStorage();
-      if (storage instanceof OAbstractPaginatedStorage) {
-        final OAtomicOperation atomicOperation = ((OAbstractPaginatedStorage) storage).getAtomicOperationsManager()
-            .getCurrentOperation();
+      final OAbstractPaginatedStorage storage = getStorage();
 
-        final OReadCache readCache = ((OAbstractPaginatedStorage) storage).getReadCache();
-        final OWriteCache writeCache = ((OAbstractPaginatedStorage) storage).getWriteCache();
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
 
-        if (atomicOperation == null) {
-          try {
-            final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
-            if (writeCache.exists(fileName)) {
-              final long fileId = readCache.openFile(fileName, writeCache);
-              readCache.deleteFile(fileId, writeCache);
-            }
-          } catch (IOException e) {
-            OLogManager.instance().error(this, "Can't delete file for value containers", e);
+      final OReadCache readCache = storage.getReadCache();
+      final OWriteCache writeCache = storage.getWriteCache();
+
+      if (atomicOperation == null) {
+        try {
+          final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
+          if (writeCache.exists(fileName)) {
+            final long fileId = readCache.openFile(fileName, writeCache);
+            readCache.deleteFile(fileId, writeCache);
           }
-        } else {
-          try {
-            final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
-            if (atomicOperation.isFileExists(fileName)) {
-              final long fileId = atomicOperation.openFile(fileName);
-              atomicOperation.deleteFile(fileId);
-            }
-          } catch (IOException e) {
-            OLogManager.instance().error(this, "Can't delete file for value containers", e);
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "Can't delete file for value containers", e);
+        }
+      } else {
+        try {
+          final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
+          if (atomicOperation.isFileExists(fileName)) {
+            final long fileId = atomicOperation.openFile(fileName);
+            atomicOperation.deleteFile(fileId);
           }
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "Can't delete file for value containers", e);
         }
       }
+
     }
   }
 
