@@ -19,6 +19,11 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.Serializable;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
@@ -36,7 +41,6 @@ import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -47,11 +51,6 @@ import com.orientechnologies.orient.server.distributed.task.OResurrectRecordTask
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
-
-import java.io.Serializable;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -67,7 +66,7 @@ public class ODistributedWorker extends Thread {
   protected final OHazelcastPlugin                    manager;
   protected final OHazelcastDistributedMessageService msgService;
   protected final String                              databaseName;
-  protected final IQueue<ODistributedRequest>         requestQueue;
+  protected final IQueue                              requestQueue;
   protected Queue<ODistributedRequest>                localQueue          = new ArrayBlockingQueue<ODistributedRequest>(
                                                                               LOCAL_QUEUE_MAXSIZE);
   protected volatile ODatabaseDocumentTx              database;
@@ -247,7 +246,7 @@ public class ODistributedWorker extends Thread {
   protected ODistributedRequest nextMessage() throws InterruptedException {
     while (localQueue.isEmpty()) {
       // WAIT FOR THE FIRST MESSAGE
-      localQueue.offer(requestQueue.take());
+      localQueue.offer((ODistributedRequest) requestQueue.take());
 
       // READ MULTIPLE MSGS IN ONE SHOT BY USING LOCAL QUEUE TO IMPROVE PERFORMANCE
       requestQueue.drainTo(localQueue, LOCAL_QUEUE_MAXSIZE - 1);
@@ -427,8 +426,8 @@ public class ODistributedWorker extends Thread {
 
     try {
       // GET THE SENDER'S RESPONSE QUEUE
-      final IQueue<ODistributedResponse> queue = msgService.getQueue(OHazelcastDistributedMessageService
-          .getResponseQueueName(iRequest.getSenderNodeName()));
+      final IQueue queue = msgService.getQueue(OHazelcastDistributedMessageService.getResponseQueueName(iRequest
+          .getSenderNodeName()));
 
       if (!queue.offer(response, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS))
         throw new ODistributedException("Timeout on dispatching response to the thread queue " + iRequest.getSenderNodeName());
