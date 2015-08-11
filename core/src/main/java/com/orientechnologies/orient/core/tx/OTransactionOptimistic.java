@@ -20,6 +20,16 @@
 
 package com.orientechnologies.orient.core.tx;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -48,6 +58,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -55,14 +66,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static AtomicInteger txSerial = new AtomicInteger();
@@ -358,9 +361,44 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     if (iRecord == null)
       return null;
-    final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED
-        : ORecordOperation.CREATED;
-    addRecord(iRecord, operation, iClusterName);
+
+    boolean originalSaved = false;
+    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
+    do {
+      Set<ORecord> newRecord = dirtyManager.getNewRecord();
+      Set<ORecord> updatedRecord = dirtyManager.getUpdateRecord();
+      dirtyManager.cleanForSave();
+      if (newRecord != null) {
+        for (ORecord rec : newRecord) {
+          if (rec instanceof ODocument)
+            ODocumentInternal.convertAllMultiValuesToTrackedVersions((ODocument) rec);
+          if (rec == iRecord) {
+            addRecord(rec, ORecordOperation.CREATED, iClusterName);
+            originalSaved = true;
+          } else
+            addRecord(rec, ORecordOperation.CREATED, getClusterName(rec));
+        }
+      }
+      if (updatedRecord != null) {
+        for (ORecord rec : updatedRecord) {
+          if (rec instanceof ODocument)
+            ODocumentInternal.convertAllMultiValuesToTrackedVersions((ODocument) rec);
+          if (rec == iRecord) {
+            final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED
+                : ORecordOperation.CREATED;
+            addRecord(rec, operation, iClusterName);
+            originalSaved = true;
+          } else
+            addRecord(rec, ORecordOperation.UPDATED, getClusterName(rec));
+        }
+      }
+    } while (dirtyManager.getNewRecord() != null || dirtyManager.getUpdateRecord() != null);
+
+    if (!originalSaved && iRecord.isDirty()) {
+      final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED
+          : ORecordOperation.CREATED;
+      addRecord(iRecord, operation, iClusterName);
+    }
     return iRecord;
   }
 

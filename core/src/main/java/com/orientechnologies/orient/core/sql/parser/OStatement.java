@@ -25,13 +25,19 @@ public class OStatement extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-
-  public void toString(Map<Object, Object> params, StringBuilder builder){
-    throw new UnsupportedOperationException("missing implementation in "+getClass().getSimpleName());
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    throw new UnsupportedOperationException("missing implementation in " + getClass().getSimpleName());
   }
 
   public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
 
+  }
+
+  @Override
+  public String toString(String prefix) {
+    StringBuilder builder = new StringBuilder();
+    toString(null, builder);
+    return builder.toString();
   }
 
   public OCommandExecutorSQLAbstract buildExecutor(final OCommandRequest iRequest) {

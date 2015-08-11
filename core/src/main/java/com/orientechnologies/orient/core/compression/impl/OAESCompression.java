@@ -1,12 +1,12 @@
 package com.orientechnologies.orient.core.compression.impl;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+
 import com.orientechnologies.orient.core.compression.OCompression;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
-
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
 
 /***
  * Stateful compression implementation that encrypt the content using AES
@@ -14,6 +14,7 @@ import javax.crypto.spec.SecretKeySpec;
  * https://github.com/orientechnologies/orientdb/issues/89.
  * 
  * @author giastfader
+ * @author Luca Garulli
  *
  */
 public class OAESCompression extends OAbstractEncryptedCompression {

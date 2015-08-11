@@ -38,7 +38,7 @@ public class OPositionalParameter extends OInputParameter {
       ((SimpleNode) finalValue).toString(params, builder);
     } else {
       builder.append(finalValue);
-    }//TODO dates?
+    }
   }
 
   public Object bindFromInputParams(Map<Object, Object> params) {

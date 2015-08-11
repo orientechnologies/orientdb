@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
@@ -60,6 +61,7 @@ public abstract class ORecordAbstract implements ORecord {
   protected transient Set<ORecordListener>       _listeners                 = null;
 
   private transient Set<OIdentityChangeListener> newIdentityChangeListeners = null;
+  protected ODirtyManager                        _dirtyManager;
 
   public ORecordAbstract() {
   }
@@ -403,6 +405,7 @@ public abstract class ORecordAbstract implements ORecord {
   protected void unsetDirty() {
     _contentChanged = false;
     _dirty = false;
+    _dirtyManager = null;
   }
 
   protected abstract byte getRecordType();
@@ -501,6 +504,32 @@ public abstract class ORecordAbstract implements ORecord {
 
   protected void clearSource() {
     this._source = null;
+  }
+
+  protected ODirtyManager getDirtyManager() {
+    if (this._dirtyManager == null) {
+      this._dirtyManager = new ODirtyManager();
+      if (this.getIdentity().isNew() && getOwner() == null)
+        this._dirtyManager.setDirty(this);
+    }
+    return this._dirtyManager;
+  }
+
+  protected void setDirtyManager(ODirtyManager dirtyManager) {
+    if (this._dirtyManager != null && dirtyManager != null) {
+      dirtyManager.merge(this._dirtyManager);
+    }
+    this._dirtyManager = dirtyManager;
+    if (this.getIdentity().isNew() && getOwner() == null && this._dirtyManager != null)
+      this._dirtyManager.setDirty(this);
+  }
+
+  protected void track(OIdentifiable id) {
+    this.getDirtyManager().track(this, id);
+  }
+  
+  protected void unTrack(OIdentifiable id) {
+    this.getDirtyManager().unTrack(this, id);
   }
 
 }

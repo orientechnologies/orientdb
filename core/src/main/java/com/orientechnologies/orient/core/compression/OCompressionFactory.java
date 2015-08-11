@@ -20,6 +20,10 @@
 
 package com.orientechnologies.orient.core.compression;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.compression.impl.OAESCompression;
 import com.orientechnologies.orient.core.compression.impl.ODESCompression;
@@ -29,10 +33,6 @@ import com.orientechnologies.orient.core.compression.impl.OLowZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.compression.impl.OSnappyCompression;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Andrey Lomakin

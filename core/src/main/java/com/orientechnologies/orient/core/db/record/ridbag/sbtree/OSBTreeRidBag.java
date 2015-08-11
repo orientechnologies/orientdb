@@ -61,6 +61,7 @@ import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketP
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
@@ -256,8 +257,12 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       offset += OIntegerSerializer.INT_SIZE;
 
       for (Map.Entry<K, Change> entry : changes.entrySet()) {
-        keySerializer.serialize(entry.getKey(), stream, offset);
-        offset += keySerializer.getObjectSize(entry.getKey());
+        K key = entry.getKey();
+        if (((OIdentifiable) key).getIdentity().isTemporary())
+          key = ((OIdentifiable) key).getRecord();
+
+        keySerializer.serialize(key, stream, offset);
+        offset += keySerializer.getObjectSize(key);
 
         offset += entry.getValue().serialize(stream, offset);
       }
@@ -385,6 +390,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
           size = -1;
         }
       }
+      
+      if (OSBTreeRidBag.this.owner != null)
+        ORecordInternal.unTrack(OSBTreeRidBag.this.owner, currentValue);
 
       if (updateOwner && !changeListeners.isEmpty())
         fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
@@ -539,8 +547,24 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       throw new IllegalStateException("This data structure is owned by document " + owner
           + " if you want to use it in other document create new rid bag instance and copy content of current one.");
     }
-
+    if(this.owner != null){
+      for (OIdentifiable entry : newEntries.keySet()) {
+        ORecordInternal.unTrack(this.owner, entry);
+      }
+      for (OIdentifiable entry : changes.keySet()) {
+        ORecordInternal.unTrack(this.owner, entry);
+      }
+    }
+    
     this.owner = owner;
+    if (this.owner != null) {
+      for (OIdentifiable entry : newEntries.keySet()) {
+        ORecordInternal.track(this.owner, entry);
+      }
+      for (OIdentifiable entry : changes.keySet()) {
+        ORecordInternal.track(this.owner, entry);
+      }
+    }
   }
 
   public Iterator<OIdentifiable> iterator() {
@@ -559,6 +583,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     TreeMap<OIdentifiable, Change> newChanges = new TreeMap<OIdentifiable, Change>();
     for (Map.Entry<OIdentifiable, Change> entry : changes.entrySet()) {
       final OIdentifiable key = entry.getKey().getRecord();
+      if (key != null && this.owner != null) {
+        ORecordInternal.unTrack(this.owner, entry.getKey());
+        ORecordInternal.track(this.owner, key);
+      }
       newChanges.put((key == null) ? entry.getKey() : key, entry.getValue());
     }
 
@@ -668,6 +696,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (size >= 0)
       size++;
 
+    if (this.owner != null)
+      ORecordInternal.track(this.owner, identifiable);
+
     if (updateOwner && !changeListeners.isEmpty())
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
           identifiable, identifiable, null, false));
@@ -697,6 +728,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
             size--;
       }
     }
+
+    if (this.owner != null)
+      ORecordInternal.unTrack(this.owner, identifiable);
 
     if (updateOwner && !changeListeners.isEmpty())
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
@@ -775,16 +809,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   @Override
   public int serialize(byte[] stream, int offset, UUID ownerUuid) {
-    for (OIdentifiable identifiable : changes.keySet()) {
-      if (identifiable instanceof ORecord) {
-        final ORID identity = identifiable.getIdentity();
-        final ORecord record = (ORecord) identifiable;
-        if (identity.isNew() || record.isDirty()) {
-          record.save();
-        }
-      }
-    }
-
     for (Map.Entry<OIdentifiable, OModifiableInteger> entry : newEntries.entrySet()) {
       OIdentifiable identifiable = entry.getKey();
       assert identifiable instanceof ORecord;

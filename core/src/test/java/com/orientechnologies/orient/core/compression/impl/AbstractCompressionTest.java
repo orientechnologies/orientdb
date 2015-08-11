@@ -1,10 +1,11 @@
 package com.orientechnologies.orient.core.compression.impl;
 
-import com.orientechnologies.orient.core.compression.OCompression;
-import com.orientechnologies.orient.core.compression.OCompressionFactory;
+import java.util.Random;
+
 import org.testng.Assert;
 
-import java.util.Random;
+import com.orientechnologies.orient.core.compression.OCompression;
+import com.orientechnologies.orient.core.compression.OCompressionFactory;
 
 /**
  * @author Andrey Lomakin

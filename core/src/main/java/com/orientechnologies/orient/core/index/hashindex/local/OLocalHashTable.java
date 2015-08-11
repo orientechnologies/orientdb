@@ -1786,6 +1786,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     }
   }
 
+  @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
   private void initHashTreeState(OAtomicOperation atomicOperation) throws IOException {
     truncateFile(atomicOperation, fileId);
 

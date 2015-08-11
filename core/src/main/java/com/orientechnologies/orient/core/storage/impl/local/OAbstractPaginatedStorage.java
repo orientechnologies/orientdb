@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -59,8 +60,10 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -104,6 +107,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -138,7 +142,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private volatile ORecordConflictStrategy          recordConflictStrategy                     = Orient.instance()
                                                                                                    .getRecordConflictStrategy()
                                                                                                    .newInstanceOfDefaultClass();
-  private final List<OCluster>                      clusters                                   = new ArrayList<OCluster>();
+  private List<OCluster>                            clusters                                   = new ArrayList<OCluster>();
   private volatile int                              defaultClusterId                           = -1;
   private volatile OAtomicOperationsManager         atomicOperationsManager;
   private volatile boolean                          wereDataRestoredAfterOpen                  = false;
@@ -249,6 +253,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           OLogManager.instance().error(this, "Cannot close cluster after exception on open");
         }
       }
+
       status = STATUS.CLOSED;
       throw new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode, e);
     } finally {
@@ -272,9 +277,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       if (!configuration.getContextConfiguration().getContextKeys()
           .contains(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey())) {
-        // SAVE COMPRESSION IN STORAGE CFG
         final String compression = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD
-            .getKey().toLowerCase()) : null;
+            .getKey().toLowerCase(configuration.getLocaleInstance())) : null;
 
         if (compression != null)
           configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compression);
@@ -285,7 +289,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         // SAVE COMPRESSION OPTIONS IF ANY. THIS IS USED FOR ENCRYPTION AT REST WHERE IN THE 'STORAGE_COMPRESSION_OPTIONS' IS STORED
         // THE KEY
         final String compressionOptions = iProperties != null ? (String) iProperties
-            .get(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS.getKey().toLowerCase()) : null;
+            .get(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS.getKey().toLowerCase(configuration.getLocaleInstance())) : null;
         if (compressionOptions != null)
           configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS, compressionOptions);
         else
@@ -1142,9 +1146,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
                     ((ODocument) record).validate();
                 }
               }
-              for (ORecordOperation txEntry : tmpEntries)
-                // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
-                commitEntry(clientTx, txEntry);
+              for (ORecordOperation txEntry : tmpEntries) {
+                if (txEntry.getRecord().isDirty()) {
+                  if (txEntry.type == ORecordOperation.CREATED)
+                    saveNew(txEntry, clientTx);
+                }
+              }
+              for (ORecordOperation txEntry : tmpEntries) {
+                if (txEntry.type != ORecordOperation.CREATED)
+                  // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
+                  commitEntry(clientTx, txEntry);
+              }
 
             }
 
@@ -1184,6 +1196,66 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       throw ((OException) e);
     else
       throw new OStorageException("Error during transaction commit.", e);
+
+  }
+
+  public void saveNew(ORecordOperation txEntry, OTransaction tx) throws IOException {
+    List<ORecordOperation> toResave = new ArrayList<ORecordOperation>();
+    LinkedList<ODocument> path = new LinkedList<ODocument>();
+    ORecord next = txEntry.getRecord();
+    ODirtyManager manager = ORecordInternal.getDirtyManager(next);
+    do {
+      if (next instanceof ODocument) {
+        ORecord nextToInspect = null;
+        List<OIdentifiable> toSave = manager.getPointed(next);
+        if (toSave == null) {
+          toSave = ORecordInternal.getDirtyManager(next).getPointed(next);
+        }
+        if (toSave != null) {
+          for (OIdentifiable oIdentifiable : toSave) {
+            if (oIdentifiable.getIdentity().isNew()) {
+              if (oIdentifiable instanceof ORecord) {
+                nextToInspect = (ORecord) oIdentifiable;
+                break;
+              } else {
+                nextToInspect = oIdentifiable.getRecord();
+                if (nextToInspect.getIdentity().isNew())
+                  break;
+                else
+                  nextToInspect = null;
+              }
+
+            }
+          }
+        }
+        if (nextToInspect != null) {
+          if (path.contains(nextToInspect)) {
+            // this is wrong, here we should do empty record save here
+            OSerializationSetThreadLocal.checkAndAdd((ODocument) nextToInspect);
+            ORecordOperation toCommit = tx.getRecordEntry(nextToInspect.getIdentity());
+            commitEntry(tx, toCommit);
+            OSerializationSetThreadLocal.removeCheck((ODocument) nextToInspect);
+            toResave.add(toCommit);
+          } else {
+            path.push((ODocument) next);
+            next = nextToInspect;
+          }
+        } else {
+          ORecordOperation toCommit = tx.getRecordEntry(next.getIdentity());
+          commitEntry(tx, toCommit);
+          next = path.pollFirst();
+        }
+
+      } else {
+        ORecordOperation toCommit = tx.getRecordEntry(next.getIdentity());
+        commitEntry(tx, toCommit);
+        next = path.pollFirst();
+      }
+    } while (next != null);
+    for (ORecordOperation op : toResave) {
+      op.getRecord().setDirty();
+      commitEntry(tx, op);
+    }
   }
 
   public void rollback(final OTransaction clientTx) {
@@ -2408,13 +2480,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       case ORecordOperation.CREATED: {
         // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
+        final ORecordId oldRID;
+        if (rid.isNew()) {
+          oldRID = rid.copy();
+        } else
+          oldRID = rid;
 
         final byte[] stream = rec.toStream();
         if (stream == null) {
           OLogManager.instance().warn(this, "Null serialization on committing new record %s in transaction", rid);
           break;
         }
-        final ORecordId oldRID = rid.isNew() ? rid.copy() : rid;
 
         if (rid.isNew()) {
           rid = rid.copy();
@@ -2444,9 +2520,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           break;
         }
 
-        rec.getRecordVersion().copyFrom(
-            doUpdateRecord(rid, ORecordInternal.isContentChanged(rec), stream, rec.getRecordVersion(),
-                ORecordInternal.getRecordType(rec), null, cluster).getResult());
+        OStorageOperationResult<ORecordVersion> updateRes = doUpdateRecord(rid, ORecordInternal.isContentChanged(rec), stream,
+            rec.getRecordVersion(), ORecordInternal.getRecordType(rec), null, cluster);
+        rec.getRecordVersion().copyFrom(updateRes.getResult());
+        if (updateRes.getModifiedRecordContent() != null) {
+          ORecordInternal.fill(rec, rid, updateRes.getResult(), updateRes.getModifiedRecordContent(), false);
+        }
         break;
       }
 

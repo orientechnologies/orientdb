@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.record.OIdentityChangeListener;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 
@@ -127,6 +128,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       return false;
     if (e instanceof ORecord && e.getIdentity().isNew()) {
       ORecordInternal.addIdentityChangeListener((ORecord) e, this);
+      ORecordInternal.track(sourceRecord, e);
       map.put(e, e);
     } else if (!e.getIdentity().isPersistent()) {
       // record id is not fixed yet, so we need to be able to watch for id changes, so get the record for this id to be able to do
@@ -135,6 +137,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       if (record == null)
         throw new IllegalArgumentException("Record with id " + e.getIdentity() + " has not be found");
       ORecordInternal.addIdentityChangeListener(record, this);
+      ORecordInternal.track(sourceRecord, e);
       map.put(e, record);
     } else
       map.put(e, ENTRY_REMOVAL);
@@ -152,7 +155,12 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       Entry<OIdentifiable, Object> entry = all.next();
       if (entry.getValue() == ENTRY_REMOVAL) {
         try {
-          entry.setValue(entry.getKey().getRecord());
+          ORecord record = entry.getKey().getRecord();
+          if (record != null) {
+            ORecordInternal.unTrack(sourceRecord, entry.getKey());
+            ORecordInternal.track(sourceRecord, record);
+          }
+          entry.setValue(record);
         } catch (ORecordNotFoundException e) {
           // IGNORE THIS
         }

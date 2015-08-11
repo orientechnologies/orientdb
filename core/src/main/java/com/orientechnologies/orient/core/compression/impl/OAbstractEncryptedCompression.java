@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.core.compression.impl;
 
-import com.orientechnologies.orient.core.exception.OSecurityException;
-
 import javax.crypto.Cipher;
 
+import com.orientechnologies.orient.core.exception.OSecurityException;
+
 /***
- * Abstract compression implementation for encryption
- * (https://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html). See
- * https://github.com/orientechnologies/orientdb/issues/89
+ * (https://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html). Issue
+ * https://github.com/orientechnologies/orientdb/issues/89.
  * 
  * @author giastfader
  *

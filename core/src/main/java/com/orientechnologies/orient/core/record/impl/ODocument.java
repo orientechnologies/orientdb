@@ -38,7 +38,19 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.ODetachable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -61,6 +73,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordListener;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -248,7 +261,7 @@ public class ODocument extends ORecordAbstract
 
       if (p.isNotNull() && fieldValue == null)
         // NULLITY
-        throw new OValidationException("The field '" + p.getFullName() + "' cannot be null, record: " + iRecord);
+        throw new OValidationException("The field 'value" + p.getFullName() + "' cannot be null, record: " + iRecord);
 
       if (fieldValue != null && p.getRegexp() != null && p.getType().equals(OType.STRING)) {
         // REGEXP
@@ -261,7 +274,7 @@ public class ODocument extends ORecordAbstract
       String defValue = p.getDefaultValue();
       if (defValue != null && defValue.length() > 0) {
         Object curFieldValue = OSQLHelper.parseDefaultValue(iRecord, defValue);
-        fieldValue = ODocumentHelper.convertField(iRecord, p.getName(), p.getType().getDefaultJavaType(), curFieldValue);
+        fieldValue = ODocumentHelper.convertField(iRecord, p.getName(), p.getType(), null, curFieldValue);
         iRecord.rawField(p.getName(), fieldValue, p.getType());
       } else {
         if (p.isMandatory()) {
@@ -790,7 +803,11 @@ public class ODocument extends ORecordAbstract
       // CREATE THE DOCUMENT OBJECT IN LAZY WAY
       RET newValue = (RET) getDatabase().load((ORID) value);
       if (newValue != null) {
+        unTrack((ORID) value);
+        track((OIdentifiable) newValue);
         value = newValue;
+        ORecordInternal.setDirtyManager((ORecord) value, this.getDirtyManager());
+
         if (!iFieldName.contains(".")) {
           ODocumentEntry entry = _fields.get(iFieldName);
           removeCollectionChangeListener(entry, entry.value);
@@ -817,7 +834,7 @@ public class ODocument extends ORecordAbstract
     RET value = this.rawField(iFieldName);
 
     if (value != null)
-      value = ODocumentHelper.convertField(this, iFieldName, iFieldType, value);
+      value = ODocumentHelper.convertField(this, iFieldName, OType.getTypeByClass(iFieldType), iFieldType, value);
 
     return value;
   }
@@ -848,11 +865,11 @@ public class ODocument extends ORecordAbstract
       else if (iFieldType == OType.DATE && value instanceof Long)
         newValue = new Date((Long) value);
       else if ((iFieldType == OType.EMBEDDEDSET || iFieldType == OType.LINKSET) && value instanceof List)
-        newValue = Collections.unmodifiableSet((Set<?>) ODocumentHelper.convertField(this, iFieldName, Set.class, value));
+        newValue = Collections.unmodifiableSet((Set<?>) ODocumentHelper.convertField(this, iFieldName, iFieldType, null, value));
       else if ((iFieldType == OType.EMBEDDEDLIST || iFieldType == OType.LINKLIST) && value instanceof Set)
-        newValue = Collections.unmodifiableList((List<?>) ODocumentHelper.convertField(this, iFieldName, List.class, value));
+        newValue = Collections.unmodifiableList((List<?>) ODocumentHelper.convertField(this, iFieldName, iFieldType, null, value));
       else if ((iFieldType == OType.EMBEDDEDMAP || iFieldType == OType.LINKMAP) && value instanceof Map)
-        newValue = Collections.unmodifiableMap((Map<?, ?>) ODocumentHelper.convertField(this, iFieldName, Map.class, value));
+        newValue = Collections.unmodifiableMap((Map<?, ?>) ODocumentHelper.convertField(this, iFieldName, iFieldType, null, value));
       else
         newValue = OType.convert(value, iFieldType.getDefaultJavaType());
 
@@ -1010,7 +1027,7 @@ public class ODocument extends ORecordAbstract
     }
     OType fieldType = deriveFieldType(iFieldName, entry, iFieldType);
     if (iPropertyValue != null && fieldType != null) {
-      iPropertyValue = ODocumentHelper.convertField(this, iFieldName, fieldType.getDefaultJavaType(), iPropertyValue);
+      iPropertyValue = ODocumentHelper.convertField(this, iFieldName, fieldType, null, iPropertyValue);
     } else if (iPropertyValue instanceof Enum)
       iPropertyValue = iPropertyValue.toString();
 
@@ -1043,14 +1060,24 @@ public class ODocument extends ORecordAbstract
       final ORidBag ridBag = (ORidBag) oldValue;
       ridBag.setOwner(null);
     } else if (oldValue instanceof ODocument) {
-      ODocumentInternal.removeOwner((ODocument) oldValue, this);
+      ((ODocument)oldValue).removeOwner(this);
+    }
+    
+    if (oldValue instanceof OIdentifiable) {
+      unTrack((OIdentifiable) oldValue);
     }
 
     if (iPropertyValue != null) {
-      if (OType.EMBEDDED.equals(fieldType) && iPropertyValue instanceof ODocument) {
-        final ODocument embeddedDocument = (ODocument) iPropertyValue;
-        ODocumentInternal.addOwner(embeddedDocument, this);
+      if (iPropertyValue instanceof ODocument) {
+        if (OType.EMBEDDED.equals(fieldType)) {
+          final ODocument embeddedDocument = (ODocument) iPropertyValue;
+          ODocumentInternal.addOwner(embeddedDocument, this);
+        }
       }
+      if (iPropertyValue instanceof OIdentifiable) {
+        track((OIdentifiable) iPropertyValue);
+      }
+
       if (iPropertyValue instanceof ORidBag) {
         final ORidBag ridBag = (ORidBag) iPropertyValue;
         ridBag.setOwner(null); // in order to avoid IllegalStateException when ridBag changes the owner (ODocument.merge)
@@ -1112,7 +1139,10 @@ public class ODocument extends ORecordAbstract
     _fieldSize--;
 
     removeCollectionChangeListener(entry, oldValue);
-
+    if (oldValue instanceof OIdentifiable )
+      unTrack((OIdentifiable) oldValue);
+    if(oldValue instanceof ORidBag)
+      ((ORidBag) oldValue).setOwner(null);
     setDirty();
     return oldValue;
   }
@@ -1310,8 +1340,10 @@ public class ODocument extends ORecordAbstract
       return Collections.emptyList();
 
     final List<ORecordElement> result = new ArrayList<ORecordElement>();
-    for (WeakReference<ORecordElement> o : _owners)
-      result.add(o.get());
+    for (WeakReference<ORecordElement> o : _owners) {
+      if (o.get() != null)
+        result.add(o.get());
+    }
 
     return result;
   }
@@ -1329,7 +1361,9 @@ public class ODocument extends ORecordAbstract
         if (e != null)
           e.setDirty();
       }
-    }
+    } else if (!isDirty())
+      getDirtyManager().setDirty(this);
+    
     // THIS IS IMPORTANT TO BE SURE THAT FIELDS ARE LOADED BEFORE IT'S TOO LATE AND THE RECORD _SOURCE IS NULL
     checkForFields();
 
@@ -2141,6 +2175,8 @@ public class ODocument extends ORecordAbstract
     entry.value = iFieldValue;
     entry.type = iFieldType;
     addCollectionChangeListener(entry);
+    if(iFieldValue instanceof OIdentifiable && !((OIdentifiable) iFieldValue).getIdentity().isPersistent())
+      track((OIdentifiable) iFieldValue);
   }
 
   protected ODocumentEntry getOrCreate(String key) {
@@ -2238,16 +2274,23 @@ public class ODocument extends ORecordAbstract
    * Internal.
    */
   protected void addOwner(final ORecordElement iOwner) {
-    if (_owners == null)
+    if (iOwner == null)
+      return;
+    if (_owners == null) {
       _owners = new ArrayList<WeakReference<ORecordElement>>();
+      if (_dirtyManager != null && this.getIdentity().isNew())
+        _dirtyManager.removeNew(this);
+    }
 
     boolean found = false;
-    for (WeakReference<ORecordElement> _owner : _owners) {
-      final ORecordElement e = _owner.get();
+    Iterator<WeakReference<ORecordElement>> ref = _owners.iterator();
+    while (ref.hasNext()) {
+      final ORecordElement e = ref.next().get();
       if (e == iOwner) {
         found = true;
         break;
-      }
+      } else if (e == null)
+        ref.remove();
     }
 
     if (!found)
@@ -2277,12 +2320,16 @@ public class ODocument extends ORecordAbstract
   protected void convertAllMultiValuesToTrackedVersions() {
     if (_fields == null)
       return;
-
     for (Map.Entry<String, ODocumentEntry> fieldEntry : _fields.entrySet()) {
       final Object fieldValue = fieldEntry.getValue().value;
-      if (!(fieldValue instanceof Collection<?>) && !(fieldValue instanceof Map<?, ?>))
+      if (!(fieldValue instanceof Collection<?>) && !(fieldValue instanceof Map<?, ?>) && !(fieldValue instanceof ODocument))
         continue;
       if (addCollectionChangeListener(fieldEntry.getValue())) {
+        continue;
+      }
+
+      if (fieldValue instanceof ODocument && ((ODocument) fieldValue).isEmbedded()) {
+        ((ODocument) fieldValue).convertAllMultiValuesToTrackedVersions();
         continue;
       }
 
@@ -2300,27 +2347,33 @@ public class ODocument extends ORecordAbstract
       Object newValue = null;
       switch (fieldType) {
       case EMBEDDEDLIST:
-        if (fieldValue instanceof List<?>)
-          newValue = new OTrackedList<Object>(this, (List<?>) fieldValue, null);
+        if (fieldValue instanceof List<?>) {
+          newValue = new OTrackedList<Object>(this);
+          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
+        }
         break;
       case EMBEDDEDSET:
-        if (fieldValue instanceof Set<?>)
-          newValue = new OTrackedSet<Object>(this, (Set<OIdentifiable>) fieldValue, null);
+        if (fieldValue instanceof Set<?>) {
+          newValue = new OTrackedSet<Object>(this);
+          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
+        }
         break;
       case EMBEDDEDMAP:
-        if (fieldValue instanceof Map<?, ?>)
-          newValue = new OTrackedMap<OIdentifiable>(this, (Map<Object, OIdentifiable>) fieldValue, null);
+        if (fieldValue instanceof Map<?, ?>) {
+          newValue = new OTrackedMap<Object>(this);
+          fillTrackedMap((Map<Object, Object>) newValue, (Map<Object, Object>) fieldValue);
+        }
         break;
       case LINKLIST:
-        if (fieldValue instanceof List<?>)
+        if (fieldValue instanceof List<?>) 
           newValue = new ORecordLazyList(this, (List<OIdentifiable>) fieldValue);
         break;
       case LINKSET:
-        if (fieldValue instanceof Set<?>)
+        if (fieldValue instanceof Set<?>) 
           newValue = new ORecordLazySet(this, (Collection<OIdentifiable>) fieldValue);
         break;
       case LINKMAP:
-        if (fieldValue instanceof Map<?, ?>)
+        if (fieldValue instanceof Map<?, ?>) 
           newValue = new ORecordLazyMap(this, (Map<Object, OIdentifiable>) fieldValue);
         break;
       default:
@@ -2333,6 +2386,49 @@ public class ODocument extends ORecordAbstract
       }
     }
 
+  }
+
+  private void fillTrackedCollection(Collection<Object> dest, Collection<Object> source) {
+    for (Object cur : source) {
+      if (cur instanceof ODocument)
+        ((ODocument) cur).convertAllMultiValuesToTrackedVersions();
+      else if (cur instanceof List) {
+        List<Object> newList = new OTrackedList<Object>(this);
+        fillTrackedCollection(newList, (Collection<Object>) cur);
+        cur = newList;
+      } else if (cur instanceof Set) {
+        Set<Object> newSet = new OTrackedSet<Object>(this);
+        fillTrackedCollection(newSet, (Collection<Object>) cur);
+        cur = newSet;
+      } else if (cur instanceof Map) {
+        Map<Object, Object> newMap = new OTrackedMap<Object>(this);
+        fillTrackedMap(newMap, (Map<Object, Object>) cur);
+        cur = newMap;
+      }
+      dest.add(cur);
+    }
+  }
+
+  private void fillTrackedMap(Map<Object, Object> dest, Map<Object, Object> source) {
+    for (Entry<Object, Object> cur : source.entrySet()) {
+      Object value = cur.getValue();
+      if (value instanceof ODocument)
+        ((ODocument) value).convertAllMultiValuesToTrackedVersions();
+      else if (cur.getValue() instanceof List) {
+        List<Object> newList = new OTrackedList<Object>(this);
+        fillTrackedCollection(newList, (Collection<Object>) value);
+        value = newList;
+      } else if (value instanceof Set) {
+        Set<Object> newSet = new OTrackedSet<Object>(this);
+        fillTrackedCollection(newSet, (Collection<Object>) value);
+        value = newSet;
+      } else if (value instanceof Map) {
+        Map<Object, Object> newMap = new OTrackedMap<Object>(this);
+        fillTrackedMap(newMap, (Map<Object, Object>) value);
+        value = newMap;
+      }
+      dest.put(cur.getKey(), value);
+    }
   }
 
   protected void internalReset() {
