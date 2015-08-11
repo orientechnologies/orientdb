@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.annotations.Test;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -166,6 +167,30 @@ public class OCommandExecutorSQLUpdateTest {
       ODocument doc = (ODocument) result.iterator().next();
       Set<?> set = doc.field("addField");
       assertEquals(set.size(), 1);
+      assertEquals(set.iterator().next(), "xxxx");
+    } finally {
+      db.close();
+    }
+  }
+
+
+  @Test
+  public void testUpdateParamDate() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateParamDate");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE CLASS test")).execute();
+      Date date = new Date();
+      db.command(new OCommandSQL("insert into test set birthDate = ?")).execute(date);
+      Iterable result = db.query(new OSQLSynchQuery<Object>("select from test"));
+      ODocument doc = (ODocument) result.iterator().next();
+      assertEquals(doc.field("birthDate"), date);
+
+      date = new Date();
+      db.command(new OCommandSQL("UPDATE test set birthDate = ?")).execute(date);
+      result = db.query(new OSQLSynchQuery<Object>("select from test"));
+      doc = (ODocument) result.iterator().next();
+      assertEquals(doc.field("birthDate"), date);
     } finally {
       db.close();
     }
