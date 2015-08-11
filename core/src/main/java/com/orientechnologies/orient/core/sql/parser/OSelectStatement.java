@@ -162,14 +162,14 @@ public class OSelectStatement extends OStatement {
       groupBy.toString(params, builder);
     }
 
-    if (unwind != null) {
-      builder.append(" ");
-      unwind.toString(params, builder);
-    }
-
     if (orderBy != null) {
       builder.append(" ");
       orderBy.toString(params, builder);
+    }
+
+    if (unwind != null) {
+      builder.append(" ");
+      unwind.toString(params, builder);
     }
 
     if (skip != null) {

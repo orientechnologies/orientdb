@@ -40,7 +40,6 @@ public class ONamedParameter extends OInputParameter {
     } else {
       builder.append(finalValue);
     }
-    // TODO dates?
   }
 
   public Object bindFromInputParams(Map<Object, Object> params) {
