@@ -428,6 +428,10 @@ public enum OGlobalConfiguration {
       "If total number of returned records in a query is major than this threshold a warning is given. Use 0 to disable it",
       Long.class, 10000),
 
+  STATEMENT_CACHE_SIZE("statement.cacheSize",
+      "Number of parsed SQL statements kept in cache",
+      Integer.class, 100),
+
   /**
    * Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.
    */

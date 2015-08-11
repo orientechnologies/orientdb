@@ -32,8 +32,8 @@ import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.sql.parser.OrientSql;
-import com.orientechnologies.orient.core.sql.parser.ParseException;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -188,7 +188,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
     final OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
     final OIndex<?> idx = metadata.getIndexManager().getIndex(iIndexName);
-    if (idx != null && idx.getDefinition() != null ) {
+    if (idx != null && idx.getDefinition() != null) {
       final String clazz = idx.getDefinition().getClassName();
 
       if (clazz != null) {
@@ -224,22 +224,19 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     if (strict) {
       final InputStream is = new ByteArrayInputStream(queryText.getBytes());
       final OrientSql osql = new OrientSql(is);
-      try {
-        final OStatement result = osql.parse();
-        preParsedStatement = result;
 
-        if (iRequest instanceof OCommandRequestAbstract) {
-          final Map<Object, Object> params = ((OCommandRequestAbstract) iRequest).getParameters();
-          StringBuilder builder = new StringBuilder();
-          result.toString(params, builder);
-          return builder.toString();
-        }
+      final OStatement result = OStatementCache.get(queryText, getDatabase());
+      preParsedStatement = result;
 
-        return result.toString();
-      } catch (ParseException e) {
-        throwParsingException(e.getMessage());
+      if (iRequest instanceof OCommandRequestAbstract) {
+        final Map<Object, Object> params = ((OCommandRequestAbstract) iRequest).getParameters();
+        StringBuilder builder = new StringBuilder();
+        result.toString(params, builder);
+        return builder.toString();
       }
-      return "ERROR!";
+
+      return result.toString();
+
     }
     return queryText;
   }
