@@ -420,21 +420,21 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
     }
   }
 
-  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached) {
-    convertAndDetachAll(nonProxiedInstance, alreadyDetached);
+  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
+    convertAndDetachAll(nonProxiedInstance, alreadyDetached, lazyObjects);
   }
 
-  protected void convertAndDetachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached) {
+  protected void convertAndDetachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
     if (converted || !convertToRecord)
       return;
 
     for (int i = 0; i < size(); ++i)
-      convertAndDetachAll(i, nonProxiedInstance, alreadyDetached);
+      convertAndDetachAll(i, nonProxiedInstance, alreadyDetached, lazyObjects);
 
     converted = true;
   }
 
-  private void convertAndDetachAll(final int iIndex, boolean nonProxiedInstance, Map<Object, Object> alreadyDetached) {
+  private void convertAndDetachAll(final int iIndex, boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
     if (converted || !convertToRecord)
       return;
 
@@ -459,7 +459,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
       }
       o = OObjectEntityEnhancer.getInstance().getProxiedInstance(doc.getClassName(), getDatabase().getEntityManager(), doc,
           sourceRecord);
-      o = ((OObjectDatabaseTx) getDatabase()).detachAll(o, nonProxiedInstance, alreadyDetached);
+      o = ((OObjectDatabaseTx) getDatabase()).detachAll(o, nonProxiedInstance, alreadyDetached, lazyObjects);
       super.set(iIndex, (TYPE) o);
     }
   }

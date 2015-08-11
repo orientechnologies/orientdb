@@ -324,7 +324,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * @return the object serialized or with detached data
    */
   public <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance) {
-    return detachAll(iPojo, returnNonProxiedInstance, new HashMap<Object, Object>());
+    return detachAll(iPojo, returnNonProxiedInstance, new HashMap<Object, Object>(), new HashMap<Object, Object>());
   }
 
   public <RET> RET load(final Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
@@ -805,8 +805,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     underlying.resetInitialization();
   }
 
-  protected <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached) {
-    return (RET) OObjectEntitySerializer.detachAll(iPojo, this, returnNonProxiedInstance, alreadyDetached);
+  protected <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
+    return (RET) OObjectEntitySerializer.detachAll(iPojo, this, returnNonProxiedInstance, alreadyDetached, lazyObjects);
   }
 
   protected void deleteCascade(final ODocument record) {
