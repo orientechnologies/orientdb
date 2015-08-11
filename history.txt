@@ -27,6 +27,14 @@
 This document contains the last changes of OrientDB Community Edition.
 
 ---------------------------------------------------------------------------------------------------
+VERSION 2.0.14 - (August, 10 2015)
+
+This is a hotfix release, with a total of 10 issues resolved:
+
+- Core.(9): https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0.14+is%3Aclosed
+- ETL..(1): https://github.com/orientechnologies/orientdb-etl/issues?q=milestone%3A2.0.14+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
 VERSION 2.0.13 - (July, 22nd 2015)
 - Bug fixing
 
