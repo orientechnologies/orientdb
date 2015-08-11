@@ -1,24 +1,28 @@
 /*
- *
- *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
- *  *
- *  *  Licensed under the Apache License, Version 2.0 (the "License");
- *  *  you may not use this file except in compliance with the License.
- *  *  You may obtain a copy of the License at
- *  *
- *  *       http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  *  Unless required by applicable law or agreed to in writing, software
- *  *  distributed under the License is distributed on an "AS IS" BASIS,
- *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  *  See the License for the specific language governing permissions and
- *  *  limitations under the License.
- *  *
- *  * For more information: http://www.orientechnologies.com
- *
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 
 package com.orientechnologies.orient.core.compression;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.compression.impl.OAESCompression;
 import com.orientechnologies.orient.core.compression.impl.ODESCompression;
@@ -27,10 +31,6 @@ import com.orientechnologies.orient.core.compression.impl.OHighZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.OLowZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.compression.impl.OSnappyCompression;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Andrey Lomakin
@@ -42,33 +42,24 @@ public class OCompressionFactory {
   private final Map<String, OCompression> compressions = new HashMap<String, OCompression>();
 
   public OCompressionFactory() {
-    init();
+    register(OHighZIPCompression.INSTANCE);
+    register(OLowZIPCompression.INSTANCE);
+    register(OGZIPCompression.INSTANCE);
+    register(OSnappyCompression.INSTANCE);
+    register(ONothingCompression.INSTANCE);
+    register(ODESCompression.INSTANCE);
+    register(OAESCompression.INSTANCE);
   }
 
-  public void init() {
-    compressions.clear();
-    register(new OHighZIPCompression());
-    register(new OLowZIPCompression());
-    register(new OGZIPCompression());
-    register(new OSnappyCompression());
-    register(new ONothingCompression());
-    register(new ODESCompression());
-    register(new OAESCompression());
-  }
-
-  public void reinit() {
-    init();
-  }
-
-  public OCompression getCompression(final String name) {
-    final OCompression compression = compressions.get(name);
+  public OCompression getCompression(String name) {
+    OCompression compression = compressions.get(name);
     if (compression == null)
-      throw new IllegalArgumentException("Compression with name '" + name + "' is absent.");
+      throw new IllegalArgumentException("Compression with name  " + name + " is absent.");
 
     return compression;
   }
 
-  public void register(final OCompression compression) {
+  public void register(OCompression compression) {
     if (compressions.containsKey(compression.name()))
       throw new IllegalArgumentException("Compression with name " + compression.name() + " was already registered.");
 
