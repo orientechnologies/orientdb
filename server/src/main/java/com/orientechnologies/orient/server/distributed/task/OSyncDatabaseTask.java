@@ -168,13 +168,16 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
             // RECORD LAST BACKUP TO BE REUSED IN CASE ANOTHER NODE ASK FOR THE SAME IN SHORT TIME WHILE THE DB IS NOT UPDATED
             ((ODistributedStorage) database.getStorage()).setLastValidBackup(backupFile);
-          } else
+
+            // WAIT UNTIL THE lastOperationId IS SET
+            while (lastOperationId.get() < 0) {
+              Thread.sleep(100);
+            }
+          } else {
+            lastOperationId.set(database.getStorage().getLastOperationId());
+
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                 "reusing last backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
-
-          // WAIT UNTIL THE lastOperationId IS SET
-          while (lastOperationId.get() < 0) {
-            Thread.sleep(100);
           }
 
           final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), backupFile, 0,
