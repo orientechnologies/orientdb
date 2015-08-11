@@ -285,18 +285,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         else
           configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD,
               OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
-
-        // SAVE COMPRESSION OPTIONS IF ANY. THIS IS USED FOR ENCRYPTION AT REST WHERE IN THE 'STORAGE_COMPRESSION_OPTIONS' IS STORED
-        // THE KEY
-        final String compressionOptions = iProperties != null ? (String) iProperties
-            .get(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS.getKey().toLowerCase(configuration.getLocaleInstance())) : null;
-        if (compressionOptions != null)
-          configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS, compressionOptions);
-        else
-          configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS,
-              OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS.getValue());
-
       }
+
+      // SAVE COMPRESSION OPTIONS IF ANY. THIS IS USED FOR ENCRYPTION AT REST WHERE IN THE 'STORAGE_COMPRESSION_OPTIONS' IS STORED
+      // THE KEY
+      final String compressionOptions = iProperties != null ? (String) iProperties
+          .get(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS.getKey().toLowerCase(configuration.getLocaleInstance())) : null;
+      if (compressionOptions != null)
+        configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS, compressionOptions);
+      else
+        configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS,
+            OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS.getValue());
 
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
       initWalAndDiskCache();
