@@ -589,12 +589,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * Deletes the record checking the version.
    */
   public ODatabase<ORecord> delete(final ORID iRecord, final ORecordVersion iVersion) {
-    executeDeleteRecord(iRecord, iVersion, true, true, OPERATION_MODE.SYNCHRONOUS, false);
+    executeDeleteRecord(iRecord, iVersion, true, OPERATION_MODE.SYNCHRONOUS, false);
     return this;
   }
 
   public ODatabase<ORecord> cleanOutRecord(final ORID iRecord, final ORecordVersion iVersion) {
-    executeDeleteRecord(iRecord, iVersion, true, true, OPERATION_MODE.SYNCHRONOUS, true);
+    executeDeleteRecord(iRecord, iVersion, true, OPERATION_MODE.SYNCHRONOUS, true);
     return this;
   }
 
@@ -1807,8 +1807,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * @Internal
    */
   public <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final ORecordVersion ver,
-      boolean callTriggers, final OPERATION_MODE mode, boolean forceCreate,
-      final ORecordCallback<? extends Number> recordCreatedCallback, ORecordCallback<ORecordVersion> recordUpdatedCallback) {
+      final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
+      ORecordCallback<ORecordVersion> recordUpdatedCallback) {
     checkOpeness();
     checkIfActive();
     if (!record.isDirty())
@@ -1871,28 +1871,26 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         checkSecurity(ORule.ResourceGeneric.CLUSTER, wasNew ? ORole.PERMISSION_CREATE : ORole.PERMISSION_UPDATE, clusterName);
 
         final boolean partialMarshalling = record instanceof ODocument
-            && OSerializationSetThreadLocal.INSTANCE.checkIfPartial((ODocument) record);
+            && OSerializationSetThreadLocal.checkIfPartial((ODocument) record);
 
         if (partialMarshalling && !isNew)
           // UPDATE + PARTIAL MARSHALLING: SKIP IT BECAUSE THE REAL UPDATE WILL BE EXECUTED BY OUTER SAVE
           return (RET) record;
 
         if (stream != null && stream.length > 0 && !partialMarshalling) {
-          if (callTriggers) {
-            final ORecordHook.TYPE triggerType = wasNew ? ORecordHook.TYPE.BEFORE_CREATE : ORecordHook.TYPE.BEFORE_UPDATE;
+          final ORecordHook.TYPE triggerType = wasNew ? ORecordHook.TYPE.BEFORE_CREATE : ORecordHook.TYPE.BEFORE_UPDATE;
 
-            final ORecordHook.RESULT hookResult = callbackHooks(triggerType, record);
+          final ORecordHook.RESULT hookResult = callbackHooks(triggerType, record);
 
-            if (hookResult == ORecordHook.RESULT.RECORD_CHANGED) {
-              if (record instanceof ODocument)
-                ((ODocument) record).validate();
-              stream = updateStream(record);
-            } else if (hookResult == ORecordHook.RESULT.SKIP_IO)
-              return (RET) record;
-            else if (hookResult == ORecordHook.RESULT.RECORD_REPLACED)
-              // RETURNED THE REPLACED RECORD
-              return (RET) OHookReplacedRecordThreadLocal.INSTANCE.get();
-          }
+          if (hookResult == ORecordHook.RESULT.RECORD_CHANGED) {
+            if (record instanceof ODocument)
+              ((ODocument) record).validate();
+            stream = updateStream(record);
+          } else if (hookResult == ORecordHook.RESULT.SKIP_IO)
+            return (RET) record;
+          else if (hookResult == ORecordHook.RESULT.RECORD_REPLACED)
+            // RETURNED THE REPLACED RECORD
+            return (RET) OHookReplacedRecordThreadLocal.INSTANCE.get();
         }
 
         if (wasNew && !isNew)
@@ -1938,13 +1936,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
           ORecordInternal.fill(record, rid, version, stream, partialMarshalling);
 
-          callbackHookSuccess(record, callTriggers, wasNew, stream, operationResult);
+          callbackHookSuccess(record, wasNew, stream, operationResult);
         } catch (Throwable t) {
-          callbackHookFailure(record, callTriggers, wasNew, stream);
+          callbackHookFailure(record, wasNew, stream);
           throw t;
         }
       } finally {
-        callbackHookFinalize(record, callTriggers, wasNew, stream);
+        callbackHookFinalize(record, wasNew, stream);
         ORecordSerializationContext.pullContext();
         getMetadata().clearThreadLocalSchemaSnapshot();
         ORecordSaveThreadLocal.removeLast();
@@ -1974,7 +1972,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * @Internal
    */
   public void executeDeleteRecord(OIdentifiable record, final ORecordVersion iVersion, final boolean iRequired,
-      boolean iCallTriggers, final OPERATION_MODE iMode, boolean prohibitTombstones) {
+      final OPERATION_MODE iMode, boolean prohibitTombstones) {
     checkOpeness();
     checkIfActive();
 
@@ -2005,11 +2003,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       try {
         // if cache is switched off record will be unreachable after delete.
         ORecord rec = record.getRecord();
-        if (iCallTriggers && rec != null)
+        if (rec != null)
           callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, rec);
-
-        // CHECK IF ENABLE THE MVCC OR BYPASS IT
-        final ORecordVersion realVersion = mvcc ? iVersion : OVersionFactory.instance().createUntrackedVersion();
 
         final OStorageOperationResult<Boolean> operationResult;
         try {
@@ -2025,15 +2020,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
             operationResult = new OStorageOperationResult<Boolean>(result.getResult());
           }
 
-          if (iCallTriggers) {
-            if (!operationResult.isMoved() && rec != null)
-              callbackHooks(ORecordHook.TYPE.AFTER_DELETE, rec);
-            else if (rec != null)
-              callbackHooks(ORecordHook.TYPE.DELETE_REPLICATED, rec);
-          }
+          if (!operationResult.isMoved() && rec != null)
+            callbackHooks(ORecordHook.TYPE.AFTER_DELETE, rec);
+          else if (rec != null)
+            callbackHooks(ORecordHook.TYPE.DELETE_REPLICATED, rec);
         } catch (Throwable t) {
-          if (iCallTriggers)
-            callbackHooks(ORecordHook.TYPE.DELETE_FAILED, rec);
+          callbackHooks(ORecordHook.TYPE.DELETE_FAILED, rec);
           throw t;
         }
 
@@ -2436,7 +2428,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     ODocument doc = (ODocument) iRecord;
     ODocumentInternal.checkClass(doc, this);
-    if (!getTransaction().isActive() || getTransaction().getStatus() == OTransaction.TXSTATUS.COMMITTING)
+    if (!getTransaction().isActive())
       // EXECUTE VALIDATION ONLY IF NOT IN TX
       doc.validate();
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
@@ -2976,14 +2968,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     storage.getConfiguration().update();
   }
 
-  private void callbackHookFailure(ORecord record, boolean iCallTriggers, boolean wasNew, byte[] stream) {
-    if (iCallTriggers && stream != null && stream.length > 0)
+  private void callbackHookFailure(ORecord record, boolean wasNew, byte[] stream) {
+    if (stream != null && stream.length > 0)
       callbackHooks(wasNew ? ORecordHook.TYPE.CREATE_FAILED : ORecordHook.TYPE.UPDATE_FAILED, record);
   }
 
-  private void callbackHookSuccess(final ORecord record, final boolean iCallTriggers, final boolean wasNew, final byte[] stream,
-      final OStorageOperationResult<ORecordVersion> operationResult) {
-    if (iCallTriggers && stream != null && stream.length > 0) {
+  private void callbackHookSuccess(final ORecord record, final boolean wasNew, final byte[] stream, final OStorageOperationResult<ORecordVersion> operationResult) {
+    if (stream != null && stream.length > 0) {
       final ORecordHook.TYPE hookType;
       if (!operationResult.isMoved()) {
         hookType = wasNew ? ORecordHook.TYPE.AFTER_CREATE : ORecordHook.TYPE.AFTER_UPDATE;
@@ -2995,8 +2986,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
-  private void callbackHookFinalize(final ORecord record, final boolean callTriggers, final boolean wasNew, final byte[] stream) {
-    if (callTriggers && stream != null && stream.length > 0) {
+  private void callbackHookFinalize(final ORecord record, final boolean wasNew, final byte[] stream) {
+    if (stream != null && stream.length > 0) {
       final ORecordHook.TYPE hookType;
       hookType = wasNew ? ORecordHook.TYPE.FINALIZE_CREATION : ORecordHook.TYPE.FINALIZE_UPDATE;
       callbackHooks(hookType, record);

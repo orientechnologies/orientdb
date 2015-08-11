@@ -183,19 +183,19 @@ public class OTransactionNoTx extends OTransactionAbstract {
       if (updatedRecord != null) {
         for (ORecord rec : updatedRecord) {
           if (rec == iRecord) {
-            toRet = database.executeSaveRecord(rec, iClusterName, rec.getRecordVersion(), true, iMode, iForceCreate,
-                iRecordCreatedCallback, iRecordUpdatedCallback);
+            toRet = database.executeSaveRecord(rec, iClusterName, rec.getRecordVersion(), iMode, iForceCreate, iRecordCreatedCallback,
+                iRecordUpdatedCallback);
           } else
-            database.executeSaveRecord(rec, getClusterName(rec), rec.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false,
-                null, null);
+            database.executeSaveRecord(rec, getClusterName(rec), rec.getRecordVersion(), OPERATION_MODE.SYNCHRONOUS, false, null,
+                null);
         }
       }
 
       if (toRet != null)
         return toRet;
       else
-        return database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), true, iMode, iForceCreate,
-            iRecordCreatedCallback, iRecordUpdatedCallback);
+        return database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), iMode, iForceCreate, iRecordCreatedCallback,
+            iRecordUpdatedCallback);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
@@ -234,11 +234,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
           if (path.contains(nextToInspect)) {
             OSerializationSetThreadLocal.checkAndAdd((ODocument) nextToInspect);
             if (nextToInspect == original)
-              toRet = database.executeSaveRecord(nextToInspect, iClusterName, nextToInspect.getRecordVersion(), true, iMode,
-                  iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+              toRet = database.executeSaveRecord(nextToInspect, iClusterName, nextToInspect.getRecordVersion(), iMode, iForceCreate,
+                  iRecordCreatedCallback, iRecordUpdatedCallback);
             else
-              database.executeSaveRecord(nextToInspect, getClusterName(nextToInspect), nextToInspect.getRecordVersion(), true,
-                  OPERATION_MODE.SYNCHRONOUS, false, null, null);
+              database.executeSaveRecord(nextToInspect, getClusterName(nextToInspect), nextToInspect.getRecordVersion(), OPERATION_MODE.SYNCHRONOUS,
+                  false, null, null);
             OSerializationSetThreadLocal.removeCheck((ODocument) nextToInspect);
             toResave.add((ODocument) nextToInspect);
           } else {
@@ -247,23 +247,22 @@ public class OTransactionNoTx extends OTransactionAbstract {
           }
         } else {
           if (next == original)
-            toRet = database.executeSaveRecord(next, iClusterName, next.getRecordVersion(), true, iMode, iForceCreate,
-                iRecordCreatedCallback, iRecordUpdatedCallback);
+            toRet = database.executeSaveRecord(next, iClusterName, next.getRecordVersion(), iMode, iForceCreate, iRecordCreatedCallback,
+                iRecordUpdatedCallback);
           else
-            database.executeSaveRecord(next, getClusterName(next), next.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false,
-                null, null);
+            database.executeSaveRecord(next, getClusterName(next), next.getRecordVersion(), OPERATION_MODE.SYNCHRONOUS, false, null,
+                null);
           next = path.pollFirst();
         }
 
       } else {
-        database.executeSaveRecord(next, null, next.getRecordVersion(), true, iMode, false, null, null);
+        database.executeSaveRecord(next, null, next.getRecordVersion(), iMode, false, null, null);
         next = path.pollFirst();
       }
     } while (next != null);
     for (ODocument op : toResave) {
       op.setDirty();
-      ORecord ret = database.executeSaveRecord(op, null, op.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null,
-          null);
+      ORecord ret = database.executeSaveRecord(op, null, op.getRecordVersion(), OPERATION_MODE.SYNCHRONOUS, false, null, null);
       if (op == original)
         toRet = ret;
     }
@@ -285,7 +284,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       return;
 
     try {
-      database.executeDeleteRecord(iRecord, iRecord.getRecordVersion(), true, true, iMode, false);
+      database.executeDeleteRecord(iRecord, iRecord.getRecordVersion(), true, iMode, false);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();

@@ -1108,19 +1108,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
             final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
-            while (clientTx.getCurrentRecordEntries().iterator().hasNext()) {
-              for (ORecordOperation txEntry : clientTx.getCurrentRecordEntries())
-                tmpEntries.add(txEntry);
+            for (ORecordOperation txEntry : clientTx.getCurrentRecordEntries())
+              tmpEntries.add(txEntry);
 
-              clientTx.clearRecordEntries();
+            clientTx.clearRecordEntries();
 
-              for (ORecordOperation txEntry : tmpEntries) {
-                if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
-                  final ORecord record = txEntry.getRecord();
-                  if (record instanceof ODocument)
-                    ((ODocument) record).validate();
-                }
+            for (ORecordOperation txEntry : tmpEntries) {
+              if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
+                final ORecord record = txEntry.getRecord();
+                if (record instanceof ODocument)
+                  ((ODocument) record).validate();
               }
+            }
             for (ORecordOperation txEntry : tmpEntries) {
               if (txEntry.getRecord().isDirty()) {
                 if (txEntry.type == ORecordOperation.CREATED)
@@ -1131,8 +1130,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               if (txEntry.type != ORecordOperation.CREATED)
                 // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
                 commitEntry(clientTx, txEntry);
-            }
-
             }
 
             if (callback != null)
