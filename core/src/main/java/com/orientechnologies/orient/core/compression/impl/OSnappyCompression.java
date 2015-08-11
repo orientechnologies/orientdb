@@ -32,8 +32,6 @@ import java.io.IOException;
 public class OSnappyCompression extends OAbstractCompression {
   public static final String             NAME     = "snappy";
 
-  public static final OSnappyCompression INSTANCE = new OSnappyCompression();
-
   @Override
   public byte[] compress(byte[] content, final int offset, final int length) {
     try {
