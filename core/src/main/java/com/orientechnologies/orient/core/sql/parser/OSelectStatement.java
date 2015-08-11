@@ -2,9 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 import java.util.List;
@@ -46,11 +44,6 @@ public class OSelectStatement extends OStatement {
 
   public OSelectStatement(OrientSql p, int id) {
     super(p, id);
-  }
-
-  @Override
-  public OCommandExecutorSQLAbstract buildExecutor(final OCommandRequest iRequest) {
-    return null;
   }
 
   private String getAlias(OProjectionItem item) {
@@ -142,50 +135,49 @@ public class OSelectStatement extends OStatement {
     this.letClause = letClause;
   }
 
-  @Override
-  public String toString() {
-    StringBuilder builder = new StringBuilder();
+  public void toString(Map<Object, Object> params, StringBuilder builder){
+
     builder.append("SELECT");
     if (projection != null) {
       builder.append(" ");
-      builder.append(projection.toString());
+      projection.toString(params, builder);
     }
     if (target != null) {
       builder.append(" FROM ");
-      builder.append(target.toString());
+      target.toString(params, builder);
     }
 
     if (letClause != null) {
       builder.append(" ");
-      builder.append(letClause.toString());
+      letClause.toString(params, builder);
     }
 
     if (whereClause != null) {
       builder.append(" WHERE ");
-      builder.append(whereClause.toString());
+      whereClause.toString(params, builder);
     }
 
     if (groupBy != null) {
       builder.append(" ");
-      builder.append(groupBy.toString());
+      groupBy.toString(params, builder);
     }
 
     if (unwind != null) {
       builder.append(" ");
-      builder.append(unwind.toString());
+      unwind.toString(params, builder);
     }
 
     if (orderBy != null) {
       builder.append(" ");
-      builder.append(orderBy.toString());
+      orderBy.toString(params, builder);
     }
 
     if (skip != null) {
-      builder.append(skip);
+      skip.toString(params, builder);
     }
 
     if (limit != null) {
-      builder.append(limit);
+      limit.toString(params, builder);
     }
 
     if (Boolean.TRUE.equals(lockRecord)) {
@@ -194,11 +186,11 @@ public class OSelectStatement extends OStatement {
 
     if (fetchPlan != null) {
       builder.append(" ");
-      builder.append(fetchPlan.toString());
+      fetchPlan.toString(params, builder);
     }
 
     if (timeout != null) {
-      builder.append(timeout);
+      timeout.toString(params, builder);
     }
 
     if (Boolean.TRUE.equals(parallel)) {
@@ -208,41 +200,8 @@ public class OSelectStatement extends OStatement {
     if (Boolean.TRUE.equals(noCache)) {
       builder.append(" NOCACHE");
     }
-
-    return builder.toString();
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    if (target != null) {
-      target.replaceParameters(params);
-    }
-
-    if (projection != null) {
-      projection.replaceParameters(params);
-    }
-
-    if (letClause != null) {
-      letClause.replaceParameters(params);
-    }
-
-    if (whereClause != null) {
-      whereClause.replaceParameters(params);
-    }
-
-    if (groupBy != null) {
-      groupBy.replaceParameters(params);
-    }
-
-    if (skip != null) {
-      skip.replaceParameters(params);
-    }
-
-    if (limit != null) {
-      limit.replaceParameters(params);
-    }
-
-  }
 
   public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
     if (this.target == null || this.target.item == null || this.target.item.cluster != null || this.target.item.clusterList != null

@@ -27,16 +27,14 @@ public class OSuffixIdentifier extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (identifier != null) {
-      return identifier.toString();
+      identifier.toString(params, builder);
     } else if (recordAttribute != null) {
-      return recordAttribute.toString();
+      recordAttribute.toString(params, builder);
     } else if (star) {
-      return "*";
+      builder.append("*");
     }
-    return super.toString();
   }
 
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {

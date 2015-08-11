@@ -31,50 +31,31 @@ public class OModifier extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+
     if (squareBrackets) {
-      result.append("[");
+      builder.append("[");
 
       if (arrayRange != null) {
-        result.append(arrayRange.toString());
+        arrayRange.toString(params, builder);
       } else if (condition != null) {
-        result.append(condition.toString());
+        condition.toString(params, builder);
       } else if (arraySingleValues != null) {
-        result.append(arraySingleValues.toString());
+        arraySingleValues.toString(params, builder);
       }
 
-      result.append("]");
+      builder.append("]");
     } else if (methodCall != null) {
-      result.append(methodCall.toString());
+      methodCall.toString(params, builder);
     } else if (suffix != null) {
-      result.append(".");
-      result.append(suffix.toString());
+      builder.append(".");
+      suffix.toString(params, builder);
     }
     if (next != null) {
-      result.append(next.toString());
+      next.toString(params, builder);
     }
-    return result.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (arrayRange != null) {
-      arrayRange.replaceParameters(params);
-    }
-    if (condition != null) {
-      condition.replaceParameters(params);
-    }
-    if (arraySingleValues != null) {
-      arraySingleValues.replaceParameters(params);
-    }
-    if (methodCall != null) {
-      methodCall.replaceParameters(params);
-    }
-    if (next != null) {
-      next.replaceParameters(params);
-    }
-  }
 
   public Object execute(OIdentifiable iCurrentRecord, Object result, OCommandContext ctx) {
     if (methodCall != null) {

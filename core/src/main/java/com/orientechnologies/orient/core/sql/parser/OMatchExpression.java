@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OMatchExpression extends SimpleNode {
   protected OMatchFilter         origin;
@@ -22,14 +23,11 @@ public class OMatchExpression extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(origin.toString());
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    origin.toString(params, builder);
     for (OMatchPathItem item : items) {
-      result.append(item.toString());
+      item.toString(params, builder);
     }
-    return result.toString();
   }
 }
 /* JavaCC - OriginalChecksum=73491fb653c32baf66997290db29f370 (do not edit this line) */

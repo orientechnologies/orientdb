@@ -186,7 +186,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       Map<String, OWhereClause> aliasFilters = new LinkedHashMap<String, OWhereClause>();
       Map<String, String> aliasClasses = new LinkedHashMap<String, String>();
       for (OMatchExpression expr : this.matchExpressions) {
-        addAliases(expr, aliasFilters, aliasClasses);
+        addAliases(expr, aliasFilters, aliasClasses, context);
       }
 
       Map<String, Long> estimatedRootEntries = estimateRootEntries(aliasClasses, aliasFilters);
@@ -567,12 +567,12 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
     String text;
 
-
     if (oWhereClause == null) {
       text = "(select from " + className + ")";
     } else {
-      oWhereClause.replaceParameters(ctx.getInputParameters());
-      text = "(select from " + className + " where " + oWhereClause.toString() + ")";
+      StringBuilder builder = new StringBuilder();
+      oWhereClause.toString(ctx.getInputParameters(), builder);
+      text = "(select from " + className + " where " + builder.toString() + ")";
     }
     OSQLTarget target = new OSQLTarget(text, ctx, "where");
 
@@ -629,16 +629,17 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return result;
   }
 
-  private void addAliases(OMatchExpression expr, Map<String, OWhereClause> aliasFilters, Map<String, String> aliasClasses) {
-    addAliases(expr.origin, aliasFilters, aliasClasses);
+  private void addAliases(OMatchExpression expr, Map<String, OWhereClause> aliasFilters, Map<String, String> aliasClasses,
+      OCommandContext context) {
+    addAliases(expr.origin, aliasFilters, aliasClasses, context);
     for (OMatchPathItem item : expr.items) {
       if (item.filter != null) {
-        addAliases(item.filter, aliasFilters, aliasClasses);
+        addAliases(item.filter, aliasFilters, aliasClasses, context);
       }
     }
   }
 
-  private void addAliases(OMatchFilter matchFilter, Map<String, OWhereClause> aliasFilters, Map<String, String> aliasClasses) {
+  private void addAliases(OMatchFilter matchFilter, Map<String, OWhereClause> aliasFilters, Map<String, String> aliasClasses,OCommandContext context) {
     String alias = matchFilter.getAlias();
     OWhereClause filter = matchFilter.getFilter();
     if (alias != null) {
@@ -655,7 +656,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         }
       }
 
-      String clazz = matchFilter.getClassName();
+      String clazz = matchFilter.getClassName(context);
       if (clazz != null) {
         String previousClass = aliasClasses.get(alias);
         if (previousClass == null) {
@@ -739,50 +740,49 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return false;
   }
 
-
   @Override
   public String getSyntax() {
     return "MATCH <match-statement> [, <match-statement] RETURN <alias>[, <alias>]";
   }
 
-  @Override public boolean isLocalExecution() {
+  @Override
+  public boolean isLocalExecution() {
     return true;
   }
 
-  @Override public boolean isCacheable() {
+  @Override
+  public boolean isCacheable() {
     return false;
   }
 
-  @Override public long getDistributedTimeout() {
+  @Override
+  public long getDistributedTimeout() {
     return -1;
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(KEYWORD_MATCH);
-    result.append(" ");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(KEYWORD_MATCH);
+    builder.append(" ");
     boolean first = true;
     for (OMatchExpression expr : this.matchExpressions) {
       if (!first) {
-        result.append(", ");
+        builder.append(", ");
       }
-      result.append(expr.toString());
+      expr.toString(params, builder);
       first = false;
     }
-    result.append(" RETURN ");
+    builder.append(" RETURN ");
     first = true;
     for (OIdentifier expr : this.returnItems) {
       if (!first) {
-        result.append(", ");
+        builder.append(", ");
       }
-      result.append(expr.toString());
+      expr.toString(params, builder);
       first = false;
     }
     if (limit != null) {
-      result.append(limit.toString());
+      limit.toString(params, builder);
     }
-    return result.toString();
   }
 
   @Override

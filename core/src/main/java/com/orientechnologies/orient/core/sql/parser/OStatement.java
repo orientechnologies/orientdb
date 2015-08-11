@@ -25,17 +25,17 @@ public class OStatement extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public OCommandExecutorSQLAbstract buildExecutor(final OCommandRequest iRequest) {
-    return null; // TODO make it abstract
-  }
 
-
-  public void replaceParameters(Map<Object, Object> params) {
-
+  public void toString(Map<Object, Object> params, StringBuilder builder){
+    throw new UnsupportedOperationException("missing implementation in "+getClass().getSimpleName());
   }
 
   public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
 
+  }
+
+  public OCommandExecutorSQLAbstract buildExecutor(final OCommandRequest iRequest) {
+    return null; // TODO make it abstract
   }
 }
 /* JavaCC - OriginalChecksum=589c4dcc8287f430e46d8eb12b0412c5 (do not edit this line) */

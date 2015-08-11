@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OMatchFilterItem extends SimpleNode {
   protected OExpression         className;
   protected OExpression         classNames;
@@ -24,33 +26,43 @@ public class OMatchFilterItem extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (className != null) {
-      return "class: " + className;
+      builder.append("class: ");
+      className.toString(params, builder);
+      return;
     }
     if (classNames != null) {
-      return "classes: " + className;
+      builder.append("classes: ");
+      classNames.toString(params, builder);
+      return;
     }
 
     if (alias != null) {
-      return "as: " + alias;
+      builder.append("as: ");
+      alias.toString(params, builder);
+      return;
     }
 
     if (maxDepth != null) {
-      return "maxdepth: " + maxDepth;
+      builder.append("maxdepth: ");
+      maxDepth.toString(params, builder);
+      return;
     }
 
     if (filter != null) {
-      return "where: (" + filter + ")";
+      builder.append("where: (");
+      filter.toString(params, builder);
+      builder.append(")");
+      return;
     }
 
-    if (whileCondition!= null) {
-      return "while: (" + whileCondition + ")";
+    if (whileCondition != null) {
+      builder.append("while: (");
+      whileCondition.toString(params, builder);
+      builder.append(")");
+      return;
     }
-
-
-    return null;
   }
 }
 /* JavaCC - OriginalChecksum=74bf4765509f102180cac29f2295031e (do not edit this line) */

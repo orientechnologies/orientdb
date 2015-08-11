@@ -5,6 +5,8 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 
+import java.util.Map;
+
 public
 class SimpleNode implements Node {
 
@@ -15,6 +17,10 @@ class SimpleNode implements Node {
   protected OrientSql parser;
   protected Token firstToken;
   protected Token lastToken;
+
+  public SimpleNode() {
+    id = -1;
+  }
 
   public SimpleNode(int i) {
     id = i;
@@ -106,6 +112,9 @@ class SimpleNode implements Node {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    throw new UnsupportedOperationException("not implemented in "+getClass().getSimpleName());
+  }
 }
 
 /* JavaCC - OriginalChecksum=d5ed710e8a3f29d574adbb1d37e08f3b (do not edit this line) */

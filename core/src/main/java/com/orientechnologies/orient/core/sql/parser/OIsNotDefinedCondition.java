@@ -30,9 +30,7 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
   public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return false;
   }
-  @Override public void replaceParameters(Map<Object, Object> params) {
-    expression.replaceParameters(params);
-  }
+
 
   @Override public boolean supportsBasicCalculation() {
     return true;
@@ -45,6 +43,12 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
   @Override protected List<Object> getExternalCalculationConditions() {
     return Collections.EMPTY_LIST;
   }
+
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    expression.toString(params, builder);
+    builder.append(" is not defined");
+  }
+
 
 }
 /* JavaCC - OriginalChecksum=1c766d6caf5ccae19c1c291396bb56f2 (do not edit this line) */

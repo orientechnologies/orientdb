@@ -25,27 +25,16 @@ public class OLevelZeroIdentifier extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (functionCall != null) {
-      return functionCall.toString();
+      functionCall.toString(params, builder);
     } else if (Boolean.TRUE.equals(self)) {
-      return "@this";
+      builder.append("@this");
     } else if (collection != null) {
-      return collection.toString();
-    }
-
-    return super.toString();
-  }
-
-  public void replaceParameters(Map<Object, Object> params) {
-    if (functionCall != null) {
-      functionCall.replaceParameters(params);
-    }
-    if (collection != null) {
-      collection.replaceParameters(params);
+      collection.toString(params, builder);
     }
   }
+
 
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     if (functionCall != null) {

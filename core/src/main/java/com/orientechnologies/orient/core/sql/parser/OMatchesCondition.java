@@ -30,18 +30,11 @@ public class OMatchesCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    expression.replaceParameters(params);
-  }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(expression.toString());
-    result.append(" MATCHES ");
-    result.append(right);
-    return result.toString();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    expression.toString(params, builder);
+    builder.append(" MATCHES ");
+    builder.append(right);
   }
 
   @Override

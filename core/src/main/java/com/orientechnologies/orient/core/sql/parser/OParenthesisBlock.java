@@ -30,21 +30,17 @@ public class OParenthesisBlock extends OBooleanExpression {
     return subElement.evaluate(currentRecord, ctx);
   }
 
-  @Override public void replaceParameters(Map<Object, Object> params) {
-    if(subElement!=null) {
-      subElement.replaceParameters(params);
-    }
+
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("(");
+    subElement.toString(params, builder);
+    builder.append(" )");
   }
 
   @Override
-  public String toString() {
-    return "(" + subElement.toString() + " )";
-  }
-
-  @Override public boolean supportsBasicCalculation() {
+  public boolean supportsBasicCalculation() {
     return subElement.supportsBasicCalculation();
   }
-
 
   @Override
   protected int getNumberOfExternalCalculations() {

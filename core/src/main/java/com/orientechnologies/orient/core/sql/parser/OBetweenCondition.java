@@ -55,12 +55,6 @@ public class OBetweenCondition extends OBooleanExpression {
     return leftResult >= 0 && rightResult <= 0;
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    first.replaceParameters(params);
-    second.replaceParameters(params);
-    third.replaceParameters(params);
-  }
 
   public OExpression getFirst() {
     return first;
@@ -86,20 +80,26 @@ public class OBetweenCondition extends OBooleanExpression {
     this.third = third;
   }
 
-  @Override
-  public String toString() {
-    return first.toString() + " BETWEEN " + second.toString() + " AND " + third.toString();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    first.toString(params, builder);
+    builder.append(" BETWEEN ");
+    second.toString(params, builder);
+    builder.append(" AND ");
+    third.toString(params, builder);
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     return 0;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     return Collections.EMPTY_LIST;
   }
 

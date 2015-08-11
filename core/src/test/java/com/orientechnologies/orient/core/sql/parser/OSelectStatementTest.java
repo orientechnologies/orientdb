@@ -293,8 +293,10 @@ public class OSelectStatementTest {
       OSelectStatement stm = (OSelectStatement) result;
       Map<Object, Object> params = new HashMap<Object, Object>();
       params.put("param1", new HashSet<Object>());
-      ((OSelectStatement) result).replaceParameters(params);
-      assertEquals(stm.toString(), "SELECT FROM bar WHERE name NOT IN []");
+
+      StringBuilder parsed = new StringBuilder();
+      stm.toString(params, parsed);
+      assertEquals(parsed.toString(), "SELECT FROM bar WHERE name NOT IN []");
     } catch (Exception e) {
       fail();
 

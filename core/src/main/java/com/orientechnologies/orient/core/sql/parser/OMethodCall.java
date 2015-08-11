@@ -37,31 +37,21 @@ public class OMethodCall extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(".");
-    result.append(methodName.toString());
-    result.append("(");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(".");
+    methodName.toString(params, builder);
+    builder.append("(");
     boolean first = true;
-    for (OExpression param : params) {
+    for (OExpression param : this.params) {
       if (!first) {
-        result.append(", ");
+        builder.append(", ");
       }
-      result.append(param.toString());
+      param.toString(params,builder);
       first = false;
     }
-    result.append(")");
-    return result.toString();
+    builder.append(")");
   }
 
-  public void replaceParameters(Map<Object, Object> iParams) {
-    if (this.params != null) {
-      for (OExpression exp : this.params) {
-        exp.replaceParameters(iParams);
-      }
-    }
-  }
 
   public boolean isBidirectional() {
     return bidirectionalMethods.contains(methodName.getValue().toLowerCase());

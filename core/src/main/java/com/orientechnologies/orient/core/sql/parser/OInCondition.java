@@ -38,46 +38,20 @@ public class OInCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    left.replaceParameters(params);
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    left.toString(params, builder);
+    builder.append(" IN ");
     if (rightStatement != null) {
-      rightStatement.replaceParameters(params);
-    }
-
-    if (rightParam != null) {
-      Object result = rightParam.bindFromInputParams(params);
-      if (rightParam != result) {
-        inputFinalValue = result;
-      }
-    }
-    if (rightMathExpression != null) {
-      rightMathExpression.replaceParameters(params);
-    }
-  }
-
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(left.toString());
-    result.append(" IN ");
-    if (rightStatement != null) {
-      result.append("(");
-      result.append(rightStatement.toString());
-      result.append(")");
+      builder.append("(");
+      rightStatement.toString(params, builder);
+      builder.append(")");
     } else if (right != null) {
-      result.append(convertToString(right));
+      builder.append(convertToString(right));
     } else if (rightParam != null) {
-      if (inputFinalValue == UNSET) {
-        result.append(rightParam.toString());
-      } else if (inputFinalValue == null) {
-        result.append("NULL");
-      } else {
-        result.append(inputFinalValue.toString());
-      }
+      rightParam.toString(params, builder);
     } else if (rightMathExpression != null) {
-      result.append(rightMathExpression.toString());
+      rightMathExpression.toString(params,builder);
     }
-    return result.toString();
   }
 
   private String convertToString(Object o) {

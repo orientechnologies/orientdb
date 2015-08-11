@@ -33,11 +33,6 @@ public class ONotBlock extends OBooleanExpression {
     return result;
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    sub.replaceParameters(params);
-  }
-
   public OBooleanExpression getSub() {
     return sub;
   }
@@ -54,12 +49,11 @@ public class ONotBlock extends OBooleanExpression {
     this.negate = negate;
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (negate) {
-      return "NOT " + sub.toString();
+      builder.append("NOT ");
     }
-    return sub.toString();
+    sub.toString(params, builder);
   }
 
   @Override

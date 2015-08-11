@@ -2,9 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OIdentifier extends SimpleNode {
 
-  protected String value;
+  protected String  value;
   protected boolean quoted = false;
 
   public OIdentifier(int id) {
@@ -30,20 +32,23 @@ public class OIdentifier extends SimpleNode {
 
   @Override
   public String toString(String prefix) {
-    if(quoted){
-      return '`'+value+'`';
+    if (quoted) {
+      return '`' + value + '`';
     }
     return value;
   }
 
-  @Override
-  public String toString() {
-    if(quoted){
-      return '`'+value+'`';
-    }
-    return value;
+  public String toString(){
+    return toString("");
   }
 
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    if (quoted) {
+      builder.append('`' + value + '`');
+    } else {
+      builder.append(value);
+    }
+  }
 
 }
 /* JavaCC - OriginalChecksum=691a2eb5096f7b5e634b2ca8ac2ded3a (do not edit this line) */

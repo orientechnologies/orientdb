@@ -27,22 +27,15 @@ public class OContainsTextCondition extends OBooleanExpression {
     return visitor.visit(this, data);
   }
 
-
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return false;
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    left.replaceParameters(params);
-    if (right != null) {
-      right.replaceParameters(params);
-    }
-  }
-
-  @Override
-  public String toString() {
-    return left.toString() + " CONTAINSTEXT " + right.toString();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    left.toString(params, builder);
+    builder.append(" CONTAINSTEXT ");
+    right.toString(params, builder);
   }
 
   @Override

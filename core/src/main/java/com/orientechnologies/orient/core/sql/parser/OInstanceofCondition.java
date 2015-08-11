@@ -33,23 +33,16 @@ public class OInstanceofCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override
-  public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append(left.toString());
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    left.toString(params, builder);
     builder.append(" instanceof ");
     if (right != null) {
-      builder.append(right.toString());
+      right.toString(params, builder);
     } else if (rightString != null) {
       builder.append(rightString);
     }
-    return builder.toString();
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    left.replaceParameters(params);
-  }
 
   @Override
   public boolean supportsBasicCalculation() {

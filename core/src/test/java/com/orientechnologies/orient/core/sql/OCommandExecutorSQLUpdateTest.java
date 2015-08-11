@@ -19,17 +19,16 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import static org.testng.Assert.*;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import static org.testng.Assert.*;
 
 public class OCommandExecutorSQLUpdateTest {
   @Test
@@ -159,13 +158,13 @@ public class OCommandExecutorSQLUpdateTest {
 
       OCommandSQL sql1 = new OCommandSQL("update " + className
           + " SET name = :name, full_name = :full_name, html_url = :html_url, description = :description, "
-          + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
+          + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url "
           + "UPSERT WHERE full_name = :full_name");
       db.command(sql1).execute(params);
 
       OCommandSQL sql2 = new OCommandSQL("update " + className
           + " SET name = :name, html_url = :html_url, description = :description, "
-          + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
+          + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url "
           + "UPSERT WHERE full_name = :full_name");
       db.command(sql2).execute(params);
     } finally {

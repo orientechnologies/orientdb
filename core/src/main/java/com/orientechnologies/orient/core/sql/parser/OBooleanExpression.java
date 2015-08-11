@@ -18,9 +18,6 @@ public abstract class OBooleanExpression extends SimpleNode {
       return true;
     }
 
-    @Override public void replaceParameters(Map<Object, Object> params) {
-
-    }
 
     @Override protected boolean supportsBasicCalculation() {
       return true;
@@ -38,6 +35,10 @@ public abstract class OBooleanExpression extends SimpleNode {
     public String toString() {
       return "true";
     }
+
+    public void toString(Map<Object, Object> params, StringBuilder builder) {
+      builder.append("true");
+    }
   };
 
   public static OBooleanExpression FALSE = new OBooleanExpression(0) {
@@ -46,9 +47,6 @@ public abstract class OBooleanExpression extends SimpleNode {
       return false;
     }
 
-    @Override public void replaceParameters(Map<Object, Object> params) {
-
-    }
 
     @Override protected boolean supportsBasicCalculation() {
       return true;
@@ -62,10 +60,13 @@ public abstract class OBooleanExpression extends SimpleNode {
       return Collections.EMPTY_LIST;
     }
 
-
     @Override
     public String toString() {
       return "false";
+    }
+
+    public void toString(Map<Object, Object> params, StringBuilder builder) {
+      builder.append("false");
     }
 
   };
@@ -85,23 +86,22 @@ public abstract class OBooleanExpression extends SimpleNode {
 
   public abstract boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx);
 
-  public abstract void replaceParameters(Map<Object, Object> params);
 
-  /**
-   *
-   * @return true if this expression can be calculated in plain Java, false otherwise (eg. LUCENE operator)
-   */
-  protected abstract boolean supportsBasicCalculation();
+    /**
+     *
+     * @return true if this expression can be calculated in plain Java, false otherwise (eg. LUCENE operator)
+     */
+    protected abstract boolean supportsBasicCalculation();
 
-  /**
-   *
-   * @return the number of sub-expressions that have to be calculated using an external engine (eg. LUCENE)
-   */
-  protected abstract int getNumberOfExternalCalculations();
+    /**
+     *
+     * @return the number of sub-expressions that have to be calculated using an external engine (eg. LUCENE)
+     */
+    protected abstract int getNumberOfExternalCalculations();
 
-  /**
-   *
-   * @return the sub-expressions that have to be calculated using an external engine (eg. LUCENE)
-   */
-  protected abstract List<Object> getExternalCalculationConditions();
-}
+    /**
+     *
+     * @return the sub-expressions that have to be calculated using an external engine (eg. LUCENE)
+     */
+    protected abstract List<Object> getExternalCalculationConditions();
+  }

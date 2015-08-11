@@ -5,10 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class OMatchPathItem extends SimpleNode {
   protected OMethodCall  method;
@@ -37,13 +34,11 @@ public class OMatchPathItem extends SimpleNode {
     return method.isBidirectional();
   }
 
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(method.toString());
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    method.toString(params, builder);
     if (filter != null) {
-      result.append(filter.toString());
+      filter.toString(params, builder);
     }
-    return result.toString();
   }
 
   protected Iterable<OIdentifiable> executeTraversal(OMatchStatement.MatchContext matchContext, OCommandContext iCommandContext,

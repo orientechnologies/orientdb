@@ -230,7 +230,9 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
         if (iRequest instanceof OCommandRequestAbstract) {
           final Map<Object, Object> params = ((OCommandRequestAbstract) iRequest).getParameters();
-          result.replaceParameters(params);
+          StringBuilder builder = new StringBuilder();
+          result.toString(params, builder);
+          return builder.toString();
         }
 
         return result.toString();

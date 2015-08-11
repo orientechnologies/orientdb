@@ -27,17 +27,15 @@ public class OMultiMatchPathItem extends OMatchPathItem {
     return false;
   }
 
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(".(");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(".(");
     for (OMatchPathItem item : items) {
-      result.append(item.toString());
+      item.toString(params, builder);
     }
-    result.append(")");
+    builder.append(")");
     if (filter != null) {
-      result.append(filter.toString());
+      filter.toString(params, builder);
     }
-    return result.toString();
   }
 
   protected Iterable<OIdentifiable> traversePatternEdge(OMatchStatement.MatchContext matchContext, OIdentifiable startingPoint,

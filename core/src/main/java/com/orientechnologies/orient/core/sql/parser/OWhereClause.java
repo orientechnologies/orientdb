@@ -31,20 +31,13 @@ public class OWhereClause extends SimpleNode {
     return baseExpression.evaluate(currentRecord, ctx);
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (baseExpression == null) {
-      return "";
+      return ;
     }
-    return baseExpression.toString();
+    baseExpression.toString(params, builder);
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (baseExpression != null) {
-      baseExpression.replaceParameters(params);
-    }
-
-  }
 
   /**
    * estimates how many items of this class will be returned applying this filter

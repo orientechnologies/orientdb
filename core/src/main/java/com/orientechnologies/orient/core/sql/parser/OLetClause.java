@@ -23,26 +23,19 @@ public class OLetClause extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("LET ");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("LET ");
     boolean first = true;
     for (OLetItem item : items) {
       if (!first) {
-        result.append(", ");
+        builder.append(", ");
       }
-      result.append(item.toString());
+      item.toString(params, builder);
       first = false;
     }
-    return result.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    for(OLetItem item:items){
-      item.replaceParameters(params);
-    }
-  }
+
 }
 
 /* JavaCC - OriginalChecksum=201a864b5ed7f1fbe0533843a7acd03d (do not edit this line) */

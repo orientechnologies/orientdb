@@ -34,12 +34,6 @@ public class OOrBlock extends OBooleanExpression {
     return false;
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    for (OBooleanExpression block : subBlocks) {
-      block.replaceParameters(params);
-    }
-  }
 
   public List<OBooleanExpression> getSubBlocks() {
     return subBlocks;
@@ -49,24 +43,23 @@ public class OOrBlock extends OBooleanExpression {
     this.subBlocks = subBlocks;
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (subBlocks == null || subBlocks.size() == 0) {
-      return "";
+      return;
     }
-    if (subBlocks.size() == 1) {
-      return subBlocks.get(0).toString();
-    }
-    StringBuilder result = new StringBuilder();
+//    if (subBlocks.size() == 1) {
+//      subBlocks.get(0).toString(params, builder);
+//      return;
+//    }
+
     boolean first = true;
     for (OBooleanExpression expr : subBlocks) {
       if (!first) {
-        result.append(" OR ");
+        builder.append(" OR ");
       }
-      result.append(expr.toString());
+      expr.toString(params, builder);
       first = false;
     }
-    return result.toString();
   }
 
   @Override
