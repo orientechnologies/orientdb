@@ -680,7 +680,7 @@ public enum OGlobalConfiguration {
       out.print("  + ");
       out.print(v.key);
       out.print(" = ");
-      out.println(v.getValue());
+      out.println(v.isHidden() ? "<hidden>" : v.getValue());
     }
   }
 
