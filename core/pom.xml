@@ -125,7 +125,6 @@
                     <threshold>Low</threshold>
                     <xmlOutput>true</xmlOutput>
                     <findbugsXmlOutput>true</findbugsXmlOutput>
-                    <failOnError>false</failOnError>
                     <includeFilterFile>findbugs_filter.xml</includeFilterFile>
                 </configuration>
                 <executions>
