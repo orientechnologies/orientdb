@@ -126,7 +126,7 @@ class JavaCharStream implements CharStream
     }
     catch (Throwable t)
     {
-      throw new Error(t.getMessage());
+      throw new Error(t.getMessage(), t);
     }
 
     available = (bufsize += 2048);
@@ -329,7 +329,7 @@ class JavaCharStream implements CharStream
       catch(java.io.IOException e)
       {
         throw new Error("Invalid escape character at line " + line +
-                                         " column " + column + ".");
+ " column " + column + ".", e);
       }
 
       if (backSlashCnt == 1)

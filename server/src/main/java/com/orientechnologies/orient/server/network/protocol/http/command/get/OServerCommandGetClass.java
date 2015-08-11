@@ -19,15 +19,15 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.io.StringWriter;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+
+import java.io.StringWriter;
 
 public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = { "GET|class/*" };
@@ -44,13 +44,15 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
     try {
       db = getProfiledDatabaseInstance(iRequest);
 
-      if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClass(urlParts[2]) == null)
-        throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
+      if (db.getMetadata().getSchema().existsClass(urlParts[2])) {
+        final OClass cls = db.getMetadata().getSchema().getClass(urlParts[2]);
+        final StringWriter buffer = new StringWriter();
+        final OJSONWriter json = new OJSONWriter(buffer, OHttpResponse.JSON_FORMAT);
+        OServerCommandGetDatabase.exportClass(db, json, cls);
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+      } else
+        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, null, null, null, null);
 
-      final StringWriter buffer = new StringWriter();
-      final OJSONWriter json = new OJSONWriter(buffer, OHttpResponse.JSON_FORMAT);
-      OServerCommandGetDatabase.exportClass(db, json, db.getMetadata().getSchema().getClass(urlParts[2]));
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
     } finally {
       if (db != null)
         db.close();

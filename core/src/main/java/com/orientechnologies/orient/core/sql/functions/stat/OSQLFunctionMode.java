@@ -1,34 +1,34 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.functions.stat;
+
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
  * Compute the mode (or multimodal) value for a field. The scores in the field's distribution that occurs more frequently. Nulls are
@@ -84,16 +84,20 @@ public class OSQLFunctionMode extends OSQLFunctionAbstract {
   @SuppressWarnings("unchecked")
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
-    Map<Object, Integer> dSeen = new HashMap<Object, Integer>();
-    int dMax = 0;
-    List<Object> dMaxElems = new ArrayList<Object>();
-    for (Object iParameter : resultsToMerge) {
-      final Map<Object, Integer> mSeen = (Map<Object, Integer>) iParameter;
-      for (Entry<Object, Integer> o : mSeen.entrySet()) {
-        dMax = this.evaluate(o.getKey(), o.getValue(), dSeen, dMaxElems, dMax);
+    if (returnDistributedResult()) {
+      Map<Object, Integer> dSeen = new HashMap<Object, Integer>();
+      int dMax = 0;
+      List<Object> dMaxElems = new ArrayList<Object>();
+      for (Object iParameter : resultsToMerge) {
+        final Map<Object, Integer> mSeen = (Map<Object, Integer>) iParameter;
+        for (Entry<Object, Integer> o : mSeen.entrySet()) {
+          dMax = this.evaluate(o.getKey(), o.getValue(), dSeen, dMaxElems, dMax);
+        }
       }
+      return dMaxElems;
     }
-    return dMaxElems;
+
+    return resultsToMerge.get(0);
   }
 
   private int evaluate(Object value, int times, Map<Object, Integer> iSeen, List<Object> iMaxElems, int iMax) {

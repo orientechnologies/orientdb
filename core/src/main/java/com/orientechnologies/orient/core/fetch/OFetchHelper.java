@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -151,7 +152,7 @@ public class OFetchHelper {
       if (iFieldDepthLevel > -1)
         depthLevel = iFieldDepthLevel;
 
-      fieldValue = record.field(fieldName);
+      fieldValue = record.rawField(fieldName);
       if (fieldValue == null
           || !(fieldValue instanceof OIdentifiable)
           && (!(fieldValue instanceof ORecordLazyMultiValue) || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext() || !(((ORecordLazyMultiValue) fieldValue)
@@ -173,6 +174,9 @@ public class OFetchHelper {
             continue;
 
           final int nextLevel = isEmbedded ? iLevelFromRoot : iLevelFromRoot + 1;
+          
+          if (fieldValue instanceof ORecordId)
+            fieldValue = ((ORecordId) fieldValue).getRecord();
 
           fetchRidMap(record, iFetchPlan, fieldValue, fieldName, iCurrentLevel, nextLevel, iFieldDepthLevel, parsedRecords,
               fieldPath, iContext);

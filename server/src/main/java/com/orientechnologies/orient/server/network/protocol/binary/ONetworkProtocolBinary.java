@@ -99,7 +99,6 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.server.OClientConnection;
-import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -125,7 +124,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
       final OContextConfiguration iConfig) throws IOException {
     // CREATE THE CLIENT CONNECTION
-    connection = OClientConnectionManager.instance().connect(this);
+    connection = iServer.getClientConnectionManager().connect(this);
 
     super.config(iListener, iServer, iSocket, iConfig);
 
@@ -153,7 +152,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     OServerPluginHelper.invokeHandlerCallbackOnClientDisconnection(server, connection);
 
-    OClientConnectionManager.instance().disconnect(connection);
+    server.getClientConnectionManager().disconnect(connection);
   }
 
   @Override
@@ -162,14 +161,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     if (Boolean.FALSE.equals(tokenBased) || requestType == OChannelBinaryProtocol.REQUEST_CONNECT
         || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || (tokenHandler == null)) {
-      connection = OClientConnectionManager.instance().getConnection(clientTxId, this);
+      connection = server.getClientConnectionManager().getConnection(clientTxId, this);
       if (clientTxId < 0) {
         short protocolId = 0;
 
         if (connection != null)
           protocolId = connection.data.protocolVersion;
 
-        connection = OClientConnectionManager.instance().connect(this);
+        connection = server.getClientConnectionManager().connect(this);
 
         if (connection != null)
           connection.data.protocolVersion = protocolId;
@@ -1125,7 +1124,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         // OLD CLIENTS WAIT FOR A OK
         sendOk(clientTxId);
 
-      if (Boolean.FALSE.equals(tokenBased) && OClientConnectionManager.instance().disconnect(connection.id))
+      if (Boolean.FALSE.equals(tokenBased) && server.getClientConnectionManager().disconnect(connection.id))
         sendShutdown();
     }
   }
@@ -2308,7 +2307,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   private boolean isConnectionAlive() {
     if (connection == null || connection.database == null) {
       // CONNECTION/DATABASE CLOSED, KILL IT
-      OClientConnectionManager.instance().kill(connection);
+      server.getClientConnectionManager().kill(connection);
       return false;
     }
     return true;

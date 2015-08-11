@@ -121,16 +121,20 @@ public class ODefaultIndexFactory implements OIndexFactory {
       durableInNonTxMode = null;
 
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
-      return new OIndexUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(name, durableInNonTxMode, storage,
+      return new OIndexUnique(name, indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(name, durableInNonTxMode,
+          storage,
           version), valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
-      return new OIndexNotUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(name, durableInNonTxMode,
+      return new OIndexNotUnique(name, indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(name,
+          durableInNonTxMode,
           storage, version), valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OIndexFullText(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(name, durableInNonTxMode,
+      return new OIndexFullText(name, indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(name,
+          durableInNonTxMode,
           storage, version), valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
-      return new OIndexDictionary(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(name, durableInNonTxMode,
+      return new OIndexDictionary(name, indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(name,
+          durableInNonTxMode,
           storage, version), valueContainerAlgorithm, metadata);
     }
 

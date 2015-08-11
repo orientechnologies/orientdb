@@ -62,7 +62,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
 
     if (rec == null) {
       // SKIP IT
-      OLogManager.instance().warn(this, "Record (%s) is null", rec);
+      OLogManager.instance().warn(this, "Record (%s) is null", iObject);
       return null;
     }
 

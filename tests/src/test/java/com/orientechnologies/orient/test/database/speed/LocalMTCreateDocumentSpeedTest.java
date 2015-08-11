@@ -51,7 +51,6 @@ public class LocalMTCreateDocumentSpeedTest {
     }
 
     database.create();
-
     database.getMetadata().getSchema().createClass("Account");
 
     final OSecurity security = database.getMetadata().getSecurity();
@@ -72,8 +71,11 @@ public class LocalMTCreateDocumentSpeedTest {
     stop = true;
 
     System.out.println("Stop insertion");
-    for (Future future : futures)
-      future.get();
+    long sum = 0;
+    for (Future<Long> future : futures)
+      sum += future.get();
+
+    System.out.println("Speed : " + (sum / futures.size()) + " ns per document.");
 
     futures.clear();
 
@@ -93,7 +95,7 @@ public class LocalMTCreateDocumentSpeedTest {
 
     stop = true;
 
-    long sum = 0;
+    sum = 0;
     for (Future future : futures)
       sum += (Long) future.get();
 
@@ -107,16 +109,18 @@ public class LocalMTCreateDocumentSpeedTest {
     OGlobalConfiguration.USE_WAL.setValue(true);
   }
 
-  private final class Saver implements Callable<Void> {
+  private final class Saver implements Callable<Long> {
 
     private Saver() {
     }
 
     @Override
-    public Void call() throws Exception {
+    public Long call() throws Exception {
       Random random = new Random();
       latch.await();
 
+      long counter = 0;
+      long start = System.nanoTime();
       while (!stop) {
 
         final String user = users.get(random.nextInt(users.size()));
@@ -132,10 +136,13 @@ public class LocalMTCreateDocumentSpeedTest {
         record.field("salary", 3000f);
         record.save();
 
+        counter++;
+
         database.close();
       }
+      long end = System.nanoTime();
 
-      return null;
+      return ((end - start) / counter);
     }
   }
 
@@ -155,20 +162,14 @@ public class LocalMTCreateDocumentSpeedTest {
 
       latch.await();
       final OPartitionedDatabasePool pool = poolFactory.get(System.getProperty("url"), "admin", "admin");
-
       final ODatabaseDocumentTx database = pool.acquire();
-
-      List<ODocument> result = new ArrayList<ODocument>();
 
       long counter = 0;
       long start = System.nanoTime();
       while (!stop) {
-        result.add((ODocument) database.load(new ORecordId(clusterId, random.nextInt(docCount))));
-        counter++;
-        if (result.size() > 1000) {
-          size = result.size();
-          result.clear();
-        }
+        ODocument document = database.load(new ORecordId(clusterId, random.nextInt(docCount)));
+        if (document != null)
+          counter++;
       }
       long end = System.nanoTime();
 

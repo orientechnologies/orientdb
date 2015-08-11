@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class OIsNotNullCondition extends OBooleanExpression {
@@ -32,8 +34,32 @@ public class OIsNotNullCondition extends OBooleanExpression {
   public String toString() {
     return expression.toString() + " IS NOT NULL";
   }
-  @Override public void replaceParameters(Map<Object, Object> params) {
+
+  @Override
+  public void replaceParameters(Map<Object, Object> params) {
     expression.replaceParameters(params);
   }
+
+  @Override
+  public boolean supportsBasicCalculation() {
+    return expression.supportsBasicCalculation();
+  }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    if (!expression.supportsBasicCalculation()) {
+      return 1;
+    }
+    return 0;
+  }
+
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
+    if (!expression.supportsBasicCalculation()) {
+      return (List) Collections.singletonList(expression);
+    }
+    return Collections.EMPTY_LIST;
+  }
+
 }
 /* JavaCC - OriginalChecksum=a292fa8a629abb7f6fe72a627fc91361 (do not edit this line) */

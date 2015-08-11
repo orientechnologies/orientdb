@@ -1,12 +1,11 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import org.testng.annotations.Test;
+import static org.testng.Assert.fail;
 
 @Test
 public class OInsertStatementTest {
@@ -50,6 +49,10 @@ public class OInsertStatementTest {
 
   public void testInsertIntoCluster() {
     checkRightSyntax("insert into cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
+    checkRightSyntax("insert into CLUSTER:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
+
+    checkRightSyntax("insert into Foo cluster foo1 (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
+    checkRightSyntax("insert into Foo CLUSTER foo1 (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
 
   }
 

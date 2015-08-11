@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
-import com.orientechnologies.orient.server.OClientConnectionManager;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -143,7 +142,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e,
           protocol.connection.getRemoteAddress());
-      OClientConnectionManager.instance().disconnect(protocol.connection);
+      protocol.getServer().getClientConnectionManager().disconnect(protocol.connection);
       OLiveQueryHook.unsubscribe(iToken);
     }
 

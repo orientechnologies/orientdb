@@ -66,12 +66,12 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
 
           try {
             OrientVertex person1 = createVertex(graph, serverId, threadId, i);
-            OrientVertex person2 = createVertex(graph, serverId, threadId, i+1);
+            OrientVertex person2 = createVertex(graph, serverId, threadId, i + 1);
 
             OrientEdge knows = createEdge(graph, person1, person2);
 
-            Assert.assertEquals( knows.getOutVertex(), person1.getIdentity() );
-            Assert.assertEquals( knows.getInVertex(), person2.getIdentity() );
+            Assert.assertEquals(knows.getOutVertex(), person1.getIdentity());
+            Assert.assertEquals(knows.getInVertex(), person2.getIdentity());
 
             graph.commit();
 
@@ -87,7 +87,8 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
             throw e;
           }
 
-          Thread.sleep(delayWriter);
+          if (delayWriter > 0)
+            Thread.sleep(delayWriter);
 
         } catch (InterruptedException e) {
           System.out.println("Writer received interrupt (db=" + databaseUrl);
@@ -155,8 +156,8 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
   }
 
   protected OrientEdge createEdge(OrientGraph graph, OrientVertex v1, OrientVertex v2) {
-    final Iterable<OrientEdge> result = graph.command(new OCommandSQL("create edge knows from " + v1.getIdentity() + " to " + v2.getIdentity()))
-        .execute();
+    final Iterable<OrientEdge> result = graph.command(
+        new OCommandSQL("create edge knows from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
     return result.iterator().next();
   }
 

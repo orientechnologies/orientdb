@@ -90,7 +90,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
       attribute = OProperty.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException e) {
       throw new OCommandSQLParsingException("Unknown property attribute '" + attributeAsString + "'. Supported attributes are: "
-          + Arrays.toString(OProperty.ATTRIBUTES.values()), parserText, oldPos);
+          + Arrays.toString(OProperty.ATTRIBUTES.values()), parserText, oldPos, e);
     }
 
     value = parserText.substring(pos + 1).trim();
@@ -106,7 +106,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
   }
 
   @Override
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 

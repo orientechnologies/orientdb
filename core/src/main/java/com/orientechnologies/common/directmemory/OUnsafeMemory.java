@@ -53,9 +53,9 @@ public class OUnsafeMemory implements ODirectMemory {
           f.setAccessible(true);
           return f.get(null);
         } catch (NoSuchFieldException e) {
-          throw new Error();
+          throw new Error(e);
         } catch (IllegalAccessException e) {
-          throw new Error();
+          throw new Error(e);
         }
       }
     });

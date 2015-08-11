@@ -123,9 +123,8 @@ public class OHttpResponse {
       writeLine(iHeaders);
     }
 
-    final String sessId = sessionId != null ? sessionId : "-";
-
-    writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessId + "; Path=/; HttpOnly");
+    if (sessionId != null)
+      writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessionId + "; Path=/; HttpOnly");
 
     byte[] binaryContent = null;
     if (!empty) {
@@ -360,8 +359,7 @@ public class OHttpResponse {
     else
       socket = connection.protocol.getChannel().socket;
     if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
-      OLogManager.instance().debug(this, "[OHttpResponse] found and removed pending closed channel %d (%s)", connection,
-          socket);
+      OLogManager.instance().debug(this, "[OHttpResponse] found and removed pending closed channel %d (%s)", connection, socket);
       throw new IOException("Connection is closed");
     }
 

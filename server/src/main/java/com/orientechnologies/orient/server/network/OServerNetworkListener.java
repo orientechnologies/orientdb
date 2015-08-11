@@ -19,22 +19,6 @@
  */
 package com.orientechnologies.orient.server.network;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.enterprise.channel.OChannel;
-import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
-import com.orientechnologies.orient.server.OClientConnectionManager;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.ShutdownHelper;
-import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
-
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.BindException;
@@ -46,6 +30,21 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.enterprise.channel.OChannel;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.ShutdownHelper;
+import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 public class OServerNetworkListener extends Thread {
   private OServerSocketFactory              socketFactory;
@@ -193,9 +192,12 @@ public class OServerNetworkListener extends Thread {
           if (server.getDistributedManager() != null) {
             final ODistributedServerManager.NODE_STATUS nodeStatus = server.getDistributedManager().getNodeStatus();
             if (nodeStatus != ODistributedServerManager.NODE_STATUS.ONLINE) {
-              OLogManager.instance().warn(this,
-                  "Distributed server is not yet ONLINE (status=%s), reject incoming connection from %s. If you are trying to shutdown the server, please kill the process", nodeStatus,
-                  socket.getRemoteSocketAddress());
+              OLogManager
+                  .instance()
+                  .warn(
+                      this,
+                      "Distributed server is not yet ONLINE (status=%s), reject incoming connection from %s. If you are trying to shutdown the server, please kill the process",
+                      nodeStatus, socket.getRemoteSocketAddress());
               socket.close();
 
               // PAUSE CURRENT THREAD TO SLOW DOWN ANY POSSIBLE ATTACK
@@ -204,10 +206,10 @@ public class OServerNetworkListener extends Thread {
             }
           }
 
-          int conns = OClientConnectionManager.instance().getTotal();
+          int conns = server.getClientConnectionManager().getTotal();
           if (conns >= OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger()) {
-            OClientConnectionManager.instance().cleanExpiredConnections();
-            conns = OClientConnectionManager.instance().getTotal();
+            server.getClientConnectionManager().cleanExpiredConnections();
+            conns = server.getClientConnectionManager().getTotal();
             if (conns >= OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger()) {
               // MAXIMUM OF CONNECTIONS EXCEEDED
               OLogManager.instance().warn(this,

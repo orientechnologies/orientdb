@@ -50,9 +50,9 @@ import java.util.Set;
  * 
  */
 public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable>> {
-  public OIndexMultiValues(final String type, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
+  public OIndexMultiValues(String name, final String type, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
       String valueContainerAlgorithm, final ODocument metadata) {
-    super(type, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+    super(name, type, algorithm, indexEngine, valueContainerAlgorithm, metadata);
   }
 
   public Set<OIdentifiable> get(Object key) {
@@ -232,7 +232,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   public OIndexMultiValues create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
 
-    return (OIndexMultiValues) super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
+    return (OIndexMultiValues) super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
         determineValueSerializer());
   }
 

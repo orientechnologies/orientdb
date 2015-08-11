@@ -24,9 +24,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -80,7 +80,7 @@ public enum OGlobalConfiguration {
   // STORAGE
   DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 4 * 1024),
 
-  DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percent of disk cache which is use as write cache", Integer.class, 30),
+  DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percent of disk cache which is use as write cache", Integer.class, 15),
 
   DISK_WRITE_CACHE_PAGE_TTL("storage.diskCache.writeCachePageTTL",
       "Max time till page will be flushed from write cache in seconds", Long.class, 24 * 60 * 60),
@@ -166,6 +166,7 @@ public enum OGlobalConfiguration {
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound", "The minimal amount of free space (in kb)"
       + " in page which is tracked in paginated storage", Integer.class, 16),
 
+  @Deprecated
   STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
       "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
 
@@ -212,6 +213,10 @@ public enum OGlobalConfiguration {
       OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME),
 
   // TRANSACTIONS
+
+  TX_TRACK_ATOMIC_OPERATIONS("tx.trackAtomicOperations",
+      "This setting is used only for debug purpose, it track stac trace of methods where atomic operation is started.",
+      Boolean.class, false),
 
   // INDEX
   INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("index.embeddedToSbtreeBonsaiThreshold",
@@ -291,6 +296,9 @@ public enum OGlobalConfiguration {
   PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental.", Boolean.class, false),
 
   // FILE
+  TRACK_FILE_CLOSE("file.trackFileClose",
+      "Log all the cases when files are closed. This is needed only for internal debugging purpose", Boolean.class, false),
+
   FILE_LOCK("file.lock", "Locks files when used. Default is true", boolean.class, true),
 
   FILE_DELETE_DELAY("file.deleteDelay", "Delay time in ms to wait for another attempt to delete a locked file", Integer.class, 10),
@@ -403,7 +411,7 @@ public enum OGlobalConfiguration {
    * Maximum time which client should wait a connection from the pool when all connection are used.
    */
   CLIENT_CONNECT_POOL_WAIT_TIMEOUT("client.connectionPool.waitTimeout",
-      "Maximum time which client should wait a connection from the pool when all connection are used", Integer.class, 5000),
+      "Maximum time which client should wait a connection from the pool when all connection are used", Integer.class, 5000,true),
 
   CLIENT_DB_RELEASE_WAIT_TIMEOUT("client.channel.dbReleaseWaitTimeout",
       "Delay in ms. after which data modification command will be resent if DB was frozen", Integer.class, 10000),
@@ -429,7 +437,7 @@ public enum OGlobalConfiguration {
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL(
       "server.log.dumpClientExceptionLevel",
       "Logs client exceptions. Use any level supported by Java java.util.logging.Level class: OFF, FINE, CONFIG, INFO, WARNING, SEVERE",
-      Level.class, Level.SEVERE),
+      Level.class, Level.FINE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
       "Dumps the full stack trace of the exception to sent to the client", Boolean.class, Boolean.FALSE),
@@ -587,6 +595,7 @@ public enum OGlobalConfiguration {
   private Object                       value          = null;
   private String                       description;
   private OConfigurationChangeCallback changeCallback = null;
+  private Boolean                      canChange;
 
   // AT STARTUP AUTO-CONFIG
   static {
@@ -596,15 +605,22 @@ public enum OGlobalConfiguration {
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
       final OConfigurationChangeCallback iChangeAction) {
-    this(iKey, iDescription, iType, iDefValue);
+    this(iKey, iDescription, iType, iDefValue, true);
     changeCallback = iChangeAction;
   }
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue) {
+    this(iKey, iDescription, iType, iDefValue, false);
+  }
+
+  OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
+      final Boolean iCanChange) {
     key = iKey;
     description = iDescription;
     defValue = iDefValue;
     type = iType;
+    canChange = iCanChange;
+
   }
 
   public static void dumpConfiguration(final PrintStream out) {
@@ -751,8 +767,13 @@ public enum OGlobalConfiguration {
       else
         value = iValue;
 
-    if (changeCallback != null)
-      changeCallback.change(oldValue, value);
+    if (changeCallback != null) {
+        try {
+            changeCallback.change(oldValue, value);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
   }
 
   public boolean getValueAsBoolean() {
@@ -781,6 +802,14 @@ public enum OGlobalConfiguration {
 
   public String getKey() {
     return key;
+  }
+
+  public Boolean getCanChange() {
+    return canChange;
+  }
+
+  public Object getDefValue() {
+    return defValue;
   }
 
   public Class<?> getType() {

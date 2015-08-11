@@ -70,6 +70,7 @@ public class OServerCommandPostServer extends OServerCommandAuthenticatedServerA
 
       cfg.setValue(settingValue);
 
+
       iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
           "Server global configuration '" + settingName + "' update successfully. Old value was '" + oldValue + "', new value is '"
               + settingValue + "'", null);

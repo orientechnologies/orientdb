@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractDistributedWriteTest extends AbstractServerClusterTest {
   protected static final int                      delayWriter = 0;
   protected static final int                      writerCount = 5;
-  protected int                                   count       = 100;
+  protected volatile int                          count       = 100;
   protected CountDownLatch                        runningWriters;
   protected final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
 
@@ -64,14 +64,16 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
         final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
         try {
           if ((i + 1) % 100 == 0)
-            System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
+            System.out.println("\nWriter " + threadId + "(" + database.getURL() + ") managed " + (i + 1) + "/" + count
+                + " records so far");
 
           final ODocument person = createRecord(database, i);
           updateRecord(database, i);
           checkRecord(database, i);
           checkIndex(database, (String) person.field("name"), person.getIdentity());
 
-          Thread.sleep(delayWriter);
+          if (delayWriter > 0)
+            Thread.sleep(delayWriter);
 
         } catch (InterruptedException e) {
           System.out.println("Writer received interrupt (db=" + database.getURL());

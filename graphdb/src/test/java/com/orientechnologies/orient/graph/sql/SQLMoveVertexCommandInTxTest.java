@@ -44,16 +44,36 @@ public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
 
   @BeforeClass
   public static void beforeClass() {
-    GraphTxAbstractTest.beforeClass();
+    init(SQLMoveVertexCommandInTxTest.class.getSimpleName());
+
     graph.executeOutsideTx(new OCallable<Object, OrientBaseGraph>() {
       @Override
       public Object call(OrientBaseGraph iArgument) {
+        customer = graph.getVertexType("Customer");
+        if (customer != null) {
+          graph.command(new OCommandSQL("delete vertex Customer"));
+          graph.dropVertexType("Customer");
+        }
+
         customer = (OrientVertexType) graph.createVertexType("Customer").setClusterSelection("default");
         customer.addCluster("Customer_genius");
         customerGeniusCluster = graph.getRawGraph().getClusterIdByName("Customer_genius");
 
+        provider = graph.getVertexType("Provider");
+        if (provider != null) {
+          graph.command(new OCommandSQL("delete vertex Provider"));
+          graph.dropVertexType("Provider");
+        }
+
         provider = (OrientVertexType) graph.createVertexType("Provider").setClusterSelection("default");
+
+        knows = graph.getEdgeType("Knows");
+        if (knows != null) {
+          graph.command(new OCommandSQL("delete edge Knows"));
+          graph.dropVertexType("Knows");
+        }
         knows = graph.createEdgeType("Knows");
+
         return null;
       }
     });

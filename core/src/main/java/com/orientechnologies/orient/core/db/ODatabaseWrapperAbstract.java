@@ -37,6 +37,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
@@ -114,9 +115,9 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
    * @throws IOException
    */
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+  public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
       final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
-    underlying.backup(out, options, callable, iListener, compressionLevel, bufferSize);
+    return underlying.backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
   /**

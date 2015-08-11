@@ -20,19 +20,17 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
-import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
@@ -48,7 +46,7 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   public static final String                         INDEX_FILE_EXTENSION = ".irs";
   private OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree;
 
-  protected static final OProfilerMBean              PROFILER             = Orient.instance().getProfiler();
+  protected static final OProfiler                   PROFILER             = Orient.instance().getProfiler();
 
   public OIndexRIDContainerSBTree(long fileId, boolean durableMode, OAbstractPaginatedStorage storage) {
     String fileName;

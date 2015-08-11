@@ -68,7 +68,7 @@ public class ConcurrentTestHelper<T> {
       }
     } catch (InterruptedException e) {
       fail("interrupted", e);
-      throw new RuntimeException("unreached exception");
+      throw new RuntimeException("unreached exception", e);
     }
   }
 

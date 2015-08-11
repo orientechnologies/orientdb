@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class OContainsValueCondition extends OBooleanExpression {
@@ -30,7 +32,8 @@ public class OContainsValueCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public void replaceParameters(Map<Object, Object> params) {
+  @Override
+  public void replaceParameters(Map<Object, Object> params) {
     left.replaceParameters(params);
     if (condition != null) {
       condition.replaceParameters(params);
@@ -53,5 +56,27 @@ public class OContainsValueCondition extends OBooleanExpression {
     }
     return result.toString();
   }
+
+  @Override
+  public boolean supportsBasicCalculation() {
+    return true;
+  }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    if (condition == null) {
+      return 0;
+    }
+    return condition.getNumberOfExternalCalculations();
+  }
+
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
+    if (condition == null) {
+      return Collections.EMPTY_LIST;
+    }
+    return condition.getExternalCalculationConditions();
+  }
+
 }
 /* JavaCC - OriginalChecksum=6fda752f10c8d8731f43efa706e39459 (do not edit this line) */

@@ -84,7 +84,7 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
         vertices = new ArrayList<OrientVertex>(result.size());
 
         for (Object o : result) {
-          ((ArrayList<OrientVertex>) vertices).add(graph.getVertex((OIdentifiable) o));
+          ((ArrayList<OrientVertex>) vertices).add(graph.getVertex(o));
         }
       } else
         throw new IllegalArgumentException("Language '" + language + "' is not supported. Use 'sql' or 'gremlin'");

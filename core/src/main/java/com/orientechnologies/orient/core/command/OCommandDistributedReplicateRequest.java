@@ -69,10 +69,7 @@ public interface OCommandDistributedReplicateRequest {
   QUORUM_TYPE getQuorumType();
 
   /**
-   * Returns the timeout on executing the command
-   * 
-   * @return long as number of ms
+   * Returns the distributed timeout in milliseconds.
    */
-  long getTimeout();
-
+  long getDistributedTimeout();
 }

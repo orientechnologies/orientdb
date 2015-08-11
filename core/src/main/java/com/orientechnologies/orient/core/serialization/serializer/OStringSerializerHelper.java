@@ -180,6 +180,10 @@ public abstract class OStringSerializerHelper {
     return source.substring(startIndex, length);
   }
 
+  public static List<String> smartSplit(final String iSource, final char iRecordSeparator, boolean iPreserveQuotes, final char... iJumpChars) {
+    return smartSplit(iSource, new char[] { iRecordSeparator }, 0, -1, true, true, false, false, true, iPreserveQuotes, iJumpChars);
+  }
+
   public static List<String> smartSplit(final String iSource, final char iRecordSeparator, final char... iJumpChars) {
     return smartSplit(iSource, new char[] { iRecordSeparator }, 0, -1, true, true, false, false, iJumpChars);
   }
@@ -199,14 +203,21 @@ public abstract class OStringSerializerHelper {
   public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
       final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
       final boolean iConsiderBags, boolean iUnicode, final char... iJumpChars) {
-    final StringBuilder buffer = new StringBuilder(128);
+    return smartSplit(iSource, iRecordSeparator, beginIndex, endIndex, iStringSeparatorExtended, iConsiderBraces, iConsiderSets, iConsiderBags, iUnicode, false, iJumpChars);
+
+  }
+    public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
+    final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
+    final boolean iConsiderBags, boolean iUnicode, boolean iPreserveQuotes, final char... iJumpChars){
+
+      final StringBuilder buffer = new StringBuilder(128);
     final ArrayList<String> parts = new ArrayList<String>();
 
     if (iSource != null && !iSource.isEmpty()) {
       final char[] source = iSource.toCharArray();
 
       while ((beginIndex = parse(source, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended, iConsiderBraces,
-          iConsiderSets, -1, iConsiderBags, iUnicode, iJumpChars)) > -1) {
+          iConsiderSets, -1, iConsiderBags, iUnicode, iPreserveQuotes, iJumpChars)) > -1) {
         parts.add(buffer.toString());
         buffer.setLength(0);
       }
@@ -274,12 +285,26 @@ public abstract class OStringSerializerHelper {
       final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
       final int iMinPosSeparatorAreValid, boolean considerBags, final char... iJumpChars) {
     return parse(iSource.toCharArray(), iBuffer, beginIndex, endIndex, iSeparator, iStringSeparatorExtended, iConsiderBraces,
-        iConsiderSets, iMinPosSeparatorAreValid, considerBags, true, iJumpChars);
+        iConsiderSets, iMinPosSeparatorAreValid, considerBags, true, false, iJumpChars);
+  }
+
+  public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
+      final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
+      final int iMinPosSeparatorAreValid, boolean considerBags, boolean iPreserveQuotes, final char... iJumpChars) {
+    return parse(iSource.toCharArray(), iBuffer, beginIndex, endIndex, iSeparator, iStringSeparatorExtended, iConsiderBraces,
+        iConsiderSets, iMinPosSeparatorAreValid, considerBags, true, iPreserveQuotes, iJumpChars);
   }
 
   public static int parse(final char[] iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
       final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
       final int iMinPosSeparatorAreValid, boolean considerBags, final boolean iUnicode, final char... iJumpChars) {
+    return parse(iSource, iBuffer, beginIndex, endIndex, iSeparator, iStringSeparatorExtended, iConsiderBraces, iConsiderSets, iMinPosSeparatorAreValid, considerBags,
+        iUnicode, false, iJumpChars);
+
+  }
+    public static int parse(final char[] iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
+      final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
+      final int iMinPosSeparatorAreValid, boolean considerBags, final boolean iUnicode, boolean iPreserveQuotes, final char... iJumpChars) {
     if (beginIndex < 0)
       return beginIndex;
 
@@ -402,7 +427,7 @@ public abstract class OStringSerializerHelper {
         }
       }
 
-      if (c == '\\' && !encodeMode) {
+      if (c == '\\' && !encodeMode && !iPreserveQuotes) {
         // ESCAPE CHARS
         final char nextChar = iSource[i + 1];
         if (nextChar == 'u' && iUnicode) {
@@ -668,7 +693,7 @@ public abstract class OStringSerializerHelper {
     try {
       getParameters(iText, 0, -1, params);
     } catch (Exception e) {
-      throw new OCommandSQLParsingException("Error on reading parameters in: " + iText);
+      throw new OCommandSQLParsingException("Error on reading parameters in: " + iText, e);
     }
     return params;
   }
