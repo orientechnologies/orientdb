@@ -19,26 +19,6 @@
  */
 package com.orientechnologies.orient.server;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-
 import com.orientechnologies.common.console.DefaultConsoleReader;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.io.OFileUtils;
@@ -70,7 +50,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 import com.orientechnologies.orient.server.config.*;
-import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -81,6 +60,25 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class OServer {
   private static final String                              ROOT_PASSWORD_VAR      = "ORIENTDB_ROOT_PASSWORD";
@@ -556,7 +554,7 @@ public class OServer {
     if (user != null && user.password != null) {
 
       final String passwordToMatch;
-      if (user.password.startsWith(OSecurityManager.ALGORITHM_PREFIX))
+      if (user.password.startsWith(OSecurityManager.ALGORITHM_PREFIX) && !iPassword.startsWith(OSecurityManager.ALGORITHM_PREFIX))
         // HASH PASSWD
         passwordToMatch = OSecurityManager.instance().digest2String(iPassword, true);
       else
@@ -606,6 +604,11 @@ public class OServer {
 
   public OServerUserConfiguration getUser(final String iUserName) {
     return serverCfg.getUser(iUserName);
+  }
+
+  public void dropUser(final String iUserName) throws IOException {
+    serverCfg.dropUser(iUserName);
+    serverCfg.saveConfiguration();
   }
 
   public boolean existsStoragePath(final String iURL) {
@@ -724,15 +727,25 @@ public class OServer {
   }
 
   public ODatabase<?> openDatabase(final String iDbType, final String iDbUrl, final String user, final String password) {
-    return openDatabase(iDbType, iDbUrl, user, password, null);
+    return openDatabase(iDbType, iDbUrl, user, password, null, false);
   }
 
   public ODatabase<?> openDatabase(final String iDbType, final String iDbUrl, final String user, final String password,
       ONetworkProtocolData data) {
+    return openDatabase(iDbType, iDbUrl, user, password, data, false);
+  }
+
+  public ODatabase<?> openDatabase(final String iDbType, final String iDbUrl, final String user, final String password,
+      ONetworkProtocolData data, final boolean iBypassAccess) {
     final String path = getStoragePath(iDbUrl);
 
     final ODatabaseInternal<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
 
+    return openDatabase(database, user, password, data, iBypassAccess);
+  }
+
+  public ODatabase<?> openDatabase(final ODatabaseInternal<?> database, final String user, final String password,
+      final ONetworkProtocolData data, final boolean iBypassAccess) {
     final OStorage storage = database.getStorage();
     if (database.isClosed()) {
       if (database.getStorage() instanceof ODirectMemoryStorage && !storage.exists()) {
@@ -741,34 +754,44 @@ public class OServer {
         } catch (OStorageException e) {
         }
       } else {
-        try {
-          database.open(user, password);
-          if (data != null) {
-            data.serverUser = false;
-            data.serverUsername = null;
-          }
-        } catch (OSecurityException e) {
-          // TRY WITH SERVER'S USER
+        if (iBypassAccess) {
+          // BYPASS SECURITY
+          openDatabaseBypassingSecurity(database, data);
+        } else {
           try {
-            serverLogin(user, password, "database.passthrough");
-          } catch (OSecurityException ex) {
-            throw e;
-          }
+            // TRY DATABASE AUTHENTICATION
+            database.open(user, password);
+            if (data != null) {
+              data.serverUser = false;
+              data.serverUsername = null;
+            }
+          } catch (OSecurityException e) {
+            // TRY WITH SERVER'S AUTHENTICATION
+            try {
+              serverLogin(user, password, "database.passthrough");
+            } catch (OSecurityException ex) {
+              throw e;
+            }
 
-          // SERVER AUTHENTICATED, BYPASS SECURITY
-          database.activateOnCurrentThread();
-          database.resetInitialization();
-          database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
-          database.open(user, password);
-          if (data != null) {
-            data.serverUser = true;
-            data.serverUsername = user;
+            // SERVER AUTHENTICATED, BYPASS SECURITY
+            openDatabaseBypassingSecurity(database, data);
           }
         }
       }
     }
 
     return database;
+  }
+
+  protected void openDatabaseBypassingSecurity(final ODatabaseInternal<?> database, final ONetworkProtocolData data) {
+    database.activateOnCurrentThread();
+    database.resetInitialization();
+    database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
+    database.open("internal", "internal");
+    if (data != null) {
+      data.serverUser = true;
+      data.serverUsername = "internal";
+    }
   }
 
   public ODatabaseInternal openDatabase(final ODatabaseInternal database) {
@@ -778,17 +801,8 @@ public class OServer {
       if (database.getStorage() instanceof ODirectMemoryStorage)
         database.create();
       else {
-        final OServerUserConfiguration replicatorUser = getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
-        try {
-          serverLogin(replicatorUser.name, replicatorUser.password, "database.passthrough");
-        } catch (OSecurityException ex) {
-          throw ex;
-        }
-
         // SERVER AUTHENTICATED, BYPASS SECURITY
-        database.resetInitialization();
-        database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
-        database.open(replicatorUser.name, replicatorUser.password);
+        openDatabaseBypassingSecurity(database, null);
       }
 
     return database;

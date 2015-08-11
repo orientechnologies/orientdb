@@ -28,18 +28,18 @@ import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 
 /**
  * Container for the list of heterogeneous values that are going to be stored in in index as composite keys.
- * 
- * @see com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree.PartialSearchMode
+ *
  * @author Andrey lomakin, Artem Orobets
+ * @see com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree.PartialSearchMode
  */
 public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, ODocumentSerializable {
-  private static final long        serialVersionUID = 1L;
+  private static final long  serialVersionUID = 1L;
   /**
    * List of heterogeneous values that are going to be stored in {@link com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree}.
    */
-  private final List<Object>       keys;
+  private final List<Object> keys;
 
-  private final Comparator<Object> comparator;
+  private final transient Comparator<Object> comparator;
 
   public OCompositeKey(final List<?> keys) {
     this.keys = new ArrayList<Object>(keys.size());
@@ -80,10 +80,10 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
 
   /**
    * Add new key value to the list of already registered values.
-   * 
+   * <p>
    * If passed in value is {@link OCompositeKey} itself then its values will be copied in current index. But key itself will not be
    * added.
-   * 
+   *
    * @param key
    *          Key to add.
    */
@@ -100,13 +100,12 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
 
   /**
    * Performs partial comparison of two composite keys.
-   * 
+   * <p>
    * Two objects will be equal if the common subset of their keys is equal. For example if first object contains two keys and second
    * contains four keys then only first two keys will be compared.
-   * 
+   *
    * @param otherKey
    *          Key to compare.
-   * 
    * @return a negative integer, zero, or a positive integer as this object is less than, equal to, or greater than the specified
    *         object.
    */

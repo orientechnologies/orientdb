@@ -41,14 +41,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -57,10 +50,10 @@ import java.util.Set;
  * @author Artem Orobets added composite index managemement
  */
 public class OIndexManagerShared extends OIndexManagerAbstract implements OIndexManager {
-  private static final long serialVersionUID      = 1L;
+  private static final long serialVersionUID = 1L;
 
-  protected volatile Thread recreateIndexesThread = null;
-  private volatile boolean  rebuildCompleted      = false;
+  protected volatile transient Thread recreateIndexesThread = null;
+  private volatile boolean            rebuildCompleted      = false;
 
   public OIndexManagerShared(final ODatabaseDocument iDatabase) {
     super(iDatabase);
@@ -69,7 +62,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   public OIndex<?> getIndexInternal(final String name) {
     acquireSharedLock();
     try {
-      return indexes.get(name.toLowerCase());
+      final Locale locale = getServerLocale();
+      return indexes.get(name.toLowerCase(locale));
     } finally {
       releaseSharedLock();
     }
@@ -136,8 +130,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     final OIndexInternal<?> index;
     acquireExclusiveLock();
     try {
-      if (indexes.containsKey(iName.toLowerCase()))
-        throw new OIndexException("Index with name " + iName.toLowerCase() + " already exists.");
+      final Locale locale = getServerLocale();
+      if (indexes.containsKey(iName.toLowerCase(locale)))
+        throw new OIndexException("Index with name " + iName.toLowerCase(locale) + " already exists.");
 
       // manual indexes are always durable
       if (clusterIdsToIndex == null || clusterIdsToIndex.length == 0) {
@@ -224,7 +219,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
     acquireExclusiveLock();
     try {
-      final OIndex<?> idx = indexes.remove(iIndexName.toLowerCase());
+      final Locale locale = getServerLocale();
+      final OIndex<?> idx = indexes.remove(iIndexName.toLowerCase(locale));
       if (idx != null) {
         removeClassPropertyIndex(idx);
 
@@ -342,6 +338,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
       clearMetadata();
       final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
+      final Locale locale = getServerLocale();
 
       if (idxs != null) {
         OIndexInternal<?> index;
@@ -350,8 +347,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         while (indexConfigurationIterator.hasNext()) {
           final ODocument d = indexConfigurationIterator.next();
           try {
-            final int indexVersion = d.field(OIndexInternal.INDEX_VERSION) == null ? 1 : (Integer) d
-                .field(OIndexInternal.INDEX_VERSION);
+            final int indexVersion = d.field(OIndexInternal.INDEX_VERSION) == null ? 1
+                : (Integer) d.field(OIndexInternal.INDEX_VERSION);
 
             OIndexInternal.IndexMetadata newIndexMetadata = OIndexAbstract.loadMetadataInternal(d,
                 (String) d.field(OIndexInternal.CONFIG_TYPE), (String) d.field(OIndexInternal.ALGORITHM),
@@ -360,7 +357,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
                 newIndexMetadata.getAlgorithm(), newIndexMetadata.getValueContainerAlgorithm(),
                 (ODocument) d.field(OIndexInternal.METADATA), indexVersion);
 
-            final String normalizedName = newIndexMetadata.getName().toLowerCase();
+            final String normalizedName = newIndexMetadata.getName().toLowerCase(locale);
 
             OIndex<?> oldIndex = oldIndexes.get(normalizedName);
             if (oldIndex != null) {
@@ -368,9 +365,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
               if (oldIndexMetadata.equals(newIndexMetadata)) {
                 addIndexInternal(oldIndex.getInternal());
                 oldIndexes.remove(normalizedName);
-              } else if (newIndexMetadata.getIndexDefinition() == null
-                  && d.field(OIndexAbstract.CONFIG_MAP_RID)
-                      .equals(oldIndex.getConfiguration().field(OIndexAbstract.CONFIG_MAP_RID))) {
+              } else if (newIndexMetadata.getIndexDefinition() == null && d.field(OIndexAbstract.CONFIG_MAP_RID)
+                  .equals(oldIndex.getConfiguration().field(OIndexAbstract.CONFIG_MAP_RID))) {
                 // index is manual and index definition was just detected
                 addIndexInternal(oldIndex.getInternal());
                 oldIndexes.remove(normalizedName);
@@ -445,10 +441,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         }
       }
 
+      final Locale locale = getServerLocale();
       if (map.isEmpty())
-        classPropertyIndex.remove(indexDefinition.getClassName().toLowerCase());
+        classPropertyIndex.remove(indexDefinition.getClassName().toLowerCase(locale));
       else
-        classPropertyIndex.put(indexDefinition.getClassName().toLowerCase(), copyPropertyMap(map));
+        classPropertyIndex.put(indexDefinition.getClassName().toLowerCase(locale), copyPropertyMap(map));
 
     } finally {
       releaseExclusiveLock();
@@ -542,10 +539,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         OLogManager.instance().info(this, "Rebuild of %s index was successfully finished.", indexName);
       } else {
         errors++;
-        OLogManager.instance().error(
-            this,
-            "Information about index was restored incorrectly, following data were loaded : "
-                + "index name - %s, index definition %s, clusters %s, type %s.", indexName, indexDefinition, clusters, type);
+        OLogManager.instance().error(this, "Information about index was restored incorrectly, following data were loaded : "
+            + "index name - %s, index definition %s, clusters %s, type %s.", indexName, indexDefinition, clusters, type);
       }
     }
 

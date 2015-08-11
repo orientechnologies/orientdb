@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.Serializable;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.TimeUnit;
-
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
@@ -38,7 +33,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -51,6 +45,11 @@ import com.orientechnologies.orient.server.distributed.task.OResurrectRecordTask
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+
+import java.io.Serializable;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -74,7 +73,7 @@ public class ODistributedWorker extends Thread {
   protected boolean                                   restoringMessages;
   protected volatile boolean                          running             = true;
 
-  public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final IQueue<ODistributedRequest> iRequestQueue,
+  public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final IQueue iRequestQueue,
       final String iDatabaseName, final int i, final boolean iRestoringMessages) {
     setName("OrientDB DistributedWorker node=" + iDistributed.getLocalNodeName() + " db=" + iDatabaseName + " id=" + i);
     distributed = iDistributed;
@@ -154,19 +153,15 @@ public class ODistributedWorker extends Thread {
   public void initDatabaseInstance() {
     if (database == null) {
       // OPEN IT
-      final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
-          ODistributedAbstractPlugin.REPLICATOR_USER);
-      database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
-          replicatorUser.password);
+      database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, "bypass", "bypass", null,
+          true);
 
       // AVOID RELOADING DB INFORMATION BECAUSE OF DEADLOCKS
       // database.reload();
 
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
-      final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
-          ODistributedAbstractPlugin.REPLICATOR_USER);
-      database.open(replicatorUser.name, replicatorUser.password);
+      manager.getServerInstance().openDatabase(database, "bypass", "bypass", null, true);
 
       // AVOID RELOADING DB INFORMATION BECAUSE OF DEADLOCKS
       // database.reload();

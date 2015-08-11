@@ -99,10 +99,11 @@ public interface OHashTable<K, V> {
     }
   }
 
-  public static final class KeyHashCodeComparator<K> implements Comparator<K> {
+  @SuppressFBWarnings(value = "SE_COMPARATOR_SHOULD_BE_SERIALIZABLE")
+  final class KeyHashCodeComparator<K> implements Comparator<K> {
     private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
-    private final OHashFunction<K>      keyHashFunction;
+    private final OHashFunction<K> keyHashFunction;
 
     public KeyHashCodeComparator(OHashFunction<K> keyHashFunction) {
       this.keyHashFunction = keyHashFunction;

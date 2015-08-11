@@ -21,18 +21,24 @@
 package com.orientechnologies.orient.core.index;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import com.orientechnologies.orient.core.collate.OCollate;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Contains helper methods for {@link OIndexDefinition} creation.
- * 
+ * <p>
  * <b>IMPORTANT:</b> This class designed for internal usage only.
- * 
+ *
  * @author Artem Orobets
  */
 public class OIndexDefinitionFactory {
@@ -40,8 +46,7 @@ public class OIndexDefinitionFactory {
 
   /**
    * Creates an instance of {@link OIndexDefinition} for automatic index.
-   * 
-   * 
+   *
    * @param oClass
    *          class which will be indexed
    * @param fieldNames
@@ -67,7 +72,7 @@ public class OIndexDefinitionFactory {
 
   /**
    * Extract field name from '<property> [by key|value]' field format.
-   * 
+   *
    * @param fieldDefinition
    *          definition of field
    * @return extracted property name
@@ -177,7 +182,12 @@ public class OIndexDefinitionFactory {
       return OPropertyMapIndexDefinition.INDEX_BY.KEY;
 
     if (fieldNameParts.length == 3) {
-      if ("by".equals(fieldNameParts[1].toLowerCase()))
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+      OStorage storage = db.getStorage();
+      OStorageConfiguration configuration = storage.getConfiguration();
+      Locale locale = configuration.getLocaleInstance();
+
+      if ("by".equals(fieldNameParts[1].toLowerCase(locale)))
         try {
           return OPropertyMapIndexDefinition.INDEX_BY.valueOf(fieldNameParts[2].toUpperCase());
         } catch (IllegalArgumentException iae) {

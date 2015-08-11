@@ -42,6 +42,7 @@ import java.util.Set;
  */
 
 public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
+  private static final long            serialVersionUID          = -885861736290603016L;
   private final List<OIndexDefinition> indexDefinitions;
   private String                       className;
   private int                          multiValueDefinitionIndex = -1;
