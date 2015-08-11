@@ -57,8 +57,10 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
           collate.addCollate(oCollate);
         }
       } else {
-        for (OType type : keyTypes) {
-          collate.addCollate(OSQLEngine.getCollate(ODefaultCollate.NAME));
+        final int typesSize = keyTypes.length;
+        final OCollate defCollate = OSQLEngine.getCollate(ODefaultCollate.NAME);
+        for (int i = 0; i < typesSize; i++) {
+          collate.addCollate(defCollate);
         }
       }
       this.collate = collate;

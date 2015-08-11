@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.*;
 
@@ -49,7 +50,8 @@ import java.util.*;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * @author Artem Orobets added composite index managemement
  */
-public class OIndexManagerShared extends OIndexManagerAbstract implements OIndexManager {
+@SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
+public class OIndexManagerShared extends OIndexManagerAbstract {
   private static final long serialVersionUID = 1L;
 
   protected volatile transient Thread recreateIndexesThread = null;
@@ -379,7 +381,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
                 configUpdated = true;
               }
             }
-          } catch (Exception e) {
+          } catch (RuntimeException e) {
             indexConfigurationIterator.remove();
             configUpdated = true;
             OLogManager.instance().error(this, "Error on loading index by configuration: %s", e, d);
@@ -413,7 +415,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       if (indexDefinition == null || indexDefinition.getClassName() == null)
         return;
 
-      Map<OMultiKey, Set<OIndex<?>>> map = classPropertyIndex.get(indexDefinition.getClassName().toLowerCase());
+      final Locale locale = getServerLocale();
+      Map<OMultiKey, Set<OIndex<?>>> map = classPropertyIndex.get(indexDefinition.getClassName().toLowerCase(locale));
 
       if (map == null) {
         return;
@@ -441,7 +444,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         }
       }
 
-      final Locale locale = getServerLocale();
+
       if (map.isEmpty())
         classPropertyIndex.remove(indexDefinition.getClassName().toLowerCase(locale));
       else

@@ -51,14 +51,14 @@ public class OIndexFullText extends OIndexMultiValues {
   private static final String  DEF_SEPARATOR_CHARS    = " \r\n\t:;,.|+*/\\=!?[]()";
   private static final String  DEF_IGNORE_CHARS       = "'\"";
   private static final String  DEF_STOP_WORDS         = "the in a at as and or for his her " + "him this that what which while "
-                                                          + "up with be was were is";
+      + "up with be was were is";
   private static int           DEF_MIN_WORD_LENGTH    = 3;
   private boolean              indexRadix;
   private String               separatorChars;
   private String               ignoreChars;
   private int                  minWordLength;
 
-  private Set<String>          stopWords;
+  private Set<String> stopWords;
 
   public OIndexFullText(String name, String typeId, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
       String valueContainerAlgorithm, ODocument metadata) {
@@ -277,7 +277,8 @@ public class OIndexFullText extends OIndexMultiValues {
   private Set<String> splitIntoWords(final String iKey) {
     final Set<String> result = new HashSet<String>();
 
-    final List<String> words = (List<String>) OStringSerializerHelper.split(new ArrayList<String>(), iKey, 0, -1, separatorChars);
+    final List<String> words = new ArrayList<String>();
+    OStringSerializerHelper.split(words, iKey, 0, -1, separatorChars);
 
     final StringBuilder buffer = new StringBuilder(64);
     // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT

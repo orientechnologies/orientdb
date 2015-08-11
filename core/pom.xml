@@ -128,6 +128,18 @@
                     <failOnError>false</failOnError>
                     <includeFilterFile>findbugs_filter.xml</includeFilterFile>
                 </configuration>
+                <executions>
+                    <!--
+                        Ensures that FindBugs inspects source code when project is compiled.
+                    -->
+                    <execution>
+                        <id>analyze-compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>

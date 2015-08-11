@@ -327,7 +327,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       recycleSubTrees(subTreesToDelete, atomicOperation);
 
       endAtomicOperation(false, null);
-    } catch (Exception e) {
+    } catch (IOException e) {
+      rollback(e);
+
+      throw new OSBTreeException("Error during clear of sbtree with name " + getName(), e);
+    } catch (RuntimeException e) {
       rollback(e);
 
       throw new OSBTreeException("Error during clear of sbtree with name " + getName(), e);
@@ -542,7 +546,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
       endAtomicOperation(false, null);
       return removed;
-    } catch (Exception e) {
+    } catch (IOException e) {
+      rollback(e);
+
+      throw new OSBTreeException("Error during removing key " + key + " from sbtree " + getName(), e);
+    } catch (RuntimeException e) {
       rollback(e);
 
       throw new OSBTreeException("Error during removing key " + key + " from sbtree " + getName(), e);
@@ -1235,13 +1243,13 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
           final long pageIndex = cacheEntry.getPageIndex();
           sysBucket.setFreeSpacePointer(new OBonsaiBucketPointer(pageIndex, OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
 
-          return new AllocationResult(new OBonsaiBucketPointer(pageIndex, 0), cacheEntry, true);
+          return new AllocationResult(new OBonsaiBucketPointer(pageIndex, 0), cacheEntry);
         } else {
           sysBucket.setFreeSpacePointer(new OBonsaiBucketPointer(freeSpacePointer.getPageIndex(),
               freeSpacePointer.getPageOffset() + OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
           final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, freeSpacePointer.getPageIndex(), false);
 
-          return new AllocationResult(freeSpacePointer, cacheEntry, false);
+          return new AllocationResult(freeSpacePointer, cacheEntry);
         }
       }
     } finally {
@@ -1265,7 +1273,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     } finally {
       cacheEntry.releaseExclusiveLock();
     }
-    return new AllocationResult(oldFreeListHead, cacheEntry, false);
+    return new AllocationResult(oldFreeListHead, cacheEntry);
   }
 
   @Override
@@ -1319,12 +1327,10 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   private static class AllocationResult {
     private final OBonsaiBucketPointer pointer;
     private final OCacheEntry          cacheEntry;
-    private final boolean              newPage;
 
-    private AllocationResult(OBonsaiBucketPointer pointer, OCacheEntry cacheEntry, boolean newPage) {
+    private AllocationResult(OBonsaiBucketPointer pointer, OCacheEntry cacheEntry) {
       this.pointer = pointer;
       this.cacheEntry = cacheEntry;
-      this.newPage = newPage;
     }
 
     private OBonsaiBucketPointer getPointer() {

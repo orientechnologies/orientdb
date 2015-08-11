@@ -48,12 +48,11 @@ public class OHashTableDirectory extends ODurableComponent {
   private final long                      firstEntryIndex;
 
   private final boolean                   durableInNonTxMode;
-  private final OAbstractPaginatedStorage storage;
+
 
   public OHashTableDirectory(String defaultExtension, String name, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
     super(storage, name, defaultExtension);
     this.durableInNonTxMode = durableInNonTxMode;
-    this.storage = storage;
     this.firstEntryIndex = 0;
   }
 
@@ -252,7 +251,7 @@ public class OHashTableDirectory extends ODurableComponent {
     } catch (IOException e) {
       endAtomicOperation(true, e);
       throw e;
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     } finally {
