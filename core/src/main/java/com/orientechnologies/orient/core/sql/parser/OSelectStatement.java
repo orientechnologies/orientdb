@@ -210,14 +210,14 @@ public class OSelectStatement extends OStatement {
       builder.append(groupBy.toString());
     }
 
-    if (unwind != null) {
-      builder.append(" ");
-      builder.append(unwind.toString());
-    }
-
     if (orderBy != null) {
       builder.append(" ");
       builder.append(orderBy.toString());
+    }
+
+    if (unwind != null) {
+      builder.append(" ");
+      builder.append(unwind.toString());
     }
 
     if (skip != null) {
