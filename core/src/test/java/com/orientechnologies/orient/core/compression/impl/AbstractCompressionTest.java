@@ -12,8 +12,10 @@ import java.util.Random;
  */
 public abstract class AbstractCompressionTest {
   public static void testCompression(String name) {
-    OCompressionFactory.INSTANCE.init();
+    testCompression(name, null);
+  }
 
+  public static void testCompression(String name, String options) {
     long seed = System.currentTimeMillis();
     System.out.println(name + " - Compression seed " + seed);
 
@@ -25,7 +27,7 @@ public abstract class AbstractCompressionTest {
       byte[] content = new byte[contentSize];
       random.nextBytes(content);
 
-      final OCompression compression = OCompressionFactory.INSTANCE.getCompression(name);
+      final OCompression compression = OCompressionFactory.INSTANCE.getCompression(name, options);
 
       final byte[] compressedContent = compression.compress(content);
 

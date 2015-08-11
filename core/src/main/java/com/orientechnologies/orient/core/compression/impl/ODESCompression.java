@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.core.compression.impl;
 
+import com.orientechnologies.orient.core.compression.OCompression;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
 import javax.crypto.Cipher;
@@ -11,7 +11,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
 
 /***
- * Compression implementation that encrypt the content using DES algorithm
+ * Stateful compression implementation that encrypt the content using DES algorithm
  * (https://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html). Issue
  * https://github.com/orientechnologies/orientdb/issues/89.
  * 
@@ -23,8 +23,8 @@ public class ODESCompression extends OAbstractEncryptedCompression {
   private final String       TRANSFORMATION = "DES/ECB/PKCS5Padding"; // //we use ECB because we cannot
   private final String       ALGORITHM_NAME = "DES";
 
-  private final SecretKey    theKey;
-  private final Cipher       cipher;
+  private SecretKey          theKey;
+  private Cipher             cipher;
 
   private boolean            initialized    = false;
 
@@ -36,17 +36,18 @@ public class ODESCompression extends OAbstractEncryptedCompression {
   }
 
   public ODESCompression() {
+  }
+
+  public OCompression configure(final String iOptions) {
     initialized = false;
 
-    final String configuredKey = OGlobalConfiguration.STORAGE_ENCRYPTION_DES_KEY.getValueAsString();
-
-    if (configuredKey == null)
-      throw new OStorageException("DES compression has been selected, but no key was found. Please configure '"
-          + OGlobalConfiguration.STORAGE_ENCRYPTION_DES_KEY.getKey() + "' setting or remove DES compression by setting '"
-          + OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey() + "=nothing'");
+    if (iOptions == null)
+      throw new OSecurityException(
+          "DES compression has been selected, but no key was found. Please configure it by passing the key as property at database create/open. The property key is: '"
+              + OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS.getKey() + "'");
 
     try {
-      final byte[] key = OBase64Utils.decode(configuredKey);
+      final byte[] key = OBase64Utils.decode(iOptions);
 
       final DESKeySpec desKeySpec = new DESKeySpec(key);
       final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(ALGORITHM_NAME);
@@ -60,6 +61,8 @@ public class ODESCompression extends OAbstractEncryptedCompression {
     }
 
     this.initialized = true;
+
+    return this;
   }
 
   public byte[] encryptOrDecrypt(final int mode, final byte[] input, final int offset, final int length) throws Throwable {

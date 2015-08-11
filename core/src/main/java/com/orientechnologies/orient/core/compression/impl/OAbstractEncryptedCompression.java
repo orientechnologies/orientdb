@@ -13,9 +13,17 @@ import javax.crypto.Cipher;
  *
  */
 public abstract class OAbstractEncryptedCompression extends OAbstractCompression {
-
-  @Override
-  public abstract String name();
+  /***
+   *
+   * @param mode
+   *          it can be Cipher.ENCRYPT_MODE or Cipher.DECRYPT_MODE
+   * @param input
+   * @param offset
+   * @param length
+   * @return
+   * @throws Throwable
+   */
+  public abstract byte[] encryptOrDecrypt(int mode, byte[] input, int offset, int length) throws Throwable;
 
   @Override
   public byte[] compress(final byte[] content, final int offset, final int length) {
@@ -34,17 +42,4 @@ public abstract class OAbstractEncryptedCompression extends OAbstractCompression
       throw new OSecurityException("Cannot decrypt content", e);
     }
   };
-
-  /***
-   * 
-   * @param mode
-   *          it can be Cipher.ENCRYPT_MODE or Cipher.DECRYPT_MODE
-   * @param input
-   * @param offset
-   * @param length
-   * @return
-   * @throws Throwable
-   */
-  public abstract byte[] encryptOrDecrypt(int mode, byte[] input, int offset, int length) throws Throwable;
-
 }

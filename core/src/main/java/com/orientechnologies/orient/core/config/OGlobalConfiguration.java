@@ -111,16 +111,9 @@ public enum OGlobalConfiguration {
       + " Possible values : gzip, nothing, snappy, des-encrypted, aes-encrypted, snappy-native. Default is nothing.", String.class,
       "nothing"),
 
-  // ENCRYPTION AT REST @see OAbstractEncryptedCompression https://github.com/orientechnologies/orientdb/issues/89
-  STORAGE_ENCRYPTION_DES_KEY(
-      "storage.encryption.des_key",
-      "The symmetric key to use to encrypt/decrypt data at rest using the DES algorithm, stored in BASE64. The key must be 64 bits long. Default is null. Without a password the encryption cannot work",
-      String.class, null),
-
-  STORAGE_ENCRYPTION_AES_KEY(
-      "storage.encryption.aes_key",
-      "The symmetric key to use to encrypt/decrypt data at rest using the AES algorithm, stored in BASE64. The key must be 128 or 256 bits. Default is null. Without a password the encryption cannot work",
-      String.class, null),
+  STORAGE_COMPRESSION_OPTIONS("storage.compressionOptions",
+      "Additional options for compression at storage level. Use this to store any encryption key. This setting is hidden",
+      String.class, null, false, true),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
@@ -440,9 +433,7 @@ public enum OGlobalConfiguration {
       "If total number of returned records in a query is major than this threshold a warning is given. Use 0 to disable it",
       Long.class, 10000),
 
-  STATEMENT_CACHE_SIZE("statement.cacheSize",
-      "Number of parsed SQL statements kept in cache",
-      Integer.class, 100),
+  STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache", Integer.class, 100),
 
   /**
    * Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.
@@ -639,6 +630,7 @@ public enum OGlobalConfiguration {
   private String                       description;
   private OConfigurationChangeCallback changeCallback = null;
   private Boolean                      canChangeAtRuntime;
+  private boolean                      hidden         = false;
 
   // AT STARTUP AUTO-CONFIG
   static {
@@ -658,12 +650,17 @@ public enum OGlobalConfiguration {
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
       final Boolean iCanChange) {
+    this(iKey, iDescription, iType, iDefValue, iCanChange, false);
+  }
+
+  OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
+      final boolean iCanChange, final boolean iHidden) {
     key = iKey;
     description = iDescription;
     defValue = iDefValue;
     type = iType;
     canChangeAtRuntime = iCanChange;
-
+    hidden = iHidden;
   }
 
   public static void dumpConfiguration(final PrintStream out) {
@@ -849,6 +846,10 @@ public enum OGlobalConfiguration {
 
   public Boolean isChangeableAtRuntime() {
     return canChangeAtRuntime;
+  }
+
+  public boolean isHidden() {
+    return hidden;
   }
 
   public Object getDefValue() {
