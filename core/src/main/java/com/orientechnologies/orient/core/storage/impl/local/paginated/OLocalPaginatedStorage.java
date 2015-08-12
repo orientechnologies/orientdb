@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
-import com.orientechnologies.orient.core.util.OBackupable;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -218,7 +217,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     try {
       ((OWOWCache) writeCache).unregisterMBean();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for write cache can not unregistered", e);
+      OLogManager.instance().error(this, "MBean for write cache cannot be unregistered", e);
     }
 
     try {
@@ -226,7 +225,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         checkpointExecutor.shutdown();
         if (!checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(),
             TimeUnit.SECONDS))
-          throw new OStorageException("Can not terminate full checkpoint task");
+          throw new OStorageException("Cannot terminate full checkpoint task");
       }
     } catch (InterruptedException e) {
       Thread.interrupted();

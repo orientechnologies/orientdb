@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 
 /**
@@ -69,7 +70,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public static final String                           DEFAULT_CHARSET               = "UTF-8";
   private             String                           charset                       = DEFAULT_CHARSET;
-  public static final int                              CURRENT_VERSION               = 14;
+  public static final int                              CURRENT_VERSION               = 13;
   public static final int                              CURRENT_BINARY_FORMAT_VERSION = 12;
   private final       List<OStorageEntryConfiguration> properties                    = Collections.synchronizedList(new ArrayList<OStorageEntryConfiguration>());
   protected final transient OStorage storage;
@@ -122,12 +123,23 @@ public class OStorageConfiguration implements OSerializableStream {
    * @compatibility 0.9.25
    * @return
    * @throws OSerializationException
+   * @param iProperties
    */
-  public OStorageConfiguration load() throws OSerializationException {
+  public OStorageConfiguration load(final Map<String, Object> iProperties) throws OSerializationException {
+    final String compressionMethod = (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase());
+    if (compressionMethod != null)
+      // SAVE COMPRESSION OPTION (ENCRYPTION KEY) IN CONFIGURATION
+      configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
+
+    final String compressionOptions = (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS.getKey().toLowerCase());
+    if (compressionOptions != null)
+      // SAVE COMPRESSION OPTION (ENCRYPTION KEY) IN CONFIGURATION
+      configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS, compressionOptions);
+
     final byte[] record = storage.readRecord(CONFIG_RID, null, false, null).getResult().buffer;
 
     if (record == null)
-      throw new OStorageException("Cannot load database's configuration. The database seems to be corrupted.");
+      throw new OStorageException("Cannot load database configuration. The database seems to be corrupted");
 
     fromStream(record);
     return this;
@@ -257,7 +269,8 @@ public class OStorageConfiguration implements OSerializableStream {
           status = OStorageClusterConfiguration.STATUS.valueOf(read(values[index++]));
 
         currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa,
-            clusterCompression, clusterConflictStrategy, status);
+            clusterCompression, configuration.getValueAsString(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS),
+            clusterConflictStrategy, status);
 
       } else if (clusterType.equals("p"))
         // PHYSICAL CLUSTER
@@ -331,7 +344,7 @@ public class OStorageConfiguration implements OSerializableStream {
         final Object value = read(values[index++]);
 
         final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
-        if (cfg != null)
+        if (cfg != null && value != null)
           configuration.setValue(key, OType.convert(value, cfg.getType()));
         else
           OLogManager.instance().warn(this, "Ignored storage configuration because not supported: %s=%s.", key, value);
@@ -428,8 +441,10 @@ public class OStorageConfiguration implements OSerializableStream {
       // WRITE CONFIGURATION
       write(buffer, configuration.getContextSize());
       for (String k : configuration.getContextKeys()) {
+        final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(k);
+
         write(buffer, k);
-        write(buffer, configuration.getValueAsString(OGlobalConfiguration.findByKey(k)));
+        write(buffer, cfg.isHidden() ? null : configuration.getValueAsString(cfg));
       }
     }
 
@@ -446,7 +461,8 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public void create() throws IOException {
-    storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, OVersionFactory.instance().createVersion(), ORecordBytes.RECORD_TYPE, (byte) 0, null);
+    storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, OVersionFactory.instance().createVersion(),
+        ORecordBytes.RECORD_TYPE, (byte) 0, null);
   }
 
   public void synch() throws IOException {
@@ -608,6 +624,20 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void clearProperties() {
     properties.clear();
+  }
+
+  protected void bindPropertiesToContext(final Map<String, Object> iProperties) {
+    final String compressionMethod = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD
+        .getKey().toLowerCase()) : null;
+    if (compressionMethod != null)
+      // SAVE COMPRESSION OPTION (ENCRYPTION KEY) IN CONFIGURATION
+      getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
+
+    final String compressionOptions = iProperties != null ? (String) iProperties
+        .get(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS.getKey().toLowerCase()) : null;
+    if (compressionOptions != null)
+      // SAVE COMPRESSION OPTION (ENCRYPTION KEY) IN CONFIGURATION
+      getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS, compressionOptions);
   }
 
   private int phySegmentFromStream(final String[] values, int index, final OStorageSegmentConfiguration iSegment) {

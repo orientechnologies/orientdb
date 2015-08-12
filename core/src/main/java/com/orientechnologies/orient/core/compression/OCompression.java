@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.compression;
 
 /**
  * @author Andrey Lomakin
+ * @author Luca Garulli
  * @since 05.06.13
  */
 public interface OCompression {
@@ -34,4 +35,6 @@ public interface OCompression {
   byte[] uncompress(byte[] content, final int offset, final int length);
 
   String name();
+
+  OCompression configure(String iOptions);
 }

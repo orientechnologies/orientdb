@@ -29,6 +29,7 @@ public class OStoragePaginatedClusterConfiguration implements OStorageClusterCon
   public float                           recordOverflowGrowFactor = DEFAULT_GROW_FACTOR;
   public float                           recordGrowFactor         = DEFAULT_GROW_FACTOR;
   public String                          compression;
+  public String                          compressionOptions;
   public transient OStorageConfiguration root;
   public int                             id;
   public String                          name;
@@ -39,7 +40,7 @@ public class OStoragePaginatedClusterConfiguration implements OStorageClusterCon
 
   public OStoragePaginatedClusterConfiguration(final OStorageConfiguration root, final int id, final String name,
       final String location, final boolean useWal, final float recordOverflowGrowFactor, final float recordGrowFactor,
-      final String compression, final String conflictStrategy, final STATUS iStatus) {
+      final String compression, final String iCompressionOptions, final String conflictStrategy, final STATUS iStatus) {
     this.root = root;
     this.id = id;
     this.name = name;
@@ -48,6 +49,7 @@ public class OStoragePaginatedClusterConfiguration implements OStorageClusterCon
     this.recordOverflowGrowFactor = recordOverflowGrowFactor;
     this.recordGrowFactor = recordGrowFactor;
     this.compression = compression;
+    this.compressionOptions = iCompressionOptions;
     this.conflictStrategy = conflictStrategy;
     this.status = iStatus;
   }

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.record;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -268,6 +269,8 @@ public abstract class ORecordAbstract implements ORecord {
 
       return this;
     } catch (OOfflineClusterException e) {
+      throw e;
+    } catch (OException e) {
       throw e;
     } catch (Exception e) {
       throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found", e);
@@ -527,7 +530,7 @@ public abstract class ORecordAbstract implements ORecord {
   protected void track(OIdentifiable id) {
     this.getDirtyManager().track(this, id);
   }
-  
+
   protected void unTrack(OIdentifiable id) {
     this.getDirtyManager().unTrack(this, id);
   }

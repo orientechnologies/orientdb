@@ -76,6 +76,11 @@ public abstract class BaseHttpTest {
     }
   }
 
+  protected boolean isInDevelopmentMode() {
+    final String env = System.getProperty("orientdb.test.env");
+    return env == null || !env.equals("dev");
+  }
+
   protected BaseHttpTest exec() throws IOException {
     final HttpHost targetHost = new HttpHost(getHost(), getPort(), getProtocol());
 
@@ -99,11 +104,10 @@ public abstract class BaseHttpTest {
     if (payload != null && request instanceof HttpEntityEnclosingRequestBase)
       ((HttpEntityEnclosingRequestBase) request).setEntity(payload);
 
-
     final CloseableHttpClient httpClient = HttpClients.createDefault();
 
-//    DefaultHttpMethodRetryHandler retryhandler = new DefaultHttpMethodRetryHandler(retry, false);
-//    context.setAttribute(HttpMethodParams.RETRY_HANDLER, retryhandler);
+    // DefaultHttpMethodRetryHandler retryhandler = new DefaultHttpMethodRetryHandler(retry, false);
+    // context.setAttribute(HttpMethodParams.RETRY_HANDLER, retryhandler);
 
     response = httpClient.execute(targetHost, request, context);
 

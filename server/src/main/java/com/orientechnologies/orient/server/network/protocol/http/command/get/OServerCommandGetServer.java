@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.Collection;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
@@ -33,6 +29,10 @@ import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Collection;
 
 public class OServerCommandGetServer extends OServerCommandGetConnections {
   private static final String[] NAMES = { "GET|server" };
@@ -73,7 +73,7 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
       json.beginObject(3, true, null);
       json.writeAttribute(4, false, "key", c.getKey());
       json.writeAttribute(4, false, "description", c.getDescription());
-      json.writeAttribute(4, false, "value", c.getValue());
+      json.writeAttribute(4, false, "value", c.isHidden() ? "<hidden>" : c.getValue());
       json.writeAttribute(4, false, "defaultValue", c.getDefValue());
       json.writeAttribute(4, false, "canChange", c.isChangeableAtRuntime());
       json.endObject(3, true);

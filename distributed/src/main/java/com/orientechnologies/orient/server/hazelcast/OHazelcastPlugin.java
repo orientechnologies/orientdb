@@ -1083,6 +1083,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         lock.unlock();
       }
 
+      db.activateOnCurrentThread();
       db.close();
     }
 

@@ -19,16 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OApi;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
-
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -40,6 +30,16 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OApi;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -108,7 +108,12 @@ public enum OGlobalConfiguration {
       "Should we perform force sync of storage configuration for each update", Boolean.class, true),
 
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
-      + " Possible values : gzip, nothing, snappy, des-encrypted, aes-encrypted, snappy-native. Default is nothing.", String.class, "nothing"),
+      + " Possible values : gzip, nothing, snappy, des-encrypted, aes-encrypted, snappy-native. Default is nothing.", String.class,
+      "nothing"),
+
+  STORAGE_COMPRESSION_OPTIONS("storage.compressionOptions",
+      "Additional options for compression at storage level. Use this to store any encryption key. This setting is hidden",
+      String.class, null, false, true),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
@@ -368,10 +373,10 @@ public enum OGlobalConfiguration {
 
   PROFILER_CONFIG("profiler.config", "Configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size>",
       String.class, null, new OConfigurationChangeCallback() {
-    public void change(final Object iCurrentValue, final Object iNewValue) {
-      Orient.instance().getProfiler().configure(iNewValue.toString());
-    }
-  }),
+        public void change(final Object iCurrentValue, final Object iNewValue) {
+          Orient.instance().getProfiler().configure(iNewValue.toString());
+        }
+      }),
 
   PROFILER_AUTODUMP_INTERVAL("profiler.autoDump.interval",
       "Dumps the profiler values at regular intervals. Time is expressed in seconds", Integer.class, 0,
@@ -428,9 +433,7 @@ public enum OGlobalConfiguration {
       "If total number of returned records in a query is major than this threshold a warning is given. Use 0 to disable it",
       Long.class, 10000),
 
-  STATEMENT_CACHE_SIZE("statement.cacheSize",
-      "Number of parsed SQL statements kept in cache",
-      Integer.class, 100),
+  STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache", Integer.class, 100),
 
   /**
    * Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.
@@ -530,9 +533,14 @@ public enum OGlobalConfiguration {
   DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
       ORecordSerializerBinary.NAME),
 
-  //ENCRYPTION AT REST @see OAbstractEncryptedCompression https://github.com/orientechnologies/orientdb/issues/89
-  STORAGE_ENCRYPTION_DES_KEY("encryption.des_key","The simmetric key to use to encrypt/descript data at rest using the DES alghorithm, stored in BASE64. The key must be 64 bits long. Default is \"T1JJRU5UREI=\" (ORIENTDB).",String.class,"T1JJRU5UREI="),
-  STORAGE_ENCRYPTION_AES_KEY("encryption.aes_key","The simmetric key to use to encrypt/descript data at rest using the AES alghorithm, stored in BASE64. The key must be 128 or 256 bits. Default is \"T1JJRU5UREJfSVNfQ09PTA==\" (ORIENTDB_IS_COOL).",String.class,"T1JJRU5UREJfSVNfQ09PTA=="),
+  // ENCRYPTION AT REST @see OAbstractEncryptedCompression https://github.com/orientechnologies/orientdb/issues/89
+  STORAGE_ENCRYPTION_DES_KEY(
+      "encryption.des_key",
+      "The simmetric key to use to encrypt/descript data at rest using the DES alghorithm, stored in BASE64. The key must be 64 bits long. Default is \"T1JJRU5UREI=\" (ORIENTDB).",
+      String.class, "T1JJRU5UREI="), STORAGE_ENCRYPTION_AES_KEY(
+      "encryption.aes_key",
+      "The simmetric key to use to encrypt/descript data at rest using the AES alghorithm, stored in BASE64. The key must be 128 or 256 bits. Default is \"T1JJRU5UREJfSVNfQ09PTA==\" (ORIENTDB_IS_COOL).",
+      String.class, "T1JJRU5UREJfSVNfQ09PTA=="),
 
   @Deprecated
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Deprecated, now BINARY serialization is used in place of CSV", Boolean.class,
@@ -618,19 +626,20 @@ public enum OGlobalConfiguration {
 
   @Deprecated
   // DEPRECATED IN 2.0
-      STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
+  STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
 
   // DEPRECATED IN 2.0, LEVEL1 CACHE CANNOT BE DISABLED ANYMORE
   @Deprecated
   CACHE_LOCAL_ENABLED("cache.local.enabled", "Deprecated, Level1 cache cannot be disabled anymore", Boolean.class, true);
 
-  private final String key;
-  private final Object defValue;
-  private final Class<?> type;
-  private Object value = null;
-  private String description;
+  private final String                 key;
+  private final Object                 defValue;
+  private final Class<?>               type;
+  private Object                       value          = null;
+  private String                       description;
   private OConfigurationChangeCallback changeCallback = null;
-  private Boolean canChangeAtRuntime;
+  private Boolean                      canChangeAtRuntime;
+  private boolean                      hidden         = false;
 
   // AT STARTUP AUTO-CONFIG
   static {
@@ -639,7 +648,7 @@ public enum OGlobalConfiguration {
   }
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
-                       final OConfigurationChangeCallback iChangeAction) {
+      final OConfigurationChangeCallback iChangeAction) {
     this(iKey, iDescription, iType, iDefValue, true);
     changeCallback = iChangeAction;
   }
@@ -649,13 +658,18 @@ public enum OGlobalConfiguration {
   }
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
-                       final Boolean iCanChange) {
+      final Boolean iCanChange) {
+    this(iKey, iDescription, iType, iDefValue, iCanChange, false);
+  }
+
+  OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
+      final boolean iCanChange, final boolean iHidden) {
     key = iKey;
     description = iDescription;
     defValue = iDefValue;
     type = iType;
     canChangeAtRuntime = iCanChange;
-
+    hidden = iHidden;
   }
 
   public static void dumpConfiguration(final PrintStream out) {
@@ -675,14 +689,15 @@ public enum OGlobalConfiguration {
       out.print("  + ");
       out.print(v.key);
       out.print(" = ");
-      out.println(v.getValue());
+      out.println(v.isHidden() ? "<hidden>" : v.getValue());
     }
   }
 
   /**
    * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
    *
-   * @param iKey Key to find. It's case insensitive.
+   * @param iKey
+   *          Key to find. It's case insensitive.
    * @return OGlobalConfiguration instance if found, otherwise null
    */
   public static OGlobalConfiguration findByKey(final String iKey) {
@@ -840,6 +855,10 @@ public enum OGlobalConfiguration {
 
   public Boolean isChangeableAtRuntime() {
     return canChangeAtRuntime;
+  }
+
+  public boolean isHidden() {
+    return hidden;
   }
 
   public Object getDefValue() {
