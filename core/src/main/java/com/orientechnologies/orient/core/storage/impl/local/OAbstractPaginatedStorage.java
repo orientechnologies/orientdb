@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -63,7 +64,9 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -1229,10 +1232,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         if (nextToInspect != null) {
           if (path.contains(nextToInspect)) {
             // this is wrong, here we should do empty record save here
-            OSerializationSetThreadLocal.checkAndAdd((ODocument) nextToInspect);
             ORecordOperation toCommit = tx.getRecordEntry(nextToInspect.getIdentity());
-            commitEntry(tx, toCommit);
-            OSerializationSetThreadLocal.removeCheck((ODocument) nextToInspect);
+            commitEmptyEntry(tx, toCommit);
             toResave.add(toCommit);
           } else {
             path.push((ODocument) next);
@@ -2439,6 +2440,45 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     return null;
   }
 
+  private void commitEmptyEntry(final OTransaction clientTx, final ORecordOperation txEntry) {
+    final ORecord rec = txEntry.getRecord();
+
+    ORecordId rid = (ORecordId) rec.getIdentity();
+
+    int clusterId = rid.clusterId;
+    if (rid.clusterId == ORID.CLUSTER_ID_INVALID && rec instanceof ODocument
+        && ODocumentInternal.getImmutableSchemaClass(((ODocument) rec)) != null) {
+      // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
+
+      final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) rec));
+      clusterId = schemaClass.getClusterForNewInstance((ODocument) rec);
+    }
+
+    final OCluster cluster = getClusterById(clusterId);
+
+    if (cluster.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME)
+        || cluster.getName().equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME))
+      // AVOID TO COMMIT INDEX STUFF
+      return;
+
+    final ORecordId oldRID = rid.copy();
+
+    ORecordSerializer binary = ((ODatabaseDocumentInternal)clientTx.getDatabase()).getSerializer();
+    final byte[] stream = binary.writeClassOnly(rec);
+
+    rid = rid.copy();
+    rid.clusterId = cluster.getId();
+    final OPhysicalPosition ppos;
+
+    final byte recordType = ORecordInternal.getRecordType(rec);
+    ppos = doCreateRecord(rid, stream, rec.getRecordVersion(), recordType, null, cluster, new OPhysicalPosition(recordType))
+        .getResult();
+
+    rid.clusterPosition = ppos.clusterPosition;
+    rec.getRecordVersion().copyFrom(ppos.recordVersion);
+    clientTx.updateIdentityAfterCommit(oldRID, rid);
+  }
+  
   private void commitEntry(final OTransaction clientTx, final ORecordOperation txEntry) throws IOException {
 
     final ORecord rec = txEntry.getRecord();

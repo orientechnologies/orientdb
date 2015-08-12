@@ -19,20 +19,18 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.common.collection.OLazyIterator;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.record.OIdentityChangeListener;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODirtyManager;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import com.orientechnologies.common.collection.OLazyIterator;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.record.OIdentityChangeListener;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Lazy implementation of Set. Can be bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty()
@@ -79,7 +77,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
         if (!(cur instanceof ODocument))
           cur = sourceRecord;
 
-        if (OSerializationSetThreadLocal.check((ODocument) cur)) {
+        if (cur.getInternalStatus() == STATUS.MARSHALLING) {
           iter = new HashSet<Entry<OIdentifiable, Object>>(ORecordLazySet.super.map.entrySet()).iterator();
         } else
           iter = ORecordLazySet.super.map.entrySet().iterator();

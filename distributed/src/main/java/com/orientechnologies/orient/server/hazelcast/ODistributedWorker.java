@@ -138,11 +138,6 @@ public class ODistributedWorker extends Thread {
           ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
               "error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
               message != null ? message.getTask() : "-");
-      } finally {
-        // CLEAR SERIALIZATION TL TO AVOID MEMORY LEAKS
-        if (OSerializationSetThreadLocal.INSTANCE != null) {
-          OSerializationSetThreadLocal.clear();
-        }
       }
     }
 

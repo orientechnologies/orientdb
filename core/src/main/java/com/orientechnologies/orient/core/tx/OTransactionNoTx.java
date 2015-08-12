@@ -232,14 +232,10 @@ public class OTransactionNoTx extends OTransactionAbstract {
         }
         if (nextToInspect != null) {
           if (path.contains(nextToInspect)) {
-            OSerializationSetThreadLocal.checkAndAdd((ODocument) nextToInspect);
             if (nextToInspect == original)
-              toRet = database.executeSaveRecord(nextToInspect, iClusterName, nextToInspect.getRecordVersion(), iMode, iForceCreate,
-                  iRecordCreatedCallback, iRecordUpdatedCallback);
+              database.executeSaveEmptyRecord(nextToInspect,iClusterName);
             else
-              database.executeSaveRecord(nextToInspect, getClusterName(nextToInspect), nextToInspect.getRecordVersion(), OPERATION_MODE.SYNCHRONOUS,
-                  false, null, null);
-            OSerializationSetThreadLocal.removeCheck((ODocument) nextToInspect);
+              database.executeSaveEmptyRecord(nextToInspect,getClusterName(nextToInspect));
             toResave.add((ODocument) nextToInspect);
           } else {
             path.push((ODocument) next);
@@ -262,9 +258,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
     } while (next != null);
     for (ODocument op : toResave) {
       op.setDirty();
-      ORecord ret = database.executeSaveRecord(op, null, op.getRecordVersion(), OPERATION_MODE.SYNCHRONOUS, false, null, null);
-      if (op == original)
+      if (op == original) {
+        ORecord ret = database.executeSaveRecord(op, null, op.getRecordVersion(), OPERATION_MODE.SYNCHRONOUS, false, null, iRecordUpdatedCallback);
         toRet = ret;
+      } else 
+        database.executeSaveRecord(op, null, op.getRecordVersion(), OPERATION_MODE.SYNCHRONOUS, false, null, null);
     }
     return toRet;
   }

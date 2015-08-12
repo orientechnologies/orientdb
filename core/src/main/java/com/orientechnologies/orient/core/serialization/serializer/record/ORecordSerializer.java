@@ -27,6 +27,8 @@ public interface ORecordSerializer {
   public ORecord fromStream(byte[] iSource, ORecord iRecord, String[] iFields);
 
   public byte[] toStream(ORecord iSource, boolean iOnlyDelta);
+  
+  public byte[] writeClassOnly(ORecord iSource);
 
   public int getCurrentVersion();
 

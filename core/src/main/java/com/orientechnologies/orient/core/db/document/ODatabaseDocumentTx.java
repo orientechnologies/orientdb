@@ -20,6 +20,29 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TimeZone;
+import java.util.TreeSet;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -78,7 +101,6 @@ import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
@@ -88,6 +110,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -103,21 +126,12 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransaction.TXSTATUS;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
@@ -1790,6 +1804,33 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
+  public <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName) {
+    boolean isNew = record.getIdentity().isNew();
+    ORecordId rid = (ORecordId) record.getIdentity();
+
+    ORecordInternal.onBeforeIdentityChanged(record);
+
+    if (isNew && rid.clusterId < 0 && storage.isAssigningClusterIds())
+      rid.clusterId = clusterName != null ? getClusterIdByName(clusterName) : getDefaultClusterId();
+
+    if (rid.clusterId > -1 && clusterName == null)
+      clusterName = getClusterNameById(rid.clusterId);
+
+    if (storage.isAssigningClusterIds())
+      checkRecordClass(record, clusterName, rid, isNew);
+
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, isNew ? ORole.PERMISSION_CREATE : ORole.PERMISSION_UPDATE, clusterName);
+    byte [] content = getSerializer().writeClassOnly(record);
+    
+    final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(rid,content, record.getRecordVersion(),
+        recordType, OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
+    
+    ORecordInternal.setVersion(record, ppos.getResult().recordVersion.getCounter());
+    ((ORecordId) record.getIdentity()).copyFrom(rid);
+    ORecordInternal.onAfterIdentityChanged(record);
+    
+    return (RET)record;
+  }
   /**
    * This method is internal, it can be subject to signature change or be removed, do not use.
    *
@@ -1859,14 +1900,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
         checkSecurity(ORule.ResourceGeneric.CLUSTER, wasNew ? ORole.PERMISSION_CREATE : ORole.PERMISSION_UPDATE, clusterName);
 
-        final boolean partialMarshalling = record instanceof ODocument
-            && OSerializationSetThreadLocal.checkIfPartial((ODocument) record);
-
-        if (partialMarshalling && !isNew)
-          // UPDATE + PARTIAL MARSHALLING: SKIP IT BECAUSE THE REAL UPDATE WILL BE EXECUTED BY OUTER SAVE
-          return (RET) record;
-
-        if (stream != null && stream.length > 0 && !partialMarshalling) {
+        if (stream != null && stream.length > 0) {
           final ORecordHook.TYPE triggerType = wasNew ? ORecordHook.TYPE.BEFORE_CREATE : ORecordHook.TYPE.BEFORE_UPDATE;
 
           final ORecordHook.RESULT hookResult = callbackHooks(triggerType, record);
@@ -1923,7 +1957,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           if (operationResult.getModifiedRecordContent() != null)
             stream = operationResult.getModifiedRecordContent();
 
-          ORecordInternal.fill(record, rid, version, stream, partialMarshalling);
+          ORecordInternal.fill(record, rid, version, stream, false);
 
           callbackHookSuccess(record, wasNew, stream, operationResult);
         } catch (Throwable t) {
@@ -2596,10 +2630,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       // ROLLBACK TX AT DB LEVEL
       currentTx.rollback(false, 0);
       getLocalCache().clear();
-      OSerializationSetThreadLocal.clear();
-
-      // CLEAR SERIALIZATION TL TO AVOID MEMORY LEAKS
-      OSerializationSetThreadLocal.clear();
 
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : browseListeners())
@@ -2665,10 +2695,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
 
     getLocalCache().clear();
-    OSerializationSetThreadLocal.clear();
-
-    // CLEAR SERIALIZATION TL TO AVOID MEMORY LEAKS
-    OSerializationSetThreadLocal.clear();
 
     return this;
   }
