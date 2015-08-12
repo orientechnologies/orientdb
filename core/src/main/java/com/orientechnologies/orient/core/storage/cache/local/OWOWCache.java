@@ -310,23 +310,22 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           throw new OStorageException("File with name '" + fileName + "' does not exist in storage '" + storageLocal.getName()
               + "'");
         else {
-          throw new OStorageException("File '" + fileName
-              + "' is not registered in 'file name - id' map, but exists in file system");
+          // throw new OStorageException("File '" + fileName
+          // + "' is not registered in 'file name - id' map, but exists in file system");
 
-          // IT WAS MANAGED AS SPECIAL "DISTRIBUTED CASE", BUT IT WAS A BUG:
-          // https://github.com/orientechnologies/orientdb/issues/4439
-          // OLogManager.instance().error(this,
-          // "File '" + fileName + "' is not registered in 'file name - id' map, but exists in file system");
-          //
-          // if (fileId == null) {
-          // ++fileCounter;
-          // fileId = fileCounter;
-          // } else
-          // fileId = -fileId;
-          //
-          // files.put(fileId, fileClassic);
-          // nameIdMap.put(fileName, fileId);
-          // writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+          // REGISTER THE FILE
+          OLogManager.instance().debug(this,
+              "File '" + fileName + "' is not registered in 'file name - id' map, but exists in file system. Registering it");
+
+          if (fileId == null) {
+            ++fileCounter;
+            fileId = fileCounter;
+          } else
+            fileId = -fileId;
+
+          files.put(fileId, fileClassic);
+          nameIdMap.put(fileName, fileId);
+          writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
         }
       }
 
@@ -407,7 +406,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
       if (existingFileId != null && existingFileId >= 0) {
         if (existingFileId == intId)
-          throw new OStorageException("File with name '" + fileName + "'' already exists in storage '" + storageLocal.getName()+"'");
+          throw new OStorageException("File with name '" + fileName + "'' already exists in storage '" + storageLocal.getName()
+              + "'");
         else
           throw new OStorageException("File with given name already exists but has different id " + existingFileId
               + " vs. proposed " + fileId);
