@@ -21,18 +21,40 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.context.jts.JtsSpatialContext;
 import com.spatial4j.core.shape.Shape;
+import com.spatial4j.core.shape.jts.JtsGeometry;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+
+import java.util.Map;
 
 public abstract class OShapeBuilder<T extends Shape> {
 
-  public static final JtsSpatialContext SPATIAL_CONTEXT = JtsSpatialContext.GEO;
+  public static final JtsSpatialContext SPATIAL_CONTEXT  = JtsSpatialContext.GEO;
+  public static final GeometryFactory   GEOMETRY_FACTORY = JtsSpatialContext.GEO.getGeometryFactory();
 
   public abstract String getName();
 
   public abstract OShapeType getType();
 
-  public abstract T makeShape(OCompositeKey key, SpatialContext ctx);
+  public T fromDoc(ODocument doc) {
+    return null;
+  }
 
-  public abstract boolean canHandle(OCompositeKey key);
+  public T fromMapGeoJson(Map<String, Object> geoJsonMap) {
+    ODocument doc = new ODocument(getName());
+    doc.field("coordinates", geoJsonMap.get("coordinates"));
+    return fromDoc(doc);
+  }
+
+  @Deprecated
+  public T makeShape(OCompositeKey key, SpatialContext ctx) {
+    throw new UnsupportedOperationException();
+  };
+
+  @Deprecated
+  public boolean canHandle(OCompositeKey key) {
+    throw new UnsupportedOperationException();
+  };
 
   public abstract void initClazz(ODatabaseDocumentTx db);
 
@@ -41,7 +63,15 @@ public abstract class OShapeBuilder<T extends Shape> {
   }
 
   public String asText(ODocument document) {
+    return asText(fromDoc(document));
+  }
+
+  public String asGeoJson(T shape) {
     return null;
+  }
+
+  public String asGeoJson(ODocument document) {
+    return asText(fromDoc(document));
   }
 
   public void validate(ODocument doc) {
@@ -49,6 +79,16 @@ public abstract class OShapeBuilder<T extends Shape> {
     if (!doc.getClassName().equals(getName())) {
     }
 
+  }
+
+  public JtsGeometry toShape(Geometry geometry) {
+    // dateline180Check is false because ElasticSearch does it's own dateline wrapping
+    JtsGeometry jtsGeometry = new JtsGeometry(geometry, SPATIAL_CONTEXT, false, false);
+    // if (autoValidateJtsGeometry)
+    // jtsGeometry.validate();
+    // if (autoIndexJtsGeometry)
+    // jtsGeometry.index();
+    return jtsGeometry;
   }
 
   public abstract T fromText(String wkt);

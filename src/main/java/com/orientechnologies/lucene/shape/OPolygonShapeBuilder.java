@@ -18,15 +18,18 @@
 
 package com.orientechnologies.lucene.shape;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
-import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.context.jts.JtsSpatialContext;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.shape.Shape;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.LinearRing;
+import com.vividsolutions.jts.geom.Polygon;
 
-import java.text.ParseException;
+import java.util.List;
 
 /**
  * Created by enricorisa on 24/04/14.
@@ -34,26 +37,12 @@ import java.text.ParseException;
 public class OPolygonShapeBuilder extends OShapeBuilder {
   @Override
   public String getName() {
-    return null;
+    return "Polygon";
   }
 
   @Override
   public OShapeType getType() {
-    return null;
-  }
-
-  @Override
-  public Shape makeShape(OCompositeKey key, SpatialContext ctx) {
-
-    SpatialContext ctx1 = JtsSpatialContext.GEO;
-    String value = key.getKeys().get(0).toString();
-
-    try {
-      return ctx1.getWktShapeParser().parse(value);
-    } catch (ParseException e) {
-      OLogManager.instance().error(this, "Error on making shape", e);
-    }
-    return null;
+    return OShapeType.POLYGON;
   }
 
   @Override
@@ -65,12 +54,50 @@ public class OPolygonShapeBuilder extends OShapeBuilder {
   public void initClazz(ODatabaseDocumentTx db) {
 
     OSchemaProxy schema = db.getMetadata().getSchema();
-    schema.createClass("Polygon");
+    OClass polygon = schema.createClass("Polygon");
+    polygon.createProperty("coordinates", OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
+
   }
 
   @Override
-  public String asText(Shape shape) {
-    return null;
+  public Shape fromDoc(ODocument document) {
+    validate(document);
+    List<List<List<Number>>> coordinates = document.field("coordinates");
+
+    return toShape(createPolygon(coordinates));
+  }
+
+  protected Polygon createPolygon(List<List<List<Number>>> coordinates) {
+    Polygon shape;
+    if (coordinates.size() == 1) {
+      List<List<Number>> coords = coordinates.get(0);
+      LinearRing linearRing = createLinearRing(coords);
+      shape = GEOMETRY_FACTORY.createPolygon(linearRing);
+    } else {
+      int i = 0;
+      LinearRing outerRing = null;
+      LinearRing[] holes = new LinearRing[coordinates.size() - 1];
+      for (List<List<Number>> coordinate : coordinates) {
+        if (i == 0) {
+          outerRing = createLinearRing(coordinate);
+        } else {
+          holes[i - 1] = createLinearRing(coordinate);
+        }
+        i++;
+      }
+      shape = GEOMETRY_FACTORY.createPolygon(outerRing, holes);
+    }
+    return shape;
+  }
+
+  protected LinearRing createLinearRing(List<List<Number>> coords) {
+    Coordinate[] crs = new Coordinate[coords.size()];
+    int i = 0;
+    for (List<Number> points : coords) {
+      crs[i] = new Coordinate(points.get(0).doubleValue(), points.get(1).doubleValue());
+      i++;
+    }
+    return GEOMETRY_FACTORY.createLinearRing(crs);
   }
 
   @Override

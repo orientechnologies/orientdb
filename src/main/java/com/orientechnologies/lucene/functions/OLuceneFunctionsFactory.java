@@ -16,6 +16,8 @@
 package com.orientechnologies.lucene.functions;
 
 import com.orientechnologies.lucene.functions.spatial.OToWktFunction;
+import com.orientechnologies.lucene.functions.spatial.STNearFunction;
+import com.orientechnologies.lucene.functions.spatial.STWithinFunction;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
@@ -30,6 +32,8 @@ public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
 
   static {
     register(OToWktFunction.NAME, OToWktFunction.class);
+    register(STWithinFunction.NAME, STWithinFunction.class);
+    register(STNearFunction.NAME, STNearFunction.class);
   }
 
   @Override

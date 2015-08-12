@@ -18,59 +18,50 @@
 
 package com.orientechnologies.lucene.shape;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
-import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.context.jts.JtsSpatialContext;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.shape.Shape;
+import com.vividsolutions.jts.geom.Polygon;
 
-import java.text.ParseException;
+import java.util.List;
 
 /**
  * Created by enricorisa on 24/04/14.
  */
-public class OMultiPolygonShapeBuilder extends OShapeBuilder {
+public class OMultiPolygonShapeBuilder extends OPolygonShapeBuilder {
   @Override
   public String getName() {
-    return null;
+    return "MultiPolygon";
   }
 
   @Override
   public OShapeType getType() {
-    return null;
-  }
-
-  @Override
-  public Shape makeShape(OCompositeKey key, SpatialContext ctx) {
-
-    SpatialContext ctx1 = JtsSpatialContext.GEO;
-    String value = key.getKeys().get(0).toString();
-
-    try {
-      return ctx1.getWktShapeParser().parse(value);
-    } catch (ParseException e) {
-      OLogManager.instance().error(this, "Error on making shape", e);
-    }
-    return null;
-  }
-
-  @Override
-  public boolean canHandle(OCompositeKey key) {
-    return false;
+    return OShapeType.MULTIPOLYGON;
   }
 
   @Override
   public void initClazz(ODatabaseDocumentTx db) {
 
     OSchemaProxy schema = db.getMetadata().getSchema();
-    schema.createClass("MultiPolygon");
+    OClass polygon = schema.createClass(getName());
+    polygon.createProperty("coordinates", OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
   }
 
   @Override
-  public String asText(Shape shape) {
-    return null;
+  public Shape fromDoc(ODocument document) {
+    validate(document);
+    List<List<List<List<Number>>>> coordinates = document.field("coordinates");
+
+    Polygon[] polygons = new Polygon[coordinates.size()];
+    int i = 0;
+    for (List<List<List<Number>>> coordinate : coordinates) {
+      polygons[i] = createPolygon(coordinate);
+      i++;
+    }
+    return toShape(GEOMETRY_FACTORY.createMultiPolygon(polygons));
   }
 
   @Override

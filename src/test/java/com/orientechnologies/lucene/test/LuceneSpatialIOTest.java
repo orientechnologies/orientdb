@@ -19,21 +19,28 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.lucene.shape.OPointShapeBuilder;
+import com.orientechnologies.lucene.shape.OPolygonShapeBuilder;
+import com.orientechnologies.lucene.shape.ORectangleShapeBuilder;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.context.jts.JtsSpatialContext;
 import com.spatial4j.core.shape.Point;
+import com.spatial4j.core.shape.Rectangle;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Polygon;
 import junit.framework.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Enrico Risa on 06/08/15.
  */
-public class LuceneSpatialIOTest extends BaseLuceneTest {
+public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
   @Override
   protected String getDatabaseName() {
     return "conversionTest";
@@ -64,6 +71,85 @@ public class LuceneSpatialIOTest extends BaseLuceneTest {
 
     String p2 = JtsSpatialContext.GEO.getGeometryFrom(point).toText();
 
+    Assert.assertEquals(p2, p1);
+  }
+
+  @Test
+  public void testRectangleIO() {
+
+    ODocument doc = new ODocument("Rectangle");
+    doc.field("coordinates", new ArrayList<Double>() {
+      {
+        add(-45d);
+        add(45d);
+        add(-30d);
+        add(30d);
+      }
+    });
+    doc.save();
+
+    ORectangleShapeBuilder builder = new ORectangleShapeBuilder();
+
+    String rect = builder.asText(doc);
+
+    Assert.assertNotNull(rect);
+
+    Rectangle rectangle = JtsSpatialContext.GEO.makeRectangle(-45d, 45d, -30d, 30d);
+
+    String rect1 = JtsSpatialContext.GEO.getGeometryFrom(rectangle).toText();
+
+    Assert.assertEquals(rect1, rect);
+  }
+
+  public void testLineIO() {
+
+  }
+
+  public void testPolygonNoHolesIO() {
+
+    ODocument doc = new ODocument("Polygon");
+    doc.field("coordinates", new ArrayList<List<List<Double>>>() {
+      {
+        add(new ArrayList<List<Double>>() {
+          {
+            add(Arrays.asList(-45d, 30d));
+            add(Arrays.asList(45d, 30d));
+            add(Arrays.asList(45d, -30d));
+            add(Arrays.asList(-45d, -30d));
+            add(Arrays.asList(-45d, 30d));
+          }
+        });
+      }
+    });
+    doc.save();
+
+    List<Coordinate> coordinates = new ArrayList<Coordinate>();
+    coordinates.add(new Coordinate(-45, 30));
+    coordinates.add(new Coordinate(45, 30));
+    coordinates.add(new Coordinate(45, -30));
+    coordinates.add(new Coordinate(-45, -30));
+    coordinates.add(new Coordinate(-45, 30));
+
+    OPolygonShapeBuilder builder = new OPolygonShapeBuilder();
+
+    String p1 = builder.asText(doc);
+    Polygon polygon1 = JtsSpatialContext.GEO.getGeometryFactory().createPolygon(
+        coordinates.toArray(new Coordinate[coordinates.size()]));
+    String p2 = polygon1.toText();
+    Assert.assertEquals(p2, p1);
+  }
+
+  public void testPolygonHolesIO() {
+
+    ODocument doc = new ODocument("Polygon");
+    doc.field("coordinates", polygonCoordTestHole());
+
+    Polygon polygon1 = polygonTestHole();
+
+    OPolygonShapeBuilder builder = new OPolygonShapeBuilder();
+    String p1 = builder.asText(doc);
+
+    String p2 = polygon1.toText();
     Assert.assertEquals(p2, p1);
   }
 

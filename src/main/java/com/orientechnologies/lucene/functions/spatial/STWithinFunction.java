@@ -23,28 +23,36 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.spatial4j.core.shape.Shape;
+import com.spatial4j.core.shape.SpatialRelation;
+
+import java.util.Map;
 
 /**
- * Created by Enrico Risa on 06/08/15.
+ * Created by Enrico Risa on 12/08/15.
  */
-public class OToWktFunction extends OSQLFunctionAbstract {
+public class STWithinFunction extends OSQLFunctionAbstract {
 
-  public static final String NAME    = "towkt";
+  public static final String NAME    = "st_within";
 
   OShapeFactory              factory = OShapeFactory.INSTANCE;
 
-  public OToWktFunction() {
-    super(NAME, 1, 1);
+  public STWithinFunction() {
+    super(NAME, 2, 2);
   }
 
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
-    return factory.asText((ODocument) iParams[0]);
+
+    Shape shape = factory.fromDoc((ODocument) iParams[0]);
+    Map map = (Map) iParams[1];
+    Shape shape1 = factory.fromMapGeoJson((Map) map.get("shape"));
+    return shape.relate(shape1) == SpatialRelation.WITHIN;
   }
 
   @Override
   public String getSyntax() {
-    return "toWKT(<doc>)";
+    return null;
   }
 }

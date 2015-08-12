@@ -18,10 +18,9 @@ package com.orientechnologies.lucene;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.functions.spatial.OToWktFunction;
+import com.orientechnologies.lucene.functions.spatial.STNearFunction;
 import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
-import com.orientechnologies.lucene.operator.OLuceneNearOperator;
-import com.orientechnologies.lucene.operator.OLuceneTextOperator;
-import com.orientechnologies.lucene.operator.OLuceneWithinOperator;
+import com.orientechnologies.lucene.operator.*;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -52,7 +51,13 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
     OSQLEngine.registerOperator(new OLuceneTextOperator());
     OSQLEngine.registerOperator(new OLuceneWithinOperator());
     OSQLEngine.registerOperator(new OLuceneNearOperator());
+    OSQLEngine.registerOperator(new OLuceneGeoFilterOperator());
+    OSQLEngine.registerOperator(new OLuceneSTContainsOperator());
+    OSQLEngine.registerOperator(new OLuceneSTNearOperator());
+    OSQLEngine.registerOperator(new OLuceneSTWithinOperator());
     OSQLEngine.getInstance().registerFunction(OToWktFunction.NAME, new OToWktFunction());
+    OSQLEngine.getInstance().registerFunction(STNearFunction.NAME, new STNearFunction());
+
     OLogManager.instance().info(this, "Lucene index plugin installed and active. Lucene version: %s",
         OLuceneIndexManagerAbstract.LUCENE_VERSION);
   }

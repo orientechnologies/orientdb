@@ -13,38 +13,34 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.functions.spatial;
 
-import com.orientechnologies.lucene.shape.OShapeFactory;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
- * Created by Enrico Risa on 06/08/15.
+ * Created by Enrico Risa on 12/08/15.
  */
-public class OToWktFunction extends OSQLFunctionAbstract {
+public class STContainsFunction extends OSQLFunctionAbstract {
 
-  public static final String NAME    = "towkt";
+  public static final String NAME = "stcontains";
 
-  OShapeFactory              factory = OShapeFactory.INSTANCE;
-
-  public OToWktFunction() {
-    super(NAME, 1, 1);
+  public STContainsFunction() {
+    super(NAME, 2, 2);
   }
 
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
-    return factory.asText((ODocument) iParams[0]);
+    return null;
   }
 
   @Override
   public String getSyntax() {
-    return "toWKT(<doc>)";
+    return null;
   }
 }

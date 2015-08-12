@@ -23,28 +23,51 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.spatial4j.core.distance.DistanceUtils;
+import com.spatial4j.core.shape.Circle;
+import com.spatial4j.core.shape.Point;
+import com.spatial4j.core.shape.Shape;
+import com.spatial4j.core.shape.SpatialRelation;
+
+import java.util.Map;
 
 /**
- * Created by Enrico Risa on 06/08/15.
+ * Created by Enrico Risa on 12/08/15.
  */
-public class OToWktFunction extends OSQLFunctionAbstract {
+public class STNearFunction extends OSQLFunctionAbstract {
 
-  public static final String NAME    = "towkt";
+  public static final String NAME    = "st_near";
 
   OShapeFactory              factory = OShapeFactory.INSTANCE;
 
-  public OToWktFunction() {
-    super(NAME, 1, 1);
+  public STNearFunction() {
+    super(NAME, 2, 2);
   }
 
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
-    return factory.asText((ODocument) iParams[0]);
+    Shape shape = factory.fromDoc((ODocument) iParams[0]);
+    Map map = (Map) iParams[1];
+    Shape shape1 = factory.fromMapGeoJson((Map) map.get("shape"));
+
+    double distance = 0;
+
+    Number n = (Number) map.get("maxDistance");
+    if (n != null) {
+      distance = n.doubleValue();
+    }
+    Point p = (Point) shape1;
+    Circle circle = factory.SPATIAL_CONTEXT.makeCircle(p.getX(), p.getY(),
+        DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM));
+    double docDistDEG = factory.SPATIAL_CONTEXT.getDistCalc().distance((Point) shape, p);
+    final double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
+    iContext.setVariable("distance", docDistInKM);
+    return shape.relate(circle) == SpatialRelation.WITHIN;
   }
 
   @Override
   public String getSyntax() {
-    return "toWKT(<doc>)";
+    return null;
   }
 }

@@ -16,26 +16,19 @@
  *
  */
 
-package com.orientechnologies.lucene.shape;
+package com.orientechnologies.lucene.manager;
+
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.spatial.SpatialStrategy;
+
+import java.io.IOException;
 
 /**
- * Created by Enrico Risa on 06/08/15.
+ * Created by Enrico Risa on 11/08/15.
  */
-public enum OShapeType {
-  /**
-   * Enumeration that lists all {@link OShapeType}s that can be handled
-   */
-  POINT("point"), MULTIPOINT("multipoint"), LINESTRING("linestring"), MULTILINESTRING("multilinestring"), POLYGON("polygon"), MULTIPOLYGON(
-      "multipolygon"), GEOMETRYCOLLECTION("geometrycollection"), RECTANGLE("rectangle"), CIRCLE("circle");
+public interface OLuceneSpatialIndexContainer {
 
-  protected final String shapeName;
+  public IndexSearcher searcher() throws IOException;
 
-  private OShapeType(String shapeName) {
-    this.shapeName = shapeName;
-  }
-
-  @Override
-  public String toString() {
-    return shapeName;
-  }
+  public SpatialStrategy strategy();
 }

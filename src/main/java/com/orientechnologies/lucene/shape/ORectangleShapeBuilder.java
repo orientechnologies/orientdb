@@ -18,10 +18,14 @@ package com.orientechnologies.lucene.shape;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.shape.Point;
+import com.spatial4j.core.shape.Rectangle;
 import com.spatial4j.core.shape.Shape;
 
 import java.util.Collection;
@@ -30,12 +34,12 @@ import java.util.List;
 public class ORectangleShapeBuilder extends OShapeBuilder {
   @Override
   public String getName() {
-    return null;
+    return "Rectangle";
   }
 
   @Override
   public OShapeType getType() {
-    return null;
+    return OShapeType.RECTANGLE;
   }
 
   @Override
@@ -72,13 +76,21 @@ public class ORectangleShapeBuilder extends OShapeBuilder {
   public void initClazz(ODatabaseDocumentTx db) {
 
     OSchemaProxy schema = db.getMetadata().getSchema();
-    schema.createClass("Rectangle");
-
+    OClass rectangle = schema.createClass("Rectangle");
+    OProperty coordinates = rectangle.createProperty("coordinates", OType.EMBEDDEDLIST, OType.DOUBLE);
+    coordinates.setMin("4");
+    coordinates.setMin("4");
   }
 
   @Override
-  public String asText(Shape shape) {
-    return null;
+  public Shape fromDoc(ODocument document) {
+    validate(document);
+    List<Double> coordinates = document.field("coordinates");
+
+    Point topLeft = SPATIAL_CONTEXT.makePoint(coordinates.get(0), coordinates.get(1));
+    Point bottomRight = SPATIAL_CONTEXT.makePoint(coordinates.get(2), coordinates.get(3));
+    Rectangle rectangle = SPATIAL_CONTEXT.makeRectangle(topLeft, bottomRight);
+    return rectangle;
   }
 
   @Override

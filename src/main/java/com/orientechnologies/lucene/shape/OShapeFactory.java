@@ -25,18 +25,20 @@ import com.spatial4j.core.shape.Shape;
 import java.util.HashMap;
 import java.util.Map;
 
-public class OShapeFactoryImpl extends OShapeBuilder {
+public class OShapeFactory extends OShapeBuilder {
 
   private Map<String, OShapeBuilder> factories = new HashMap<String, OShapeBuilder>();
 
-  public OShapeFactoryImpl() {
+  public static final OShapeFactory  INSTANCE  = new OShapeFactory();
+
+  protected OShapeFactory() {
     registerFactory(new OLineShapeBuilder());
     registerFactory(new OMultiLineShapeBuilder());
     registerFactory(new OPointShapeBuilder());
     // registerFactory(Point.class, new OMultiPointShapeFactory());
     registerFactory(new ORectangleShapeBuilder());
     registerFactory(new OPolygonShapeBuilder());
-    // registerFactory(Shape.class, new OMultiPolygonShapeFactory());
+    registerFactory(new OMultiPolygonShapeBuilder());
   }
 
   @Override
@@ -72,6 +74,16 @@ public class OShapeFactoryImpl extends OShapeBuilder {
   }
 
   @Override
+  public Shape fromDoc(ODocument document) {
+    OShapeBuilder oShapeBuilder = factories.get(document.getClassName());
+    if (oShapeBuilder != null) {
+      return oShapeBuilder.fromDoc(document);
+    }
+    // TODO handle exception shape not found
+    return null;
+  }
+
+  @Override
   public String asText(ODocument document) {
     OShapeBuilder oShapeBuilder = factories.get(document.getClassName());
     if (oShapeBuilder != null) {
@@ -88,6 +100,16 @@ public class OShapeFactoryImpl extends OShapeBuilder {
 
   @Override
   public Shape fromText(String wkt) {
+    return null;
+  }
+
+  @Override
+  public Shape fromMapGeoJson(Map geoJsonMap) {
+    OShapeBuilder oShapeBuilder = factories.get(geoJsonMap.get("type"));
+    if (oShapeBuilder != null) {
+      return oShapeBuilder.fromMapGeoJson(geoJsonMap);
+    }
+    // TODO handle exception shape not found
     return null;
   }
 

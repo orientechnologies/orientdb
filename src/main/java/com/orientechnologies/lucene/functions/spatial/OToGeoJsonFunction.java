@@ -27,13 +27,13 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 /**
  * Created by Enrico Risa on 06/08/15.
  */
-public class OToWktFunction extends OSQLFunctionAbstract {
+public class OToGeoJsonFunction extends OSQLFunctionAbstract {
 
-  public static final String NAME    = "towkt";
+  public static final String NAME    = "asgeojson";
 
   OShapeFactory              factory = OShapeFactory.INSTANCE;
 
-  public OToWktFunction() {
+  public OToGeoJsonFunction() {
     super(NAME, 1, 1);
   }
 
@@ -45,6 +45,6 @@ public class OToWktFunction extends OSQLFunctionAbstract {
 
   @Override
   public String getSyntax() {
-    return "toWKT(<doc>)";
+    return "asGeoJson(<doc>)";
   }
 }

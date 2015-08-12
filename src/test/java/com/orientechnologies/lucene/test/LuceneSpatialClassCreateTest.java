@@ -49,7 +49,7 @@ public class LuceneSpatialClassCreateTest extends BaseLuceneTest {
 
     Assert.assertNotNull(schema.getClass("Line"));
 
-    Assert.assertNotNull(schema.getClass("MultiLine"));
+//    Assert.assertNotNull(schema.getClass("MultiLine"));
 
     Assert.assertNotNull(schema.getClass("Rectangle"));
 

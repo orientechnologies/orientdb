@@ -20,8 +20,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.lucene.index.OLuceneSpatialIndex;
 import com.orientechnologies.lucene.manager.OLuceneFullTextIndexManager;
-import com.orientechnologies.lucene.manager.OLuceneSpatialIndexManager;
-import com.orientechnologies.lucene.shape.OShapeFactoryImpl;
+import com.orientechnologies.lucene.manager.OLuceneGeoSpatialIndexManager;
+import com.orientechnologies.lucene.shape.OShapeFactory;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
@@ -60,7 +60,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   public OLuceneIndexFactory() {
 
-    spatialManager = new OLuceneSpatialManager(new OShapeFactoryImpl());
+    spatialManager = new OLuceneSpatialManager(OShapeFactory.INSTANCE);
     Orient.instance().addDbLifecycleListener(this);
   }
 
@@ -142,7 +142,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
           new OLuceneFullTextIndexManager(), indexType), valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.SPATIAL.toString().equals(indexType)) {
       return new OLuceneSpatialIndex(name, indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
-          new OLuceneSpatialIndexManager(new OShapeFactoryImpl()), indexType), valueContainerAlgorithm, metadata);
+          new OLuceneGeoSpatialIndexManager(OShapeFactory.INSTANCE), indexType), valueContainerAlgorithm, metadata);
     }
     throw new OConfigurationException("Unsupported type : " + indexType);
   }

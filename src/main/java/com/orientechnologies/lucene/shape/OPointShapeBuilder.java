@@ -65,17 +65,18 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
 
     OSchemaProxy schema = db.getMetadata().getSchema();
     OClass point = schema.createClass("Point");
+    point.setAbstract(true);
     OProperty coordinates = point.createProperty("coordinates", OType.EMBEDDEDLIST, OType.DOUBLE);
     coordinates.setMin("2");
     coordinates.setMin("2");
   }
 
   @Override
-  public String asText(ODocument document) {
+  public Point fromDoc(ODocument document) {
     validate(document);
-    List<Double> coordinates = document.field("coordinates");
-    Point point = SPATIAL_CONTEXT.makePoint(coordinates.get(0), coordinates.get(1));
-    return asText(point);
+    List<Number> coordinates = document.field("coordinates");
+    Point point = SPATIAL_CONTEXT.makePoint(coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue());
+    return point;
   }
 
   @Override
