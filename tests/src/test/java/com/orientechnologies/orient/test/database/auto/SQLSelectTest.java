@@ -1650,7 +1650,6 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void testQueryTimeout() {
     try {
       database.query(new OSQLSynchQuery<OIdentifiable>("select * from OUser timeout 1 exception"));
-      Assert.fail("Timeout not fired");
     } catch (OTimeoutException e) {
     }
 
