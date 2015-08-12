@@ -230,6 +230,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         OFileUtils.copyFile(file, newFile);
 
         final long newFileId = readCache.openFile(newFileName, writeCache);
+
         readCache.deleteFile(fileId, writeCache);
         fileId = newFileId;
         writeCache.renameFile(fileId, newFileName, getFullName());
