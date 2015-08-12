@@ -34,7 +34,6 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
@@ -43,7 +42,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 public class OEmbeddedRidBag implements ORidBagDelegate {
   private byte[]                                                       serializedContent = null;
@@ -276,9 +274,6 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
         final OIdentifiable identifiable = (OIdentifiable) entry;
         if (identifiable instanceof ORecord) {
           final ORecord record = (ORecord) identifiable;
-          if (record.getIdentity().isNew()) {
-            record.save();
-          }
 
           entries[i] = record.getIdentity();
         }

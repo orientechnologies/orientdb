@@ -602,10 +602,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       if (identifiable instanceof ORecord) {
         ORID identity = identifiable.getIdentity();
         ORecord record = (ORecord) identifiable;
-        if (identity.isNew() || record.isDirty()) {
-          record.save();
-          identity = record.getIdentity();
-        }
+        identity = record.getIdentity();
 
         newChangedValues.put(identity, entry.getValue());
       } else
@@ -615,7 +612,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     for (Map.Entry<OIdentifiable, Change> entry : newChangedValues.entrySet()) {
       if (entry.getKey() instanceof ORecord) {
         ORecord record = (ORecord) entry.getKey();
-        record.save();
 
         newChangedValues.put(record, entry.getValue());
       } else
@@ -812,7 +808,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     for (Map.Entry<OIdentifiable, OModifiableInteger> entry : newEntries.entrySet()) {
       OIdentifiable identifiable = entry.getKey();
       assert identifiable instanceof ORecord;
-      ((ORecord) identifiable).save();
       Change c = changes.get(identifiable);
 
       final int delta = entry.getValue().intValue();
