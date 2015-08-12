@@ -1201,7 +1201,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public void saveNew(ORecordOperation txEntry, OTransaction tx) throws IOException {
-    List<ORecordOperation> toResave = new ArrayList<ORecordOperation>();
     LinkedList<ODocument> path = new LinkedList<ODocument>();
     ORecord next = txEntry.getRecord();
     ODirtyManager manager = ORecordInternal.getDirtyManager(next);
@@ -1231,10 +1230,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         }
         if (nextToInspect != null) {
           if (path.contains(nextToInspect)) {
-            // this is wrong, here we should do empty record save here
             ORecordOperation toCommit = tx.getRecordEntry(nextToInspect.getIdentity());
             commitEmptyEntry(tx, toCommit);
-            toResave.add(toCommit);
           } else {
             path.push((ODocument) next);
             next = nextToInspect;
@@ -1251,10 +1248,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         next = path.pollFirst();
       }
     } while (next != null);
-    for (ORecordOperation op : toResave) {
-      op.getRecord().setDirty();
-      commitEntry(tx, op);
-    }
   }
 
   public void rollback(final OTransaction clientTx) {

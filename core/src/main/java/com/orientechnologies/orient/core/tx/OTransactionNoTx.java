@@ -212,7 +212,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
       final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     ORecord toRet = null;
-    List<ODocument> toResave = new ArrayList<ODocument>();
     LinkedList<ODocument> path = new LinkedList<ODocument>();
     ORecord next = document;
     do {
@@ -236,7 +235,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
               database.executeSaveEmptyRecord(nextToInspect,iClusterName);
             else
               database.executeSaveEmptyRecord(nextToInspect,getClusterName(nextToInspect));
-            toResave.add((ODocument) nextToInspect);
           } else {
             path.push((ODocument) next);
             next = nextToInspect;
@@ -256,14 +254,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
         next = path.pollFirst();
       }
     } while (next != null);
-    for (ODocument op : toResave) {
-      op.setDirty();
-      if (op == original) {
-        ORecord ret = database.executeSaveRecord(op, null, op.getRecordVersion(), OPERATION_MODE.SYNCHRONOUS, false, null, iRecordUpdatedCallback);
-        toRet = ret;
-      } else 
-        database.executeSaveRecord(op, null, op.getRecordVersion(), OPERATION_MODE.SYNCHRONOUS, false, null, null);
-    }
     return toRet;
   }
 
