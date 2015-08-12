@@ -19,14 +19,13 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.testng.Assert.*;
 
@@ -135,39 +134,130 @@ public class OCommandExecutorSQLUpdateTest {
     }
 
   }
+    @Test
+    public void testNamedParamsSyntax() {
+      //issue #4470
+      String className = getClass().getSimpleName() + "_NamedParamsSyntax";
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:"+className);
+      db.create();
+
+      try {
+        db.command(new OCommandSQL("create class " + className)).execute();
+
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("name", "foo");
+        params.put("full_name", "foo");
+        params.put("html_url", "foo");
+        params.put("description", "foo");
+        params.put("git_url", "foo");
+        params.put("ssh_url", "foo");
+        params.put("clone_url", "foo");
+        params.put("svn_url", "foo");
+
+        OCommandSQL sql1 = new OCommandSQL("update " + className
+            + " SET name = :name, full_name = :full_name, html_url = :html_url, description = :description, "
+            + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
+            + "UPSERT WHERE full_name = :full_name");
+        db.command(sql1).execute(params);
+
+        OCommandSQL sql2 = new OCommandSQL("update " + className
+            + " SET name = :name, html_url = :html_url, description = :description, "
+            + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
+            + "UPSERT WHERE full_name = :full_name");
+        db.command(sql2).execute(params);
+      }finally{
+        db.close();
+      }
+    }
+
 
   @Test
-  public void testNamedParamsSyntax() {
-    // issue #4470
-    String className = getClass().getSimpleName() + "_NamedParamsSyntax";
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + className);
+  public void testUpsertSetPut() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateUpsertSetPut");
     db.create();
-
     try {
-      db.command(new OCommandSQL("create class " + className)).execute();
+      db.command(new OCommandSQL("CREATE CLASS test")).execute();
+      db.command(new OCommandSQL("CREATE PROPERTY test.id integer")).execute();
+      db.command(new OCommandSQL("CREATE PROPERTY test.addField EMBEDDEDSET string")).execute();
+      db.command(new OCommandSQL("UPDATE test SET id = 1 ADD addField=\"xxxx\" UPSERT WHERE id = 1")).execute();
+      Iterable result = db.query(new OSQLSynchQuery<Object>("select from test"));
+      ODocument doc = (ODocument) result.iterator().next();
+      Set<?> set = doc.field("addField");
+      assertEquals(set.size(), 1);
+      assertEquals(set.iterator().next(), "xxxx");
+    } finally {
+      db.close();
+    }
+  }
+
+
+  @Test
+  public void testUpdateParamDate() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateParamDate");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE CLASS test")).execute();
+      Date date = new Date();
+      db.command(new OCommandSQL("insert into test set birthDate = ?")).execute(date);
+      Iterable result = db.query(new OSQLSynchQuery<Object>("select from test"));
+      ODocument doc = (ODocument) result.iterator().next();
+      assertEquals(doc.field("birthDate"), date);
+
+      date = new Date();
+      db.command(new OCommandSQL("UPDATE test set birthDate = ?")).execute(date);
+      result = db.query(new OSQLSynchQuery<Object>("select from test"));
+      doc = (ODocument) result.iterator().next();
+      assertEquals(doc.field("birthDate"), date);
+    } finally {
+      db.close();
+    }
+  }
+
+  // issue #4776
+  @Test
+  public void testBooleanListNamedParameter(){
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testBooleanListNamedParameter");
+    try {
+      ODatabaseRecordThreadLocal.INSTANCE.set(db);
+      db.create();
+      db.getMetadata().getSchema().createClass("test");
+
+      ODocument doc = new ODocument("test");
+      doc.field("id", 1);
+      doc.field("boolean", false);
+      doc.field("integerList", Collections.EMPTY_LIST);
+      doc.field("booleanList", Collections.EMPTY_LIST);
+      db.save(doc);
+
+      System.out.println(doc.toJSON());
+
+      OCommandSQL updateCommand = new OCommandSQL(
+          "UPDATE test SET boolean = :boolean, booleanList = :booleanList, integerList = :integerList WHERE id = 1");
 
       Map<String, Object> params = new HashMap<String, Object>();
-      params.put("name", "foo");
-      params.put("full_name", "foo");
-      params.put("html_url", "foo");
-      params.put("description", "foo");
-      params.put("git_url", "foo");
-      params.put("ssh_url", "foo");
-      params.put("clone_url", "foo");
-      params.put("svn_url", "foo");
 
-      OCommandSQL sql1 = new OCommandSQL("update " + className
-          + " SET name = :name, full_name = :full_name, html_url = :html_url, description = :description, "
-          + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url "
-          + "UPSERT WHERE full_name = :full_name");
-      db.command(sql1).execute(params);
+      params.put("boolean", true);
 
-      OCommandSQL sql2 = new OCommandSQL("update " + className
-          + " SET name = :name, html_url = :html_url, description = :description, "
-          + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url "
-          + "UPSERT WHERE full_name = :full_name");
-      db.command(sql2).execute(params);
-    } finally {
+      List<Object> integerList = new ArrayList<Object>();
+      integerList.add(1);
+      params.put("integerList", integerList);
+
+      List<Object> booleanList = new ArrayList<Object>();
+      booleanList.add(true);
+      params.put("booleanList", booleanList);
+
+      db.command(updateCommand).execute(params);
+
+      OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT * FROM test WHERE id = 1");
+
+      List<ODocument> queryResult = db.command(query).execute(params);
+      assertEquals(queryResult.size(), 1);
+      ODocument docResult = queryResult.get(0);
+      List<?> resultBooleanList = docResult.field("booleanList");
+      assertNotNull(resultBooleanList);
+      assertEquals(resultBooleanList.size(), 1);
+      assertEquals(resultBooleanList.iterator().next(), true);
+    }finally{
       db.close();
     }
   }

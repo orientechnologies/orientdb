@@ -37,6 +37,9 @@ public class OInputParameter extends SimpleNode {
     if (value == null) {
       return null;
     }
+    if(value instanceof Boolean){
+      return value;
+    }
     if (value instanceof Integer) {
       OInteger result = new OInteger(-1);
       result.setValue((Integer) value);
