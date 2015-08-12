@@ -115,7 +115,7 @@
     </issueManagement>
     <ciManagement>
         <system>jenkins</system>
-        <url>http://datastorm.com.ua/</url>
+        <url>http://helios.orientdb.com/</url>
     </ciManagement>
     <distributionManagement>
         <repository>
