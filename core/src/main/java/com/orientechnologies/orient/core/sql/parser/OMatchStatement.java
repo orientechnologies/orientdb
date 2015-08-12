@@ -27,18 +27,18 @@ import java.util.*;
 
 public class OMatchStatement extends OStatement implements OCommandExecutor, OIterableRecordSource {
 
-  String                             DEFAULT_ALIAS_PREFIX = "$ORIENT_DEFAULT_ALIAS_";
+  String DEFAULT_ALIAS_PREFIX = "$ORIENT_DEFAULT_ALIAS_";
 
   private OSQLAsynchQuery<ODocument> request;
 
-  long                               threshold            = 5;
+  long threshold = 5;
 
   class MatchContext {
-    int                        currentEdgeNumber = 0;
+    int currentEdgeNumber = 0;
 
-    Map<String, Iterable>      candidates        = new LinkedHashMap<String, Iterable>();
-    Map<String, OIdentifiable> matched           = new LinkedHashMap<String, OIdentifiable>();
-    Map<PatternEdge, Boolean>  matchedEdges      = new IdentityHashMap<PatternEdge, Boolean>();
+    Map<String, Iterable>      candidates   = new LinkedHashMap<String, Iterable>();
+    Map<String, OIdentifiable> matched      = new LinkedHashMap<String, OIdentifiable>();
+    Map<PatternEdge, Boolean>  matchedEdges = new IdentityHashMap<PatternEdge, Boolean>();
 
     public MatchContext copy(String alias, OIdentifiable value) {
       MatchContext result = new MatchContext();
@@ -55,7 +55,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   public static class EdgeTraversal {
-    boolean     out = true;
+    boolean out = true;
     PatternEdge edge;
 
     public EdgeTraversal(PatternEdge edge, boolean out) {
@@ -66,21 +66,25 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   public static class MatchExecutionPlan {
     public List<EdgeTraversal> sortedEdges;
-    public Map<String, Long>   preFetchedAliases = new HashMap<String, Long>();
-    public String              rootAlias;
+    public Map<String, Long> preFetchedAliases = new HashMap<String, Long>();
+    public String rootAlias;
   }
 
-  public static final String       KEYWORD_MATCH    = "MATCH";
+  public static final String                 KEYWORD_MATCH    = "MATCH";
   // parsed data
-  protected List<OMatchExpression> matchExpressions = new ArrayList<OMatchExpression>();
-  protected List<OIdentifier>      returnItems      = new ArrayList<OIdentifier>();
-  protected OLimit                 limit;
+  protected           List<OMatchExpression> matchExpressions = new ArrayList<OMatchExpression>();
+  protected           List<OIdentifier>      returnItems      = new ArrayList<OIdentifier>();
+  protected OLimit limit;
 
-  protected Pattern                pattern;
+  protected Pattern pattern;
+
+  private Map<String, OWhereClause> aliasFilters;
+  private Map<String, String>       aliasClasses;
+
 
   // execution data
-  private OCommandContext          context;
-  private OProgressListener        progressListener;
+  private OCommandContext   context;
+  private OProgressListener progressListener;
 
   public OMatchStatement() {
     super(-1);
@@ -135,7 +139,30 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
     validateReturn();
 
+    Map<String, OWhereClause> aliasFilters = new LinkedHashMap<String, OWhereClause>();
+    Map<String, String> aliasClasses = new LinkedHashMap<String, String>();
+    for (OMatchExpression expr : this.matchExpressions) {
+      addAliases(expr, aliasFilters, aliasClasses, context);
+    }
+
+    this.aliasFilters = aliasFilters;
+    this.aliasClasses = aliasClasses;
+
+    rebindFilters(aliasFilters);
+
     return (RET) this;
+  }
+
+  private void rebindFilters(Map<String, OWhereClause> aliasFilters) {
+    for (OMatchExpression expression : matchExpressions) {
+      OWhereClause newFilter = aliasFilters.get(expression.origin.getAlias());
+      expression.origin.setFilter(newFilter);
+
+      for (OMatchPathItem item : expression.items) {
+        newFilter = aliasFilters.get(item.filter.getAlias());
+        item.filter.setFilter(newFilter);
+      }
+    }
   }
 
   private void validateReturn() {
@@ -183,11 +210,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   public Object execute(OSQLAsynchQuery<ODocument> request, OCommandContext context) {
     Map<Object, Object> iArgs = context.getInputParameters();
     try {
-      Map<String, OWhereClause> aliasFilters = new LinkedHashMap<String, OWhereClause>();
-      Map<String, String> aliasClasses = new LinkedHashMap<String, String>();
-      for (OMatchExpression expr : this.matchExpressions) {
-        addAliases(expr, aliasFilters, aliasClasses, context);
-      }
+
+
 
       Map<String, Long> estimatedRootEntries = estimateRootEntries(aliasClasses, aliasFilters);
       if (estimatedRootEntries.values().contains(0l)) {

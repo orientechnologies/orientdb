@@ -63,6 +63,22 @@ public class OMatchFilter extends SimpleNode {
     return null;
   }
 
+  public void setFilter(OWhereClause filter) {
+    boolean found = false;
+    for (OMatchFilterItem item : items) {
+      if (item.filter != null) {
+        item.filter = filter;
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      OMatchFilterItem newItem = new OMatchFilterItem(-1);
+      newItem.filter = filter;
+      items.add(newItem);
+    }
+  }
+
   public OWhereClause getWhileCondition() {
     for (OMatchFilterItem item : items) {
       if (item.whileCondition != null) {
@@ -80,7 +96,7 @@ public class OMatchFilter extends SimpleNode {
         else if (item.className.value instanceof SimpleNode) {
           StringBuilder builder = new StringBuilder();
 
-          ((SimpleNode) item.className.value).toString(context.getInputParameters(), builder);
+          ((SimpleNode) item.className.value).toString(context == null ? null : context.getInputParameters(), builder);
           return builder.toString();
         } else {
           return item.className.value.toString();
