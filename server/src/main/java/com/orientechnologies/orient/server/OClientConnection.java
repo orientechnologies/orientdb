@@ -56,6 +56,9 @@ public class OClientConnection {
 
       database = null;
     }
+
+    if (protocol != null)
+      protocol.sendShutdown();
   }
 
   /**
