@@ -26,12 +26,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.Rectangle;
-import com.spatial4j.core.shape.Shape;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class ORectangleShapeBuilder extends OShapeBuilder {
+public class ORectangleShapeBuilder extends OShapeBuilder<Rectangle> {
   @Override
   public String getName() {
     return "Rectangle";
@@ -43,7 +43,7 @@ public class ORectangleShapeBuilder extends OShapeBuilder {
   }
 
   @Override
-  public Shape makeShape(OCompositeKey key, SpatialContext ctx) {
+  public Rectangle makeShape(OCompositeKey key, SpatialContext ctx) {
 
     Point[] points = new Point[2];
     int i = 0;
@@ -76,16 +76,16 @@ public class ORectangleShapeBuilder extends OShapeBuilder {
   public void initClazz(ODatabaseDocumentTx db) {
 
     OSchemaProxy schema = db.getMetadata().getSchema();
-    OClass rectangle = schema.createClass("Rectangle");
-    OProperty coordinates = rectangle.createProperty("coordinates", OType.EMBEDDEDLIST, OType.DOUBLE);
+    OClass rectangle = schema.createClass(getName());
+    OProperty coordinates = rectangle.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.DOUBLE);
     coordinates.setMin("4");
     coordinates.setMin("4");
   }
 
   @Override
-  public Shape fromDoc(ODocument document) {
+  public Rectangle fromDoc(ODocument document) {
     validate(document);
-    List<Double> coordinates = document.field("coordinates");
+    List<Double> coordinates = document.field(COORDINATES);
 
     Point topLeft = SPATIAL_CONTEXT.makePoint(coordinates.get(0), coordinates.get(1));
     Point bottomRight = SPATIAL_CONTEXT.makePoint(coordinates.get(2), coordinates.get(3));
@@ -94,7 +94,23 @@ public class ORectangleShapeBuilder extends OShapeBuilder {
   }
 
   @Override
-  public Shape fromText(String wkt) {
+  public Rectangle fromText(String wkt) {
     return null;
+  }
+
+  @Override
+  public ODocument toDoc(final Rectangle shape) {
+
+    ODocument doc = new ODocument(getName());
+
+    doc.field(COORDINATES, new ArrayList<Double>() {
+      {
+        add(shape.getMinX());
+        add(shape.getMinY());
+        add(shape.getMaxX());
+        add(shape.getMaxY());
+      }
+    });
+    return doc;
   }
 }

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.shape.Point;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class OPointShapeBuilder extends OShapeBuilder<Point> {
@@ -66,7 +67,7 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
     OSchemaProxy schema = db.getMetadata().getSchema();
     OClass point = schema.createClass("Point");
     point.setAbstract(true);
-    OProperty coordinates = point.createProperty("coordinates", OType.EMBEDDEDLIST, OType.DOUBLE);
+    OProperty coordinates = point.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.DOUBLE);
     coordinates.setMin("2");
     coordinates.setMin("2");
   }
@@ -74,7 +75,7 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
   @Override
   public Point fromDoc(ODocument document) {
     validate(document);
-    List<Number> coordinates = document.field("coordinates");
+    List<Number> coordinates = document.field(COORDINATES);
     Point point = SPATIAL_CONTEXT.makePoint(coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue());
     return point;
   }
@@ -82,5 +83,18 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
   @Override
   public Point fromText(String wkt) {
     return null;
+  }
+
+  @Override
+  public ODocument toDoc(final Point shape) {
+
+    ODocument doc = new ODocument(getName());
+    doc.field(COORDINATES, new ArrayList<Double>() {
+      {
+        add(shape.getX());
+        add(shape.getY());
+      }
+    });
+    return doc;
   }
 }

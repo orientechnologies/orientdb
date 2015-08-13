@@ -25,7 +25,7 @@ import java.util.Set;
 
 public class OLuceneOperatorFactory implements OQueryOperatorFactory {
 
-  private static final Set<OQueryOperator> OPERATORS;
+  public static final Set<OQueryOperator> OPERATORS;
 
   static {
     final Set<OQueryOperator> operators = new HashSet<OQueryOperator>();

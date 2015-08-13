@@ -18,19 +18,38 @@
 
 package com.orientechnologies.lucene.test;
 
+import com.orientechnologies.lucene.shape.OMultiPolygonShapeBuilder;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.context.jts.JtsSpatialContext;
+import com.spatial4j.core.shape.jts.JtsGeometry;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LinearRing;
+import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Polygon;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Enrico Risa on 07/08/15.
  */
 public abstract class BaseSpatialLuceneTest extends BaseLuceneTest {
+
+  @BeforeClass
+  public void init() {
+    initDB();
+  }
+
+  @AfterClass
+  public void deInit() {
+    deInitDB();
+  }
 
   protected Polygon polygonTestHole() {
     List<Coordinate> outerRing = new ArrayList<Coordinate>();
@@ -75,5 +94,31 @@ public abstract class BaseSpatialLuceneTest extends BaseLuceneTest {
         });
       }
     };
+  }
+
+  protected ODocument loadMultiPolygon() throws IOException {
+    InputStream systemResourceAsStream = ClassLoader.getSystemResourceAsStream("italy.json");
+
+    ODocument doc = new ODocument().fromJSON(systemResourceAsStream);
+
+    Map geometry = doc.field("geometry");
+
+    String type = (String) geometry.get("type");
+    ODocument location = new ODocument(type);
+    location.field("coordinates", geometry.get("coordinates"));
+    return location;
+  }
+
+  protected MultiPolygon createMultiPolygon() throws IOException {
+
+    ODocument document = loadMultiPolygon();
+
+
+    OMultiPolygonShapeBuilder builder = new OMultiPolygonShapeBuilder();
+
+    JtsGeometry geometry = builder.fromDoc(document);
+    
+    return (MultiPolygon) geometry.getGeom();
+
   }
 }

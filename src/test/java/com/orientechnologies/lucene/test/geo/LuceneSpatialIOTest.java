@@ -16,23 +16,26 @@
  *  
  */
 
-package com.orientechnologies.lucene.test;
+package com.orientechnologies.lucene.test.geo;
 
-import com.orientechnologies.lucene.shape.OPointShapeBuilder;
-import com.orientechnologies.lucene.shape.OPolygonShapeBuilder;
-import com.orientechnologies.lucene.shape.ORectangleShapeBuilder;
+import com.orientechnologies.lucene.shape.*;
+import com.orientechnologies.lucene.test.BaseSpatialLuceneTest;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.context.jts.JtsSpatialContext;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.Rectangle;
+import com.spatial4j.core.shape.Shape;
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Polygon;
 import junit.framework.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,7 +55,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
   }
 
   @Test
-  public void testPointIO() {
+  public void testPointIO() throws ParseException {
 
     ODocument doc = new ODocument("Point");
     doc.field("coordinates", new ArrayList<Double>() {
@@ -61,7 +64,6 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
         add(45d);
       }
     });
-    doc.save();
     OPointShapeBuilder builder = new OPointShapeBuilder();
 
     String p1 = builder.asText(doc);
@@ -72,6 +74,10 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     String p2 = JtsSpatialContext.GEO.getGeometryFrom(point).toText();
 
     Assert.assertEquals(p2, p1);
+
+    ODocument parsed = builder.toDoc(p2);
+
+    Assert.assertEquals(doc.field("coordinates"), parsed.field("coordinates"));
   }
 
   @Test
@@ -81,12 +87,11 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     doc.field("coordinates", new ArrayList<Double>() {
       {
         add(-45d);
-        add(45d);
         add(-30d);
+        add(45d);
         add(30d);
       }
     });
-    doc.save();
 
     ORectangleShapeBuilder builder = new ORectangleShapeBuilder();
 
@@ -101,10 +106,35 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     Assert.assertEquals(rect1, rect);
   }
 
-  public void testLineIO() {
+  @Test
+  public void testLineStringIO() {
 
+    ODocument doc = new ODocument("LineString");
+    doc.field("coordinates", new ArrayList<List<Double>>() {
+      {
+        add(Arrays.asList(-71.160281, 42.258729));
+        add(Arrays.asList(-71.160837, 42.259113));
+        add(Arrays.asList(-71.161144, 42.25932));
+      }
+    });
+
+    OLineStringShapeBuilder builder = new OLineStringShapeBuilder();
+    String lineString = builder.asText(doc);
+
+    Shape shape = JtsSpatialContext.GEO.makeLineString(new ArrayList<Point>() {
+      {
+        add(JtsSpatialContext.GEO.makePoint(-71.160281, 42.258729));
+        add(JtsSpatialContext.GEO.makePoint(-71.160837, 42.259113));
+        add(JtsSpatialContext.GEO.makePoint(-71.161144, 42.25932));
+      }
+    });
+
+    String lineString1 = JtsSpatialContext.GEO.getGeometryFrom(shape).toText();
+
+    Assert.assertEquals(lineString1, lineString);
   }
 
+  @Test
   public void testPolygonNoHolesIO() {
 
     ODocument doc = new ODocument("Polygon");
@@ -139,6 +169,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     Assert.assertEquals(p2, p1);
   }
 
+  @Test
   public void testPolygonHolesIO() {
 
     ODocument doc = new ODocument("Polygon");
@@ -151,6 +182,18 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
 
     String p2 = polygon1.toText();
     Assert.assertEquals(p2, p1);
+  }
+
+  @Test
+  public void testMultiPolygon() throws IOException {
+
+    OMultiPolygonShapeBuilder builder = new OMultiPolygonShapeBuilder();
+    ODocument multiPolygon = loadMultiPolygon();
+    MultiPolygon multiPolygon1 = createMultiPolygon();
+
+    String m1 = builder.asText(multiPolygon);
+    String m2 = multiPolygon1.toText();
+    Assert.assertEquals(m2, m1);
   }
 
   @AfterClass

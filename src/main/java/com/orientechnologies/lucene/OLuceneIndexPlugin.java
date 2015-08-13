@@ -17,8 +17,7 @@
 package com.orientechnologies.lucene;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.lucene.functions.spatial.OToWktFunction;
-import com.orientechnologies.lucene.functions.spatial.STNearFunction;
+import com.orientechnologies.lucene.functions.OLuceneFunctionsFactory;
 import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
 import com.orientechnologies.lucene.operator.*;
 import com.orientechnologies.orient.core.Orient;
@@ -28,9 +27,14 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+
+import java.util.Map;
+import java.util.Set;
 
 public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODatabaseLifecycleListener {
 
@@ -48,18 +52,31 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
     Orient.instance().addDbLifecycleListener(this);
 
     OIndexes.registerFactory(new OLuceneIndexFactory());
-    OSQLEngine.registerOperator(new OLuceneTextOperator());
-    OSQLEngine.registerOperator(new OLuceneWithinOperator());
-    OSQLEngine.registerOperator(new OLuceneNearOperator());
-    OSQLEngine.registerOperator(new OLuceneGeoFilterOperator());
-    OSQLEngine.registerOperator(new OLuceneSTContainsOperator());
-    OSQLEngine.registerOperator(new OLuceneSTNearOperator());
-    OSQLEngine.registerOperator(new OLuceneSTWithinOperator());
-    OSQLEngine.getInstance().registerFunction(OToWktFunction.NAME, new OToWktFunction());
-    OSQLEngine.getInstance().registerFunction(STNearFunction.NAME, new STNearFunction());
+
+    registerOperators();
+
+    registerFunctions();
 
     OLogManager.instance().info(this, "Lucene index plugin installed and active. Lucene version: %s",
         OLuceneIndexManagerAbstract.LUCENE_VERSION);
+  }
+
+  protected void registerOperators() {
+
+    Set<OQueryOperator> operators = OLuceneOperatorFactory.OPERATORS;
+
+    for (OQueryOperator operator : operators) {
+      OSQLEngine.registerOperator(operator);
+    }
+
+  }
+
+  protected void registerFunctions() {
+    Map<String, Object> functions = OLuceneFunctionsFactory.FUNCTIONS;
+
+    for (String s : functions.keySet()) {
+      OSQLEngine.getInstance().registerFunction(s, (OSQLFunction) functions.get(s));
+    }
   }
 
   @Override

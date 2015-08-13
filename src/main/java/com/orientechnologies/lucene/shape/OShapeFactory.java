@@ -20,7 +20,14 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.context.SpatialContext;
+import com.spatial4j.core.shape.Point;
+import com.spatial4j.core.shape.Rectangle;
 import com.spatial4j.core.shape.Shape;
+import com.spatial4j.core.shape.ShapeCollection;
+import com.spatial4j.core.shape.jts.JtsGeometry;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.MultiPolygon;
+import com.vividsolutions.jts.geom.Polygon;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,10 +39,10 @@ public class OShapeFactory extends OShapeBuilder {
   public static final OShapeFactory  INSTANCE  = new OShapeFactory();
 
   protected OShapeFactory() {
-    registerFactory(new OLineShapeBuilder());
-    registerFactory(new OMultiLineShapeBuilder());
+    registerFactory(new OLineStringShapeBuilder());
+    registerFactory(new OMultiLineStringShapeBuilder());
     registerFactory(new OPointShapeBuilder());
-    // registerFactory(Point.class, new OMultiPointShapeFactory());
+    registerFactory(new OMultiPointShapeBuilder());
     registerFactory(new ORectangleShapeBuilder());
     registerFactory(new OPolygonShapeBuilder());
     registerFactory(new OMultiPolygonShapeBuilder());
@@ -101,6 +108,68 @@ public class OShapeFactory extends OShapeBuilder {
   @Override
   public Shape fromText(String wkt) {
     return null;
+  }
+
+  @Override
+  public ODocument toDoc(Shape shape) {
+
+    ODocument doc = null;
+    if (Point.class.isAssignableFrom(shape.getClass())) {
+      doc = factories.get(Point.class.getSimpleName()).toDoc(shape);
+    } else if (Rectangle.class.isAssignableFrom(shape.getClass())) {
+      doc = factories.get(Rectangle.class.getSimpleName()).toDoc(shape);
+    } else if (JtsGeometry.class.isAssignableFrom(shape.getClass())) {
+      JtsGeometry geometry = (JtsGeometry) shape;
+      Geometry geom = geometry.getGeom();
+      doc = factories.get(geom.getClass().getSimpleName()).toDoc(shape);
+
+    } else if (ShapeCollection.class.isAssignableFrom(shape.getClass())) {
+      ShapeCollection collection = (ShapeCollection) shape;
+
+      if (isMultiPolygon(collection)) {
+
+        doc = factories.get("MultiPolygon").toDoc(createMultiPolygon(collection));
+      }
+    }
+    return doc;
+  }
+
+  protected JtsGeometry createMultiPolygon(ShapeCollection<JtsGeometry> geometries) {
+
+    Polygon[] polygons = new Polygon[geometries.size()];
+
+    int i = 0;
+
+    for (JtsGeometry geometry : geometries) {
+      polygons[i] = (Polygon) geometry.getGeom();
+      i++;
+    }
+
+    MultiPolygon multiPolygon = GEOMETRY_FACTORY.createMultiPolygon(polygons);
+
+    return SPATIAL_CONTEXT.makeShape(multiPolygon);
+  }
+
+  protected boolean isMultiPolygon(ShapeCollection<Shape> collection) {
+
+    boolean isMultiPolygon = true;
+    for (Shape shape : collection) {
+
+      if (!isPolygon(shape)) {
+        isMultiPolygon = false;
+        break;
+      }
+    }
+    return isMultiPolygon;
+  }
+
+  protected boolean isPolygon(Shape shape) {
+
+    if (shape instanceof JtsGeometry) {
+      Geometry geom = ((JtsGeometry) shape).getGeom();
+      return geom instanceof Polygon;
+    }
+    return false;
   }
 
   @Override

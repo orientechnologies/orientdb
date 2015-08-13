@@ -16,8 +16,9 @@
  *  
  */
 
-package com.orientechnologies.lucene.test;
+package com.orientechnologies.lucene.test.geo;
 
+import com.orientechnologies.lucene.test.BaseSpatialLuceneTest;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -41,10 +42,10 @@ import java.util.Map;
  */
 
 @Test
-public class LuceneSpatialMultyPolygonTest extends BaseSpatialLuceneTest {
+public class LuceneSpatialPolygonTest extends BaseSpatialLuceneTest {
   @Override
   protected String getDatabaseName() {
-    return "spatialMultiPolygonTest";
+    return "spatialPolygonTest";
   }
 
   @BeforeClass
@@ -56,7 +57,7 @@ public class LuceneSpatialMultyPolygonTest extends BaseSpatialLuceneTest {
     OClass v = schema.getClass("V");
     OClass oClass = schema.createClass("Place");
     oClass.setSuperClass(v);
-    oClass.createProperty("location", OType.EMBEDDED, schema.getClass("MultiPolygon"));
+    oClass.createProperty("location", OType.EMBEDDED, schema.getClass("Polygon"));
     oClass.createProperty("name", OType.STRING);
 
     databaseDocumentTx.command(new OCommandSQL("CREATE INDEX Place.location ON Place(location) SPATIAL ENGINE LUCENE")).execute();
@@ -64,9 +65,16 @@ public class LuceneSpatialMultyPolygonTest extends BaseSpatialLuceneTest {
   }
 
   @Test
-  public void testIndexingMultiPolygon() throws IOException {
+  public void testPolygonWithoutIndex() {
 
-    InputStream systemResourceAsStream = ClassLoader.getSystemResourceAsStream("italy.json");
+    databaseDocumentTx.command(new OCommandSQL("drop index Place.location")).execute();
+    queryPolygon();
+  }
+
+  @Test
+  public void testIndexingPolygon() throws IOException {
+
+    InputStream systemResourceAsStream = ClassLoader.getSystemResourceAsStream("germany.json");
 
     ODocument doc = new ODocument().fromJSON(systemResourceAsStream);
 
@@ -76,52 +84,41 @@ public class LuceneSpatialMultyPolygonTest extends BaseSpatialLuceneTest {
     ODocument location = new ODocument(type);
     location.field("coordinates", geometry.get("coordinates"));
     ODocument germany = new ODocument("Place");
-    germany.field("name", "Italy");
+    germany.field("name", "Germany");
     germany.field("location", location);
     databaseDocumentTx.save(germany);
 
     OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("Place.location");
 
     Assert.assertEquals(index.getSize(), 1);
+    queryPolygon();
 
-    // Should not contain Berlin
-    String query = "select * from Place where location STContains { 'shape' : { 'type' : 'Point' , 'coordinates' : [13.383333,52.516667]} } ";
+  }
+
+  protected void queryPolygon() {
+    // Should contain Berlin
+    String query = "select * from Place where location ST_CONTAINS { 'shape' : { 'type' : 'Point' , 'coordinates' : [13.383333,52.516667]} } ";
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
+    Assert.assertEquals(docs.size(), 1);
+
+    // Should contain Berlin BBox
+    query = "select * from Place where location ST_CONTAINS { 'shape' : { 'type' : 'Rectangle' , 'coordinates' : [13.0884,52.33812,13.76134,52.675499]} } ";
+    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
+
+    Assert.assertEquals(docs.size(), 1);
+
+    // Should not contain Rome
+    query = "select * from Place where location ST_CONTAINS { 'shape' : { 'type' : 'Point' , 'coordinates' : [12.5,41.9]} } ";
+    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
+
     Assert.assertEquals(docs.size(), 0);
 
-    // Should not contain Berlin BBox
-    query = "select * from Place where location STContains { 'shape' : { 'type' : 'Rectangle' , 'coordinates' : [13.0884,52.33812,13.76134,52.675499]} } ";
+    // Should not contain Rome BBox
+    query = "select * from Place where location ST_CONTAINS { 'shape' : { 'type' : 'Rectangle' , 'coordinates' : [12.37528,41.802872,12.62256,41.991791]} } ";
     docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(docs.size(), 0);
-
-    // Should contain contain Rome
-    query = "select * from Place where location STContains { 'shape' : { 'type' : 'Point' , 'coordinates' : [12.5,41.9]} } ";
-    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-
-    Assert.assertEquals(docs.size(), 1);
-
-    // Should contain Rome BBox
-    query = "select * from Place where location STContains { 'shape' : { 'type' : 'Rectangle' , 'coordinates' : [12.37528,41.802872,12.62256,41.991791]} } ";
-    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-
-    Assert.assertEquals(docs.size(), 1);
-
-    // Should contain contain Catania
-
-    query = "select * from Place where location STContains { 'shape' : { 'type' : 'Point' , 'coordinates' : [15.0777,37.507999]} } ";
-    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-
-    Assert.assertEquals(docs.size(), 1);
-
-    // Should contain Catania BBox
-
-    query = "select * from Place where location STContains { 'shape' : { 'type' : 'Rectangle' , 'coordinates' : [15.04145,37.470379,15.11752,37.532421]} } ";
-    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-
-    Assert.assertEquals(docs.size(), 1);
-
   }
 
   @AfterClass

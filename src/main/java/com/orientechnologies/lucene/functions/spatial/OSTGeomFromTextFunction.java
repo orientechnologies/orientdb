@@ -21,33 +21,32 @@ package com.orientechnologies.lucene.functions.spatial;
 import com.orientechnologies.lucene.shape.OShapeFactory;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
-import com.spatial4j.core.shape.Shape;
-import com.spatial4j.core.shape.SpatialRelation;
 
-import java.util.Map;
+import java.text.ParseException;
 
 /**
- * Created by Enrico Risa on 12/08/15.
+ * Created by Enrico Risa on 13/08/15.
  */
-public class STContainsFunction extends OSQLFunctionAbstract {
+public class OSTGeomFromTextFunction extends OSQLFunctionAbstract {
 
-  public static final String NAME    = "st_contains";
+  public static final String NAME    = "ST_GeomFromText";
 
   OShapeFactory              factory = OShapeFactory.INSTANCE;
 
-  public STContainsFunction() {
-    super(NAME, 2, 2);
+  public OSTGeomFromTextFunction() {
+    super("", 1, 1);
   }
 
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
-    Shape shape = factory.fromDoc((ODocument) iParams[0]);
-    Map map = (Map) iParams[1];
-    Shape shape1 = factory.fromMapGeoJson((Map) map.get("shape"));
-    return shape.relate(shape1) == SpatialRelation.CONTAINS;
+    try {
+      return factory.toDoc((String) iParams[0]);
+    } catch (ParseException e) {
+      e.printStackTrace();
+    }
+    return null;
   }
 
   @Override

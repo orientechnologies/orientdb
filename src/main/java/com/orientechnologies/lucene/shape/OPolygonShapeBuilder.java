@@ -19,22 +19,23 @@
 package com.orientechnologies.lucene.shape;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.spatial4j.core.shape.Shape;
+import com.spatial4j.core.shape.jts.JtsGeometry;
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.LinearRing;
 import com.vividsolutions.jts.geom.Polygon;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by enricorisa on 24/04/14.
  */
-public class OPolygonShapeBuilder extends OShapeBuilder {
+public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   @Override
   public String getName() {
     return "Polygon";
@@ -43,11 +44,6 @@ public class OPolygonShapeBuilder extends OShapeBuilder {
   @Override
   public OShapeType getType() {
     return OShapeType.POLYGON;
-  }
-
-  @Override
-  public boolean canHandle(OCompositeKey key) {
-    return false;
   }
 
   @Override
@@ -60,7 +56,7 @@ public class OPolygonShapeBuilder extends OShapeBuilder {
   }
 
   @Override
-  public Shape fromDoc(ODocument document) {
+  public JtsGeometry fromDoc(ODocument document) {
     validate(document);
     List<List<List<Number>>> coordinates = document.field("coordinates");
 
@@ -101,7 +97,29 @@ public class OPolygonShapeBuilder extends OShapeBuilder {
   }
 
   @Override
-  public Shape fromText(String wkt) {
+  public JtsGeometry fromText(String wkt) {
     return null;
+  }
+
+  @Override
+  public ODocument toDoc(JtsGeometry shape) {
+
+    ODocument doc = new ODocument(getName());
+    Polygon polygon = (Polygon) shape.getGeom();
+    List<List<List<Double>>> polyCoordinates = coordinatesFromPolygon(polygon);
+    doc.field(COORDINATES, polyCoordinates);
+    return doc;
+  }
+
+  protected List<List<List<Double>>> coordinatesFromPolygon(Polygon polygon) {
+    List<List<List<Double>>> polyCoordinates = new ArrayList<List<List<Double>>>();
+    LineString exteriorRing = polygon.getExteriorRing();
+    polyCoordinates.add(coordinatesFromLineString(exteriorRing));
+    int i = polygon.getNumInteriorRing();
+    for (int j = 0; j < i; j++) {
+      LineString interiorRingN = polygon.getInteriorRingN(i);
+      polyCoordinates.add(coordinatesFromLineString(interiorRingN));
+    }
+    return polyCoordinates;
   }
 }

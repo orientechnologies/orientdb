@@ -15,9 +15,7 @@
  */
 package com.orientechnologies.lucene.functions;
 
-import com.orientechnologies.lucene.functions.spatial.OToWktFunction;
-import com.orientechnologies.lucene.functions.spatial.STNearFunction;
-import com.orientechnologies.lucene.functions.spatial.STWithinFunction;
+import com.orientechnologies.lucene.functions.spatial.*;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
@@ -28,12 +26,14 @@ import java.util.Set;
 
 public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
 
-  private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
+  public static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
 
   static {
-    register(OToWktFunction.NAME, OToWktFunction.class);
-    register(STWithinFunction.NAME, STWithinFunction.class);
-    register(STNearFunction.NAME, STNearFunction.class);
+    register(OToWktFunction.NAME, new OToWktFunction());
+    register(STWithinFunction.NAME, new STWithinFunction());
+    register(STNearFunction.NAME, new STNearFunction());
+    register(STContainsFunction.NAME, new STContainsFunction());
+    register(OSTGeomFromTextFunction.NAME, new OSTGeomFromTextFunction());
   }
 
   @Override
@@ -70,5 +70,9 @@ public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
 
   public static void register(final String iName, final Object iImplementation) {
     FUNCTIONS.put(iName.toLowerCase(), iImplementation);
+  }
+
+  public Map<String, Object> getFunctions() {
+    return FUNCTIONS;
   }
 }

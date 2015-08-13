@@ -37,7 +37,7 @@ import java.util.Map;
 public class OLuceneSTContainsOperator extends OLuceneSpatialOperator {
 
   public OLuceneSTContainsOperator() {
-    super("STCONTAINS", 5, false);
+    super("ST_CONTAINS", 5, false);
   }
 
   @Override

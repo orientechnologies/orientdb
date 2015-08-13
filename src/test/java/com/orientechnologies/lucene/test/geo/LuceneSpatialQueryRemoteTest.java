@@ -16,7 +16,7 @@
  *
  */
 
-package com.orientechnologies.lucene.test;
+package com.orientechnologies.lucene.test.geo;
 
 import org.testng.annotations.Test;
 

@@ -16,9 +16,10 @@
  *  
  */
 
-package com.orientechnologies.lucene.test;
+package com.orientechnologies.lucene.test.geo;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;

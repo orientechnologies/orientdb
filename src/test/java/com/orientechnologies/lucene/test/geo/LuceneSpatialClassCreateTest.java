@@ -16,8 +16,9 @@
  *  
  */
 
-package com.orientechnologies.lucene.test;
+package com.orientechnologies.lucene.test.geo;
 
+import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import junit.framework.Assert;
 import org.testng.annotations.AfterClass;
@@ -45,17 +46,17 @@ public class LuceneSpatialClassCreateTest extends BaseLuceneTest {
 
     Assert.assertNotNull(schema.getClass("Point"));
 
-//    Assert.assertNotNull(schema.getClass("MultiPoint"));
+    Assert.assertNotNull(schema.getClass("MultiPoint"));
 
-    Assert.assertNotNull(schema.getClass("Line"));
+    Assert.assertNotNull(schema.getClass("LineString"));
 
-//    Assert.assertNotNull(schema.getClass("MultiLine"));
+    Assert.assertNotNull(schema.getClass("MultiLineString"));
 
     Assert.assertNotNull(schema.getClass("Rectangle"));
 
     Assert.assertNotNull(schema.getClass("Polygon"));
 
-//    Assert.assertNotNull(schema.getClass("MultiPolygon"));
+    Assert.assertNotNull(schema.getClass("MultiPolygon"));
   }
 
   @AfterClass

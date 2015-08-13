@@ -25,12 +25,14 @@ import com.spatial4j.core.shape.jts.JtsGeometry;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 
+import java.text.ParseException;
 import java.util.Map;
 
 public abstract class OShapeBuilder<T extends Shape> {
 
   public static final JtsSpatialContext SPATIAL_CONTEXT  = JtsSpatialContext.GEO;
   public static final GeometryFactory   GEOMETRY_FACTORY = JtsSpatialContext.GEO.getGeometryFactory();
+  public static final String            COORDINATES      = "coordinates";
 
   public abstract String getName();
 
@@ -42,7 +44,7 @@ public abstract class OShapeBuilder<T extends Shape> {
 
   public T fromMapGeoJson(Map<String, Object> geoJsonMap) {
     ODocument doc = new ODocument(getName());
-    doc.field("coordinates", geoJsonMap.get("coordinates"));
+    doc.field(COORDINATES, geoJsonMap.get(COORDINATES));
     return fromDoc(doc);
   }
 
@@ -92,5 +94,12 @@ public abstract class OShapeBuilder<T extends Shape> {
   }
 
   public abstract T fromText(String wkt);
+
+  public abstract ODocument toDoc(T shape);
+
+  public ODocument toDoc(String wkt) throws ParseException {
+    T parsed = (T) SPATIAL_CONTEXT.getWktShapeParser().parse(wkt);
+    return toDoc(parsed);
+  }
 
 }
