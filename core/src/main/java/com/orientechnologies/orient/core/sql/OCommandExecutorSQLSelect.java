@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -121,41 +122,38 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
-  private static final AsyncResult              PARALLEL_END_EXECUTION_THREAD = new AsyncResult(null, null);
+  private static final AsyncResult PARALLEL_END_EXECUTION_THREAD = new AsyncResult(null, null);
 
-  private final OOrderByOptimizer               orderByOptimizer              = new OOrderByOptimizer();
-  private final OMetricRecorder                 metricRecorder                = new OMetricRecorder();
-  private final OFilterOptimizer                filterOptimizer               = new OFilterOptimizer();
-  private final OFilterAnalyzer                 filterAnalyzer                = new OFilterAnalyzer();
-  private Map<String, String>                   projectionDefinition          = null;
+  private final OOrderByOptimizer           orderByOptimizer     = new OOrderByOptimizer();
+  private final OMetricRecorder             metricRecorder       = new OMetricRecorder();
+  private final OFilterOptimizer            filterOptimizer      = new OFilterOptimizer();
+  private final OFilterAnalyzer             filterAnalyzer       = new OFilterAnalyzer();
+  private       Map<String, String>         projectionDefinition = null;
   // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT IT'S USED THE PROJECTIONS IN GROUPED-RESULTS
-  private Map<String, Object>                   projections                   = null;
-  private List<OPair<String, String>>           orderedFields                 = new ArrayList<OPair<String, String>>();
-  private List<String>                          groupByFields;
-  private Map<Object, ORuntimeResult>           groupedResult;
-  private List<String>                          unwindFields;
-  private Object                                expandTarget;
-  private int                                   fetchLimit                    = -1;
-  private OIdentifiable                         lastRecord;
-  private String                                fetchPlan;
-  private volatile boolean                      executing;
-  private boolean                               fullySortedByIndex            = false;
-  private LOCKING_STRATEGY                      lockingStrategy               = LOCKING_STRATEGY.DEFAULT;
+  private       Map<String, Object>         projections          = null;
+  private       List<OPair<String, String>> orderedFields        = new ArrayList<OPair<String, String>>();
+  private List<String>                groupByFields;
+  private Map<Object, ORuntimeResult> groupedResult;
+  private List<String>                unwindFields;
+  private Object                      expandTarget;
+  private int fetchLimit = -1;
+  private          OIdentifiable lastRecord;
+  private          String        fetchPlan;
+  private volatile boolean       executing;
+  private boolean          fullySortedByIndex = false;
+  private LOCKING_STRATEGY lockingStrategy    = LOCKING_STRATEGY.DEFAULT;
 
-  private Boolean                               isAnyFunctionAggregates       = null;
-  private volatile boolean                      parallel                      = false;
-  private volatile boolean                      parallelRunning;
-  private final ArrayBlockingQueue<AsyncResult> resultQueue                   = new ArrayBlockingQueue<AsyncResult>(
-                                                                                  OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE
-                                                                                      .getValueAsInteger());
+  private          Boolean isAnyFunctionAggregates = null;
+  private volatile boolean parallel                = false;
+  private volatile boolean parallelRunning;
+  private final ArrayBlockingQueue<AsyncResult> resultQueue = new ArrayBlockingQueue<AsyncResult>(OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE.getValueAsInteger());
 
-  private ConcurrentHashMap<ORID, ORID>         uniqueResult;
-  private boolean                               noCache                       = false;
-  private int                                   tipLimitThreshold             = OGlobalConfiguration.QUERY_LIMIT_THRESHOLD_TIP
-                                                                                  .getValueAsInteger();
-  private String                                NULL_VALUE                    = "null";
+  private ConcurrentHashMap<ORID, ORID> uniqueResult;
+  private boolean noCache           = false;
+  private int     tipLimitThreshold = OGlobalConfiguration.QUERY_LIMIT_THRESHOLD_TIP.getValueAsInteger();
+  private String  NULL_VALUE        = "null";
 
-  private AtomicLong                            tmpQueueOffer                 = new AtomicLong();
+  private AtomicLong tmpQueueOffer = new AtomicLong();
 
   public OCommandExecutorSQLSelect() {
   }
@@ -183,13 +181,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       final int result = firstParamCount - secondParamCount;
 
       if (result == 0 && !orderedFields.isEmpty()) {
-        if (!(indexOne instanceof OChainedIndexProxy)
-            && orderByOptimizer.canBeUsedByOrderBy(indexOne, OCommandExecutorSQLSelect.this.orderedFields)) {
+        if (!(indexOne instanceof OChainedIndexProxy) && orderByOptimizer.canBeUsedByOrderBy(indexOne, OCommandExecutorSQLSelect.this.orderedFields)) {
           return 1;
         }
 
-        if (!(indexTwo instanceof OChainedIndexProxy)
-            && orderByOptimizer.canBeUsedByOrderBy(indexTwo, OCommandExecutorSQLSelect.this.orderedFields)) {
+        if (!(indexTwo instanceof OChainedIndexProxy) && orderByOptimizer.canBeUsedByOrderBy(indexTwo, OCommandExecutorSQLSelect.this.orderedFields)) {
           return -1;
         }
       }
@@ -199,7 +195,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private static Object getIndexKey(final OIndexDefinition indexDefinition, Object value, OCommandContext context) {
-    if (indexDefinition instanceof OCompositeIndexDefinition || indexDefinition.getParamCount() > 1) {
+    if (indexDefinition instanceof OCompositeIndexDefinition || indexDefinition.getParamCount()>1) {
       if (value instanceof List) {
         final List<?> values = (List<?>) value;
         List<Object> keyParams = new ArrayList<Object>(values.size());
@@ -261,10 +257,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       parserNextWord(true);
       if (parserGetLastWord().equalsIgnoreCase(KEYWORD_FROM)) {
         // FROM
-        parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(parserGetCurrentPosition(), endPosition),
-            getContext(), KEYWORD_WHERE);
-        parserSetCurrentPosition(parsedTarget.parserIsEnded() ? endPosition : parsedTarget.parserGetCurrentPosition()
-            + parserGetCurrentPosition());
+        parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(parserGetCurrentPosition(), endPosition), getContext(), KEYWORD_WHERE);
+        parserSetCurrentPosition(parsedTarget.parserIsEnded() ? endPosition : parsedTarget.parserGetCurrentPosition() + parserGetCurrentPosition());
       } else {
         parserGoBack();
       }
@@ -277,11 +271,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           if (!w.isEmpty()) {
             if (w.equals(KEYWORD_WHERE)) {
-              compiledFilter = OSQLEngine.getInstance().parseCondition(
-                  parserText.substring(parserGetCurrentPosition(), endPosition), getContext(), KEYWORD_WHERE);
+              compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition), getContext(), KEYWORD_WHERE);
               optimize();
-              parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition()
-                  + parserGetCurrentPosition());
+              parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition() + parserGetCurrentPosition());
             } else if (w.equals(KEYWORD_LET)) {
               parseLet();
             } else if (w.equals(KEYWORD_GROUP)) {
@@ -318,7 +310,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
         }
       }
-      if (limit == 0 || limit < -1) {
+      if (limit == 0 || limit<-1) {
         throw new IllegalArgumentException("Limit must be > 0 or = -1 (no limit)");
       }
       validateQuery();
@@ -334,7 +326,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       for (Object letValue : let.values()) {
         if (letValue instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime f = (OSQLFunctionRuntime) letValue;
-          if (f.getFunction().aggregateResults() && this.groupByFields != null && this.groupByFields.size() > 0) {
+          if (f.getFunction().aggregateResults() && this.groupByFields != null && this.groupByFields.size()>0) {
             throwParsingException("Aggregate function cannot be used in LET clause together with GROUP BY");
           }
         }
@@ -1563,13 +1555,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       threads[i].start();
     }
 
-    int resultCount = 0;
-
     while (runningThreads.get() > 0 || !resultQueue.isEmpty()) {
       try {
         final AsyncResult result = resultQueue.take();
 
-        resultCount++;
+        if (OExecutionThreadLocal.isInterruptCurrentOperation())
+          throw new InterruptedException("Operation has been interrupted");
+
         if (result != PARALLEL_END_EXECUTION_THREAD) {
 
           if (!handleResult(result.record, result.context)) {
