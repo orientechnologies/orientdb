@@ -26,14 +26,15 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
  */
 public class OLuceneSpatialManager {
 
+  private OShapeBuilder shapeFactory;
 
-    private OShapeBuilder shapeFactory;
+  public OLuceneSpatialManager(OShapeBuilder oShapeBuilder) {
+    shapeFactory = oShapeBuilder;
+  }
 
-    public OLuceneSpatialManager(OShapeBuilder oShapeBuilder) {
-        shapeFactory = oShapeBuilder;
-    }
+  public void init(ODatabaseDocumentTx db) {
 
-    public void init(ODatabaseDocumentTx db) {
-        shapeFactory.initClazz(db);
-    }
+    db.getMetadata().getSchema().createAbstractClass("Shape");
+    shapeFactory.initClazz(db);
+  }
 }

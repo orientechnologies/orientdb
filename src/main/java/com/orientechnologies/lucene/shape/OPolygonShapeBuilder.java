@@ -50,7 +50,8 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   public void initClazz(ODatabaseDocumentTx db) {
 
     OSchemaProxy schema = db.getMetadata().getSchema();
-    OClass polygon = schema.createClass("Polygon");
+    OClass polygon = schema.createClass(getName());
+    polygon.addSuperClass(superClass(db));
     polygon.createProperty("coordinates", OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
 
   }

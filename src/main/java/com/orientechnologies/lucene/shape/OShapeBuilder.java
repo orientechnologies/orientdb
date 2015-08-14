@@ -17,6 +17,7 @@ package com.orientechnologies.lucene.shape;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.context.jts.JtsSpatialContext;
@@ -33,6 +34,7 @@ public abstract class OShapeBuilder<T extends Shape> {
   public static final JtsSpatialContext SPATIAL_CONTEXT  = JtsSpatialContext.GEO;
   public static final GeometryFactory   GEOMETRY_FACTORY = JtsSpatialContext.GEO.getGeometryFactory();
   public static final String            COORDINATES      = "coordinates";
+  public static final String            BASE_CLASS       = "Shape";
 
   public abstract String getName();
 
@@ -89,6 +91,10 @@ public abstract class OShapeBuilder<T extends Shape> {
     // if (autoIndexJtsGeometry)
     // jtsGeometry.index();
     return jtsGeometry;
+  }
+
+  protected OClass superClass(ODatabaseDocumentTx db) {
+    return db.getMetadata().getSchema().getClass(BASE_CLASS);
   }
 
   public abstract T fromText(String wkt);

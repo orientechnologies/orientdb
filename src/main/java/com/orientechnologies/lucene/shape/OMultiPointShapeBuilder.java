@@ -60,6 +60,7 @@ public class OMultiPointShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
 
     OSchemaProxy schema = db.getMetadata().getSchema();
     OClass multiPoint = schema.createClass("MultiPoint");
+    multiPoint.addSuperClass(superClass(db));
     multiPoint.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
   }
 

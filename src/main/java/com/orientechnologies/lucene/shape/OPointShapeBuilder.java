@@ -67,6 +67,7 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
     OSchemaProxy schema = db.getMetadata().getSchema();
     OClass point = schema.createClass("Point");
     point.setAbstract(true);
+    point.addSuperClass(superClass(db));
     OProperty coordinates = point.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.DOUBLE);
     coordinates.setMin("2");
     coordinates.setMin("2");

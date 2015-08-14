@@ -29,7 +29,7 @@ public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
   public static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
 
   static {
-    register(OToWktFunction.NAME, new OToWktFunction());
+    register(OSTAsTextFunction.NAME, new OSTAsTextFunction());
     register(STWithinFunction.NAME, new STWithinFunction());
     register(STNearFunction.NAME, new STNearFunction());
     register(STContainsFunction.NAME, new STContainsFunction());

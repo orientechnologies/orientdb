@@ -58,6 +58,7 @@ public class OMultiLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeomet
   public void initClazz(ODatabaseDocumentTx db) {
     OSchemaProxy schema = db.getMetadata().getSchema();
     OClass lineString = schema.createClass(getName());
+    lineString.addSuperClass(superClass(db));
     lineString.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
   }
 

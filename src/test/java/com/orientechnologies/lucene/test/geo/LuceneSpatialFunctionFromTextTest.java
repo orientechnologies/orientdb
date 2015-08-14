@@ -33,7 +33,7 @@ import java.util.List;
  * Created by Enrico Risa on 13/08/15.
  */
 @Test
-public class LuceneSpatialFunctionTest extends BaseSpatialLuceneTest {
+public class LuceneSpatialFunctionFromTextTest extends BaseSpatialLuceneTest {
 
   @Override
   protected String getDatabaseName() {
@@ -163,7 +163,4 @@ public class LuceneSpatialFunctionTest extends BaseSpatialLuceneTest {
 
   }
 
-  public void toWktTest() {
-
-  }
 }
