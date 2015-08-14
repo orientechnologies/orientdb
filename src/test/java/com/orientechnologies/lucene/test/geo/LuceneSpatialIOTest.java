@@ -111,15 +111,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
   @Test
   public void testRectangleIO() {
 
-    ODocument doc = new ODocument("Rectangle");
-    doc.field("coordinates", new ArrayList<Double>() {
-      {
-        add(-45d);
-        add(-30d);
-        add(45d);
-        add(30d);
-      }
-    });
+    ODocument doc = rectangle();
 
     ORectangleShapeBuilder builder = new ORectangleShapeBuilder();
 
