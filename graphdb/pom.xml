@@ -131,6 +131,8 @@
                 <configuration>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
+                        <orient.server.testMode>${orient.server.testMode}</orient.server.testMode>
+                        <orient.server.port>${orient.server.port}</orient.server.port>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
