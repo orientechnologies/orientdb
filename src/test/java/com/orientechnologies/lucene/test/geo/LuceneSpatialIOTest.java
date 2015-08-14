@@ -51,6 +51,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     initDB();
   }
 
+  // POINT
   @Test
   public void testPointIO() throws ParseException {
 
@@ -77,6 +78,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     Assert.assertEquals(doc.field("coordinates"), parsed.field("coordinates"));
   }
 
+  // MULTIPOINT
   @Test
   public void testMultiPointIO() {
 
@@ -105,6 +107,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     Assert.assertEquals(multiPoint1.toText(), multiPoint);
   }
 
+  // RECTANGLE
   @Test
   public void testRectangleIO() {
 
@@ -131,6 +134,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     Assert.assertEquals(rect1, rect);
   }
 
+  // LINESTRING
   @Test
   public void testLineStringIO() {
 
@@ -159,6 +163,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     Assert.assertEquals(lineString1, lineString);
   }
 
+  // MULTILINESTRING
   @Test
   public void testMultiLineStringIO() {
 
@@ -195,6 +200,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     Assert.assertEquals(multiLineString1, multiLineString);
   }
 
+  // POLYGON
   @Test
   public void testPolygonNoHolesIO() {
 
@@ -229,6 +235,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     Assert.assertEquals(p2, p1);
   }
 
+  // POLYGON
   @Test
   public void testPolygonHolesIO() {
 
@@ -244,6 +251,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     Assert.assertEquals(p2, p1);
   }
 
+  // MULTIPOLYGON
   @Test
   public void testMultiPolygon() throws IOException {
 
