@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.*;
@@ -129,7 +130,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       this.matchExpressions = result.matchExpressions;
       this.returnItems = result.returnItems;
     } catch (ParseException e) {
-      throw new OCommandSQLParsingException(e.getMessage(), e);
+      OErrorCode.QUERY_PARSE_ERROR.throwException(e.getMessage(), e);
     }
 
     assignDefaultAliases(this.matchExpressions);
