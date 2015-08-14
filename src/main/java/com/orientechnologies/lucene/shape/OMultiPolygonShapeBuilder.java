@@ -19,7 +19,9 @@
 package com.orientechnologies.lucene.shape;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.context.jts.JtsSpatialContext;
 import com.spatial4j.core.shape.Shape;
@@ -29,7 +31,17 @@ import java.text.ParseException;
 /**
  * Created by enricorisa on 24/04/14.
  */
-public class OPolygonShapeFactory implements OShapeFactory {
+public class OMultiPolygonShapeBuilder extends OShapeBuilder {
+  @Override
+  public String getName() {
+    return null;
+  }
+
+  @Override
+  public OShapeType getType() {
+    return null;
+  }
+
   @Override
   public Shape makeShape(OCompositeKey key, SpatialContext ctx) {
 
@@ -47,5 +59,22 @@ public class OPolygonShapeFactory implements OShapeFactory {
   @Override
   public boolean canHandle(OCompositeKey key) {
     return false;
+  }
+
+  @Override
+  public void initClazz(ODatabaseDocumentTx db) {
+
+    OSchemaProxy schema = db.getMetadata().getSchema();
+    schema.createClass("MultiPolygon");
+  }
+
+  @Override
+  public String asText(Shape shape) {
+    return null;
+  }
+
+  @Override
+  public Shape fromText(String wkt) {
+    return null;
   }
 }
