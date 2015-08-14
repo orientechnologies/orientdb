@@ -18,32 +18,30 @@
  *
  */
 
-package com.orientechnologies.orient.core.compression;
+package com.orientechnologies.orient.core.encryption;
 
 /**
- * /** Storage compression interface. Additional compression implementations can be plugged via <code>register()</code> method.
- * There are 2 versions:<br>
+ * Storage encryption interface. Additional encryption implementations can be plugged via <code>register()</code> method. There are
+ * 2 versions:<br>
  * <ul>
- * <li><code>OCompressionFactory.INSTANCE.register(<class>)</code> for stateful implementations, a new instance will be created for
+ * <li><code>OEncryptionFactory.INSTANCE.register(<class>)</code> for stateful implementations, a new instance will be created for
  * each storage/li>
- * <li><code>OCompressionFactory.INSTANCE.register(<instance>)</code> for stateless implementations, the same instance will be
- * shared across all the storages./li>
+ * <li><code>OEncryptionFactory.INSTANCE.register(<instance>)</code> for stateless implementations, the same instance will be shared
+ * across all the storages./li>
  * </ul>
- *
- * @author Andrey Lomakin
+ * 
  * @author Luca Garulli
- * @since 05.06.13
  */
-public interface OCompression {
-  byte[] compress(byte[] content);
+public interface OEncryption {
+  byte[] encrypt(byte[] content);
 
-  byte[] compress(byte[] content, final int offset, final int length);
+  byte[] decrypt(byte[] content);
 
-  byte[] uncompress(byte[] content);
+  byte[] encrypt(byte[] content, final int offset, final int length);
 
-  byte[] uncompress(byte[] content, final int offset, final int length);
+  byte[] decrypt(byte[] content, final int offset, final int length);
 
   String name();
 
-  OCompression configure(String iOptions);
+  OEncryption configure(String iOptions);
 }

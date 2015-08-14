@@ -107,13 +107,25 @@ public enum OGlobalConfiguration {
   STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Should we perform force sync of storage configuration for each update", Boolean.class, true),
 
-  STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
-      + " Possible values : gzip, nothing, snappy, des-encrypted, aes-encrypted, snappy-native. Default is nothing.", String.class,
-      "nothing"),
+  STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method used in storage."
+      + " Possible values : gzip, nothing, snappy, snappy-native. Default is 'nothing'", String.class, "nothing"),
 
-  STORAGE_COMPRESSION_OPTIONS("storage.compressionOptions",
-      "Additional options for compression at storage level. Use this to store any encryption key. This setting is hidden",
-      String.class, null, false, true),
+  STORAGE_ENCRYPTION_METHOD("storage.encryptionMethod", "Record encryption method used in storage"
+      + " Possible values : 'aes' and 'des'. Default is no encryption.", String.class, "nothing"),
+
+  STORAGE_ENCRYPTION_KEY("storage.encryptionKey", "Contains the storage encryption key. This setting is hidden", String.class,
+      null, false, true),
+
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE("storage.makeFullCheckpointAfterCreate",
+      "Indicates whether full checkpoint should be performed if storage was created", Boolean.class, true),
+
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN(
+      "storage.makeFullCheckpointAfterOpen",
+      "Indicates whether full checkpoint should be performed if storage was opened. It is needed to make fuzzy checkpoints to work without issues",
+      Boolean.class, true),
+
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
+      "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
@@ -154,17 +166,6 @@ public enum OGlobalConfiguration {
 
   WAL_LOCATION("storage.wal.path", "Path to the wal file on the disk, by default is placed in DB directory but"
       + " it is highly recomended to use separate disk to store log operations", String.class, null),
-
-  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE("storage.makeFullCheckpointAfterCreate",
-      "Indicates whether full checkpoint should be performed if storage was created.", Boolean.class, true),
-
-  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN(
-      "storage.makeFullCheckpointAfterOpen",
-      "Indicates whether full checkpoint should be performed if storage was opened. It is needed to make fuzzy checkpoints to work without issues",
-      Boolean.class, true),
-
-  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
-      "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
 
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes,!!! NEVER CHANGE THIS VALUE !!!",
       Integer.class, 64),
@@ -466,6 +467,9 @@ public enum OGlobalConfiguration {
   CLIENT_SESSION_TOKEN_BASED("client.session.tokenBased", "Request a token based session to the server", Boolean.class, false),
 
   // SERVER
+  SERVER_OPEN_ALL_DATABASES_AT_STARTUP("server.openAllDatabasesAtStartup",
+      "If true, the server opens all the available databases at startup. Since 2.2", Boolean.class, false),
+
   SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections", Integer.class,
       5000),
 
@@ -535,15 +539,6 @@ public enum OGlobalConfiguration {
 
   DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
       ORecordSerializerBinary.NAME),
-
-  // ENCRYPTION AT REST @see OAbstractEncryptedCompression https://github.com/orientechnologies/orientdb/issues/89
-  STORAGE_ENCRYPTION_DES_KEY(
-      "encryption.des_key",
-      "The simmetric key to use to encrypt/descript data at rest using the DES alghorithm, stored in BASE64. The key must be 64 bits long. Default is \"T1JJRU5UREI=\" (ORIENTDB).",
-      String.class, "T1JJRU5UREI="), STORAGE_ENCRYPTION_AES_KEY(
-      "encryption.aes_key",
-      "The simmetric key to use to encrypt/descript data at rest using the AES alghorithm, stored in BASE64. The key must be 128 or 256 bits. Default is \"T1JJRU5UREJfSVNfQ09PTA==\" (ORIENTDB_IS_COOL).",
-      String.class, "T1JJRU5UREJfSVNfQ09PTA=="),
 
   @Deprecated
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Deprecated, now BINARY serialization is used in place of CSV", Boolean.class,

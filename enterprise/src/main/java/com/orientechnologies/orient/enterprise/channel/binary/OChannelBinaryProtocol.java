@@ -19,14 +19,14 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
+import java.io.IOException;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.IOException;
 
 /**
  * The range of the requests is 1-79.
@@ -106,10 +106,6 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR   = 113;
   public static final byte  REQUEST_RIDBAG_GET_SIZE                   = 114;
 
-  public static final byte  REQUEST_INDEX_GET                         = 120;
-  public static final byte  REQUEST_INDEX_PUT                         = 121;
-  public static final byte  REQUEST_INDEX_REMOVE                      = 122;
-
   // INCOMING
   public static final byte  RESPONSE_STATUS_OK                        = 0;
   public static final byte  RESPONSE_STATUS_ERROR                     = 1;
@@ -131,8 +127,8 @@ public class OChannelBinaryProtocol {
   public static final int   PROTOCOL_VERSION_29                       = 29;                 // ADDED PUSH SUPPORT FOR LIVE QUERY
   public static final int   PROTOCOL_VERSION_30                       = 30;                 // NEW COMMAND TO READ RECORD ONLY IF
                                                                                              // VERSION IS NOT LATEST WAS ADD
-  public static final int   PROTOCOL_VERSION_31                       = 30;                 // NEW INDEX COMMANDS: INDEX_GET,
-                                                                                             // INDEX_PUT, INDEX_REMOVE
+  public static final int   PROTOCOL_VERSION_31                       = 31;                 // CHANGED STORAGE CFG TO ADD
+                                                                                             // ENCRYPTION
   public static final int   CURRENT_PROTOCOL_VERSION                  = PROTOCOL_VERSION_31;
 
   public static OIdentifiable readIdentifiable(final OChannelBinaryAsynchClient network) throws IOException {

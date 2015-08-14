@@ -59,6 +59,7 @@ import java.util.TimeZone;
  * <li>12 = introduced record conflict strategy as string in both storage and paginated clusters</li>
  * <li>13 = introduced cluster status to manage cluster as "offline" with the new command "alter cluster status offline". Removed
  * data segments</li>
+ * <li>14 = introduced encryption and encryptionKey</li>
  * </ul>
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
@@ -66,36 +67,38 @@ import java.util.TimeZone;
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId CONFIG_RID = new OImmutableRecordId(0, 0);
+  public static final ORecordId                      CONFIG_RID                    = new OImmutableRecordId(0, 0);
 
-  public static final String                           DEFAULT_CHARSET               = "UTF-8";
-  private             String                           charset                       = DEFAULT_CHARSET;
-  public static final int                              CURRENT_VERSION               = 13;
-  public static final int                              CURRENT_BINARY_FORMAT_VERSION = 12;
-  private final       List<OStorageEntryConfiguration> properties                    = Collections.synchronizedList(new ArrayList<OStorageEntryConfiguration>());
-  protected final transient OStorage storage;
-  private final   OContextConfiguration configuration = new OContextConfiguration();
-  public volatile int                   version       = -1;
-  public volatile String name;
-  public volatile String schemaRecordId;
-  public volatile String dictionaryRecordId;
-  public volatile String indexMgrRecordId;
-  public volatile String dateFormat     = "yyyy-MM-dd";
-  public volatile String dateTimeFormat = "yyyy-MM-dd HH:mm:ss";
-  public volatile int                          binaryFormatVersion;
-  public volatile OStorageSegmentConfiguration fileTemplate;
-  public volatile  List<OStorageClusterConfiguration> clusters       = Collections.synchronizedList(new ArrayList<OStorageClusterConfiguration>());
-  private volatile String                             localeLanguage = Locale.getDefault().getLanguage();
-  private volatile String                             localeCountry  = Locale.getDefault().getCountry();
-  private volatile TimeZone                           timeZone       = TimeZone.getDefault();
-  private transient volatile Locale               localeInstance;
-  private transient volatile DecimalFormatSymbols unusualSymbols;
-  private volatile           String               clusterSelection;
-  private volatile           String               conflictStrategy;
-  private volatile int minimumClusters = 1;
-  private volatile String  recordSerializer;
-  private volatile int     recordSerializerVersion;
-  private volatile boolean strictSQL;
+  public static final String                         DEFAULT_CHARSET               = "UTF-8";
+  private String                                     charset                       = DEFAULT_CHARSET;
+  public static final int                            CURRENT_VERSION               = 14;
+  public static final int                            CURRENT_BINARY_FORMAT_VERSION = 12;
+  private final List<OStorageEntryConfiguration>     properties                    = Collections
+                                                                                       .synchronizedList(new ArrayList<OStorageEntryConfiguration>());
+  protected final transient OStorage                 storage;
+  private final OContextConfiguration                configuration                 = new OContextConfiguration();
+  public volatile int                                version                       = -1;
+  public volatile String                             name;
+  public volatile String                             schemaRecordId;
+  public volatile String                             dictionaryRecordId;
+  public volatile String                             indexMgrRecordId;
+  public volatile String                             dateFormat                    = "yyyy-MM-dd";
+  public volatile String                             dateTimeFormat                = "yyyy-MM-dd HH:mm:ss";
+  public volatile int                                binaryFormatVersion;
+  public volatile OStorageSegmentConfiguration       fileTemplate;
+  public volatile List<OStorageClusterConfiguration> clusters                      = Collections
+                                                                                       .synchronizedList(new ArrayList<OStorageClusterConfiguration>());
+  private volatile String                            localeLanguage                = Locale.getDefault().getLanguage();
+  private volatile String                            localeCountry                 = Locale.getDefault().getCountry();
+  private volatile TimeZone                          timeZone                      = TimeZone.getDefault();
+  private transient volatile Locale                  localeInstance;
+  private transient volatile DecimalFormatSymbols    unusualSymbols;
+  private volatile String                            clusterSelection;
+  private volatile String                            conflictStrategy;
+  private volatile int                               minimumClusters               = 1;
+  private volatile String                            recordSerializer;
+  private volatile int                               recordSerializerVersion;
+  private volatile boolean                           strictSQL;
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
@@ -126,15 +129,21 @@ public class OStorageConfiguration implements OSerializableStream {
    * @param iProperties
    */
   public OStorageConfiguration load(final Map<String, Object> iProperties) throws OSerializationException {
-    final String compressionMethod = (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase());
+    final String compressionMethod = (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey()
+        .toLowerCase());
     if (compressionMethod != null)
-      // SAVE COMPRESSION OPTION (ENCRYPTION KEY) IN CONFIGURATION
+      // SAVE COMPRESSION METHOD IN CONFIGURATION
       configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
 
-    final String compressionOptions = (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS.getKey().toLowerCase());
-    if (compressionOptions != null)
-      // SAVE COMPRESSION OPTION (ENCRYPTION KEY) IN CONFIGURATION
-      configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS, compressionOptions);
+    final String encryptionMethod = (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey().toLowerCase());
+    if (encryptionMethod != null)
+      // SAVE ENCRYPTION METHOD IN CONFIGURATION
+      configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
+
+    final String encryptionKey = (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase());
+    if (encryptionKey != null)
+      // SAVE ENCRYPTION KEY IN CONFIGURATION
+      configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
 
     final byte[] record = storage.readRecord(CONFIG_RID, null, false, null).getResult().buffer;
 
@@ -147,7 +156,8 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void update() throws OSerializationException {
     final byte[] record = toStream();
-    storage.updateRecord(CONFIG_RID, true, record, OVersionFactory.instance().createUntrackedVersion(), ORecordBytes.RECORD_TYPE, 0, null);
+    storage.updateRecord(CONFIG_RID, true, record, OVersionFactory.instance().createUntrackedVersion(), ORecordBytes.RECORD_TYPE,
+        0, null);
   }
 
   public boolean isEmpty() {
@@ -257,6 +267,10 @@ public class OStorageConfiguration implements OSerializableStream {
           // CLUSTER
           determineStorageCompression = clusterCompression;
 
+        String clusterEncryption = null;
+        if (version >= 14)
+          clusterEncryption = read(values[index++]);
+
         final String clusterConflictStrategy;
         if (version >= 12)
           clusterConflictStrategy = read(values[index++]);
@@ -269,7 +283,7 @@ public class OStorageConfiguration implements OSerializableStream {
           status = OStorageClusterConfiguration.STATUS.valueOf(read(values[index++]));
 
         currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa,
-            clusterCompression, configuration.getValueAsString(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS),
+            clusterCompression, clusterEncryption, configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
             clusterConflictStrategy, status);
 
       } else if (clusterType.equals("p"))
@@ -344,9 +358,10 @@ public class OStorageConfiguration implements OSerializableStream {
         final Object value = read(values[index++]);
 
         final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
-        if (cfg != null && value != null)
-          configuration.setValue(key, OType.convert(value, cfg.getType()));
-        else
+        if (cfg != null) {
+          if (value != null)
+            configuration.setValue(key, OType.convert(value, cfg.getType()));
+        } else
           OLogManager.instance().warn(this, "Ignored storage configuration because not supported: %s=%s.", key, value);
       }
     } else
@@ -363,11 +378,11 @@ public class OStorageConfiguration implements OSerializableStream {
   /**
    * Added version used for managed Network Versioning.
    * 
-   * @param version
+   * @param iNetworkVersion
    * @return
    * @throws OSerializationException
    */
-  public byte[] toStream(int version) throws OSerializationException {
+  public byte[] toStream(final int iNetworkVersion) throws OSerializationException {
     final StringBuilder buffer = new StringBuilder(8192);
 
     write(buffer, CURRENT_VERSION);
@@ -384,7 +399,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
     write(buffer, timeZone.getID());
     write(buffer, charset);
-    if (version > 24)
+    if (iNetworkVersion > 24)
       write(buffer, conflictStrategy);
 
     phySegmentToStream(buffer, fileTemplate);
@@ -409,13 +424,15 @@ public class OStorageConfiguration implements OSerializableStream {
         write(buffer, paginatedClusterConfiguration.recordOverflowGrowFactor);
         write(buffer, paginatedClusterConfiguration.recordGrowFactor);
         write(buffer, paginatedClusterConfiguration.compression);
-        if (version > 24)
+        if (iNetworkVersion >= 31)
+          write(buffer, paginatedClusterConfiguration.encryption);
+        if (iNetworkVersion > 24)
           write(buffer, paginatedClusterConfiguration.conflictStrategy);
-        if (version > 25)
+        if (iNetworkVersion > 25)
           write(buffer, paginatedClusterConfiguration.getStatus().name().toString());
       }
     }
-    if (version <= 25) {
+    if (iNetworkVersion <= 25) {
       // dataSegment array
       write(buffer, 0);
       // tx Segment File
@@ -434,7 +451,7 @@ public class OStorageConfiguration implements OSerializableStream {
     write(buffer, clusterSelection);
     write(buffer, minimumClusters);
 
-    if (version > 24) {
+    if (iNetworkVersion > 24) {
       write(buffer, recordSerializer);
       write(buffer, recordSerializerVersion);
 
@@ -630,14 +647,20 @@ public class OStorageConfiguration implements OSerializableStream {
     final String compressionMethod = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD
         .getKey().toLowerCase()) : null;
     if (compressionMethod != null)
-      // SAVE COMPRESSION OPTION (ENCRYPTION KEY) IN CONFIGURATION
+      // SAVE COMPRESSION METHOD IN CONFIGURATION
       getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
 
-    final String compressionOptions = iProperties != null ? (String) iProperties
-        .get(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS.getKey().toLowerCase()) : null;
-    if (compressionOptions != null)
-      // SAVE COMPRESSION OPTION (ENCRYPTION KEY) IN CONFIGURATION
-      getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS, compressionOptions);
+    final String encryptionMethod = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD
+        .getKey().toLowerCase()) : null;
+    if (encryptionMethod != null)
+      // SAVE ENCRYPTION METHOD IN CONFIGURATION
+      getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
+
+    final String encryptionKey = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY
+        .getKey().toLowerCase()) : null;
+    if (encryptionKey != null)
+      // SAVE ENCRYPTION KEY IN CONFIGURATION
+      getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
   }
 
   private int phySegmentFromStream(final String[] values, int index, final OStorageSegmentConfiguration iSegment) {

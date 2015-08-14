@@ -459,15 +459,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
         ridBagSize();
         break;
-      case OChannelBinaryProtocol.REQUEST_INDEX_GET:
-        indexGet();
-        break;
-      case OChannelBinaryProtocol.REQUEST_INDEX_PUT:
-        indexPut();
-        break;
-      case OChannelBinaryProtocol.REQUEST_INDEX_REMOVE:
-        indexRemove();
-        break;
+
       default:
         setDataCommandInfo("Command not supported");
         return false;

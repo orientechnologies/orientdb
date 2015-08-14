@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 public interface OCluster {
 
   enum ATTRIBUTES {
-    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION, CONFLICTSTRATEGY, STATUS
+    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION, CONFLICTSTRATEGY, STATUS, ENCRYPTION
   }
 
   void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException;
@@ -50,6 +50,8 @@ public interface OCluster {
   OModificationLock getExternalModificationLock();
 
   Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
+
+  String encryption();
 
   void convertToTombstone(long iPosition) throws IOException;
 

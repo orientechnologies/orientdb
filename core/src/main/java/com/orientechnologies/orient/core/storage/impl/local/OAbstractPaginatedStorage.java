@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -65,8 +64,6 @@ import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -258,6 +255,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       status = STATUS.CLOSED;
+
       throw new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode, e);
     } finally {
       stateLock.releaseWriteLock();
@@ -290,15 +288,26 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
       }
 
-      // SAVE COMPRESSION OPTIONS IF ANY. THIS IS USED FOR ENCRYPTION AT REST WHERE IN THE 'STORAGE_COMPRESSION_OPTIONS' IS STORED
+      if (!configuration.getContextConfiguration().getContextKeys().contains(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey())) {
+        final String encryption = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD
+            .getKey().toLowerCase(configuration.getLocaleInstance())) : null;
+
+        if (encryption != null)
+          configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryption);
+        else
+          configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD,
+              OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getValue());
+      }
+
+      // SAVE COMPRESSION OPTIONS IF ANY. THIS IS USED FOR ENCRYPTION AT REST WHERE IN THE 'STORAGE_ENCRYPTION_KEY' IS STORED
       // THE KEY
-      final String compressionOptions = iProperties != null ? (String) iProperties
-          .get(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS.getKey().toLowerCase(configuration.getLocaleInstance())) : null;
-      if (compressionOptions != null)
-        configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS, compressionOptions);
+      final String encryptionKey = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY
+          .getKey().toLowerCase(configuration.getLocaleInstance())) : null;
+      if (encryptionKey != null)
+        configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
       else
-        configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS,
-            OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS.getValue());
+        configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY,
+            OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getValue());
 
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
       initWalAndDiskCache();
@@ -1147,7 +1156,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
                   ((ODocument) record).validate();
               }
             }
-            
+
             for (ORecordOperation txEntry : tmpEntries) {
               if (txEntry.getRecord().isDirty()) {
                 if (txEntry.type == ORecordOperation.CREATED)
@@ -2203,27 +2212,30 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     final String storageCompression = getConfiguration().getContextConfiguration().getValueAsString(
         OGlobalConfiguration.STORAGE_COMPRESSION_METHOD);
 
-    final String storageCompressionOptions = getConfiguration().getContextConfiguration().getValueAsString(
-        OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS);
+    final String storageEncryption = getConfiguration().getContextConfiguration().getValueAsString(
+        OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD);
+
+    final String encryptionKey = getConfiguration().getContextConfiguration().getValueAsString(
+        OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
 
     final String stgConflictStrategy = getConflictStrategy().getName();
 
     createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.size(),
-        OMetadataDefault.CLUSTER_INTERNAL_NAME, null, true, 20, 4, storageCompression, storageCompressionOptions,
+        OMetadataDefault.CLUSTER_INTERNAL_NAME, null, true, 20, 4, storageCompression, storageEncryption, encryptionKey,
         stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
 
     createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.size(),
         OMetadataDefault.CLUSTER_INDEX_NAME, null, false, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-        OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression, storageCompressionOptions,
+        OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression, storageEncryption, encryptionKey,
         stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
 
     createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.size(),
-        OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, false, 1, 1, storageCompression, storageCompressionOptions,
+        OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, false, 1, 1, storageCompression, storageEncryption, encryptionKey,
         stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
 
     defaultClusterId = createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.size(),
         CLUSTER_DEFAULT_NAME, null, true, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-        OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression, storageCompressionOptions,
+        OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression, storageEncryption, encryptionKey,
         stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
   }
 
@@ -2456,7 +2468,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     final ORecordId oldRID = rid.copy();
 
-    ORecordSerializer binary = ((ODatabaseDocumentInternal)clientTx.getDatabase()).getSerializer();
+    ORecordSerializer binary = ((ODatabaseDocumentInternal) clientTx.getDatabase()).getSerializer();
     final byte[] stream = binary.writeClassOnly(rec);
 
     rid = rid.copy();
@@ -2471,7 +2483,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     rec.getRecordVersion().copyFrom(ppos.recordVersion);
     clientTx.updateIdentityAfterCommit(oldRID, rid);
   }
-  
+
   private void commitEntry(final OTransaction clientTx, final ORecordOperation txEntry) throws IOException {
 
     final ORecord rec = txEntry.getRecord();

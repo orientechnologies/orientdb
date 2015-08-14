@@ -20,20 +20,21 @@
 
 package com.orientechnologies.orient.graph.console;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Iterator;
+import java.util.List;
+
+import org.junit.Assert;
+import org.junit.Test;
+
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Test cases against OrientDB console.
@@ -152,7 +153,8 @@ public class OConsoleDatabaseAppTest {
       }
       OrientGraph graph = new OrientGraph(dbUrl);
       try {
-        Iterable<Vertex> result = graph.command(new OSQLSynchQuery<Vertex>("select expand(out()) from (select from V where name = 'foo')")).execute();
+        Iterable<Vertex> result = graph.command(
+            new OSQLSynchQuery<Vertex>("select expand(out()) from (select from V where name = 'foo')")).execute();
         Iterator<Vertex> iterator = result.iterator();
         Assert.assertTrue(iterator.hasNext());
         Vertex next = iterator.next();
@@ -215,7 +217,7 @@ public class OConsoleDatabaseAppTest {
     PrintStream stream = new PrintStream(out);
     console.setOutput(stream);
     try {
-      console.createDatabase(dbUrl, null, null, null, null);
+      console.createDatabase(dbUrl, null, null, null, null, null);
       console.createClass("class foo");
       console.insert("into foo set name = 'barbar'");
 
@@ -261,7 +263,7 @@ public class OConsoleDatabaseAppTest {
   public void testDumpRecordDetails() {
     ConsoleTest c = new ConsoleTest();
     try {
-      c.console().createDatabase("memory:OConsoleDatabaseAppTestDumpRecordDetails", null, null, null, null);
+      c.console().createDatabase("memory:OConsoleDatabaseAppTestDumpRecordDetails", null, null, null, null, null);
       c.console().createClass("class foo");
       c.console().insert("into foo set name = 'barbar'");
       c.console().select("from foo limit -1");

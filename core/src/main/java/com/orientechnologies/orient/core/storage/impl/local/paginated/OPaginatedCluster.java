@@ -30,6 +30,8 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -58,28 +60,28 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGI
  * @since 10/7/13
  */
 public class OPaginatedCluster extends ODurableComponent implements OCluster {
-  public static final String                    DEF_EXTENSION            = ".pcl";
-  private static final int                      DISK_PAGE_SIZE           = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
-  private static final int                      LOWEST_FREELIST_BOUNDARY = PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY
-                                                                             .getValueAsInteger();
-  private final static int                      FREE_LIST_SIZE           = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
-  private static final int                      PAGE_INDEX_OFFSET        = 16;
-  private static final int                      RECORD_POSITION_MASK     = 0xFFFF;
-  private static final int                      ONE_KB                   = 1024;
-  private final OModificationLock               externalModificationLock = new OModificationLock();
-  private volatile OCompression                 compression;
-  private volatile String                       compressionOptions;
-  private OClusterPositionMap                   clusterPositionMap;
-  private OAbstractPaginatedStorage             storageLocal;
-  private volatile int                          id;
-  private long                                  fileId;
-  private OStoragePaginatedClusterConfiguration config;
-  private long                                  pinnedStateEntryIndex;
-  private ORecordConflictStrategy               recordConflictStrategy;
+  public static final  String            DEF_EXTENSION            = ".pcl";
+  private static final int               DISK_PAGE_SIZE           = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
+  private static final int               LOWEST_FREELIST_BOUNDARY = PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
+  private final static int               FREE_LIST_SIZE           = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
+  private static final int               PAGE_INDEX_OFFSET        = 16;
+  private static final int               RECORD_POSITION_MASK     = 0xFFFF;
+  private static final int               ONE_KB                   = 1024;
+  private final        OModificationLock externalModificationLock = new OModificationLock();
+  private volatile OCompression                          compression;
+  private volatile OEncryption                           encryption;
+  private volatile String                                encryptionKey;
+  private          OClusterPositionMap                   clusterPositionMap;
+  private          OAbstractPaginatedStorage             storageLocal;
+  private volatile int                                   id;
+  private          long                                  fileId;
+  private          OStoragePaginatedClusterConfiguration config;
+  private          long                                  pinnedStateEntryIndex;
+  private          ORecordConflictStrategy               recordConflictStrategy;
 
   private static final class AddEntryResult {
-    private final long           pageIndex;
-    private final int            pagePosition;
+    private final long pageIndex;
+    private final int  pagePosition;
 
     private final ORecordVersion recordVersion;
     private final int            recordsSizeDiff;
@@ -107,19 +109,17 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public void configure(final OStorage storage, final int id, final String clusterName, final Object... parameters)
-      throws IOException {
+  public void configure(final OStorage storage, final int id, final String clusterName, final Object... parameters) throws IOException {
     externalModificationLock.requestModificationLock();
     try {
       acquireExclusiveLock();
       try {
         final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
         final String cfgCompression = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD);
-        final String cfgCompressionOptions = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS);
+        final String cfgEncryption = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD);
+        final String cfgEncryptionKey = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
 
-        config = new OStoragePaginatedClusterConfiguration(storage.getConfiguration(), id, clusterName, null, true,
-            OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-            cfgCompression, cfgCompressionOptions, null, OStorageClusterConfiguration.STATUS.ONLINE);
+        config = new OStoragePaginatedClusterConfiguration(storage.getConfiguration(), id, clusterName, null, true, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, cfgCompression, cfgEncryption, cfgEncryptionKey, null, OStorageClusterConfiguration.STATUS.ONLINE);
         config.name = clusterName;
 
         init((OAbstractPaginatedStorage) storage, config);
@@ -132,7 +132,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public void configure(OStorage storage, OStorageClusterConfiguration config) throws IOException {
+  public void configure(final OStorage storage, final OStorageClusterConfiguration config) throws IOException {
     externalModificationLock.requestModificationLock();
     try {
       acquireExclusiveLock();
@@ -162,10 +162,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public void create(int startSize) throws IOException {
+  public void create(final int startSize) throws IOException {
     externalModificationLock.requestModificationLock();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      final OAtomicOperation atomicOperation = startAtomicOperation();
       acquireExclusiveLock();
       try {
         fileId = addFile(atomicOperation, getFullName());
@@ -200,7 +200,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         fileId = openFile(atomicOperation, getFullName());
 
-        OCacheEntry pinnedStateEntry = loadPage(atomicOperation, fileId, 0, false);
+        final OCacheEntry pinnedStateEntry = loadPage(atomicOperation, fileId, 0, false);
         try {
           pinPage(atomicOperation, pinnedStateEntry);
           pinnedStateEntryIndex = pinnedStateEntry.getPageIndex();
@@ -247,7 +247,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     close(true);
   }
 
-  public void close(boolean flush) throws IOException {
+  public void close(final boolean flush) throws IOException {
     externalModificationLock.requestModificationLock();
     try {
       acquireExclusiveLock();
@@ -323,7 +323,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             throw new IllegalArgumentException("Cannot change compression setting on cluster '" + getName()
                 + "' because it is not empty");
           setCompressionInternal(stringValue, ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration()
-              .getContextConfiguration().getValueAsString(OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS));
+              .getContextConfiguration().getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY));
           break;
         case CONFLICTSTRATEGY:
           setRecordConflictStrategy(stringValue);
@@ -335,6 +335,13 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase(storageLocal
               .getConfiguration().getLocaleInstance())));
         }
+        case ENCRYPTION:
+          if (getEntries() > 0)
+            throw new IllegalArgumentException("Cannot change encryption setting on cluster '" + getName()
+                + "' because it is not empty");
+          setEncryptionInternal(stringValue, ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration()
+              .getContextConfiguration().getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY));
+          break;
         default:
           throw new IllegalArgumentException("Runtime change of attribute '" + attribute + " is not supported");
         }
@@ -391,6 +398,16 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
+  public String encryption() {
+    acquireSharedLock();
+    try {
+      return config.encryption;
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
   public void convertToTombstone(long iPosition) throws IOException {
     throw new UnsupportedOperationException("convertToTombstone");
   }
@@ -398,6 +415,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public OPhysicalPosition createRecord(byte[] content, final ORecordVersion recordVersion, final byte recordType)
       throws IOException {
     content = compression.compress(content);
+    content = encryption.encrypt(content);
 
     externalModificationLock.requestModificationLock();
     try {
@@ -578,6 +596,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         fullContentPosition += OIntegerSerializer.INT_SIZE;
 
         byte[] recordContent = compression.uncompress(fullContent, fullContentPosition, readContentSize);
+        recordContent = encryption.decrypt(recordContent);
+
         return new ORawBuffer(recordContent, recordVersion, recordType);
       } finally {
         releaseSharedLock();
@@ -762,6 +782,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public void updateRecord(final long clusterPosition, byte[] content, final ORecordVersion recordVersion, final byte recordType)
       throws IOException {
     content = compression.compress(content);
+    content = encryption.encrypt(content);
 
     externalModificationLock.requestModificationLock();
     try {
@@ -1334,7 +1355,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     OFileUtils.checkValidName(config.getName());
 
     this.config = (OStoragePaginatedClusterConfiguration) config;
-    this.compression = OCompressionFactory.INSTANCE.getCompression(this.config.compression, this.config.compressionOptions);
+    this.compression = OCompressionFactory.INSTANCE.getCompression(this.config.compression, null);
+    this.encryption = OEncryptionFactory.INSTANCE.getEncryption(this.config.encryption, this.config.encryptionKey);
 
     if (((OStoragePaginatedClusterConfiguration) config).conflictStrategy != null)
       this.recordConflictStrategy = Orient.instance().getRecordConflictStrategy()
@@ -1353,9 +1375,18 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       config.compression = iCompressionMethod;
       storageLocal.getConfiguration().update();
     } catch (IllegalArgumentException e) {
-      throw new OStorageException("Invalid value for " + OCluster.ATTRIBUTES.COMPRESSION + " attribute. ", e);
+      throw new OStorageException("Invalid value for " + OCluster.ATTRIBUTES.COMPRESSION + " attribute", e);
     }
+  }
 
+  private void setEncryptionInternal(final String iMethod, final String iKey) {
+    try {
+      encryption = OEncryptionFactory.INSTANCE.getEncryption(iMethod, iKey);
+      config.encryption = iMethod;
+      storageLocal.getConfiguration().update();
+    } catch (IllegalArgumentException e) {
+      throw new OStorageException("Invalid value for " + ATTRIBUTES.ENCRYPTION + " attribute", e);
+    }
   }
 
   private void setRecordOverflowGrowFactorInternal(final String stringValue) {

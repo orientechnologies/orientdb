@@ -1,12 +1,13 @@
-package com.orientechnologies.orient.core.compression.impl;
+package com.orientechnologies.orient.core.encryption.impl;
+
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-
-import com.orientechnologies.orient.core.compression.OCompression;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
 /***
  * Stateful compression implementation that encrypt the content using AES
@@ -17,7 +18,7 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
  * @author Luca Garulli
  *
  */
-public class OAESCompression extends OAbstractEncryptedCompression {
+public class OAESEncryption extends OAbstractEncryption {
   // @see https://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html#SunJCEProvider
   private final String       TRANSFORMATION = "AES/ECB/PKCS5Padding"; // we use ECB because we cannot store the
   private final String       ALGORITHM_NAME = "AES";
@@ -27,23 +28,23 @@ public class OAESCompression extends OAbstractEncryptedCompression {
 
   private boolean            initialized    = false;
 
-  public static final String NAME           = "aes-encrypted";
+  public static final String NAME           = "aes";
 
   @Override
   public String name() {
     return NAME;
   }
 
-  public OAESCompression() {
+  public OAESEncryption() {
   }
 
-  public OCompression configure(final String iOptions) {
+  public OEncryption configure(final String iOptions) {
     initialized = false;
 
     if (iOptions == null)
       throw new OSecurityException(
-          "AES compression has been selected, but no key was found. Please configure it by passing the key as property at database create/open. The property key is: '"
-              + OGlobalConfiguration.STORAGE_COMPRESSION_OPTIONS.getKey() + "'");
+          "AES encryption has been selected, but no key was found. Please configure it by passing the key as property at database create/open. The property key is: '"
+              + OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey() + "'");
 
     try {
       final byte[] key = OBase64Utils.decode(iOptions);
@@ -52,7 +53,7 @@ public class OAESCompression extends OAbstractEncryptedCompression {
       cipher = Cipher.getInstance(TRANSFORMATION);
 
     } catch (Exception e) {
-      throw new OSecurityException(
+      throw new OInvalidStorageEncryptionKeyException(
           "Cannot initialize AES encryption with current key. Assure the key is a BASE64 - 128 oe 256 bits long", e);
 
     }

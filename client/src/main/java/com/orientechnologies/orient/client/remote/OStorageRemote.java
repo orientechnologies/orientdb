@@ -65,7 +65,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -554,107 +553,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       } catch (Exception e) {
         handleException(network, "Error on read record " + rid, e);
-      }
-    } while (true);
-  }
-
-  public Object indexGet(final String iIndexName, Object iKey, final String iFetchPlan) {
-    if (iIndexName == null || iIndexName.isEmpty())
-      throw new IllegalArgumentException("Index name is mandatory");
-
-    OChannelBinaryAsynchClient network = null;
-    do {
-      try {
-
-        try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_GET);
-          network.writeString(iIndexName);
-          if (iKey instanceof OCompositeKey)
-            iKey = ((OCompositeKey) iKey).getKeys();
-          network.writeBytes(new ODocument().field("key", iKey).toStream());
-          network.writeString(iFetchPlan != null ? iFetchPlan : "");
-        } finally {
-          endRequest(network);
-        }
-
-        try {
-          beginResponse(network);
-
-          return readSynchResult(network, ODatabaseRecordThreadLocal.INSTANCE.get());
-
-        } finally {
-          endResponse(network);
-        }
-
-      } catch (Exception e) {
-        handleException(network, "Error on index get for key: " + iKey, e);
-
-      }
-    } while (true);
-  }
-
-  public void indexPut(final String iIndexName, Object iKey, final OIdentifiable iValue) {
-    if (iIndexName == null || iIndexName.isEmpty())
-      throw new IllegalArgumentException("Index name is mandatory");
-
-    OChannelBinaryAsynchClient network = null;
-    do {
-      try {
-
-        try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_PUT);
-          network.writeString(iIndexName);
-          if (iKey instanceof OCompositeKey)
-            iKey = ((OCompositeKey) iKey).getKeys();
-          network.writeBytes(new ODocument().field("key", iKey).toStream());
-          network.writeRID(iValue.getIdentity());
-        } finally {
-          endRequest(network);
-        }
-
-        try {
-          beginResponse(network);
-        } finally {
-          endResponse(network);
-        }
-
-      } catch (Exception e) {
-        handleException(network, "Error on index put for key: " + iKey, e);
-
-      }
-    } while (true);
-  }
-
-  public boolean indexRemove(final String iIndexName, Object iKey) {
-    if (iIndexName == null || iIndexName.isEmpty())
-      throw new IllegalArgumentException("Index name is mandatory");
-
-    OChannelBinaryAsynchClient network = null;
-    do {
-      try {
-
-        try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_REMOVE);
-          network.writeString(iIndexName);
-          if (iKey instanceof OCompositeKey)
-            iKey = ((OCompositeKey) iKey).getKeys();
-          network.writeBytes(new ODocument().field("key", iKey).toStream());
-        } finally {
-          endRequest(network);
-        }
-
-        try {
-          beginResponse(network);
-
-          return network.readBoolean();
-
-        } finally {
-          endResponse(network);
-        }
-
-      } catch (Exception e) {
-        handleException(network, "Error on index remove for key: " + iKey, e);
-
       }
     } while (true);
   }

@@ -87,6 +87,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
       segment.getFile().read(OBinaryProtocol.SIZE_INT, buffer, size);
 
       fromStream(buffer);
+
     } catch (IOException e) {
       throw new OSerializationException("Cannot load database's configuration. The database seems to be corrupted.", e);
     }
