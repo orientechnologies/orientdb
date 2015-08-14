@@ -15,21 +15,22 @@
  */
 package com.orientechnologies.lucene.functions;
 
-import com.orientechnologies.lucene.functions.spatial.OToWktFunction;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
+import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAverage;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
 
 public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
 
   private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
 
   static {
-    register(OToWktFunction.NAME, OToWktFunction.class);
+    register(OLuceneNearFunction.NAME, OLuceneNearFunction.class);
   }
 
   @Override

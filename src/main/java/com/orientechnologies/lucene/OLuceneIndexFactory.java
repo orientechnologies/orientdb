@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -44,7 +43,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
   public static final String       LUCENE_ALGORITHM = "LUCENE";
-  OLuceneSpatialManager            spatialManager;
+
   static {
     final Set<String> types = new HashSet<String>();
     types.add(OClass.INDEX_TYPE.FULLTEXT.toString());
@@ -59,8 +58,6 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   public OLuceneIndexFactory() {
-
-    spatialManager = new OLuceneSpatialManager(new OShapeFactoryImpl());
     Orient.instance().addDbLifecycleListener(this);
   }
 
@@ -92,7 +89,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   @Override
   public void onCreate(ODatabaseInternal iDatabase) {
-    spatialManager.init((ODatabaseDocumentTx) iDatabase);
+
   }
 
   @Override

@@ -16,31 +16,15 @@
 
 package com.orientechnologies.lucene.shape;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.shape.Point;
+import com.spatial4j.core.shape.Shape;
 
-import java.util.List;
 
-public class OPointShapeBuilder extends OShapeBuilder<Point> {
+public class OPointShapeFactory implements OShapeFactory {
   @Override
-  public String getName() {
-    return "Point";
-  }
-
-  @Override
-  public OShapeType getType() {
-    return OShapeType.POINT;
-  }
-
-  @Override
-  public Point makeShape(OCompositeKey key, SpatialContext ctx) {
+  public Shape makeShape(OCompositeKey key, SpatialContext ctx) {
     double lat = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(0), Double.class)).doubleValue();
     double lng = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(1), Double.class)).doubleValue();
     return ctx.makePoint(lng, lat);
@@ -58,28 +42,5 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
       }
     }
     return canHandle;
-  }
-
-  @Override
-  public void initClazz(ODatabaseDocumentTx db) {
-
-    OSchemaProxy schema = db.getMetadata().getSchema();
-    OClass point = schema.createClass("Point");
-    OProperty coordinates = point.createProperty("coordinates", OType.EMBEDDEDLIST, OType.DOUBLE);
-    coordinates.setMin("2");
-    coordinates.setMin("2");
-  }
-
-  @Override
-  public String asText(ODocument document) {
-    validate(document);
-    List<Double> coordinates = document.field("coordinates");
-    Point point = SPATIAL_CONTEXT.makePoint(coordinates.get(0), coordinates.get(1));
-    return asText(point);
-  }
-
-  @Override
-  public Point fromText(String wkt) {
-    return null;
   }
 }

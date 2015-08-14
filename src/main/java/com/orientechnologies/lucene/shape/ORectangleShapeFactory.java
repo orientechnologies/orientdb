@@ -16,9 +16,8 @@
 
 package com.orientechnologies.lucene.shape;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.shape.Point;
@@ -27,17 +26,7 @@ import com.spatial4j.core.shape.Shape;
 import java.util.Collection;
 import java.util.List;
 
-public class ORectangleShapeBuilder extends OShapeBuilder {
-  @Override
-  public String getName() {
-    return null;
-  }
-
-  @Override
-  public OShapeType getType() {
-    return null;
-  }
-
+public class ORectangleShapeFactory implements OShapeFactory {
   @Override
   public Shape makeShape(OCompositeKey key, SpatialContext ctx) {
 
@@ -66,23 +55,5 @@ public class ORectangleShapeBuilder extends OShapeBuilder {
       }
     }
     return canHandle;
-  }
-
-  @Override
-  public void initClazz(ODatabaseDocumentTx db) {
-
-    OSchemaProxy schema = db.getMetadata().getSchema();
-    schema.createClass("Rectangle");
-
-  }
-
-  @Override
-  public String asText(Shape shape) {
-    return null;
-  }
-
-  @Override
-  public Shape fromText(String wkt) {
-    return null;
   }
 }

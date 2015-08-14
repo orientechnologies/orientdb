@@ -17,7 +17,6 @@
 package com.orientechnologies.lucene;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.lucene.functions.spatial.OToWktFunction;
 import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
 import com.orientechnologies.lucene.operator.OLuceneNearOperator;
 import com.orientechnologies.lucene.operator.OLuceneTextOperator;
@@ -52,7 +51,6 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
     OSQLEngine.registerOperator(new OLuceneTextOperator());
     OSQLEngine.registerOperator(new OLuceneWithinOperator());
     OSQLEngine.registerOperator(new OLuceneNearOperator());
-    OSQLEngine.getInstance().registerFunction(OToWktFunction.NAME, new OToWktFunction());
     OLogManager.instance().info(this, "Lucene index plugin installed and active. Lucene version: %s",
         OLuceneIndexManagerAbstract.LUCENE_VERSION);
   }
@@ -74,12 +72,10 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
 
   @Override
   public void onCreate(final ODatabaseInternal iDatabase) {
-
   }
 
   @Override
   public void onOpen(final ODatabaseInternal iDatabase) {
-
   }
 
   @Override
