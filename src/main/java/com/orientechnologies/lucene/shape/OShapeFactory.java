@@ -25,14 +25,13 @@ import com.spatial4j.core.shape.Rectangle;
 import com.spatial4j.core.shape.Shape;
 import com.spatial4j.core.shape.ShapeCollection;
 import com.spatial4j.core.shape.jts.JtsGeometry;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Polygon;
+import com.spatial4j.core.shape.jts.JtsPoint;
+import com.vividsolutions.jts.geom.*;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class OShapeFactory extends OShapeBuilder {
+public class OShapeFactory extends OComplexShapeBuilder {
 
   private Map<String, OShapeBuilder> factories = new HashMap<String, OShapeBuilder>();
 
@@ -127,11 +126,46 @@ public class OShapeFactory extends OShapeBuilder {
       ShapeCollection collection = (ShapeCollection) shape;
 
       if (isMultiPolygon(collection)) {
-
         doc = factories.get("MultiPolygon").toDoc(createMultiPolygon(collection));
+      } else if (isMultiPoint(collection)) {
+        doc = factories.get("MultiPoint").toDoc(createMultiPoint(collection));
+      } else if (isMultiLine(collection)) {
+        doc = factories.get("MultiLineString").toDoc(createMultiLine(collection));
       }
     }
     return doc;
+  }
+
+  protected JtsGeometry createMultiPoint(ShapeCollection<JtsPoint> geometries) {
+
+    Coordinate[] points = new Coordinate[geometries.size()];
+
+    int i = 0;
+
+    for (JtsPoint geometry : geometries) {
+      points[i] = new Coordinate(geometry.getX(), geometry.getY());
+      i++;
+    }
+
+    MultiPoint multiPoints = GEOMETRY_FACTORY.createMultiPoint(points);
+
+    return SPATIAL_CONTEXT.makeShape(multiPoints);
+  }
+
+  protected JtsGeometry createMultiLine(ShapeCollection<JtsGeometry> geometries) {
+
+    LineString[] multiLineString = new LineString[geometries.size()];
+
+    int i = 0;
+
+    for (JtsGeometry geometry : geometries) {
+      multiLineString[i] = (LineString) geometry.getGeom();
+      i++;
+    }
+
+    MultiLineString multiPoints = GEOMETRY_FACTORY.createMultiLineString(multiLineString);
+
+    return SPATIAL_CONTEXT.makeShape(multiPoints);
   }
 
   protected JtsGeometry createMultiPolygon(ShapeCollection<JtsGeometry> geometries) {
@@ -161,6 +195,44 @@ public class OShapeFactory extends OShapeBuilder {
       }
     }
     return isMultiPolygon;
+  }
+
+  protected boolean isMultiPoint(ShapeCollection<Shape> collection) {
+
+    boolean isMultipoint = true;
+    for (Shape shape : collection) {
+
+      if (!isPoint(shape)) {
+        isMultipoint = false;
+        break;
+      }
+    }
+    return isMultipoint;
+  }
+
+  protected boolean isMultiLine(ShapeCollection<Shape> collection) {
+
+    boolean isMultipoint = true;
+    for (Shape shape : collection) {
+
+      if (!isLineString(shape)) {
+        isMultipoint = false;
+        break;
+      }
+    }
+    return isMultipoint;
+  }
+
+  private boolean isLineString(Shape shape) {
+    if (shape instanceof JtsGeometry) {
+      Geometry geom = ((JtsGeometry) shape).getGeom();
+      return geom instanceof LineString;
+    }
+    return false;
+  }
+
+  protected boolean isPoint(Shape shape) {
+    return shape instanceof Point;
   }
 
   protected boolean isPolygon(Shape shape) {

@@ -31,11 +31,6 @@ import java.util.List;
  */
 public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilder<T> {
 
-
-
-
-
-
   protected List<List<Double>> coordinatesFromLineString(LineString ring) {
 
     Coordinate[] coordinates = ring.getCoordinates();
@@ -45,5 +40,15 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
       numbers.add(Arrays.asList(coordinate.x, coordinate.y));
     }
     return numbers;
+  }
+
+  protected LineString createLineString(List<List<Number>> coordinates) {
+    Coordinate[] coords = new Coordinate[coordinates.size()];
+    int i = 0;
+    for (List<Number> c : coordinates) {
+      coords[i] = new Coordinate(c.get(0).doubleValue(), c.get(1).doubleValue());
+      i++;
+    }
+    return GEOMETRY_FACTORY.createLineString(coords);
   }
 }

@@ -23,9 +23,14 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.spatial4j.core.shape.Shape;
+import com.spatial4j.core.shape.jts.JtsGeometry;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.MultiLineString;
 
-public class OMultiLineStringShapeBuilder extends OShapeBuilder {
+import java.util.ArrayList;
+import java.util.List;
+
+public class OMultiLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   @Override
   public String getName() {
     return "MultiLineString";
@@ -37,6 +42,19 @@ public class OMultiLineStringShapeBuilder extends OShapeBuilder {
   }
 
   @Override
+  public JtsGeometry fromDoc(ODocument document) {
+    validate(document);
+    List<List<List<Number>>> coordinates = document.field(COORDINATES);
+    LineString[] multiLine = new LineString[coordinates.size()];
+    int j = 0;
+    for (List<List<Number>> coordinate : coordinates) {
+      multiLine[j] = createLineString(coordinate);
+      j++;
+    }
+    return toShape(GEOMETRY_FACTORY.createMultiLineString(multiLine));
+  }
+
+  @Override
   public void initClazz(ODatabaseDocumentTx db) {
     OSchemaProxy schema = db.getMetadata().getSchema();
     OClass lineString = schema.createClass(getName());
@@ -44,17 +62,23 @@ public class OMultiLineStringShapeBuilder extends OShapeBuilder {
   }
 
   @Override
-  public String asText(Shape shape) {
+  public JtsGeometry fromText(String wkt) {
     return null;
   }
 
   @Override
-  public Shape fromText(String wkt) {
-    return null;
-  }
+  public ODocument toDoc(JtsGeometry shape) {
+    final MultiLineString geom = (MultiLineString) shape.getGeom();
 
-  @Override
-  public ODocument toDoc(Shape shape) {
-    return null;
+    ODocument doc = new ODocument(getName());
+    for (int i = 0; i < geom.getNumGeometries(); i++) {
+      final LineString lineString = (LineString) geom.getGeometryN(i);
+      doc.field(COORDINATES, new ArrayList<List<List<Double>>>() {
+        {
+          add(coordinatesFromLineString(lineString));
+        }
+      });
+    }
+    return doc;
   }
 }

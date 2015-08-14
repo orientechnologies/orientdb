@@ -56,6 +56,25 @@ public class LuceneSpatialFunctionTest extends BaseSpatialLuceneTest {
   }
 
   @Test
+  public void geomFromTextMultiLineStringTest() {
+
+    ODocument point = new ODocument("MultiLineString");
+    point.field("coordinates", new ArrayList<List<List<Double>>>() {
+      {
+        add(new ArrayList<List<Double>>() {
+          {
+            add(Arrays.asList(-71.160281, 42.258729));
+            add(Arrays.asList(-71.160837, 42.259113));
+            add(Arrays.asList(-71.161144, 42.25932));
+          }
+        });
+      }
+    });
+    checkFromText(point,
+        "select ST_GeomFromText('MULTILINESTRING((-71.160281 42.258729,-71.160837 42.259113,-71.161144 42.25932))') as geom");
+  }
+
+  @Test
   public void geomFromTextPointTest() {
 
     ODocument point = new ODocument("Point");
@@ -66,6 +85,21 @@ public class LuceneSpatialFunctionTest extends BaseSpatialLuceneTest {
       }
     });
     checkFromText(point, "select ST_GeomFromText('POINT(50 50)') as geom");
+  }
+
+  @Test
+  public void geomFromTextMultiPointTest() {
+
+    ODocument point = new ODocument("MultiPoint");
+    point.field("coordinates", new ArrayList<List<Double>>() {
+      {
+        add(Arrays.asList(-71.160281, 42.258729));
+        add(Arrays.asList(-71.160837, 42.259113));
+        add(Arrays.asList(-71.161144, 42.25932));
+      }
+    });
+    checkFromText(point,
+        "select ST_GeomFromText('MULTIPOINT ((-71.160281 42.258729), (-71.160837 42.259113), (-71.161144 42.25932))') as geom");
   }
 
   @Test

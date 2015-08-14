@@ -21,14 +21,11 @@ package com.orientechnologies.lucene.test.geo;
 import com.orientechnologies.lucene.shape.*;
 import com.orientechnologies.lucene.test.BaseSpatialLuceneTest;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.context.jts.JtsSpatialContext;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.Rectangle;
 import com.spatial4j.core.shape.Shape;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Polygon;
+import com.spatial4j.core.shape.jts.JtsGeometry;
+import com.vividsolutions.jts.geom.*;
 import junit.framework.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -69,15 +66,43 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     String p1 = builder.asText(doc);
     Assert.assertNotNull(p1);
 
-    Point point = SpatialContext.GEO.makePoint(-100d, 45d);
+    Point point = context.makePoint(-100d, 45d);
 
-    String p2 = JtsSpatialContext.GEO.getGeometryFrom(point).toText();
+    String p2 = context.getGeometryFrom(point).toText();
 
     Assert.assertEquals(p2, p1);
 
     ODocument parsed = builder.toDoc(p2);
 
     Assert.assertEquals(doc.field("coordinates"), parsed.field("coordinates"));
+  }
+
+  @Test
+  public void testMultiPointIO() {
+
+    ODocument doc = new ODocument("MultiPoint");
+    doc.field("coordinates", new ArrayList<List<Double>>() {
+      {
+        add(Arrays.asList(-71.160281, 42.258729));
+        add(Arrays.asList(-71.160837, 42.259113));
+        add(Arrays.asList(-71.161144, 42.25932));
+      }
+    });
+
+    OMultiPointShapeBuilder builder = new OMultiPointShapeBuilder();
+    String multiPoint = builder.asText(doc);
+
+    List<Coordinate> points = new ArrayList<Coordinate>() {
+      {
+        add(new Coordinate(-71.160281, 42.258729));
+        add(new Coordinate(-71.160837, 42.259113));
+        add(new Coordinate(-71.161144, 42.25932));
+      }
+    };
+
+    MultiPoint multiPoint1 = geometryFactory.createMultiPoint(points.toArray(new Coordinate[points.size()]));
+
+    Assert.assertEquals(multiPoint1.toText(), multiPoint);
   }
 
   @Test
@@ -99,9 +124,9 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
 
     Assert.assertNotNull(rect);
 
-    Rectangle rectangle = JtsSpatialContext.GEO.makeRectangle(-45d, 45d, -30d, 30d);
+    Rectangle rectangle = context.makeRectangle(-45d, 45d, -30d, 30d);
 
-    String rect1 = JtsSpatialContext.GEO.getGeometryFrom(rectangle).toText();
+    String rect1 = context.getGeometryFrom(rectangle).toText();
 
     Assert.assertEquals(rect1, rect);
   }
@@ -121,17 +146,53 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     OLineStringShapeBuilder builder = new OLineStringShapeBuilder();
     String lineString = builder.asText(doc);
 
-    Shape shape = JtsSpatialContext.GEO.makeLineString(new ArrayList<Point>() {
+    Shape shape = context.makeLineString(new ArrayList<Point>() {
       {
-        add(JtsSpatialContext.GEO.makePoint(-71.160281, 42.258729));
-        add(JtsSpatialContext.GEO.makePoint(-71.160837, 42.259113));
-        add(JtsSpatialContext.GEO.makePoint(-71.161144, 42.25932));
+        add(context.makePoint(-71.160281, 42.258729));
+        add(context.makePoint(-71.160837, 42.259113));
+        add(context.makePoint(-71.161144, 42.25932));
       }
     });
 
-    String lineString1 = JtsSpatialContext.GEO.getGeometryFrom(shape).toText();
+    String lineString1 = context.getGeometryFrom(shape).toText();
 
     Assert.assertEquals(lineString1, lineString);
+  }
+
+  @Test
+  public void testMultiLineStringIO() {
+
+    ODocument doc = new ODocument("MultiLineString");
+    doc.field("coordinates", new ArrayList<List<List<Double>>>() {
+      {
+        add(new ArrayList<List<Double>>() {
+          {
+            add(Arrays.asList(-71.160281, 42.258729));
+            add(Arrays.asList(-71.160837, 42.259113));
+            add(Arrays.asList(-71.161144, 42.25932));
+          }
+        });
+      }
+    });
+
+    OMultiLineStringShapeBuilder builder = new OMultiLineStringShapeBuilder();
+    String multiLineString = builder.asText(doc);
+
+    Shape shape = context.makeLineString(new ArrayList<Point>() {
+      {
+        add(context.makePoint(-71.160281, 42.258729));
+        add(context.makePoint(-71.160837, 42.259113));
+        add(context.makePoint(-71.161144, 42.25932));
+      }
+    });
+
+    JtsGeometry geometry = (JtsGeometry) shape;
+
+    LineString lineString = (LineString) geometry.getGeom();
+    MultiLineString multiLineString2 = geometryFactory.createMultiLineString(new LineString[] { lineString });
+    String multiLineString1 = multiLineString2.toText();
+
+    Assert.assertEquals(multiLineString1, multiLineString);
   }
 
   @Test
@@ -163,8 +224,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     OPolygonShapeBuilder builder = new OPolygonShapeBuilder();
 
     String p1 = builder.asText(doc);
-    Polygon polygon1 = JtsSpatialContext.GEO.getGeometryFactory().createPolygon(
-        coordinates.toArray(new Coordinate[coordinates.size()]));
+    Polygon polygon1 = geometryFactory.createPolygon(coordinates.toArray(new Coordinate[coordinates.size()]));
     String p2 = polygon1.toText();
     Assert.assertEquals(p2, p1);
   }

@@ -38,9 +38,7 @@ public abstract class OShapeBuilder<T extends Shape> {
 
   public abstract OShapeType getType();
 
-  public T fromDoc(ODocument doc) {
-    return null;
-  }
+  public abstract T fromDoc(ODocument doc);
 
   public T fromMapGeoJson(Map<String, Object> geoJsonMap) {
     ODocument doc = new ODocument(getName());
