@@ -100,10 +100,33 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public static final String            PARAM_MAX_POOL       = "maxpool";
   public static final String            PARAM_DB_TYPE        = "dbtype";
   private static final String           DEFAULT_HOST         = "localhost";
-  private static final int              DEFAULT_PORT         = 2424;
+  private static final int              DEFAULT_PORT;
   private static final int              DEFAULT_SSL_PORT     = 2434;
   private static final String           ADDRESS_SEPARATOR    = ";";
   private static final String           DRIVER_NAME          = "OrientDB Java";
+
+  static {
+    int serverPort = -1;
+
+    String serverTestMode = System.getProperty("orient.server.testMode", "false");
+    if (serverTestMode.equals("true")) {
+      String serverTestPort = System.getProperty("orient.server.port");
+      if (serverTestPort != null) {
+        try {
+          serverPort = Integer.parseInt(serverTestPort);
+
+        } catch (NumberFormatException e) {
+          serverPort = -1;
+        }
+      }
+    }
+
+    if (serverPort == -1)
+      serverPort = 2424;
+
+    DEFAULT_PORT = serverPort;
+  }
+
   protected final List<String>          serverURLs           = new ArrayList<String>();
   protected final Map<String, OCluster> clusterMap           = new ConcurrentHashMap<String, OCluster>();
   private final ExecutorService         asynchExecutor;

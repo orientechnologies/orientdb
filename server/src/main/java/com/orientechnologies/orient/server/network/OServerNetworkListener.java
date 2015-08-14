@@ -32,6 +32,7 @@ import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 import java.io.IOException;
@@ -76,7 +77,7 @@ public class OServerNetworkListener extends Thread {
       OLogManager.instance().error(this, "Error on reading protocol version for %s", e, ONetworkProtocolException.class, iProtocol);
     }
 
-    listen(iHostName, iHostPortRange, iProtocolName);
+    listen(iHostName, iHostPortRange, iProtocolName, iProtocol);
     protocolType = iProtocol;
 
     readParameters(iServer.getContextConfiguration(), iParameters);
@@ -301,8 +302,27 @@ public class OServerNetworkListener extends Thread {
    * @param iHostPortRange
    * @param iHostName
    */
-  private void listen(final String iHostName, final String iHostPortRange, final String iProtocolName) {
-    final int[] ports = getPorts(iHostPortRange);
+  private void listen(final String iHostName, final String iHostPortRange, final String iProtocolName,
+      Class<? extends ONetworkProtocol> protocolClass) {
+
+    int[] ports = null;
+    if (protocolClass.equals(ONetworkProtocolBinary.class)) {
+      String serverTestMode = System.getProperty("orient.server.testMode", "false");
+      if (serverTestMode.equals("true")) {
+        String serverTestPort = System.getProperty("orient.server.port");
+        if (serverTestPort != null) {
+          try {
+            int serverPort = Integer.parseInt(serverTestPort);
+            ports = new int[] { serverPort };
+          } catch (NumberFormatException e) {
+            ports = null;
+          }
+        }
+      }
+    }
+
+    if (ports == null)
+      ports = getPorts(iHostPortRange);
 
     for (int port : ports) {
       inboundAddr = new InetSocketAddress(iHostName, port);
