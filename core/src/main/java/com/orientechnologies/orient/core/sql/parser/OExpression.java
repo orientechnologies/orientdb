@@ -67,19 +67,19 @@ public class OExpression extends SimpleNode {
 
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (value == null) {
-      return "null";
+      builder.append("null");
     } else if (value instanceof SimpleNode) {
-      return value.toString();
+      ((SimpleNode) value).toString(params, builder);
     } else if (value instanceof String) {
       if (Boolean.TRUE.equals(singleQuotes)) {
-        return "'" + value + "'";
+        builder.append("'" + value + "'");
+      } else {
+        builder.append("\"" + value + "\"");
       }
-      return "\"" + value + "\"";
     } else {
-      return "" + value;
+      builder.append("" + value);
     }
   }
 
@@ -87,21 +87,10 @@ public class OExpression extends SimpleNode {
     return s.replaceAll("\"", "\\\\\"");
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (value instanceof OInputParameter) {
-      value = ((OInputParameter) value).bindFromInputParams(params);
-    } else if (value instanceof OBaseExpression) {
-      ((OBaseExpression) value).replaceParameters(params);
-    } else if (value instanceof OParenthesisExpression) {
-      ((OParenthesisExpression) value).replaceParameters(params);
-    } else if (value instanceof OMathExpression) {
-      ((OMathExpression) value).replaceParameters(params);
-    }
-  }
 
   public boolean supportsBasicCalculation() {
-    if(value instanceof OMathExpression) {
-      return ((OMathExpression)value).supportsBasicCalculation();
+    if (value instanceof OMathExpression) {
+      return ((OMathExpression) value).supportsBasicCalculation();
     }
     return true;
   }

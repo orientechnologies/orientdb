@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OClusterList extends SimpleNode {
 
@@ -22,20 +23,18 @@ public class OClusterList extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder builder = new StringBuilder();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+
     builder.append("cluster:[");
     boolean first = true;
     for (OIdentifier id : clusters) {
       if (!first) {
         builder.append(",");
       }
-      builder.append(id.toString());
+      id.toString(params, builder);
       first = false;
     }
     builder.append("]");
-    return builder.toString();
   }
 }
 /* JavaCC - OriginalChecksum=bd90ffa0b9d17f204b3cf2d47eedb409 (do not edit this line) */

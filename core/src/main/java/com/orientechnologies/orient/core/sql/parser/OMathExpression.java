@@ -176,13 +176,6 @@ public class OMathExpression extends SimpleNode {
     super(p, id);
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (childExpressions != null) {
-      for (OMathExpression expr : childExpressions) {
-        expr.replaceParameters(params);
-      }
-    }
-  }
 
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     if (childExpressions.size() == 0) {
@@ -213,35 +206,31 @@ public class OMathExpression extends SimpleNode {
     this.childExpressions = childExpressions;
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     for (int i = 0; i < childExpressions.size(); i++) {
       if (i > 0) {
-        result.append(" ");
+        builder.append(" ");
         switch (operators.get(i - 1)) {
         case PLUS:
-          result.append("+");
+          builder.append("+");
           break;
         case MINUS:
-          result.append("-");
+          builder.append("-");
           break;
         case STAR:
-          result.append("*");
+          builder.append("*");
           break;
         case SLASH:
-          result.append("/");
+          builder.append("/");
           break;
         case REM:
-          result.append("%");
+          builder.append("%");
           break;
         }
-        result.append(" ");
+        builder.append(" ");
       }
-      result.append(childExpressions.get(i).toString());
+      childExpressions.get(i).toString(params, builder);
     }
-    return result.toString();
   }
 
   public Object apply(final Object a, final Operator operation, final Object b) {

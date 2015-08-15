@@ -22,22 +22,18 @@ public class OTraverseProjectionItem extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+
     if (star) {
-      return "*";
+      builder.append("*");
+      return;
     }
-    StringBuilder result = new StringBuilder();
-    result.append(base.toString());
+
+    base.toString(params, builder);
     if (modifier != null) {
-      result.append(modifier.toString());
+      modifier.toString(params, builder);
     }
-
-    return result.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-
-  }
 }
 /* JavaCC - OriginalChecksum=0c562254fd4d11266edc0504fd36fc99 (do not edit this line) */

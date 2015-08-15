@@ -149,7 +149,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           }
 
           if (!iSingleValue.getIdentity().isValid())
-            ((ORecord) iSingleValue).save();
+            (iSingleValue.getRecord()).save();
 
           values.add(iSingleValue.getIdentity());
           indexEngine.put(key, values);
@@ -238,8 +238,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   protected OStreamSerializer determineValueSerializer() {
     if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm))
-      return (OStreamSerializer) getDatabase().getSerializerFactory().getObjectSerializer(
-          OStreamSerializerSBTreeIndexRIDContainer.ID);
+      return (OStreamSerializer) getDatabase().getSerializerFactory()
+          .getObjectSerializer(OStreamSerializerSBTreeIndexRIDContainer.ID);
     else
       return OStreamSerializerListRID.INSTANCE;
   }
@@ -304,10 +304,10 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     Collections.sort(sortedKeys, comparator);
 
     return new OIndexAbstractCursor() {
-      private Iterator<?>             keysIterator    = sortedKeys.iterator();
+      private Iterator<?> keysIterator = sortedKeys.iterator();
 
       private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-      private Object                  currentKey;
+      private Object currentKey;
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {

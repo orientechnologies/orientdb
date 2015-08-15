@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OUnwind extends SimpleNode {
 
@@ -22,16 +23,14 @@ public class OUnwind extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("UNWIND ");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("UNWIND ");
     for (int i = 0; i < items.size(); i++) {
       if (i > 0) {
-        result.append(", ");
+        builder.append(", ");
       }
-      result.append(items.get(i).toString());
+      items.get(i).toString(params, builder);
     }
-    return result.toString();
   }
 }
 /* JavaCC - OriginalChecksum=4739190aa6c1a3533a89b76a15bd6fdf (do not edit this line) */

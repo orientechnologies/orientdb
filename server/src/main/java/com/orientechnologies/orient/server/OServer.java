@@ -348,6 +348,7 @@ public class OServer {
       try {
         loadStorages();
         loadUsers();
+        loadDatabases();
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error on reading server configuration", e, OConfigurationException.class);
       }
@@ -506,21 +507,80 @@ public class OServer {
     return storages;
   }
 
-  public String getStorageURL(final String iName) {
-    final OServerConfiguration configuration = serverCfg.getConfiguration();
+  /**
+   * Opens all the available server's databases.
+   */
+  protected void loadDatabases() {
+    if (!OGlobalConfiguration.SERVER_OPEN_ALL_DATABASES_AT_STARTUP.getValueAsBoolean())
+      return;
 
-    // SEARCH IN CONFIGURED PATHS
-    if (configuration.storages != null && configuration.storages.length > 0)
-      for (OServerStorageConfiguration s : configuration.storages)
-        if (s.name.equals(iName))
-          return s.path;
+    final String dbPath = getDatabaseDirectory();
+    for (Map.Entry<String, String> storageEntry : getAvailableStorageNames().entrySet()) {
+      final String databaseName = storageEntry.getKey();
 
-    // SEARCH IN DEFAULT DATABASE DIRECTORY
-    final Map<String, String> storages = new HashMap<String, String>();
-    final String rootDirectory = getDatabaseDirectory();
-    scanDatabaseDirectory(new File(rootDirectory), storages);
+      OLogManager.instance().info(this, "Opening database '%s' at startup...", databaseName);
 
-    return storages.get(iName);
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dbPath + databaseName);
+      try {
+        try {
+          openDatabaseBypassingSecurity(db, null);
+        } catch (OStorageException e) {
+          if (e.getCause() instanceof OSecurityException) {
+            if (askForEncryptionKey(databaseName)) {
+              // RETRY IT
+              try {
+                openDatabaseBypassingSecurity(db, null);
+              } catch (Exception e2) {
+                // LOOK FOR A SECURITY EXCEPTION
+                Throwable nested = e2;
+                while (nested != null) {
+                  if (nested instanceof OSecurityException) {
+                    OLogManager.instance().error(this, "Invalid key for database '%s'. Skip database opening", databaseName);
+                    return;
+                  }
+                  nested = nested.getCause();
+                }
+                OLogManager.instance().error(this, "Error on opening database '%s': %s", e, e.getMessage());
+              }
+            }
+          }
+        }
+      } finally {
+        db.activateOnCurrentThread();
+        db.close();
+      }
+    }
+  }
+
+  private boolean askForEncryptionKey(final String iDatabaseName) {
+    try {
+      Thread.sleep(500);
+    } catch (InterruptedException e) {
+    }
+
+    System.out.println();
+    System.out.println();
+    System.out.println("+--------------------------------------------------------------------------+");
+    System.out.println(String.format("| INSERT THE KEY FOR THE ENCRYPTED DATABASE %-31s|", "'" + iDatabaseName + "'"));
+    System.out.println("+--------------------------------------------------------------------------+");
+    System.out.println("| To avoid this message set the environment variable or JVM setting        |");
+    System.out.println("| 'storage.encryptionKey' to the key to use.                               |");
+    System.out.println("+--------------------------------------------------------------------------+");
+    System.out.print("\nDatabase encryption key [BLANK=to skip opening]: ");
+
+    OConsoleReader reader = new DefaultConsoleReader();
+    try {
+      String key = reader.readLine();
+      if (key != null) {
+        key = key.trim();
+        if (!key.isEmpty()) {
+          OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue(key);
+          return true;
+        }
+      }
+    } catch (IOException e) {
+    }
+    return false;
   }
 
   public String getDatabaseDirectory() {

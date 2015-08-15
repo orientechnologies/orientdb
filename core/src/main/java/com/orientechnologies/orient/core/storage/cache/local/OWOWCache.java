@@ -308,15 +308,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         if (!fileClassic.exists())
           throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
         else {
-          // workaround of bug in distributed storage https://github.com/orientechnologies/orientdb/issues/4439
+          // throw new OStorageException("File '" + fileName
+          // + "' is not registered in 'file name - id' map, but exists in file system");
 
-          OLogManager
-              .instance()
-              .error(
-                  this,
-                  "File '"
-                      + fileName
-                      + "' is not registered in the 'file name - id' map, but exists in file system. This could be due to a failed restore");
+          // REGISTER THE FILE
+          OLogManager.instance().debug(this,
+              "File '" + fileName + "' is not registered in 'file name - id' map, but exists in file system. Registering it");
 
           if (fileId == null) {
             ++fileCounter;
@@ -407,7 +404,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
       if (existingFileId != null && existingFileId >= 0) {
         if (existingFileId == intId)
-          throw new OStorageException("File with name " + fileName + " already exists in storage " + storageLocal.getName());
+          throw new OStorageException("File with name '" + fileName + "'' already exists in storage '" + storageLocal.getName()
+              + "'");
         else
           throw new OStorageException("File with given name already exists but has different id " + existingFileId
               + " vs. proposed " + fileId);

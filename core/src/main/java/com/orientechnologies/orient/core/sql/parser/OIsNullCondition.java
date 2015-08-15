@@ -39,15 +39,11 @@ public class OIsNullCondition extends OBooleanExpression {
     this.expression = expression;
   }
 
-  @Override
-  public String toString() {
-    return expression.toString() + " is null";
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    expression.toString(params, builder);
+    builder.append(" is null");
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    expression.replaceParameters(params);
-  }
 
   @Override
   public boolean supportsBasicCalculation() {

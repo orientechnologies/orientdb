@@ -84,8 +84,8 @@ public class OIndexDefinitionFactory {
     if (fieldNameParts.length == 3 && "by".equalsIgnoreCase(fieldNameParts[1]))
       return fieldNameParts[0];
 
-    throw new IllegalArgumentException("Illegal field name format, should be '<property> [by key|value]' but was '"
-        + fieldDefinition + '\'');
+    throw new IllegalArgumentException(
+        "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldDefinition + '\'');
   }
 
   private static OIndexDefinition createMultipleFieldIndexDefinition(final OClass oClass, final List<String> fieldsToIndex,
@@ -99,8 +99,8 @@ public class OIndexDefinitionFactory {
       if (collates != null)
         collate = collates.get(i);
 
-      compositeIndex.addIndex(createSingleFieldIndexDefinition(oClass, fieldsToIndex.get(i), types.get(i), collate, indexKind,
-          algorithm));
+      compositeIndex
+          .addIndex(createSingleFieldIndexDefinition(oClass, fieldsToIndex.get(i), types.get(i), collate, indexKind, algorithm));
     }
 
     return compositeIndex;
@@ -177,27 +177,32 @@ public class OIndexDefinitionFactory {
   }
 
   private static OPropertyMapIndexDefinition.INDEX_BY extractMapIndexSpecifier(final String fieldName) {
+
     String[] fieldNameParts = FILED_NAME_PATTERN.split(fieldName);
     if (fieldNameParts.length == 1)
       return OPropertyMapIndexDefinition.INDEX_BY.KEY;
 
     if (fieldNameParts.length == 3) {
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-      OStorage storage = db.getStorage();
-      OStorageConfiguration configuration = storage.getConfiguration();
-      Locale locale = configuration.getLocaleInstance();
+      Locale locale = getServerLocale();
 
       if ("by".equals(fieldNameParts[1].toLowerCase(locale)))
         try {
-          return OPropertyMapIndexDefinition.INDEX_BY.valueOf(fieldNameParts[2].toUpperCase());
+          return OPropertyMapIndexDefinition.INDEX_BY.valueOf(fieldNameParts[2].toUpperCase(locale));
         } catch (IllegalArgumentException iae) {
-          throw new IllegalArgumentException("Illegal field name format, should be '<property> [by key|value]' but was '"
-              + fieldName + '\'', iae);
+          throw new IllegalArgumentException(
+              "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName + '\'', iae);
         }
     }
 
-    throw new IllegalArgumentException("Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName
-        + '\'');
+    throw new IllegalArgumentException(
+        "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName + '\'');
+  }
+
+  private static Locale getServerLocale() {
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    OStorage storage = db.getStorage();
+    OStorageConfiguration configuration = storage.getConfiguration();
+    return configuration.getLocaleInstance();
   }
 
   private static String adjustFieldName(final OClass clazz, final String fieldName) {

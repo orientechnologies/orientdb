@@ -50,34 +50,24 @@ public class OFunctionCall extends SimpleNode {
     this.params = params;
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(name.toString());
-    result.append("(");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    name.toString(params,builder);
+    builder.append("(");
     if (star) {
-      result.append("*");
+      builder.append("*");
     } else {
       boolean first = true;
-      for (OExpression expr : params) {
+      for (OExpression expr : this.params) {
         if (!first) {
-          result.append(", ");
+          builder.append(", ");
         }
-        result.append(expr.toString());
+        expr.toString(params, builder);
         first = false;
       }
     }
-    result.append(")");
-    return result.toString();
+    builder.append(")");
   }
 
-  public void replaceParameters(Map<Object, Object> iParams) {
-    if (params != null) {
-      for (OExpression expr : params) {
-        expr.replaceParameters(iParams);
-      }
-    }
-  }
 
   public Object execute(Object targetObjects, OCommandContext ctx) {
     return execute(targetObjects, ctx, name.getValue());

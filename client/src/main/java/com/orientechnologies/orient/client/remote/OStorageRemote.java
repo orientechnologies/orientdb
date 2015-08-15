@@ -19,6 +19,22 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -49,7 +65,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -76,21 +91,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsyn
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
 
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
-
 /**
  * This object is bound to each remote ODatabase instances.
  */
@@ -99,10 +99,33 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public static final String            PARAM_MAX_POOL       = "maxpool";
   public static final String            PARAM_DB_TYPE        = "dbtype";
   private static final String           DEFAULT_HOST         = "localhost";
-  private static final int              DEFAULT_PORT         = 2424;
+  private static final int              DEFAULT_PORT;
   private static final int              DEFAULT_SSL_PORT     = 2434;
   private static final String           ADDRESS_SEPARATOR    = ";";
   private static final String           DRIVER_NAME          = "OrientDB Java";
+
+  static {
+    int serverPort = -1;
+
+    String serverTestMode = System.getProperty("orient.server.testMode", "false");
+    if (serverTestMode.equals("true")) {
+      String serverTestPort = System.getProperty("orient.server.port");
+      if (serverTestPort != null) {
+        try {
+          serverPort = Integer.parseInt(serverTestPort);
+
+        } catch (NumberFormatException e) {
+          serverPort = -1;
+        }
+      }
+    }
+
+    if (serverPort == -1)
+      serverPort = 2424;
+
+    DEFAULT_PORT = serverPort;
+  }
+
   protected final List<String>          serverURLs           = new ArrayList<String>();
   protected final Map<String, OCluster> clusterMap           = new ConcurrentHashMap<String, OCluster>();
   private final ExecutorService         asynchExecutor;
@@ -222,7 +245,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       openRemoteDatabase();
 
       final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this, recordFormat);
-      storageConfiguration.load();
+      storageConfiguration.load(iOptions);
 
       configuration = storageConfiguration;
 
@@ -553,107 +576,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       } catch (Exception e) {
         handleException(network, "Error on read record " + rid, e);
-      }
-    } while (true);
-  }
-
-  public Object indexGet(final String iIndexName, Object iKey, final String iFetchPlan) {
-    if (iIndexName == null || iIndexName.isEmpty())
-      throw new IllegalArgumentException("Index name is mandatory");
-
-    OChannelBinaryAsynchClient network = null;
-    do {
-      try {
-
-        try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_GET);
-          network.writeString(iIndexName);
-          if (iKey instanceof OCompositeKey)
-            iKey = ((OCompositeKey) iKey).getKeys();
-          network.writeBytes(new ODocument().field("key", iKey).toStream());
-          network.writeString(iFetchPlan != null ? iFetchPlan : "");
-        } finally {
-          endRequest(network);
-        }
-
-        try {
-          beginResponse(network);
-
-          return readSynchResult(network, ODatabaseRecordThreadLocal.INSTANCE.get());
-
-        } finally {
-          endResponse(network);
-        }
-
-      } catch (Exception e) {
-        handleException(network, "Error on index get for key: " + iKey, e);
-
-      }
-    } while (true);
-  }
-
-  public void indexPut(final String iIndexName, Object iKey, final OIdentifiable iValue) {
-    if (iIndexName == null || iIndexName.isEmpty())
-      throw new IllegalArgumentException("Index name is mandatory");
-
-    OChannelBinaryAsynchClient network = null;
-    do {
-      try {
-
-        try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_PUT);
-          network.writeString(iIndexName);
-          if (iKey instanceof OCompositeKey)
-            iKey = ((OCompositeKey) iKey).getKeys();
-          network.writeBytes(new ODocument().field("key", iKey).toStream());
-          network.writeRID(iValue.getIdentity());
-        } finally {
-          endRequest(network);
-        }
-
-        try {
-          beginResponse(network);
-        } finally {
-          endResponse(network);
-        }
-
-      } catch (Exception e) {
-        handleException(network, "Error on index put for key: " + iKey, e);
-
-      }
-    } while (true);
-  }
-
-  public boolean indexRemove(final String iIndexName, Object iKey) {
-    if (iIndexName == null || iIndexName.isEmpty())
-      throw new IllegalArgumentException("Index name is mandatory");
-
-    OChannelBinaryAsynchClient network = null;
-    do {
-      try {
-
-        try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_REMOVE);
-          network.writeString(iIndexName);
-          if (iKey instanceof OCompositeKey)
-            iKey = ((OCompositeKey) iKey).getKeys();
-          network.writeBytes(new ODocument().field("key", iKey).toStream());
-        } finally {
-          endRequest(network);
-        }
-
-        try {
-          beginResponse(network);
-
-          return network.readBoolean();
-
-        } finally {
-          endResponse(network);
-        }
-
-      } catch (Exception e) {
-        handleException(network, "Error on index remove for key: " + iKey, e);
-
       }
     } while (true);
   }

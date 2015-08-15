@@ -23,6 +23,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -44,10 +45,9 @@ public class OMultiValue {
    * @return true if it's an array, a collection or a map, otherwise false
    */
   public static boolean isMultiValue(final Class<?> iType) {
-    return OCollection.class.isAssignableFrom(iType)
-        || Collection.class.isAssignableFrom(iType)
-        || (iType.isArray() || Map.class.isAssignableFrom(iType) || OMultiCollectionIterator.class.isAssignableFrom(iType) || OCollection.class
-            .isAssignableFrom(iType));
+    return OCollection.class.isAssignableFrom(iType) || Collection.class.isAssignableFrom(iType)
+        || (iType.isArray() || Map.class.isAssignableFrom(iType) || OMultiCollectionIterator.class.isAssignableFrom(iType)
+            || OCollection.class.isAssignableFrom(iType));
   }
 
   /**
@@ -114,7 +114,7 @@ public class OMultiValue {
         return ((Map<?, Object>) iObject).values().iterator().next();
       else if (iObject.getClass().isArray())
         return Array.get(iObject, 0);
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       // IGNORE IT
       OLogManager.instance().debug(iObject, "Error on reading the first item of the Multi-value field '%s'", iObject);
     }
@@ -151,7 +151,7 @@ public class OMultiValue {
         return last;
       } else if (iObject.getClass().isArray())
         return Array.get(iObject, Array.getLength(iObject) - 1);
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       // IGNORE IT
       OLogManager.instance().debug(iObject, "Error on reading the last item of the Multi-value field '%s'", iObject);
     }
@@ -214,7 +214,7 @@ public class OMultiValue {
         if (it instanceof OResettable)
           ((OResettable) it).reset();
       }
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       // IGNORE IT
       OLogManager.instance().debug(iObject, "Error on reading the first item of the Multi-value field '%s'", iObject);
     }
@@ -352,6 +352,7 @@ public class OMultiValue {
    *          Single value, array of values or collections of values. Map are not supported.
    * @return
    */
+  @SuppressFBWarnings("BC_UNCONFIRMED_CAST")
   public static Object add(final Object iObject, final Object iToAdd) {
     if (iObject != null) {
       if (iObject instanceof Collection<?> || iObject instanceof OCollection<?>) {
@@ -648,6 +649,7 @@ public class OMultiValue {
     return array(iValue, iClass, null);
   }
 
+  @SuppressFBWarnings("PZLA_PREFER_ZERO_LENGTH_ARRAYS")
   public static <T> T[] array(final Object iValue, final Class<? extends T> iClass, final OCallable<Object, Object> iCallback) {
     if (iValue == null)
       return null;

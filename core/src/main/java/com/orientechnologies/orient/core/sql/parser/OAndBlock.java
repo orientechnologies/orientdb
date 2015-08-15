@@ -36,12 +36,6 @@ public class OAndBlock extends OBooleanExpression {
 
   }
 
-  @Override public void replaceParameters(Map<Object, Object> params) {
-    for(OBooleanExpression sub:subBlocks){
-      sub.replaceParameters(params);
-    }
-  }
-
   public List<OBooleanExpression> getSubBlocks() {
     return subBlocks;
   }
@@ -50,24 +44,22 @@ public class OAndBlock extends OBooleanExpression {
     this.subBlocks = subBlocks;
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (subBlocks == null || subBlocks.size() == 0) {
-      return "";
+      return;
     }
-    if (subBlocks.size() == 1) {
-      return subBlocks.get(0).toString();
-    }
-    StringBuilder result = new StringBuilder();
+//    if (subBlocks.size() == 1) {
+//      subBlocks.get(0).toString(params, builder);
+//    }
+
     boolean first = true;
     for (OBooleanExpression expr : subBlocks) {
       if (!first) {
-        result.append(" AND ");
+        builder.append(" AND ");
       }
-      result.append(expr.toString());
+      expr.toString(params, builder);
       first = false;
     }
-    return result.toString();
   }
 
   @Override protected boolean supportsBasicCalculation() {

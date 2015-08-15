@@ -35,35 +35,25 @@ public class OBaseExpression extends OMathExpression {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
+  @Override public String toString() {
+    return super.toString();
+  }
+
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (number != null) {
-      result.append(number.toString());
+      number.toString(params, builder);
     } else if (identifier != null) {
-      result.append(identifier.toString());
+      identifier.toString(params, builder);
     } else if (string != null) {
-      result.append(string);
+      builder.append(string);
     } else if (inputParam != null) {
-      if (inputFinalValue == UNSET) {
-        result.append(inputParam.toString());
-      } else if (inputFinalValue == null) {
-        result.append("NULL");
-      } else {
-        if (inputFinalValue instanceof String) {
-          result.append("\"");
-          result.append(OExpression.encode(inputFinalValue.toString()));
-          result.append("\"");
-        } else {
-          result.append(inputFinalValue.toString());
-        }
-      }
+      inputParam.toString(params,builder);
     }
 
     if (modifier != null) {
-      result.append(modifier.toString());
+      modifier.toString(params, builder);
     }
-    return result.toString();
+
   }
 
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
@@ -83,20 +73,7 @@ public class OBaseExpression extends OMathExpression {
     return result;
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (identifier != null) {
-      identifier.replaceParameters(params);
-    }
-    if (inputParam != null) {
-      Object result = inputParam.bindFromInputParams(params);
-      if (inputParam != result) {
-        inputFinalValue = result;
-      }
-    }
-    if (modifier != null) {
-      modifier.replaceParameters(params);
-    }
-  }
+
 
   @Override
   protected boolean supportsBasicCalculation() {

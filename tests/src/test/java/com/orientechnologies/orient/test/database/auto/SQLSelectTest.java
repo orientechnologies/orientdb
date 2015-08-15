@@ -23,6 +23,7 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -1644,6 +1645,15 @@ public class SQLSelectTest extends AbstractSelectTest {
     for (OIdentifiable r : result) {
       Assert.assertEquals(((ODocument) r.getRecord()).field("counter"), i++);
     }
+  }
+
+  public void testQueryTimeout() {
+    try {
+      database.query(new OSQLSynchQuery<OIdentifiable>("select * from OUser timeout 1 exception"));
+    } catch (OTimeoutException e) {
+    }
+
+    database.query(new OSQLSynchQuery<OIdentifiable>("select * from OUser timeout 1 return"));
   }
 
   private List<Long> getValidPositions(int clusterId) {

@@ -32,15 +32,12 @@ public class OBinaryCondition extends OBooleanExpression {
     return operator.execute(left.execute(currentRecord, ctx), right.execute(currentRecord, ctx));
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    left.replaceParameters(params);
-    right.replaceParameters(params);
-  }
-
-  @Override
-  public String toString() {
-    return left.toString() + " " + operator.toString() + " " + right.toString();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    left.toString(params, builder);
+    builder.append(" ");
+    builder.append(operator.toString());
+    builder.append(" ");
+    right.toString(params, builder);
   }
 
   protected boolean supportsBasicCalculation() {

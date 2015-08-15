@@ -86,31 +86,17 @@ public class OContainsCondition extends OBooleanExpression {
 
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    left.replaceParameters(params);
-    if (right != null) {
-      right.replaceParameters(params);
-    }
-    if (condition != null) {
-      condition.replaceParameters(params);
-    }
-  }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(left.toString());
-    result.append(" CONTAINS ");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    left.toString(params, builder);
+    builder.append(" CONTAINS ");
     if (right != null) {
-      result.append(right.toString());
+      right.toString(params, builder);
     } else if (condition != null) {
-      result.append("(");
-      result.append(condition.toString());
-      result.append(")");
+      builder.append("(");
+      condition.toString(params, builder);
+      builder.append(")");
     }
-
-    return result.toString();
   }
 
   @Override

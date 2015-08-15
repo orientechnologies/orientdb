@@ -2,8 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OMatchFilter extends SimpleNode {
   // TODO transform in a map
@@ -60,6 +63,22 @@ public class OMatchFilter extends SimpleNode {
     return null;
   }
 
+  public void setFilter(OWhereClause filter) {
+    boolean found = false;
+    for (OMatchFilterItem item : items) {
+      if (item.filter != null) {
+        item.filter = filter;
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      OMatchFilterItem newItem = new OMatchFilterItem(-1);
+      newItem.filter = filter;
+      items.add(newItem);
+    }
+  }
+
   public OWhereClause getWhileCondition() {
     for (OMatchFilterItem item : items) {
       if (item.whileCondition != null) {
@@ -69,13 +88,19 @@ public class OMatchFilter extends SimpleNode {
     return null;
   }
 
-  public String getClassName() {
+  public String getClassName(OCommandContext context) {
     for (OMatchFilterItem item : items) {
       if (item.className != null) {
         if (item.className.value instanceof String)
           return (String) item.className.value;
-        else
+        else if (item.className.value instanceof SimpleNode) {
+          StringBuilder builder = new StringBuilder();
+
+          ((SimpleNode) item.className.value).toString(context == null ? null : context.getInputParameters(), builder);
+          return builder.toString();
+        } else {
           return item.className.value.toString();
+        }
         // TODO evaluate expression
       }
     }
@@ -91,19 +116,17 @@ public class OMatchFilter extends SimpleNode {
     return null;
   }
 
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("{");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("{");
     boolean first = true;
     for (OMatchFilterItem item : items) {
       if (!first) {
-        result.append(", ");
+        builder.append(", ");
       }
-      result.append(item.toString());
+      item.toString(params, builder);
       first = false;
     }
-    result.append("}");
-    return result.toString();
+    builder.append("}");
   }
 
 }

@@ -41,6 +41,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -714,6 +716,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       newConfig = new ODocument().setTrackingChanges(false);
       if (oldConfig.hasOwners()) {
         ODocumentInternal.addOwner(newConfig, oldConfig.getOwner());
+      } else {
+        ORecordInternal.getDirtyManager(oldConfig).removeNew(oldConfig);
       }
 
       oldConfig.copyTo(newConfig);

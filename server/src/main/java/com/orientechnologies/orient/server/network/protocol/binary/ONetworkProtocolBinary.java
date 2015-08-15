@@ -19,6 +19,18 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -101,18 +113,6 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -459,15 +459,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
         ridBagSize();
         break;
-      case OChannelBinaryProtocol.REQUEST_INDEX_GET:
-        indexGet();
-        break;
-      case OChannelBinaryProtocol.REQUEST_INDEX_PUT:
-        indexPut();
-        break;
-      case OChannelBinaryProtocol.REQUEST_INDEX_REMOVE:
-        indexRemove();
-        break;
+
       default:
         setDataCommandInfo("Command not supported");
         return false;
@@ -1157,11 +1149,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         }
 
         String value;
-        try {
-          value = cfg.getValueAsString() != null ? cfg.getValueAsString() : "";
-        } catch (Exception e) {
-          value = "";
-        }
+        if (cfg.isHidden())
+          value = "<hidden>";
+        else
+          try {
+            value = cfg.getValueAsString() != null ? cfg.getValueAsString() : "";
+          } catch (Exception e) {
+            value = "";
+          }
 
         channel.writeString(key);
         channel.writeString(value);
@@ -1202,7 +1197,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final String key = channel.readString();
     final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
-    String cfgValue = cfg != null ? cfg.getValueAsString() : "";
+    String cfgValue = cfg != null ? cfg.isHidden() ? "<hidden>" : cfg.getValueAsString() : "";
 
     beginResponse();
     try {

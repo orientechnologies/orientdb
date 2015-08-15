@@ -12,7 +12,9 @@ public class OMatchStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
     SimpleNode result = checkSyntax(query, true);
-    return checkSyntax(result.toString(), true);
+    StringBuilder builder = new StringBuilder();
+    result.toString(null, builder);
+    return checkSyntax(builder.toString(), true);
   }
 
   protected SimpleNode checkWrongSyntax(String query) {

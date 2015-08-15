@@ -14,7 +14,10 @@ import static org.testng.Assert.*;
 public class OSelectStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
-    return checkSyntax(query, true);
+    SimpleNode result = checkSyntax(query, true);
+    StringBuilder builder = new StringBuilder();
+    result.toString(null, builder);
+    return checkSyntax(builder.toString(), true);
   }
 
   protected SimpleNode checkWrongSyntax(String query) {
@@ -30,7 +33,9 @@ public class OSelectStatementTest {
       }
       System.out.println(query);
       System.out.println("->");
-      System.out.println(result.toString());
+      StringBuilder builer = new StringBuilder();
+      result.toString(null, builer);
+      System.out.println(builer.toString());
       System.out.println("............");
       return result;
     } catch (Exception e) {
@@ -293,8 +298,10 @@ public class OSelectStatementTest {
       OSelectStatement stm = (OSelectStatement) result;
       Map<Object, Object> params = new HashMap<Object, Object>();
       params.put("param1", new HashSet<Object>());
-      ((OSelectStatement) result).replaceParameters(params);
-      assertEquals(stm.toString(), "SELECT FROM bar WHERE name NOT IN []");
+
+      StringBuilder parsed = new StringBuilder();
+      stm.toString(params, parsed);
+      assertEquals(parsed.toString(), "SELECT FROM bar WHERE name NOT IN []");
     } catch (Exception e) {
       fail();
 
@@ -395,7 +402,7 @@ public class OSelectStatementTest {
     checkRightSyntax("insert into test content { \"node_id\": \"MFmqvmht\\/\\/GYsYYWB8=\"}");
   }
 
-  @Test()
+  @Test
   public void testClusterList() {
     checkRightSyntax("select from cluster:[foo,bar]");
   }

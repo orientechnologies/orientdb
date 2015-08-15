@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author Luigi Dell'Aquila
@@ -23,13 +24,12 @@ public class OMatchPathItemFirst extends OMatchPathItem {
     return false;
   }
 
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(function.toString());
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+
+    function.toString(params, builder);
     if (filter != null) {
-      result.append(filter.toString());
+      filter.toString(params, builder);
     }
-    return result.toString();
   }
 
   protected Iterable<OIdentifiable> traversePatternEdge(OMatchStatement.MatchContext matchContext, OIdentifiable startingPoint,

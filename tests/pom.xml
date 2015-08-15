@@ -10,7 +10,7 @@
     the specific language governing permissions and ~ limitations under the License. -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -120,13 +120,16 @@
                     <systemPropertyVariables>
                         <storage.lockTimeout>60000</storage.lockTimeout>
                         <storage.makeFullCheckpointAfterCreate>false</storage.makeFullCheckpointAfterCreate>
-                        <storage.makeFullCheckpointAfterClusterCreate>false</storage.makeFullCheckpointAfterClusterCreate>
+                        <storage.makeFullCheckpointAfterClusterCreate>false
+                        </storage.makeFullCheckpointAfterClusterCreate>
                         <storage.wal.syncOnPageFlush>false</storage.wal.syncOnPageFlush>
                         <storage.configuration.syncOnUpdate>false</storage.configuration.syncOnUpdate>
                         <index.flushAfterCreate>false</index.flushAfterCreate>
-                        <buildDirectory>.</buildDirectory>
+                        <buildDirectory>${project.build.directory}</buildDirectory>
                         <url>memory:demo</url>
-                        <testPath>.</testPath>
+                        <testPath>${project.basedir}</testPath>
+                        <orient.server.testMode>${orient.server.testMode}</orient.server.testMode>
+                        <orient.server.port>${orient.server.port}</orient.server.port>
                     </systemPropertyVariables>
                 </configuration>
                 <executions>
@@ -143,7 +146,9 @@
                         </goals>
                         <configuration>
                             <suiteXmlFiles>
-                                <suiteXmlFile>src/test/java/com/orientechnologies/orient/test/database/auto/embedded-test-db-from-scratch.xml</suiteXmlFile>
+                                <suiteXmlFile>
+                                    src/test/java/com/orientechnologies/orient/test/database/auto/embedded-test-db-from-scratch.xml
+                                </suiteXmlFile>
                             </suiteXmlFiles>
                         </configuration>
                     </execution>
@@ -154,10 +159,14 @@
                         </goals>
                         <configuration>
                             <systemPropertyVariables>
-                                <orientdb.config.file>target/test-classes/orientdb-server-config.xml</orientdb.config.file>
+                                <orientdb.config.file>target/test-classes/orientdb-server-config.xml
+                                </orientdb.config.file>
+                                <ORIENTDB_HOME>${project.build.directory}/remote-server</ORIENTDB_HOME>
                             </systemPropertyVariables>
                             <suiteXmlFiles>
-                                <suiteXmlFile>src/test/java/com/orientechnologies/orient/test/database/auto/remote-test-db-from-scratch.xml</suiteXmlFile>
+                                <suiteXmlFile>
+                                    src/test/java/com/orientechnologies/orient/test/database/auto/remote-test-db-from-scratch.xml
+                                </suiteXmlFile>
                             </suiteXmlFiles>
                         </configuration>
                     </execution>

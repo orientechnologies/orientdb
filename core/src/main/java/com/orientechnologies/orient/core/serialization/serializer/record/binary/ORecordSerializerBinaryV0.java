@@ -650,31 +650,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return fullPos;
   }
 
-  private OIdentifiable recursiveLinkSave(OIdentifiable link) {
-
-    if (link instanceof ORID) {
-      if (((ORID) link).isValid() && ((ORID) link).isNew()) {
-        final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
-        ORecord record = link.getRecord();
-        if (record != null) {
-          if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null)
-            throw new ODatabaseException("Impossible save a record during network serialization");
-          database.save(record);
-          return record;
-        }
-      }
-    } else if (link instanceof ORecord) {
-      ORID rid = link.getIdentity();
-      if (((ORecord) link).isDirty() || (rid.isTemporary())) {
-        if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null)
-          throw new ODatabaseException("Impossible save a record during network serialization");
-
-        ((ORecord) link).save();
-      }
-    }
-    return link;
-  }
-
   private int writeNullLink(BytesContainer bytes) {
     int pos = OVarIntSerializer.write(bytes, NULL_RECORD_ID.getIdentity().getClusterId());
     OVarIntSerializer.write(bytes, NULL_RECORD_ID.getIdentity().getClusterPosition());
@@ -683,8 +658,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   private int writeOptimizedLink(BytesContainer bytes, OIdentifiable link) {
-    link = recursiveLinkSave(link);
-    assert link.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link";
+    if (!link.getIdentity().isPersistent()) {
+      ORecord real = link.getRecord();
+      if (real != null)
+        link = real;
+    }
+    assert link.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "+ link.getIdentity();
     int pos = OVarIntSerializer.write(bytes, link.getIdentity().getClusterId());
     OVarIntSerializer.write(bytes, link.getIdentity().getClusterPosition());
     return pos;

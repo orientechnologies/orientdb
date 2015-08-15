@@ -27,17 +27,24 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
-import javax.management.*;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.String;
 import java.lang.management.ManagementFactory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -220,7 +227,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       try {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         final ObjectName mbeanName = new ObjectName(getMBeanName());
-        server.registerMBean(this, mbeanName);
+        if (!server.isRegistered(mbeanName))
+          server.registerMBean(this, mbeanName);
+
       } catch (MalformedObjectNameException e) {
         throw new OStorageException("Error during registration of atomic manager MBean.", e);
       } catch (InstanceAlreadyExistsException e) {

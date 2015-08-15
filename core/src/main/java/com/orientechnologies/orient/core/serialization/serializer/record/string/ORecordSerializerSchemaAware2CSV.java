@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
@@ -278,6 +279,17 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     return result;
   }
 
+  public byte[] writeClassOnly(ORecord iSource) {
+    final ODocument record = (ODocument) iSource;
+    StringBuilder iOutput = new StringBuilder();
+    if (ODocumentInternal.getImmutableSchemaClass(record) != null) {
+      iOutput.append(ODocumentInternal.getImmutableSchemaClass(record).getStreamableName());
+      iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
+    }
+    return OBinaryProtocol.string2bytes(iOutput.toString());
+  }
+  
+  
   @Override
   protected StringBuilder toString(ORecord iRecord, final StringBuilder iOutput, final String iFormat,
       OUserObject2RecordHandler iObjHandler, final Map<ODocument, Boolean> iMarshalledRecords, final boolean iOnlyDelta,

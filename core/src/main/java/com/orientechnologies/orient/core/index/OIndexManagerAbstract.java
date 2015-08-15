@@ -361,7 +361,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
     final OIndex<?> index = indexes.get(indexName);
     if (index != null && index.getDefinition() != null && index.getDefinition().getClassName() != null
-        && className.equals(index.getDefinition().getClassName().toLowerCase()))
+        && className.equals(index.getDefinition().getClassName().toLowerCase(locale)))
       return preProcessBeforeReturn(index);
     return null;
   }
@@ -425,7 +425,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       if (indexDefinition == null || indexDefinition.getClassName() == null)
         return;
 
-      Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(indexDefinition.getClassName().toLowerCase());
+      Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(indexDefinition.getClassName().toLowerCase(locale));
 
       if (propertyIndex == null) {
         propertyIndex = new HashMap<OMultiKey, Set<OIndex<?>>>();
@@ -449,7 +449,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         propertyIndex.put(multiKey, indexSet);
       }
 
-      classPropertyIndex.put(indexDefinition.getClassName().toLowerCase(), copyPropertyMap(propertyIndex));
+      classPropertyIndex.put(indexDefinition.getClassName().toLowerCase(locale), copyPropertyMap(propertyIndex));
     } finally {
       releaseExclusiveLock();
     }

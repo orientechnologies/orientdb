@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -31,7 +41,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
@@ -40,8 +50,8 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.util.*;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -49,7 +59,8 @@ import java.util.*;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * @author Artem Orobets added composite index managemement
  */
-public class OIndexManagerShared extends OIndexManagerAbstract implements OIndexManager {
+@SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
+public class OIndexManagerShared extends OIndexManagerAbstract {
   private static final long serialVersionUID = 1L;
 
   protected volatile transient Thread recreateIndexesThread = null;
@@ -250,7 +261,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
       try {
-        final ORecordTrackedSet idxs = new ORecordTrackedSet(document);
+        final OTrackedSet<ODocument> idxs = new OTrackedSet<ODocument>(document);
 
         for (final OIndex<?> i : indexes.values()) {
           idxs.add(((OIndexInternal<?>) i).updateConfiguration());
@@ -379,7 +390,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
                 configUpdated = true;
               }
             }
-          } catch (Exception e) {
+          } catch (RuntimeException e) {
             indexConfigurationIterator.remove();
             configUpdated = true;
             OLogManager.instance().error(this, "Error on loading index by configuration: %s", e, d);
@@ -413,7 +424,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       if (indexDefinition == null || indexDefinition.getClassName() == null)
         return;
 
-      Map<OMultiKey, Set<OIndex<?>>> map = classPropertyIndex.get(indexDefinition.getClassName().toLowerCase());
+      final Locale locale = getServerLocale();
+      Map<OMultiKey, Set<OIndex<?>>> map = classPropertyIndex.get(indexDefinition.getClassName().toLowerCase(locale));
 
       if (map == null) {
         return;
@@ -441,7 +453,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         }
       }
 
-      final Locale locale = getServerLocale();
+
       if (map.isEmpty())
         classPropertyIndex.remove(indexDefinition.getClassName().toLowerCase(locale));
       else

@@ -320,6 +320,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   @Override
+  public byte[] writeClassOnly(ORecord iSource) {
+    return new byte[] {};
+  }
+  
+  @Override
   public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat,
       final OUserObject2RecordHandler iObjHandler, final Map<ODocument, Boolean> iMarshalledRecords, boolean iOnlyDelta,
       boolean autoDetectCollectionType) {

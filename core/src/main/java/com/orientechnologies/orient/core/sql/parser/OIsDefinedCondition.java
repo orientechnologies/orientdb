@@ -31,24 +31,23 @@ public class OIsDefinedCondition extends OBooleanExpression {
     return false;
   }
 
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    expression.toString(params, builder);
+    builder.append(" is defined");
+  }
+
   @Override
-  public String toString() {
-    return expression.toString() + " is defined";
-  }
-
-  @Override public void replaceParameters(Map<Object, Object> params) {
-    expression.replaceParameters(params);
-  }
-
-  @Override public boolean supportsBasicCalculation() {
+  public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     return 0;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     return Collections.EMPTY_LIST;
   }
 

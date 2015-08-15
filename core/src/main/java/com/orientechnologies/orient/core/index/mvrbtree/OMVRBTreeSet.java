@@ -24,6 +24,7 @@ import com.orientechnologies.common.collection.ONavigableMap;
 import com.orientechnologies.common.collection.ONavigableSet;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -34,6 +35,7 @@ import java.util.NoSuchElementException;
 import java.util.SortedSet;
 
 @SuppressWarnings("unchecked")
+@SuppressFBWarnings("DMI_NONSERIALIZABLE_OBJECT_WRITTEN")
 public class OMVRBTreeSet<E> extends AbstractSet<E> implements ONavigableSet<E>, Cloneable, java.io.Serializable {
   /**
    * The backing map.

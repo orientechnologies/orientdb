@@ -107,8 +107,25 @@ public enum OGlobalConfiguration {
   STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Should we perform force sync of storage configuration for each update", Boolean.class, true),
 
-  STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
-      + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "nothing"),
+  STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method used in storage."
+      + " Possible values : gzip, nothing, snappy, snappy-native. Default is 'nothing'", String.class, "nothing"),
+
+  STORAGE_ENCRYPTION_METHOD("storage.encryptionMethod", "Record encryption method used in storage"
+      + " Possible values : 'aes' and 'des'. Default is no encryption.", String.class, "nothing"),
+
+  STORAGE_ENCRYPTION_KEY("storage.encryptionKey", "Contains the storage encryption key. This setting is hidden", String.class,
+      null, false, true),
+
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE("storage.makeFullCheckpointAfterCreate",
+      "Indicates whether full checkpoint should be performed if storage was created", Boolean.class, true),
+
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN(
+      "storage.makeFullCheckpointAfterOpen",
+      "Indicates whether full checkpoint should be performed if storage was opened. It is needed to make fuzzy checkpoints to work without issues",
+      Boolean.class, true),
+
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
+      "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
@@ -149,17 +166,6 @@ public enum OGlobalConfiguration {
 
   WAL_LOCATION("storage.wal.path", "Path to the wal file on the disk, by default is placed in DB directory but"
       + " it is highly recomended to use separate disk to store log operations", String.class, null),
-
-  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE("storage.makeFullCheckpointAfterCreate",
-      "Indicates whether full checkpoint should be performed if storage was created.", Boolean.class, true),
-
-  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN(
-      "storage.makeFullCheckpointAfterOpen",
-      "Indicates whether full checkpoint should be performed if storage was opened. It is needed to make fuzzy checkpoints to work without issues",
-      Boolean.class, true),
-
-  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
-      "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
 
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes,!!! NEVER CHANGE THIS VALUE !!!",
       Integer.class, 64),
@@ -368,10 +374,10 @@ public enum OGlobalConfiguration {
 
   PROFILER_CONFIG("profiler.config", "Configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size>",
       String.class, null, new OConfigurationChangeCallback() {
-    public void change(final Object iCurrentValue, final Object iNewValue) {
-      Orient.instance().getProfiler().configure(iNewValue.toString());
-    }
-  }),
+        public void change(final Object iCurrentValue, final Object iNewValue) {
+          Orient.instance().getProfiler().configure(iNewValue.toString());
+        }
+      }),
 
   PROFILER_AUTODUMP_INTERVAL("profiler.autoDump.interval",
       "Dumps the profiler values at regular intervals. Time is expressed in seconds", Integer.class, 0,
@@ -413,12 +419,15 @@ public enum OGlobalConfiguration {
 
   // QUERY
   QUERY_PARALLEL_AUTO("query.parallelAuto", "Auto enable parallel query if requirement are met", Boolean.class, Runtime
-      .getRuntime().availableProcessors() > 1),
+      .getRuntime().availableProcessors() > 2),
 
   QUERY_PARALLEL_MINIMUM_RECORDS("query.parallelMinimumRecords",
       "Minimum number of records to activate parallel query automatically", Long.class, 300000),
 
-  QUERY_PARALLEL_SCAN_CHUNK("query.parallelScanChunk", "Maximum number of records to scan in single operation", Integer.class, 1024),
+  QUERY_PARALLEL_RESULT_QUEUE_SIZE(
+      "query.parallelResultQueueSize",
+      "Size of the queue that hold result on parallel execution. The queue is blocking, so in case the queue is full, the query threads are in wait",
+      Integer.class, 20000),
 
   QUERY_SCAN_THRESHOLD_TIP("query.scanThresholdTip",
       "If total number of records scanned in a query is major than this threshold a warning is given. Use 0 to disable it",
@@ -427,6 +436,8 @@ public enum OGlobalConfiguration {
   QUERY_LIMIT_THRESHOLD_TIP("query.limitThresholdTip",
       "If total number of returned records in a query is major than this threshold a warning is given. Use 0 to disable it",
       Long.class, 10000),
+
+  STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache", Integer.class, 100),
 
   /**
    * Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.
@@ -456,6 +467,9 @@ public enum OGlobalConfiguration {
   CLIENT_SESSION_TOKEN_BASED("client.session.tokenBased", "Request a token based session to the server", Boolean.class, false),
 
   // SERVER
+  SERVER_OPEN_ALL_DATABASES_AT_STARTUP("server.openAllDatabasesAtStartup",
+      "If true, the server opens all the available databases at startup. Since 2.2", Boolean.class, false),
+
   SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections", Integer.class,
       5000),
 
@@ -610,19 +624,20 @@ public enum OGlobalConfiguration {
 
   @Deprecated
   // DEPRECATED IN 2.0
-      STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
+  STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
 
   // DEPRECATED IN 2.0, LEVEL1 CACHE CANNOT BE DISABLED ANYMORE
   @Deprecated
   CACHE_LOCAL_ENABLED("cache.local.enabled", "Deprecated, Level1 cache cannot be disabled anymore", Boolean.class, true);
 
-  private final String key;
-  private final Object defValue;
-  private final Class<?> type;
-  private Object value = null;
-  private String description;
+  private final String                 key;
+  private final Object                 defValue;
+  private final Class<?>               type;
+  private Object                       value          = null;
+  private String                       description;
   private OConfigurationChangeCallback changeCallback = null;
-  private Boolean canChangeAtRuntime;
+  private Boolean                      canChangeAtRuntime;
+  private boolean                      hidden         = false;
 
   // AT STARTUP AUTO-CONFIG
   static {
@@ -631,7 +646,7 @@ public enum OGlobalConfiguration {
   }
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
-                       final OConfigurationChangeCallback iChangeAction) {
+      final OConfigurationChangeCallback iChangeAction) {
     this(iKey, iDescription, iType, iDefValue, true);
     changeCallback = iChangeAction;
   }
@@ -641,13 +656,18 @@ public enum OGlobalConfiguration {
   }
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
-                       final Boolean iCanChange) {
+      final Boolean iCanChange) {
+    this(iKey, iDescription, iType, iDefValue, iCanChange, false);
+  }
+
+  OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
+      final boolean iCanChange, final boolean iHidden) {
     key = iKey;
     description = iDescription;
     defValue = iDefValue;
     type = iType;
     canChangeAtRuntime = iCanChange;
-
+    hidden = iHidden;
   }
 
   public static void dumpConfiguration(final PrintStream out) {
@@ -667,14 +687,15 @@ public enum OGlobalConfiguration {
       out.print("  + ");
       out.print(v.key);
       out.print(" = ");
-      out.println(v.getValue());
+      out.println(v.isHidden() ? "<hidden>" : v.getValue());
     }
   }
 
   /**
    * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
    *
-   * @param iKey Key to find. It's case insensitive.
+   * @param iKey
+   *          Key to find. It's case insensitive.
    * @return OGlobalConfiguration instance if found, otherwise null
    */
   public static OGlobalConfiguration findByKey(final String iKey) {
@@ -832,6 +853,10 @@ public enum OGlobalConfiguration {
 
   public Boolean isChangeableAtRuntime() {
     return canChangeAtRuntime;
+  }
+
+  public boolean isHidden() {
+    return hidden;
   }
 
   public Object getDefValue() {

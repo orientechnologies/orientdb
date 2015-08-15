@@ -25,62 +25,48 @@ public class OInsertStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("INSERT INTO ");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("INSERT INTO ");
     if (targetClass != null) {
-      result.append(targetClass.toString());
+      targetClass.toString(params, builder);
       if (targetClusterName != null) {
-        result.append(" CLUSTER ");
-        result.append(targetClusterName.toString());
+        builder.append(" CLUSTER ");
+        targetClusterName.toString(params, builder);
       }
     }
     if (targetCluster != null) {
-      result.append(targetCluster.toString());
+      targetCluster.toString(params, builder);
     }
     if (targetIndex != null) {
-      result.append(targetIndex.toString());
+      targetIndex.toString(params, builder);
     }
     if (insertBody != null) {
-      result.append(" ");
-      result.append(insertBody.toString());
+      builder.append(" ");
+      insertBody.toString(params, builder);
     }
     if (returnStatement != null) {
-      result.append(" RETURN ");
-      result.append(returnStatement.toString());
+      builder.append(" RETURN ");
+      returnStatement.toString(params, builder);
     }
     if (selectStatement != null) {
-      result.append(" ");
+      builder.append(" ");
       if (selectWithFrom) {
-        result.append("FROM ");
+        builder.append("FROM ");
       }
       if (selectInParentheses) {
-        result.append("(");
+        builder.append("(");
       }
-      result.append(selectStatement.toString());
+      selectStatement.toString(params, builder);
       if (selectInParentheses) {
-        result.append(")");
+        builder.append(")");
       }
 
     }
     if (unsafe) {
-      result.append(" UNSAFE");
+      builder.append(" UNSAFE");
     }
-    return result.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (insertBody != null) {
-      insertBody.replaceParameters(params);
-    }
-    if (returnStatement != null) {
-      returnStatement.replaceParameters(params);
-    }
-    if (selectStatement != null) {
-      selectStatement.replaceParameters(params);
-    }
-  }
 
 }
 /* JavaCC - OriginalChecksum=ccfabcf022d213caed873e6256cb26ad (do not edit this line) */

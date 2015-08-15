@@ -278,13 +278,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
-  @ConsoleCommand(description = "Create a new database", onlineHelp = "Console-Command-Create-Database")
+  @ConsoleCommand(description = "Create a new database. For encrypted database or portion of database, set the variable 'storage.encryptionKey' with the key to use", onlineHelp = "Console-Command-Create-Database")
   public void createDatabase(
       @ConsoleParameter(name = "database-url", description = "The url of the database to create in the format '<mode>:<path>'") String iDatabaseURL,
       @ConsoleParameter(name = "user", optional = true, description = "Server administrator name") String iUserName,
       @ConsoleParameter(name = "password", optional = true, description = "Server administrator password") String iUserPassword,
-      @ConsoleParameter(name = "storage-type", optional = true, description = "The type of the storage. 'local' and 'plocal' for disk-based databases and 'memory' for in-memory database") String iStorageType,
-      @ConsoleParameter(name = "db-type", optional = true, description = "The type of the database used between 'document' and 'graph'. By default is graph.") String iDatabaseType)
+      @ConsoleParameter(name = "storage-type", optional = true, description = "The type of the storage: 'plocal' for disk-based databases and 'memory' for in-memory database") String iStorageType,
+      @ConsoleParameter(name = "db-type", optional = true, description = "The type of the database used between 'document' and 'graph'. By default is graph.") String iDatabaseType,
+      @ConsoleParameter(name = "[options]", optional = true, description = "Additional options, example: -encryption=aes -compression=snappy") final String iOptions)
       throws IOException {
 
     if (iUserName == null)
@@ -321,7 +322,25 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         if (!iDatabaseURL.toLowerCase().startsWith(iStorageType.toLowerCase()))
           throw new IllegalArgumentException("Storage type '" + iStorageType + "' is different by storage type in URL");
       }
+
       currentDatabase = Orient.instance().getDatabaseFactory().createDatabase(iDatabaseType, iDatabaseURL);
+
+      if (iOptions != null) {
+        final List<String> options = OStringSerializerHelper.smartSplit(iOptions, ',', false);
+        for (String option : options) {
+          final String[] values = option.split("=");
+          if (values.length != 2)
+            throw new IllegalArgumentException("Options must have in th format -<option>=<value>[,-<option>=<value>]*");
+
+          if ("-encryption".equalsIgnoreCase(values[0]))
+            currentDatabase.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey(), values[1]);
+          else if ("-compression".equalsIgnoreCase(values[0]))
+            currentDatabase.setProperty(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey(), values[1]);
+          else
+            currentDatabase.setProperty(values[0], values[1]);
+        }
+      }
+
       currentDatabase.create();
       currentDatabaseName = currentDatabase.getName();
     }
@@ -2068,10 +2087,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     if (serverAdmin != null) {
       serverAdmin.setGlobalConfiguration(config, iConfigValue);
-      message("\n\nRemote configuration value changed correctly");
+      message("\nRemote configuration value changed correctly");
     } else {
       config.setValue(iConfigValue);
-      message("\n\nLocal configuration value changed correctly");
+      message("\nLocal configuration value changed correctly");
     }
     out.println();
   }
