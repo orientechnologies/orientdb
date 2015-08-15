@@ -220,6 +220,26 @@ public class OMultiValue {
     }
     return null;
   }
+  
+  /**
+   * Sets the value of the Multi-value object (array or collection) at iIndex 
+   * 
+   * @param iObject
+   *          Multi-value object (array, collection)
+   * @param iValue
+   *          The value to set at this specified index.      
+   * @param iIndex
+   *          integer as the position requested
+   */
+  public static void setValue(final Object iObject, final Object iValue, final int iIndex) {
+    if (iObject instanceof List<?>) {
+      ((List<Object>)iObject).set(iIndex, iValue);
+    } else if (iObject.getClass().isArray()) {
+      Array.set(iObject, iIndex, iValue);
+    } else {
+      throw new IllegalArgumentException("Can only set positional indices for Lists and Arrays");
+    }
+  }
 
   /**
    * Returns an <code>Iterable<Object></code> object to browse the multi-value instance (array, collection or map)
