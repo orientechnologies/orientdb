@@ -970,32 +970,56 @@ public class ODocument extends ORecordAbstract
       return this;
     }
 
-    final int lastSep = _allowChainedAccess ? iFieldName.lastIndexOf('.') : -1;
+    final int lastDotSep = _allowChainedAccess ? iFieldName.lastIndexOf('.') : -1;
+    final int lastArraySep = _allowChainedAccess ? iFieldName.lastIndexOf('[') : -1;
+    
+    final int lastSep = Math.max(lastArraySep, lastDotSep);
+    final boolean lastIsArray = lastArraySep > lastDotSep;
+    
     if (lastSep > -1) {
       // SUB PROPERTY GET 1 LEVEL BEFORE LAST
       final Object subObject = field(iFieldName.substring(0, lastSep));
       if (subObject != null) {
-        final String subFieldName = iFieldName.substring(lastSep + 1);
+        final String subFieldName = lastIsArray ? iFieldName.substring(lastSep) : iFieldName.substring(lastSep + 1);
         if (subObject instanceof ODocument) {
           // SUB-DOCUMENT
           ((ODocument) subObject).field(subFieldName, iPropertyValue);
           return (ODocument) (((ODocument) subObject).isEmbedded() ? this : subObject);
-        } else if (subObject instanceof Map<?, ?>)
+        } else if (subObject instanceof Map<?, ?>) {
           // KEY/VALUE
           ((Map<String, Object>) subObject).put(subFieldName, iPropertyValue);
-        else if (OMultiValue.isMultiValue(subObject)) {
-          // APPLY CHANGE TO ALL THE ITEM IN SUB-COLLECTION
-          for (Object subObjectItem : OMultiValue.getMultiValueIterable(subObject)) {
-            if (subObjectItem instanceof ODocument) {
-              // SUB-DOCUMENT, CHECK IF IT'S NOT LINKED
-              if (!((ODocument) subObjectItem).isEmbedded())
-                throw new IllegalArgumentException("Property '" + iFieldName
-                    + "' points to linked collection of items. You can only change embedded documents in this way");
-              ((ODocument) subObjectItem).field(subFieldName, iPropertyValue);
-            } else if (subObjectItem instanceof Map<?, ?>) {
-              // KEY/VALUE
-              ((Map<String, Object>) subObjectItem).put(subFieldName, iPropertyValue);
-            }
+        } else if (OMultiValue.isMultiValue(subObject)) {
+          if ((subObject instanceof List<?> || subObject.getClass().isArray()) && lastIsArray) {
+              // List // Array Type with a index subscript.
+              final int subFieldNameLen = subFieldName.length();
+              
+              if (subFieldName.charAt(subFieldNameLen - 1) != ']') {
+                  throw new IllegalArgumentException("Missed closing ']'");
+              }
+              
+              final String indexPart = subFieldName.substring(1, subFieldNameLen - 1);
+              String indexAsString = ODocumentHelper.getIndexPart(null, indexPart).toString();
+              
+              try {
+                  final int index = Integer.parseInt(indexAsString);
+                  OMultiValue.setValue(subObject, iPropertyValue, index);
+              } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("List / array subscripts must resolve to integer values.");
+              }
+          } else {
+              // APPLY CHANGE TO ALL THE ITEM IN SUB-COLLECTION
+              for (Object subObjectItem : OMultiValue.getMultiValueIterable(subObject)) {
+                if (subObjectItem instanceof ODocument) {
+                  // SUB-DOCUMENT, CHECK IF IT'S NOT LINKED
+                  if (!((ODocument) subObjectItem).isEmbedded())
+                    throw new IllegalArgumentException("Property '" + iFieldName
+                        + "' points to linked collection of items. You can only change embedded documents in this way");
+                  ((ODocument) subObjectItem).field(subFieldName, iPropertyValue);
+                } else if (subObjectItem instanceof Map<?, ?>) {
+                  // KEY/VALUE
+                  ((Map<String, Object>) subObjectItem).put(subFieldName, iPropertyValue);
+                }
+              }
           }
           return this;
         }
