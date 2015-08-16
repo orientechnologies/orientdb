@@ -61,9 +61,8 @@
                 <!-- USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
             </parameters>
         </handler>
-        <!-- SERVER SIDE SCRIPT INTERPRETER. WARNING! THIS CAN BE A SECURITY HOLE:
-            ENABLE IT ONLY IF CLIENTS ARE TRUCT, TO TURN ON SET THE 'ENABLED' PARAMETER
-            TO 'true' -->
+        <!-- SERVER SIDE SCRIPT INTERPRETER. WARNING, THIS CAN BE A SECURITY HOLE BECAUSE MALICIOUS CODE COULD BE INJECTED.
+            ENABLE IT ONLY IF CLIENTS ARE TRUSTED, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
         <handler
                 class="com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter">
             <parameters>
