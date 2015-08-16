@@ -6,6 +6,7 @@ import java.util.Map;
 
 public class OUpdateIncrementItem extends SimpleNode {
   protected OIdentifier left;
+  protected OModifier   leftModifier;
   protected OExpression right;
 
   public OUpdateIncrementItem(int id) {
@@ -24,6 +25,9 @@ public class OUpdateIncrementItem extends SimpleNode {
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);
+    if (leftModifier != null) {
+      leftModifier.toString(params, builder);
+    }
     builder.append(" = ");
     right.toString(params, builder);
   }
