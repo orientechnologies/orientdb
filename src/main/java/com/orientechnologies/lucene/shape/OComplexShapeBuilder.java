@@ -18,9 +18,10 @@
 
 package com.orientechnologies.lucene.shape;
 
-import com.spatial4j.core.shape.Shape;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.LineString;
+import com.spatial4j.core.shape.*;
+import com.spatial4j.core.shape.jts.JtsGeometry;
+import com.spatial4j.core.shape.jts.JtsPoint;
+import com.vividsolutions.jts.geom.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,5 +51,113 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
       i++;
     }
     return GEOMETRY_FACTORY.createLineString(coords);
+  }
+
+  protected JtsGeometry createMultiPoint(ShapeCollection<JtsPoint> geometries) {
+
+    Coordinate[] points = new Coordinate[geometries.size()];
+
+    int i = 0;
+
+    for (JtsPoint geometry : geometries) {
+      points[i] = new Coordinate(geometry.getX(), geometry.getY());
+      i++;
+    }
+
+    MultiPoint multiPoints = GEOMETRY_FACTORY.createMultiPoint(points);
+
+    return SPATIAL_CONTEXT.makeShape(multiPoints);
+  }
+
+  protected JtsGeometry createMultiLine(ShapeCollection<JtsGeometry> geometries) {
+
+    LineString[] multiLineString = new LineString[geometries.size()];
+
+    int i = 0;
+
+    for (JtsGeometry geometry : geometries) {
+      multiLineString[i] = (LineString) geometry.getGeom();
+      i++;
+    }
+
+    MultiLineString multiPoints = GEOMETRY_FACTORY.createMultiLineString(multiLineString);
+
+    return SPATIAL_CONTEXT.makeShape(multiPoints);
+  }
+
+  protected JtsGeometry createMultiPolygon(ShapeCollection<JtsGeometry> geometries) {
+
+    Polygon[] polygons = new Polygon[geometries.size()];
+
+    int i = 0;
+
+    for (JtsGeometry geometry : geometries) {
+      polygons[i] = (Polygon) geometry.getGeom();
+      i++;
+    }
+
+    MultiPolygon multiPolygon = GEOMETRY_FACTORY.createMultiPolygon(polygons);
+
+    return SPATIAL_CONTEXT.makeShape(multiPolygon);
+  }
+
+  protected boolean isMultiPolygon(ShapeCollection<Shape> collection) {
+
+    boolean isMultiPolygon = true;
+    for (Shape shape : collection) {
+
+      if (!isPolygon(shape)) {
+        isMultiPolygon = false;
+        break;
+      }
+    }
+    return isMultiPolygon;
+  }
+
+  protected boolean isMultiPoint(ShapeCollection<Shape> collection) {
+
+    boolean isMultipoint = true;
+    for (Shape shape : collection) {
+
+      if (!isPoint(shape)) {
+        isMultipoint = false;
+        break;
+      }
+    }
+    return isMultipoint;
+  }
+
+  protected boolean isMultiLine(ShapeCollection<Shape> collection) {
+
+    boolean isMultipoint = true;
+    for (Shape shape : collection) {
+
+      if (!isLineString(shape)) {
+        isMultipoint = false;
+        break;
+      }
+    }
+    return isMultipoint;
+  }
+
+  private boolean isLineString(Shape shape) {
+    if (shape instanceof JtsGeometry) {
+      Geometry geom = ((JtsGeometry) shape).getGeom();
+      return geom instanceof LineString;
+    }
+    return false;
+  }
+
+  protected boolean isPoint(Shape shape) {
+    return shape instanceof com.spatial4j.core.shape.Point;
+  }
+
+  protected boolean isPolygon(Shape shape) {
+
+    if (shape instanceof JtsGeometry) {
+      Geometry geom = ((JtsGeometry) shape).getGeom();
+      return geom instanceof Polygon;
+    }
+    return false;
   }
 }

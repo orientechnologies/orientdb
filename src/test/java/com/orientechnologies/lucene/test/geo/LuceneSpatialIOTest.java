@@ -256,6 +256,19 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     Assert.assertEquals(m2, m1);
   }
 
+  // GEOMETRY COLLECTION
+  @Test
+  public void testGeometryCollection() throws IOException {
+
+    OGeometryCollectionShapeBuilder builder = new OGeometryCollectionShapeBuilder(OShapeFactory.INSTANCE);
+    ODocument geometryCollection = geometryCollection();
+    GeometryCollection collection = createGeometryCollection();
+
+    String m1 = builder.asText(geometryCollection);
+    String m2 = collection.toText();
+    Assert.assertEquals(m2, m1);
+  }
+
   @AfterClass
   public void deInit() {
     deInitDB();

@@ -66,8 +66,6 @@ public class LuceneSpatialFunctionFromTextTest extends BaseSpatialLuceneTest {
     checkFromText(point, "select ST_GeomFromText('" + MULTIPOINTWKT + "') as geom");
   }
 
-
-
   @Test
   public void geomFromTextRectangleTest() {
     ODocument polygon = rectangle();
@@ -88,7 +86,12 @@ public class LuceneSpatialFunctionFromTextTest extends BaseSpatialLuceneTest {
     checkFromText(polygon, "select ST_GeomFromText('" + MULTIPOLYGONWKT + "') as geom");
   }
 
-  protected void checkFromText(ODocument source, String query) {
+  @Test
+  public void geomCollectionFromText() {
+    checkFromCollectionText(geometryCollection(), "select ST_GeomFromText('" + GEOMETRYCOLLECTION + "') as geom");
+  }
+
+  protected void checkFromCollectionText(ODocument source, String query) {
 
     List<ODocument> docs = databaseDocumentTx.command(new OCommandSQL(query)).execute();
 
@@ -96,11 +99,39 @@ public class LuceneSpatialFunctionFromTextTest extends BaseSpatialLuceneTest {
     ODocument geom = docs.get(0).field("geom");
     Assert.assertNotNull(geom);
 
+    Assert.assertNotNull(geom.field("geometries"));
+
+    Assert.assertEquals(source.getClassName(), geom.getClassName());
+
+    List<ODocument> sourceCollection = source.field("geometries");
+    List<ODocument> targetCollection = source.field("geometries");
+    Assert.assertEquals(sourceCollection.size(), targetCollection.size());
+
+    int i = 0;
+    for (ODocument entries : sourceCollection) {
+      assertGeometry(entries, targetCollection.get(i));
+      i++;
+    }
+
+  }
+
+  protected void checkFromText(ODocument source, String query) {
+
+    List<ODocument> docs = databaseDocumentTx.command(new OCommandSQL(query)).execute();
+
+    Assert.assertEquals(docs.size(), 1);
+    ODocument geom = docs.get(0).field("geom");
+    assertGeometry(source, geom);
+
+  }
+
+  private void assertGeometry(ODocument source, ODocument geom) {
+    Assert.assertNotNull(geom);
+
     Assert.assertNotNull(geom.field("coordinates"));
 
     Assert.assertEquals(source.getClassName(), geom.getClassName());
     Assert.assertEquals(geom.field("coordinates"), source.field("coordinates"));
-
   }
 
 }

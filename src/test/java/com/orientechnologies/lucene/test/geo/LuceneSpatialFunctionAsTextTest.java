@@ -70,6 +70,7 @@ public class LuceneSpatialFunctionAsTextTest extends BaseSpatialLuceneTest {
     createLocation("Rectangle", rectangle());
     createLocation("Polygon", polygon());
     createLocation("MultiPolygon", loadMultiPolygon());
+    createLocation("GeometryCollection", geometryCollection());
 
   }
 
@@ -117,6 +118,11 @@ public class LuceneSpatialFunctionAsTextTest extends BaseSpatialLuceneTest {
   @Test
   public void testPolygon() {
     queryAndAssertGeom("Polygon", POLYGONWKT);
+  }
+
+  @Test
+  public void testGeometryCollection() {
+    queryAndAssertGeom("GeometryCollection", GEOMETRYCOLLECTION);
   }
 
   @Test
