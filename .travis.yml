@@ -1,7 +1,17 @@
-language: java
 sudo: false
-script: "mvn -Dorientdb.test.env=ci clean deploy"
+language: java
+before_install: git clone -b travis `git config --get remote.origin.url` target/travis
+script: '[ ${TRAVIS_PULL_REQUEST} = ''false'' ] && mvn clean deploy -Dorientdb.test.env=ci
+  --settings target/travis/settings.xml || mvn clean verify -Dorientdb.test.env=ci
+  --settings target/travis/settings.xml'
+branches:
+  only:
+  - develop
 jdk:
-  - oraclejdk8
-  - oraclejdk7
-  - openjdk7
+- oraclejdk8
+- oraclejdk7
+- openjdk7
+env:
+  global:
+  - secure: H9NadRz3kBolRce6lEOBRTX7LEF4L+Nj+btL58wpExYBqKr6hKV8VayNYfuubJ2XSHhoX3rW4a51u3P8LYUGvAxAyOeVPtIKdwskXx6x49gLqVN/VWZMaEQXwm3F2TooeggHUe+0b51JxRuuSwfofxLFva0L+KJupvVCt/QjK7w=
+  - secure: FaCJ4ZxVB0dBL1GgVwy4aD+WMWYS+A7Wxu3ki8j+0mJBt1WAj4nW4BMG1AawzUD/0oZU1Qtz5/WYlV816r5dv53Aui1omGQqaX89Dq0yXr4XOsHvJKE+bnR81lPPR9kxHRxcJQ/YytRit642ohBvhjaiOjTJdhFXrk6Q/QdFOyw=
