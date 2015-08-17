@@ -1,31 +1,34 @@
 #!/bin/bash
-if [ -z "$1" ]
+
+export VER=`grep "<version>" pom.xml | head -n 1|awk -F "[<>]" '{print $3}'`
+
+if [ -z "$VER" ]
 then
-    echo "SYNTAX ERROR, USE: deploy.sh <version> [<path-of-databases-to-link>]"
+    echo "ERROR: CANNOT FIND CURRENT ORIENTDB RELEASE!"
     exit
 fi
 
-echo "Building OrientDB $1..."
+echo "Building OrientDB $VER..."
 
 mvn clean install -DskipTests=true -Dmaven.findbugs.enable=false -DlocalDeploy=true
 
-DIR=distribution/target/orientdb-community-$1-distribution.dir/orientdb-community-$1/
+DIR=distribution/target/orientdb-community-$VER-distribution.dir/orientdb-community-$VER/
 
-echo "Releasing OrientDB $1 to $DIR..."
+echo "Releasing OrientDB $VER to $DIR..."
 
-cp ../drivers/orientdb-jdbc/target/orientdb-jdbc-$1.jar $DIR/lib/
-cp ../modules/orientdb-lucene/target/orientdb-lucene-$1-dist.jar $DIR/plugins/
-cp ../modules/orientdb-etl/target/orientdb-etl-$1.jar $DIR/lib/
+cp ../drivers/orientdb-jdbc/target/orientdb-jdbc-$VER.jar $DIR/lib/
+cp ../modules/orientdb-lucene/target/orientdb-lucene-$VER-dist.jar $DIR/plugins/
+cp ../modules/orientdb-etl/target/orientdb-etl-$VER.jar $DIR/lib/
 cp ../modules/orientdb-etl/script/oetl.* $DIR/bin/
 
 cd $DIR
 
-if [ -n "$2" ]
+if [ -n "$1" ]
 then
-    echo "Linking databases folder in $2..."
+    echo "Linking databases folder in $1..."
     rm -rf databases
-    ln -s $2 databases
+    ln -s $1 databases
 fi
 
-echo "Switching to the fresh built OrientDB $1"
+echo "Switching to the fresh built OrientDB $VER"
 

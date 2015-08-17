@@ -1,12 +1,15 @@
 #!/bin/bash
-if [ -z "$1" ]
+
+export VER=`grep "<version>" pom.xml | head -n 1|awk -F "[<>]" '{print $3}'`
+
+if [ -z "$VER" ]
 then
-    echo "SYNTAX ERROR, USE: cd.sh <version>"
+    echo "ERROR: CANNOT FIND CURRENT ORIENTDB RELEASE!"
     exit
 fi
 
-echo "Switching to the fresh built OrientDB $1"
+echo "Switching to the fresh built OrientDB $VER"
 
-DIR=distribution/target/orientdb-community-$1-distribution.dir/orientdb-community-$1/
+DIR=distribution/target/orientdb-community-$VER-distribution.dir/orientdb-community-$VER/
 
 cd $DIR
