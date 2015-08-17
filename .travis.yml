@@ -13,5 +13,5 @@ jdk:
 - openjdk7
 env:
   global:
-  - secure: H9NadRz3kBolRce6lEOBRTX7LEF4L+Nj+btL58wpExYBqKr6hKV8VayNYfuubJ2XSHhoX3rW4a51u3P8LYUGvAxAyOeVPtIKdwskXx6x49gLqVN/VWZMaEQXwm3F2TooeggHUe+0b51JxRuuSwfofxLFva0L+KJupvVCt/QjK7w=
-  - secure: Gcm+x6F0WgwHxGuvkSIGRBFBZ+SiP+IDpihYb+Dr8praadpwNPi4vKhqs1hHcSOPuJ3yyp1RPT0CtrHlXg7VBEyjXxKtTYE3S87eMayuKCvtWIH8hBBG6AZZfE5QqsOSVqzhz3OkPCwy4SR5fs2dzQnmKWa0qcRUYJp5hSGG+KE=
+  - secure: Ag2LmxgKwiwMKEloQQlMDRZjuyiBS4FZSaMDlTitReNkNPCIPY0gyBMCSQX9zaNd8TeH/cUk036KNhgf7Bz3TTyhXeGOEfuh/mmNGe+FarA45hNPLPm+2w/GoOLdkKekWkA11WPYRfoWiq0UU+O/aZgIam8IU7/+lmtBDEDh69c=
+  - secure: W8Koda8njTn33nEZ6GWo84uPHTqDw0uWbuaVTGxaisCqy6HfnsFZMM7Tfv/x3sq0FdE2c6SA8iIblLug6u0AJso+O//4oETgcs6zpi7+lDKgP/Z+EnPdTdebOjHsm0AIChK2wslvqqs5Ht50w5LhP3VQGGiDaiprHL8BU4QUSas=
