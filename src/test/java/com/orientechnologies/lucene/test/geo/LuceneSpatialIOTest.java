@@ -40,6 +40,8 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 06/08/15.
  */
+
+@Test(groups = "embedded")
 public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
   @Override
   protected String getDatabaseName() {

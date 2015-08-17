@@ -37,7 +37,7 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 14/08/15.
  */
-@Test
+@Test(groups = "embedded")
 public class LuceneSpatialFunctionAsTextTest extends BaseSpatialLuceneTest {
 
   @Override

@@ -28,6 +28,8 @@ import org.testng.annotations.Test;
 /**
  * Created by Enrico Risa on 06/08/15.
  */
+
+@Test(groups = "embedded")
 public class LuceneSpatialClassCreateTest extends BaseLuceneTest {
   @Override
   protected String getDatabaseName() {

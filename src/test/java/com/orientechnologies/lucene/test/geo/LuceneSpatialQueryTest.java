@@ -147,7 +147,7 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
     deInitDB();
   }
 
-  @Test
+  @Test(enabled = false)
   public void testNearQuery() {
 
     String query = "select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 0.5}]";
@@ -160,7 +160,7 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
     Assert.assertEquals(0.2749329729746763, docs.get(0).field("$distance"));
   }
 
-  @Test
+  @Test(enabled = false)
   public void testWithinQuery() {
     String query = "select * from Place where [latitude,longitude] WITHIN [[51.507222,-0.1275],[55.507222,-0.1275]]";
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));

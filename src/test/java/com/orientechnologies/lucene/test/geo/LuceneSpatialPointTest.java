@@ -39,7 +39,7 @@ import java.util.List;
  * Created by Enrico Risa on 07/08/15.
  */
 
-@Test
+@Test(groups = "embedded")
 public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
   @Override
   protected String getDatabaseName() {

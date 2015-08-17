@@ -41,7 +41,7 @@ import java.util.Map;
  * Created by Enrico Risa on 07/08/15.
  */
 
-@Test
+@Test(groups = "embedded")
 public class LuceneSpatialPolygonTest extends BaseSpatialLuceneTest {
   @Override
   protected String getDatabaseName() {

@@ -19,10 +19,14 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * Created by enricorisa on 26/09/14.
@@ -53,5 +57,27 @@ public class LuceneCreateIndexRemote extends LuceneCreateIndexTest {
     restart();
 
     assertQuery();
+
+    ODocument doc = new ODocument("Song");
+
+    doc.field("title", "Test");
+    doc.field("author", "Author");
+
+    databaseDocumentTx.save(doc);
+
+    assertNewQuery();
+
+    restart();
+
+    assertNewQuery();
+
+  }
+
+  protected void assertNewQuery() {
+
+    List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+        "select * from Song where [title] LUCENE \"(title:Test)\""));
+
+    Assert.assertEquals(docs.size(), 1);
   }
 }

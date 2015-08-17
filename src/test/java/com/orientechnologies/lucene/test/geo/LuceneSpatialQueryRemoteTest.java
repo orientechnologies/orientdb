@@ -20,7 +20,7 @@ package com.orientechnologies.lucene.test.geo;
 
 import org.testng.annotations.Test;
 
-@Test(groups = "remote")
+@Test(groups = "remote",enabled = false)
 public class LuceneSpatialQueryRemoteTest extends LuceneSpatialQueryTest {
 
   public LuceneSpatialQueryRemoteTest() {
