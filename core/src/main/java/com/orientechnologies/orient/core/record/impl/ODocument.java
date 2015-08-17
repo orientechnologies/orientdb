@@ -19,41 +19,21 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODetachable;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -81,25 +61,36 @@ import com.orientechnologies.orient.core.serialization.serializer.ONetworkThread
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
  * be added at run-time. Instances can be reused across calls by using the reset() before to re-use.
  */
 @SuppressWarnings({ "unchecked" })
-public class ODocument extends ORecordAbstract
-    implements Iterable<Entry<String, Object>>, ORecordSchemaAware, ODetachable, Externalizable {
+public class ODocument extends ORecordAbstract implements Iterable<Entry<String, Object>>, ORecordSchemaAware, ODetachable,
+    Externalizable {
 
-  public static final byte        RECORD_TYPE      = 'd';
-  protected static final String[] EMPTY_STRINGS    = new String[] {};
-  private static final long       serialVersionUID = 1L;
-  protected int                   _fieldSize;
+  public static final byte                                RECORD_TYPE             = 'd';
+  protected static final String[]                         EMPTY_STRINGS           = new String[] {};
+  private static final long                               serialVersionUID        = 1L;
+  protected int                                           _fieldSize;
 
-  protected Map<String, ODocumentEntry> _fields;
+  protected Map<String, ODocumentEntry>                   _fields;
 
   protected boolean                                       _trackingChanges        = true;
   protected boolean                                       _ordered                = true;
@@ -177,8 +168,8 @@ public class ODocument extends ORecordAbstract
       final OSchema schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
       final OClass cls = schema.getClassByClusterId(_recordId.clusterId);
       if (cls != null && !cls.getName().equals(iClassName))
-        throw new IllegalArgumentException(
-            "Cluster id does not correspond class name should be " + iClassName + " but found " + cls.getName());
+        throw new IllegalArgumentException("Cluster id does not correspond class name should be " + iClassName + " but found "
+            + cls.getName());
     }
 
     _dirty = false;
@@ -359,8 +350,7 @@ public class ODocument extends ORecordAbstract
       if (p.getMinComparable().compareTo(fieldValue) > 0) {
         switch (p.getType()) {
         case STRING:
-          throw new OValidationException(
-              "The field '" + p.getFullName() + "' contains fewer characters than " + min + " requested");
+          throw new OValidationException("The field '" + p.getFullName() + "' contains fewer characters than " + min + " requested");
         case DATE:
         case DATETIME:
           throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
@@ -413,8 +403,8 @@ public class ODocument extends ORecordAbstract
         boolean simple = fieldValue != null ? OType.isSimpleType(fieldValue) : OType.isSimpleType(orgVal);
         if ((simple) || (fieldValue != null && orgVal == null) || (fieldValue == null && orgVal != null)
             || (fieldValue != null && !fieldValue.equals(orgVal)))
-          throw new OValidationException(
-              "The field '" + p.getFullName() + "' is immutable and cannot be altered. Field value is: " + entry.value);
+          throw new OValidationException("The field '" + p.getFullName() + "' is immutable and cannot be altered. Field value is: "
+              + entry.value);
       }
     }
   }
@@ -789,6 +779,37 @@ public class ODocument extends ORecordAbstract
   }
 
   /**
+   * Evaluates a SQL expression against current document. Example:
+   * <code>long amountPlusVat = doc.eval("amount * 120 / 100");</code>
+   * 
+   * @param iExpression
+   *          SQL expression to evaluate.
+   * @throws OQueryParsingException
+   *           in case the expression is not valid
+   * @return The result of expression
+   */
+  public Object eval(final String iExpression) {
+    return eval(iExpression, null);
+  }
+
+  /**
+   * Evaluates a SQL expression against current document by passing a context. The expression can refer to the variables contained
+   * in the context. Example: <code>
+   *   OCommandContext context = new OBasicCommandContext().setVariable("vat", 20);
+   *   long amountPlusVat = doc.eval("amount * (100+$vat) / 100", context);
+   * </code>
+   *
+   * @param iExpression
+   *          SQL expression to evaluate.
+   * @throws OQueryParsingException
+   *           in case the expression is not valid
+   * @return The result of expression
+   */
+  public Object eval(final String iExpression, final OCommandContext iContext) {
+    return new OSQLPredicate(iExpression).evaluate(this, null, iContext);
+  }
+
+  /**
    * Reads the field value.
    *
    * @param iFieldName
@@ -972,10 +993,10 @@ public class ODocument extends ORecordAbstract
 
     final int lastDotSep = _allowChainedAccess ? iFieldName.lastIndexOf('.') : -1;
     final int lastArraySep = _allowChainedAccess ? iFieldName.lastIndexOf('[') : -1;
-    
+
     final int lastSep = Math.max(lastArraySep, lastDotSep);
     final boolean lastIsArray = lastArraySep > lastDotSep;
-    
+
     if (lastSep > -1) {
       // SUB PROPERTY GET 1 LEVEL BEFORE LAST
       final Object subObject = field(iFieldName.substring(0, lastSep));
@@ -990,36 +1011,36 @@ public class ODocument extends ORecordAbstract
           ((Map<String, Object>) subObject).put(subFieldName, iPropertyValue);
         } else if (OMultiValue.isMultiValue(subObject)) {
           if ((subObject instanceof List<?> || subObject.getClass().isArray()) && lastIsArray) {
-              // List // Array Type with a index subscript.
-              final int subFieldNameLen = subFieldName.length();
-              
-              if (subFieldName.charAt(subFieldNameLen - 1) != ']') {
-                  throw new IllegalArgumentException("Missed closing ']'");
-              }
-              
-              final String indexPart = subFieldName.substring(1, subFieldNameLen - 1);
-              String indexAsString = ODocumentHelper.getIndexPart(null, indexPart).toString();
-              
-              try {
-                  final int index = Integer.parseInt(indexAsString);
-                  OMultiValue.setValue(subObject, iPropertyValue, index);
-              } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("List / array subscripts must resolve to integer values.");
-              }
+            // List // Array Type with a index subscript.
+            final int subFieldNameLen = subFieldName.length();
+
+            if (subFieldName.charAt(subFieldNameLen - 1) != ']') {
+              throw new IllegalArgumentException("Missed closing ']'");
+            }
+
+            final String indexPart = subFieldName.substring(1, subFieldNameLen - 1);
+            String indexAsString = ODocumentHelper.getIndexPart(null, indexPart).toString();
+
+            try {
+              final int index = Integer.parseInt(indexAsString);
+              OMultiValue.setValue(subObject, iPropertyValue, index);
+            } catch (NumberFormatException e) {
+              throw new IllegalArgumentException("List / array subscripts must resolve to integer values.");
+            }
           } else {
-              // APPLY CHANGE TO ALL THE ITEM IN SUB-COLLECTION
-              for (Object subObjectItem : OMultiValue.getMultiValueIterable(subObject)) {
-                if (subObjectItem instanceof ODocument) {
-                  // SUB-DOCUMENT, CHECK IF IT'S NOT LINKED
-                  if (!((ODocument) subObjectItem).isEmbedded())
-                    throw new IllegalArgumentException("Property '" + iFieldName
-                        + "' points to linked collection of items. You can only change embedded documents in this way");
-                  ((ODocument) subObjectItem).field(subFieldName, iPropertyValue);
-                } else if (subObjectItem instanceof Map<?, ?>) {
-                  // KEY/VALUE
-                  ((Map<String, Object>) subObjectItem).put(subFieldName, iPropertyValue);
-                }
+            // APPLY CHANGE TO ALL THE ITEM IN SUB-COLLECTION
+            for (Object subObjectItem : OMultiValue.getMultiValueIterable(subObject)) {
+              if (subObjectItem instanceof ODocument) {
+                // SUB-DOCUMENT, CHECK IF IT'S NOT LINKED
+                if (!((ODocument) subObjectItem).isEmbedded())
+                  throw new IllegalArgumentException("Property '" + iFieldName
+                      + "' points to linked collection of items. You can only change embedded documents in this way");
+                ((ODocument) subObjectItem).field(subFieldName, iPropertyValue);
+              } else if (subObjectItem instanceof Map<?, ?>) {
+                // KEY/VALUE
+                ((Map<String, Object>) subObjectItem).put(subFieldName, iPropertyValue);
               }
+            }
           }
           return this;
         }
@@ -1084,9 +1105,9 @@ public class ODocument extends ORecordAbstract
       final ORidBag ridBag = (ORidBag) oldValue;
       ridBag.setOwner(null);
     } else if (oldValue instanceof ODocument) {
-      ((ODocument)oldValue).removeOwner(this);
+      ((ODocument) oldValue).removeOwner(this);
     }
-    
+
     if (oldValue instanceof OIdentifiable) {
       unTrack((OIdentifiable) oldValue);
     }
@@ -1163,9 +1184,9 @@ public class ODocument extends ORecordAbstract
     _fieldSize--;
 
     removeCollectionChangeListener(entry, oldValue);
-    if (oldValue instanceof OIdentifiable )
+    if (oldValue instanceof OIdentifiable)
       unTrack((OIdentifiable) oldValue);
-    if(oldValue instanceof ORidBag)
+    if (oldValue instanceof ORidBag)
       ((ORidBag) oldValue).setOwner(null);
     setDirty();
     return oldValue;
@@ -1266,7 +1287,7 @@ public class ODocument extends ORecordAbstract
     final Iterator<Entry<String, ODocumentEntry>> iterator = _fields.entrySet().iterator();
     return new Iterator<Entry<String, Object>>() {
       private Entry<String, ODocumentEntry> current;
-      private boolean read = true;
+      private boolean                       read = true;
 
       public boolean hasNext() {
         while (iterator.hasNext()) {
@@ -1387,7 +1408,7 @@ public class ODocument extends ORecordAbstract
       }
     } else if (!isDirty())
       getDirtyManager().setDirty(this);
-    
+
     // THIS IS IMPORTANT TO BE SURE THAT FIELDS ARE LOADED BEFORE IT'S TOO LATE AND THE RECORD _SOURCE IS NULL
     checkForFields();
 
@@ -2199,7 +2220,7 @@ public class ODocument extends ORecordAbstract
     entry.value = iFieldValue;
     entry.type = iFieldType;
     addCollectionChangeListener(entry);
-    if(iFieldValue instanceof OIdentifiable && !((OIdentifiable) iFieldValue).getIdentity().isPersistent())
+    if (iFieldValue instanceof OIdentifiable && !((OIdentifiable) iFieldValue).getIdentity().isPersistent())
       track((OIdentifiable) iFieldValue);
   }
 
@@ -2389,15 +2410,15 @@ public class ODocument extends ORecordAbstract
         }
         break;
       case LINKLIST:
-        if (fieldValue instanceof List<?>) 
+        if (fieldValue instanceof List<?>)
           newValue = new ORecordLazyList(this, (List<OIdentifiable>) fieldValue);
         break;
       case LINKSET:
-        if (fieldValue instanceof Set<?>) 
+        if (fieldValue instanceof Set<?>)
           newValue = new ORecordLazySet(this, (Collection<OIdentifiable>) fieldValue);
         break;
       case LINKMAP:
-        if (fieldValue instanceof Map<?, ?>) 
+        if (fieldValue instanceof Map<?, ?>)
           newValue = new ORecordLazyMap(this, (Map<Object, OIdentifiable>) fieldValue);
         break;
       default:
@@ -2531,8 +2552,7 @@ public class ODocument extends ORecordAbstract
 
   private void fetchClassName() {
     final ODatabaseDocumentInternal database = getDatabaseIfDefinedInternal();
-    if (database != null && database.getStorageVersions() != null
-        && database.getStorageVersions().classesAreDetectedByClusterId()) {
+    if (database != null && database.getStorageVersions() != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
       if (_recordId.clusterId < 0) {
         checkForLoading();
         checkForFields("@class");
