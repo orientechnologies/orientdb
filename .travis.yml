@@ -4,4 +4,4 @@ script: "mvn -Dorientdb.test.env=ci clean deploy"
 jdk:
   - oraclejdk8
   - oraclejdk7
-  - openjdk6
+  - openjdk7
