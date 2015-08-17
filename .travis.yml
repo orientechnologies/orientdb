@@ -1,5 +1,6 @@
 sudo: false
 language: java
+script: "mvn clean test -Dorientdb.test.env=ci"
 branches:
   only:
   - develop
