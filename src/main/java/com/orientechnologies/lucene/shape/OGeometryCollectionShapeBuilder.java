@@ -98,7 +98,7 @@ public class OGeometryCollectionShapeBuilder extends OComplexShapeBuilder<ShapeC
   public ODocument toDoc(ShapeCollection<Shape> shapes) {
 
     ODocument doc = new ODocument(getName());
-    List<ODocument> geometries = new ArrayList<>(shapes.size());
+    List<ODocument> geometries = new ArrayList<ODocument>(shapes.size());
     for (Shape s : shapes) {
       geometries.add(shapeFactory.toDoc(s));
     }
