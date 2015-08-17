@@ -8,9 +8,3 @@ jdk:
 - oraclejdk8
 - oraclejdk7
 - openjdk7
-matrix:
-  include:
-  - jdk: oraclejdk8
-    script: "mvn test -Dorientdb.test.env=ci"
-    after_success:
-    - '[ ${TRAVIS_PULL_REQUEST} = ''false'' ] && mvn deploy -DskipTests=true --settings ~/.travis-settings.xml || echo "SKIP DEPLOY BECAUSE IT'S A PULL REQUEST"'
