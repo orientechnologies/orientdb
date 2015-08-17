@@ -1,6 +1,6 @@
 language: java
 sudo: false
-script: mvn -Dorientdb.test.env=ci clean deploy
+script: "mvn -Dorientdb.test.env=ci clean deploy"
 jdk:
   - oraclejdk8
   - oraclejdk7
