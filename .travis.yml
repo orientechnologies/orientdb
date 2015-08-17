@@ -1,6 +1,6 @@
 sudo: false
 language: java
-script: "mvn clean test -Dorientdb.test.env=ci"
+script: "mvn test -Dorientdb.test.env=ci"
 branches:
   only:
   - develop
@@ -11,6 +11,6 @@ jdk:
 matrix:
   include:
   - jdk: oraclejdk8
-    script: "mvn clean test -Dorientdb.test.env=ci"
+    script: "mvn test -Dorientdb.test.env=ci"
     after_success:
     - '[ ${TRAVIS_PULL_REQUEST} = ''false'' ] && mvn deploy -DskipTests=true --settings ~/.travis-settings.xml || echo "SKIP DEPLOY BECAUSE IT'S A PULL REQUEST"'
