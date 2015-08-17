@@ -8,6 +8,8 @@ jdk:
 - oraclejdk8
 - oraclejdk7
 - openjdk7
-after_success:
-  - echo "<settings><servers><server><id>ossrh</id><username>\${env.OSSRH_USER}</username><password>\${env.OSSRH_PASS}</password></server></servers></settings>" > ~/settings.xml
-  - '[ ${TRAVIS_PULL_REQUEST} = ''false'' ] && mvn deploy --settings ~/settings.xml || echo "SKIP DEPLOY BECAUSE IT'S A PULL REQUEST"'
+matrix:
+  include:
+  - jdk: oraclejdk8
+    after_success:
+    - '[ ${TRAVIS_PULL_REQUEST} = ''false'' ] && mvn deploy -DskipTests=true --settings ~/.travis-settings.xml || echo "SKIP DEPLOY BECAUSE IT'S A PULL REQUEST"'
