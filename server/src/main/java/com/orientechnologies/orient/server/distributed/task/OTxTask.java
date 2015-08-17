@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -43,12 +49,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Distributed transaction task.
@@ -108,7 +108,7 @@ public class OTxTask extends OAbstractReplicatedTask {
         for (OAbstractRecordReplicatedTask task : tasks) {
           final ORecord record = task.getRecord();
 
-          if (record != null) {
+          if (record instanceof ODocument) {
             // ASSURE ALL RIDBAGS ARE UNMARSHALLED TO AVOID STORING TEMP RIDS
             for (String f : ((ODocument) record).fieldNames()) {
               final Object fValue = ((ODocument) record).field(f);
