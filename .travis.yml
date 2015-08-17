@@ -1,9 +1,5 @@
 sudo: false
 language: java
-before_install: git clone -b travis `git config --get remote.origin.url` target/travis
-script: '[ ${TRAVIS_PULL_REQUEST} = ''false'' ] && mvn clean deploy -Dorientdb.test.env=ci
-  --settings target/travis/settings.xml || mvn clean verify -Dorientdb.test.env=ci
-  --settings target/travis/settings.xml'
 branches:
   only:
   - develop
@@ -11,7 +7,6 @@ jdk:
 - oraclejdk8
 - oraclejdk7
 - openjdk7
-env:
-  global:
-  - secure: Ag2LmxgKwiwMKEloQQlMDRZjuyiBS4FZSaMDlTitReNkNPCIPY0gyBMCSQX9zaNd8TeH/cUk036KNhgf7Bz3TTyhXeGOEfuh/mmNGe+FarA45hNPLPm+2w/GoOLdkKekWkA11WPYRfoWiq0UU+O/aZgIam8IU7/+lmtBDEDh69c=
-  - secure: W8Koda8njTn33nEZ6GWo84uPHTqDw0uWbuaVTGxaisCqy6HfnsFZMM7Tfv/x3sq0FdE2c6SA8iIblLug6u0AJso+O//4oETgcs6zpi7+lDKgP/Z+EnPdTdebOjHsm0AIChK2wslvqqs5Ht50w5LhP3VQGGiDaiprHL8BU4QUSas=
+after_success:
+  - echo "<settings><servers><server><id>ossrh</id><username>\${env.OSSRH_USER}</username><password>\${env.OSSRH_PASS}</password></server></servers></settings>" > ~/settings.xml
+  - '[ ${TRAVIS_PULL_REQUEST} = ''false'' ] && mvn deploy --settings ~/settings.xml || echo "SKIP DEPLOY BECAUSE IT'S A PULL REQUEST"'
