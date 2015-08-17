@@ -1,6 +1,5 @@
 sudo: false
 language: java
-script: "travis_wait mvn test -Dorientdb.test.env=ci"
 branches:
   only:
   - develop
