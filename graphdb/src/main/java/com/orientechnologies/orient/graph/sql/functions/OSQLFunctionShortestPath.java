@@ -86,7 +86,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
       final OCommandContext iContext) {
     final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
     ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getAnyGraph(shutdownFlag);
     try {
       final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
 

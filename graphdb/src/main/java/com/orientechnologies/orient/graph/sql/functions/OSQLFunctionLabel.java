@@ -53,7 +53,7 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
       OCommandContext iContext) {
     final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
     ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getAnyGraph(shutdownFlag);
     try {
       if (iCurrentResult != null) {
         return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
@@ -86,8 +86,7 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
       return edge.getLabel();
 
     } else
-      throw new OCommandExecutionException("Invalid record: is neither a vertex nor an edge. Found class: "
-          + immutableClass);
+      throw new OCommandExecutionException("Invalid record: is neither a vertex nor an edge. Found class: " + immutableClass);
   }
 
   public String getSyntax() {
