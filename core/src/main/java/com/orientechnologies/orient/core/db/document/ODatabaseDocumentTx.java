@@ -20,6 +20,13 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -107,13 +114,6 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
@@ -584,24 +584,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   public ODatabase<ORecord> cleanOutRecord(final ORID iRecord, final ORecordVersion iVersion) {
     executeDeleteRecord(iRecord, iVersion, true, OPERATION_MODE.SYNCHRONOUS, true);
     return this;
-  }
-
-  public ORecord getRecordByUserObject(final Object iUserObject, final boolean iCreateIfNotAvailable) {
-    return (ORecord) iUserObject;
-  }
-
-  public void registerUserObject(final Object iObject, final ORecord iRecord) {
-  }
-
-  public void registerUserObjectAfterLinkSave(ORecord iRecord) {
-  }
-
-  public Object getUserObjectByRecord(final OIdentifiable record, final String iFetchPlan) {
-    return record;
-  }
-
-  public boolean existsUserObjectByRID(final ORID iRID) {
-    return true;
   }
 
   public String getType() {

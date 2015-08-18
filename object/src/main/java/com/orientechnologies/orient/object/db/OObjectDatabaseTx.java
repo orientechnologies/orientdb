@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.object.db;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
@@ -29,7 +38,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -64,14 +72,6 @@ import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.object.metadata.OMetadataObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyObject;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx that handles conversion between ODocument instances and
@@ -81,8 +81,7 @@ import java.util.Map;
  * @author Luca Molino
  */
 @SuppressWarnings("unchecked")
-public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements ODatabaseObject, ODatabaseInternal<Object>,
-    OUserObject2RecordHandler {
+public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements ODatabaseObject, ODatabaseInternal<Object> {
 
   public static final String    TYPE = "object";
   protected ODictionary<Object> dictionary;
@@ -805,7 +804,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     underlying.resetInitialization();
   }
 
-  protected <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
+  protected <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached,
+      Map<Object, Object> lazyObjects) {
     return (RET) OObjectEntitySerializer.detachAll(iPojo, this, returnNonProxiedInstance, alreadyDetached, lazyObjects);
   }
 

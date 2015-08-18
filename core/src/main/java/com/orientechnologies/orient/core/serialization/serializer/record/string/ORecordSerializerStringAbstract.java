@@ -50,9 +50,9 @@ import com.orientechnologies.orient.core.util.ODateHelper;
 @SuppressWarnings("serial")
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer, Serializable {
   protected static final OProfiler PROFILER              = Orient.instance().getProfiler();
-  private static final char             DECIMAL_SEPARATOR     = '.';
-  private static final String           MAX_INTEGER_AS_STRING = String.valueOf(Integer.MAX_VALUE);
-  private static final int              MAX_INTEGER_DIGITS    = MAX_INTEGER_AS_STRING.length();
+  private static final char        DECIMAL_SEPARATOR     = '.';
+  private static final String      MAX_INTEGER_AS_STRING = String.valueOf(Integer.MAX_VALUE);
+  private static final int         MAX_INTEGER_DIGITS    = MAX_INTEGER_AS_STRING.length();
 
   public static Object fieldTypeFromStream(final ODocument iDocument, OType iType, final Object iValue) {
     if (iValue == null)
@@ -651,16 +651,6 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   }
 
   public abstract ORecord fromString(String iContent, ORecord iRecord, String[] iFields);
-
-  public StringBuilder toString(final ORecord iRecord, final String iFormat) {
-    return toString(iRecord, new StringBuilder(1024), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
-        OSerializationSetThreadLocal.INSTANCE.get(), false, true);
-  }
-
-  public StringBuilder toString(final ORecord iRecord, final String iFormat, final boolean autoDetectCollectionType) {
-    return toString(iRecord, new StringBuilder(1024), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
-        OSerializationSetThreadLocal.INSTANCE.get(), false, autoDetectCollectionType);
-  }
 
   public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat) {
     return toString(iRecord, iOutput, iFormat, null, OSerializationSetThreadLocal.INSTANCE.get(), false, true);
