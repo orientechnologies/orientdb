@@ -85,7 +85,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
         if (multiValueDefinitionIndex == -1)
           multiValueDefinitionIndex = indexDefinitions.size() - 1;
         else
-          throw new OIndexException("Composite key can not contain more than one collection item");
+          throw new OIndexException("Composite key cannot contain more than one collection item");
     }
 
     className = iClassName;
@@ -110,7 +110,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
       if (multiValueDefinitionIndex == -1)
         multiValueDefinitionIndex = indexDefinitions.size() - 1;
       else
-        throw new OIndexException("Composite key can not contain more than one collection item");
+        throw new OIndexException("Composite key cannot contain more than one collection item");
     }
 
     collate.addCollate(indexDefinition.getCollate());
@@ -263,7 +263,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
           compositeKeys.add(compositeKey);
         }
       else
-        throw new OIndexException("Composite key can not contain more than one collection item");
+        throw new OIndexException("Composite key cannot contain more than one collection item");
 
       int compositeIndex = 0;
       for (final Object keyItem : collectionKey) {

@@ -163,7 +163,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
    * 
    * Requirements to the base index:
    * <ul>
-   * <li>Should be unique or not unique. Other types can not be used to get all documents with required links.</li>
+   * <li>Should be unique or not unique. Other types cannot be used to get all documents with required links.</li>
    * <li>Should not be composite hash index. As soon as hash index does not support partial match search.</li>
    * <li>Composite index that ignores null values should not be used.</li>
    * <li>Hash index is better than tree based indexes.</li>
@@ -225,11 +225,11 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   /**
-   * Check if index can be used as base index.
+   * Checks if index can be used as base index.
    * 
    * Requirements to the base index:
    * <ul>
-   * <li>Should be unique or not unique. Other types can not be used to get all documents with required links.</li>
+   * <li>Should be unique or not unique. Other types cannot be used to get all documents with required links.</li>
    * <li>Should not be composite hash index. As soon as hash index does not support partial match search.</li>
    * <li>Composite index that ignores null values should not be used.</li>
    * </ul>

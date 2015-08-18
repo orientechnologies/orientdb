@@ -770,7 +770,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       commitExecutor.shutdown();
       try {
         if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
-          throw new OException("Background data flush task can not be stopped.");
+          throw new OException("Background data flush task cannot be stopped.");
       } catch (InterruptedException e) {
         OLogManager.instance().error(this, "Data flush thread was interrupted");
 
@@ -931,7 +931,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           nameIdMapHolder.close();
 
           if (!nameIdMapHolderFile.delete())
-            throw new OStorageException("Can not delete disk cache file which contains name-id mapping.");
+            throw new OStorageException("Cannot delete disk cache file which contains name-id mapping.");
         }
 
         nameIdMapHolder = null;
@@ -945,7 +945,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       commitExecutor.shutdown();
       try {
         if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
-          throw new OException("Background data flush task can not be stopped.");
+          throw new OException("Background data flush task cannot be stopped.");
       } catch (InterruptedException e) {
         OLogManager.instance().error(this, "Data flush thread was interrupted");
 

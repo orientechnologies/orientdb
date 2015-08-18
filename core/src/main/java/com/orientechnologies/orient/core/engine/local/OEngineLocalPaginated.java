@@ -26,8 +26,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
@@ -46,7 +46,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     try {
       readCache.registerMBean();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for read cache can not be registered", e);
+      OLogManager.instance().error(this, "MBean for read cache cannot be registered", e);
     }
 
   }
@@ -80,7 +80,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     try {
       readCache.unregisterMBean();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for read cache can not be unregisterd.", e);
+      OLogManager.instance().error(this, "MBean for read cache cannot be unregistered", e);
     }
 
   }

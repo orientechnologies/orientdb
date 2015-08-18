@@ -1122,7 +1122,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     try {
       commit(true);
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Exception during commit of active transaction.", e);
+      OLogManager.instance().error(this, "Exception during commit of active transaction", e);
     }
 
     if (status != STATUS.OPEN)
@@ -1466,7 +1466,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (getStorage() instanceof OLocalPaginatedStorage)
       storage = ((OLocalPaginatedStorage) getStorage());
     else {
-      OLogManager.instance().error(this, "We can not freeze non local storage.");
+      OLogManager.instance().error(this, "Only local paginated storage supports release of cluster");
       return;
     }
 
@@ -1480,7 +1480,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       final OLocalPaginatedStorage paginatedStorage = ((OLocalPaginatedStorage) getStorage());
       paginatedStorage.freeze(throwException, iClusterId);
     } else {
-      OLogManager.instance().error(this, "Only local paginated storage supports cluster freeze.");
+      OLogManager.instance().error(this, "Only local paginated storage supports freeze of cluster");
     }
   }
 
@@ -2138,7 +2138,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     checkOpeness();
     if (!(getStorage() instanceof OFreezableStorage)) {
       OLogManager.instance().error(this,
-          "We can not freeze non local storage. " + "If you use remote client please use OServerAdmin instead.");
+          "Only local paginated storage supports freeze. If you are using remote client please use OServerAdmin instead");
 
       return;
     }
@@ -2168,7 +2168,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     checkOpeness();
     if (!(getStorage() instanceof OFreezableStorage)) {
       OLogManager.instance().error(this,
-          "We can not freeze non local storage. " + "If you use remote client please use OServerAdmin instead.");
+          "Only local paginated storage supports freeze. " + "If you use remote client please use OServerAdmin instead");
 
       return;
     }
@@ -2198,7 +2198,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     checkOpeness();
     if (!(getStorage() instanceof OFreezableStorage)) {
       OLogManager.instance().error(this,
-          "We can not release non local storage. " + "If you use remote client please use OServerAdmin instead.");
+          "Only local paginated storage supports release. If you are using remote client please use OServerAdmin instead");
       return;
     }
 
@@ -2435,7 +2435,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
             if (schemaClass != null) {
               // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
               if (schemaClass.isAbstract())
-                throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
+                throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
               clusterId = schemaClass.getClusterForNewInstance(doc);
               iClusterName = getClusterNameById(clusterId);
             } else {
@@ -3049,7 +3049,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (s instanceof OFreezableStorage)
       return (OFreezableStorage) s;
     else {
-      OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation.");
+      OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation");
       return null;
     }
   }

@@ -315,7 +315,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     try {
       wowCache.registerMBean();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for write cache can not be registered.");
+      OLogManager.instance().error(this, "MBean for write cache cannot be registered.");
     }
 
     writeCache = wowCache;

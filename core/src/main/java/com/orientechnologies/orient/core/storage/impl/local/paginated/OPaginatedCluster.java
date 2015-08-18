@@ -1393,7 +1393,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       float growFactor = Float.parseFloat(stringValue);
       if (growFactor < 1)
-        throw new OStorageException(OCluster.ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR + " can not be less than 1");
+        throw new OStorageException(OCluster.ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR + " cannot be less than 1");
 
       config.recordOverflowGrowFactor = growFactor;
       storageLocal.getConfiguration().update();
@@ -1407,7 +1407,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       float growFactor = Float.parseFloat(stringValue);
       if (growFactor < 1)
-        throw new OStorageException(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR + " can not be less than 1");
+        throw new OStorageException(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR + " cannot be less than 1");
 
       config.recordGrowFactor = growFactor;
       storageLocal.getConfiguration().update();

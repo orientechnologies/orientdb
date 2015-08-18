@@ -738,7 +738,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Hides records content by putting tombstone on the records position but does not delete record itself.
    *
-   * This method is used in case of record content itself is broken and can not be read or deleted. So it is emergence method. This
+   * This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method. This
    * method can be used only if there is no active transaction in database.
    *
    *

@@ -19,15 +19,15 @@
  */
 package com.orientechnologies.common.collection;
 
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Handles Multi-value types such as Arrays, Collections and Maps. It recognizes special Orient collections.
@@ -533,7 +533,7 @@ public class OMultiValue {
 
           if (iAllOccurrences) {
             if (iObject instanceof OCollection)
-              throw new IllegalStateException("Mutable collection can not be used to remove all occurrences.");
+              throw new IllegalStateException("Mutable collection cannot be used to remove all occurrences.");
 
             final Collection<Object> collection = (Collection) iObject;
             OMultiCollectionIterator<?> it = (OMultiCollectionIterator<?>) iToRemove;
