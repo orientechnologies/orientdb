@@ -677,11 +677,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     final ORID id = getIdentity();
     if (id.isValid())
-      map.put("@rid", id);
+      map.put(ODocumentHelper.ATTRIBUTE_RID, id);
 
     final String className = getClassName();
     if (className != null)
-      map.put("@class", className);
+      map.put(ODocumentHelper.ATTRIBUTE_CLASS, className);
 
     return map;
   }
@@ -945,11 +945,23 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     if (iFieldName.isEmpty())
       throw new IllegalArgumentException("Field name is empty");
 
-    if ("@class".equals(iFieldName)) {
+    if (ODocumentHelper.ATTRIBUTE_CLASS.equals(iFieldName)) {
       setClassName(iPropertyValue.toString());
       return this;
-    } else if ("@rid".equals(iFieldName)) {
+    } else if (ODocumentHelper.ATTRIBUTE_RID.equals(iFieldName)) {
       _recordId.fromString(iPropertyValue.toString());
+      return this;
+    } else if (ODocumentHelper.ATTRIBUTE_VERSION.equals(iFieldName)) {
+      if (iPropertyValue != null) {
+        int v = _recordVersion.getCounter();
+
+        if (iPropertyValue instanceof Number)
+          v = ((Number) iPropertyValue).intValue();
+        else
+          Integer.parseInt(iPropertyValue.toString());
+
+        _recordVersion.setCounter(v);
+      }
       return this;
     }
 
@@ -1090,9 +1102,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     checkForLoading();
     checkForFields();
 
-    if ("@class".equalsIgnoreCase(iFieldName)) {
+    if (ODocumentHelper.ATTRIBUTE_CLASS.equalsIgnoreCase(iFieldName)) {
       setClassName(null);
-    } else if ("@rid".equalsIgnoreCase(iFieldName)) {
+    } else if (ODocumentHelper.ATTRIBUTE_RID.equalsIgnoreCase(iFieldName)) {
       _recordId = new ORecordId();
     }
 
@@ -2415,7 +2427,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     if (database != null && database.getStorageVersions() != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
       if (_recordId.clusterId < 0) {
         checkForLoading();
-        checkForFields("@class");
+        checkForFields(ODocumentHelper.ATTRIBUTE_CLASS);
       } else {
         final OSchema schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
         if (schema != null) {
@@ -2427,7 +2439,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     } else {
       // CLASS NOT FOUND: CHECK IF NEED LOADING AND UNMARSHALLING
       checkForLoading();
-      checkForFields("@class");
+      checkForFields(ODocumentHelper.ATTRIBUTE_CLASS);
     }
   }
 
