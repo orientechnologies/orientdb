@@ -19,7 +19,6 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -27,6 +26,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -34,26 +34,36 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 10/08/15.
  */
-public class LuceneBugTest {
+public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
+
+  public LuceneTransactionQueryTest() {
+  }
+
+  public LuceneTransactionQueryTest(boolean remote) {
+    super(remote);
+  }
 
   @Test
   public void bugTest() {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:default").create();
-    final OrientVertexType c1 = new OrientGraphNoTx(db).createVertexType("C1");
+
+    final OrientVertexType c1 = new OrientGraphNoTx(databaseDocumentTx).createVertexType("C1");
     c1.createProperty("p1", OType.STRING);
     c1.createIndex("p1", "FULLTEXT", null, null, "LUCENE", new String[] { "p1" });
 
-    final OrientGraph graph = new OrientGraph(db);
+    final OrientGraph graph = new OrientGraph(databaseDocumentTx);
     graph.begin();
     final OrientVertex result = graph.addVertex("class:C1");
     result.setProperty("p1", "abc");
 
-
     final String query = "select from C1 where p1 lucene \"abc\" limit 1";
     final List<ODocument> vertices = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OSQLSynchQuery<ODocument>(query))
         .execute();
-    assert vertices != null && vertices.size() == 1;
+    Assert.assertEquals(vertices.size(), 1);
 
-    db.drop();
+  }
+
+  @Override
+  protected String getDatabaseName() {
+    return "transactionQueryTest";
   }
 }

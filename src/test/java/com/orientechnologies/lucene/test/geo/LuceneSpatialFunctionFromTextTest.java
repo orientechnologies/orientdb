@@ -22,6 +22,8 @@ import com.orientechnologies.lucene.test.BaseSpatialLuceneTest;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -32,6 +34,19 @@ import java.util.List;
  */
 @Test(groups = "embedded")
 public class LuceneSpatialFunctionFromTextTest extends BaseSpatialLuceneTest {
+
+
+  @BeforeClass
+  @Override
+  public void init() {
+    super.init();
+  }
+
+  @AfterClass
+  @Override
+  public void deInit() {
+    super.deInit();
+  }
 
   @Override
   protected String getDatabaseName() {
