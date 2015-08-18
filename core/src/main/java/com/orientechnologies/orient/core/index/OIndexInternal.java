@@ -134,7 +134,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * transactions.
    * </p>
    *
-   * This is internal method and can not be used by end users.
+   * This is internal method and cannot be used by end users.
    *
    * @param key
    *          Keys to lock.
@@ -157,7 +157,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * transactions.
    * </p>
    *
-   * This is internal method and can not be used by end users.
+   * This is internal method and cannot be used by end users.
    *
    * @param keys
    *          Keys to lock.
@@ -174,7 +174,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * <li>{@link #remove(Object)}</li>
    * </ol>
    *
-   * This is internal method and can not be used by end users.
+   * This is internal method and cannot be used by end users.
    *
    * @param key
    *          Keys to unlock.
@@ -191,7 +191,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * <li>{@link #remove(Object)}</li>
    * </ol>
    *
-   * This is internal method and can not be used by end users.
+   * This is internal method and cannot be used by end users.
    *
    * @param keys
    *          Keys to unlock.

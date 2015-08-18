@@ -56,7 +56,7 @@ import java.util.Map;
  * <ol/>
  * 
  * 
- * There is support of null values for keys, but values itself can not be null. Null keys support is switched off by default if null
+ * There is support of null values for keys, but values itself cannot be null. Null keys support is switched off by default if null
  * keys are supported value which is related to null key will be stored in separate file which has only one page.
  * 
  * Buckets/pages for usual (non-null) key-value entries can be considered as sorted array. The first bytes of page contains such

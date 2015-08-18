@@ -76,7 +76,7 @@ public class ORecordSerializationContext {
   public static ORecordSerializationContext pullContext() {
     final Deque<ORecordSerializationContext> stack = SERIALIZATION_CONTEXT_STACK.get();
     if (stack.isEmpty())
-      throw new IllegalStateException("Can not find current serialization context");
+      throw new IllegalStateException("Cannot find current serialization context");
 
     return stack.poll();
   }
