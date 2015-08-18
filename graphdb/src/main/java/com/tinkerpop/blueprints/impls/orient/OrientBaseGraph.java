@@ -127,7 +127,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     this.password = iUserPassword;
 
     database = iDatabase;
-    checkForGraphSchema(database);
 
     makeActive();
     putInInitializationStack();
@@ -332,48 +331,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     } catch (UnsupportedEncodingException e) {
       OLogManager.instance().error(null, "Error on decoding class name using encoding '%s'", e, "UTF-8");
       return iClassName;
-    }
-  }
-
-  protected static void checkForGraphSchema(final ODatabaseDocumentTx iDatabase) {
-    final OSchema schema = iDatabase.getMetadata().getSchema();
-
-    final OClass vertexBaseClass = schema.getClass(OrientVertexType.CLASS_NAME);
-    final OClass edgeBaseClass = schema.getClass(OrientEdgeType.CLASS_NAME);
-
-    if (vertexBaseClass == null)
-      // CREATE THE META MODEL USING THE ORIENT SCHEMA
-      schema.createClass(OrientVertexType.CLASS_NAME).setOverSize(2);
-
-    if (edgeBaseClass == null)
-      schema.createClass(OrientEdgeType.CLASS_NAME);
-
-    // @COMPATIBILITY < 1.4.0:
-    boolean warn = false;
-    final String MSG_SUFFIX = ". Probably you are using a database created with a previous version of OrientDB. Export in graphml format and reimport it";
-
-    if (vertexBaseClass != null) {
-      if (!vertexBaseClass.getName().equals(OrientVertexType.CLASS_NAME)) {
-        OLogManager.instance().warn(null, "Found Vertex class %s" + MSG_SUFFIX, vertexBaseClass.getName());
-        warn = true;
-      }
-
-      if (vertexBaseClass.existsProperty(CONNECTION_OUT) || vertexBaseClass.existsProperty(CONNECTION_IN)) {
-        OLogManager.instance().warn(null, "Found property in/out against V");
-        warn = true;
-      }
-    }
-
-    if (edgeBaseClass != null) {
-      if (!warn && !edgeBaseClass.getName().equals(OrientEdgeType.CLASS_NAME)) {
-        OLogManager.instance().warn(null, "Found Edge class %s" + MSG_SUFFIX, edgeBaseClass.getName());
-        warn = true;
-      }
-
-      if (edgeBaseClass.existsProperty(CONNECTION_OUT) || edgeBaseClass.existsProperty(CONNECTION_IN)) {
-        OLogManager.instance().warn(null, "Found property in/out against E");
-        warn = true;
-      }
     }
   }
 
@@ -1860,7 +1817,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     makeActive();
     putInInitializationStack();
-    checkForGraphSchema(database);
   }
 
   private List<Index<? extends Element>> loadManualIndexes() {
