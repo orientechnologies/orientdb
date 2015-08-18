@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OCommonConst;
@@ -54,16 +64,6 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
@@ -223,9 +223,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         iRecord = new ODocument();
 
       try {
-        int recordVersion = 0;
-        long timestamp = 0L;
-        long macAddress = 0L;
         for (int i = 0; i < fields.size(); i += 2) {
           final String fieldName = OStringSerializerHelper.getStringContent(fields.get(i));
           final String fieldValue = fields.get(i + 1);
@@ -597,7 +594,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     if (shouldBeDeserializedAsEmbedded(recordInternal, iType))
       ODocumentInternal.addOwner(recordInternal, iRecord);
     else {
-      ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
+      ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
       if (rid.isPersistent() && database != null) {
         ODocument documentToMerge = database.load(rid);
@@ -680,7 +677,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         // TODO redundant in some cases, owner is already added by getValue in some cases
         if (shouldBeDeserializedAsEmbedded(collectionItem, iType))
           ODocumentInternal.addOwner((ODocument) collectionItem, iRecord);
-        
+
         visitor.visitItem(collectionItem);
       }
     }
