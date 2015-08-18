@@ -414,7 +414,7 @@ public class OServer {
           try {
             l.shutdown();
           } catch (Throwable e) {
-            OLogManager.instance().error(this, "Error during shutdown of listener %s.", e, l);
+            OLogManager.instance().error(this, "Error during shutdown of listener %s", e, l);
           }
         }
       }

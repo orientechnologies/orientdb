@@ -76,7 +76,7 @@ public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
 
       return result;
     } catch (IOException e) {
-      throw new ODatabaseException("Cannot read next record of cluster.", e);
+      throw new ODatabaseException("Cannot read next record of cluster", e);
     }
   }
 

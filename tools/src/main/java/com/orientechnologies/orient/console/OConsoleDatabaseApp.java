@@ -1781,7 +1781,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "db2-url", description = "URL of the second database") final String iDb2URL,
       @ConsoleParameter(name = "username", description = "User name", optional = true) final String iUserName,
       @ConsoleParameter(name = "password", description = "User password", optional = true) final String iUserPassword,
-      @ConsoleParameter(name = "detect-mapping-data", description = "Whether RID mapping data after DB import should be tried to found on the disk.", optional = true) String autoDiscoveringMappingData)
+      @ConsoleParameter(name = "detect-mapping-data", description = "Whether RID mapping data after DB import should be tried to found on the disk", optional = true) String autoDiscoveringMappingData)
       throws IOException {
     try {
       final ODatabaseCompare compare;

@@ -231,13 +231,13 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
           server.registerMBean(this, mbeanName);
 
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during registration of atomic manager MBean.", e);
+        throw new OStorageException("Error during registration of atomic manager MBean", e);
       } catch (InstanceAlreadyExistsException e) {
-        throw new OStorageException("Error during registration of atomic manager MBean.", e);
+        throw new OStorageException("Error during registration of atomic manager MBean", e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during registration of atomic manager MBean.", e);
+        throw new OStorageException("Error during registration of atomic manager MBean", e);
       } catch (NotCompliantMBeanException e) {
-        throw new OStorageException("Error during registration of atomic manager MBean.", e);
+        throw new OStorageException("Error during registration of atomic manager MBean", e);
       }
     }
   }
@@ -253,11 +253,11 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         final ObjectName mbeanName = new ObjectName(getMBeanName());
         server.unregisterMBean(mbeanName);
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during unregistration of atomic manager MBean.", e);
+        throw new OStorageException("Error during unregistration of atomic manager MBean", e);
       } catch (InstanceNotFoundException e) {
-        throw new OStorageException("Error during unregistration of atomic manager MBean.", e);
+        throw new OStorageException("Error during unregistration of atomic manager MBean", e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during unregistration of atomic manager MBean.", e);
+        throw new OStorageException("Error during unregistration of atomic manager MBean", e);
       }
     }
   }

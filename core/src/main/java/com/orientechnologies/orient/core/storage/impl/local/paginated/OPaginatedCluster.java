@@ -1001,7 +1001,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         endAtomicOperation(false, null);
       } catch (RuntimeException e) {
         endAtomicOperation(true, e);
-        throw new OStorageException("Error during record update.", e);
+        throw new OStorageException("Error during record update", e);
       } finally {
         releaseExclusiveLock();
       }
@@ -1113,7 +1113,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         releaseSharedLock();
       }
     } catch (IOException ioe) {
-      throw new OStorageException("Error during retrieval of size of " + getName() + " cluster.", ioe);
+      throw new OStorageException("Error during retrieval of size of '" + getName() + "' cluster", ioe);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }

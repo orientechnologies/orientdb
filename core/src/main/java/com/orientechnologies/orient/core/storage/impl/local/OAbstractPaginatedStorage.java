@@ -199,7 +199,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       try {
         atomicOperationsManager.registerMBean();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "MBean for atomic operations manager cannot be registered.", e);
+        OLogManager.instance().error(this, "MBean for atomic operations manager cannot be registered", e);
       }
 
       restoreIfNeeded();
@@ -316,7 +316,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       try {
         atomicOperationsManager.registerMBean();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "MBean for atomic operations manager cannot be registered.", e);
+        OLogManager.instance().error(this, "MBean for atomic operations manager cannot be registered", e);
       }
 
       preCreateSteps();
@@ -448,7 +448,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         postDeleteSteps();
 
       } catch (IOException e) {
-        throw new OStorageException("Cannot delete database '" + name + "'.", e);
+        throw new OStorageException("Cannot delete database '" + name + "'", e);
       } finally {
         dataLock.releaseExclusiveLock();
 
@@ -1205,7 +1205,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (e instanceof OException)
       throw ((OException) e);
     else
-      throw new OStorageException("Error during transaction commit.", e);
+      throw new OStorageException("Error during transaction commit", e);
 
   }
 
@@ -1285,7 +1285,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
 
         } catch (IOException e) {
-          throw new OStorageException("Error during transaction rollback.", e);
+          throw new OStorageException("Error during transaction rollback", e);
         } finally {
           transaction.set(null);
           dataLock.releaseExclusiveLock();
@@ -1976,7 +1976,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       try {
         wereDataRestoredAfterOpen = restoreFromWAL();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Exception during storage data restore.", e);
+        OLogManager.instance().error(this, "Exception during storage data restore", e);
         throw e;
       }
 
@@ -2397,7 +2397,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       try {
         atomicOperationsManager.unregisterMBean();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "MBean for atomic opeations manager cannot be unregistered.", e);
+        OLogManager.instance().error(this, "MBean for atomic opeations manager cannot be unregistered", e);
       }
 
       status = STATUS.CLOSED;
@@ -2806,7 +2806,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             wereNonTxOperationsPerformedInPreviousOpen = true;
           }
         } else
-          OLogManager.instance().warn(this, "Record %s will be skipped during data restore.", walRecord);
+          OLogManager.instance().warn(this, "Record %s will be skipped during data restore", walRecord);
 
         recordsProcessed++;
 
@@ -2882,7 +2882,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       archiveZipOutputStream.close();
     } catch (IOException ioe) {
-      OLogManager.instance().error(this, "Error during WAL backup.", ioe);
+      OLogManager.instance().error(this, "Error during WAL backup", ioe);
     }
 
   }

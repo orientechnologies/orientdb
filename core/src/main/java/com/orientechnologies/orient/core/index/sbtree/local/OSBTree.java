@@ -116,7 +116,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during sbtree creation.", e);
+      throw new OIndexException("Error during sbtree creation", e);
     }
 
     acquireExclusiveLock();
@@ -228,7 +228,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during sbtree entrie put.", e);
+      throw new OIndexException("Error during sbtree entrie put", e);
     }
 
     acquireExclusiveLock();
@@ -380,7 +380,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during sbtree clear.", e);
+      throw new OIndexException("Error during sbtree clear", e);
     }
 
     acquireExclusiveLock();
@@ -425,7 +425,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during sbtree deletion.", e);
+      throw new OIndexException("Error during sbtree deletion", e);
     }
 
     acquireExclusiveLock();
@@ -452,7 +452,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during sbtree deletion.", e);
+      throw new OIndexException("Error during sbtree deletion", e);
     }
 
     acquireExclusiveLock();
@@ -541,7 +541,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during sbtree entrie remove.", e);
+      throw new OIndexException("Error during sbtree entrie remove", e);
     }
 
     acquireExclusiveLock();

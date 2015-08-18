@@ -1104,7 +1104,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
             readCache.deleteFile(fileId, writeCache);
           }
         } catch (IOException e) {
-          OLogManager.instance().error(this, "Can't delete file for value containers", e);
+          OLogManager.instance().error(this, "Cannot delete file for value containers", e);
         }
       } else {
         try {
@@ -1114,7 +1114,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
             atomicOperation.deleteFile(fileId);
           }
         } catch (IOException e) {
-          OLogManager.instance().error(this, "Can't delete file for value containers", e);
+          OLogManager.instance().error(this, "Cannot delete file for value containers", e);
         }
       }
 

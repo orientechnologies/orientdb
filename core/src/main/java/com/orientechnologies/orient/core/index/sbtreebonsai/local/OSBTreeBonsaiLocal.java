@@ -92,7 +92,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OSBTreeException("Error during sbtree creation.", e);
+      throw new OSBTreeException("Error during sbtree creation", e);
     }
 
     Lock lock = fileLockManager.acquireExclusiveLock(-1);
@@ -210,7 +210,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OSBTreeException("Error during sbtree entrie put.", e);
+      throw new OSBTreeException("Error during sbtree entrie put", e);
     }
 
     final Lock lock = fileLockManager.acquireExclusiveLock(fileId);
@@ -299,7 +299,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OSBTreeException("Error during sbtree entrie clear.", e);
+      throw new OSBTreeException("Error during sbtree entrie clear", e);
     }
 
     final Lock lock = fileLockManager.acquireExclusiveLock(fileId);
@@ -418,7 +418,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OSBTreeException("Error during sbtree deletion.", e);
+      throw new OSBTreeException("Error during sbtree deletion", e);
     }
 
     final Lock lock = fileLockManager.acquireExclusiveLock(fileId);
@@ -514,7 +514,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OSBTreeException("Error during sbtree entrie removal.", e);
+      throw new OSBTreeException("Error during sbtree entrie removal", e);
     }
 
     Lock lock = fileLockManager.acquireExclusiveLock(fileId);

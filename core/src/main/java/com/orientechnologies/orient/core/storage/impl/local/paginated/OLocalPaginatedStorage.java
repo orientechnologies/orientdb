@@ -112,7 +112,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     final File storageFolder = new File(storagePath);
     if (!storageFolder.exists())
       if (!storageFolder.mkdirs())
-        throw new OStorageException("Can not crate folders in storage with path " + storagePath);
+        throw new OStorageException("Cannot create folders in storage with path " + storagePath);
 
     super.create(iProperties);
   }
@@ -264,7 +264,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         if (notDeletedFiles == 0) {
           // TRY TO DELETE ALSO THE DIRECTORY IF IT'S EMPTY
           if (!dbDir.delete())
-            OLogManager.instance().error(this, "Can not delete storage directory with path " + dbDir.getAbsolutePath());
+            OLogManager.instance().error(this, "Cannot delete storage directory with path " + dbDir.getAbsolutePath());
           return;
         }
       } else

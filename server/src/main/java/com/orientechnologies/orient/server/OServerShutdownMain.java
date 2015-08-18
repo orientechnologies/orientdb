@@ -90,7 +90,7 @@ public class OServerShutdownMain {
       }
 
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class);
+      OLogManager.instance().error(this, "Error on reading server configuration", OConfigurationException.class);
     }
   }
 

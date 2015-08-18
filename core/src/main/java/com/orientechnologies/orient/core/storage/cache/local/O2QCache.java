@@ -527,13 +527,13 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
         server.registerMBean(this, mbeanName);
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during registration of read cache MBean.", e);
+        throw new OStorageException("Error during registration of read cache MBean", e);
       } catch (InstanceAlreadyExistsException e) {
-        throw new OStorageException("Error during registration of read cache MBean.", e);
+        throw new OStorageException("Error during registration of read cache MBean", e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during registration of read cache MBean.", e);
+        throw new OStorageException("Error during registration of read cache MBean", e);
       } catch (NotCompliantMBeanException e) {
-        throw new OStorageException("Error during registration of read cache MBean.", e);
+        throw new OStorageException("Error during registration of read cache MBean", e);
       }
     }
   }
@@ -545,11 +545,11 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
         server.unregisterMBean(mbeanName);
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during unregistration of read cache MBean.", e);
+        throw new OStorageException("Error during unregistration of read cache MBean", e);
       } catch (InstanceNotFoundException e) {
-        throw new OStorageException("Error during unregistration of read cache MBean.", e);
+        throw new OStorageException("Error during unregistration of read cache MBean", e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during unregistration of read cache MBean.", e);
+        throw new OStorageException("Error during unregistration of read cache MBean", e);
       }
     }
   }

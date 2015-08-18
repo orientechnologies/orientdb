@@ -433,7 +433,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     try {
       throwable = objectInputStream.readObject();
     } catch (ClassNotFoundException e) {
-      OLogManager.instance().error(this, "Error during exception serialization.", e);
+      OLogManager.instance().error(this, "Error during exception serialization", e);
     }
 
     objectInputStream.close();
@@ -442,7 +442,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       throw (OException) throwable;
     else if (throwable instanceof Throwable)
       // WRAP IT
-      throw new OResponseProcessingException("Exception during response processing.", (Throwable) throwable);
+      throw new OResponseProcessingException("Exception during response processing", (Throwable) throwable);
     else
       OLogManager.instance().error(
           this,

@@ -362,7 +362,7 @@ public class OStorageConfiguration implements OSerializableStream {
           if (value != null)
             configuration.setValue(key, OType.convert(value, cfg.getType()));
         } else
-          OLogManager.instance().warn(this, "Ignored storage configuration because not supported: %s=%s.", key, value);
+          OLogManager.instance().warn(this, "Ignored storage configuration because not supported: %s=%s", key, value);
       }
     } else
       // SAVE STORAGE COMPRESSION METHOD AS PROPERTY

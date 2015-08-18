@@ -180,7 +180,7 @@ public class OClientConnectionManager {
         // INTERRUPT THE NEWTORK MANAGER TOO
         protocol.interrupt();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during interruption of binary protocol.", e);
+        OLogManager.instance().error(this, "Error during interruption of binary protocol", e);
       }
 
       disconnect(connection);

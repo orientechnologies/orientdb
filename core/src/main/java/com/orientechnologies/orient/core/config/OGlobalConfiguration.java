@@ -92,10 +92,10 @@ public enum OGlobalConfiguration {
   DISK_WRITE_CACHE_FLUSH_WRITE_INACTIVITY_INTERVAL("storage.diskCache.writeCacheFlushInactivityInterval",
       "Interval between 2 writes to the disk cache,"
           + " if writes are done with interval more than provided all files will be fsynced before next write,"
-          + " which allows do not do data restore after server crash (in ms).", Long.class, 60 * 1000),
+          + " which allows do not do data restore after server crash (in ms)", Long.class, 60 * 1000),
 
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
-      "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, -1),
+      "Maximum amount of time till write cache will be wait before page flush in ms", Integer.class, -1),
 
   DISK_CACHE_FREE_SPACE_LIMIT("storage.diskCache.diskFreeSpaceLimit", "Minimum amount of space on disk after which database will "
       + "work only in read mode, in megabytes", Long.class, 100),
@@ -111,7 +111,7 @@ public enum OGlobalConfiguration {
       + " Possible values : gzip, nothing, snappy, snappy-native. Default is 'nothing'", String.class, "nothing"),
 
   STORAGE_ENCRYPTION_METHOD("storage.encryptionMethod", "Record encryption method used in storage"
-      + " Possible values : 'aes' and 'des'. Default is no encryption.", String.class, "nothing"),
+      + " Possible values : 'aes' and 'des'. Default is no encryption", String.class, "nothing"),
 
   STORAGE_ENCRYPTION_KEY("storage.encryptionKey", "Contains the storage encryption key. This setting is hidden", String.class,
       null, false, true),
@@ -125,7 +125,7 @@ public enum OGlobalConfiguration {
       Boolean.class, true),
 
   STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
-      "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
+      "Indicates whether full checkpoint should be performed if storage was opened", Boolean.class, true),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
@@ -135,7 +135,7 @@ public enum OGlobalConfiguration {
       "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) <= 0 means that caching will be switched off.",
       Integer.class, 3000),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single. WAL segment in megabytes.", Integer.class, 128),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single. WAL segment in megabytes", Integer.class, 128),
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Supposed, maximum size of WAL on disk in megabytes. This size may be more or less. ",
       Integer.class, 4096),
@@ -175,7 +175,7 @@ public enum OGlobalConfiguration {
 
   @Deprecated
   STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
-      "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
+      "Indicates whether crc32 should be used for each record to check record integrity", Boolean.class, false),
 
   STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 0),
 
@@ -240,7 +240,7 @@ public enum OGlobalConfiguration {
       Integer.class, 1500),
 
   INDEX_SYNCHRONOUS_AUTO_REBUILD("index.auto.synchronousAutoRebuild",
-      "Synchronous execution of auto rebuilding of indexes in case of db crash.", Boolean.class, Boolean.TRUE),
+      "Synchronous execution of auto rebuilding of indexes in case of db crash", Boolean.class, Boolean.TRUE),
 
   INDEX_AUTO_LAZY_UPDATES(
       "index.auto.lazyUpdates",
@@ -301,7 +301,7 @@ public enum OGlobalConfiguration {
       Integer.class, -1, true),
 
   // COLLECTIONS
-  PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental.", Boolean.class, false),
+  PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental", Boolean.class, false),
 
   // FILE
   TRACK_FILE_CLOSE("file.trackFileClose",
@@ -314,7 +314,7 @@ public enum OGlobalConfiguration {
   FILE_DELETE_RETRY("file.deleteRetry", "Number of retries to delete a locked file", Integer.class, 50),
 
   JNA_DISABLE_USE_SYSTEM_LIBRARY("jna.disable.system.library",
-      "This property disable to using JNA installed in your system. And use JNA bundled with database.", boolean.class, true),
+      "This property disable to using JNA installed in your system. And use JNA bundled with database", boolean.class, true),
 
   // NETWORK
   NETWORK_MAX_CONCURRENT_SESSIONS("network.maxConcurrentSessions", "Maximum number of concurrent sessions", Integer.class, 1000,
@@ -443,7 +443,7 @@ public enum OGlobalConfiguration {
    * Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.
    */
   CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool",
-      "Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.", Integer.class, 100),
+      "Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection", Integer.class, 100),
 
   /**
    * Maximum time which client should wait a connection from the pool when all connection are used.

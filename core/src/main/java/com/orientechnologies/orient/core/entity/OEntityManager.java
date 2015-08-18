@@ -19,6 +19,13 @@
   */
 package com.orientechnologies.orient.core.entity;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.reflection.OReflectionHelper;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
@@ -26,13 +33,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.reflection.OReflectionHelper;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 
 public class OEntityManager {
   private static Map<String, OEntityManager> databaseInstances = new HashMap<String, OEntityManager>();
@@ -78,7 +78,7 @@ public class OEntityManager {
       return createInstance(Class.forName(iClassName));
     } catch (Exception e) {
       throw new OConfigurationException("The class '" + iClassName
-          + "' was not found between the entity classes. Ensure registerEntityClasses(package) has been called first.", e);
+          + "' was not found between the entity classes. Ensure registerEntityClasses(package) has been called first", e);
     }
   }
 
@@ -189,7 +189,7 @@ public class OEntityManager {
     for (Class<?> c : classes) {
       if (!classHandler.containsEntityClass(c)) {
         if (c.isAnonymousClass()) {
-          OLogManager.instance().debug(this, "Skip registration of anonymous class '%s'.", c.getName());
+          OLogManager.instance().debug(this, "Skip registration of anonymous class '%s'", c.getName());
           continue;
         }
         classHandler.registerEntityClass(c);

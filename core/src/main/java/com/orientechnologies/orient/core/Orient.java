@@ -312,7 +312,7 @@ public class Orient extends OListenerManger<OOrientListener> {
           }
 
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during orient shutdown.", e);
+          OLogManager.instance().error(this, "Error during orient shutdown", e);
         }
 
       // CALL THE SHUTDOWN ON ALL THE LISTENERS
@@ -321,7 +321,7 @@ public class Orient extends OListenerManger<OOrientListener> {
           try {
             l.onShutdown();
           } catch (Exception e) {
-            OLogManager.instance().error(this, "Error during orient shutdown.", e);
+            OLogManager.instance().error(this, "Error during orient shutdown", e);
           }
 
       }

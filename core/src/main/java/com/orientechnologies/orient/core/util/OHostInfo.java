@@ -46,7 +46,7 @@ public class OHostInfo {
           return mac;
       }
     } catch (SocketException e) {
-      throw new IllegalStateException("Error during MAC address retrieval.", e);
+      throw new IllegalStateException("Error during MAC address retrieval", e);
     }
 
     throw new IllegalStateException("Node id is possible to generate only on machine which have at least"

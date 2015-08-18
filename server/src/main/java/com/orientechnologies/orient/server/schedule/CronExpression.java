@@ -478,7 +478,7 @@ public final class CronExpression implements Serializable, Cloneable {
                     throw new ParseException("Support for specifying 'L' with other days of the week is not implemented", -1);
                 }
                 if(exprOn == DAY_OF_WEEK && expr.indexOf('#') != -1 && expr.indexOf('#', expr.indexOf('#') +1) != -1) {
-                    throw new ParseException("Support for specifying multiple \"nth\" days is not implemented.", -1);
+                    throw new ParseException("Support for specifying multiple \"nth\" days is not implemented", -1);
                 }
                 
                 StringTokenizer vTok = new StringTokenizer(expr, ",");
@@ -509,7 +509,7 @@ public final class CronExpression implements Serializable, Cloneable {
             if (!dayOfMSpec || dayOfWSpec) {
                 if (!dayOfWSpec || dayOfMSpec) {
                     throw new ParseException(
-                            "Support for specifying both a day-of-week AND a day-of-month parameter is not implemented.", 0);
+                            "Support for specifying both a day-of-week AND a day-of-month parameter is not implemented", 0);
                 }
             }
         } catch (ParseException pe) {
@@ -628,7 +628,7 @@ public final class CronExpression implements Serializable, Cloneable {
             } else if (c == '/'
                     && ((i + 1) >= s.length() || s.charAt(i + 1) == ' ' || s
                             .charAt(i + 1) == '\t')) { 
-                throw new ParseException("'/' must be followed by an integer.", i);
+                throw new ParseException("'/' must be followed by an integer", i);
             } else if (c == '*') {
                 i++;
             }
@@ -636,7 +636,7 @@ public final class CronExpression implements Serializable, Cloneable {
             if (c == '/') { // is an increment specified?
                 i++;
                 if (i >= s.length()) {
-                    throw new ParseException("Unexpected end of string.", i);
+                    throw new ParseException("Unexpected end of string", i);
                 }
 
                 incr = getNumericValue(s, i);

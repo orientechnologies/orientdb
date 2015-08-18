@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -38,6 +35,9 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class OTransactionAbstract implements OTransaction {
   protected final ODatabaseDocumentTx           database;
@@ -233,7 +233,7 @@ public abstract class OTransactionAbstract implements OTransaction {
       if (schemaClass != null) {
         // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
         if (schemaClass.isAbstract())
-          throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
+          throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
         clusterId = schemaClass.getClusterForNewInstance((ODocument) record);
         return database.getClusterNameById(clusterId);
       } else {

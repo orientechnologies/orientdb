@@ -980,13 +980,13 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         final ObjectName mbeanName = new ObjectName(getMBeanName());
         server.registerMBean(this, mbeanName);
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during registration of write cache MBean.", e);
+        throw new OStorageException("Error during registration of write cache MBean", e);
       } catch (InstanceAlreadyExistsException e) {
-        throw new OStorageException("Error during registration of write cache MBean.", e);
+        throw new OStorageException("Error during registration of write cache MBean", e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during registration of write cache MBean.", e);
+        throw new OStorageException("Error during registration of write cache MBean", e);
       } catch (NotCompliantMBeanException e) {
-        throw new OStorageException("Error during registration of write cache MBean.", e);
+        throw new OStorageException("Error during registration of write cache MBean", e);
       }
     }
   }
@@ -1002,11 +1002,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         final ObjectName mbeanName = new ObjectName(getMBeanName());
         server.unregisterMBean(mbeanName);
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during unregistration of write cache MBean.", e);
+        throw new OStorageException("Error during unregistration of write cache MBean", e);
       } catch (InstanceNotFoundException e) {
-        throw new OStorageException("Error during unregistration of write cache MBean.", e);
+        throw new OStorageException("Error during unregistration of write cache MBean", e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during unregistration of write cache MBean.", e);
+        throw new OStorageException("Error during unregistration of write cache MBean", e);
       }
     }
   }
@@ -1408,9 +1408,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
         lastAmountOfFlushedPages.lazySet(flushedPages);
       } catch (IOException e) {
-        OLogManager.instance().error(this, "Exception during data flush.", e);
+        OLogManager.instance().error(this, "Exception during data flush", e);
       } catch (RuntimeException e) {
-        OLogManager.instance().error(this, "Exception during data flush.", e);
+        OLogManager.instance().error(this, "Exception during data flush", e);
       } finally {
         final long end = System.currentTimeMillis();
         durationOfLastFlush.lazySet(end - start);

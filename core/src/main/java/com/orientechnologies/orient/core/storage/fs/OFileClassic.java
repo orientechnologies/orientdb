@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
+import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -33,44 +40,37 @@ import java.nio.channels.OverlappingFileLockException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.orientechnologies.common.concur.lock.OLockException;
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.io.OIOException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-
 public class OFileClassic implements OFile {
-  private static final boolean trackFileClose = OGlobalConfiguration.TRACK_FILE_CLOSE.getValueAsBoolean();
+  private static final boolean trackFileClose           = OGlobalConfiguration.TRACK_FILE_CLOSE.getValueAsBoolean();
 
-  public final static String NAME = "classic";
-  public static final int HEADER_SIZE = 1024;
-  private static final int SOFTLY_CLOSED_OFFSET_V_0 = 8;
-  private static final int SOFTLY_CLOSED_OFFSET = 16;
-  private static final int VERSION_OFFSET = 48;
-  private static final int CURRENT_VERSION = 1;
-  private static final int OPEN_RETRY_MAX = 10;
-  private static final int OPEN_DELAY_RETRY = 100;
-  private static final long LOCK_WAIT_TIME = 300;
-  private static final int LOCK_MAX_RETRIES = 10;
-  private final ReadWriteLock lock = new ReentrantReadWriteLock();
-  private ByteBuffer internalWriteBuffer = ByteBuffer.allocate(OBinaryProtocol.SIZE_LONG);
+  public final static String   NAME                     = "classic";
+  public static final int      HEADER_SIZE              = 1024;
+  private static final int     SOFTLY_CLOSED_OFFSET_V_0 = 8;
+  private static final int     SOFTLY_CLOSED_OFFSET     = 16;
+  private static final int     VERSION_OFFSET           = 48;
+  private static final int     CURRENT_VERSION          = 1;
+  private static final int     OPEN_RETRY_MAX           = 10;
+  private static final int     OPEN_DELAY_RETRY         = 100;
+  private static final long    LOCK_WAIT_TIME           = 300;
+  private static final int     LOCK_MAX_RETRIES         = 10;
+  private final ReadWriteLock  lock                     = new ReentrantReadWriteLock();
+  private ByteBuffer           internalWriteBuffer      = ByteBuffer.allocate(OBinaryProtocol.SIZE_LONG);
 
-  private volatile File osFile;
-  private final String mode;
+  private volatile File        osFile;
+  private final String         mode;
 
-  private RandomAccessFile accessFile;
-  private FileChannel channel;
-  private volatile boolean dirty = false;
-  private volatile boolean headerDirty = false;
-  private int version;
+  private RandomAccessFile     accessFile;
+  private FileChannel          channel;
+  private volatile boolean     dirty                    = false;
+  private volatile boolean     headerDirty              = false;
+  private int                  version;
 
-  private boolean failCheck = true;
-  private volatile long size;                                                                                // PART OF
+  private boolean              failCheck                = true;
+  private volatile long        size;                                                                                // PART OF
   // HEADER (4
   // bytes)
-  private FileLock fileLock;
-  private boolean wasSoftlyClosed = true;
+  private FileLock             fileLock;
+  private boolean              wasSoftlyClosed          = true;
 
   public OFileClassic(String osFile, String mode) {
     this.mode = mode;
@@ -425,7 +425,7 @@ public class OFileClassic implements OFile {
         try {
           channel.force(false);
         } catch (IOException e) {
-          OLogManager.instance().warn(this, "Error during flush of file %s. Data may be lost in case of power failure.", getName(),
+          OLogManager.instance().warn(this, "Error during flush of file %s. Data may be lost in case of power failure", getName(),
               e);
         }
 
@@ -481,7 +481,7 @@ public class OFileClassic implements OFile {
         channel.force(true);
       } catch (IOException e) {
         OLogManager.instance()
-            .warn(this, "Error during flush of file %s. Data may be lost in case of power failure.", getName(), e);
+            .warn(this, "Error during flush of file '%s'. Data may be lost in case of power failure", getName(), e);
       }
     } finally {
       releaseWriteLock();
@@ -933,7 +933,7 @@ public class OFileClassic implements OFile {
       try {
         unlock();
       } catch (IOException ioe) {
-        OLogManager.instance().error(this, "Error during unlock of file " + osFile.getName() + ", during IO exception handling.",
+        OLogManager.instance().error(this, "Error during unlock of file '" + osFile.getName() + "', during IO exception handling",
             ioe);
       }
 
@@ -941,14 +941,14 @@ public class OFileClassic implements OFile {
         channel.close();
       } catch (IOException ioe) {
         OLogManager.instance().error(this,
-            "Error during channel close for file " + osFile.getAbsolutePath() + ", during IO exception handling.", ioe);
+            "Error during channel close for file '" + osFile.getAbsolutePath() + "', during IO exception handling", ioe);
       }
 
       try {
         accessFile.close();
       } catch (IOException ioe) {
         OLogManager.instance().error(this,
-            "Error during close of file " + osFile.getAbsolutePath() + ", during IO exception handling.", ioe);
+            "Error during close of file '" + osFile.getAbsolutePath() + "', during IO exception handling", ioe);
       }
 
       channel = null;

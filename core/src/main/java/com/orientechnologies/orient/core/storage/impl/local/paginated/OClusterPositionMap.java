@@ -83,7 +83,7 @@ public class OClusterPositionMap extends ODurableComponent {
       throw ioe;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw new OStorageException("Error during cluster position - physical position map.", e);
+      throw new OStorageException("Error during cluster position - physical position map", e);
     } finally {
       releaseExclusiveLock();
     }
@@ -141,7 +141,7 @@ public class OClusterPositionMap extends ODurableComponent {
       throw ioe;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw new OStorageException("Error during deletion of cluster position - physical position map.", e);
+      throw new OStorageException("Error during deletion of cluster position - physical position map", e);
     } finally {
       releaseExclusiveLock();
     }
@@ -159,7 +159,7 @@ public class OClusterPositionMap extends ODurableComponent {
       throw ioe;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw new OStorageException("Error during rename of cluster position - physical position map.", e);
+      throw new OStorageException("Error during rename of cluster position - physical position map", e);
     } finally {
       releaseExclusiveLock();
     }
@@ -198,7 +198,7 @@ public class OClusterPositionMap extends ODurableComponent {
         return result;
       } catch (Exception e) {
         endAtomicOperation(true, e);
-        throw new OStorageException("Error during creation of mapping between logical adn physical record position.", e);
+        throw new OStorageException("Error during creation of mapping between logical adn physical record position", e);
       } finally {
         cacheEntry.releaseExclusiveLock();
         releasePage(atomicOperation, cacheEntry);
@@ -234,10 +234,10 @@ public class OClusterPositionMap extends ODurableComponent {
       endAtomicOperation(false, null);
     } catch (IOException e) {
       endAtomicOperation(true, e);
-      throw new OStorageException("Error of update of mapping between logical adn physical record position.", e);
+      throw new OStorageException("Error of update of mapping between logical adn physical record position", e);
     } catch (RuntimeException e) {
       endAtomicOperation(true, e);
-      throw new OStorageException("Error of update of mapping between logical adn physical record position.", e);
+      throw new OStorageException("Error of update of mapping between logical adn physical record position", e);
     } finally {
       releaseExclusiveLock();
     }
@@ -298,7 +298,7 @@ public class OClusterPositionMap extends ODurableComponent {
       } catch (Exception e) {
         endAtomicOperation(true, e);
 
-        throw new OStorageException("Error during removal of mapping between logical and physical record position.", e);
+        throw new OStorageException("Error during removal of mapping between logical and physical record position", e);
       } finally {
         cacheEntry.releaseExclusiveLock();
         releasePage(atomicOperation, cacheEntry);

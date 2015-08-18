@@ -329,7 +329,7 @@ class JavaCharStream implements CharStream
       catch(java.io.IOException e)
       {
         throw new Error("Invalid escape character at line " + line +
- " column " + column + ".", e);
+ " column " + column, e);
       }
 
       if (backSlashCnt == 1)

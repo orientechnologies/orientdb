@@ -19,16 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -51,6 +41,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -484,7 +484,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
         recreateIndexes(idxs);
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error when attempt to restore indexes after crash was performed.", e);
+        OLogManager.instance().error(this, "Error when attempt to restore indexes after crash was performed", e);
       }
     }
 
@@ -496,7 +496,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           recreateIndex(idx);
 
         } catch (RuntimeException e) {
-          OLogManager.instance().error(this, "Error during addition of index %s", e, idx);
+          OLogManager.instance().error(this, "Error during addition of index '%s'", e, idx);
           errors++;
         }
       }
@@ -532,14 +532,14 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       final String type = indexMetadata.getType();
 
       if (indexName != null && clusters != null && !clusters.isEmpty() && type != null) {
-        OLogManager.instance().info(this, "Start creation of index %s", indexName);
+        OLogManager.instance().info(this, "Start creation of index '%s'", indexName);
         index.deleteWithoutIndexLoad(indexName);
         index.create(indexName, indexDefinition, defaultClusterName, clusters, false, new OIndexRebuildOutputListener(index));
 
         index.setRebuildingFlag();
         addIndexInternal(index);
 
-        OLogManager.instance().info(this, "Index %s was successfully created and rebuild is going to be started.", indexName);
+        OLogManager.instance().info(this, "Index '%s' was successfully created and rebuild is going to be started", indexName);
 
         index.rebuild(new OIndexRebuildOutputListener(index));
         index.flush();
@@ -548,23 +548,23 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
         ok++;
 
-        OLogManager.instance().info(this, "Rebuild of %s index was successfully finished.", indexName);
+        OLogManager.instance().info(this, "Rebuild of '%s index was successfully finished", indexName);
       } else {
         errors++;
         OLogManager.instance().error(this, "Information about index was restored incorrectly, following data were loaded : "
-            + "index name - %s, index definition %s, clusters %s, type %s.", indexName, indexDefinition, clusters, type);
+            + "index name '%s', index definition '%s', clusters %s, type %s", indexName, indexDefinition, clusters, type);
       }
     }
 
     private void addIndexAsIs(ODocument idx, OIndexInternal<?> index, OIndexInternal.IndexMetadata indexMetadata) {
-      OLogManager.instance().info(this, "Index %s is not automatic index and will be added as is.", indexMetadata.getName());
+      OLogManager.instance().info(this, "Index '%s' is not automatic index and will be added as is", indexMetadata.getName());
 
       if (index.loadFromConfiguration(idx)) {
         addIndexInternal(index);
         setDirty();
 
         ok++;
-        OLogManager.instance().info(this, "Index %s was added in DB index list.", index.getName());
+        OLogManager.instance().info(this, "Index '%s' was added in DB index list", index.getName());
       } else {
         index.delete();
         errors++;
@@ -579,7 +579,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
       ODocument metadata = idx.field(OIndexInternal.METADATA);
       if (indexType == null) {
-        OLogManager.instance().error(this, "Index type is null, will process other record.");
+        OLogManager.instance().error(this, "Index type is null, will process other record");
         throw new OException("Index type is null, will process other record. Index configuration: " + idx.toString());
       }
 
@@ -589,7 +589,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     private Collection<ODocument> getConfiguration() {
       final Collection<ODocument> idxs = doc.field(CONFIG_INDEXES);
       if (idxs == null) {
-        OLogManager.instance().warn(this, "List of indexes is empty.");
+        OLogManager.instance().warn(this, "List of indexes is empty");
         return Collections.emptyList();
       }
       return idxs;

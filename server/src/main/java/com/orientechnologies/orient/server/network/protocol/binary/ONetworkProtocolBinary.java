@@ -2054,7 +2054,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       channel.writeBytes(result);
     } catch (Exception e) {
-      OLogManager.instance().warn(this, "Can't serialize an exception object", e);
+      OLogManager.instance().warn(this, "Cannot serialize an exception object", e);
 
       // Write empty stream for binary compatibility
       channel.writeBytes(OCommonConst.EMPTY_BYTE_ARRAY);

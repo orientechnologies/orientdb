@@ -69,7 +69,7 @@ public class OHashTableDirectory extends ODurableComponent {
       throw e;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw new OStorageException("Error during creation of hash table.", e);
+      throw new OStorageException("Error during creation of hash table", e);
     } finally {
       releaseExclusiveLock();
     }
@@ -547,7 +547,7 @@ public class OHashTableDirectory extends ODurableComponent {
       throw e;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw new OStorageException("Error during removing of hash table directory content.", e);
+      throw new OStorageException("Error during removing of hash table directory content", e);
     } finally {
       releaseExclusiveLock();
     }

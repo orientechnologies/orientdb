@@ -929,7 +929,7 @@ public abstract class OStringSerializerHelper {
         while (true) {
           tend = iOrigin.indexOf('\'', tend + 1);
           if (tend < 0) {
-            throw new OCommandSQLParsingException("Could not find end of text area.", iOrigin, i);
+            throw new OCommandSQLParsingException("Could not find end of text area", iOrigin, i);
           }
 
           if (iOrigin.charAt(tend - 1) == '\\') {

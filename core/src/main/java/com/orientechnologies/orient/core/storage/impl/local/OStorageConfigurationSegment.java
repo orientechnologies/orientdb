@@ -89,7 +89,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
       fromStream(buffer);
 
     } catch (IOException e) {
-      throw new OSerializationException("Cannot load database's configuration. The database seems to be corrupted.", e);
+      throw new OSerializationException("Cannot load database's configuration. The database seems to be corrupted", e);
     }
     return this;
   }

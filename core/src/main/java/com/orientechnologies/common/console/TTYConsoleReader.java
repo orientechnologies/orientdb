@@ -20,15 +20,15 @@
 
 package com.orientechnologies.common.console;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-
 import java.io.*;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 
 public class TTYConsoleReader implements OConsoleReader {
 
@@ -75,9 +75,9 @@ public class TTYConsoleReader implements OConsoleReader {
         outStream = System.out;
       }
     } catch (FileNotFoundException fnfe) {
-      OLogManager.instance().error(this, "History file not found", fnfe, "");
+      OLogManager.instance().error(this, "History file not found", fnfe);
     } catch (IOException ioe) {
-      OLogManager.instance().error(this, "Error reading history file.", ioe, "");
+      OLogManager.instance().error(this, "Error reading history file", ioe);
     }
 
     if (inStream == null)
@@ -446,14 +446,14 @@ public class TTYConsoleReader implements OConsoleReader {
       try {
         file.createNewFile();
       } catch (IOException ioe) {
-        OLogManager.instance().error(this, "Error creating history file.", ioe, "");
+        OLogManager.instance().error(this, "Error creating history file", ioe);
       }
     } else if (!read) {
       file.delete();
       try {
         file.createNewFile();
       } catch (IOException ioe) {
-        OLogManager.instance().error(this, "Error creating history file.", ioe, "");
+        OLogManager.instance().error(this, "Error creating history file", ioe);
       }
     }
     return file;

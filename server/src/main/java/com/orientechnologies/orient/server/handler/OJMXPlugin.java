@@ -82,7 +82,7 @@ public class OJMXPlugin extends OServerPluginAbstract {
           mBeanServer.unregisterMBean(onProfiler);
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " unregisterMBean error.", e);
+      OLogManager.instance().error(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " unregisterMBean error", e);
     }
 
   }
