@@ -70,7 +70,6 @@ public class OCommandExecutorSQLUpdateTest {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestContent");
     db.create();
     try {
-      db.command(new OCommandSQL("CREATE class V")).execute();
       db.command(new OCommandSQL("insert into V (name) values ('bar')")).execute();
       db.command(new OCommandSQL("UPDATE V content {\"value\":\"foo\"}")).execute();
       Iterable result = db.query(new OSQLSynchQuery<Object>("select from V"));
@@ -86,7 +85,6 @@ public class OCommandExecutorSQLUpdateTest {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestContentParse");
     db.create();
     try {
-      db.command(new OCommandSQL("CREATE class V")).execute();
       db.command(new OCommandSQL("insert into V (name) values ('bar')")).execute();
       db.command(new OCommandSQL("UPDATE V content {\"value\":\"foo\\\\\"}")).execute();
       Iterable result = db.query(new OSQLSynchQuery<Object>("select from V"));

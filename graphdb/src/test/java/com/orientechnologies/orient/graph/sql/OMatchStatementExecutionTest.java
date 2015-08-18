@@ -1,20 +1,24 @@
 package com.orientechnologies.orient.graph.sql;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import static org.junit.Assert.*;
 
 public class OMatchStatementExecutionTest {
   private static String      DB_STORAGE = "memory";
@@ -28,8 +32,6 @@ public class OMatchStatementExecutionTest {
     db.create();
     getProfilerInstance().startRecording();
 
-    db.command(new OCommandSQL("CREATE class V")).execute();
-    db.command(new OCommandSQL("CREATE class E")).execute();
     db.command(new OCommandSQL("CREATE class Person extends V")).execute();
     db.command(new OCommandSQL("CREATE class Friend extends E")).execute();
     db.command(new OCommandSQL("CREATE VERTEX Person set name = 'n1'")).execute();

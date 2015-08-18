@@ -771,10 +771,10 @@ public class OServer {
     return this;
   }
 
-  public ODatabase<?> openDatabase(final String iDbType, final String iDbUrl, final OToken iToken) {
+  public ODatabase<?> openDatabase(final String iDbUrl, final OToken iToken) {
     final String path = getStoragePath(iDbUrl);
 
-    final ODatabaseInternal<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
+    final ODatabaseInternal<?> database = new ODatabaseDocumentTx(path);
 
     if (database.isClosed())
       if (database.getStorage() instanceof ODirectMemoryStorage)
@@ -786,20 +786,19 @@ public class OServer {
     return database;
   }
 
-  public ODatabase<?> openDatabase(final String iDbType, final String iDbUrl, final String user, final String password) {
-    return openDatabase(iDbType, iDbUrl, user, password, null, false);
+  public ODatabase<?> openDatabase(final String iDbUrl, final String user, final String password) {
+    return openDatabase(iDbUrl, user, password, null, false);
   }
 
-  public ODatabase<?> openDatabase(final String iDbType, final String iDbUrl, final String user, final String password,
-      ONetworkProtocolData data) {
-    return openDatabase(iDbType, iDbUrl, user, password, data, false);
+  public ODatabase<?> openDatabase(final String iDbUrl, final String user, final String password, ONetworkProtocolData data) {
+    return openDatabase(iDbUrl, user, password, data, false);
   }
 
-  public ODatabase<?> openDatabase(final String iDbType, final String iDbUrl, final String user, final String password,
-      ONetworkProtocolData data, final boolean iBypassAccess) {
+  public ODatabase<?> openDatabase(final String iDbUrl, final String user, final String password, ONetworkProtocolData data,
+      final boolean iBypassAccess) {
     final String path = getStoragePath(iDbUrl);
 
-    final ODatabaseInternal<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
+    final ODatabaseInternal<?> database = new ODatabaseDocumentTx(path);
 
     return openDatabase(database, user, password, data, iBypassAccess);
   }

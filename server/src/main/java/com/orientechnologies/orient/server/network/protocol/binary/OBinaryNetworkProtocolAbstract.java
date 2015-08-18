@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.logging.Level;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -62,10 +66,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-
-import java.io.IOException;
-import java.net.Socket;
-import java.util.logging.Level;
 
 /**
  * Abstract base class for binary network implementations.
@@ -325,7 +325,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     } else
       throw new IllegalArgumentException("Cannot create database: storage mode '" + storageType + "' is not supported.");
 
-    return Orient.instance().getDatabaseFactory().createDatabase(dbType, path);
+    return new ODatabaseDocumentTx(path);
   }
 
   protected int deleteRecord(final ODatabaseDocument iDatabase, final ORID rid, final ORecordVersion version) {
@@ -385,7 +385,6 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     } else
       currentRecord = newRecord;
 
-    
     currentRecord.getRecordVersion().copyFrom(version);
 
     iDatabase.save(currentRecord);

@@ -47,7 +47,6 @@ import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactoryImpl;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
-import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
 import com.orientechnologies.orient.core.engine.OEngine;
@@ -70,7 +69,6 @@ public class Orient extends OListenerManger<OOrientListener> {
   private final ConcurrentHashMap<Integer, Boolean>                                  storageIds                    = new ConcurrentHashMap<Integer, Boolean>();
 
   private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners          = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
-  private final ODatabaseFactory                                                     databaseFactory               = new ODatabaseFactory();
   private final OScriptManager                                                       scriptManager                 = new OScriptManager();
   private final ThreadGroup                                                          threadGroup;
   private final AtomicInteger                                                        serialId                      = new AtomicInteger();
@@ -276,10 +274,6 @@ public class Orient extends OListenerManger<OOrientListener> {
       }
 
       OLogManager.instance().debug(this, "Orient Engine is shutting down...");
-
-      if (databaseFactory != null)
-        // CLOSE ALL DATABASES
-        databaseFactory.shutdown();
 
       closeAllStorages();
 
@@ -694,10 +688,6 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public void setRecordFactoryManager(final ORecordFactoryManager iRecordFactoryManager) {
     recordFactoryManager = iRecordFactoryManager;
-  }
-
-  public ODatabaseFactory getDatabaseFactory() {
-    return databaseFactory;
   }
 
   public OProfiler getProfiler() {

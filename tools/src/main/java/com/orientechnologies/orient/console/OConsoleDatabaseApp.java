@@ -19,6 +19,14 @@
  */
 package com.orientechnologies.orient.console;
 
+import java.io.*;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
+
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -88,13 +96,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginated
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedClusterDebug;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
-import java.io.*;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected static final int    DEFAULT_WIDTH      = 150;
@@ -323,7 +324,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           throw new IllegalArgumentException("Storage type '" + iStorageType + "' is different by storage type in URL");
       }
 
-      currentDatabase = Orient.instance().getDatabaseFactory().createDatabase(iDatabaseType, iDatabaseURL);
+      currentDatabase = new ODatabaseDocumentTx(iDatabaseURL);
 
       if (iOptions != null) {
         final List<String> options = OStringSerializerHelper.smartSplit(iOptions, ',', false);

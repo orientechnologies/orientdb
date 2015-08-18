@@ -20,29 +20,6 @@
 
 package com.orientechnologies.orient.core.db.document;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TimeZone;
-import java.util.TreeSet;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -109,8 +86,6 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSaveThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -132,6 +107,13 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
@@ -1333,7 +1315,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     case DEFAULTCLUSTERID:
       return getDefaultClusterId();
     case TYPE:
-      return ((OMetadataInternal) getMetadata()).getImmutableSchemaSnapshot().existsClass("V") ? "graph" : "document";
+      return getMetadata().getImmutableSchemaSnapshot().existsClass("V") ? "graph" : "document";
     case DATEFORMAT:
       return storage.getConfiguration().dateFormat;
 
@@ -1394,7 +1376,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       break;
 
     case TYPE:
-      throw new IllegalArgumentException("Database type property is not supported");
+      throw new IllegalArgumentException("Database type cannot be changed at run-time");
 
     case DATEFORMAT:
       // CHECK FORMAT
@@ -1820,17 +1802,18 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       checkRecordClass(record, clusterName, rid, isNew);
 
     checkSecurity(ORule.ResourceGeneric.CLUSTER, isNew ? ORole.PERMISSION_CREATE : ORole.PERMISSION_UPDATE, clusterName);
-    byte [] content = getSerializer().writeClassOnly(record);
-    
-    final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(rid,content, record.getRecordVersion(),
+    byte[] content = getSerializer().writeClassOnly(record);
+
+    final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(rid, content, record.getRecordVersion(),
         recordType, OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
-    
+
     ORecordInternal.setVersion(record, ppos.getResult().recordVersion.getCounter());
     ((ORecordId) record.getIdentity()).copyFrom(rid);
     ORecordInternal.onAfterIdentityChanged(record);
-    
-    return (RET)record;
+
+    return (RET) record;
   }
+
   /**
    * This method is internal, it can be subject to signature change or be removed, do not use.
    *
@@ -2988,7 +2971,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       callbackHooks(wasNew ? ORecordHook.TYPE.CREATE_FAILED : ORecordHook.TYPE.UPDATE_FAILED, record);
   }
 
-  private void callbackHookSuccess(final ORecord record, final boolean wasNew, final byte[] stream, final OStorageOperationResult<ORecordVersion> operationResult) {
+  private void callbackHookSuccess(final ORecord record, final boolean wasNew, final byte[] stream,
+      final OStorageOperationResult<ORecordVersion> operationResult) {
     if (stream != null && stream.length > 0) {
       final ORecordHook.TYPE hookType;
       if (!operationResult.isMoved()) {

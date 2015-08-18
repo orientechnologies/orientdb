@@ -771,13 +771,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     String dbType = ODatabaseDocument.TYPE;
     if (connection.data.protocolVersion >= 8)
-      // READ DB-TYPE FROM THE CLIENT
+      // READ DB-TYPE FROM THE CLIENT. NOT USED ANYMORE
       dbType = channel.readString();
 
     final String user = channel.readString();
     final String passwd = channel.readString();
 
-    connection.database = (ODatabaseDocumentTx) server.openDatabase(dbType, dbURL, user, passwd, connection.data);
+    connection.database = (ODatabaseDocumentTx) server.openDatabase(dbURL, user, passwd, connection.data);
 
     if (connection.database.getStorage() instanceof OStorageProxy && !loadUserFromSchema(user, passwd)) {
       sendErrorOrDropConnection(clientTxId, new OSecurityAccessException(connection.database.getName(),
@@ -926,7 +926,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.copy");
 
-    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) server.openDatabase(ODatabaseDocument.TYPE, dbUrl, dbUser, dbPassword);
+    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) server.openDatabase(dbUrl, dbUser, dbPassword);
 
     beginResponse();
     try {

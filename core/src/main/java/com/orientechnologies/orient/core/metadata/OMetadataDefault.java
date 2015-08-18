@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata;
 
-import java.io.IOException;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
@@ -49,25 +46,28 @@ import com.orientechnologies.orient.core.schedule.OSchedulerListenerImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerProxy;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
+import java.io.IOException;
+import java.util.concurrent.Callable;
+
 public class OMetadataDefault implements OMetadataInternal {
-  public static final String            CLUSTER_INTERNAL_NAME     = "internal";
-  public static final String            CLUSTER_INDEX_NAME        = "index";
-  public static final String            CLUSTER_MANUAL_INDEX_NAME = "manindex";
+  public static final String        CLUSTER_INTERNAL_NAME     = "internal";
+  public static final String        CLUSTER_INDEX_NAME        = "index";
+  public static final String        CLUSTER_MANUAL_INDEX_NAME = "manindex";
 
-  protected int                         schemaClusterId;
+  protected int                     schemaClusterId;
 
-  protected OSchemaProxy                schema;
-  protected OSecurity                   security;
-  protected OIndexManagerProxy          indexManager;
-  protected OFunctionLibraryProxy       functionLibrary;
-  protected OSchedulerListenerProxy     scheduler;
+  protected OSchemaProxy            schema;
+  protected OSecurity               security;
+  protected OIndexManagerProxy      indexManager;
+  protected OFunctionLibraryProxy   functionLibrary;
+  protected OSchedulerListenerProxy scheduler;
 
-  protected OCommandCache               commandCache;
-  protected static final OProfiler      PROFILER                  = Orient.instance().getProfiler();
+  protected OCommandCache           commandCache;
+  protected static final OProfiler  PROFILER                  = Orient.instance().getProfiler();
 
-  private OImmutableSchema              immutableSchema           = null;
-  private int                           immutableCount            = 0;
-  private ODatabaseDocumentInternal     database;
+  private OImmutableSchema          immutableSchema           = null;
+  private int                       immutableCount            = 0;
+  private ODatabaseDocumentInternal database;
 
   public OMetadataDefault() {
   }
@@ -100,6 +100,10 @@ public class OMetadataDefault implements OMetadataInternal {
     functionLibrary.create();
     security.createClassTrigger();
     scheduler.create();
+
+    // CREATE BASE VERTEX AND EDGE CLASSES
+    schema.createClass("V");
+    schema.createClass("E");
   }
 
   public OSchemaProxy getSchema() {
