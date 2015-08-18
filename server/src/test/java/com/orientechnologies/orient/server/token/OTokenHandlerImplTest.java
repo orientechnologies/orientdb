@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 
 import org.testng.annotations.BeforeMethod;
@@ -23,10 +22,7 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-public class OrientTokenHandlerTest {
-
-  private static final OServerParameterConfiguration[] I_PARAMS = new OServerParameterConfiguration[] { new OServerParameterConfiguration(
-                                                                    OrientTokenHandler.SIGN_KEY_PAR, "any key") };
+public class OTokenHandlerImplTest {
 
   @BeforeMethod
   public void beforeTest() {
@@ -37,12 +33,11 @@ public class OrientTokenHandlerTest {
 
   @Test(enabled = false)
   public void testWebTokenCreationValidation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OrientTokenHandlerTest.class.getSimpleName());
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
     try {
       OSecurityUser original = db.getUser();
-      OrientTokenHandler handler = new OrientTokenHandler();
-      handler.config(null, I_PARAMS);
+      OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
       try {
         // Make this thread wait at least on millisecond before check the validity
         Thread.sleep(1);
@@ -68,8 +63,7 @@ public class OrientTokenHandlerTest {
 
   @Test(expectedExceptions = Exception.class)
   public void testInvalidToken() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    OrientTokenHandler handler = new OrientTokenHandler();
-    handler.config(null, I_PARAMS);
+    OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
     handler.parseWebToken("random".getBytes());
   }
 
@@ -79,7 +73,7 @@ public class OrientTokenHandlerTest {
     header.setType("Orient");
     header.setAlgorithm("some");
     header.setKeyId("the_key");
-    OrientTokenHandler handler = new OrientTokenHandler();
+    OTokenHandlerImpl handler = new OTokenHandlerImpl();
     byte[] headerbytes = handler.serializeWebHeader(header);
 
     OJwtHeader des = handler.deserializeWebHeader(headerbytes);
@@ -104,7 +98,7 @@ public class OrientTokenHandlerTest {
     payload.setTokenId("aaa");
     payload.setUserRid(new ORecordId(3, 4));
 
-    OrientTokenHandler handler = new OrientTokenHandler();
+    OTokenHandlerImpl handler = new OTokenHandlerImpl();
     byte[] payloadbytes = handler.serializeWebPayload(payload);
 
     OJwtPayload des = handler.deserializeWebPayload(ptype, payloadbytes);
@@ -120,13 +114,12 @@ public class OrientTokenHandlerTest {
 
   @Test
   public void testTokenForge() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OrientTokenHandlerTest.class.getSimpleName());
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
     try {
       OSecurityUser original = db.getUser();
-      OrientTokenHandler handler = new OrientTokenHandler();
+      OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
 
-      handler.config(null, I_PARAMS);
       byte[] token = handler.getSignedWebToken(db, original);
       byte[] token2 = handler.getSignedWebToken(db, original);
       String s = new String(token);
@@ -146,18 +139,17 @@ public class OrientTokenHandlerTest {
 
   @Test
   public void testBinartTokenCreationValidation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OrientTokenHandlerTest.class.getSimpleName());
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
     try {
       OSecurityUser original = db.getUser();
-      OrientTokenHandler handler = new OrientTokenHandler();
+      OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
       ONetworkProtocolData data = new ONetworkProtocolData();
       data.driverName = "aa";
       data.driverVersion = "aa";
       data.serializationImpl = "a";
       data.protocolVersion = 2;
 
-      handler.config(null, I_PARAMS);
       byte[] token = handler.getSignedBinaryToken(db, original, data);
 
       OToken tok = handler.parseBinaryToken(token);
@@ -177,18 +169,17 @@ public class OrientTokenHandlerTest {
   }
 
   public void testTokenNotRenew() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OrientTokenHandlerTest.class.getSimpleName());
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
     try {
       OSecurityUser original = db.getUser();
-      OrientTokenHandler handler = new OrientTokenHandler();
+      OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
       ONetworkProtocolData data = new ONetworkProtocolData();
       data.driverName = "aa";
       data.driverVersion = "aa";
       data.serializationImpl = "a";
       data.protocolVersion = 2;
 
-      handler.config(null, I_PARAMS);
       byte[] token = handler.getSignedBinaryToken(db, original, data);
 
       OToken tok = handler.parseBinaryToken(token);
@@ -202,18 +193,17 @@ public class OrientTokenHandlerTest {
   }
 
   public void testTokenRenew() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OrientTokenHandlerTest.class.getSimpleName());
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
     try {
       OSecurityUser original = db.getUser();
-      OrientTokenHandler handler = new OrientTokenHandler();
+      OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
       ONetworkProtocolData data = new ONetworkProtocolData();
       data.driverName = "aa";
       data.driverVersion = "aa";
       data.serializationImpl = "a";
       data.protocolVersion = 2;
 
-      handler.config(null, I_PARAMS);
       byte[] token = handler.getSignedBinaryToken(db, original, data);
 
       OToken tok = handler.parseBinaryToken(token);

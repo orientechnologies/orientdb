@@ -126,16 +126,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   @Deprecated
   private int                                  minPool;
   @Deprecated
-  private int                                  maxPool;
-  private ORemoteServerEventListener           asynchEventListener;
-  private String                               connectionDbType;
-
-  private volatile String                      connectionUserName;
-
-  private String                               connectionUserPassword;
-  private Map<String, Object>                  connectionOptions;
-  private OEngineRemote                        engine;
-  private String                               recordFormat;
+  private int                           maxPool;
+  private ORemoteServerEventListener    asynchEventListener;
+  private String                        connectionDbType;
+  private volatile String               connectionUserName;
+  private String                        connectionUserPassword;
+  private Map<String, Object>           connectionOptions;
+  private OEngineRemote                 engine;
+  private String                        recordFormat;
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
     this(iClientId, iURL, iMode, null);
@@ -306,13 +304,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     try {
       if (status == STATUS.CLOSED)
         return;
+      if (getSessionToken() != null) {
 
-      network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
-      try {
-        setSessionId(null, -1, null);
-      } finally {
-        endRequest(network);
-        engine.getConnectionManager().release(network);
+        network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
+        try {
+          setSessionId(null, -1, null);
+        } finally {
+          endRequest(network);
+          engine.getConnectionManager().release(network);
+        }
       }
 
       if (!checkForClose(iForce))

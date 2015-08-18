@@ -368,9 +368,20 @@ public enum OGlobalConfiguration {
   NETWORK_HTTP_JSONP_ENABLED("network.http.jsonp",
       "Enable the usage of JSONP if requested by the client. The parameter name to use is 'callback'", Boolean.class, false, true),
 
-  OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, "utf-8"), NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT(
-      "network.http.sessionExpireTimeout", "Timeout after which an http session is considered tp have expired (seconds)",
-      Integer.class, 300),
+  @Deprecated
+  OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, ""),
+
+  NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT( "network.http.sessionExpireTimeout",
+      "Timeout after which an http session is considered tp have expired (seconds)", Integer.class, 300),
+
+  NETWORK_HTTP_USE_TOKEN( "network.http.useToken", "Enable Token based sessions for http", Boolean.class, false),
+
+  NETWORK_TOKEN_SECRETKEY("network.token.secretyKey", "Network token sercret key", String.class, ""),
+
+  NETWORK_TOKEN_ENCRIPTION_ALGORITHM("network.token.encriptionAlgorithm", "Network token algorithm", String.class,"HmacSHA256"),
+
+  NETWORK_TOKEN_EXPIRE_TIMEOUT("network.token.expireTimeout",
+      "Timeout after which an binary session is considered tp have expired (minutes)", Integer.class, 60),
 
   // PROFILER
   PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,
@@ -475,7 +486,8 @@ public enum OGlobalConfiguration {
 
   CLIENT_SSL_TRUSTSTORE_PASSWORD("client.ssl.trustStorePass", "Use SSL for client connections", String.class, null),
 
-  CLIENT_SESSION_TOKEN_BASED("client.session.tokenBased", "Request a token based session to the server", Boolean.class, false),
+  @Deprecated
+  CLIENT_SESSION_TOKEN_BASED("client.session.tokenBased", "Request a token based session to the server", Boolean.class, true),
 
   // SERVER
   SERVER_OPEN_ALL_DATABASES_AT_STARTUP("server.openAllDatabasesAtStartup",

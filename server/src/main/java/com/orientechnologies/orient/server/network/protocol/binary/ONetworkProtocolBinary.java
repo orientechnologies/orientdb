@@ -164,7 +164,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     waitNodeIsOnline();
 
     if (Boolean.FALSE.equals(tokenBased) || requestType == OChannelBinaryProtocol.REQUEST_CONNECT
-        || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || (tokenHandler == null)) {
+        || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN) {
       connection = server.getClientConnectionManager().getConnection(clientTxId, this);
       if (clientTxId < 0) {
         short protocolId = 0;
@@ -198,11 +198,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             throw new OSecurityException("The token provided is expired");
           }
           connection = new OClientConnection(clientTxId, this);
-          if (tokenHandler != null)
-            connection.data = tokenHandler.getProtocolDataFromToken(token);
+          connection.data = tokenHandler.getProtocolDataFromToken(token);
           String db = token.getDatabase();
           String type = token.getDatabaseType();
-          if (db != null && type != null) {
+          if (db != null && type != null && requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
             final ODatabaseDocumentTx database = new ODatabaseDocumentTx(type + ":" + db);
             if (connection.data.serverUser) {
               database.resetInitialization();
@@ -865,7 +864,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
-      if (Boolean.TRUE.equals(tokenBased) && token != null) {
+      if (Boolean.TRUE.equals(tokenBased) && token != null && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
+          && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
         // TODO: Check if the token is expiring and if it is send a new token
         byte[] renewedToken = tokenHandler.renewIfNeeded(token);
         channel.writeBytes(renewedToken);
@@ -1140,10 +1140,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     setDataCommandInfo("Close Database");
 
     if (connection != null) {
-      if (connection.data.protocolVersion > 0 && connection.data.protocolVersion < 9)
-        // OLD CLIENTS WAIT FOR A OK
-        sendOk(clientTxId);
-
       if (Boolean.FALSE.equals(tokenBased) && server.getClientConnectionManager().disconnect(connection.id))
         sendShutdown();
     }

@@ -12,4 +12,6 @@ public interface OKeyProvider {
   public Key getKey(OJwtHeader header);
 
   public String[] getKeys();
+
+  public String getDefaultKey();
 }
