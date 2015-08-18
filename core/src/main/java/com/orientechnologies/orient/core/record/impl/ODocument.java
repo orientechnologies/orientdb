@@ -779,8 +779,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   /**
-   * Evaluates a SQL expression against current document. Example:
-   * <code>long amountPlusVat = doc.eval("amount * 120 / 100");</code>
+   * Evaluates a SQL expression against current document. Example: <code>long amountPlusVat = doc.eval("amount * 120 / 100");</code>
    * 
    * @param iExpression
    *          SQL expression to evaluate.
@@ -1939,15 +1938,19 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     _immutableClazz = null;
     _immutableSchemaVersion = -1;
 
+    _className = iClassName;
+
     if (iClassName == null) {
-      _className = null;
       return;
     }
 
-    final OClass _clazz = ((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(iClassName);
-    if (_clazz != null) {
-      _className = _clazz.getName();
-      convertFieldsToClass(_clazz);
+    final ODatabaseDocument db = getDatabaseIfDefined();
+    if (db != null) {
+      final OClass _clazz = ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClass(iClassName);
+      if (_clazz != null) {
+        _className = _clazz.getName();
+        convertFieldsToClass(_clazz);
+      }
     }
   }
 
@@ -1976,22 +1979,26 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     _immutableClazz = null;
     _immutableSchemaVersion = -1;
 
+    _className = className;
+
     if (className == null) {
-      _className = null;
       return;
     }
 
-    OMetadataInternal metadata = (OMetadataInternal) getDatabase().getMetadata();
-    this._immutableClazz = (OImmutableClass) metadata.getImmutableSchemaSnapshot().getClass(className);
-    OClass clazz;
-    if (this._immutableClazz != null) {
-      clazz = this._immutableClazz;
-    } else {
-      clazz = metadata.getSchema().getOrCreateClass(className);
-    }
-    if (clazz != null) {
-      _className = clazz.getName();
-      convertFieldsToClass(clazz);
+    final ODatabaseDocument db = getDatabaseIfDefined();
+    if (db != null) {
+      OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
+      this._immutableClazz = (OImmutableClass) metadata.getImmutableSchemaSnapshot().getClass(className);
+      OClass clazz;
+      if (this._immutableClazz != null) {
+        clazz = this._immutableClazz;
+      } else {
+        clazz = metadata.getSchema().getOrCreateClass(className);
+      }
+      if (clazz != null) {
+        _className = clazz.getName();
+        convertFieldsToClass(clazz);
+      }
     }
   }
 
