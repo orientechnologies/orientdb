@@ -20,6 +20,9 @@
 
 package com.orientechnologies.common.console;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+
 import java.io.*;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -27,9 +30,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-
+/**
+ * Custom implementation of TTY reader. Supports arrow keys + history.
+ */
 public class TTYConsoleReader implements OConsoleReader {
 
   private static final String   HISTORY_FILE_NAME   = ".orientdb_history";
@@ -82,6 +85,10 @@ public class TTYConsoleReader implements OConsoleReader {
 
     if (inStream == null)
       throw new OException("Cannot access to the input stream. Check permissions of running process");
+  }
+
+  public String readPassword() throws IOException {
+    return readLine();
   }
 
   public String readLine() throws IOException {

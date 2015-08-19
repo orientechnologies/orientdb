@@ -49,19 +49,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class OConsoleApplication {
-  protected static final String[]   COMMENT_PREFIXS = new String[] { "#", "--", "//" };
-  public static final String        ONLINE_HELP_URL = "https://raw.githubusercontent.com/orientechnologies/orientdb-docs/master/";
-  public static final String        ONLINE_HELP_EXT = ".md";
-  protected final StringBuilder     commandBuffer   = new StringBuilder(2048);
-  protected InputStream             in              = System.in;                                                                  // System.in;
-  protected PrintStream             out             = System.out;
-  protected PrintStream             err             = System.err;
-  protected String                  wordSeparator   = " ";
-  protected String[]                helpCommands    = { "help", "?" };
-  protected String[]                exitCommands    = { "exit", "bye", "quit" };
-  protected Map<String, String>     properties      = new HashMap<String, String>();
+  protected static final String[]            COMMENT_PREFIXS = new String[] { "#", "--", "//" };
+  public static final    String              ONLINE_HELP_URL = "https://raw.githubusercontent.com/orientechnologies/orientdb-docs/master/";
+  public static final    String              ONLINE_HELP_EXT = ".md";
+  protected final        StringBuilder       commandBuffer   = new StringBuilder(2048);
+  protected              InputStream         in              = System.in;                                                                  // System.in;
+  protected              PrintStream         out             = System.out;
+  protected              PrintStream         err             = System.err;
+  protected              String              wordSeparator   = " ";
+  protected              String[]            helpCommands    = { "help", "?" };
+  protected              String[]            exitCommands    = { "exit", "bye", "quit" };
+  protected              Map<String, String> properties      = new HashMap<String, String>();
   // protected OConsoleReader reader = new TTYConsoleReader();
-  protected OConsoleReader          reader          = new DefaultConsoleReader();
+  protected              OConsoleReader      reader          = new ODefaultConsoleReader();
   protected boolean                 interactiveMode;
   protected String[]                args;
   protected TreeMap<Method, Object> methods;
@@ -77,13 +77,10 @@ public class OConsoleApplication {
   public static String getCorrectMethodName(Method m) {
     StringBuilder buffer = new StringBuilder(128);
     buffer.append(getClearName(m.getName()));
-    for (int i = 0; i < m.getParameterAnnotations().length; i++) {
-      for (int j = 0; j < m.getParameterAnnotations()[i].length; j++) {
+    for (int i = 0; i<m.getParameterAnnotations().length; i++) {
+      for (int j = 0; j<m.getParameterAnnotations()[i].length; j++) {
         if (m.getParameterAnnotations()[i][j] instanceof com.orientechnologies.common.console.annotation.ConsoleParameter) {
-          buffer
-              .append(" <"
-                  + ((com.orientechnologies.common.console.annotation.ConsoleParameter) m.getParameterAnnotations()[i][j]).name()
-                  + ">");
+          buffer.append(" <" + ((com.orientechnologies.common.console.annotation.ConsoleParameter) m.getParameterAnnotations()[i][j]).name() + ">");
         }
       }
     }
@@ -96,7 +93,7 @@ public class OConsoleApplication {
     char c;
     if (iJavaName != null) {
       buffer.append(iJavaName.charAt(0));
-      for (int i = 1; i < iJavaName.length(); ++i) {
+      for (int i = 1; i<iJavaName.length(); ++i) {
         c = iJavaName.charAt(i);
 
         if (Character.isUpperCase(c)) {

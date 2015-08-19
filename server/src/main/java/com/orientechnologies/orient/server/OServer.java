@@ -19,8 +19,8 @@
  */
 package com.orientechnologies.orient.server;
 
-import com.orientechnologies.common.console.DefaultConsoleReader;
 import com.orientechnologies.common.console.OConsoleReader;
+import com.orientechnologies.common.console.ODefaultConsoleReader;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -414,7 +414,7 @@ public class OServer {
           try {
             l.shutdown();
           } catch (Throwable e) {
-            OLogManager.instance().error(this, "Error during shutdown of listener %s", e, l);
+            OLogManager.instance().error(this, "Error during shutdown of listener %s.", e, l);
           }
         }
       }
@@ -568,9 +568,9 @@ public class OServer {
     System.out.println("+--------------------------------------------------------------------------+");
     System.out.print("\nDatabase encryption key [BLANK=to skip opening]: ");
 
-    OConsoleReader reader = new DefaultConsoleReader();
+    final OConsoleReader reader = new ODefaultConsoleReader();
     try {
-      String key = reader.readLine();
+      String key = reader.readPassword();
       if (key != null) {
         key = key.trim();
         if (!key.isEmpty()) {
@@ -989,15 +989,39 @@ public class OServer {
       System.out.println("| To avoid this message set the environment variable or JVM     |");
       System.out.println("| setting ORIENTDB_ROOT_PASSWORD to the root password to use.   |");
       System.out.println("+---------------------------------------------------------------+");
-      System.out.print("\nRoot password [BLANK=auto generate it]: ");
 
-      OConsoleReader reader = new DefaultConsoleReader();
-      rootPassword = reader.readLine();
-      if (rootPassword != null) {
-        rootPassword = rootPassword.trim();
-        if (rootPassword.isEmpty())
-          rootPassword = null;
-      }
+      final OConsoleReader console = new ODefaultConsoleReader();
+
+      // ASK FOR PASSWORD + CONFIRM
+      do {
+        System.out.print("\nRoot password [BLANK=auto generate it]: ");
+        rootPassword = console.readPassword();
+
+        if (rootPassword != null) {
+          rootPassword = rootPassword.trim();
+          if (rootPassword.isEmpty())
+            rootPassword = null;
+        }
+
+        if (rootPassword != null) {
+          System.out.print("Please confirm the root password: ");
+
+          String rootConfirmPassword = console.readPassword();
+          if (rootConfirmPassword != null) {
+            rootConfirmPassword = rootConfirmPassword.trim();
+            if (rootConfirmPassword.isEmpty())
+              rootConfirmPassword = null;
+          }
+
+          if (!rootPassword.equals(rootConfirmPassword)) {
+            System.out.println("ERROR: Passwords don't match, please reinsert both of them, or press ENTER to auto generate it");
+          } else
+            // PASSWORDS MATCH
+            break;
+        }
+
+      } while (rootPassword != null);
+
     } else
       OLogManager.instance().warn(this, "Found ORIENTDB_ROOT_PASSWORD variable, using this value as root's password", rootPassword);
 
