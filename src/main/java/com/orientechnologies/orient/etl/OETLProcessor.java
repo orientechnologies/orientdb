@@ -491,6 +491,7 @@ public class OETLProcessor {
 
     } catch (OETLProcessHaltedException e) {
       out(LOG_LEVELS.ERROR, "ETL process halted: %s", e);
+      throw e;
     }
   }
 

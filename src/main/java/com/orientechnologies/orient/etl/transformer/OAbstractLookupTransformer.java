@@ -85,8 +85,12 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
         final OType idxFieldType = index.getDefinition().getTypes()[0];
         joinValue = OType.convert(joinValue, idxFieldType.getDefaultJavaType());
         result = index.get(joinValue);
-      } else
+      } else {
+        if (sqlQuery instanceof OSQLSynchQuery)
+          ((OSQLSynchQuery) sqlQuery).resetPagination();
+
         result = pipeline.getDocumentDatabase().query(sqlQuery, joinValue);
+      }
 
       if (result != null && result instanceof Collection) {
         final Collection coll = (Collection) result;

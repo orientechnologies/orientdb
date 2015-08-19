@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
@@ -34,10 +35,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OEdgeTransformer extends OAbstractLookupTransformer {
-  private String    edgeClass    = OrientEdgeType.CLASS_NAME;
-  private boolean   directionOut = true;
+  private String    edgeClass      = OrientEdgeType.CLASS_NAME;
+  private boolean   directionOut   = true;
   private ODocument targetVertexFields;
   private ODocument edgeFields;
+  private boolean   skipDuplicates = false;
 
   @Override
   public ODocument getConfiguration() {
@@ -52,6 +54,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
             + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
             + "{targetVertexFields:{optional:true,description:'Map of fields to set in target vertex. Use ${$input.<field>} to get input field values'}},"
             + "{edgeFields:{optional:true,description:'Map of fields to set in edge. Use ${$input.<field>} to get input field values'}},"
+            + "{skipDuplicates:{optional:true,description:'Vertices with duplicate keys are skipped', default:false}},"
             + "{unresolvedVertexAction:{optional:true,description:'action when a unresolved vertices is found',values:"
             + stringArray2Json(ACTION.values()) + "}}]," + "input:['ODocument','OrientVertex'],output:'OrientVertex'}");
   }
@@ -74,6 +77,8 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
       targetVertexFields = (ODocument) iConfiguration.field("targetVertexFields");
     if (iConfiguration.containsField("edgeFields"))
       edgeFields = (ODocument) iConfiguration.field("edgeFields");
+    if (iConfiguration.containsField("skipDuplicates"))
+      skipDuplicates = (Boolean) resolve(iConfiguration.field("skipDuplicates"));
   }
 
   @Override
@@ -91,35 +96,38 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-    // GET JOIN VALUE
-    final OrientVertex vertex;
-    if (input instanceof OrientVertex)
-      vertex = (OrientVertex) input;
-    else if (input instanceof OIdentifiable)
-      vertex = pipeline.getGraphDatabase().getVertex(input);
-    else
-      throw new OTransformException(getName() + ": input type '" + input + "' is not supported");
+    for (Object o : OMultiValue.getMultiValueIterable(input)) {
+      // GET JOIN VALUE
+      final OrientVertex vertex;
+      if (o instanceof OrientVertex)
+        vertex = (OrientVertex) o;
+      else if (o instanceof OIdentifiable)
+        vertex = pipeline.getGraphDatabase().getVertex(o);
+      else
+        throw new OTransformException(getName() + ": input type '" + o + "' is not supported");
 
-    final Object joinCurrentValue = joinValue != null ? joinValue : vertex.getProperty(joinFieldName);
+      final Object joinCurrentValue = joinValue != null ? joinValue : vertex.getProperty(joinFieldName);
 
-    if (OMultiValue.isMultiValue(joinCurrentValue)) {
-      // RESOLVE SINGLE JOINS
-      for (Object o : OMultiValue.getMultiValueIterable(joinCurrentValue)) {
-        final Object r = lookup(o, false);
-        if (createEdge(vertex, o, r) == null) {
+      if (OMultiValue.isMultiValue(joinCurrentValue)) {
+        // RESOLVE SINGLE JOINS
+        for (Object ob : OMultiValue.getMultiValueIterable(joinCurrentValue)) {
+          final Object r = lookup(ob, false);
+          if (createEdge(vertex, ob, r) == null) {
+            if (unresolvedLinkAction == ACTION.SKIP)
+              // RETURN NULL ONLY IN CASE SKIP ACTION IS REQUESTED
+              return null;
+          }
+        }
+      } else {
+        final Object result = lookup(joinCurrentValue, false);
+        if (createEdge(vertex, joinCurrentValue, result) == null) {
           if (unresolvedLinkAction == ACTION.SKIP)
             // RETURN NULL ONLY IN CASE SKIP ACTION IS REQUESTED
             return null;
         }
       }
-    } else {
-      final Object result = lookup(joinCurrentValue, false);
-      if (createEdge(vertex, joinCurrentValue, result) == null) {
-        if (unresolvedLinkAction == ACTION.SKIP)
-          // RETURN NULL ONLY IN CASE SKIP ACTION IS REQUESTED
-          return null;
-      }
     }
+
     return input;
   }
 
@@ -130,7 +138,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
       // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
       switch (unresolvedLinkAction) {
       case CREATE:
-        //Don't try to create a Vertex with a null value
+        // Don't try to create a Vertex with a null value
         if (joinCurrentValue != null) {
           if (lookup != null) {
             final String[] lookupParts = lookup.split("\\.");
@@ -182,22 +190,32 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
       for (Object o : OMultiValue.getMultiValueIterable(result)) {
         final OrientVertex targetVertex = pipeline.getGraphDatabase().getVertex(o);
 
-        // CREATE THE EDGE
-        final OrientEdge edge;
-        if (directionOut)
-          edge = (OrientEdge) vertex.addEdge(edgeClass, targetVertex);
-        else
-          edge = (OrientEdge) targetVertex.addEdge(edgeClass, vertex);
+        try {
+          // CREATE THE EDGE
+          final OrientEdge edge;
+          if (directionOut)
+            edge = (OrientEdge) vertex.addEdge(edgeClass, targetVertex);
+          else
+            edge = (OrientEdge) targetVertex.addEdge(edgeClass, vertex);
 
-        if (edgeFields != null) {
-          for (String f : edgeFields.fieldNames())
-            edge.setProperty(f, resolve(edgeFields.field(f)));
+          if (edgeFields != null) {
+            for (String f : edgeFields.fieldNames())
+              edge.setProperty(f, resolve(edgeFields.field(f)));
+          }
+
+          edges.add(edge);
+          log(OETLProcessor.LOG_LEVELS.DEBUG, "created new edge=%s", edge);
+        } catch (ORecordDuplicatedException e) {
+          if (skipDuplicates) {
+            log(OETLProcessor.LOG_LEVELS.DEBUG, "skipped creation of new edge because already exists");
+            continue;
+          } else {
+            log(OETLProcessor.LOG_LEVELS.ERROR, "error on creation of new edge because it already exists (skipDuplicates=false)");
+            throw e;
+          }
         }
-
-        edges.add(edge);
-
-        log(OETLProcessor.LOG_LEVELS.DEBUG, "created new edge=%s", edge);
       }
+
       return edges;
     }
 

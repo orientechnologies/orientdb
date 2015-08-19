@@ -18,10 +18,16 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.etl.ETLBaseTest;
+import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import junit.framework.Assert;
 import org.junit.Test;
 
 import java.util.Iterator;
@@ -37,9 +43,15 @@ public class OEdgeTransformerTest extends ETLBaseTest {
   @Override
   public void setUp() {
     super.setUp();
-    graph.createVertexType("V1");
-    graph.createVertexType("V2");
-    graph.createEdgeType("Friend");
+    final OrientVertexType v1 = graph.createVertexType("V1");
+    final OrientVertexType v2 = graph.createVertexType("V2");
+
+    final OrientEdgeType edgeType = graph.createEdgeType("Friend");
+    edgeType.createProperty("in", OType.LINK, v2);
+    edgeType.createProperty("out", OType.LINK, v1);
+
+    // ASSURE NOT DUPLICATES
+    edgeType.createIndex("out_in", OClass.INDEX_TYPE.UNIQUE, "in", "out");
 
     graph.addVertex("class:V2").setProperty("name", "Luca");
     graph.commit();
@@ -114,5 +126,30 @@ public class OEdgeTransformerTest extends ETLBaseTest {
     assertEquals(v0.getProperty("name"), "Jay");
     assertEquals(v0.getProperty("surname"), "Miner");
     assertEquals(v0.getProperty("id"), 0);
+  }
+
+  @Test
+  public void testErrorOnDuplicateVertex() {
+    try {
+      process("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca\nJay,Miner,Luca' } }, extractor : { row: {} },"
+          + " transformers: [{csv: {}}, {merge: {joinFieldName:'name',lookup:'V1.name'}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
+          + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+
+      Assert.fail();
+
+    } catch (OETLProcessHaltedException e) {
+      Assert.assertTrue(true);
+    }
+  }
+
+  @Test
+  public void testSkipDuplicateVertex() {
+    process("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca\nJay,Miner,Luca' } }, extractor : { row: {} },"
+        + " transformers: [{csv: {}}, {merge: {joinFieldName:'name',lookup:'V1.name'}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',skipDuplicates:true, joinFieldName:'friend',lookup:'V2.name'}},"
+        + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+
+    assertEquals(1, graph.countVertices("V1"));
+    assertEquals(1, graph.countVertices("V2"));
+    assertEquals(1, graph.countEdges("Friend"));
   }
 }
