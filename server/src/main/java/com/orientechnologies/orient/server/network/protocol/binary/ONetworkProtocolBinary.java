@@ -197,7 +197,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           if (!tokenHandler.validateBinaryToken(token)) {
             throw new OSecurityException("The token provided is expired");
           }
-          connection = new OClientConnection(clientTxId, this);
+          if (requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN && clientTxId < 0)
+            connection = server.getClientConnectionManager().connect(this);
+          else
+            connection = new OClientConnection(clientTxId, this);
           connection.data = tokenHandler.getProtocolDataFromToken(token);
           String db = token.getDatabase();
           String type = token.getDatabaseType();
@@ -292,6 +295,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       case OChannelBinaryProtocol.REQUEST_DB_OPEN:
         openDatabase();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DB_REOPEN:
+        reopenDatabase();
         break;
 
       case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
@@ -479,6 +486,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
 
       throw e;
+    }
+  }
+
+  private void reopenDatabase() throws IOException {
+    // TODO:REASSOCIATE CONNECTION TO CLIENT.
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      channel.writeInt(connection.id);
+    } finally {
+      endResponse();
     }
   }
 

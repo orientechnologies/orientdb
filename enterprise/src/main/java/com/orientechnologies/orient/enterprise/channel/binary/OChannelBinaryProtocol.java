@@ -46,6 +46,7 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_DB_DROP                           = 7;
   public static final byte  REQUEST_DB_SIZE                           = 8;
   public static final byte  REQUEST_DB_COUNTRECORDS                   = 9;
+  public static final byte  REQUEST_DB_REOPEN                         = 17;
 
   public static final byte  REQUEST_DATACLUSTER_ADD                   = 10;
   public static final byte  REQUEST_DATACLUSTER_DROP                  = 11;

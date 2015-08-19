@@ -277,7 +277,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       if (debug)
         OLogManager.instance().debug(this, "%s - Session %d handle response", socket.getLocalAddress(), iRequesterId);
 
-      if (currentSessionId >= 0 && token)
+      if (token)
         tokenBytes = this.readBytes();
       else
         tokenBytes = null;
