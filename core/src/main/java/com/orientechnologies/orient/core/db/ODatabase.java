@@ -500,11 +500,6 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   OSecurityUser getUser();
 
   /**
-   * Set user for current database instance
-   */
-  void setUser(OSecurityUser user);
-
-  /**
    * Loads the entity and return it.
    *
    * @param iObject
