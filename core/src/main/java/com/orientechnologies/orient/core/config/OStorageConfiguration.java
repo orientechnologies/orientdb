@@ -59,7 +59,8 @@ import java.util.TimeZone;
  * <li>12 = introduced record conflict strategy as string in both storage and paginated clusters</li>
  * <li>13 = introduced cluster status to manage cluster as "offline" with the new command "alter cluster status offline". Removed
  * data segments</li>
- * <li>14 = introduced encryption and encryptionKey</li>
+ * <li>14 = no changes, but version was incremented</li>
+ * <li>15 = introduced encryption and encryptionKey</li>
  * </ul>
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
@@ -71,7 +72,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public static final String                         DEFAULT_CHARSET               = "UTF-8";
   private String                                     charset                       = DEFAULT_CHARSET;
-  public static final int                            CURRENT_VERSION               = 14;
+  public static final int                            CURRENT_VERSION               = 15;
   public static final int                            CURRENT_BINARY_FORMAT_VERSION = 12;
   private final List<OStorageEntryConfiguration>     properties                    = Collections
                                                                                        .synchronizedList(new ArrayList<OStorageEntryConfiguration>());
@@ -268,7 +269,7 @@ public class OStorageConfiguration implements OSerializableStream {
           determineStorageCompression = clusterCompression;
 
         String clusterEncryption = null;
-        if (version >= 14)
+        if (version >= 15)
           clusterEncryption = read(values[index++]);
 
         final String clusterConflictStrategy;
