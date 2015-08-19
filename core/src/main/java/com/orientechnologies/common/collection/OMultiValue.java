@@ -19,15 +19,16 @@
  */
 package com.orientechnologies.common.collection;
 
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Handles Multi-value types such as Arrays, Collections and Maps. It recognizes special Orient collections.
@@ -45,9 +46,10 @@ public class OMultiValue {
    * @return true if it's an array, a collection or a map, otherwise false
    */
   public static boolean isMultiValue(final Class<?> iType) {
-    return OCollection.class.isAssignableFrom(iType) || Collection.class.isAssignableFrom(iType)
-        || (iType.isArray() || Map.class.isAssignableFrom(iType) || OMultiCollectionIterator.class.isAssignableFrom(iType)
-            || OCollection.class.isAssignableFrom(iType));
+    return OCollection.class.isAssignableFrom(iType)
+        || Collection.class.isAssignableFrom(iType)
+        || (iType.isArray() || Map.class.isAssignableFrom(iType) || OMultiCollectionIterator.class.isAssignableFrom(iType) || OCollection.class
+            .isAssignableFrom(iType));
   }
 
   /**
@@ -220,20 +222,20 @@ public class OMultiValue {
     }
     return null;
   }
-  
+
   /**
-   * Sets the value of the Multi-value object (array or collection) at iIndex 
+   * Sets the value of the Multi-value object (array or collection) at iIndex
    * 
    * @param iObject
    *          Multi-value object (array, collection)
    * @param iValue
-   *          The value to set at this specified index.      
+   *          The value to set at this specified index.
    * @param iIndex
    *          integer as the position requested
    */
   public static void setValue(final Object iObject, final Object iValue, final int iIndex) {
     if (iObject instanceof List<?>) {
-      ((List<Object>)iObject).set(iIndex, iValue);
+      ((List<Object>) iObject).set(iIndex, iValue);
     } else if (iObject.getClass().isArray()) {
       Array.set(iObject, iIndex, iValue);
     } else {
@@ -251,7 +253,7 @@ public class OMultiValue {
     if (iObject == null)
       return null;
 
-    if (iObject instanceof Iterable<?>)
+    if (iObject instanceof Iterable<?> && !(iObject instanceof ODocument))
       return (Iterable<Object>) iObject;
     else if (iObject instanceof Collection<?>)
       return ((Collection<Object>) iObject);
