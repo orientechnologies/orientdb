@@ -54,7 +54,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
             + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
             + "{targetVertexFields:{optional:true,description:'Map of fields to set in target vertex. Use ${$input.<field>} to get input field values'}},"
             + "{edgeFields:{optional:true,description:'Map of fields to set in edge. Use ${$input.<field>} to get input field values'}},"
-            + "{skipDuplicates:{optional:true,description:'Vertices with duplicate keys are skipped', default:false}},"
+            + "{skipDuplicates:{optional:true,description:'Duplicated edges (with a composite index built on both out and in properties) are skipped', default:false}},"
             + "{unresolvedVertexAction:{optional:true,description:'action when a unresolved vertices is found',values:"
             + stringArray2Json(ACTION.values()) + "}}]," + "input:['ODocument','OrientVertex'],output:'OrientVertex'}");
   }
