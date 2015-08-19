@@ -50,6 +50,16 @@ public class OVertexTransformerTest extends ETLBaseTest {
   }
 
   @Test
+  public void testCreateTargetVertexIfNotExists() {
+    process("{source: { content: { value: 'name,idf,parent\nParent,1,\nChild,2,1' } }, extractor : { row: {} },"
+        + " transformers: [{csv: {}}, {merge: { joinFieldName:'idf', lookup:'V.idf'}}, {vertex: {class:'V'}},"+
+              "{edge:{ class: 'E', joinFieldName: 'parent', lookup: 'V.idf', unresolvedLinkAction: 'CREATE' }, if: '$input.parent IS NOT NULL'}"
+        + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+
+    assertEquals(2, graph.countVertices("V"));
+  }
+
+  @Test
   public void testErrorOnDuplicateVertex() {
     try {
       process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { row: {} },"
