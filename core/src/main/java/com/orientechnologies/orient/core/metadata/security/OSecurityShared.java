@@ -315,8 +315,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
     readerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
     readerRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ);
     readerRole.addRule(ORule.ResourceGeneric.CLUSTER, OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_READ);
-    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_NONE);
+    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_NONE);
     readerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_READ);
     readerRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_READ);
     readerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_READ);
@@ -331,8 +331,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
     writerRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE
         + ORole.PERMISSION_UPDATE);
     writerRole.addRule(ORule.ResourceGeneric.CLUSTER, OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-    writerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_READ);
-    writerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_NONE);
+    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_NONE);
     writerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL);
     writerRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL);
     writerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
@@ -499,7 +499,6 @@ public class OSecurityShared implements OSecurity, OCloseable {
       if (roleClass.getInvolvedIndexes("name") == null)
         p.createIndex(INDEX_TYPE.UNIQUE);
     }
-
   }
 
   public void createClassTrigger() {
