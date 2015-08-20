@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -29,7 +30,11 @@ import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Predicate;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.Assert;
@@ -108,8 +113,8 @@ public class GraphTests {
 
     vCollate.createProperty("name", OType.STRING);
 
-    g.createKeyIndex("name", Vertex.class, new Parameter<String, String>("class", "VCollate"), new Parameter<String, String>("type",
-        "UNIQUE"), new Parameter<String, OType>("keytype", OType.STRING), new Parameter<String, String>("collate", "ci"));
+    g.createKeyIndex("name", Vertex.class, new Parameter<String, String>("class", "VCollate"), new Parameter<String, String>(
+        "type", "UNIQUE"), new Parameter<String, OType>("keytype", OType.STRING), new Parameter<String, String>("collate", "ci"));
     OrientVertex vertex = g.addVertex("class:VCollate", new Object[] { "name", "Enrico" });
 
     g.commit();
