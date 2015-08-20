@@ -17,6 +17,7 @@
 package com.orientechnologies.lucene.operator;
 
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
+import com.orientechnologies.lucene.shape.OShapeFactory;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -30,12 +31,19 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperator;
+import com.spatial4j.core.distance.DistanceUtils;
+import com.spatial4j.core.shape.Circle;
+import com.spatial4j.core.shape.Point;
+import com.spatial4j.core.shape.Shape;
+import com.spatial4j.core.shape.SpatialRelation;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 public class OLuceneNearOperator extends OQueryTargetOperator {
+
+  OShapeFactory factory = OShapeFactory.INSTANCE;
 
   public OLuceneNearOperator() {
     super("NEAR", 5, false);
@@ -45,11 +53,32 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
   public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
       Object iRight, OCommandContext iContext) {
 
-    if (iContext.getVariable("$luceneIndex") != null) {
-      return true;
-    } else {
-      return false;
+    List<Object> left = (List<Object>) iLeft;
+
+    double lat = (double) left.get(0);
+    double lon = (double) left.get(1);
+
+    Shape shape = factory.SPATIAL_CONTEXT.makePoint(lon, lat);
+    List<Object> right = (List<Object>) iRight;
+
+    double lat1 = (double) right.get(0);
+    double lon1 = (double) right.get(1);
+    Shape shape1 = factory.SPATIAL_CONTEXT.makePoint(lon1, lat1);
+
+    Map map = (Map) right.get(2);
+    double distance = 0;
+
+    Number n = (Number) map.get("maxDistance");
+    if (n != null) {
+      distance = n.doubleValue();
     }
+    Point p = (Point) shape1;
+    Circle circle = factory.SPATIAL_CONTEXT.makeCircle(p.getX(), p.getY(),
+        DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM));
+    double docDistDEG = factory.SPATIAL_CONTEXT.getDistCalc().distance((Point) shape, p);
+    final double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
+    iContext.setVariable("distance", docDistInKM);
+    return shape.relate(circle) == SpatialRelation.WITHIN;
   }
 
   private Object[] parseParams(OIdentifiable iRecord, OSQLFilterCondition iCondition) {

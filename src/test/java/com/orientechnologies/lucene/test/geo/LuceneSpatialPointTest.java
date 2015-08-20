@@ -72,6 +72,11 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
     ODocument rome = newCity("Rome", 12.5, 41.9);
     ODocument london = newCity("London", -0.1275, 51.507222);
 
+    ODocument rome1 = new ODocument("Place");
+    rome1.field("name", "Rome");
+    rome1.field("latitude", 41.9);
+    rome1.field("longitude", 12.5);
+    databaseDocumentTx.save(rome1);
     databaseDocumentTx.save(rome);
     databaseDocumentTx.save(london);
 
@@ -84,6 +89,7 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
     queryPoint();
   }
 
+  @Test
   public void testIndexingPoint() {
 
     queryPoint();
@@ -103,19 +109,27 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
     Assert.assertEquals(1.6229442709302933, docs.get(0).field("$distance"));
   }
 
+  @Test
   public void testOldNearQuery() {
 
-    ODocument rome = new ODocument("Place");
-    rome.field("name", "Rome");
-    rome.field("latitude", 41.9);
-    rome.field("longitude", 12.5);
-    databaseDocumentTx.save(rome);
+
+    queryOldNear();
+  }
+
+  protected void queryOldNear() {
     String query = "select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 2}]";
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(1, docs.size());
 
     Assert.assertEquals(1.6229442709302933, docs.get(0).field("$distance"));
+  }
+
+  @Test
+  public void testOldNearQueryWithoutIndex() {
+
+    databaseDocumentTx.command(new OCommandSQL("Drop INDEX Place.l_lon")).execute();
+    queryOldNear();
   }
 
   protected ODocument newCity(String name, final Double longitude, final Double latitude) {
