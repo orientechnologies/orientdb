@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import org.testng.Assert;
 
+import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -29,11 +30,26 @@ public abstract class AbstractEncryptionTest {
 
       final OEncryption en = OEncryptionFactory.INSTANCE.getEncryption(name, options);
 
-      final byte[] encryptedContent = en.encrypt(content);
+      // FULL
+      byte[] encryptedContent = en.encrypt(content);
 
       encryptedSize += encryptedContent.length;
 
       Assert.assertEquals(content, en.decrypt(encryptedContent));
+
+      // PARTIAL (BUT FULL)
+      encryptedContent = en.encrypt(content, 0, content.length);
+
+      encryptedSize += encryptedContent.length;
+
+      Assert.assertEquals(content, en.decrypt(encryptedContent));
+
+      // REAL PARTIAL
+      encryptedContent = en.encrypt(content, 1, content.length - 2);
+
+      encryptedSize += encryptedContent.length - 2;
+
+      Assert.assertEquals(Arrays.copyOfRange(content, 1, content.length - 1), en.decrypt(encryptedContent));
     }
 
     System.out.println("Encryption/Decryption test against " + name + " took: " + (System.currentTimeMillis() - seed)
