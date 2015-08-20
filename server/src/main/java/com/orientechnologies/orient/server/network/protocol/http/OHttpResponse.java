@@ -88,15 +88,11 @@ public class OHttpResponse {
 
   public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders)
       throws IOException {
-    if (sendStarted)
-    // AVOID TO SEND RESPONSE TWICE
-    {
+    if (sendStarted) {
+      // AVOID TO SEND RESPONSE TWICE
       return;
     }
     sendStarted = true;
-
-    // final String content;
-    // final String contentType;
 
     if (callbackFunction != null) {
       content = callbackFunction + "(" + iContent + ")";
