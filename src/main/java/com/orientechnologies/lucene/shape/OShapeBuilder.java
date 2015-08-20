@@ -55,7 +55,7 @@ public abstract class OShapeBuilder<T extends Shape> {
 
   @Deprecated
   public boolean canHandle(OCompositeKey key) {
-    throw new UnsupportedOperationException();
+    return false;
   };
 
   public abstract void initClazz(ODatabaseDocumentTx db);
