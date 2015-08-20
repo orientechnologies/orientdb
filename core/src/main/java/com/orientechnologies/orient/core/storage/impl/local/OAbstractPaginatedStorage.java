@@ -188,6 +188,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (!exists())
         throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
+      status = STATUS.OPEN;
+
       configuration.load(iProperties);
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
@@ -244,7 +246,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       writeCache.startFuzzyCheckpoints();
 
-      status = STATUS.OPEN;
+
     } catch (Exception e) {
       for (OCluster c : clusters) {
         try {
@@ -252,6 +254,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         } catch (IOException e1) {
           OLogManager.instance().error(this, "Cannot close cluster after exception on open");
         }
+      }
+
+      try {
+        doClose(true, false);
+      } catch (RuntimeException re) {
+        OLogManager.instance().error(this, "Error during storage close", e);
       }
 
       status = STATUS.CLOSED;
@@ -288,7 +296,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
       }
 
-      if (!configuration.getContextConfiguration().getContextKeys().contains(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey())) {
+      if (!configuration.getContextConfiguration().getContextKeys()
+          .contains(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey())) {
         final String encryption = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD
             .getKey().toLowerCase(configuration.getLocaleInstance())) : null;
 
