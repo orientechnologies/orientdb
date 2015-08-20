@@ -1,6 +1,6 @@
 sudo: false
 language: java
-install: travis_wait mvn install
+install: travis_wait(60) mvn install
 branches:
   only:
   - develop
