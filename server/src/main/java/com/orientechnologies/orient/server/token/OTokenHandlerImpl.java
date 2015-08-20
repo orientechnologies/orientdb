@@ -61,7 +61,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       key = OBase64Utils.decode(configKey, OBase64Utils.URL_SAFE);
 
     if (key == null)
-      key = OSecurityManager.instance().digest(String.valueOf(keyGenerator.nextLong()));
+      key = OSecurityManager.instance().digestSHA256(String.valueOf(keyGenerator.nextLong()));
 
     keyProvider = new DefaultKeyProvider(key);
 

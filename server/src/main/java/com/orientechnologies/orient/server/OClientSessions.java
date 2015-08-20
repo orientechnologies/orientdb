@@ -43,4 +43,8 @@ public class OClientSessions {
   public boolean isActive() {
     return !connections.isEmpty();
   }
+
+  public List<OClientConnection> getConnections() {
+    return connections;
+  }
 }

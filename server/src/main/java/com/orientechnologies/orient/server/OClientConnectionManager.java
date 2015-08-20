@@ -444,4 +444,8 @@ public class OClientConnectionManager {
       }
     }
   }
+
+  public OClientSessions getSession(ONetworkProtocolBinary iNetworkProtocolBinary) {
+    return sessions.get(new OHashToken(iNetworkProtocolBinary.getTokenBytes()));
+  }
 }
