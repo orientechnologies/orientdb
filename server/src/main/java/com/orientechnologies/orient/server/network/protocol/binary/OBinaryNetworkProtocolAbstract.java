@@ -80,6 +80,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected volatile int         requestType;
   protected int                  clientTxId;
   protected OToken               token;
+  protected byte[]               tokenBytes;
   protected boolean              okSent;
   protected OTokenHandler        tokenHandler;
 
@@ -463,4 +464,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return requestType;
   }
 
+  public byte[] getTokenBytes() {
+    return tokenBytes;
+  }
 }

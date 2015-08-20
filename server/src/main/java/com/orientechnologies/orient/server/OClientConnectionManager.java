@@ -19,38 +19,35 @@
  */
 package com.orientechnologies.orient.server;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import com.orientechnologies.orient.server.network.protocol.binary.OBinaryNetworkProtocolAbstract;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class OClientConnectionManager {
-  protected ConcurrentMap<Integer, OClientConnection> connections      = new ConcurrentHashMap<Integer, OClientConnection>();
-  protected AtomicInteger                             connectionSerial = new AtomicInteger(0);
+  protected ConcurrentMap<Integer, OClientConnection>  connections      = new ConcurrentHashMap<Integer, OClientConnection>();
+  protected AtomicInteger                              connectionSerial = new AtomicInteger(0);
+  protected ConcurrentMap<OHashToken, OClientSessions> sessions         = new ConcurrentHashMap<OHashToken, OClientSessions>();
 
   public OClientConnectionManager() {
     final int delay = OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY.getValueAsInteger();
@@ -119,9 +116,42 @@ public class OClientConnectionManager {
     connection = new OClientConnection(connectionSerial.incrementAndGet(), iProtocol);
 
     connections.put(connection.id, connection);
-
     OLogManager.instance().config(this, "Remote client connected from: " + connection);
 
+    return connection;
+  }
+
+  /**
+   * Create a connection.
+   *
+   * @param iProtocol
+   *          protocol which will be used by connection
+   * @return new connection
+   * @throws IOException
+   */
+  public OClientConnection connect(final ONetworkProtocol iProtocol, final OClientConnection connection, final byte[] tokenBytes,
+      final OToken token) throws IOException {
+
+    OClientSessions session = new OClientSessions(tokenBytes, token);
+    sessions.put(new OHashToken(tokenBytes), session);
+    session.addConnection(connection);
+    OLogManager.instance().config(this, "Remote client connected from: " + connection);
+
+    return connection;
+  }
+
+  public OClientConnection reConnect(final ONetworkProtocol iProtocol, final byte[] tokenBytes, final OToken token)
+      throws IOException {
+    OClientSessions sess = sessions.get(new OHashToken(tokenBytes));
+    if (sess == null) {
+      // todo : fail or reconnect.
+      throw new OException("no session there ?#?#?");
+    }
+    final OClientConnection connection;
+    connection = new OClientConnection(connectionSerial.incrementAndGet(), iProtocol);
+
+    connections.put(connection.id, connection);
+    sess.addConnection(connection);
     return connection;
   }
 
@@ -221,6 +251,7 @@ public class OClientConnectionManager {
     OLogManager.instance().debug(this, "Disconnecting connection with id=%d", iChannelId);
 
     final OClientConnection connection = connections.remove(iChannelId);
+    removeConnectFromSession(connection);
 
     if (connection != null) {
       connection.close();
@@ -242,9 +273,25 @@ public class OClientConnectionManager {
     return false;
   }
 
+  private void removeConnectFromSession(OClientConnection connection) {
+    if (connection.getProtocol() instanceof OBinaryNetworkProtocolAbstract) {
+      OBinaryNetworkProtocolAbstract proto = (OBinaryNetworkProtocolAbstract) connection.getProtocol();
+      byte[] tokenBytes = proto.getTokenBytes();
+      OHashToken hashToken = new OHashToken(tokenBytes);
+      OClientSessions sess = sessions.get(hashToken);
+      if (sess != null) {
+        sess.removeConnection(connection);
+        if (!sess.isActive()) {
+          sessions.remove(hashToken);
+        }
+      }
+    }
+  }
+
   public void disconnect(final OClientConnection iConnection) {
     OLogManager.instance().debug(this, "Disconnecting connection %s...", iConnection);
 
+    removeConnectFromSession(iConnection);
     iConnection.close();
 
     int totalRemoved = 0;

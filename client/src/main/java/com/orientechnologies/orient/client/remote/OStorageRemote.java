@@ -175,8 +175,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public byte[] getSessionToken() {
-    // final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
-    // return instance != null ? instance.get().token : null;
     return token;
   }
 

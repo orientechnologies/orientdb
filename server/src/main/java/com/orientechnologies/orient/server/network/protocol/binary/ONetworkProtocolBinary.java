@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -181,7 +183,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
     } else {
       if (requestType != OChannelBinaryProtocol.REQUEST_CONNECT && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
-        byte[] tokenBytes = channel.readBytes();
+        tokenBytes = channel.readBytes();
         try {
           this.token = tokenHandler.parseBinaryToken(tokenBytes);
         } catch (Exception e) {
@@ -198,7 +200,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             throw new OSecurityException("The token provided is expired");
           }
           if (requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN && clientTxId < 0)
-            connection = server.getClientConnectionManager().connect(this);
+            connection = server.getClientConnectionManager().reConnect(this, tokenBytes, token);
           else
             connection = new OClientConnection(clientTxId, this);
           connection.data = tokenHandler.getProtocolDataFromToken(token);
@@ -772,8 +774,18 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final String user = channel.readString();
     final String passwd = channel.readString();
-
     connection.database = (ODatabaseDocumentTx) server.openDatabase(dbURL, user, passwd, connection.data);
+
+    byte[] token = tokenHandler.getSignedBinaryToken(connection.database, connection.database.getUser(), connection.data);
+
+    if (Boolean.TRUE.equals(tokenBased)) {
+      // TODO: do not use the parse split getSignedBinaryToken in two methods.
+      try {
+        getServer().getClientConnectionManager().connect(this, connection, token, tokenHandler.parseBinaryToken(token));
+      } catch (Exception e) {
+        throw new OException(e);
+      }
+    }
 
     if (connection.database.getStorage() instanceof OStorageProxy && !loadUserFromSchema(user, passwd)) {
       sendErrorOrDropConnection(clientTxId, new OSecurityAccessException(connection.database.getName(),
@@ -786,7 +798,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.writeInt(connection.id);
         if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
           if (Boolean.TRUE.equals(tokenBased)) {
-            byte[] token = tokenHandler.getSignedBinaryToken(connection.database, connection.database.getUser(), connection.data);
+
             channel.writeBytes(token);
           } else
             channel.writeBytes(OCommonConst.EMPTY_BYTE_ARRAY);
