@@ -265,13 +265,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           // / NO NODE TO REPLICATE
           return null;
 
-          if (nodeClusterMap.size() == 1 && nodeClusterMap.keySet().iterator().next().equals(localNodeName)) {
-            // LOCAL NODE, AVOID TO DISTRIBUTE IT
-            // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
-            result = wrapped.command(iCommand);
-
-            results = new HashMap<String, Object>(1);
-            results.put(localNodeName, result);
+        result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
 
         dManager.propagateSchemaChanges(ODatabaseRecordThreadLocal.INSTANCE.get());
 
@@ -302,18 +296,20 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               maxReadQuorum = Math.max(maxReadQuorum, dbCfg.getReadQuorum(cl));
           }
 
-          if (executeLocally(localNodeName, dbCfg, exec, involvedClusters, nodes))
-            // LOCAL NODE, AVOID TO DISTRIBUTE IT
-            // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
-            return wrapped.command(iCommand);
+          if (nodes.size() == 1 && nodes.iterator().next().equals(dManager.getLocalNodeName()) && maxReadQuorum <= 1)
+            executeLocally = true;
 
         } else if (nodes.size() == 1 && nodes.iterator().next().equals(dManager.getLocalNodeName()))
           executeLocally = true;
 
         if (executeLocally)
           // LOCAL NODE, AVOID TO DISTRIBUTE IT
-          // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
-          return wrapped.command(iCommand);
+          return ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+            @Override
+            public Object call() throws Exception {
+              return wrapped.command(iCommand);
+            }
+          });
 
         // TODO: OPTIMIZE FILTERING BY CHANGING TARGET PER CLUSTER INSTEAD OF LEAVING CLASS
         result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
