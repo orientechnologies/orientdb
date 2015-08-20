@@ -447,6 +447,19 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
+  public void testUnwindOrder() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest order by coll unwind coll")).execute();
+
+    assertEquals(qResult.size(), 4);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+      assertFalse(doc.getIdentity().isPersistent());
+    }
+  }
+
+  @Test
   public void testUnwindSkip() {
     List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll skip 1")).execute();
 

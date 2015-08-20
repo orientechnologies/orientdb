@@ -14,7 +14,8 @@ import static org.testng.Assert.*;
 public class OSelectStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
-    return checkSyntax(query, true);
+    SimpleNode result = checkSyntax(query, true);
+    return checkSyntax(result.toString(), true);
   }
 
   protected SimpleNode checkWrongSyntax(String query) {
@@ -564,6 +565,14 @@ public class OSelectStatementTest {
   public void testReturn() {
     checkRightSyntax("select from ouser timeout 1 exception");
     checkRightSyntax("select from ouser timeout 1 return");
+
+  }
+
+
+  @Test
+  public void testDefined() {
+    checkRightSyntax("select from foo where bar is defined");
+    checkRightSyntax("select from foo where bar is not defined");
 
   }
 

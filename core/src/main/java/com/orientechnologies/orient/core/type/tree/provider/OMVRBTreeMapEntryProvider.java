@@ -292,7 +292,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
         fromStreamUsingBinaryStreamSerializer(iStream);
       return this;
     } catch (IOException e) {
-      throw new OSerializationException("Can not unmarshall tree node with id ", e);
+      throw new OSerializationException("Cannot unmarshall tree node with id ", e);
     } finally {
       PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.entry.fromStream"), "Deserialize a MVRBTree entry", timer);
     }

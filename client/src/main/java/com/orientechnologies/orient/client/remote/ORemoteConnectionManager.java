@@ -127,13 +127,13 @@ public class ORemoteConnectionManager implements OChannelListener {
     try {
       conn.unlock();
     } catch (Exception e) {
-      OLogManager.instance().debug(this, "Can not unlock connection lock", e);
+      OLogManager.instance().debug(this, "Cannot unlock connection lock", e);
     }
 
     try {
       conn.close();
     } catch (Exception e) {
-      OLogManager.instance().debug(this, "Can not close connection", e);
+      OLogManager.instance().debug(this, "Cannot close connection", e);
     }
 
     final OResourcePool<String, OChannelBinaryAsynchClient> pool = connections.get(conn.getServerURL());
@@ -200,7 +200,7 @@ public class ORemoteConnectionManager implements OChannelListener {
         c.unregisterListener(this);
         c.close();
       } catch (Exception e) {
-        OLogManager.instance().debug(this, "Can not close binary channel", e);
+        OLogManager.instance().debug(this, "Cannot close binary channel", e);
       }
     pool.close();
   }

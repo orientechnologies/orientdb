@@ -19,16 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -43,6 +33,16 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedStorage;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Ask for synchronization of database from a remote node.
@@ -81,6 +81,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
       final Lock lock = iManager.getLock("sync." + databaseName);
       if (lock.tryLock()) {
         try {
+
           final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYDB + databaseName);
           if (lastDeployment != null && lastDeployment.longValue() == random) {
             // SKIP IT
@@ -146,7 +147,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
                       "backup of database '%s' completed. lastOperationId=%d...", databaseName, lastOperationId.get());
 
                 } catch (IOException e) {
-                  OLogManager.instance().error(this, "Cannot execute backup of database %s for deploy database", e, databaseName);
+                  OLogManager.instance().error(this, "Cannot execute backup of database '%s' for deploy database", e, databaseName);
                 } finally {
                   try {
                     fileOutputStream.close();
@@ -164,13 +165,16 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
             // RECORD LAST BACKUP TO BE REUSED IN CASE ANOTHER NODE ASK FOR THE SAME IN SHORT TIME WHILE THE DB IS NOT UPDATED
             ((ODistributedStorage) database.getStorage()).setLastValidBackup(backupFile);
-          } else
+
+            // WAIT UNTIL THE lastOperationId IS SET
+            while (lastOperationId.get() < 0) {
+              Thread.sleep(100);
+            }
+          } else {
+            lastOperationId.set(database.getStorage().getLastOperationId());
+
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                 "reusing last backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
-
-          // WAIT UNTIL THE lastOperationId IS SET
-          while (lastOperationId.get() < 0) {
-            Thread.sleep(100);
           }
 
           final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), backupFile, 0,

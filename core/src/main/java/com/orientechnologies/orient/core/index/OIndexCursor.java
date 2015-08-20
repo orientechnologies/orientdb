@@ -34,7 +34,7 @@ import java.util.Set;
  * 
  * Cursor is created as result of index query method such as
  * {@link com.orientechnologies.orient.core.index.OIndex#iterateEntriesBetween(Object, boolean, Object, boolean, boolean)} cursor
- * instance can not be used at several threads simultaneously.
+ * instance cannot be used at several threads simultaneously.
  * 
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 4/4/14

@@ -586,7 +586,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   private void doCommit() {
     if (status == TXSTATUS.ROLLED_BACK || status == TXSTATUS.ROLLBACKING)
-      throw new ORollbackException("Given transaction was rolled back and can not be used.");
+      throw new ORollbackException("Given transaction was rolled back and cannot be used.");
 
     status = TXSTATUS.COMMITTING;
 
