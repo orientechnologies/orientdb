@@ -594,6 +594,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       timeout();
 
     } catch (Throwable t) {
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Error executing request", t);
       if (request.httpMethod != null && request.url != null) {
         try {
           sendTextContent(505, "Error on executing of " + request.httpMethod + " for the resource: " + request.url, null,
