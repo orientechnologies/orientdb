@@ -419,8 +419,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
       if (name.getAllIndexes().isEmpty())
         userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     }
-    if (!userClass.existsProperty("password"))
-      ((OClassImpl) userClass).createProperty("password", OType.STRING, (OType) null, checkData).setMandatory(true)
+    if (!userClass.existsProperty(OUser.PASSWORD_FIELD))
+      ((OClassImpl) userClass).createProperty(OUser.PASSWORD_FIELD, OType.STRING, (OType) null, checkData).setMandatory(true)
           .setNotNull(true);
     if (!userClass.existsProperty("roles"))
       ((OClassImpl) userClass).createProperty("roles", OType.LINKSET, roleClass, checkData);

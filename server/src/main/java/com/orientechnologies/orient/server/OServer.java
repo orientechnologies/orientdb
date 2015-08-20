@@ -613,15 +613,7 @@ public class OServer {
 
     if (user != null && user.password != null) {
 
-      final String passwordToMatch;
-      if (user.password.startsWith(OSecurityManager.ALGORITHM_PREFIX) && !iPassword.startsWith(OSecurityManager.ALGORITHM_PREFIX))
-        // HASH PASSWD
-        passwordToMatch = OSecurityManager.instance().digest2String(iPassword, true);
-      else
-        // USE PASSWD IN CLEAR
-        passwordToMatch = iPassword;
-
-      if (user.password.equals(passwordToMatch)) {
+      if (OSecurityManager.instance().checkPassword(iPassword, user.password)) {
         if (user.resources.equals("*"))
           // ACCESS TO ALL
           return true;
@@ -752,10 +744,10 @@ public class OServer {
   public void addUser(final String iName, String iPassword, final String iPermissions) throws IOException {
     if (iPassword == null)
       // AUTO GENERATE PASSWORD
-      iPassword = OSecurityManager.instance().digest2String(String.valueOf(random.nextLong()), false);
+      iPassword = OSecurityManager.instance().createSHA256(String.valueOf(random.nextLong()));
 
     // HASH THE PASSWORD
-    iPassword = OSecurityManager.instance().digest2String(iPassword, true);
+    iPassword = OSecurityManager.instance().createHash(iPassword, OSecurityManager.PBKDF2_ALGORITHM, true);
 
     serverCfg.setUser(iName, iPassword, iPermissions);
     serverCfg.saveConfiguration();

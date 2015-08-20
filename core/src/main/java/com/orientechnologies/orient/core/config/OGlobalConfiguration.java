@@ -316,6 +316,11 @@ public enum OGlobalConfiguration {
   JNA_DISABLE_USE_SYSTEM_LIBRARY("jna.disable.system.library",
       "This property disable to using JNA installed in your system. And use JNA bundled with database", boolean.class, true),
 
+  // SECURITY
+  SECURITY_USER_PASSWORD_SALT_ITERATIONS("security.userPasswordSaltIterations",
+      "Number of iterations to generate the salt or user password. Changing this setting does not affect stored passwords",
+      Integer.class, 1000),
+
   // NETWORK
   NETWORK_MAX_CONCURRENT_SESSIONS("network.maxConcurrentSessions", "Maximum number of concurrent sessions", Integer.class, 1000,
       true),
