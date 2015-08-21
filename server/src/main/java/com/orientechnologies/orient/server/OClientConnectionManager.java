@@ -60,15 +60,12 @@ public class OClientConnectionManager {
       }
     }, delay, delay);
 
-    Orient
-        .instance()
-        .getProfiler()
-        .registerHookValue("server.connections.actives", "Number of active network connections", METRIC_TYPE.COUNTER,
-            new OProfilerHookValue() {
-              public Object getValue() {
-                return connections.size();
-              }
-            });
+    Orient.instance().getProfiler().registerHookValue("server.connections.actives", "Number of active network connections",
+        METRIC_TYPE.COUNTER, new OProfilerHookValue() {
+          public Object getValue() {
+            return connections.size();
+          }
+        });
   }
 
   public void cleanExpiredConnections() {
@@ -103,7 +100,7 @@ public class OClientConnectionManager {
 
   /**
    * Create a connection.
-   * 
+   *
    * @param iProtocol
    *          protocol which will be used by connection
    * @return new connection
@@ -132,8 +129,11 @@ public class OClientConnectionManager {
   public OClientConnection connect(final ONetworkProtocol iProtocol, final OClientConnection connection, final byte[] tokenBytes,
       final OToken token) throws IOException {
 
-    OClientSessions session = new OClientSessions(tokenBytes, token);
-    sessions.put(new OHashToken(tokenBytes), session);
+    OClientSessions session;
+    synchronized (sessions) {
+      session = new OClientSessions(tokenBytes, token);
+      sessions.put(new OHashToken(tokenBytes), session);
+    }
     session.addConnection(connection);
     OLogManager.instance().config(this, "Remote client connected from: " + connection);
 
@@ -142,22 +142,28 @@ public class OClientConnectionManager {
 
   public OClientConnection reConnect(final ONetworkProtocol iProtocol, final byte[] tokenBytes, final OToken token)
       throws IOException {
-    OClientSessions sess = sessions.get(new OHashToken(tokenBytes));
-    if (sess == null) {
-      // todo : fail or reconnect.
-      throw new OException("no session there ?#?#?");
-    }
+
     final OClientConnection connection;
     connection = new OClientConnection(connectionSerial.incrementAndGet(), iProtocol);
 
     connections.put(connection.id, connection);
+    OHashToken key = new OHashToken(tokenBytes);
+    OClientSessions sess;
+    synchronized (sessions) {
+      sess = sessions.get(key);
+      if (sess == null) {
+        // RECONNECT
+        sess = new OClientSessions(tokenBytes, token);
+        sessions.put(new OHashToken(tokenBytes), sess);
+      }
+    }
     sess.addConnection(connection);
     return connection;
   }
 
   /**
    * Retrieves the connection by id.
-   * 
+   *
    * @param iChannelId
    *          id of connection
    * @return The connection if any, otherwise null
@@ -173,7 +179,7 @@ public class OClientConnectionManager {
 
   /**
    * Retrieves the connection by address/port.
-   * 
+   *
    * @param iAddress
    *          The address as string in the format address as format <ip>:<port>
    * @return The connection if any, otherwise null
@@ -188,7 +194,7 @@ public class OClientConnectionManager {
 
   /**
    * Disconnects and kill the associated network manager.
-   * 
+   *
    * @param iChannelId
    *          id of connection
    */
@@ -198,7 +204,7 @@ public class OClientConnectionManager {
 
   /**
    * Disconnects and kill the associated network manager.
-   * 
+   *
    * @param connection
    *          connection to kill
    */
@@ -226,7 +232,7 @@ public class OClientConnectionManager {
 
   /**
    * Interrupt the associated network manager.
-   * 
+   *
    * @param iChannelId
    *          id of connection
    */
@@ -242,7 +248,7 @@ public class OClientConnectionManager {
 
   /**
    * Disconnects a client connections
-   * 
+   *
    * @param iChannelId
    *          id of connection
    * @return true if was last one, otherwise false
@@ -259,8 +265,8 @@ public class OClientConnectionManager {
       // CHECK IF THERE ARE OTHER CONNECTIONS
       for (Entry<Integer, OClientConnection> entry : connections.entrySet()) {
         if (entry.getValue().getProtocol().equals(connection.getProtocol())) {
-          OLogManager.instance()
-              .debug(this, "Disconnected connection with id=%d but are present other active channels", iChannelId);
+          OLogManager.instance().debug(this, "Disconnected connection with id=%d but are present other active channels",
+              iChannelId);
           return false;
         }
       }
@@ -278,11 +284,13 @@ public class OClientConnectionManager {
       OBinaryNetworkProtocolAbstract proto = (OBinaryNetworkProtocolAbstract) connection.getProtocol();
       byte[] tokenBytes = proto.getTokenBytes();
       OHashToken hashToken = new OHashToken(tokenBytes);
-      OClientSessions sess = sessions.get(hashToken);
-      if (sess != null) {
-        sess.removeConnection(connection);
-        if (!sess.isActive()) {
-          sessions.remove(hashToken);
+      synchronized (sessions) {
+        OClientSessions sess = sessions.get(hashToken);
+        if (sess != null) {
+          sess.removeConnection(connection);
+          if (!sess.isActive()) {
+            sessions.remove(hashToken);
+          }
         }
       }
     }
@@ -446,6 +454,9 @@ public class OClientConnectionManager {
   }
 
   public OClientSessions getSession(ONetworkProtocolBinary iNetworkProtocolBinary) {
-    return sessions.get(new OHashToken(iNetworkProtocolBinary.getTokenBytes()));
+    OHashToken key = new OHashToken(iNetworkProtocolBinary.getTokenBytes());
+    synchronized (sessions) {
+      return sessions.get(key);
+    }
   }
 }
