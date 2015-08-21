@@ -24,6 +24,7 @@ import static org.testng.AssertJUnit.assertTrue;
  */
 @Test(groups = "db")
 public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
+  private static final String serverPort = System.getProperty("orient.server.port", "2424");
 
   @Parameters(value = "url")
   public RemoteProtocolCommandsTest(@Optional String url) {
@@ -32,7 +33,8 @@ public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
 
   @Test
   public void testConnect() throws Exception {
-    final OServerAdmin admin = new OServerAdmin("remote:localhost:2424").connect("root", ODatabaseHelper.getServerRootPassword());
+    final OServerAdmin admin = new OServerAdmin("remote:localhost:" + serverPort).connect("root",
+        ODatabaseHelper.getServerRootPassword());
     admin.close();
   }
 

@@ -40,7 +40,12 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -285,13 +290,16 @@ public class OSQLFilterCondition {
         return new Date(new Double(stringValue).longValue());
       } catch (Exception pe2) {
         throw new OQueryParsingException("Error on conversion of date '" + stringValue + "' using the format: "
-            + formatter.toPattern());
+            + formatter.toPattern(), pe2);
       }
     }
   }
 
   protected Object evaluate(OIdentifiable iCurrentRecord, final ODocument iCurrentResult, final Object iValue,
       final OCommandContext iContext) {
+    if (iValue == null)
+      return null;
+
     if (iCurrentRecord != null && iCurrentRecord.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
       try {
         iCurrentRecord = iCurrentRecord.getRecord().load();
@@ -301,19 +309,11 @@ public class OSQLFilterCondition {
     }
 
     if (iValue instanceof OSQLFilterItem) {
-//      if (iCurrentResult != null) {
-//        final Object v = ((OSQLFilterItem) iValue).getValue(iCurrentResult, iCurrentResult, iContext);
-//        if (v != null) {
-//          return v;
-//        }
-//      }
-
       return ((OSQLFilterItem) iValue).getValue(iCurrentRecord, iCurrentResult, iContext);
     }
 
-    if (iValue instanceof OSQLFilterCondition)
-    // NESTED CONDITION: EVALUATE IT RECURSIVELY
-    {
+    if (iValue instanceof OSQLFilterCondition) {
+      // NESTED CONDITION: EVALUATE IT RECURSIVELY
       return ((OSQLFilterCondition) iValue).evaluate(iCurrentRecord, iCurrentResult, iContext);
     }
 
@@ -323,9 +323,9 @@ public class OSQLFilterCondition {
       return f.execute(iCurrentRecord, iCurrentRecord, iCurrentResult, iContext);
     }
 
-    final Iterable<?> multiValue = OMultiValue.getMultiValueIterable(iValue);
+    if (OMultiValue.isMultiValue(iValue)) {
+      final Iterable<?> multiValue = OMultiValue.getMultiValueIterable(iValue);
 
-    if (multiValue != null) {
       // MULTI VALUE: RETURN A COPY
       final ArrayList<Object> result = new ArrayList<Object>(OMultiValue.getSize(iValue));
 

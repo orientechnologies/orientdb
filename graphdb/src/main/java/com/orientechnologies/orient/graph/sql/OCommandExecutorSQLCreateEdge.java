@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -37,11 +38,11 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -115,7 +116,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
 
       if (className == null) {
         // ASSIGN DEFAULT CLASS
-        className = "E";
+        className = OrientEdgeType.CLASS_NAME;
         clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
       }
 
@@ -161,8 +162,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
 
             if (fields != null)
               // EVALUATE FIELDS
-              for (Iterator<OPair<String, Object>> it = fields.iterator(); it.hasNext();) {
-                final OPair<String, Object> f = it.next();
+              for (final OPair<String, Object> f : fields) {
                 if (f.getValue() instanceof OSQLFunctionRuntime)
                   f.setValue(((OSQLFunctionRuntime) f.getValue()).getValue(to, null, context));
               }
@@ -202,6 +202,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
                   try {
                     Thread.sleep(wait);
                   } catch (InterruptedException e1) {
+                    OLogManager.instance().error(this, "Wait was interrupted.");
                   }
 
                 // RELOAD LAST VERSION

@@ -21,7 +21,7 @@ package com.orientechnologies.orient.core.type.tree;
 
 import com.orientechnologies.common.collection.OLimitedMap;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -64,7 +64,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   protected float                                          optimizeEntryPointsFactor;
   private final TreeMap<K, OMVRBTreeEntryPersistent<K, V>> entryPoints;
   private final Map<ORID, OMVRBTreeEntryPersistent<K, V>>  cache;
-  protected static final OProfilerMBean                    PROFILER           = Orient.instance().getProfiler();
+  protected static final OProfiler                         PROFILER           = Orient.instance().getProfiler();
 
   private static final int                                 OPTIMIZE_MAX_RETRY = 10;
 

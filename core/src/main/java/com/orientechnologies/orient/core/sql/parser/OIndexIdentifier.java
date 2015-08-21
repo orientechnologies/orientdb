@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OIndexIdentifier extends SimpleNode {
 
   public enum Type {
@@ -24,26 +26,23 @@ public class OIndexIdentifier extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder builder = new StringBuilder();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     switch (type) {
     case INDEX:
-      builder.append("index");
+      builder.append("INDEX");
       break;
     case VALUES:
-      builder.append("indexvalues");
+      builder.append("INDEXVALUES");
       break;
     case VALUESASC:
-      builder.append("indexvaluesasc");
+      builder.append("INDEXVALUESASC");
       break;
     case VALUESDESC:
-      builder.append("indexvaluesdesc");
+      builder.append("INDEXVALUESDESC");
       break;
     }
     builder.append(":");
     builder.append(indexName);
-    return builder.toString();
   }
 }
 /* JavaCC - OriginalChecksum=025f134fd4b27b84210738cdb6dd027c (do not edit this line) */

@@ -18,6 +18,7 @@ import java.util.Map;
  * @since 2/6/14
  */
 public abstract class OrientGraphRemoteTest extends OrientGraphTest {
+  private static final String             serverPort     = System.getProperty("orient.server.port", "3080");
   private static OServer                  server;
   private static String                   oldOrientDBHome;
 
@@ -61,7 +62,7 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
   }
 
   public Graph generateGraph(final String graphDirectoryName) {
-    final String url = "remote:localhost:3080/" + graphDirectoryName;
+    final String url = "remote:localhost:" + serverPort + "/" + graphDirectoryName;
     OrientGraph graph = currentGraphs.get(url);
 
     if (graph != null) {
@@ -104,7 +105,7 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     // this is necessary on windows systems: deleting the directory is not enough because it takes a
     // while to unlock files
     try {
-      final String url = "remote:localhost:3080/" + graphDirectoryName;
+      final String url = "remote:localhost:" + serverPort + "/" + graphDirectoryName;
       final OrientGraph graph = currentGraphs.get(url);
       if (graph != null)
         graph.shutdown();

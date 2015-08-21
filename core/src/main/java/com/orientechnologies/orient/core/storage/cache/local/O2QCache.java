@@ -30,16 +30,27 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+
 import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.*;
+import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-
-import javax.management.*;
 
 /**
  * @author Andrey Lomakin
@@ -309,6 +320,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       fileLock = fileLockManager.acquireExclusiveLock(fileId);
       try {
         final long filledUpTo = writeCache.getFilledUpTo(fileId);
+        assert filledUpTo >= 0;
         cacheResult = doLoad(fileId, filledUpTo, false, true, writeCache);
       } finally {
         fileLockManager.releaseLock(fileLock);
@@ -430,7 +442,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
         } else
           throw new OStorageException("Page with index " + pageIndex + " for file with id " + fileId
-              + " can not be freed because it is used.");
+              + " cannot be freed because it is used.");
       } else
         throw new OStorageException("Page with index " + pageIndex + " was  not found in cache for file with id " + fileId);
     }
@@ -515,13 +527,13 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
         server.registerMBean(this, mbeanName);
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during registration of read cache MBean.", e);
+        throw new OStorageException("Error during registration of read cache MBean", e);
       } catch (InstanceAlreadyExistsException e) {
-        throw new OStorageException("Error during registration of read cache MBean.", e);
+        throw new OStorageException("Error during registration of read cache MBean", e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during registration of read cache MBean.", e);
+        throw new OStorageException("Error during registration of read cache MBean", e);
       } catch (NotCompliantMBeanException e) {
-        throw new OStorageException("Error during registration of read cache MBean.", e);
+        throw new OStorageException("Error during registration of read cache MBean", e);
       }
     }
   }
@@ -533,11 +545,11 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
         server.unregisterMBean(mbeanName);
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during unregistration of read cache MBean.", e);
+        throw new OStorageException("Error during unregistration of read cache MBean", e);
       } catch (InstanceNotFoundException e) {
-        throw new OStorageException("Error during unregistration of read cache MBean.", e);
+        throw new OStorageException("Error during unregistration of read cache MBean", e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during unregistration of read cache MBean.", e);
+        throw new OStorageException("Error during unregistration of read cache MBean", e);
       }
     }
   }
@@ -590,9 +602,6 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     }
 
     cacheEntry = a1in.get(fileId, pageIndex);
-    if (cacheEntry != null) {
-
-    }
     return cacheEntry;
   }
 
@@ -606,7 +615,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
       else
         throw new OStorageException("Page with index " + cacheEntry.getPageIndex() + " for file id " + cacheEntry.getFileId()
-            + " is used and can not be removed");
+            + " is used and cannot be removed");
 
     for (OCacheEntry cacheEntry : a1in)
       if (cacheEntry.getUsagesCount() == 0) {
@@ -617,7 +626,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
       else
         throw new OStorageException("Page with index " + cacheEntry.getPageIndex() + " for file id " + cacheEntry.getFileId()
-            + " is used and can not be removed");
+            + " is used and cannot be removed");
 
     a1out.clear();
     am.clear();
@@ -637,7 +646,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         pinnedEntry.clearCachePointer();
       } else
         throw new OStorageException("Page with index " + pinnedEntry.getPageIndex() + " for file with id "
-            + pinnedEntry.getFileId() + "can not be freed because it is used.");
+            + pinnedEntry.getFileId() + "cannot be freed because it is used.");
     }
 
     pinnedPages.clear();
@@ -810,6 +819,9 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
               final OCachePointer cachePointer = removedFromAInEntry.getCachePointer();
               cachePointer.decrementReadersReferrer();
               removedFromAInEntry.clearCachePointer();
+
+              if (OLogManager.instance().isDebugEnabled())
+                OLogManager.instance().debug(this, "Moving page in disk cache from a1in to a1out area: %s", removedFromAInEntry);
 
               a1out.putToMRU(removedFromAInEntry);
             } finally {

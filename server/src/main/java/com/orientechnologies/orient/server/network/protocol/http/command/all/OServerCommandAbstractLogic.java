@@ -71,7 +71,7 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
           final ODocument params = new ODocument().fromJSON(iRequest.content);
           functionResult = f.executeInContext(context, params.toMap());
         } catch (Exception e) {
-          throw new OCommandScriptException("Error on parsing parameters from request body");
+          throw new OCommandScriptException("Error on parsing parameters from request body", e);
         }
       } else
         functionResult = f.executeInContext(context, args);

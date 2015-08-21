@@ -47,7 +47,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
  * To support of "atomic operation" concept following should be done:
  * <ol>
  * <li>Call {@link #startAtomicOperation()} method.</li>
- * <li>Call {@link #endAtomicOperation(boolean)} method when atomic operation completes, passed in parameter should be
+ * <li>Call {@link #endAtomicOperation(boolean, Exception)} method when atomic operation completes, passed in parameter should be
  * <code>false</code> if atomic operation completes with success and <code>true</code> if there were some exceptions and it is
  * needed to rollback given operation.</li>
  * </ol>
@@ -103,12 +103,12 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     super.acquireExclusiveLock();
   }
 
-  protected void endAtomicOperation(boolean rollback) throws IOException {
-    atomicOperationsManager.endAtomicOperation(rollback);
+  protected void endAtomicOperation(boolean rollback, Exception e) throws IOException {
+    atomicOperationsManager.endAtomicOperation(rollback, e);
   }
 
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this);
+    return atomicOperationsManager.startAtomicOperation(this, false);
   }
 
   protected OWALChangesTree getChangesTree(OAtomicOperation atomicOperation, OCacheEntry entry) {

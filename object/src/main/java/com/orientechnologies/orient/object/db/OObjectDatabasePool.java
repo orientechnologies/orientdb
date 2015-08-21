@@ -21,6 +21,10 @@ package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 
+/**
+ * @deprecated Please use com.orientechnologies.orient.core.db.OPartitionedDatabasePool instead.
+ */
+@Deprecated
 public class OObjectDatabasePool extends ODatabasePoolBase<OObjectDatabaseTx> {
   private static OObjectDatabasePool globalInstance = new OObjectDatabasePool();
 

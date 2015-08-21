@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -37,6 +34,15 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * SQL query implementation.
@@ -116,8 +122,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
 
     buffer.setUtf8(text); // TEXT AS STRING
     buffer.set(limit); // LIMIT AS INTEGER
-    buffer.setUtf8(fetchPlan != null ? fetchPlan : ""); // FETCH PLAN IN FORM OF STRING (to know more goto:
-    // http://code.google.com/p/orient/wiki/FetchingStrategies)
+    buffer.setUtf8(fetchPlan != null ? fetchPlan : "");
 
     buffer.set(serializeQueryParameters(parameters));
 
@@ -170,7 +175,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
     for (Entry<Object, Object> entry : params.entrySet()) {
       final Object value = entry.getValue();
 
-      if (value instanceof Set<?> && ((Set<?>) value).iterator().next() instanceof ORecord) {
+      if (value instanceof Set<?> && !((Set<?>) value).isEmpty() && ((Set<?>) value).iterator().next() instanceof ORecord) {
         // CONVERT RECORDS AS RIDS
         final Set<ORID> newSet = new HashSet<ORID>();
         for (ORecord rec : (Set<ORecord>) value) {
@@ -178,7 +183,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
         }
         newParams.put(entry.getKey(), newSet);
 
-      } else if (value instanceof List<?> && ((List<?>) value).get(0) instanceof ORecord) {
+      } else if (value instanceof List<?> && !((List<?>) value).isEmpty() && ((List<?>) value).get(0) instanceof ORecord) {
         // CONVERT RECORDS AS RIDS
         final List<ORID> newList = new ArrayList<ORID>();
         for (ORecord rec : (List<ORecord>) value) {
@@ -186,17 +191,18 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
         }
         newParams.put(entry.getKey(), newList);
 
-      } else if (value instanceof Map<?, ?> && ((Map<?, ?>) value).values().iterator().next() instanceof ORecord) {
+      } else if (value instanceof Map<?, ?> && !((Map<?, ?>) value).isEmpty()
+          && ((Map<?, ?>) value).values().iterator().next() instanceof ORecord) {
         // CONVERT RECORDS AS RIDS
         final Map<Object, ORID> newMap = new HashMap<Object, ORID>();
         for (Entry<?, ORecord> mapEntry : ((Map<?, ORecord>) value).entrySet()) {
           newMap.put(mapEntry.getKey(), mapEntry.getValue().getIdentity());
         }
         newParams.put(entry.getKey(), newMap);
-      } else if (entry.getValue() instanceof ORecord) {
-        newParams.put(entry.getKey(), ((OIdentifiable) entry.getValue()).getIdentity());
+      } else if (value instanceof OIdentifiable) {
+        newParams.put(entry.getKey(), ((OIdentifiable) value).getIdentity());
       } else
-        newParams.put(entry.getKey(), entry.getValue());
+        newParams.put(entry.getKey(), value);
     }
 
     return newParams;

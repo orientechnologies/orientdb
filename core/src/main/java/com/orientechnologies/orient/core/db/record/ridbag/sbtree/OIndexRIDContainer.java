@@ -80,7 +80,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying();
     try {
-      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName);
+      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
       final OReadCache readCache = storage.getReadCache();
       final OWriteCache writeCache = storage.getWriteCache();
 
@@ -97,14 +97,14 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
         else
           fileId = atomicOperation.addFile(fileName);
 
-        storage.getAtomicOperationsManager().endAtomicOperation(false);
+        storage.getAtomicOperationsManager().endAtomicOperation(false, null);
         return fileId;
       }
     } catch (IOException e) {
       try {
-        storage.getAtomicOperationsManager().endAtomicOperation(true);
+        storage.getAtomicOperationsManager().endAtomicOperation(true, e);
       } catch (IOException ioe) {
-        throw new OSBTreeException("Error of rollback of atomic operation");
+        throw new OSBTreeException("Error of rollback of atomic operation", ioe);
       }
 
       throw new OSBTreeException("Error creation of sbtree with name " + fileName, e);

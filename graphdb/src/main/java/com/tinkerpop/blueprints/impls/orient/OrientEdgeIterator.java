@@ -62,7 +62,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
 
     if (rec == null) {
       // SKIP IT
-      OLogManager.instance().warn(this, "Record (%s) is null", rec);
+      OLogManager.instance().warn(this, "Record (%s) is null", iObject);
       return null;
     }
 
@@ -76,7 +76,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     if (!(record instanceof ODocument)) {
       // SKIP IT
       OLogManager.instance().warn(this,
-          "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s, Database : %s .", rec,
+          "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s, Database : %s", rec,
           sourceVertex != null ? sourceVertex.getIdentity() : null, targetVertex != null ? targetVertex.getIdentity() : null,
           record.getDatabase().getURL());
       return null;

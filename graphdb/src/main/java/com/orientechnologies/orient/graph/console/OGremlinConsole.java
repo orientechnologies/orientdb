@@ -20,14 +20,12 @@ import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
-import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.graph.graphml.OGraphMLReader;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
-import com.orientechnologies.orient.graph.migration.OGraphMigration;
 import com.tinkerpop.blueprints.impls.orient.OBonsaiTreeRepair;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
@@ -107,18 +105,18 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
     final String options = fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim() : text;
 
-    if (fileName != null && fileName.endsWith(".graphml")) {
-      message("\nImporting GRAPHML database from " + text + "...");
+    if (fileName != null && (fileName.endsWith(".graphml") || fileName.endsWith(".xml"))) {
+      message("\nImporting GRAPHML database from " + fileName + " with options (" + options + ")...");
 
       try {
         final Map<String, List<String>> opts = parseOptions(options);
 
-        final OrientGraph g = new OrientGraph((com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx) currentDatabase);
+        final OrientGraph g = new OrientGraph(currentDatabase);
         g.setUseLog(false);
         g.setWarnOnForceClosingTx(false);
         new OGraphMLReader(g).setOptions(opts).inputGraph(g, fileName);
         g.commit();
-        commit();
+        currentDatabase.commit();
 
       } catch (ODatabaseImportException e) {
         printError(e);
@@ -144,13 +142,6 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       OBonsaiTreeRepair repairer = new OBonsaiTreeRepair();
       repairer.repairDatabaseRidbags(currentDatabase, this);
     }
-  }
-
-  @ConsoleCommand(description = "Migrates graph from OMVRBTree to ORidBag")
-  public void upgradeGraph() {
-    OGraphMigration migration = new OGraphMigration(getCurrentDatabase(), this);
-    migration.execute();
-    message("Graph has been upgraded.");
   }
 
   @Override

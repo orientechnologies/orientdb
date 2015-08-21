@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly>
+
+    <id>distribution</id>
+
+    <formats>
+        <format>dir</format>
+    </formats>
+
+    <fileSets>
+        <!--
+         | copy benchmarks scripts
+        -->
+        <fileSet>
+            <directory>${basedir}/../server/benchmarks</directory>
+            <outputDirectory>benchmarks</outputDirectory>
+            <excludes>
+                <exclude>*.sh</exclude>
+            </excludes>
+            <filtered>true</filtered>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../server/benchmarks</directory>
+            <outputDirectory>benchmarks</outputDirectory>
+            <includes>
+                <include>*.sh</include>
+            </includes>
+            <fileMode>755</fileMode>
+            <filtered>true</filtered>
+        </fileSet>
+
+        <!--
+         | copy server scripts
+        -->
+        <fileSet>
+            <directory>${basedir}/../server/script</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.bat</include>
+            </includes>
+            <fileMode>644</fileMode>
+            <filtered>true</filtered>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../server/script</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.sh</include>
+            </includes>
+            <fileMode>755</fileMode>
+            <filtered>true</filtered>
+        </fileSet>
+
+        <!--
+         | copy tools scripts
+        -->
+        <fileSet>
+            <directory>${basedir}/../tools/script</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.bat</include>
+            </includes>
+            <fileMode>644</fileMode>
+            <filtered>true</filtered>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../tools/script</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.sh</include>
+            </includes>
+            <fileMode>755</fileMode>
+            <filtered>true</filtered>
+        </fileSet>
+
+        <!--
+         | copy distributed scripts
+        -->
+        <fileSet>
+            <directory>${basedir}/../distributed/script</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.bat</include>
+            </includes>
+            <fileMode>644</fileMode>
+            <filtered>true</filtered>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../distributed/script</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.sh</include>
+            </includes>
+            <fileMode>755</fileMode>
+            <filtered>true</filtered>
+        </fileSet>
+
+        <!--
+         | copy graphdb scripts
+        -->
+        <fileSet>
+            <directory>${basedir}/../graphdb/script</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.bat</include>
+            </includes>
+            <fileMode>644</fileMode>
+            <filtered>true</filtered>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../graphdb/script</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.sh</include>
+            </includes>
+            <fileMode>755</fileMode>
+            <filtered>true</filtered>
+        </fileSet>
+
+        <!--
+         | configurations
+        -->
+        <fileSet>
+            <directory>${basedir}/../server/config</directory>
+            <outputDirectory>config</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../tools/config</directory>
+            <outputDirectory>config</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../distributed/config</directory>
+            <outputDirectory>config</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../graphdb/config</directory>
+            <outputDirectory>config</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../server/config/cert</directory>
+            <outputDirectory>config/cert</outputDirectory>
+        </fileSet>        
+
+        <!--
+         | Plugins
+        -->
+        <fileSet>
+            <directory>${basedir}/../server/plugins</directory>
+            <outputDirectory>plugins</outputDirectory>
+        </fileSet>
+
+        <!--
+         | Web part
+        -->
+        <fileSet>
+            <directory>${basedir}/../server/src/site</directory>
+            <outputDirectory>www</outputDirectory>
+        </fileSet>
+
+        <!--
+         | creates an empty log directory
+        -->
+        <fileSet>
+            <directory>${basedir}/../server/config</directory>
+            <outputDirectory>log</outputDirectory>
+            <excludes>
+                <exclude>*</exclude>
+            </excludes>
+        </fileSet>
+
+        <!--
+         | copy databases directory
+        -->
+        <fileSet>
+            <directory>${basedir}/target/databases</directory>
+            <outputDirectory>databases</outputDirectory>
+        </fileSet>
+    </fileSets>
+
+    <!--
+     | includes legals
+    -->
+    <files>
+        <file>
+            <source>${basedir}/../license.txt</source>
+            <fileMode>444</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/../history.txt</source>
+            <fileMode>444</fileMode>
+        </file>
+        <file>
+            <source>${basedir}/../readme.txt</source>
+            <fileMode>444</fileMode>
+        </file>
+    </files>
+
+    <!--
+     | all artifacts in a /lib dir
+    -->
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>lib</outputDirectory>
+            <includes>
+                <include>*:jar:*</include>
+            </includes>
+            <excludes>
+                <exclude>*:ant:*</exclude>
+                <exclude>*:ant-launcher:*</exclude>
+                <exclude>*:ivy:*</exclude>
+            </excludes>
+        </dependencySet>
+    </dependencySets>
+
+</assembly>

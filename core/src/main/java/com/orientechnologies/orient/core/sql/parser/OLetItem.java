@@ -23,28 +23,17 @@ public class OLetItem extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(varName.toString());
-    result.append(" = ");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    varName.toString(params, builder);
+    builder.append(" = ");
     if (expression != null) {
-      result.append(expression.toString());
+      expression.toString(params, builder);
     } else if (query != null) {
-      result.append("(");
-      result.append(query.toString());
-      result.append(")");
+      builder.append("(");
+      query.toString(params, builder);
+      builder.append(")");
     }
-    return result.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (expression != null) {
-      expression.replaceParameters(params);
-    }
-    if (query != null) {
-      query.replaceParameters(params);
-    }
-  }
 }
 /* JavaCC - OriginalChecksum=bb3cd298d79f50d72f6842e6d6ea4fb2 (do not edit this line) */

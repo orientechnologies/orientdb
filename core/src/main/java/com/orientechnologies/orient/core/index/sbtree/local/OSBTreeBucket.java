@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * @author Andrey Lomakin
@@ -69,6 +70,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
   private final Comparator<? super K> comparator              = ODefaultComparator.INSTANCE;
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OSBTreeBucket(OCacheEntry cacheEntry, boolean isLeaf, OBinarySerializer<K> keySerializer, OType[] keyTypes,
       OBinarySerializer<V> valueSerializer, OWALChangesTree changesTree) throws IOException {
     super(cacheEntry, changesTree);
@@ -92,6 +94,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     setByteValue(VALUE_SERIALIZER_OFFSET, this.valueSerializer.getId());
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OSBTreeBucket(OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer, OType[] keyTypes,
       OBinarySerializer<V> valueSerializer, OWALChangesTree changesTree) {
     super(cacheEntry, changesTree);

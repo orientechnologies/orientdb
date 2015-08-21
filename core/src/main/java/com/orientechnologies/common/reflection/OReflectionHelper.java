@@ -92,11 +92,11 @@ public class OReflectionHelper {
         }
       }
     } catch (NullPointerException x) {
-      throw new ClassNotFoundException(iPackageName + " does not appear to be " + "a valid package (Null pointer exception)");
+      throw new ClassNotFoundException(iPackageName + " does not appear to be " + "a valid package (Null pointer exception)", x);
     } catch (UnsupportedEncodingException encex) {
-      throw new ClassNotFoundException(iPackageName + " does not appear to be " + "a valid package (Unsupported encoding)");
+      throw new ClassNotFoundException(iPackageName + " does not appear to be " + "a valid package (Unsupported encoding)", encex);
     } catch (IOException ioex) {
-      throw new ClassNotFoundException("IOException was thrown when trying " + "to get all resources for " + iPackageName);
+      throw new ClassNotFoundException("IOException was thrown when trying " + "to get all resources for " + iPackageName, ioex);
     }
 
     // For every directory identified capture all the .class files

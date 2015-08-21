@@ -83,8 +83,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   boolean isClosed();
 
-  OSharedResourceAdaptiveExternal getLock();
-
   // CRUD OPERATIONS
   OStorageOperationResult<OPhysicalPosition> createRecord(ORecordId iRecordId, byte[] iContent, ORecordVersion iRecordVersion,
       byte iRecordType, int iMode, ORecordCallback<Long> iCallback);
@@ -191,11 +189,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   void synch();
 
-  int getUsers();
-
-  int addUser();
-
-  int removeUser();
 
   /**
    * Execute the command request and return the result back.

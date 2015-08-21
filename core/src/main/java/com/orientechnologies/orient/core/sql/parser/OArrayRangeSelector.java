@@ -25,35 +25,24 @@ public class OArrayRangeSelector extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (from != null) {
-      result.append(from);
+      builder.append(from);
     } else {
-      result.append(fromSelector.toString());
+      fromSelector.toString(params, builder);
     }
     if (newRange) {
-      result.append("-");
+      builder.append("-");
       // TODO in 3.0 result.append("..");
     } else {
-      result.append("-");
+      builder.append("-");
     }
     if (to != null) {
-      result.append(to);
+      builder.append(to);
     } else {
-      result.append(toSelector.toString());
+      toSelector.toString(params, builder);
     }
-    return result.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (fromSelector != null) {
-      fromSelector.replaceParameters(params);
-    }
-    if (toSelector != null) {
-      toSelector.replaceParameters(params);
-    }
-  }
 }
 /* JavaCC - OriginalChecksum=594a372e31fcbcd3ed962c2260e76468 (do not edit this line) */

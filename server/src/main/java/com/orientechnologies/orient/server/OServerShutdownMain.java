@@ -42,105 +42,110 @@ import com.orientechnologies.common.log.OLogManager;
   * @author Luca Garulli (l.garulli--at--orientechnologies.com)
   *
   */
- public class OServerShutdownMain {
-   public String                           networkAddress;
-   public int[]                            networkPort;
-   public OChannelBinaryAsynchClient       channel;
-   protected OServerConfigurationLoaderXml configurationLoader;
-   protected OServerConfiguration          configuration;
+public class OServerShutdownMain {
+  public String                           networkAddress;
+  public int[]                            networkPort;
+  public OChannelBinaryAsynchClient       channel;
+  protected OServerConfigurationLoaderXml configurationLoader;
+  protected OServerConfiguration          configuration;
 
-   private OContextConfiguration           contextConfig;
-   private String                          rootPassword;
+  private OContextConfiguration           contextConfig;
+  private String                          rootUser;
+  private String                          rootPassword;
 
-   public OServerShutdownMain(final String iServerAddress, final String iServerPorts, final String iRootPassword) {
-     contextConfig = new OContextConfiguration();
+  public OServerShutdownMain(final String iServerAddress, final String iServerPorts,
+                             final String iRootUser, final String iRootPassword) {
+    contextConfig = new OContextConfiguration();
 
-     try {
-       if (iRootPassword == null) {
-         // LOAD SERVER ROOT'S PASSWORD
-         loadConfiguration();
-         if (configuration.users != null && configuration.users.length > 0) {
-           for (OServerUserConfiguration u : configuration.users) {
-             if (u.name.equals(OServerConfiguration.SRV_ROOT_ADMIN)) {
-               // FOUND
-               rootPassword = u.password;
-               break;
-             }
-           }
-         }
-       } else
-         rootPassword = iRootPassword;
+    try {
+      rootUser = iRootUser;
+      if (iRootPassword == null) {
+        // LOAD SERVER ROOT'S PASSWORD
+        loadConfiguration();
+        if (configuration.users != null && configuration.users.length > 0) {
+          for (OServerUserConfiguration u : configuration.users) {
+            if (u.name.equals(rootUser)) {
+              // FOUND
+              rootPassword = u.password;
+              break;
+            }
+          }
+        }
+      } else
+        rootPassword = iRootPassword;
 
-       if (iServerAddress == null) {
-         // LOAD SERVER HOST AND PORT FROM FILE
-         loadConfiguration();
-         for (OServerNetworkListenerConfiguration l : configuration.network.listeners) {
-           if (l.protocol.equals("distributed") || l.protocol.equals("binary")) {
-             networkAddress = l.ipAddress;
-             networkPort = OServerNetworkListener.getPorts(l.portRange);
-             break;
-           }
-         }
-       } else {
-         networkAddress = iServerAddress;
-         networkPort = OServerNetworkListener.getPorts(iServerPorts);
-       }
+      if (iServerAddress == null) {
+        // LOAD SERVER HOST AND PORT FROM FILE
+        loadConfiguration();
+        for (OServerNetworkListenerConfiguration l : configuration.network.listeners) {
+          if (l.protocol.equals("distributed") || l.protocol.equals("binary")) {
+            networkAddress = l.ipAddress;
+            networkPort = OServerNetworkListener.getPorts(l.portRange);
+            break;
+          }
+        }
+      } else {
+        networkAddress = iServerAddress;
+        networkPort = OServerNetworkListener.getPorts(iServerPorts);
+      }
 
-     } catch (IOException e) {
-       OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class);
-     }
-   }
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error on reading server configuration", OConfigurationException.class);
+    }
+  }
 
-   private void loadConfiguration() throws IOException {
-     if (configurationLoader != null)
-       // AREADY LOADED
-       return;
+  private void loadConfiguration() throws IOException {
+    if (configurationLoader != null)
+      // AREADY LOADED
+      return;
 
-     configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, ODatabaseHelper.getConfigurationFile());
-     configuration = configurationLoader.load();
-   }
+    configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, ODatabaseHelper.getConfigurationFile());
+    configuration = configurationLoader.load();
+  }
 
-   public void connect(final int iTimeout) throws IOException {
-     // TRY TO CONNECT TO THE RIGHT PORT
-     for (int port : networkPort)
-       try {
-         channel = new OChannelBinaryAsynchClientSynch(networkAddress, port, null, contextConfig);
-         break;
-       } catch (Exception e) {
-         OLogManager.instance().error(this, "Error on connecting to %s:%d", e, networkAddress, port);
-       }
+  public void connect(final int iTimeout) throws IOException {
+    // TRY TO CONNECT TO THE RIGHT PORT
+    for (int port : networkPort)
+      try {
+        channel = new OChannelBinaryAsynchClientSynch(networkAddress, port, null, contextConfig);
+        break;
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on connecting to %s:%d", e, networkAddress, port);
+      }
 
-     if (channel == null)
-       throw new ONetworkProtocolException("Cannot connect to server host '" + networkAddress + "', ports: "
-           + Arrays.toString(networkPort));
+    if (channel == null)
+      throw new ONetworkProtocolException("Cannot connect to server host '" + networkAddress + "', ports: "
+          + Arrays.toString(networkPort));
 
-     channel.writeByte(OChannelBinaryProtocol.REQUEST_SHUTDOWN);
-     channel.writeInt(0);
-     channel.writeString(OServerConfiguration.SRV_ROOT_ADMIN);
-     channel.writeString(rootPassword);
-     channel.flush();
+    channel.writeByte(OChannelBinaryProtocol.REQUEST_SHUTDOWN);
+    channel.writeInt(0);
+    channel.writeString(rootUser);
+    channel.writeString(rootPassword);
+    channel.flush();
 
-     if (channel.readByte() == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
-       channel.readInt();
-       channel.readString();
-       throw new ONetworkProtocolException(channel.readString());
-     }
-     channel.readInt();
-   }
+    if (channel.readByte() == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
+      channel.readInt();
+      channel.readString();
+      throw new ONetworkProtocolException(channel.readString());
+    }
+    channel.readInt();
+  }
 
-   public static void main(final String[] iArgs) {
-     String serverHost = iArgs.length > 0 ? iArgs[0] : null;
-     String serverPorts = iArgs.length > 1 ? iArgs[1] : null;
-     String rootPassword = iArgs.length > 2 ? iArgs[2] : null;
+  public static void main(final String[] iArgs) {
+    String serverHost = iArgs.length > 0 ? iArgs[0] : null;
+    String serverPorts = iArgs.length > 1 ? iArgs[1] : null;
+    String rootPassword = iArgs.length > 2 ? iArgs[2] : null;
+    String rootUser = iArgs.length > 3 ? iArgs[3] : null;
 
-     System.out.println("Sending shutdown command to remote OrientDB Server instance...");
+    rootUser = (rootUser != null) ? rootUser : OServerConfiguration.DEFAULT_ROOT_USER;
+    System.out.println("Sending shutdown command to remote OrientDB Server instance...");
 
-     try {
-       new OServerShutdownMain(serverHost, serverPorts, rootPassword).connect(5000);
-       System.out.println("Shutdown executed correctly");
-     } catch (Exception e) {
-       System.out.println("Error: " + e.getLocalizedMessage());
-     }
-     System.out.println();
-   }
- }
+    try {
+      new OServerShutdownMain(serverHost, serverPorts, rootUser, rootPassword).connect(5000);
+      System.out.println("Shutdown executed correctly");
+    } catch (Exception e) {
+      System.out.println("Error: " + e.getLocalizedMessage());
+    }
+    System.out.println();
+  }
+}

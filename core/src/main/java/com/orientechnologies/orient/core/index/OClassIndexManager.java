@@ -37,6 +37,9 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -60,11 +63,25 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * 
  * @author Andrey Lomakin, Artem Orobets
  */
-public class OClassIndexManager extends ODocumentHookAbstract {
-  private final ThreadLocal<Deque<TreeMap<OIndex<?>, List<Object>>>> lockedKeys = new ThreadLocal<Deque<TreeMap<OIndex<?>, List<Object>>>>();
+public class OClassIndexManager extends ODocumentHookAbstract implements OOrientStartupListener, OOrientShutdownListener {
+  private Deque<TreeMap<OIndex<?>, List<Object>>> lockedKeys = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
 
   public OClassIndexManager(ODatabaseDocument database) {
     super(database);
+
+    Orient.instance().registerWeakOrientStartupListener(this);
+    Orient.instance().registerWeakOrientShutdownListener(this);
+  }
+
+  @Override
+  public void onShutdown() {
+    lockedKeys = null;
+  }
+
+  @Override
+  public void onStartup() {
+    if (lockedKeys == null)
+      lockedKeys = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
   }
 
   private static void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
@@ -293,11 +310,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   private ODocument checkIndexedPropertiesOnCreation(final ODocument record, final Collection<OIndex<?>> indexes) {
     ODocument replaced = null;
 
-    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys.get();
-    if (indexKeysMapQueue == null) {
-      indexKeysMapQueue = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
-      lockedKeys.set(indexKeysMapQueue);
-    }
+    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
 
     final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
 
@@ -335,11 +348,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   private void checkIndexedPropertiesOnUpdate(final ODocument record, final Collection<OIndex<?>> indexes) {
-    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys.get();
-    if (indexKeysMapQueue == null) {
-      indexKeysMapQueue = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
-      lockedKeys.set(indexKeysMapQueue);
-    }
+    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
 
     final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
 
@@ -378,7 +387,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       try {
         return (ODocument) iRecord.load();
       } catch (final ORecordNotFoundException e) {
-        throw new OIndexException("Error during loading of record with id : " + iRecord.getIdentity());
+        throw new OIndexException("Error during loading of record with id : " + iRecord.getIdentity(), e);
       }
     }
     return iRecord;
@@ -401,9 +410,6 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   @Override
   public void onRecordAfterCreate(ODocument document) {
     document = checkForLoading(document);
-
-    // STORE THE RECORD IF NEW, OTHERWISE ITS RID
-    final OIdentifiable rid = document.getIdentity();
 
     final OClass cls = ODocumentInternal.getImmutableSchemaClass(document);
     if (cls != null) {
@@ -589,7 +595,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   private void unlockKeys() {
-    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys.get();
+    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
     if (indexKeysMapQueue == null)
       return;
 

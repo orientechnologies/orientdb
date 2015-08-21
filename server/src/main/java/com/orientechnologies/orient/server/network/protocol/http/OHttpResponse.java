@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.server.OClientConnection;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,15 +44,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
-
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.server.OClientConnection;
 
 /**
  * Maintains information about current HTTP response.
@@ -88,15 +88,11 @@ public class OHttpResponse {
 
   public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders)
       throws IOException {
-    if (sendStarted)
-    // AVOID TO SEND RESPONSE TWICE
-    {
+    if (sendStarted) {
+      // AVOID TO SEND RESPONSE TWICE
       return;
     }
     sendStarted = true;
-
-    // final String content;
-    // final String contentType;
 
     if (callbackFunction != null) {
       content = callbackFunction + "(" + iContent + ")";
@@ -123,9 +119,8 @@ public class OHttpResponse {
       writeLine(iHeaders);
     }
 
-    final String sessId = sessionId != null ? sessionId : "-";
-
-    writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessId + "; Path=/; HttpOnly");
+    if (sessionId != null)
+      writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessionId + "; Path=/; HttpOnly");
 
     byte[] binaryContent = null;
     if (!empty) {
@@ -360,8 +355,7 @@ public class OHttpResponse {
     else
       socket = connection.protocol.getChannel().socket;
     if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
-      OLogManager.instance().debug(this, "[OHttpResponse] found and removed pending closed channel %d (%s)", connection,
-          socket);
+      OLogManager.instance().debug(this, "[OHttpResponse] found and removed pending closed channel %d (%s)", connection, socket);
       throw new IOException("Connection is closed");
     }
 

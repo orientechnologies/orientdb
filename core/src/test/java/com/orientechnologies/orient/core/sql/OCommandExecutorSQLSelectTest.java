@@ -1,6 +1,25 @@
+/*
+ *
+ *  *  Copyright 2015 Orient Technologies LTD (info(at)orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -102,6 +121,9 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("CREATE class TestParams")).execute();
     db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='foo'")).execute();
     db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='bar'")).execute();
+
+    db.command(new OCommandSQL("CREATE class TestBacktick")).execute();
+    db.command(new OCommandSQL("insert into TestBacktick  set foo = 1, bar = 2, `foo-bar` = 10")).execute();
 
     // /*** from issue #2743
     OSchema schema = db.getMetadata().getSchema();
@@ -665,6 +687,38 @@ public class OCommandExecutorSQLSelectTest {
     }
   }
 
+  @Test
+  public void testNullProjection() {
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT 1 AS integer, 'Test' AS string, NULL AS nothing, [] AS array, {} AS object");
+
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 1);
+    ODocument doc = results.get(0);
+    assertEquals(doc.field("integer"), 1);
+    assertEquals(doc.field("string"), "Test");
+    assertNull(doc.field("nothing"));
+    boolean nullFound = false;
+    for (String s : doc.fieldNames()) {
+      if (s.equals("nothing")) {
+        nullFound = true;
+        break;
+      }
+    }
+    assertTrue(nullFound);
+
+  }
+
+  @Test
+  public void testBacktick() {
+
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT `foo-bar` as r from TestBacktick");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 1);
+    ODocument doc = results.get(0);
+    assertEquals(doc.field("r"), 10);
+
+
+  }
 
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
@@ -677,7 +731,7 @@ public class OCommandExecutorSQLSelectTest {
     return -1l;
   }
 
-  private OProfilerMBean getProfilerInstance() throws Exception {
+  private OProfiler getProfilerInstance() throws Exception {
     return Orient.instance().getProfiler();
 
   }

@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.cache.local;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -275,6 +276,9 @@ public class ConcurrentLRUList implements LRUList {
 
     headReference.next.set(null);
     tailReference.set(headReference);
+
+    trash.clear();
+    trashSize.set(0);
   }
 
   @Override
@@ -320,6 +324,9 @@ public class ConcurrentLRUList implements LRUList {
 
     @Override
     public OCacheEntry next() {
+      if (!hasNext())
+        throw new NoSuchElementException();
+
       final OCacheEntry entry = current.entry.entry;
 
       do

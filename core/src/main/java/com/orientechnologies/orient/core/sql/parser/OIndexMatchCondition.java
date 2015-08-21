@@ -2,10 +2,12 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 public class OIndexMatchCondition extends OBooleanExpression {
 
@@ -29,62 +31,62 @@ public class OIndexMatchCondition extends OBooleanExpression {
   }
 
   @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    return false;
+  }
+
+
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("KEY ");
+    if (operator != null) {
+      builder.append(operator.toString());
+      builder.append(" [");
+      boolean first = true;
+      for (OExpression x : leftExpressions) {
+        if (!first) {
+          builder.append(", ");
+        }
+        x.toString(params, builder);
+        first = false;
+      }
+      builder.append("]");
+    } else if (Boolean.TRUE.equals(between)) {
+      builder.append(" BETWEEN [");
+      boolean first = true;
+      for (OExpression x : leftExpressions) {
+        if (!first) {
+          builder.append(", ");
+        }
+        x.toString(params, builder);
+        first = false;
+      }
+      builder.append("] AND [");
+      first = true;
+      for (OExpression x : rightExpressions) {
+        if (!first) {
+          builder.append(", ");
+        }
+        x.toString(params, builder);
+        first = false;
+      }
+      builder.append("]");
+    }
+  }
+
+  @Override public boolean supportsBasicCalculation() {
     return false;
   }
 
   @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    if (leftExpressions != null) {
-      for (OExpression x : leftExpressions) {
-        x.replaceParameters(params);
-      }
-    }
-    if (rightExpressions != null) {
-      for (OExpression x : rightExpressions) {
-        x.replaceParameters(params);
-      }
-    }
+  protected int getNumberOfExternalCalculations() {
+    return 1;
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("KEY ");
-    if (operator != null) {
-      result.append(operator.toString());
-      result.append(" [");
-      boolean first = true;
-      for (OExpression x : leftExpressions) {
-        if (!first) {
-          result.append(", ");
-        }
-        result.append(x.toString());
-        first = false;
-      }
-      result.append("]");
-    } else if (Boolean.TRUE.equals(between)) {
-      result.append(" BETWEEN [");
-      boolean first = true;
-      for (OExpression x : leftExpressions) {
-        if (!first) {
-          result.append(", ");
-        }
-        result.append(x.toString());
-        first = false;
-      }
-      result.append("] AND [");
-      first = true;
-      for (OExpression x : rightExpressions) {
-        if (!first) {
-          result.append(", ");
-        }
-        result.append(x.toString());
-        first = false;
-      }
-      result.append("]");
-    }
-    return result.toString();
+  @Override protected List<Object> getExternalCalculationConditions() {
+    List<Object> result = new ArrayList<Object>();
+    result.add(this);
+    return result;
   }
+
 }
 /* JavaCC - OriginalChecksum=702e9ab959e87b043b519844a7d31224 (do not edit this line) */

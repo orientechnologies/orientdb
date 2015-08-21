@@ -183,16 +183,16 @@ public class OClassTrigger extends ODocumentHookAbstract {
       return RESULT.RECORD_NOT_CHANGED;
 
     final ODocument document = (ODocument) iRecord;
-    OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(document);
-    if (immutableClass != null && immutableClass.isSubClassOf(CLASSNAME))
+    OImmutableClass immutableSchemaClass = ODocumentInternal.getImmutableSchemaClass(document);
+    if (immutableSchemaClass != null && immutableSchemaClass.isTriggered())
       return super.onTrigger(iType, iRecord);
 
     return RESULT.RECORD_NOT_CHANGED;
   }
 
   private Object checkClzAttribute(final ODocument iDocument, String attr) {
-    final OClass clz = ODocumentInternal.getImmutableSchemaClass(iDocument);
-    if (clz != null && clz.isSubClassOf(CLASSNAME)) {
+    final OImmutableClass clz = ODocumentInternal.getImmutableSchemaClass(iDocument);
+    if (clz != null && clz.isTriggered()) {
       OFunction func = null;
       String fieldName = clz.getCustom(attr);
       OClass superClz = clz.getSuperClass();

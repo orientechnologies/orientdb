@@ -4,6 +4,7 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.Comparator;
 
@@ -90,6 +91,7 @@ public interface OHashTable<K, V> {
     public final boolean allLeftHashMapsEqual;
     public final boolean allRightHashMapsEqual;
 
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
     public NodeSplitResult(long[] newNode, boolean allLeftHashMapsEqual, boolean allRightHashMapsEqual) {
       this.newNode = newNode;
       this.allLeftHashMapsEqual = allLeftHashMapsEqual;
@@ -97,10 +99,11 @@ public interface OHashTable<K, V> {
     }
   }
 
-  public static final class KeyHashCodeComparator<K> implements Comparator<K> {
+  @SuppressFBWarnings(value = "SE_COMPARATOR_SHOULD_BE_SERIALIZABLE")
+  final class KeyHashCodeComparator<K> implements Comparator<K> {
     private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
-    private final OHashFunction<K>      keyHashFunction;
+    private final OHashFunction<K> keyHashFunction;
 
     public KeyHashCodeComparator(OHashFunction<K> keyHashFunction) {
       this.keyHashFunction = keyHashFunction;

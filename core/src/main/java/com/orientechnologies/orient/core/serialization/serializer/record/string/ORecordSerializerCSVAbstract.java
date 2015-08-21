@@ -60,6 +60,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelperManager;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 import java.util.Collection;
@@ -95,20 +96,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       // JUST THE REFERENCE
       rid = (ORID) iLinked;
 
-      if (rid.isValid() && rid.isNew()) {
-        // SAVE AT THE FLY AND STORE THE NEW RID
-        final ORecord record = rid.getRecord();
-        if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null)
-          throw new ODatabaseException("Impossible save a record during network serialization");
-
-        final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
-        if (record != null) {
-          database.save((ORecord) record);
-          rid = record.getIdentity();
-        }
-
-        resultRid = rid;
-      }
+      assert rid.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "+ rid.getIdentity();
+      resultRid = rid;
     } else {
       if (iLinked instanceof String)
         iLinked = new ORecordId((String) iLinked);
@@ -127,26 +116,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       ORecord iLinkedRecord = ((OIdentifiable) iLinked).getRecord();
       rid = iLinkedRecord.getIdentity();
 
-      if ((rid.isNew() && !rid.isTemporary()) || iLinkedRecord.isDirty()) {
-        if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null)
-          throw new ODatabaseException("Impossible save a record during network serialization");
-
-        final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
-        if (iLinkedRecord instanceof ODocument) {
-          final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) iLinkedRecord));
-          database.save(
-              iLinkedRecord,
-              schemaClass != null && database.getStorage().isAssigningClusterIds() ? database.getClusterNameById(schemaClass
-                  .getClusterForNewInstance((ODocument) iLinkedRecord)) : null);
-        } else
-          // STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
-          database.save(iLinkedRecord);
-
-        final ODatabase<?> dbOwner = database.getDatabaseOwner();
-        dbOwner.registerUserObjectAfterLinkSave(iLinkedRecord);
-
-        resultRid = iLinkedRecord;
-      }
+      assert rid.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "+ rid.getIdentity();
 
       final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
       if (iParentRecord != null) {
@@ -784,13 +754,12 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         if (id instanceof ODocument) {
           doc = (ODocument) id;
 
-          if (id.getIdentity().isTemporary()) {
-            if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null)
-              throw new ODatabaseException("Impossible save a record during network serialization");
-
-            doc.save();
-          }
-
+          if(doc.hasOwners())
+            linkedType = OType.EMBEDDED;
+          
+          assert linkedType == OType.EMBEDDED || id.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get()
+              .getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link " + id.getIdentity();
+          
           linkedClass = ODocumentInternal.getImmutableSchemaClass(doc);
         } else
           linkedClass = null;

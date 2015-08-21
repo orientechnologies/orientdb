@@ -23,19 +23,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -148,15 +147,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public OSharedResourceAdaptiveExternal getLock() {
-    pushSession();
-    try {
-      return delegate.getLock();
-    } finally {
-      popSession();
-    }
-  }
-
   public void setSessionId(final String iServerURL, final int iSessionId, byte[] iToken) {
     serverURL = iServerURL;
     sessionId = iSessionId;
@@ -227,7 +217,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
+  public List<String> backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
@@ -699,21 +689,6 @@ public class OStorageRemoteThread implements OStorageProxy {
   @Override
   public String getUserName() {
     return delegate.getUserName();
-  }
-
-  @Override
-  public Object indexGet(final String iIndexName, final Object iKey, final String iFetchPlan) {
-    return delegate.indexGet(iIndexName, iKey, iFetchPlan);
-  }
-
-  @Override
-  public void indexPut(final String iIndexName, Object iKey, final OIdentifiable iValue) {
-    delegate.indexPut(iIndexName, iKey, iValue);
-  }
-
-  @Override
-  public boolean indexRemove(final String iIndexName, final Object iKey) {
-    return delegate.indexRemove(iIndexName, iKey);
   }
 
   @Override

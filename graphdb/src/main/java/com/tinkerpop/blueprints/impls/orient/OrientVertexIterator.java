@@ -105,9 +105,6 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
   }
 
   public boolean filter(final Vertex iObject) {
-    if (iObject instanceof OrientVertex && ((OrientVertex) iObject).getRecord() == null) {
-      return false;
-    }
-    return true;
+    return !(iObject instanceof OrientVertex && ((OrientVertex) iObject).getRecord() == null);
   }
 }

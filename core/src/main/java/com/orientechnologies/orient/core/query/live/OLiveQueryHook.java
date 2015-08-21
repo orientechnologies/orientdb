@@ -50,6 +50,7 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
   static Object                                                   threadLock  = new Object();
 
   public OLiveQueryHook(ODatabaseDocumentTx db) {
+    super(db);
     db.registerListener(this);
   }
 
@@ -162,7 +163,7 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
   }
 
   protected void addOp(ODocument iDocument, byte iType) {
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocument db =database;
     if (db.getTransaction() == null || !db.getTransaction().isActive()) {
 
       // TODO synchronize

@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -82,16 +83,16 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
   @SuppressWarnings("unchecked")
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
-    final Map<Long, Collection<Object>> chunks = new HashMap<Long, Collection<Object>>();
-    for (Object iParameter : resultsToMerge) {
-      final Map<String, Object> container = (Map<String, Object>) ((Collection<?>) iParameter).iterator().next();
-      chunks.put((Long) container.get("node"), (Collection<Object>) container.get("context"));
+    if (returnDistributedResult()) {
+      final Collection<Object> result = new HashSet<Object>();
+      for (Object iParameter : resultsToMerge) {
+        final Map<String, Object> container = (Map<String, Object>) ((Collection<?>) iParameter).iterator().next();
+        result.addAll((Collection<?>) container.get("context"));
+      }
+      return result;
     }
-    final Collection<Object> result = new ArrayList<Object>();
-    for (Collection<Object> chunk : chunks.values()) {
-      result.addAll(chunk);
-    }
-    return result;
+
+    return resultsToMerge.get(0);
   }
 
   protected List<Object> prepareResult(List<Object> res) {

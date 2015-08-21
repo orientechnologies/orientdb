@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -44,7 +44,7 @@ public abstract class OQueryOperator {
 
   public static enum ORDER {
     /**
-     * Used when order compared to other operator can not be evaluated or has no consequences.
+     * Used when order compared to other operator cannot be evaluated or has no consequences.
      */
     UNKNOWNED,
     /**
@@ -197,7 +197,7 @@ public abstract class OQueryOperator {
     }
 
     if (thisPosition == -1 || otherPosition == -1) {
-      // can not decide which comes first
+      // cannot decide which comes first
       return ORDER.UNKNOWNED;
     }
 
@@ -215,7 +215,7 @@ public abstract class OQueryOperator {
     if (iContext.isRecordingMetrics())
       iContext.updateMetric("compositeIndexUsed", +1);
 
-    final OProfilerMBean profiler = Orient.instance().getProfiler();
+    final OProfiler profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {
       profiler.updateCounter(profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"), "Used index in query", +1);
 

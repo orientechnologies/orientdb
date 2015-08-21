@@ -21,4 +21,5 @@
   <properties>
     <entry value="." name="orient.home"/>
   </properties>
+  <isAfterFirstTime>true</isAfterFirstTime>
 </orient-server>

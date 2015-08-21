@@ -102,32 +102,17 @@ public class ORemoteIndexEngine implements OIndexEngine {
   @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer) {
-    return new OIndexAbstractCursor() {
-      @Override
-      public Map.Entry<Object, OIdentifiable> nextEntry() {
-        return null;
-      }
-    };
+    return new EntriesBetweenCursor();
   }
 
   @Override
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return new OIndexAbstractCursor() {
-      @Override
-      public Map.Entry nextEntry() {
-        return null;
-      }
-    };
+    return new EntriesMajorCursor();
   }
 
   @Override
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return new OIndexAbstractCursor() {
-      @Override
-      public Map.Entry nextEntry() {
-        return null;
-      }
-    };
+    return new EntriesMinorCursor();
   }
 
   @Override
@@ -158,5 +143,26 @@ public class ORemoteIndexEngine implements OIndexEngine {
   @Override
   public int getVersion() {
     return -1;
+  }
+
+  private static class EntriesBetweenCursor extends OIndexAbstractCursor {
+    @Override
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
+      return null;
+    }
+  }
+
+  private static class EntriesMajorCursor extends OIndexAbstractCursor {
+    @Override
+    public Map.Entry nextEntry() {
+      return null;
+    }
+  }
+
+  private static class EntriesMinorCursor extends OIndexAbstractCursor {
+    @Override
+    public Map.Entry nextEntry() {
+      return null;
+    }
   }
 }

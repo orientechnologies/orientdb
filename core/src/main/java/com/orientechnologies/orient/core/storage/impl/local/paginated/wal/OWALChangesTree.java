@@ -756,10 +756,6 @@ public class OWALChangesTree {
       this.maxEnd = end;
     }
 
-    private boolean overlapsWith(Node other) {
-      return start < other.end && end > other.start;
-    }
-
     private boolean overlapsWith(int start, int end) {
       return this.start < end && this.end > start;
     }

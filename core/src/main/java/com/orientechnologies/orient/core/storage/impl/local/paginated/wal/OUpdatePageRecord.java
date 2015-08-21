@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-
 /**
  * @author Andrey Lomakin
  * @since 26.04.13
@@ -33,8 +31,8 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   }
 
   public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId,
-      final OWALChangesTree changesTree, OLogSequenceNumber startLsn) {
-    super(pageIndex, fileId, operationUnitId, startLsn);
+                           final OWALChangesTree changesTree) {
+    super(pageIndex, fileId, operationUnitId);
     this.changesTree = changesTree;
   }
 

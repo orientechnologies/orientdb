@@ -85,7 +85,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       attribute = OClass.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException e) {
       throw new OCommandSQLParsingException("Unknown class's attribute '" + attributeAsString + "'. Supported attributes are: "
-          + Arrays.toString(OClass.ATTRIBUTES.values()), parserText, oldPos);
+          + Arrays.toString(OClass.ATTRIBUTES.values()), parserText, oldPos, e);
     }
 
     value = parserText.substring(pos + 1).trim();
@@ -123,6 +123,10 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       throw new OCommandExecutionException("Cannot alter class '" + className
           + "' because is an Edge class and could break vertices. Use UNSAFE if you want to force it");
 
+    // REMOVE CACHE OF COMMAND RESULTS
+    for (int clId : cls.getPolymorphicClusterIds())
+      getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(getDatabase().getClusterNameById(clId));
+
     if (value != null && attribute == ATTRIBUTES.SUPERCLASS) {
       checkClassExists(database, className, value);
     }
@@ -144,7 +148,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
   }
 
   @Override
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 

@@ -141,7 +141,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
       try {
         currentRecord = readCurrentRecord(record, +1);
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during read of record.", e);
+        OLogManager.instance().error(this, "Error during read of record", e);
 
         currentRecord = null;
       }

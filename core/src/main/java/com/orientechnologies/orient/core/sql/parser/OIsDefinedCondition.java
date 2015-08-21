@@ -2,8 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class OIsDefinedCondition extends OBooleanExpression {
@@ -24,17 +27,29 @@ public class OIsDefinedCondition extends OBooleanExpression {
   }
 
   @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return false;
   }
 
-  @Override
-  public String toString() {
-    return expression.toString() + " is defined";
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    expression.toString(params, builder);
+    builder.append(" is defined");
   }
 
-  @Override public void replaceParameters(Map<Object, Object> params) {
-    expression.replaceParameters(params);
+  @Override
+  public boolean supportsBasicCalculation() {
+    return true;
   }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    return 0;
+  }
+
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
+    return Collections.EMPTY_LIST;
+  }
+
 }
 /* JavaCC - OriginalChecksum=075954b212c8cb44c8538bf5dea047d3 (do not edit this line) */

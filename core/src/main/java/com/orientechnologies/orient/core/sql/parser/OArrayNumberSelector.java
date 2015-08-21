@@ -27,34 +27,23 @@ public class OArrayNumberSelector extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (inputValue != null) {
-      if (inputFinalValue == UNSET) {
-        return inputValue.toString();
-      } else if (inputFinalValue == null) {
-        return "NULL";
-      } else {
-        return inputFinalValue.toString();
-      }
+      // if (inputFinalValue == UNSET) {
+      // inputValue.toString(params, builder);
+      // } else if (inputFinalValue == null) {
+      // builder.append("NULL");
+      // } else {
+      // builder.appinputFinalValue.toString(params, builder);
+      // }
+      inputValue.toString(params, builder);
     } else if (expressionValue != null) {
-      return expressionValue.toString();
+      expressionValue.toString(params, builder);
     } else if (integer != null) {
-      return integer.toString();
+      builder.append(integer);
     }
-    return super.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (inputValue != null) {
-      Object result = inputValue.bindFromInputParams(params);
-      if (result != inputValue) {
-        inputFinalValue = result;
-      }
-    }
-    if (expressionValue != null) {
-      expressionValue.replaceParameters(params);
-    }
-  }
+
 }
 /* JavaCC - OriginalChecksum=5b2e495391ede3ccdc6c25aa63c8e591 (do not edit this line) */

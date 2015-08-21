@@ -14,6 +14,7 @@ public class CreateClassMultipleClusterTest {
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + CreateClassMultipleClusterTest.class.getSimpleName());
     db.create();
     try {
+      db.command(new OCommandSQL("drop class V")).execute();
       db.command(new OCommandSQL("create class V clusters 16")).execute();
       db.command(new OCommandSQL("create class X extends V clusters 32")).execute();
 

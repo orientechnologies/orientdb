@@ -74,7 +74,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
     final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
     executor.parse(iCommand);
     quorumType = ((OCommandDistributedReplicateRequest) executor).getQuorumType();
-    timeout = ((OCommandDistributedReplicateRequest) executor).getTimeout();
+    timeout = ((OCommandDistributedReplicateRequest) executor).getDistributedTimeout();
   }
 
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
@@ -133,7 +133,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   }
 
   @Override
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     return timeout;
   }
 

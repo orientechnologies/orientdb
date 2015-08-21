@@ -38,6 +38,31 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
  * 
  */
 public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
+  private static class MapEntry implements Map.Entry<Object, OIdentifiable> {
+    private final Object        key;
+    private final OIdentifiable backendValue;
+
+    public MapEntry(Object key, OIdentifiable backendValue) {
+      this.key = key;
+      this.backendValue = backendValue;
+    }
+
+    @Override
+    public Object getKey() {
+      return key;
+    }
+
+    @Override
+    public OIdentifiable getValue() {
+      return backendValue;
+    }
+
+    @Override
+    public OIdentifiable setValue(OIdentifiable value) {
+      throw new UnsupportedOperationException("setValue");
+    }
+  }
+
   private class PureTxBetweenIndexForwardCursor extends OIndexAbstractCursor {
     private final OTransactionIndexChanges indexChanges;
     private Object                         firstKey;
@@ -466,22 +491,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
   }
 
   private Map.Entry<Object, OIdentifiable> createMapEntry(final Object key, final OIdentifiable backendValue) {
-    return new Map.Entry<Object, OIdentifiable>() {
-      @Override
-      public Object getKey() {
-        return key;
-      }
-
-      @Override
-      public OIdentifiable getValue() {
-        return backendValue;
-      }
-
-      @Override
-      public OIdentifiable setValue(OIdentifiable value) {
-        throw new UnsupportedOperationException("setValue");
-      }
-    };
+    return new MapEntry(key, backendValue);
   }
 
   private Set<OIdentifiable> calculateTxValue(final Object key, OTransactionIndexChanges indexChanges) {

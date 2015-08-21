@@ -6,6 +6,7 @@ import java.util.List;
 import com.orientechnologies.orient.core.collate.OCollate;
 
 public class OCompositeCollate implements OCollate {
+  private static final long              serialVersionUID = 8683726773893639905L;
   /**
    * 
    */

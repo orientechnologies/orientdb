@@ -45,7 +45,8 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
   protected TIMEOUT_STRATEGY       timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
   protected Map<Object, Object>    parameters;
   protected String                 fetchPlan       = null;
-  protected boolean                useCache        = true;
+  protected boolean                useCache        = false;
+  protected boolean                cacheableResult = false;
   protected OCommandContext        context;
 
   private final Set<String>        nodesToExclude  = new HashSet<String>();
@@ -128,6 +129,16 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 
   public void setUseCache(boolean useCache) {
     this.useCache = useCache;
+  }
+
+  @Override
+  public boolean isCacheableResult() {
+    return cacheableResult;
+  }
+
+  @Override
+  public void setCacheableResult(final boolean iValue) {
+    cacheableResult = iValue;
   }
 
   @Override

@@ -48,7 +48,8 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class OAbstractProfiler extends OSharedResourceAbstract implements OProfilerMBean, OOrientStartupListener {
+public abstract class OAbstractProfiler extends OSharedResourceAbstract implements OProfiler, OOrientStartupListener,
+    OProfilerMXBean {
 
   protected final Map<String, OProfilerHookValue>          hooks         = new ConcurrentHashMap<String, OProfilerHookValue>();
   protected final ConcurrentHashMap<String, String>        dictionary    = new ConcurrentHashMap<String, String>();

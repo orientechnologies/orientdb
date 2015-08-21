@@ -223,9 +223,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         iRecord = new ODocument();
 
       try {
-        int recordVersion = 0;
-        long timestamp = 0L;
-        long macAddress = 0L;
         for (int i = 0; i < fields.size(); i += 2) {
           final String fieldName = OStringSerializerHelper.getStringContent(fields.get(i));
           final String fieldValue = fields.get(i + 1);
@@ -317,6 +314,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     }
 
     return iRecord;
+  }
+
+  @Override
+  public byte[] writeClassOnly(ORecord iSource) {
+    return new byte[] {};
   }
 
   @Override
@@ -597,7 +599,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     if (shouldBeDeserializedAsEmbedded(recordInternal, iType))
       ODocumentInternal.addOwner(recordInternal, iRecord);
     else {
-      ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
+      ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
       if (rid.isPersistent() && database != null) {
         ODocument documentToMerge = database.load(rid);
@@ -680,9 +682,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         // TODO redundant in some cases, owner is already added by getValue in some cases
         if (shouldBeDeserializedAsEmbedded(collectionItem, iType))
           ODocumentInternal.addOwner((ODocument) collectionItem, iRecord);
-
-        if (collectionItem instanceof String && ((String) collectionItem).length() == 0)
-          continue;
 
         visitor.visitItem(collectionItem);
       }

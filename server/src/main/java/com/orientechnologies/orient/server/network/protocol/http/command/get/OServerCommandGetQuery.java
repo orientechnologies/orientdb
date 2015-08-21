@@ -59,6 +59,10 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
       db = getProfiledDatabaseInstance(iRequest);
 
       final OQueryAbstract command = new OSQLSynchQuery<ODocument>(text, limit).setFetchPlan(fetchPlan);
+
+      // REQUEST CAN'T MODIFY THE RESULT, SO IT'S CACHEABLE
+      command.setCacheableResult(true);
+
       response = (List<OIdentifiable>) db.query(command);
       fetchPlan = command.getFetchPlan();
 

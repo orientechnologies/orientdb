@@ -1,15 +1,15 @@
 package com.orientechnologies.orient.core.sql.functions.stat;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 @Test
 public class OSQLFunctionVarianceTest {
@@ -25,7 +25,7 @@ public class OSQLFunctionVarianceTest {
       }
     };
   }
-  
+
   @Test
   public void testEmpty() {
     Object result = variance.getResult();
@@ -84,7 +84,11 @@ public class OSQLFunctionVarianceTest {
     results.add(doc1);
     results.add(doc2);
 
-    assertEquals(22.1875, variance.mergeDistributedResult(results));
+    assertEquals(22.1875, new OSQLFunctionVariance() {
+      @Override
+      protected boolean returnDistributedResult() {
+        return true;
+      }
+    }.mergeDistributedResult(results));
   }
-
 }

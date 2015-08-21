@@ -21,17 +21,11 @@ public class OFromClause extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (item != null) {
-      return item.toString();
+      item.toString(params, builder);
     }
-    return "";
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    item.replaceParameters(params);
-  }
 }
 /* JavaCC - OriginalChecksum=051839d20dabfa4cce26ebcbe0d03a86 (do not edit this line) */

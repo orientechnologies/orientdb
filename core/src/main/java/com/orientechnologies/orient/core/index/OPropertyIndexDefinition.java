@@ -34,6 +34,7 @@ import java.util.List;
  * 
  */
 public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
+  private static final long serialVersionUID = 7395728581151922197L;
   protected String className;
   protected String field;
   protected OType  keyType;

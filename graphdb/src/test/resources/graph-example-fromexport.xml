@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+    <graph id="G" edgedefault="directed">
+        <node id="n5176" labels=":Person:_Person">
+            <data key="labels">:Person:_Person</data>
+            <data key="__type__">com.orientechnologies.test.model.Person</data>
+            <data key="id">7354</data>
+        </node>
+        <node id="n5177" labels=":Person:_Person">
+            <data key="labels">:Person:_Person</data>
+            <data key="__type__">com.orientechnologies.test.model.Person</data>
+            <data key="id">7311</data>
+        </node>
+        <node id="n62684" labels=":Person:_Person">
+            <data key="labels">:Person:_Person</data>
+            <data key="__type__">com.orientechnologies.test.model.Person</data>
+            <data key="id">7445</data>
+            <data key="facebookUserId">1000074</data>
+        </node>
+        <node id="n62688" labels=":Person:_Person">
+            <data key="labels">:Person:_Person</data>
+            <data key="__type__">com.orientechnologies.test.model.Person</data>
+            <data key="id">7449</data>
+            <data key="facebookUserId">1000075</data>
+        </node>
+        <edge id="e84" source="n5177" target="n5176" label="KNOWS">
+            <data key="label">KNOWS</data>
+            <data key="__type__">com.orientechnologies.test.model.Relationship</data>
+            <data key="tlm">1385646623000</data>
+            <data key="friend">true</data>
+            <data key="weight">50</data>
+        </edge>
+        <edge id="e293" source="n62684" target="n62688" label="KNOWS">
+            <data key="label">KNOWS</data>
+            <data key="__type__">com.orientechnologies.test.model.Relationship</data>
+            <data key="classmate">true</data>
+            <data key="tlm">1389268439000</data>
+            <data key="weight">35</data>
+        </edge>
+
+    </graph>
+</graphml>

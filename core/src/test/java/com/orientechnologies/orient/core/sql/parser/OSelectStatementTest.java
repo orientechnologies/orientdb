@@ -14,7 +14,10 @@ import static org.testng.Assert.*;
 public class OSelectStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
-    return checkSyntax(query, true);
+    SimpleNode result = checkSyntax(query, true);
+    StringBuilder builder = new StringBuilder();
+    result.toString(null, builder);
+    return checkSyntax(builder.toString(), true);
   }
 
   protected SimpleNode checkWrongSyntax(String query) {
@@ -30,7 +33,9 @@ public class OSelectStatementTest {
       }
       System.out.println(query);
       System.out.println("->");
-      System.out.println(result.toString());
+      StringBuilder builer = new StringBuilder();
+      result.toString(null, builer);
+      System.out.println(builer.toString());
       System.out.println("............");
       return result;
     } catch (Exception e) {
@@ -148,7 +153,14 @@ public class OSelectStatementTest {
   @Test
   public void testIndex1() {
     SimpleNode result = checkRightSyntax("select from index:collateCompositeIndexCS where key = ['VAL', 'VaL']");
-    // result.dump("    ");
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
+  }
+
+  @Test
+  public void testIndex2() {
+    SimpleNode result = checkRightSyntax("select from index:collateCompositeIndexCS where key between ['VAL', 'VaL'] and ['zz', 'zz']");
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
 
@@ -286,8 +298,10 @@ public class OSelectStatementTest {
       OSelectStatement stm = (OSelectStatement) result;
       Map<Object, Object> params = new HashMap<Object, Object>();
       params.put("param1", new HashSet<Object>());
-      ((OSelectStatement) result).replaceParameters(params);
-      assertEquals(stm.toString(), "SELECT FROM bar WHERE name NOT IN []");
+
+      StringBuilder parsed = new StringBuilder();
+      stm.toString(params, parsed);
+      assertEquals(parsed.toString(), "SELECT FROM bar WHERE name NOT IN []");
     } catch (Exception e) {
       fail();
 
@@ -388,7 +402,7 @@ public class OSelectStatementTest {
     checkRightSyntax("insert into test content { \"node_id\": \"MFmqvmht\\/\\/GYsYYWB8=\"}");
   }
 
-  @Test()
+  @Test
   public void testClusterList() {
     checkRightSyntax("select from cluster:[foo,bar]");
   }
@@ -408,6 +422,156 @@ public class OSelectStatementTest {
     checkRightSyntax("select from test order by (something),(somethingElse)");
     checkRightSyntax("select from test order by something,(somethingElse)");
     checkRightSyntax("select from test order by (something asc),(somethingElse desc)");
+  }
+
+  @Test()
+  public void testMultipleLucene() {
+    checkRightSyntax("select from Foo where a lucene 'a'");
+    checkWrongSyntax("select from Foo where a lucene 'a' and b lucene 'a'");
+
+    checkWrongSyntax("select union($a, $b) let $a = (select from Foo where a lucene 'a' and b lucene 'b'), $b = (select from Foo where b lucene 'b')");
+    checkRightSyntax("select union($a, $b) let $a = (select from Foo where a lucene 'a'), $b = (select from Foo where b lucene 'b')");
+    checkWrongSyntax("select from (select from Foo) where a lucene 'a'");
+
+    checkWrongSyntax("select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo')))) or select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo'))))");
+
+    checkWrongSyntax("select from cluster:foo where a lucene 'b'");
+    checkRightSyntax("select from index:foo where a lucene 'b'");
+    checkWrongSyntax("select from #12:0 where a lucene 'b'");
+    checkWrongSyntax("select from [#12:0, #12:1] where a lucene 'b'");
+
+  }
+
+  public void testBacktick() {
+    checkRightSyntax("select `foo` from foo where `foo` = 'bar'");
+    checkRightSyntax("select `SELECT` from foo where `SELECT` = 'bar'");
+    checkRightSyntax("select `TRAVERSE` from foo where `TRAVERSE` = 'bar'");
+    checkRightSyntax("select `INSERT` from foo where `INSERT` = 'bar'");
+    checkRightSyntax("select `CREATE` from foo where `CREATE` = 'bar'");
+    checkRightSyntax("select `DELETE` from foo where `DELETE` = 'bar'");
+    checkRightSyntax("select `VERTEX` from foo where `VERTEX` = 'bar'");
+    checkRightSyntax("select `EDGE` from foo where `EDGE` = 'bar'");
+    checkRightSyntax("select `UPDATE` from foo where `UPDATE` = 'bar'");
+    checkRightSyntax("select `UPSERT` from foo where `UPSERT` = 'bar'");
+    checkRightSyntax("select `FROM` from foo where `FROM` = 'bar'");
+    checkRightSyntax("select `TO` from foo where `TO` = 'bar'");
+    checkRightSyntax("select `WHERE` from foo where `WHERE` = 'bar'");
+    checkRightSyntax("select `WHILE` from foo where `WHILE` = 'bar'");
+    checkRightSyntax("select `INTO` from foo where `INTO` = 'bar'");
+    checkRightSyntax("select `VALUES` from foo where `VALUES` = 'bar'");
+    checkRightSyntax("select `SET` from foo where `SET` = 'bar'");
+    checkRightSyntax("select `ADD` from foo where `ADD` = 'bar'");
+    checkRightSyntax("select `PUT` from foo where `PUT` = 'bar'");
+    checkRightSyntax("select `MERGE` from foo where `MERGE` = 'bar'");
+    checkRightSyntax("select `CONTENT` from foo where `CONTENT` = 'bar'");
+    checkRightSyntax("select `REMOVE` from foo where `REMOVE` = 'bar'");
+    checkRightSyntax("select `INCREMENT` from foo where `INCREMENT` = 'bar'");
+    checkRightSyntax("select `AND` from foo where `AND` = 'bar'");
+    checkRightSyntax("select `OR` from foo where `OR` = 'bar'");
+    checkRightSyntax("select `NULL` from foo where `NULL` = 'bar'");
+    checkRightSyntax("select `DEFINED` from foo where `DEFINED` = 'bar'");
+    checkRightSyntax("select `ORDER` from foo where `ORDER` = 'bar'");
+    checkRightSyntax("select `GROUP` from foo where `GROUP` = 'bar'");
+    checkRightSyntax("select `BY` from foo where `BY` = 'bar'");
+    checkRightSyntax("select `LIMIT` from foo where `LIMIT` = 'bar'");
+    checkRightSyntax("select `SKIP2` from foo where `SKIP2` = 'bar'");
+    checkRightSyntax("select `OFFSET` from foo where `OFFSET` = 'bar'");
+    checkRightSyntax("select `TIMEOUT` from foo where `TIMEOUT` = 'bar'");
+    checkRightSyntax("select `ASC` from foo where `ASC` = 'bar'");
+    checkRightSyntax("select `AS` from foo where `AS` = 'bar'");
+    checkRightSyntax("select `DESC` from foo where `DESC` = 'bar'");
+    checkRightSyntax("select `FETCHPLAN` from foo where `FETCHPLAN` = 'bar'");
+    checkRightSyntax("select `RETURN` from foo where `RETURN` = 'bar'");
+    checkRightSyntax("select `BEFORE` from foo where `BEFORE` = 'bar'");
+    checkRightSyntax("select `AFTER` from foo where `AFTER` = 'bar'");
+    checkRightSyntax("select `LOCK` from foo where `LOCK` = 'bar'");
+    checkRightSyntax("select `RECORD` from foo where `RECORD` = 'bar'");
+    checkRightSyntax("select `WAIT` from foo where `WAIT` = 'bar'");
+
+    checkRightSyntax("select `identifier` from foo where `identifier` = 'bar'");
+    checkRightSyntax("select `select` from foo where `select` = 'bar'");
+    checkRightSyntax("select `traverse` from foo where `traverse` = 'bar'");
+    checkRightSyntax("select `insert` from foo where `insert` = 'bar'");
+    checkRightSyntax("select `create` from foo where `create` = 'bar'");
+    checkRightSyntax("select `delete` from foo where `delete` = 'bar'");
+    checkRightSyntax("select `vertex` from foo where `vertex` = 'bar'");
+    checkRightSyntax("select `edge` from foo where `edge` = 'bar'");
+    checkRightSyntax("select `update` from foo where `update` = 'bar'");
+    checkRightSyntax("select `upsert` from foo where `upsert` = 'bar'");
+    checkRightSyntax("select `from` from foo where `from` = 'bar'");
+    checkRightSyntax("select `to` from foo where `to` = 'bar'");
+    checkRightSyntax("select `where` from foo where `where` = 'bar'");
+    checkRightSyntax("select `while` from foo where `while` = 'bar'");
+    checkRightSyntax("select `into` from foo where `into` = 'bar'");
+    checkRightSyntax("select `values` from foo where `values` = 'bar'");
+    checkRightSyntax("select `set` from foo where `set` = 'bar'");
+    checkRightSyntax("select `add` from foo where `add` = 'bar'");
+    checkRightSyntax("select `put` from foo where `put` = 'bar'");
+    checkRightSyntax("select `merge` from foo where `merge` = 'bar'");
+    checkRightSyntax("select `content` from foo where `content` = 'bar'");
+    checkRightSyntax("select `remove` from foo where `remove` = 'bar'");
+    checkRightSyntax("select `increment` from foo where `increment` = 'bar'");
+    checkRightSyntax("select `and` from foo where `and` = 'bar'");
+    checkRightSyntax("select `or` from foo where `or` = 'bar'");
+    checkRightSyntax("select `null` from foo where `null` = 'bar'");
+    checkRightSyntax("select `defined` from foo where `defined` = 'bar'");
+    checkRightSyntax("select `order` from foo where `order` = 'bar'");
+    checkRightSyntax("select `group` from foo where `group` = 'bar'");
+    checkRightSyntax("select `by` from foo where `by` = 'bar'");
+    checkRightSyntax("select `limit` from foo where `limit` = 'bar'");
+    checkRightSyntax("select `skip2` from foo where `skip2` = 'bar'");
+    checkRightSyntax("select `offset` from foo where `offset` = 'bar'");
+    checkRightSyntax("select `timeout` from foo where `timeout` = 'bar'");
+    checkRightSyntax("select `asc` from foo where `asc` = 'bar'");
+    checkRightSyntax("select `as` from foo where `as` = 'bar'");
+    checkRightSyntax("select `desc` from foo where `desc` = 'bar'");
+    checkRightSyntax("select `fetchplan` from foo where `fetchplan` = 'bar'");
+    checkRightSyntax("select `return` from foo where `return` = 'bar'");
+    checkRightSyntax("select `before` from foo where `before` = 'bar'");
+    checkRightSyntax("select `after` from foo where `after` = 'bar'");
+    checkRightSyntax("select `lock` from foo where `lock` = 'bar'");
+    checkRightSyntax("select `record` from foo where `record` = 'bar'");
+    checkRightSyntax("select `wait` from foo where `wait` = 'bar'");
+    checkRightSyntax("select `retry` from foo where `retry` = 'bar'");
+    checkRightSyntax("select `let` from foo where `let` = 'bar'");
+    checkRightSyntax("select `nocache` from foo where `nocache` = 'bar'");
+    checkRightSyntax("select `unsafe` from foo where `unsafe` = 'bar'");
+    checkRightSyntax("select `parallel` from foo where `parallel` = 'bar'");
+    checkRightSyntax("select `strategy` from foo where `strategy` = 'bar'");
+    checkRightSyntax("select `depth_first` from foo where `depth_first` = 'bar'");
+    checkRightSyntax("select `breadth_first` from foo where `breadth_first` = 'bar'");
+    checkRightSyntax("select `lucene` from foo where `lucene` = 'bar'");
+    checkRightSyntax("select `near` from foo where `near` = 'bar'");
+    checkRightSyntax("select `within` from foo where `within` = 'bar'");
+    checkRightSyntax("select `unwind` from foo where `unwind` = 'bar'");
+    checkRightSyntax("select `maxdepth` from foo where `maxdepth` = 'bar'");
+    checkRightSyntax("select `not` from foo where `not` = 'bar'");
+    checkRightSyntax("select `in` from foo where `in` = 'bar'");
+    checkRightSyntax("select `like` from foo where `like` = 'bar'");
+    checkRightSyntax("select `is` from foo where `is` = 'bar'");
+    checkRightSyntax("select `between` from foo where `between` = 'bar'");
+    checkRightSyntax("select `contains` from foo where `contains` = 'bar'");
+    checkRightSyntax("select `containsall` from foo where `containsall` = 'bar'");
+    checkRightSyntax("select `containskey` from foo where `containskey` = 'bar'");
+    checkRightSyntax("select `containsvalue` from foo where `containsvalue` = 'bar'");
+    checkRightSyntax("select `containstext` from foo where `containstext` = 'bar'");
+    checkRightSyntax("select `matches` from foo where `matches` = 'bar'");
+    checkRightSyntax("select `key` from foo where `key` = 'bar'");
+    checkRightSyntax("select `instanceof` from foo where `instanceof` = 'bar'");
+    checkRightSyntax("select `cluster` from foo where `cluster` = 'bar'");
+
+    checkRightSyntax("select `foo-bar` from foo where `cluster` = 'bar'");
+
+    checkWrongSyntax("select `cluster from foo where `cluster` = 'bar'");
+    checkWrongSyntax("select `cluster from foo where cluster` = 'bar'");
+
+  }
+
+  @Test
+  public void testReturn() {
+    checkRightSyntax("select from ouser timeout 1 exception");
+    checkRightSyntax("select from ouser timeout 1 return");
+
   }
 
   private void printTree(String s) {

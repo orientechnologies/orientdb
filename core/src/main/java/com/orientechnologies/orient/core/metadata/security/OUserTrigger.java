@@ -22,8 +22,10 @@ package com.orientechnologies.orient.core.metadata.security;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Encrypt the password using the SHA-256 algorithm.
@@ -34,7 +36,16 @@ public class OUserTrigger extends ODocumentHookAbstract {
 
   public OUserTrigger(ODatabaseDocument database) {
     super(database);
-    setIncludeClasses("OUser", "ORole");
+  }
+
+  @Override
+  public RESULT onTrigger(TYPE iType, ORecord iRecord) {
+    OImmutableClass clazz = null;
+    if (iRecord instanceof ODocument)
+      clazz = ODocumentInternal.getImmutableSchemaClass((ODocument) iRecord);
+    if (clazz == null || (!clazz.isOuser() && !clazz.isOrole()))
+      return RESULT.RECORD_NOT_CHANGED;
+    return super.onTrigger(iType, iRecord);
   }
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
@@ -69,7 +80,7 @@ public class OUserTrigger extends ODocumentHookAbstract {
     if (password == null)
       throw new OSecurityException("User '" + iDocument.field("name") + "' has no password");
 
-    if (!password.startsWith(OSecurityManager.ALGORITHM_PREFIX)) {
+    if (!password.startsWith("{")) {
       iDocument.field("password", OUser.encryptPassword(password));
       return RESULT.RECORD_CHANGED;
     }

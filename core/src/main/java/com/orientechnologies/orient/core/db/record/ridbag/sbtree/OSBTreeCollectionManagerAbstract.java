@@ -134,7 +134,7 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
       assert container != null;
 
       if (container.usagesCounter != 0)
-        throw new IllegalStateException("Can not delete SBTreeBonsai instance because it is used in other thread.");
+        throw new IllegalStateException("Cannot delete SBTreeBonsai instance because it is used in other thread.");
 
       treeCache.remove(collectionPointer);
     }

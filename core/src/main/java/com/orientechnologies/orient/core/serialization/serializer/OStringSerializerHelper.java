@@ -400,7 +400,7 @@ public abstract class OStringSerializerHelper {
         if (insideLinkPart > 0 && c != '-' && !Character.isDigit(c) && c != ORID.SEPARATOR && c != LINK)
           insideLinkPart = 0;
 
-        if ((c == '"' || iStringSeparatorExtended && c == '\'') && !encodeMode) {
+        if ((c == '"' || c == '`' || iStringSeparatorExtended && c == '\'' ) && !encodeMode) {
           // START STRING
           stringBeginChar = c;
         }
@@ -418,7 +418,7 @@ public abstract class OStringSerializerHelper {
             continue;
       } else {
         // INSIDE A STRING
-        if ((c == '"' || iStringSeparatorExtended && c == '\'') && !encodeMode) {
+        if ((c == '"' || c == '`' ||iStringSeparatorExtended && c == '\'') && !encodeMode) {
           // CLOSE THE STRING ?
           if (stringBeginChar == c) {
             // SAME CHAR AS THE BEGIN OF THE STRING: CLOSE IT AND PUSH
@@ -693,7 +693,7 @@ public abstract class OStringSerializerHelper {
     try {
       getParameters(iText, 0, -1, params);
     } catch (Exception e) {
-      throw new OCommandSQLParsingException("Error on reading parameters in: " + iText);
+      throw new OCommandSQLParsingException("Error on reading parameters in: " + iText, e);
     }
     return params;
   }
@@ -929,7 +929,7 @@ public abstract class OStringSerializerHelper {
         while (true) {
           tend = iOrigin.indexOf('\'', tend + 1);
           if (tend < 0) {
-            throw new OCommandSQLParsingException("Could not find end of text area.", iOrigin, i);
+            throw new OCommandSQLParsingException("Could not find end of text area", iOrigin, i);
           }
 
           if (iOrigin.charAt(tend - 1) == '\\') {

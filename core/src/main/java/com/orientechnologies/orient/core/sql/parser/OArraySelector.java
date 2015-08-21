@@ -6,9 +6,6 @@ import java.util.Map;
 
 public class OArraySelector extends SimpleNode {
 
-  private static final Object UNSET           = new Object();
-  private Object              inputFinalValue = UNSET;
-
   protected ORid              rid;
   protected OInputParameter   inputParam;
   protected OExpression       expression;
@@ -27,36 +24,17 @@ public class OArraySelector extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (rid != null) {
-      return rid.toString();
+      rid.toString(params, builder);
     } else if (inputParam != null) {
-      if (inputFinalValue == UNSET) {
-        return inputParam.toString();
-      } else if (inputFinalValue == null) {
-        return "NULL";
-      } else {
-        return inputFinalValue.toString();
-      }
+      inputParam.toString(params, builder);
     } else if (expression != null) {
-      return expression.toString();
+      expression.toString(params, builder);
     } else if (integer != null) {
-      return integer.toString();
+      integer.toString(params, builder);
     }
-    return null;
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (inputParam != null) {
-      Object result = inputParam.bindFromInputParams(params);
-      if (result != inputParam) {
-        inputFinalValue = result;
-      }
-    }
-    if (expression != null) {
-      expression.replaceParameters(params);
-    }
-  }
 }
 /* JavaCC - OriginalChecksum=f87a5543b1dad0fb5f6828a0663a7c9e (do not edit this line) */

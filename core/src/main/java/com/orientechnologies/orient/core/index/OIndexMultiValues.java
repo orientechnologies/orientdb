@@ -50,9 +50,9 @@ import java.util.Set;
  * 
  */
 public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable>> {
-  public OIndexMultiValues(final String type, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
+  public OIndexMultiValues(String name, final String type, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
       String valueContainerAlgorithm, final ODocument metadata) {
-    super(type, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+    super(name, type, algorithm, indexEngine, valueContainerAlgorithm, metadata);
   }
 
   public Set<OIdentifiable> get(Object key) {
@@ -149,7 +149,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           }
 
           if (!iSingleValue.getIdentity().isValid())
-            ((ORecord) iSingleValue).save();
+            (iSingleValue.getRecord()).save();
 
           values.add(iSingleValue.getIdentity());
           indexEngine.put(key, values);
@@ -232,14 +232,14 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   public OIndexMultiValues create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
 
-    return (OIndexMultiValues) super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
+    return (OIndexMultiValues) super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
         determineValueSerializer());
   }
 
   protected OStreamSerializer determineValueSerializer() {
     if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm))
-      return (OStreamSerializer) getDatabase().getSerializerFactory().getObjectSerializer(
-          OStreamSerializerSBTreeIndexRIDContainer.ID);
+      return (OStreamSerializer) getDatabase().getSerializerFactory()
+          .getObjectSerializer(OStreamSerializerSBTreeIndexRIDContainer.ID);
     else
       return OStreamSerializerListRID.INSTANCE;
   }
@@ -304,10 +304,10 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     Collections.sort(sortedKeys, comparator);
 
     return new OIndexAbstractCursor() {
-      private Iterator<?>             keysIterator    = sortedKeys.iterator();
+      private Iterator<?> keysIterator = sortedKeys.iterator();
 
       private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-      private Object                  currentKey;
+      private Object currentKey;
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {

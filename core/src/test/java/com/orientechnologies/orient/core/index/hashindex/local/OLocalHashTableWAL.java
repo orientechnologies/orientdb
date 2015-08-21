@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -343,8 +343,8 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
     byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
 
-    fileOne.seek(OAbstractFile.HEADER_SIZE);
-    fileTwo.seek(OAbstractFile.HEADER_SIZE);
+    fileOne.seek(OFileClassic.HEADER_SIZE);
+    fileTwo.seek(OFileClassic.HEADER_SIZE);
 
     int bytesRead = fileOne.read(expectedContent);
     while (bytesRead >= 0) {

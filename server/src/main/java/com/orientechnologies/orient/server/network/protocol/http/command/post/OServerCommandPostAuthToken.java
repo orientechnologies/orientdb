@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
+import java.io.IOException;
+import java.util.Map;
+
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -12,9 +15,6 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
-
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * Created by emrul on 14/09/14.
@@ -70,7 +70,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
         ODatabaseDocumentTx db = null;
         OSecurityUser user = null;
         try {
-          db = (ODatabaseDocumentTx) server.openDatabase("document", iRequest.databaseName, username, password);
+          db = (ODatabaseDocumentTx) server.openDatabase(iRequest.databaseName, username, password);
           user = db.getUser();
 
           if (user != null) {
@@ -111,7 +111,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
     ODatabaseDocumentTx db = null;
     String userRid = null;
     try {
-      db = (ODatabaseDocumentTx) server.openDatabase("document", iDatabaseName, username, password);
+      db = (ODatabaseDocumentTx) server.openDatabase(iDatabaseName, username, password);
 
       userRid = (db.getUser() == null ? "<server user>" : db.getUser().getDocument().getIdentity().toString());
     } catch (OSecurityAccessException e) {

@@ -20,13 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.*;
-
-import org.apache.commons.configuration.Configuration;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -45,19 +38,43 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.intent.OIntent;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.GraphQuery;
+import com.tinkerpop.blueprints.Index;
+import com.tinkerpop.blueprints.Parameter;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
+import org.apache.commons.configuration.Configuration;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
@@ -71,12 +88,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public static final String                                  CLUSTER_PREFIX      = "cluster:";
   public static final String                                  ADMIN               = "admin";
   private static volatile ThreadLocal<OrientBaseGraph>        activeGraph         = new ThreadLocal<OrientBaseGraph>();
-  private static volatile ThreadLocal<Deque<OrientBaseGraph>> initializationStack = new ThreadLocal<Deque<OrientBaseGraph>>() {
-                                                                                    @Override
-                                                                                    protected Deque<OrientBaseGraph> initialValue() {
-                                                                                      return new LinkedList<OrientBaseGraph>();
-                                                                                    }
-                                                                                  };
+  private static volatile ThreadLocal<Deque<OrientBaseGraph>> initializationStack = new InitializationStackThreadLocal();
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -85,12 +97,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         if (activeGraph == null)
           activeGraph = new ThreadLocal<OrientBaseGraph>();
         if (initializationStack == null)
-          initializationStack = new ThreadLocal<Deque<OrientBaseGraph>>() {
-            @Override
-            protected Deque<OrientBaseGraph> initialValue() {
-              return new LinkedList<OrientBaseGraph>();
-            }
-          };
+          initializationStack = new InitializationStackThreadLocal();
       }
 
       @Override
@@ -120,7 +127,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     this.password = iUserPassword;
 
     database = iDatabase;
-    checkForGraphSchema(database);
 
     makeActive();
     putInInitializationStack();
@@ -245,8 +251,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *          of graph
    */
   public OrientBaseGraph(final Configuration configuration) {
-    this(configuration.getString("blueprints.orientdb.url", null), configuration.getString("blueprints.orientdb.username", null),
-        configuration.getString("blueprints.orientdb.password", null));
+    this(configuration.getString("blueprints.orientdb.url", null), configuration.getString("blueprints.orientdb.username", null), configuration.getString("blueprints.orientdb.password", null));
     super.init(configuration);
   }
 
@@ -282,7 +287,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * (Internal) Returns the case sensitive edge class names.
    */
   public static void getEdgeClassNames(final OrientBaseGraph graph, final String... iLabels) {
-    if (iLabels != null && graph.isUseClassForEdgeLabel()) {
+    if (iLabels != null && graph != null && graph.isUseClassForEdgeLabel()) {
       for (int i = 0; i < iLabels.length; ++i) {
         final OrientEdgeType edgeType = graph.getEdgeType(iLabels[i]);
         if (edgeType != null)
@@ -325,48 +330,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     } catch (UnsupportedEncodingException e) {
       OLogManager.instance().error(null, "Error on decoding class name using encoding '%s'", e, "UTF-8");
       return iClassName;
-    }
-  }
-
-  protected static void checkForGraphSchema(final ODatabaseDocumentTx iDatabase) {
-    final OSchema schema = iDatabase.getMetadata().getSchema();
-
-    final OClass vertexBaseClass = schema.getClass(OrientVertexType.CLASS_NAME);
-    final OClass edgeBaseClass = schema.getClass(OrientEdgeType.CLASS_NAME);
-
-    if (vertexBaseClass == null)
-      // CREATE THE META MODEL USING THE ORIENT SCHEMA
-      schema.createClass(OrientVertexType.CLASS_NAME).setOverSize(2);
-
-    if (edgeBaseClass == null)
-      schema.createClass(OrientEdgeType.CLASS_NAME);
-
-    // @COMPATIBILITY < 1.4.0:
-    boolean warn = false;
-    final String MSG_SUFFIX = ". Probably you are using a database created with a previous version of OrientDB. Export in graphml format and reimport it";
-
-    if (vertexBaseClass != null) {
-      if (!vertexBaseClass.getName().equals(OrientVertexType.CLASS_NAME)) {
-        OLogManager.instance().warn(null, "Found Vertex class %s" + MSG_SUFFIX, vertexBaseClass.getName());
-        warn = true;
-      }
-
-      if (vertexBaseClass.existsProperty(CONNECTION_OUT) || vertexBaseClass.existsProperty(CONNECTION_IN)) {
-        OLogManager.instance().warn(null, "Found property in/out against V");
-        warn = true;
-      }
-    }
-
-    if (edgeBaseClass != null) {
-      if (!warn && !edgeBaseClass.getName().equals(OrientEdgeType.CLASS_NAME)) {
-        OLogManager.instance().warn(null, "Found Edge class %s" + MSG_SUFFIX, edgeBaseClass.getName());
-        warn = true;
-      }
-
-      if (edgeBaseClass.existsProperty(CONNECTION_OUT) || edgeBaseClass.existsProperty(CONNECTION_IN)) {
-        OLogManager.instance().warn(null, "Found property in/out against E");
-        warn = true;
-      }
     }
   }
 
@@ -666,10 +629,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       }
     }
 
-    if (id != null && id instanceof String && id.toString().startsWith(CLASS_PREFIX))
-      // GET THE CLASS NAME
-      className = id.toString().substring(CLASS_PREFIX.length());
-
     // SAVE THE ID TOO?
     final Object[] fields = isSaveOriginalIds() && id != null ? new Object[] { OrientElement.DEF_ORIGINAL_ID_FIELDNAME, id } : null;
 
@@ -796,6 +755,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public Iterable<Vertex> getVerticesOfClass(final String iClassName, final boolean iPolymorphic) {
     makeActive();
 
+    final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iClassName);
+    if (cls == null)
+      throw new IllegalArgumentException("Cannot find class '" + iClassName + "' in database schema");
+
+    if (!cls.isSubClassOf(OrientVertexType.CLASS_NAME))
+      throw new IllegalArgumentException("Class '" + iClassName + "' is not a vertex class");
+
     return new OrientElementScanIterable<Vertex>(this, iClassName, iPolymorphic);
   }
 
@@ -825,7 +791,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       final String className = iKey.substring(0, pos);
       key = iKey.substring(iKey.indexOf('.') + 1);
 
-      final OClass clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
+      final OClass clazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(className);
 
       final Collection<? extends OIndex<?>> indexes = clazz.getIndexes();
       for (OIndex<?> index : indexes) {
@@ -983,6 +949,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public Iterable<Edge> getEdgesOfClass(final String iClassName, final boolean iPolymorphic) {
     makeActive();
 
+    final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iClassName);
+    if (cls == null)
+      throw new IllegalArgumentException("Cannot find class '" + iClassName + "' in database schema");
+
+    if (!cls.isSubClassOf(OrientEdgeType.CLASS_NAME))
+      throw new IllegalArgumentException("Class '" + iClassName + "' is not an edge class");
+
     return new OrientElementScanIterable<Edge>(this, iClassName, iPolymorphic);
   }
 
@@ -1074,6 +1047,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     final ODocument doc = rec.getRecord();
     if (doc == null)
       return null;
+
+    if (!doc.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME))
+      throw new IllegalArgumentException("Class '" + doc.getClassName() + "' is not an edge class");
 
     return new OrientEdge(this, rec);
   }
@@ -1592,7 +1568,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (elementClass == null)
       throw ExceptionFactory.classForElementCannotBeNull();
 
-    final OSchema schema = ((OMetadataInternal) getRawGraph().getMetadata()).getImmutableSchemaSnapshot();
+    final OSchema schema = getRawGraph().getMetadata().getImmutableSchemaSnapshot();
     final String elementOClassName = getClassName(elementClass);
 
     Set<String> result = new HashSet<String>();
@@ -1840,7 +1816,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     makeActive();
     putInInitializationStack();
-    checkForGraphSchema(database);
   }
 
   private List<Index<? extends Element>> loadManualIndexes() {
@@ -1860,5 +1835,12 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
     // compatibility with versions earlier 1.6.3
         || idx.getConfiguration().field(OrientIndex.CONFIG_CLASSNAME) != null;
+  }
+
+  private static class InitializationStackThreadLocal extends ThreadLocal<Deque<OrientBaseGraph>> {
+    @Override
+    protected Deque<OrientBaseGraph> initialValue() {
+      return new LinkedList<OrientBaseGraph>();
+    }
   }
 }

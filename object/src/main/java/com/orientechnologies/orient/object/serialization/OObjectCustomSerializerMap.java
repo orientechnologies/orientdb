@@ -166,7 +166,7 @@ public class OObjectCustomSerializerMap<TYPE> extends HashMap<Object, Object> im
     convertAll();
   }
 
-  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached) {
+  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
     convertAll();
   }
 

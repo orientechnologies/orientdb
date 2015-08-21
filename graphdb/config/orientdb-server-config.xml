@@ -61,9 +61,8 @@
                 <!-- USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
             </parameters>
         </handler>
-        <!-- SERVER SIDE SCRIPT INTERPRETER. WARNING! THIS CAN BE A SECURITY HOLE:
-            ENABLE IT ONLY IF CLIENTS ARE TRUCT, TO TURN ON SET THE 'ENABLED' PARAMETER
-            TO 'true' -->
+        <!-- SERVER SIDE SCRIPT INTERPRETER. WARNING, THIS CAN BE A SECURITY HOLE BECAUSE MALICIOUS CODE COULD BE INJECTED.
+            ENABLE IT ONLY IF CLIENTS ARE TRUSTED, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
         <handler
                 class="com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter">
             <parameters>
@@ -124,7 +123,6 @@
         </protocols>
         <listeners>
             <listener protocol="binary" ip-address="0.0.0.0" port-range="2424-2430" socket="default"/>
-            <!-- <listener protocol="binary" ip-address="0.0.0.0" port-range="2434-2440" socket="ssl"/> -->
             <listener protocol="http" ip-address="0.0.0.0" port-range="2480-2490" socket="default">
                 <parameters>
                     <!-- Connection's custom parameters. If not specified the global configuration
@@ -138,7 +136,7 @@
                 </parameters>
                 <commands>
                     <command
-                            pattern="GET|www GET|studio/ GET| GET|*.htm GET|*.html GET|*.xml GET|*.jpeg GET|*.jpg GET|*.png GET|*.gif GET|*.js GET|*.css GET|*.swf GET|*.ico GET|*.txt GET|*.otf GET|*.pjs GET|*.svg GET|*.json GET|*.woff GET|*.ttf GET|*.svgz"
+                            pattern="GET|www GET|studio/ GET| GET|*.htm GET|*.html GET|*.xml GET|*.jpeg GET|*.jpg GET|*.png GET|*.gif GET|*.js GET|*.css GET|*.swf GET|*.ico GET|*.txt GET|*.otf GET|*.pjs GET|*.svg GET|*.json GET|*.woff GET|*.woff2 GET|*.ttf GET|*.svgz"
                             implementation="com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent">
                         <parameters>
                             <!-- Don't cache html resources in development mode -->

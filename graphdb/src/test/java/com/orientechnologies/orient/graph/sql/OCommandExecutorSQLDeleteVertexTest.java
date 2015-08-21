@@ -19,11 +19,8 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
+
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,7 +29,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.List;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
  * @author Luigi Dell'Aquila
@@ -44,8 +44,7 @@ public class OCommandExecutorSQLDeleteVertexTest {
 
   @BeforeClass
   public static void init() throws Exception {
-    db = Orient.instance().getDatabaseFactory()
-        .createDatabase("graph", "memory:" + OCommandExecutorSQLDeleteVertexTest.class.getSimpleName());
+    db = new ODatabaseDocumentTx("memory:" + OCommandExecutorSQLDeleteVertexTest.class.getSimpleName());
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();
@@ -70,7 +69,7 @@ public class OCommandExecutorSQLDeleteVertexTest {
   }
 
   @Test
-  public void testDeteleVertexLimit() throws Exception {
+  public void testDeleteVertexLimit() throws Exception {
     // for issue #4148
 
     for (int i = 0; i < 10; i++) {
@@ -81,6 +80,21 @@ public class OCommandExecutorSQLDeleteVertexTest {
 
     List<?> result = db.query(new OSQLSynchQuery("select from User"));
     Assert.assertEquals(result.size(), 6);
+
+  }
+
+  @Test
+  public void testDeleteVertexBatch() throws Exception {
+    // for issue #4622
+
+    for (int i = 0; i < 100; i++) {
+      db.command(new OCommandSQL("create vertex User set name = 'foo" + i + "'")).execute();
+    }
+
+    final int res = (Integer) db.command(new OCommandSQL("delete vertex User batch 5")).execute();
+
+    List<?> result = db.query(new OSQLSynchQuery("select from User"));
+    Assert.assertEquals(result.size(), 0);
 
   }
 }
