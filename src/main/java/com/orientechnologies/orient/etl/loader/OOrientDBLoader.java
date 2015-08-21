@@ -413,6 +413,9 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       for (ODocument idx : indexes) {
         OIndex index;
 
+        final ODocument metadata = (ODocument) resolve(idx.field("metadata"));
+        log(OETLProcessor.LOG_LEVELS.DEBUG, "%s: found metadata field '%s'", getName(), metadata);
+
         String idxName = (String) resolve(idx.field("name"));
         if (idxName != null) {
           index = documentDatabase.getMetadata().getIndexManager().getIndex(idxName);
@@ -472,7 +475,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
           // ALREADY EXISTS
           continue;
 
-        index = cls.createIndex(idxName, idxType, fields);
+        index = cls.createIndex(idxName, idxType, null, metadata, fields);
         log(OETLProcessor.LOG_LEVELS.DEBUG, "- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s",
             idxName, idxType, idxClass, idxFields);
       }
