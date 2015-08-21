@@ -18,15 +18,6 @@
 
 package com.orientechnologies.lucene.test;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -35,7 +26,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.tx.OTransaction;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.util.Collection;
 
 /**
  * Created by enricorisa on 28/06/14.
@@ -46,7 +40,7 @@ public class LuceneInsertMultithreadTest {
 
   private final static int  THREADS  = 10;
   private final static int  RTHREADS = 1;
-  private final static int  CYCLE    = 1000;
+  private final static int  CYCLE    = 100;
   private ODatabaseDocument databaseDocumentTx;
 
   private static String     url;

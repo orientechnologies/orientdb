@@ -20,7 +20,7 @@ package com.orientechnologies.lucene.test;
 
 import org.testng.annotations.Test;
 
-@Test(groups = "remote")
+@Test(enabled = false)
 public class LuceneSpatialQueryRemoteTest extends LuceneSpatialQueryTest {
 
   public LuceneSpatialQueryRemoteTest() {
@@ -30,5 +30,30 @@ public class LuceneSpatialQueryRemoteTest extends LuceneSpatialQueryTest {
   @Override
   protected String getDatabaseName() {
     return super.getDatabaseName() + "Remote";
+  }
+
+  @Test(enabled = false)
+  @Override
+  public void testNearQuery() {
+    super.testNearQuery();
+  }
+
+  @Test(enabled = false)
+  @Override
+  public void testNearQueryWithoutIndex() {
+    super.testNearQueryWithoutIndex();
+
+  }
+
+  @Test(enabled = false)
+  @Override
+  public void testWithinQuery() {
+    super.testWithinQuery();
+  }
+
+  @Test(enabled = false)
+  @Override
+  public void testWithinQueryWithoutIndex() {
+    super.testWithinQueryWithoutIndex();
   }
 }

@@ -16,7 +16,6 @@
 
 package com.orientechnologies.lucene.shape;
 
-import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.shape.Point;
@@ -24,14 +23,14 @@ import com.spatial4j.core.shape.Rectangle;
 import com.spatial4j.core.shape.Shape;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class OShapeFactoryImpl implements OShapeFactory {
 
   private Map<Class<? extends Shape>, OShapeFactory> factories = new HashMap<Class<? extends Shape>, OShapeFactory>();
 
-  public OShapeFactoryImpl() {
+  public static OShapeFactoryImpl INSTANCE = new OShapeFactoryImpl();
+  protected OShapeFactoryImpl() {
     registerFactory(Point.class, new OPointShapeFactory());
     registerFactory(Rectangle.class, new ORectangleShapeFactory());
     registerFactory(Shape.class, new OPolygonShapeFactory());

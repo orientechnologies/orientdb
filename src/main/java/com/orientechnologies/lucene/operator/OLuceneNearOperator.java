@@ -30,6 +30,12 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperator;
+import com.spatial4j.core.context.SpatialContext;
+import com.spatial4j.core.distance.DistanceUtils;
+import com.spatial4j.core.shape.Circle;
+import com.spatial4j.core.shape.Point;
+import com.spatial4j.core.shape.Shape;
+import com.spatial4j.core.shape.SpatialRelation;
 
 import java.util.Collection;
 import java.util.List;
@@ -45,11 +51,32 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
   public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
       Object iRight, OCommandContext iContext) {
 
-    if (iContext.getVariable("$luceneIndex") != null) {
-      return true;
-    } else {
-      return false;
+    List<Number> left = (List<Number>) iLeft;
+
+    double lat = left.get(0).doubleValue();
+    double lon = left.get(1).doubleValue();
+
+    Shape shape = SpatialContext.GEO.makePoint(lon, lat);
+    List<Number> right = (List<Number>) iRight;
+
+    double lat1 =  right.get(0).doubleValue();
+    double lon1 =  right.get(1).doubleValue();
+    Shape shape1 = SpatialContext.GEO.makePoint(lon1, lat1);
+
+    Map map = (Map) right.get(2);
+    double distance = 0;
+
+    Number n = (Number) map.get("maxDistance");
+    if (n != null) {
+      distance = n.doubleValue();
     }
+    Point p = (Point) shape1;
+    Circle circle = SpatialContext.GEO.makeCircle(p.getX(), p.getY(),
+        DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM));
+    double docDistDEG = SpatialContext.GEO.getDistCalc().distance((Point) shape, p);
+    final double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
+    iContext.setVariable("distance", docDistInKM);
+    return shape.relate(circle) == SpatialRelation.WITHIN;
   }
 
   private Object[] parseParams(OIdentifiable iRecord, OSQLFilterCondition iCondition) {

@@ -67,7 +67,7 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
   public void loadCloseDelete() {
 
     ODocument city = new ODocument("City");
-    int size = 100000;
+    int size = 1000;
     for (int i = 0; i < size; i++) {
       city.field("name", "Rome " + i);
       databaseDocumentTx.save(city);

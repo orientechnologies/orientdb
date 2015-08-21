@@ -146,23 +146,42 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
     deInitDB();
   }
 
-  @Test
+  @Test(priority = 1)
   public void testNearQuery() {
 
+    assertNear();
+  }
+
+  @Test(priority = 3)
+  public void testNearQueryWithoutIndex() {
+
+    databaseDocumentTx.command(new OCommandSQL("drop index Place.l_lon")).execute();
+    assertNear();
+  }
+
+  @Test(priority = 4)
+  public void testWithinQueryWithoutIndex() {
+    databaseDocumentTx.command(new OCommandSQL("drop index Place.l_lon")).execute();
+    assertWithin();
+  }
+
+  protected void assertNear() {
     String query = "select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 0.5}]";
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(1, docs.size());
 
-    // WHY ? 0.2749329729746763
-    // Assert.assertEquals(0.27504313167833594, docs.get(0).field("$distance"));
     Assert.assertEquals(0.2749329729746763, docs.get(0).field("$distance"));
   }
 
-  @Test
+  @Test(priority = 2)
   public void testWithinQuery() {
-    String query = "select * from Place where [latitude,longitude] WITHIN [[51.507222,-0.1275],[55.507222,-0.1275]]";
+    assertWithin();
+  }
+
+  protected void assertWithin() {
+    String query = "select * from Place where [latitude,longitude] WITHIN [[51.286839,-0.51035],[51.692322,0.33403]]";
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-    Assert.assertEquals(238, docs.size());
+    Assert.assertEquals(291, docs.size());
   }
 }

@@ -43,7 +43,7 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
 
   private final static int THREADS  = 10;
   private final static int RTHREADS = 1;
-  private final static int CYCLE    = 1000;
+  private final static int CYCLE    = 100;
 
   protected String         url      = "";
 

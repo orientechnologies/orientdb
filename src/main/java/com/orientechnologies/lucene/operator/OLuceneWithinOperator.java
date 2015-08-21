@@ -17,6 +17,7 @@
 package com.orientechnologies.lucene.operator;
 
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
+import com.orientechnologies.lucene.shape.OShapeFactoryImpl;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -28,12 +29,17 @@ import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperator;
+import com.spatial4j.core.context.SpatialContext;
+import com.spatial4j.core.shape.Shape;
+import com.spatial4j.core.shape.SpatialRelation;
 import org.apache.lucene.spatial.query.SpatialOperation;
 
 import java.util.Collection;
 import java.util.List;
 
 public class OLuceneWithinOperator extends OQueryTargetOperator {
+
+  OShapeFactoryImpl shapeFactory = OShapeFactoryImpl.INSTANCE;
 
   public OLuceneWithinOperator() {
     super("WITHIN", 5, false);
@@ -48,11 +54,16 @@ public class OLuceneWithinOperator extends OQueryTargetOperator {
   @Override
   public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
       Object iRight, OCommandContext iContext) {
-    if (iContext.getVariable("$luceneIndex") != null) {
-      return true;
-    } else {
-      return false;
-    }
+    List<Number> left = (List<Number>) iLeft;
+
+    double lat = left.get(0).doubleValue();
+    double lon = left.get(1).doubleValue();
+
+    Shape shape = SpatialContext.GEO.makePoint(lon, lat);
+
+    Shape shape1 = shapeFactory.makeShape(new OSpatialCompositeKey((List<?>) iRight), SpatialContext.GEO);
+
+    return shape.relate(shape1) == SpatialRelation.WITHIN;
   }
 
   @Override
