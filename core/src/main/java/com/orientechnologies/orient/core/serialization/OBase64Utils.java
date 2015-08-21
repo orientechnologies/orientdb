@@ -1440,11 +1440,11 @@ public class OBase64Utils {
     } // end if
     if (srcOffset < 0 || srcOffset + 3 >= source.length) {
       throw new IllegalArgumentException(String.format(
-          "Source array with length %d cannot have offset of %d and still process four bytes.", source.length, srcOffset));
+          "Source array with length %d cannot have offset of %d and still process four bytes", source.length, srcOffset));
     } // end if
     if (destOffset < 0 || destOffset + 2 >= destination.length) {
       throw new IllegalArgumentException(String.format(
-          "Destination array with length %d cannot have offset of %d and still store three bytes.", destination.length, destOffset));
+          "Destination array with length %d cannot have offset of %d and still store three bytes", destination.length, destOffset));
     } // end if
 
     byte[] DECODABET = getDecodabet(options);
@@ -1538,7 +1538,7 @@ public class OBase64Utils {
     } // end if
     if (off < 0 || off + len > source.length) {
       throw new IllegalArgumentException(String.format(
-          "Source array with length %d cannot have offset of %d and process %d bytes.", source.length, off, len));
+          "Source array with length %d cannot have offset of %d and process %d bytes", source.length, off, len));
     } // end if
 
     if (len == 0) {

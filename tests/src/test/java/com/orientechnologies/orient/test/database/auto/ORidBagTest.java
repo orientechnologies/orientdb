@@ -136,7 +136,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
-		database = new ODatabaseDocumentTx(database.getURL());
+    database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
 
     doc = database.load(rid);
@@ -213,7 +213,8 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
-		database.resetInitialization();
+    database.activateOnCurrentThread();
+    database.resetInitialization();
     database.open("admin", "admin");
 
     doc = database.load(rid);
@@ -336,7 +337,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
-		database = new ODatabaseDocumentTx(database.getURL());
+    database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
 
     doc = database.load(rid);
@@ -455,7 +456,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
-		database = new ODatabaseDocumentTx(database.getURL());
+    database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
 
     doc = database.load(rid);
@@ -579,7 +580,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
-		database = new ODatabaseDocumentTx(database.getURL());
+    database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
 
     doc = database.load(rid);
@@ -767,7 +768,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
-		database = new ODatabaseDocumentTx(database.getURL());
+    database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
 
     doc = database.load(id);
@@ -1400,9 +1401,9 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     c.addEdge("link", a);
     c.addEdge("link", b);
 
-//    System.out.println("A: " + a.getRecord());
-//    System.out.println("B: " + b.getRecord());
-//    System.out.println("C: " + c.getRecord());
+    // System.out.println("A: " + a.getRecord());
+    // System.out.println("B: " + b.getRecord());
+    // System.out.println("C: " + c.getRecord());
 
     database.commit();
   }

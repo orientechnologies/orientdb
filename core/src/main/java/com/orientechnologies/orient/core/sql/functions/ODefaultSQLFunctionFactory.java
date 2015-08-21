@@ -18,25 +18,9 @@ package com.orientechnologies.orient.core.sql.functions;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.coll.*;
 import com.orientechnologies.orient.core.sql.functions.geo.OSQLFunctionDistance;
-import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAverage;
-import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionEval;
-import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMax;
-import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMin;
-import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionSum;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCoalesce;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDate;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDecode;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionEncode;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIf;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIfNull;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionUUID;
-import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionMedian;
-import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionMode;
-import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionPercentile;
-import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionStandardDeviation;
-import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionVariance;
+import com.orientechnologies.orient.core.sql.functions.math.*;
+import com.orientechnologies.orient.core.sql.functions.misc.*;
+import com.orientechnologies.orient.core.sql.functions.stat.*;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionConcat;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionFormat;
 
@@ -60,6 +44,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionDate.NAME, OSQLFunctionDate.class);
     register(OSQLFunctionDecode.NAME, new OSQLFunctionDecode());
     register(OSQLFunctionDifference.NAME, OSQLFunctionDifference.class);
+    register(OSQLFunctionSymmetricDifference.NAME, OSQLFunctionSymmetricDifference.class);
     register(OSQLFunctionDistance.NAME, new OSQLFunctionDistance());
     register(OSQLFunctionDistinct.NAME, OSQLFunctionDistinct.class);
     register(OSQLFunctionDocument.NAME, OSQLFunctionDocument.class);
@@ -89,6 +74,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionStandardDeviation.NAME, OSQLFunctionStandardDeviation.class);
     register(OSQLFunctionUUID.NAME, OSQLFunctionUUID.class);
     register(OSQLFunctionConcat.NAME, OSQLFunctionConcat.class);
+    register(OSQLFunctionDecimal.NAME, OSQLFunctionDecimal.class);
   }
 
   public static void register(final String iName, final Object iImplementation) {

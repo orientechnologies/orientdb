@@ -18,6 +18,7 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyAbstractDelegate;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -29,9 +30,11 @@ import com.tinkerpop.blueprints.Direction;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public class OrientVertexType extends OrientElementType {
-  public static final String CLASS_NAME = "V";
+  // Keeping the name in Immutable class because i cannot do the other way around
+  public static final String CLASS_NAME = OImmutableClass.VERTEX_CLASS_NAME;
 
   public class OrientVertexProperty extends OPropertyAbstractDelegate {
+    public static final String      ORDERED = "ordered";
     protected final OrientBaseGraph graph;
 
     public OrientVertexProperty(final OrientBaseGraph iGraph, final OProperty iProperty) {
@@ -39,13 +42,13 @@ public class OrientVertexType extends OrientElementType {
       graph = iGraph;
     }
 
-    public boolean getOrdered() {
-      final String value = delegate.getCustom("ordered");
+    public boolean isOrdered() {
+      final String value = delegate.getCustom(ORDERED);
       return Boolean.parseBoolean(value);
     }
 
     public OrientVertexProperty setOrdered(final boolean iOrdered) {
-      delegate.setCustom("ordered", Boolean.toString(iOrdered));
+      delegate.setCustom(ORDERED, Boolean.toString(iOrdered));
       return this;
     }
   }
@@ -54,11 +57,11 @@ public class OrientVertexType extends OrientElementType {
     super(graph, delegate);
   }
 
-  protected static final void checkType(final OClass iType) {
+  protected static void checkType(final OClass iType) {
     if (iType == null)
       throw new IllegalArgumentException("Vertex class is null");
 
-    if (!iType.isSubClassOf(CLASS_NAME))
+    if (((iType instanceof OImmutableClass) && !((OImmutableClass) iType).isVertexType()) || !iType.isSubClassOf(CLASS_NAME))
       throw new IllegalArgumentException("Type error. The class '" + iType + "' does not extend class '" + CLASS_NAME
           + "' and therefore cannot be considered a Vertex");
   }

@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.hazelcast.core.Hazelcast;
+import com.hazelcast.instance.GroupProperties;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -79,6 +81,8 @@ public abstract class AbstractServerClusterTest {
   }
 
   public void init(final int servers) {
+    System.setProperty(GroupProperties.PROP_WAIT_SECONDS_BEFORE_JOIN, "1");
+
     Orient.setRegisterDatabaseByPath(true);
     for (int i = 0; i < servers; ++i)
       serverInstance.add(new ServerRun(rootDirectory, "" + i));
@@ -87,54 +91,87 @@ public abstract class AbstractServerClusterTest {
   public void execute() throws Exception {
     System.out.println("Starting test against " + serverInstance.size() + " server nodes...");
 
-    for (ServerRun server : serverInstance) {
-      System.out.println("\n******************************************************************************************");
-      System.out.println("STARTING SERVER -> " + server.getServerId() + "...");
-      System.out.println("******************************************************************************************\n");
-      server.startServer(getDistributedServerConfiguration(server));
-      try {
-        Thread.sleep(delayServerStartup * serverInstance.size());
-      } catch (InterruptedException e) {
+    try {
+
+      for (ServerRun server : serverInstance) {
+        banner("STARTING SERVER -> " + server.getServerId() + "...");
+        server.startServer(getDistributedServerConfiguration(server));
+
+        if (delayServerStartup > 0)
+          try {
+            Thread.sleep(delayServerStartup * serverInstance.size());
+          } catch (InterruptedException e) {
+          }
+
+        onServerStarted(server);
       }
-    }
 
-    try {
-      System.out.println("Server started, waiting for synchronization (" + (delayServerAlign * serverInstance.size() / 1000)
-          + "secs)...");
-      Thread.sleep(delayServerAlign * serverInstance.size());
-    } catch (InterruptedException e) {
-    }
+      if (delayServerAlign > 0)
+        try {
+          System.out.println("Server started, waiting for synchronization (" + (delayServerAlign * serverInstance.size() / 1000)
+              + "secs)...");
+          Thread.sleep(delayServerAlign * serverInstance.size());
+        } catch (InterruptedException e) {
+        }
 
-    for (ServerRun server : serverInstance) {
-      final ODocument cfg = server.getServerInstance().getDistributedManager().getClusterConfiguration();
-      Assert.assertNotNull(cfg);
-    }
+      for (ServerRun server : serverInstance) {
+        final ODocument cfg = server.getServerInstance().getDistributedManager().getClusterConfiguration();
+        Assert.assertNotNull(cfg);
+      }
 
-    System.out.println("\n******************************************************************************************");
-    System.out.println("Executing test...");
-    System.out.println("******************************************************************************************\n");
+      OLogManager.instance().flush();
+      banner("Executing test...");
 
-    try {
-      executeTest();
+      try {
+        executeTest();
+      } finally {
+        onAfterExecution();
+      }
+
     } finally {
-      onAfterExecution();
+      banner("Test finished");
 
-      System.out.println("\n******************************************************************************************");
-      System.out.println("Shutting down nodes...");
-      System.out.println("******************************************************************************************\n");
-      for (ServerRun server : serverInstance)
+      OLogManager.instance().flush();
+      banner("Shutting down nodes...");
+      for (ServerRun server : serverInstance) {
+        System.out.println("Shutting down node " + server.getServerId() + "...");
         server.shutdownServer();
+      }
+
+      onTestEnded();
+
+      banner("Shutdown HZ...");
       Hazelcast.shutdownAll();
-      System.out.println("\n******************************************************************************************");
-      System.out.println("Test finished");
-      System.out.println("******************************************************************************************\n");
+
+      banner("Clean server directories...");
       deleteServers();
     }
   }
 
-  protected void onAfterExecution() {
+  protected void banner(final String iMessage) {
+    OLogManager.instance().flush();
+    System.out
+        .println("\n**********************************************************************************************************");
+    System.out.println(iMessage);
+    System.out
+        .println("**********************************************************************************************************\n");
+    System.out.flush();
   }
 
+  protected void log(final String iMessage) {
+    OLogManager.instance().flush();
+    System.out.println("\n"+iMessage);
+    System.out.flush();
+  }
+
+  protected void onServerStarted(ServerRun server) {
+  }
+
+  protected void onTestEnded() {
+  }
+
+  protected void onAfterExecution() throws Exception {
+  }
 
   protected abstract String getDatabaseName();
 
@@ -169,6 +206,7 @@ public abstract class AbstractServerClusterTest {
         onAfterDatabaseCreation(graph);
       } finally {
         graph.shutdown();
+        Orient.instance().closeAllStorages();
       }
     }
 

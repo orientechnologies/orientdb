@@ -1,17 +1,18 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OStorage;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 import java.util.List;
 
@@ -73,7 +74,7 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
       Assert
           .assertEquals(
               e.getMessage(),
-              "Class SchemaSharedIndexSuperTest cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
+              "Class 'SchemaSharedIndexSuperTest' cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
     }
 
     database.getMetadata().getSchema().reload();

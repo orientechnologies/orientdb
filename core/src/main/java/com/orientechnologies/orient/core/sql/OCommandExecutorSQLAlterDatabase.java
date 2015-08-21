@@ -19,19 +19,19 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * SQL ALTER DATABASE command: Changes an attribute of the current database.
@@ -73,7 +73,7 @@ public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLAbstrac
       attribute = ODatabase.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException e) {
       throw new OCommandSQLParsingException("Unknown database's attribute '" + attributeAsString + "'. Supported attributes are: "
-          + Arrays.toString(ODatabase.ATTRIBUTES.values()), parserText, oldPos);
+          + Arrays.toString(ODatabase.ATTRIBUTES.values()), parserText, oldPos, e);
     }
 
     value = parserText.substring(pos + 1).trim();
@@ -88,6 +88,11 @@ public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLAbstrac
     return this;
   }
 
+  @Override
+  public long getDistributedTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
+  }
+
   /**
    * Execute the ALTER DATABASE.
    */
@@ -100,6 +105,11 @@ public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLAbstrac
 
     database.setInternal(attribute, value);
     return null;
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
   }
 
   public String getSyntax() {

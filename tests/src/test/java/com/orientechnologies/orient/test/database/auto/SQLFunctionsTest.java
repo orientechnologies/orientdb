@@ -15,6 +15,22 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -29,21 +45,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Test(groups = "sql-select")
 public class SQLFunctionsTest extends DocumentDBBaseTest {
@@ -315,10 +316,9 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
   @Test
   public void queryComposedAggregates() {
-    List<ODocument> result = database
-        .command(
-            new OSQLSynchQuery<ODocument>(
-                "select MIN(id) as min, max(id) as max, AVG(id) as average, count(id) as total from Account")).execute();
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select MIN(id) as min, max(id) as max, AVG(id) as average, sum(id) as total from Account"))
+        .execute();
 
     Assert.assertTrue(result.size() == 1);
     for (ODocument d : result) {
@@ -467,8 +467,8 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     for (ODocument d : result) {
       final String name = d.field("name");
 
-      Assert.assertEquals(OSecurityManager.digest2String(name, "SHA-256"), d.field("n256"));
-      Assert.assertEquals(OSecurityManager.digest2String(name, "SHA-512"), d.field("n512"));
+      Assert.assertEquals(OSecurityManager.createHash(name, "SHA-256"), d.field("n256"));
+      Assert.assertEquals(OSecurityManager.createHash(name, "SHA-512"), d.field("n512"));
     }
   }
 }

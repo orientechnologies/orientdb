@@ -22,29 +22,19 @@ public class OCollection extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-
-    StringBuilder result = new StringBuilder();
-    result.append("[");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("[");
     boolean first = true;
     for (OExpression expr : expressions) {
       if (!first) {
-        result.append(", ");
+        builder.append(", ");
       }
-      result.append(expr.toString());
+      expr.toString(params, builder);
       first = false;
     }
-    result.append("]");
-    return result.toString();
+    builder.append("]");
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (expressions != null) {
-      for (OExpression expr : expressions) {
-        expr.replaceParameters(params);
-      }
-    }
-  }
+
 }
 /* JavaCC - OriginalChecksum=c93b20138b2ae58c5f76e458c34b5946 (do not edit this line) */

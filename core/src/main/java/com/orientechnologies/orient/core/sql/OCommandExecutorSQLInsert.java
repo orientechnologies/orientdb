@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -36,12 +37,18 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * SQL INSERT command.
- * 
+ *
  * @author Luca Garulli
  * @author Johann Sorel (Geomatys)
  */
@@ -68,9 +75,9 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     String queryText = textRequest.getText();
     String originalQuery = queryText;
     try {
-//      System.out.println("NEW PARSER FROM: " + queryText);
+      // System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-//      System.out.println("NEW PARSER   TO: " + queryText);
+      // System.out.println("NEW PARSER   TO: " + queryText);
       textRequest.setText(queryText);
 
       final ODatabaseDocument database = getDatabase();
@@ -147,9 +154,11 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
           parseContent();
           sourceClauseProcessed = true;
         } else if (parserGetLastWord().equals(KEYWORD_SET)) {
-          final LinkedHashMap<String, Object> fields = new LinkedHashMap<String, Object>();
-          newRecords.add(fields);
+          final List<OPair<String, Object>> fields = new ArrayList<OPair<String, Object>>();
           parseSetFields(clazz, fields);
+
+          newRecords.add(OPair.convertToMap(fields));
+
           sourceClauseProcessed = true;
         }
       }
@@ -411,4 +420,13 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     return (OIdentifiable) parsedRid;
   }
 
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
+  }
+
+  @Override
+  public Object getResult() {
+    return null;
+  }
 }

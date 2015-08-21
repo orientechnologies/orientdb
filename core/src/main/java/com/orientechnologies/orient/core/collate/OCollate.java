@@ -19,16 +19,15 @@
   */
 package com.orientechnologies.orient.core.collate;
 
-import java.util.Comparator;
+import java.io.Serializable;
 
 /**
  * Specify the Collating strategy when comparison in SQL statement is required.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
-public interface OCollate {
-  public String getName();
+public interface OCollate extends Serializable {
+  String getName();
 
-  public Object transform(Object obj);
+  Object transform(Object obj);
 }

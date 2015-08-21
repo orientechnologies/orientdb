@@ -2,10 +2,15 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OSkip extends SimpleNode {
+import java.util.Map;
 
-  protected Integer num;
+public class OSkip extends SimpleNode {
+
+  protected OInteger        num;
+
+  protected OInputParameter inputParam;
+
+  protected Object          inputFinalValue;
 
   public OSkip(int id) {
     super(id);
@@ -15,18 +20,23 @@ class OSkip extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  public Integer getNum() {
-    return num;
-  }
 
-  public void setNum(Integer num) {
-    this.num = num;
+
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    if (num == null && inputParam == null) {
+      return;
+    }
+    builder.append(" SKIP ");
+    if (num != null) {
+      num.toString(params, builder);
+    } else {
+      inputParam.toString(params, builder);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=8e13ca184705a8fc1b5939ecefe56a60 (do not edit this line) */

@@ -54,6 +54,11 @@ public class ORecordSerializerRaw implements ORecordSerializer {
     return record;
   }
 
+  @Override
+  public byte[] writeClassOnly(ORecord iSource) {
+    return new byte[]{};
+  }
+  
   public byte[] toStream(final ORecord iSource, boolean iOnlyDelta) {
     try {
       return iSource.toStream();

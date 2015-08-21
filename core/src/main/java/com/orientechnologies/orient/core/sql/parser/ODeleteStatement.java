@@ -9,7 +9,7 @@ public class ODeleteStatement extends OStatement {
   protected OFromClause  fromClause;
   protected OWhereClause whereClause;
   protected boolean      returnBefore = false;
-  protected OInteger     limit        = null;
+  protected OLimit       limit        = null;
   protected boolean      unsafe       = false;
 
   public ODeleteStatement(int id) {
@@ -20,35 +20,24 @@ public class ODeleteStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("DELETE FROM ");
-    result.append(fromClause.toString());
-    if (whereClause != null) {
-      result.append(" WHERE ");
-      result.append(whereClause.toString());
-    }
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+
+    builder.append("DELETE FROM ");
+    fromClause.toString(params, builder);
     if (returnBefore) {
-      result.append(" RETURN BEFORE");
+      builder.append(" RETURN BEFORE");
+    }
+    if (whereClause != null) {
+      builder.append(" WHERE ");
+      whereClause.toString(params, builder);
     }
     if (limit != null) {
-      result.append(" LIMIT ");
-      result.append(limit);
+      limit.toString(params, builder);
     }
     if (unsafe) {
-      result.append(" UNSAFE");
+      builder.append(" UNSAFE");
     }
-    return result.toString();
-  }
+   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    fromClause.replaceParameters(params);
-
-    if (whereClause != null) {
-      whereClause.replaceParameters(params);
-    }
-
-  }
 }
 /* JavaCC - OriginalChecksum=5fb4ca5ba648e6c9110f41d806206a6f (do not edit this line) */

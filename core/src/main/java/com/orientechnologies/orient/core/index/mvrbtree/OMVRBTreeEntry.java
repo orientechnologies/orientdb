@@ -19,10 +19,13 @@
   */
 package com.orientechnologies.orient.core.index.mvrbtree;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.Map;
 
 
 @SuppressWarnings("unchecked")
+@SuppressFBWarnings(value = "EQ_COMPARETO_USE_OBJECT_EQUALS")
 public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparable<OMVRBTreeEntry<K, V>> {
   protected OMVRBTree<K, V> tree;
 

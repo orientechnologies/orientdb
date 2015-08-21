@@ -2,10 +2,13 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OLimit extends SimpleNode {
+import java.util.Map;
 
-  protected Integer num;
+public class OLimit extends SimpleNode {
+
+  protected OInteger         num;
+
+  protected OInputParameter inputParam;
 
   public OLimit(int id) {
     super(id);
@@ -15,18 +18,21 @@ class OLimit extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  public Integer getNum() {
-    return num;
-  }
-
-  public void setNum(Integer num) {
-    this.num = num;
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    if (num == null && inputParam == null) {
+      return;
+    }
+    builder.append(" LIMIT ");
+    if (num != null) {
+      num.toString(params, builder);
+    } else {
+      inputParam.toString(params, builder);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=1063b9489290bb08de6048ba55013171 (do not edit this line) */

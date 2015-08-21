@@ -10,6 +10,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -109,6 +110,7 @@ public class TestNetworkSerializerIndipendency {
     server.shutdown();
     File iDirectory = new File(SERVER_DIRECTORY);
     deleteDirectory(iDirectory);
+    Orient.instance().startup();
   }
 
   private void deleteDirectory(File iDirectory) {
@@ -117,7 +119,7 @@ public class TestNetworkSerializerIndipendency {
         if (f.isDirectory())
           deleteDirectory(f);
         else if (!f.delete())
-          throw new OConfigurationException("Can't delete the file: " + f);
+          throw new OConfigurationException("Cannot delete the file: " + f);
       }
   }
 }

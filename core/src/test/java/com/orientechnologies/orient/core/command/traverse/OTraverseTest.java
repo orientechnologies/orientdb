@@ -1,18 +1,16 @@
 package com.orientechnologies.orient.core.command.traverse;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -51,36 +49,35 @@ public class OTraverseTest {
     final ODocument ba = new ODocument();
     final ODocument bb = new ODocument();
     final ODocument a = new ODocument();
-    a.field("a", aa);
-    a.field("b", ab);
+    a.field("aa", aa);
+    a.field("ab", ab);
     final ODocument b = new ODocument();
-    b.field("a", ba);
-    b.field("b", bb);
+    b.field("ba", ba);
+    b.field("bb", bb);
 
     rootDocument.field("a", a);
     rootDocument.field("b", b);
 
     final ODocument c1 = new ODocument();
     final ODocument c1a = new ODocument();
-    c1.field("a", c1a);
+    c1.field("c1a", c1a);
     final ODocument c1b = new ODocument();
-    c1.field("b", c1b);
+    c1.field("c1b", c1b);
     final ODocument c2 = new ODocument();
     final ODocument c2a = new ODocument();
-    c2.field("a", c2a);
+    c2.field("c2a", c2a);
     final ODocument c2b = new ODocument();
-    c2.field("b", c2b);
+    c2.field("c2b", c2b);
     final ODocument c3 = new ODocument();
     final ODocument c3a = new ODocument();
-    c3.field("a", c3a);
+    c3.field("c3a", c3a);
     final ODocument c3b = new ODocument();
-    c3.field("b", c3b);
+    c3.field("c3b", c3b);
     rootDocument.field("c", new ArrayList<ODocument>(Arrays.asList(c1, c2, c3)));
 
     rootDocument.save();
 
-    final List<ODocument> expectedResult = Arrays.asList(rootDocument, c1, c1b, c1a, c2, c2b, c2a, c3, c3b, c3a, b, bb, ba, a, ab,
-        aa);
+    final List<ODocument> expectedResult = Arrays.asList(rootDocument, a, aa, ab, b, ba, bb, c1, c1a, c1b, c2, c2a, c2b, c3, c3a, c3b);
 
     final List<OIdentifiable> results = traverse.execute();
 
@@ -96,30 +93,30 @@ public class OTraverseTest {
     final ODocument ba = new ODocument();
     final ODocument bb = new ODocument();
     final ODocument a = new ODocument();
-    a.field("a", aa);
-    a.field("b", ab);
+    a.field("aa", aa);
+    a.field("ab", ab);
     final ODocument b = new ODocument();
-    b.field("a", ba);
-    b.field("b", bb);
+    b.field("ba", ba);
+    b.field("bb", bb);
 
     rootDocument.field("a", a);
     rootDocument.field("b", b);
 
     final ODocument c1 = new ODocument();
     final ODocument c1a = new ODocument();
-    c1.field("a", c1a);
+    c1.field("c1a", c1a);
     final ODocument c1b = new ODocument();
-    c1.field("b", c1b);
+    c1.field("c1b", c1b);
     final ODocument c2 = new ODocument();
     final ODocument c2a = new ODocument();
-    c2.field("a", c2a);
+    c2.field("c2a", c2a);
     final ODocument c2b = new ODocument();
-    c2.field("b", c2b);
+    c2.field("c2b", c2b);
     final ODocument c3 = new ODocument();
     final ODocument c3a = new ODocument();
-    c3.field("a", c3a);
+    c3.field("c3a", c3a);
     final ODocument c3b = new ODocument();
-    c3.field("b", c3b);
+    c3.field("c3b", c3b);
     rootDocument.field("c", new ArrayList<ODocument>(Arrays.asList(c1, c2, c3)));
 
     rootDocument.save();
@@ -137,9 +134,9 @@ public class OTraverseTest {
     for (int i = 0; i < expectedResult.size() && equality; i++) {
       equality &= results.get(i).equals(expectedResult.get(i));
     }
-    System.out.println("Actual:   " + results);
-    System.out.println();
     System.out.println("Expected: " + expectedResult);
+    System.out.println();
+    System.out.println("Actual:   " + results);
     Assert.assertTrue(equality);
   }
 }

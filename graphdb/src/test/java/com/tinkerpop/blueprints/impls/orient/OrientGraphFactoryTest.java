@@ -1,17 +1,17 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 
 /**
  * 
@@ -130,5 +130,13 @@ public class OrientGraphFactoryTest {
 
     g.shutdown();
     gfactory.close();
+  }
+
+  @Test
+  public void testCreateGraphByOrientGraphFactory() {
+    OrientGraphFactory factory = new OrientGraphFactory("memory:test01").setupPool(1, 10);
+    OrientGraph graph = factory.getTx();
+    assertNotNull(graph);
+    graph.shutdown();
   }
 }

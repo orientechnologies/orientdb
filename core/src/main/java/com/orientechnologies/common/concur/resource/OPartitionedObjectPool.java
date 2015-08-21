@@ -2,6 +2,7 @@ package com.orientechnologies.common.concur.resource;
 
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -14,30 +15,27 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 15/12/14
  */
+@SuppressFBWarnings(value = "VO_VOLATILE_REFERENCE_TO_ARRAY")
 public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
-  private static final int           HASH_INCREMENT = 0x61c88647;
-  private static final int           MIN_POOL_SIZE  = 2;
-  private static final AtomicInteger nextHashCode   = new AtomicInteger();
+  private static final int HASH_INCREMENT = 0x61c88647;
+  private static final int MIN_POOL_SIZE = 2;
+  private static final AtomicInteger nextHashCode = new AtomicInteger();
 
-  private final int                  maxPartitions  = Runtime.getRuntime().availableProcessors() << 3;
-  private final ObjectFactory<T>     factory;
-  private final int                  maxSize;
-  private final ThreadLocal<Integer> threadHashCode = new ThreadLocal<Integer>() {
-                                                      @Override
-                                                      protected Integer initialValue() {
-                                                        return nextHashCode();
-                                                      }
-                                                    };
+  private final int maxPartitions;
+  private final ObjectFactory<T> factory;
+  private final int maxSize;
+  private volatile ThreadLocal<Integer> threadHashCode = new ThreadHashCodeThreadLocal();
 
-  private final AtomicBoolean        poolBusy       = new AtomicBoolean();
-  private volatile PoolPartition[]   partitions;
-  private volatile boolean           closed         = false;
+  private final AtomicBoolean poolBusy = new AtomicBoolean();
+  private volatile PoolPartition[] partitions;
+  private volatile boolean closed = false;
 
-  public OPartitionedObjectPool(ObjectFactory factory, int maxSize) {
+  public OPartitionedObjectPool(final ObjectFactory factory, final int maxSize, final int maxPartitions) {
     this.factory = factory;
     this.maxSize = maxSize;
+    this.maxPartitions = maxPartitions;
 
-    final PoolPartition[] pts = new PoolPartition[2];
+    final PoolPartition[] pts = new PoolPartition[maxPartitions < 2 ? maxPartitions : 2];
 
     for (int i = 0; i < pts.length; i++) {
       final PoolPartition partition = new PoolPartition();
@@ -84,8 +82,8 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
           if (pts.length < maxPartitions) {
             if (!poolBusy.get() && poolBusy.compareAndSet(false, true)) {
               if (pts == partitions) {
-                final PoolPartition[] newPartitions = new PoolPartition[partitions.length << 1];
-                System.arraycopy(partitions, 0, newPartitions, 0, partitions.length);
+                final PoolPartition[] newPartitions = new PoolPartition[pts.length << 1];
+                System.arraycopy(pts, 0, newPartitions, 0, pts.length);
 
                 partitions = newPartitions;
               }
@@ -149,11 +147,20 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
       }
 
     }
+
+    threadHashCode = null;
+    partitions = null;
   }
 
   @Override
   public void onShutdown() {
     close();
+  }
+
+  @Override
+  public void onStartup() {
+    if (threadHashCode == null)
+      threadHashCode = new ThreadHashCodeThreadLocal();
   }
 
   public int getAvailableObjects() {
@@ -208,9 +215,9 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
   }
 
   private static final class PoolPartition<T> {
-    private final AtomicInteger            currentSize     = new AtomicInteger();
-    private final AtomicInteger            acquiredObjects = new AtomicInteger();
-    private final ConcurrentLinkedQueue<T> queue           = new ConcurrentLinkedQueue<T>();
+    private final AtomicInteger currentSize = new AtomicInteger();
+    private final AtomicInteger acquiredObjects = new AtomicInteger();
+    private final ConcurrentLinkedQueue<T> queue = new ConcurrentLinkedQueue<T>();
   }
 
   public interface ObjectFactory<T> {
@@ -225,11 +232,18 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
 
   public static final class PoolEntry<T> {
     private final PoolPartition<T> partition;
-    public final T                 object;
+    public final T object;
 
     public PoolEntry(PoolPartition<T> partition, T object) {
       this.partition = partition;
       this.object = object;
+    }
+  }
+
+  private static class ThreadHashCodeThreadLocal extends ThreadLocal<Integer> {
+    @Override
+    protected Integer initialValue() {
+      return nextHashCode();
     }
   }
 }

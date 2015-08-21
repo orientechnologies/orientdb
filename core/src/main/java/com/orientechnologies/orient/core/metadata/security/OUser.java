@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -31,7 +26,11 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Contains the user settings about security and permissions. Each user has one or more roles associated. Roles contains the
@@ -41,12 +40,15 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  * 
  * @see ORole
  */
-public class OUser extends ODocumentWrapper implements OSecurityUser {
-  public static final String ADMIN            = "admin";
-  public static final String CLASS_NAME       = "OUser";
-  private static final long  serialVersionUID = 1L;
+public class OUser extends OIdentity implements OSecurityUser {
+  public static final String  ADMIN            = "admin";
+  public static final String  CLASS_NAME       = "OUser";
+  public static final String PASSWORD_FIELD   = "password";
+
+  private static final long   serialVersionUID = 1L;
+
   // AVOID THE INVOCATION OF SETTER
-  protected Set<ORole>       roles            = new HashSet<ORole>();
+  protected Set<ORole>        roles            = new HashSet<ORole>();
 
   /**
    * Constructor used in unmarshalling.
@@ -75,7 +77,7 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
   }
 
   public static final String encryptPassword(final String iPassword) {
-    return OSecurityManager.instance().digest2String(iPassword, true);
+    return OSecurityManager.instance().createHash(iPassword, OSecurityManager.PBKDF2_ALGORITHM, true);
   }
 
   @Override
@@ -101,7 +103,7 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
 
   /**
    * Checks if the user has the permission to access to the requested resource for the requested operation.
-   * 
+   *
    * @param iOperation
    *          Requested operation
    * @return The role that has granted the permission if any, otherwise a OSecurityAccessException exception is raised
@@ -200,7 +202,7 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
   }
 
   public boolean checkPassword(final String iPassword) {
-    return OSecurityManager.instance().check(iPassword, (String) document.field("password"));
+    return OSecurityManager.instance().checkPassword(iPassword, (String) document.field(PASSWORD_FIELD));
   }
 
   public String getName() {
@@ -213,11 +215,11 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
   }
 
   public String getPassword() {
-    return document.field("password");
+    return document.field(PASSWORD_FIELD);
   }
 
   public OUser setPassword(final String iPassword) {
-    document.field("password", iPassword);
+    document.field(PASSWORD_FIELD, iPassword);
     return this;
   }
 

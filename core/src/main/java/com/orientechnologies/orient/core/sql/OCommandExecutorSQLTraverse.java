@@ -28,7 +28,12 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -53,6 +58,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
   public static final String KEYWORD_WHILE    = "WHILE";
   public static final String KEYWORD_TRAVERSE = "TRAVERSE";
   public static final String KEYWORD_STRATEGY = "STRATEGY";
+  public static final String KEYWORD_MAXDEPTH = "MAXDEPTH";
 
   // HANDLES ITERATION IN LAZY WAY
   private OTraverse          traverse         = new OTraverse();
@@ -109,7 +115,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
       parserSkipWhiteSpaces();
 
       if (!parserIsEnded()) {
-        if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP, KEYWORD_OFFSET, KEYWORD_TIMEOUT, KEYWORD_STRATEGY)) {
+        if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP, KEYWORD_OFFSET, KEYWORD_TIMEOUT, KEYWORD_MAXDEPTH, KEYWORD_STRATEGY)) {
           final String w = parserGetLastWord();
           if (w.equals(KEYWORD_LIMIT))
             parseLimit(w);
@@ -117,6 +123,8 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
             parseSkip(w);
           else if (w.equals(KEYWORD_TIMEOUT))
             parseTimeout(w);
+          else if (w.equals(KEYWORD_MAXDEPTH))
+            parseMaxDepth(w);
           else if (w.equals(KEYWORD_STRATEGY))
             parseStrategy(w);
         }
@@ -127,25 +135,43 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
       else
         traverse.limit(limit);
 
-      iRequest.getContext().setChild(traverse.getContext());
+      traverse.getContext().setChild(iRequest.getContext());
     } finally {
       textRequest.setText(originalQuery);
     }
     return this;
   }
 
+  protected boolean parseMaxDepth(final String w) throws OCommandSQLParsingException {
+    if (!w.equals(KEYWORD_MAXDEPTH))
+      return false;
+
+    String word = parserNextWord(true);
+
+    try {
+      traverse.setMaxDepth(Integer.parseInt(word));
+    } catch (Exception e) {
+      throwParsingException("Invalid " + KEYWORD_MAXDEPTH + " value set to '" + word + "' but it should be a valid long. Example: "
+          + KEYWORD_MAXDEPTH + " 3000");
+    }
+
+    if (traverse.getMaxDepth() < 0)
+      throwParsingException("Invalid " + KEYWORD_MAXDEPTH + ": value set minor than ZERO. Example: " + KEYWORD_MAXDEPTH + " 3");
+
+    return true;
+  }
+
   public Object execute(final Map<Object, Object> iArgs) {
+    context.beginExecution(timeoutMs, timeoutStrategy);
+
     if (!assignTarget(iArgs))
       throw new OQueryParsingException("No source found in query: specify class, cluster(s) or single record(s)");
-
-    context = traverse.getContext();
-    context.beginExecution(timeoutMs, timeoutStrategy);
 
     try {
       // BROWSE ALL THE RECORDS AND COLLECTS RESULT
       final List<OIdentifiable> result = traverse.execute();
       for (OIdentifiable r : result)
-        if (!handleResult(r))
+        if (!handleResult(r, context))
           // LIMIT REACHED
           break;
 
@@ -170,7 +196,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
   }
 
   public String getSyntax() {
-    return "TRAVERSE <field>* FROM <target> [WHILE <condition>] [STRATEGY <strategy>]";
+    return "TRAVERSE <field>* FROM <target> [MAXDEPTH <max-depth>] [WHILE <condition>] [STRATEGY <strategy>]";
   }
 
   protected void warnDeprecatedWhere() {
@@ -234,8 +260,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     if (!w.equals(KEYWORD_STRATEGY))
       return false;
 
-    parserNextWord(true);
-    final String strategyWord = parserGetLastWord();
+    final String strategyWord = parserNextWord(true);
 
     try {
       traverse.setStrategy(OTraverse.STRATEGY.valueOf(strategyWord.toUpperCase()));
@@ -243,5 +268,10 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
       throwParsingException("Invalid " + KEYWORD_STRATEGY + ". Use one between " + Arrays.toString(OTraverse.STRATEGY.values()));
     }
     return true;
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.READ;
   }
 }

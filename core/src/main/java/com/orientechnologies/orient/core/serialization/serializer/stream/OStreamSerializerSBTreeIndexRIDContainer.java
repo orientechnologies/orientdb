@@ -20,7 +20,10 @@
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.serialization.types.*;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OBooleanSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -170,7 +173,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
       final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
       final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer, durable,
-          (OAbstractPaginatedStorage) db.getStorage());
+          (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
       return new OIndexRIDContainer(fileId, underlying, durable);
     }
   }
@@ -228,7 +231,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
       final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
       final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer, durable,
-          (OAbstractPaginatedStorage) db.getStorage());
+          (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
       return new OIndexRIDContainer(fileId, underlying, durable);
     }
   }
@@ -255,7 +258,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
       final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
       final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer, durable,
-          (OAbstractPaginatedStorage) db.getStorage());
+          (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
       return new OIndexRIDContainer(fileId, underlying, durable);
     }
   }

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
@@ -40,10 +41,15 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   protected int[]   clusterIds;
   protected int     currentClusterIdx;
   protected ORecord currentRecord;
-
   protected ORID    beginRange;
   protected ORID    endRange;
 
+  public ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
+      final int[] iClusterIds, final boolean iUseCache) {
+    this(iDatabase, iLowLevelDatabase, iClusterIds, iUseCache, false, OStorage.LOCKING_STRATEGY.NONE);
+  }
+
+  @Deprecated
   public ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final int[] iClusterIds, final boolean iUseCache, final boolean iterateThroughTombstones,
       final OStorage.LOCKING_STRATEGY iLockingStrategy) {
@@ -55,6 +61,12 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     config();
   }
 
+  protected ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
+      final boolean iUseCache) {
+    this(iDatabase, iLowLevelDatabase, iUseCache, false, OStorage.LOCKING_STRATEGY.NONE);
+  }
+
+  @Deprecated
   protected ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
@@ -144,7 +156,13 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
         if (outsideOfTheRange(current))
           continue;
 
-        currentRecord = readCurrentRecord(record, 0);
+        try {
+          currentRecord = readCurrentRecord(record, 0);
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error during read of record", e);
+
+          currentRecord = null;
+        }
 
         if (currentRecord != null)
           if (include(currentRecord))
@@ -343,6 +361,18 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     }
 
     return this;
+  }
+
+  public ORID getBeginRange() {
+    return beginRange;
+  }
+
+  public ORID getEndRange() {
+    return endRange;
+  }
+
+  public int[] getClusterIds() {
+    return clusterIds;
   }
 
   @Override

@@ -40,7 +40,7 @@ import java.util.Map;
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> implements OCommandResultListener, Iterable<T> {
-  private final OResultSet<T> result              = new OResultSet<T>();
+  private final OResultSet<T> result              = new OConcurrentResultSet<T>();
   private ORID                nextPageRID;
   private Map<Object, Object> previousQueryParams = new HashMap<Object, Object>();
 
@@ -84,15 +84,12 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
 
     final List<Object> res = (List<Object>) super.run(iArgs);
 
-    if (res != result && res!=null) {
+    if (res != result && res != null) {
       Iterator<Object> iter = res.iterator();
-      while(iter.hasNext()){
+      while (iter.hasNext()) {
         Object item = iter.next();
-//        System.out.println("adding result "+item);
-        result.add((T)item);
+        result.add((T) item);
       }
-//      for (Object r : res)
-//        result.add((T) r);
     }
 
     ((OResultSet) result).setCompleted();
@@ -144,7 +141,7 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
   }
 
   @Override
-  protected void queryFromStream(OMemoryStream buffer) {
+  protected void queryFromStream(final OMemoryStream buffer) {
     super.queryFromStream(buffer);
 
     final String rid = buffer.getAsString();

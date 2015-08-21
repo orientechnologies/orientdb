@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * Abstraction of pointer which points to allocated direct memory area. All access to direct memory should be performed ONLY using
  * this class instance.
  *
- * Instance of this class can not be created directly. If you need to work with direct memory use following approach.
+ * Instance of this class cannot be created directly. If you need to work with direct memory use following approach.
  *
  * <code>
  *   ODirectMemory directMemory = ODirectMemoryFactory.directMemory();

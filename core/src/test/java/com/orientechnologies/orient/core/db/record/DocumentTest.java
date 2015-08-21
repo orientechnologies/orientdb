@@ -20,7 +20,10 @@
 
 package com.orientechnologies.orient.core.db.record;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -80,4 +83,39 @@ public class DocumentTest {
     Assert.assertEquals(map.get("@class"), "V");
     Assert.assertTrue(map.containsKey("@rid"));
   }
+
+  @Test
+  public void testConvertionOnTypeSet() {
+    ODocument doc = new ODocument();
+
+    doc.field("some", 3);
+    doc.setFieldType("some", OType.STRING);
+    Assert.assertEquals(doc.fieldType("some"), OType.STRING);
+    Assert.assertEquals(doc.field("some"), "3");
+
+  }
+
+  @Test
+  public void testEval() {
+    ODocument doc = new ODocument();
+
+    doc.field("amount", 300);
+
+    Number amountPlusVat = (Number) doc.eval("amount * 120 / 100");
+
+    Assert.assertEquals(amountPlusVat.longValue(), 360l);
+  }
+
+  @Test
+  public void testEvalInContext() {
+    ODocument doc = new ODocument();
+
+    doc.field("amount", 300);
+
+    OCommandContext context = new OBasicCommandContext().setVariable("vat", 20);
+    Number amountPlusVat = (Number) doc.eval("amount * (100 + $vat) / 100", context);
+
+    Assert.assertEquals(amountPlusVat.longValue(), 360l);
+  }
+
 }

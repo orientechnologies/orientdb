@@ -20,11 +20,6 @@
 
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -32,11 +27,17 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
+  private static final long serialVersionUID = -1264300379465791244L;
   private OType[] keyTypes;
 
   public OSimpleKeyIndexDefinition(int version, final OType... keyTypes) {
-    super(version);
+    super();
 
     this.keyTypes = keyTypes;
   }
@@ -45,9 +46,10 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   public OSimpleKeyIndexDefinition(OType[] keyTypes2, List<OCollate> collatesList, int version) {
-    super(version);
+    super();
 
-    this.keyTypes = keyTypes2;
+    this.keyTypes = Arrays.copyOf(keyTypes2, keyTypes2.length);
+
     if (keyTypes.length > 1) {
       OCompositeCollate collate = new OCompositeCollate(this);
       if (collatesList != null) {
@@ -55,8 +57,10 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
           collate.addCollate(oCollate);
         }
       } else {
-        for (OType type : keyTypes) {
-          collate.addCollate(OSQLEngine.getCollate(ODefaultCollate.NAME));
+        final int typesSize = keyTypes.length;
+        final OCollate defCollate = OSQLEngine.getCollate(ODefaultCollate.NAME);
+        for (int i = 0; i < typesSize; i++) {
+          collate.addCollate(defCollate);
         }
       }
       this.collate = collate;
@@ -105,7 +109,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   public OType[] getTypes() {
-    return keyTypes;
+    return Arrays.copyOf(keyTypes, keyTypes.length);
   }
 
   @Override
@@ -168,7 +172,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
       this.collate = collates;
     }
 
-    setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean> field("nullValuesIgnored")));
+    setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean>field("nullValuesIgnored")));
   }
 
   public Object getDocumentValueToIndex(final ODocument iDocument) {
@@ -203,11 +207,11 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * @param indexName
    * @param indexType
    */
-  public String toCreateIndexDDL(final String indexName, final String indexType) {
+  public String toCreateIndexDDL(final String indexName, final String indexType, final String engine) {
     final StringBuilder ddl = new StringBuilder("create index ");
     ddl.append(indexName).append(' ').append(indexType).append(' ');
 

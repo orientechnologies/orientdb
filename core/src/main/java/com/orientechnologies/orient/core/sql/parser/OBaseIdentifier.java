@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.Map;
 
 public class OBaseIdentifier extends SimpleNode {
@@ -23,21 +26,23 @@ public class OBaseIdentifier extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (levelZero != null) {
-      return levelZero.toString();
+      levelZero.toString(params, builder);
     } else if (suffix != null) {
-      return suffix.toString();
+      suffix.toString(params, builder);
     }
-    return super.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (levelZero != null) {
-      levelZero.replaceParameters(params);
-    }
 
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    if (levelZero != null) {
+      return levelZero.execute(iCurrentRecord, ctx);
+    }
+    if (suffix != null) {
+      return suffix.execute(iCurrentRecord, ctx);
+    }
+    return null;
   }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

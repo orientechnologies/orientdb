@@ -97,7 +97,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   OPropertyImpl(final OClassImpl owner) {
-    document = new ODocument();
+    document = new ODocument().setTrackingChanges(false);
     this.owner = owner;
   }
 
@@ -683,7 +683,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     return this;
   }
 
-
   public String getRegexp() {
     acquireSchemaReadLock();
     try {
@@ -709,7 +708,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(commandSQL).execute();
 
         setRegexpInternal(regexp);
       } else
@@ -1042,7 +1041,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     try {
       if (this == obj)
         return true;
-      if (!OProperty.class.isAssignableFrom(obj.getClass()))
+      if (obj == null || !OProperty.class.isAssignableFrom(obj.getClass()))
         return false;
       OProperty other = (OProperty) obj;
       if (owner == null) {
@@ -1076,6 +1075,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     mandatory = document.containsField("mandatory") ? (Boolean) document.field("mandatory") : false;
     readonly = document.containsField("readonly") ? (Boolean) document.field("readonly") : false;
     notNull = document.containsField("notNull") ? (Boolean) document.field("notNull") : false;
+    defaultValue = (String) (document.containsField("defaultValue") ? document.field("defaultValue") : null);
     if (document.containsField("collate"))
       collate = OSQLEngine.getCollate((String) document.field("collate"));
 
@@ -1118,6 +1118,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       document.field("mandatory", mandatory);
       document.field("readonly", readonly);
       document.field("notNull", notNull);
+      document.field("defaultValue", defaultValue);
 
       document.field("min", min);
       document.field("max", max);

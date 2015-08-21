@@ -1,11 +1,11 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import static org.testng.Assert.fail;
+import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import org.testng.annotations.Test;
+import static org.testng.Assert.fail;
 
 @Test
 public class OCreateVertexStatementTest {
@@ -36,6 +36,10 @@ public class OCreateVertexStatementTest {
   }
 
   public void testSimpleCreate() {
+    checkRightSyntax("create vertex");
+    checkRightSyntax("create vertex V");
+    checkRightSyntax("create vertex x cluster t");
+    checkWrongSyntax("create vertex V foo");
     checkRightSyntax("create vertex Foo (a) values (1)");
     checkRightSyntax("create vertex Foo (a) values ('1')");
     checkRightSyntax("create vertex Foo (a) values (\"1\")");

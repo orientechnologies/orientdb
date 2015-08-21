@@ -22,20 +22,15 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.OIdentityChangeListener;
 import com.orientechnologies.orient.core.record.OIdentityChangeListener;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 
 /**
  * Lazy implementation of Set. Can be bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty()
@@ -55,8 +50,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
  */
 public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement,
     OIdentityChangeListener {
-  protected boolean                     autoConvertToRecord = true;
-  protected Map<OIdentifiable, ORecord> recordCache;
+  protected boolean autoConvertToRecord = true;
 
   public ORecordLazySet(final ODocument iSourceRecord) {
     super(iSourceRecord);
@@ -77,7 +71,13 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
   public Iterator<OIdentifiable> iterator() {
     return new OLazyRecordIterator(new OLazyIterator<OIdentifiable>() {
       {
-        if (OSerializationSetThreadLocal.check((ODocument) sourceRecord)) {
+        ORecordElement cur = null;
+        if (sourceRecord != null)
+          cur = sourceRecord.getOwner();
+        if (!(cur instanceof ODocument))
+          cur = sourceRecord;
+
+        if (cur.getInternalStatus() == STATUS.MARSHALLING) {
           iter = new HashSet<Entry<OIdentifiable, Object>>(ORecordLazySet.super.map.entrySet()).iterator();
         } else
           iter = ORecordLazySet.super.map.entrySet().iterator();
@@ -126,7 +126,17 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       return false;
     if (e instanceof ORecord && e.getIdentity().isNew()) {
       ORecordInternal.addIdentityChangeListener((ORecord) e, this);
+      ORecordInternal.track(sourceRecord, e);
       map.put(e, e);
+    } else if (!e.getIdentity().isPersistent()) {
+      // record id is not fixed yet, so we need to be able to watch for id changes, so get the record for this id to be able to do
+      // this.
+      final ORecord record = e.getRecord();
+      if (record == null)
+        throw new IllegalArgumentException("Record with id " + e.getIdentity() + " has not be found");
+      ORecordInternal.addIdentityChangeListener(record, this);
+      ORecordInternal.track(sourceRecord, e);
+      map.put(e, record);
     } else
       map.put(e, ENTRY_REMOVAL);
     setDirty();
@@ -138,12 +148,17 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
   }
 
   public void convertLinks2Records() {
-    Iterator<Entry<OIdentifiable, Object>> all = map.entrySet().iterator();
+    final Iterator<Entry<OIdentifiable, Object>> all = map.entrySet().iterator();
     while (all.hasNext()) {
       Entry<OIdentifiable, Object> entry = all.next();
       if (entry.getValue() == ENTRY_REMOVAL) {
         try {
-          entry.setValue(entry.getKey().getRecord());
+          ORecord record = entry.getKey().getRecord();
+          if (record != null) {
+            ORecordInternal.unTrack(sourceRecord, entry.getKey());
+            ORecordInternal.track(sourceRecord, record);
+          }
+          entry.setValue(record);
         } catch (ORecordNotFoundException e) {
           // IGNORE THIS
         }
@@ -169,7 +184,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
 
   public boolean clearDeletedRecords() {
     boolean removed = false;
-    Iterator<Entry<OIdentifiable, Object>> all = map.entrySet().iterator();
+    final Iterator<Entry<OIdentifiable, Object>> all = map.entrySet().iterator();
     while (all.hasNext()) {
       Entry<OIdentifiable, Object> entry = all.next();
       if (entry.getValue() == ENTRY_REMOVAL) {
@@ -212,6 +227,26 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
   @Override
   public void setAutoConvertToRecord(boolean convertToRecord) {
     this.autoConvertToRecord = convertToRecord;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof Set<?>) {
+      Set<Object> coll = ((Set<Object>) obj);
+      if (map.size() == coll.size()) {
+        for (Object obje : coll) {
+          if (!map.containsKey(obje))
+            return false;
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return map.hashCode();
   }
 
 }

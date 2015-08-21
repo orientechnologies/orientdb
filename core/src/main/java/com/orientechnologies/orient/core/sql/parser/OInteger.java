@@ -2,9 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OInteger extends ONumber {
 
-  protected Integer value;
+  protected Number value;
 
   public OInteger(int id) {
     super(id);
@@ -14,17 +16,16 @@ public class OInteger extends ONumber {
     super(p, id);
   }
 
-  public Integer getValue() {
+  public Number getValue() {
     return value;
   }
 
-  public void setValue(Integer value) {
+  public void setValue(Number value) {
     this.value = value;
   }
 
-  @Override
-  public String toString() {
-    return "" + value;
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("" + value);
   }
 }
 /* JavaCC - OriginalChecksum=2e6eee6366ff4e864dd6c8184d2766f5 (do not edit this line) */

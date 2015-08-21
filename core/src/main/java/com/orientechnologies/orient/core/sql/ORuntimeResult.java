@@ -37,13 +37,8 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.methods.OSQLMethodRuntime;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Handles runtime results.
@@ -65,7 +60,7 @@ public class ORuntimeResult {
   }
 
   public static ODocument createProjectionDocument(final int iProgressive) {
-    final ODocument doc = new ODocument().setOrdered(true);
+    final ODocument doc = new ODocument().setOrdered(true).setTrackingChanges(false);
     // ASSIGN A TEMPORARY RID TO ALLOW PAGINATION IF ANY
     ((ORecordId) doc.getIdentity()).clusterId = -2;
     ((ORecordId) doc.getIdentity()).clusterPosition = iProgressive;
@@ -87,8 +82,10 @@ public class ORuntimeResult {
         final String prjName = projection.getKey();
         final Object v = projection.getValue();
 
-        if (v == null)
+        if (v == null && prjName != null) {
+          iValue.field(prjName, (Object) null);
           continue;
+        }
 
         final Object projectionValue;
         if (v.equals("*")) {

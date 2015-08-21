@@ -21,6 +21,7 @@ import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
@@ -96,7 +97,11 @@ public class OOfflineCluster implements OCluster {
 
       switch (attribute) {
       case STATUS: {
-        return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase()));
+        if (stringValue == null)
+          throw new IllegalStateException("Value of attribute is null.");
+
+        return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase(storageLocal
+            .getConfiguration().getLocaleInstance())));
       }
       default:
         throw new IllegalArgumentException("Runtime change of attribute '" + attribute + " is not supported on Offline cluster "
@@ -106,6 +111,11 @@ public class OOfflineCluster implements OCluster {
     } finally {
       externalModificationLock.releaseModificationLock();
     }
+  }
+
+  @Override
+  public String encryption() {
+    return null;
   }
 
   @Override
@@ -149,6 +159,12 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
+  public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, ORecordVersion recordVersion) throws IOException,
+      ORecordNotFoundException {
+    throw new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'");
+  }
+
+  @Override
   public boolean exists() {
     return true;
   }
@@ -171,6 +187,11 @@ public class OOfflineCluster implements OCluster {
   @Override
   public long getLastPosition() throws IOException {
     return ORID.CLUSTER_POS_INVALID;
+  }
+
+  @Override
+  public String getFileName() {
+    throw new OOfflineClusterException("Cannot return filename of offline cluster '" + name + "'");
   }
 
   @Override

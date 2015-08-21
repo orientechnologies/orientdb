@@ -1,21 +1,15 @@
 package com.orientechnologies.orient.core.index;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.*;
 
 /**
  * @author LomakiA <a href="mailto:a.lomakin@orientechnologies.com">Andrey Lomakin</a>
@@ -38,11 +32,11 @@ public class OPropertyMapIndexDefinitionTest {
   @BeforeMethod
   public void beforeMethod() {
     propertyIndexByKey = new OPropertyMapIndexDefinition("testClass", "fOne", OType.STRING,
-        OPropertyMapIndexDefinition.INDEX_BY.KEY, -1);
+        OPropertyMapIndexDefinition.INDEX_BY.KEY);
     propertyIndexByIntegerKey = new OPropertyMapIndexDefinition("testClass", "fTwo", OType.INTEGER,
-        OPropertyMapIndexDefinition.INDEX_BY.KEY, -1);
+        OPropertyMapIndexDefinition.INDEX_BY.KEY);
     propertyIndexByValue = new OPropertyMapIndexDefinition("testClass", "fOne", OType.INTEGER,
-        OPropertyMapIndexDefinition.INDEX_BY.VALUE, -1);
+        OPropertyMapIndexDefinition.INDEX_BY.VALUE);
   }
 
   public void testCreateValueByKeySingleParameter() {
@@ -196,7 +190,7 @@ public class OPropertyMapIndexDefinitionTest {
     database.create();
 
     propertyIndexByKey = new OPropertyMapIndexDefinition("tesClass", "fOne", OType.STRING,
-        OPropertyMapIndexDefinition.INDEX_BY.KEY, -1);
+        OPropertyMapIndexDefinition.INDEX_BY.KEY);
 
     final ODocument docToStore = propertyIndexByKey.toStream();
     database.save(docToStore);
@@ -215,7 +209,7 @@ public class OPropertyMapIndexDefinitionTest {
     database.create();
 
     propertyIndexByValue = new OPropertyMapIndexDefinition("tesClass", "fOne", OType.INTEGER,
-        OPropertyMapIndexDefinition.INDEX_BY.VALUE, -1);
+        OPropertyMapIndexDefinition.INDEX_BY.VALUE);
 
     final ODocument docToStore = propertyIndexByValue.toStream();
     database.save(docToStore);
@@ -246,16 +240,16 @@ public class OPropertyMapIndexDefinitionTest {
 
   @Test(expectedExceptions = NullPointerException.class)
   public void testIndexByIsRequired() {
-    new OPropertyMapIndexDefinition("testClass", "testField", OType.STRING, null, -1);
+    new OPropertyMapIndexDefinition("testClass", "testField", OType.STRING, null);
   }
 
   public void testCreateDDLByKey() {
-    final String ddl = propertyIndexByKey.toCreateIndexDDL("testIndex", "unique").toLowerCase();
+    final String ddl = propertyIndexByKey.toCreateIndexDDL("testIndex", "unique",null).toLowerCase();
     Assert.assertEquals(ddl, "create index testindex on testclass ( fone by key ) unique");
   }
 
   public void testCreateDDLByValue() {
-    final String ddl = propertyIndexByValue.toCreateIndexDDL("testIndex", "unique").toLowerCase();
+    final String ddl = propertyIndexByValue.toCreateIndexDDL("testIndex", "unique",null).toLowerCase();
     Assert.assertEquals(ddl, "create index testindex on testclass ( fone by value ) unique");
   }
 

@@ -20,9 +20,6 @@
 
 package com.orientechnologies.orient.core.intent;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -30,6 +27,9 @@ import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class OIntentMassiveInsert implements OIntent {
   private boolean                                     previousRetainRecords;
@@ -41,6 +41,7 @@ public class OIntentMassiveInsert implements OIntent {
   private boolean                                     disableValidation = true;
   private boolean                                     disableSecurity   = true;
   private boolean                                     disableHooks      = true;
+  private boolean                                     enableCache       = true;
 
   public void begin(final ODatabaseDocumentInternal iDatabase) {
     if (disableSecurity) {
@@ -49,6 +50,10 @@ public class OIntentMassiveInsert implements OIntent {
       iDatabase.getDatabaseOwner().setUser(null);
     }
     ODatabaseInternal<?> ownerDb = iDatabase.getDatabaseOwner();
+
+    if (!enableCache) {
+      ownerDb.getLocalCache().setEnable(enableCache);
+    }
 
     if (ownerDb instanceof ODatabaseDocument) {
       previousRetainRecords = ((ODatabaseDocument) ownerDb).isRetainRecords();
@@ -92,6 +97,9 @@ public class OIntentMassiveInsert implements OIntent {
 
     ODatabaseInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
+    if (!enableCache) {
+      ownerDb.getLocalCache().setEnable(!enableCache);
+    }
     if (ownerDb instanceof ODatabaseDocument) {
       ((ODatabaseDocument) ownerDb).setRetainRecords(previousRetainRecords);
       if (disableValidation)
@@ -138,6 +146,13 @@ public class OIntentMassiveInsert implements OIntent {
   public OIntentMassiveInsert setDisableHooks(final boolean disableHooks) {
     this.disableHooks = disableHooks;
     return this;
+
+  }
+
+  public OIntentMassiveInsert setEnableCache(boolean enableCache) {
+    this.enableCache = enableCache;
+    return this;
+
   }
 
   @Override

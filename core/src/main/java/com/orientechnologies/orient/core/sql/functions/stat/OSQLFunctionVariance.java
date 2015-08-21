@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.functions.stat;
 
 import java.util.HashMap;
@@ -103,31 +103,35 @@ public class OSQLFunctionVariance extends OSQLFunctionAbstract {
   @SuppressWarnings("unchecked")
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
-    long dN = 0;
-    double dMean = 0;
-    Double var = null;
-    for (Object iParameter : resultsToMerge) {
-      final Map<String, Object> item = (Map<String, Object>) iParameter;
-      if (dN == 0) { // first element
-        dN = (Long) item.get("n");
-        dMean = (Double) item.get("mean");
-        var = (Double) item.get("var");
-      } else {
-        long rhsN = (Long) item.get("n");
-        double rhsMean = (Double) item.get("mean");
-        double rhsVar = (Double) item.get("var");
+    if (returnDistributedResult()) {
+      long dN = 0;
+      double dMean = 0;
+      Double var = null;
+      for (Object iParameter : resultsToMerge) {
+        final Map<String, Object> item = (Map<String, Object>) iParameter;
+        if (dN == 0) { // first element
+          dN = (Long) item.get("n");
+          dMean = (Double) item.get("mean");
+          var = (Double) item.get("var");
+        } else {
+          long rhsN = (Long) item.get("n");
+          double rhsMean = (Double) item.get("mean");
+          double rhsVar = (Double) item.get("var");
 
-        long totalN = dN + rhsN;
-        double totalMean = ((dMean * dN) + (rhsMean * rhsN)) / totalN;
+          long totalN = dN + rhsN;
+          double totalMean = ((dMean * dN) + (rhsMean * rhsN)) / totalN;
 
-        var = (((dN * var) + (rhsN * rhsVar)) / totalN) + ((dN * rhsN) * Math.pow((rhsMean - dMean) / totalN, 2));
-        dN = totalN;
-        dMean = totalMean;
+          var = (((dN * var) + (rhsN * rhsVar)) / totalN) + ((dN * rhsN) * Math.pow((rhsMean - dMean) / totalN, 2));
+          dN = totalN;
+          dMean = totalMean;
+        }
+
       }
-
+      return var;
     }
 
-    return var;
+    return resultsToMerge.get(0);
+
   }
 
   @Override

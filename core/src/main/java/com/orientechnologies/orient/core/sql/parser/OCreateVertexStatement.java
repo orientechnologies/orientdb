@@ -20,40 +20,30 @@ public class OCreateVertexStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("CREATE VERTEX ");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+
+    builder.append("CREATE VERTEX ");
     if (targetClass != null) {
-      result.append(targetClass.toString());
+      targetClass.toString(params, builder);
       if (targetClusterName != null) {
-        result.append(" CLUSTER ");
-        result.append(targetClusterName.toString());
+        builder.append(" CLUSTER ");
+        targetClusterName.toString(params, builder);
       }
     }
     if (targetCluster != null) {
-      result.append(targetCluster.toString());
+      targetCluster.toString(params, builder);
     }
     if (returnStatement != null) {
-      result.append(" RETURN ");
-      result.append(returnStatement.toString());
+      builder.append(" RETURN ");
+      returnStatement.toString(params, builder);
     }
     if (insertBody != null) {
       if (targetClass != null || targetCluster != null || returnStatement != null) {
-        result.append(" ");
+        builder.append(" ");
       }
-      result.append(insertBody.toString());
+      insertBody.toString(params, builder);
     }
-    return result.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (returnStatement != null) {
-      returnStatement.replaceParameters(params);
-    }
-    if (insertBody != null) {
-      insertBody.replaceParameters(params);
-    }
-  }
 }
 /* JavaCC - OriginalChecksum=0ac3d3f09a76b9924a17fd05bc293863 (do not edit this line) */

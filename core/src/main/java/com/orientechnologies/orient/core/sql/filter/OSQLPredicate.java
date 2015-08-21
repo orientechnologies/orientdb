@@ -29,9 +29,9 @@ import java.util.Set;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
@@ -118,7 +118,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     return evaluate(null, null, iContext);
   }
 
-  public Object evaluate(final ORecord iRecord, ODocument iCurrentResult, final OCommandContext iContext) {
+  public Object evaluate(final OIdentifiable iRecord, ODocument iCurrentResult, final OCommandContext iContext) {
     if (rootCondition == null)
       return true;
 
@@ -255,7 +255,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
         // CONFIGURE COULD INSTANTIATE A NEW OBJECT: ACT AS A FACTORY
         return op.configure(params);
       } catch (Exception e) {
-        throw new OQueryParsingException("Syntax error using the operator '" + op.toString() + "'. Syntax is: " + op.getSyntax());
+        throw new OQueryParsingException("Syntax error using the operator '" + op.toString() + "'. Syntax is: " + op.getSyntax(), e);
       }
     } else
       parserMoveCurrentPosition(+1);

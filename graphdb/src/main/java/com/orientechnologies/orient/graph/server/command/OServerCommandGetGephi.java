@@ -28,7 +28,6 @@ import java.util.Set;
 
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
@@ -40,8 +39,8 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstract {
@@ -71,7 +70,7 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
     final ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
 
     final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
-    final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getAnyGraph(shutdownFlag);
     try {
 
       final Iterable<OrientVertex> vertices;
@@ -84,7 +83,7 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
         vertices = new ArrayList<OrientVertex>(result.size());
 
         for (Object o : result) {
-          ((ArrayList<OrientVertex>) vertices).add(graph.getVertex((OIdentifiable) o));
+          ((ArrayList<OrientVertex>) vertices).add(graph.getVertex(o));
         }
       } else
         throw new IllegalArgumentException("Language '" + language + "' is not supported. Use 'sql' or 'gremlin'");

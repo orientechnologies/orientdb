@@ -23,26 +23,17 @@ public class OArraySingleValuesSelector extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     boolean first = true;
-    StringBuilder result = new StringBuilder();
     for (OArraySelector item : items) {
       if (!first) {
-        result.append(",");
+        builder.append(",");
       }
-      result.append(item.toString());
+      item.toString(params, builder);
       first = false;
     }
-    return result.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if(items!=null){
-      for(OArraySelector item:items){
-        item.replaceParameters(params);
-      }
-    }
-  }
+
 }
 /* JavaCC - OriginalChecksum=991998c77a4831184b6dca572513fd8d (do not edit this line) */

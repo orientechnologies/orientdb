@@ -30,13 +30,13 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.OClientConnection;
-import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -66,10 +66,12 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.InputMismatchException;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
@@ -86,8 +88,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   protected OHttpResponse              response;
   protected OHttpNetworkCommandManager cmdManager;
   private String                       responseCharSet;
+  private boolean                      jsonResponseError;
   private String[]                     additionalResponseHeaders;
   private String                       listeningAddress  = "?";
+  private OContextConfiguration        configuration;
 
   public ONetworkProtocolHttpAbstract() {
     super(Orient.instance().getThreadGroup(), "IO-HTTP");
@@ -96,6 +100,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   @Override
   public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
       final OContextConfiguration iConfiguration) throws IOException {
+    configuration = iConfiguration;
     registerStatelessCommands(iListener);
 
     final String addHeaders = iConfiguration.getValueAsString("network.http.additionalResponseHeaders", null);
@@ -103,17 +108,17 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       additionalResponseHeaders = addHeaders.split(";");
 
     // CREATE THE CLIENT CONNECTION
-    connection = OClientConnectionManager.instance().connect(this);
+    connection = iServer.getClientConnectionManager().connect(this);
 
     server = iServer;
     requestMaxContentLength = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_MAX_CONTENT_LENGTH);
     socketTimeout = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
     responseCharSet = iConfiguration.getValueAsString(OGlobalConfiguration.NETWORK_HTTP_CONTENT_CHARSET);
 
+    jsonResponseError = iConfiguration.getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_JSON_RESPONSE_ERROR);
+
     channel = new OChannelTextServer(iSocket, iConfiguration);
     channel.connected();
-
-    request = new OHttpRequest(this, channel.inStream, connection.data, iConfiguration);
 
     connection.data.caller = channel.toString();
 
@@ -128,13 +133,14 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     connection.data.commandDetail = null;
 
     final String callbackF;
-    if ((request.parameters != null) && request.parameters.containsKey(OHttpUtils.CALLBACK_PARAMETER_NAME))
+    if (OGlobalConfiguration.NETWORK_HTTP_JSONP_ENABLED.getValueAsBoolean() && request.parameters != null && request.parameters.containsKey(OHttpUtils.CALLBACK_PARAMETER_NAME))
       callbackF = request.parameters.get(OHttpUtils.CALLBACK_PARAMETER_NAME);
     else
       callbackF = null;
 
     response = new OHttpResponse(channel.outStream, request.httpVersion, additionalResponseHeaders, responseCharSet,
-        connection.data.serverInfo, request.sessionId, callbackF, request.keepAlive);
+        connection.data.serverInfo, request.sessionId, callbackF, request.keepAlive, connection);
+    response.setJsonErrorResponse(jsonResponseError);
     if (request.contentEncoding != null && request.contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
       response.setContentEncoding(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED);
     }
@@ -186,7 +192,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
               "->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + request.httpMethod + "."
                   + URLDecoder.decode(command, "UTF-8"));
 
-          sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, OHttpUtils.STATUS_INVALIDMETHOD_DESCRIPTION, null,
+          sendError(OHttpUtils.STATUS_INVALIDMETHOD_CODE, OHttpUtils.STATUS_INVALIDMETHOD_DESCRIPTION, null,
               OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: " + command, request.keepAlive);
         } catch (IOException e1) {
           sendShutdown();
@@ -220,11 +226,19 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       channel.close();
 
     } finally {
-      OClientConnectionManager.instance().disconnect(connection.id);
+      server.getClientConnectionManager().disconnect(connection.id);
 
       if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Connection shutdowned");
+        OLogManager.instance().debug(this, "Connection closed");
     }
+  }
+
+  public OHttpRequest getRequest() {
+    return request;
+  }
+
+  public OHttpResponse getResponse() {
+    return response;
   }
 
   @Override
@@ -330,7 +344,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     }
 
     try {
-      sendTextContent(errorCode, errorReason, responseHeaders, OHttpUtils.CONTENT_TEXT_PLAIN, errorMessage, request.keepAlive);
+      sendError(errorCode, errorReason, responseHeaders, OHttpUtils.CONTENT_TEXT_PLAIN, errorMessage, request.keepAlive);
     } catch (IOException e1) {
       sendShutdown();
     }
@@ -350,6 +364,43 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
 
+    writeLine(null);
+
+    if (binaryContent != null)
+      channel.writeBytes(binaryContent);
+    channel.flush();
+  }
+
+  protected void sendError(final int iCode, final String iReason, String iHeaders, final String iContentType,
+      final String iContent, final boolean iKeepAlive) throws IOException {
+    final byte[] binaryContent;
+
+    if (!jsonResponseError) {
+      sendTextContent(iCode, iReason, iHeaders, iContentType, iContent, iKeepAlive);
+      return;
+    }
+
+    sendStatus(iCode, iReason);
+    sendResponseHeaders(OHttpUtils.CONTENT_JSON, iKeepAlive);
+
+    if (iHeaders != null)
+      writeLine(iHeaders);
+
+    ODocument response = new ODocument();
+    ODocument error = new ODocument();
+
+    error.field("code", iCode);
+    error.field("reason", iCode);
+    error.field("content", iContent);
+
+    List<ODocument> errors = new ArrayList<ODocument>();
+    errors.add(error);
+
+    response.field("errors", errors);
+
+    binaryContent = response.toJSON("prettyPrint").getBytes(utf8);
+
+    writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (binaryContent != null ? binaryContent.length : 0));
     writeLine(null);
 
     if (binaryContent != null)
@@ -525,7 +576,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       }
 
       channel.socket.setSoTimeout(socketTimeout);
-      connection.data.lastCommandReceived = Orient.instance().getProfiler().startChrono();
+      connection.data.lastCommandReceived = System.currentTimeMillis();
+
+      request = new OHttpRequest(this, channel.inStream, connection.data, configuration);
 
       requestContent.setLength(0);
       request.isMultipart = false;
@@ -590,12 +643,12 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     } catch (Throwable t) {
       if (request.httpMethod != null && request.url != null) {
         try {
-          sendTextContent(505, "Error on executing of " + request.httpMethod + " for the resource: " + request.url, null,
-              "text/plain", t.toString(), request.keepAlive);
+          sendError(505, "Error on executing of " + request.httpMethod + " for the resource: " + request.url, null, "text/plain",
+              t.toString(), request.keepAlive);
         } catch (IOException e) {
         }
       } else
-        sendTextContent(505, "Error on executing request", null, "text/plain", t.toString(), request.keepAlive);
+        sendError(505, "Error on executing request", null, "text/plain", t.toString(), request.keepAlive);
 
       readAllContent(request);
     } finally {
@@ -605,6 +658,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             .getProfiler()
             .stopChrono("server.network.requests", "Total received requests", connection.data.lastCommandReceived,
                 "server.network.requests");
+
+      request = null;
+      response = null;
     }
   }
 
@@ -688,6 +744,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     cmdManager.registerCommand(new OServerCommandPostImportRecords());
     cmdManager.registerCommand(new OServerCommandPostProperty());
     cmdManager.registerCommand(new OServerCommandPostConnection());
+    cmdManager.registerCommand(new OServerCommandPostServer());
     cmdManager.registerCommand(new OServerCommandPostStudio());
     cmdManager.registerCommand(new OServerCommandPutDocument());
     cmdManager.registerCommand(new OServerCommandPutIndex());
@@ -699,7 +756,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     cmdManager.registerCommand(new OServerCommandOptions());
     cmdManager.registerCommand(new OServerCommandFunction());
     cmdManager.registerCommand(new OServerCommandAction());
-    cmdManager.registerCommand(new OServerCommandKillDbConnection());
+    cmdManager.registerCommand(new OServerCommandPostKillDbConnection());
     cmdManager.registerCommand(new OServerCommandGetSupportedLanguages());
     cmdManager.registerCommand(new OServerCommandPostAuthToken());
 

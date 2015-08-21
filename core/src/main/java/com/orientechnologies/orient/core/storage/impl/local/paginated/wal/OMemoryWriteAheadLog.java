@@ -23,41 +23,20 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 6/25/14
  */
 public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
-  private long             counter = 0;
-  private List<OWALRecord> records = new ArrayList<OWALRecord>();
-
   @Override
   public OLogSequenceNumber begin() throws IOException {
-    syncObject.lock();
-    try {
-      if (records.isEmpty())
-        return null;
-
-      return records.get(0).getLsn();
-    } finally {
-      syncObject.unlock();
-    }
+    throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
   @Override
   public OLogSequenceNumber end() throws IOException {
-    syncObject.lock();
-    try {
-      if (records.isEmpty())
-        return null;
-
-      return records.get(records.size() - 1).getLsn();
-    } finally {
-      syncObject.unlock();
-    }
+    throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
   @Override
@@ -72,37 +51,16 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   @Override
   public OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback,
       OLogSequenceNumber startLsn) throws IOException {
-    return log(new OAtomicUnitEndRecord(operationUnitId, rollback, startLsn));
+    return log(new OAtomicUnitEndRecord(operationUnitId, rollback));
   }
 
   @Override
   public OLogSequenceNumber log(OWALRecord record) throws IOException {
-    OLogSequenceNumber logSequenceNumber;
-    syncObject.lock();
-    try {
-      logSequenceNumber = new OLogSequenceNumber(0, counter);
-      counter++;
-
-      if (record instanceof OAtomicUnitStartRecord)
-        records.clear();
-
-      records.add(record);
-      record.setLsn(logSequenceNumber);
-    } finally {
-      syncObject.unlock();
-    }
-
-    return logSequenceNumber;
+    return new OLogSequenceNumber(Long.MAX_VALUE, Long.MAX_VALUE);
   }
 
   @Override
   public void truncate() throws IOException {
-    syncObject.lock();
-    try {
-      records.clear();
-    } finally {
-      syncObject.unlock();
-    }
   }
 
   @Override
@@ -115,72 +73,30 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public void delete() throws IOException {
-    truncate();
   }
 
   @Override
   public void delete(boolean flush) throws IOException {
-    truncate();
+    throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
   @Override
   public OWALRecord read(OLogSequenceNumber lsn) throws IOException {
-    syncObject.lock();
-    try {
-      if (records.isEmpty())
-        return null;
-
-      final long index = lsn.getPosition() - records.get(0).getLsn().getPosition();
-      if (index < 0 || index >= records.size())
-        return null;
-
-      return records.get((int) index);
-    } finally {
-      syncObject.unlock();
-    }
+    throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
   @Override
   public OLogSequenceNumber next(OLogSequenceNumber lsn) throws IOException {
-    syncObject.lock();
-    try {
-      if (records.isEmpty())
-        return null;
-
-      final long index = lsn.getPosition() - records.get(0).getLsn().getPosition() + 1;
-      if (index < 0 || index >= records.size())
-        return null;
-
-      return new OLogSequenceNumber(0, lsn.getPosition() + 1);
-    } finally {
-      syncObject.unlock();
-    }
+    throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
   @Override
-  public OLogSequenceNumber getFlushedLSN() {
-    return new OLogSequenceNumber(Long.MAX_VALUE, Long.MAX_VALUE);
+  public OLogSequenceNumber getFlushedLsn() {
+    throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
   @Override
   public void cutTill(OLogSequenceNumber lsn) throws IOException {
-    syncObject.lock();
-    try {
-      if (records.isEmpty())
-        return;
-
-      long index = records.get(0).getLsn().getPosition() - lsn.getPosition();
-      if (index < 0)
-        return;
-
-      if (index > records.size())
-        index = records.size();
-
-      for (int i = 0; i < index; i++)
-        records.remove(0);
-    } finally {
-      syncObject.unlock();
-    }
   }
 
   @Override

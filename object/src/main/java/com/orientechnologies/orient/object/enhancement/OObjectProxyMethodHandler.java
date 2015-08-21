@@ -70,7 +70,7 @@ import java.util.Set;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
- * 
+ *
  */
 public class OObjectProxyMethodHandler implements MethodHandler {
 
@@ -119,7 +119,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   /**
    * Method that detaches all fields contained in the document to the given object
-   * 
+   *
    * @param self
    *          :- The object containing this handler instance
    * @throws InvocationTargetException
@@ -146,14 +146,14 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   /**
    * Method that detaches all fields contained in the document to the given object
-   * 
+   *
    * @param self
    *          :- The object containing this handler instance
    * @throws InvocationTargetException
    * @throws IllegalAccessException
    * @throws NoSuchMethodException
    */
-  public void detachAll(final Object self, final boolean nonProxiedInstance, final Map<Object, Object> alreadyDetached)
+  public void detachAll(final Object self, final boolean nonProxiedInstance, final Map<Object, Object> alreadyDetached, final Map<Object, Object> lazyObjects)
       throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     final Class<?> selfClass = self.getClass();
 
@@ -162,7 +162,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       if (field != null) {
         Object value = getValue(self, fieldName, false, null, true);
         if (value instanceof OObjectLazyMultivalueElement) {
-          ((OObjectLazyMultivalueElement<?>) value).detachAll(nonProxiedInstance, alreadyDetached);
+          ((OObjectLazyMultivalueElement<?>) value).detachAll(nonProxiedInstance, alreadyDetached, lazyObjects);
           if (nonProxiedInstance)
             value = ((OObjectLazyMultivalueElement<?>) value).getNonOrientInstance();
         } else if (value instanceof Proxy) {
@@ -170,12 +170,25 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           if (nonProxiedInstance) {
             value = OObjectEntitySerializer.getNonProxiedInstance(value);
           }
-          Object detachedValue = alreadyDetached.get(handler.doc.getIdentity());
-          if (detachedValue != null) {
-            value = detachedValue;
+
+          if (OObjectEntitySerializer.isFetchLazyField(self.getClass(), fieldName)) {
+            //just make a placeholder with only the id, so it can be fetched later (but not by orient internally)
+            //do not use the already detached map for this, that might mix up lazy and non-lazy objects
+            Object lazyValue = lazyObjects.get(handler.doc.getIdentity());
+            if (lazyValue != null) {
+              value = lazyValue;
+            } else {
+              OObjectEntitySerializer.setIdField(field.getType(), value, handler.doc.getIdentity());
+              lazyObjects.put(handler.doc.getIdentity(), value);
+            }
           } else {
-            alreadyDetached.put(handler.doc.getIdentity(), value);
-            handler.detachAll(value, nonProxiedInstance, alreadyDetached);
+            Object detachedValue = alreadyDetached.get(handler.doc.getIdentity());
+            if (detachedValue != null) {
+              value = detachedValue;
+            } else {
+              alreadyDetached.put(handler.doc.getIdentity(), value);
+              handler.detachAll(value, nonProxiedInstance, alreadyDetached, lazyObjects);
+            }
           }
         }
         OObjectEntitySerializer.setFieldValue(field, self, value);
@@ -187,8 +200,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   /**
    * Method that attaches all data contained in the object to the associated document
-   * 
-   * 
+   *
+   *
    * @param self
    *          :- The object containing this handler instance
    * @throws IllegalAccessException
@@ -348,7 +361,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
               Method setMethod = getSetMethod(self.getClass().getSuperclass(), getSetterFieldName(fieldName), value);
               setMethod.invoke(self, value);
             } else if ((value instanceof Set || value instanceof Map)
-                && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) < 0) {
+                && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) < 0
+                && !OReflectionHelper.isJavaType(genericMultiValueType)) {
               if (value instanceof Set)
                 value = new OObjectLazySet(self, (Set<OIdentifiable>) docValue, OObjectEntitySerializer.isCascadeDeleteField(
                     self.getClass(), fieldName));
@@ -518,7 +532,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         doc.field(f.getName(), doc.field(f.getName()), type);
       Map<Object, OIdentifiable> docMap = doc.field(f.getName(), type);
       if (docMap == null) {
-        docMap = new ORecordLazyMap(doc);
+        if (OType.EMBEDDEDMAP == type)
+          docMap = new OTrackedMap<OIdentifiable>(doc);
+        else
+          docMap = new ORecordLazyMap(doc);
         setDocFieldValue(f.getName(), docMap, type);
       }
       value = new OObjectLazyMap(self, docMap, value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
@@ -557,7 +574,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         OType type = embedded ? OType.EMBEDDEDLIST : OType.LINKLIST;
         List<OIdentifiable> docList = doc.field(f.getName(), type);
         if (docList == null) {
-          docList = new ORecordLazyList(doc);
+          if (embedded)
+            docList = new OTrackedList<OIdentifiable>(doc);
+          else
+            docList = new ORecordLazyList(doc);
           setDocFieldValue(f.getName(), docList, type);
         } else if (isFieldUpdate) {
           docList.clear();
@@ -568,7 +588,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         OType type = embedded ? OType.EMBEDDEDSET : OType.LINKSET;
         Set<OIdentifiable> docSet = doc.field(f.getName(), type);
         if (docSet == null) {
-          docSet = new ORecordLazySet(doc);
+          if (embedded)
+            docSet = new OTrackedSet<OIdentifiable>(doc);
+          else
+            docSet = new ORecordLazySet(doc);
           setDocFieldValue(f.getName(), docSet, type);
         } else if (isFieldUpdate) {
           docSet.clear();
@@ -718,6 +741,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   }
 
   protected Object convertDocumentToObject(final ODocument value, final Object self) {
+    if (value == null)
+      return null;
     return OObjectEntityEnhancer.getInstance().getProxiedInstance(value.getClassName(), getDatabase().getEntityManager(), value,
         (self instanceof ProxyObject ? (ProxyObject) self : null));
   }

@@ -31,29 +31,38 @@ public class OProjection extends SimpleNode {
   }
 
   @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (items == null) {
-      return "";
+      return;
     }
     boolean first = true;
-    StringBuilder builder = new StringBuilder();
+
+    // print * before
     for (OProjectionItem item : items) {
-      if (!first) {
-        builder.append(", ");
-      }
-      builder.append(item.toString());
-      first = false;
-    }
+      if (item.isAll()) {
+        if (!first) {
+          builder.append(", ");
+        }
 
-    return builder.toString();
-  }
-
-  public void replaceParameters(Map<Object, Object> params) {
-    if(items!=null){
-      for(OProjectionItem item:items){
-        item.replaceParameters(params);
+        item.toString(params, builder);
+        first = false;
       }
     }
+
+    // and then the rest of the projections
+    for (OProjectionItem item : items) {
+      if (!item.isAll()) {
+        if (!first) {
+          builder.append(", ");
+        }
+
+        item.toString(params, builder);
+        first = false;
+      }
+    }
   }
+
+
+
 }
 /* JavaCC - OriginalChecksum=3a650307b53bae626dc063c4b35e62c3 (do not edit this line) */

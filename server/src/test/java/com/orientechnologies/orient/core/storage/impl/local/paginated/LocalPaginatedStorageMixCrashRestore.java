@@ -46,7 +46,7 @@ public class LocalPaginatedStorageMixCrashRestore {
   private File                             buildDir;
   private AtomicInteger                    idGen           = new AtomicInteger();
 
-  private OLockManager<Integer, Thread>    idLockManager   = new OLockManager<Integer, Thread>(true, 1000);
+  private OLockManager<Integer>            idLockManager   = new OLockManager<Integer>(true, 1000);
 
   private ExecutorService                  executorService = Executors.newCachedThreadPool();
 
@@ -128,7 +128,7 @@ public class LocalPaginatedStorageMixCrashRestore {
 
     private void createRecord() {
       final int idToCreate = idGen.getAndIncrement();
-      idLockManager.acquireLock(Thread.currentThread(), idToCreate, OLockManager.LOCK.EXCLUSIVE);
+      idLockManager.acquireLock(idToCreate, OLockManager.LOCK.EXCLUSIVE);
       try {
         final ODocument document = new ODocument("TestClass");
         document.field("id", idToCreate);
@@ -150,7 +150,7 @@ public class LocalPaginatedStorageMixCrashRestore {
       if (idToDelete == null)
         idToDelete = addedIds.first();
 
-      idLockManager.acquireLock(Thread.currentThread(), idToDelete, OLockManager.LOCK.EXCLUSIVE);
+      idLockManager.acquireLock(idToDelete, OLockManager.LOCK.EXCLUSIVE);
 
       while (deletedIds.containsKey(idToDelete)) {
         idLockManager.releaseLock(Thread.currentThread(), idToDelete, OLockManager.LOCK.EXCLUSIVE);
@@ -159,7 +159,7 @@ public class LocalPaginatedStorageMixCrashRestore {
         idToDelete = addedIds.ceiling(closeId);
         if (idToDelete == null)
           idToDelete = addedIds.first();
-        idLockManager.acquireLock(Thread.currentThread(), idToDelete, OLockManager.LOCK.EXCLUSIVE);
+        idLockManager.acquireLock(idToDelete, OLockManager.LOCK.EXCLUSIVE);
       }
 
       addedIds.remove(idToDelete);
@@ -189,7 +189,7 @@ public class LocalPaginatedStorageMixCrashRestore {
       if (idToUpdate == null)
         idToUpdate = addedIds.first();
 
-      idLockManager.acquireLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+      idLockManager.acquireLock(idToUpdate, OLockManager.LOCK.EXCLUSIVE);
 
       while (deletedIds.containsKey(idToUpdate)) {
         idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
@@ -199,7 +199,7 @@ public class LocalPaginatedStorageMixCrashRestore {
         if (idToUpdate == null)
           idToUpdate = addedIds.first();
 
-        idLockManager.acquireLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+        idLockManager.acquireLock(idToUpdate, OLockManager.LOCK.EXCLUSIVE);
       }
 
       addedIds.remove(idToUpdate);

@@ -2,11 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORecordId;
+
 import java.util.Map;
 
 public class OExpression extends SimpleNode {
 
-  protected Object  value;
   protected Boolean singleQuotes;
   protected Boolean doubleQuotes;
 
@@ -23,16 +26,14 @@ public class OExpression extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public Object createExecutorFilter() {
-
-    // TODO create an interface for this;
-
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     if (value instanceof ORid) {
-      return null;// TODO
+      ORid v = (ORid) value;
+      return new ORecordId(v.cluster.getValue().intValue(), v.position.getValue().longValue());
     } else if (value instanceof OInputParameter) {
-      return null;// TODO
+      return ((OInputParameter) value).bindFromInputParams(ctx.getInputParameters());
     } else if (value instanceof OMathExpression) {
-      return ((OMathExpression) value).createExecutorFilter();
+      return ((OMathExpression) value).execute(iCurrentRecord, ctx);
     } else if (value instanceof OJson) {
       return null;// TODO
     } else if (value instanceof String) {
@@ -66,19 +67,19 @@ public class OExpression extends SimpleNode {
 
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (value == null) {
-      return "null";
+      builder.append("null");
     } else if (value instanceof SimpleNode) {
-      return value.toString();
+      ((SimpleNode) value).toString(params, builder);
     } else if (value instanceof String) {
       if (Boolean.TRUE.equals(singleQuotes)) {
-        return "'" + value + "'";
+        builder.append("'" + value + "'");
+      } else {
+        builder.append("\"" + value + "\"");
       }
-      return "\"" + value + "\"";
     } else {
-      return "" + value;
+      builder.append("" + value);
     }
   }
 
@@ -86,12 +87,12 @@ public class OExpression extends SimpleNode {
     return s.replaceAll("\"", "\\\\\"");
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (value instanceof OInputParameter) {
-      value = ((OInputParameter) value).bindFromInputParams(params);
-    } else if (value instanceof OBaseExpression) {
-      ((OBaseExpression) value).replaceParameters(params);
+
+  public boolean supportsBasicCalculation() {
+    if (value instanceof OMathExpression) {
+      return ((OMathExpression) value).supportsBasicCalculation();
     }
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

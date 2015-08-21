@@ -26,6 +26,6 @@ import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 public class OClassicFileTest extends OFileAbstractTest {
 	@Override
 	protected OFile getFileImpl() throws IOException {
-		return new OFileClassic().init(FILE_NAME, "rw");
+    return new OFileClassic(FILE_NAME, "rw");
 	}
 }

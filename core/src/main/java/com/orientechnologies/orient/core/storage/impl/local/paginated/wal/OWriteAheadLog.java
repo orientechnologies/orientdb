@@ -66,7 +66,7 @@ public interface OWriteAheadLog {
 
   OLogSequenceNumber next(OLogSequenceNumber lsn) throws IOException;
 
-  OLogSequenceNumber getFlushedLSN();
+  OLogSequenceNumber getFlushedLsn();
 
   void cutTill(OLogSequenceNumber lsn) throws IOException;
 

@@ -56,17 +56,24 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
     // RE-READ THE RECORD
     record1.reload();
+
+    db2.activateOnCurrentThread();
     ORecordFlat record2 = db2.load(record1.getIdentity());
 
     record2.value("This is the second version").save();
     record2.value("This is the third version").save();
 
+    db1.activateOnCurrentThread();
     record1.reload(null, true);
 
     Assert.assertEquals(record1.value(), "This is the third version");
 
     db1.close();
+
+    db2.activateOnCurrentThread();
     db2.close();
+
+    database.activateOnCurrentThread();
   }
 
   @Test
@@ -89,15 +96,12 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
     }
   }
 
-  @Test(expectedExceptions = OTransactionException.class)
+  @Test
   public void testTransactionPreListenerRollback() throws IOException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
-
-    ORecordFlat record1 = new ORecordFlat(db);
+    ORecordFlat record1 = new ORecordFlat(database);
     record1.value("This is the first version").save();
 
-    db.registerListener(new ODatabaseListener() {
+    final ODatabaseListener listener = new ODatabaseListener() {
 
       @Override
       public void onAfterTxCommit(ODatabase iDatabase) {
@@ -150,12 +154,19 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
       public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
         return true;
       }
-    });
+    };
 
-    db.begin();
-    db.commit();
+    database.registerListener(listener);
+    database.begin();
 
-    db.close();
+    try {
+      database.commit();
+      Assert.assertTrue(false);
+    } catch (OTransactionException e) {
+      Assert.assertTrue(true);
+    } finally {
+      database.unregisterListener(listener);
+    }
   }
 
   @Test

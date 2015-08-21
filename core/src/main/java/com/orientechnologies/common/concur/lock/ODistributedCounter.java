@@ -2,6 +2,7 @@ package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -10,24 +11,40 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  */
+@SuppressFBWarnings(value = "VO_VOLATILE_REFERENCE_TO_ARRAY")
 public class ODistributedCounter extends OOrientListenerAbstract {
-  private static final int           HASH_INCREMENT = 0x61c88647;
+  private static final int HASH_INCREMENT = 0x61c88647;
+  private static final int MAX_RETRIES = 8;
 
-  private static final AtomicInteger nextHashCode   = new AtomicInteger();
-  private final AtomicBoolean        poolBusy       = new AtomicBoolean();
-  private final int                  maxPartitions  = Runtime.getRuntime().availableProcessors() << 3;
-  private final int                  MAX_RETRIES    = 8;
+  private static final AtomicInteger nextHashCode = new AtomicInteger();
+  private final AtomicBoolean poolBusy = new AtomicBoolean();
+  private final int maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
 
-  private final ThreadLocal<Integer> threadHashCode = new ThreadHashCode();
-  private volatile AtomicLong[]      counters       = new AtomicLong[2];
+
+  private volatile ThreadLocal<Integer> threadHashCode = new ThreadHashCode();
+  private volatile AtomicLong[] counters;
 
   public ODistributedCounter() {
-    for (int i = 0; i < counters.length; i++) {
-      counters[i] = new AtomicLong();
+    final AtomicLong[] cts = new AtomicLong[2];
+    for (int i = 0; i < cts.length; i++) {
+      cts[i] = new AtomicLong();
     }
+
+    counters = cts;
 
     Orient.instance().registerWeakOrientStartupListener(this);
     Orient.instance().registerWeakOrientShutdownListener(this);
+  }
+
+  @Override
+  public void onStartup() {
+    if (threadHashCode == null)
+      threadHashCode = new ThreadHashCode();
+  }
+
+  @Override
+  public void onShutdown() {
+    threadHashCode = null;
   }
 
   public void increment() {
@@ -38,7 +55,24 @@ public class ODistributedCounter extends OOrientListenerAbstract {
     updateCounter(-1);
   }
 
-  private void updateCounter(int delta) {
+  public void add(long delta) {
+    updateCounter(delta);
+  }
+
+  public void clear() {
+    while (!poolBusy.compareAndSet(false, true)) ;
+
+    final AtomicLong[] cts = new AtomicLong[counters.length];
+    for (int i = 0; i < counters.length; i++) {
+      cts[i] = new AtomicLong();
+    }
+
+    counters = cts;
+
+    poolBusy.set(false);
+  }
+
+  private void updateCounter(long delta) {
     final int hashCode = threadHashCode.get();
 
     while (true) {
@@ -81,8 +115,9 @@ public class ODistributedCounter extends OOrientListenerAbstract {
         if (!poolBusy.get() && poolBusy.compareAndSet(false, true)) {
           if (cts == counters) {
             if (cts.length < maxPartitions) {
-              counters = new AtomicLong[cts.length << 1];
-              System.arraycopy(cts, 0, counters, 0, cts.length);
+              final AtomicLong[] newCts = new AtomicLong[cts.length << 1];
+              System.arraycopy(cts, 0, newCts, 0, cts.length);
+              counters = newCts;
             }
           }
 
@@ -95,20 +130,24 @@ public class ODistributedCounter extends OOrientListenerAbstract {
   }
 
   public boolean isEmpty() {
+    return get() == 0;
+  }
+
+  public long get() {
     long sum = 0;
 
     for (AtomicLong counter : counters)
       if (counter != null)
         sum += counter.get();
 
-    return sum == 0;
+    return sum;
   }
 
   private static int nextHashCode() {
     return nextHashCode.getAndAdd(HASH_INCREMENT);
   }
 
-  private static class ThreadHashCode extends ThreadLocal<Integer> {
+  private static final class ThreadHashCode extends ThreadLocal<Integer> {
     @Override
     protected Integer initialValue() {
       return nextHashCode();

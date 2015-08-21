@@ -9,7 +9,8 @@ public class ODeleteVertexStatement extends OStatement {
   protected OFromClause  fromClause;
   protected OWhereClause whereClause;
   protected boolean      returnBefore = false;
-  protected OInteger     limit        = null;
+  protected OLimit       limit        = null;
+  protected OBatch       batch        = null;
 
   public ODeleteVertexStatement(int id) {
     super(id);
@@ -19,32 +20,24 @@ public class ODeleteVertexStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("DELETE VERTEX ");
-    result.append(fromClause.toString());
-    if (whereClause != null) {
-      result.append(" WHERE ");
-      result.append(whereClause.toString());
-    }
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("DELETE VERTEX ");
+    fromClause.toString(params, builder);
     if (returnBefore) {
-      result.append(" RETURN BEFORE");
+      builder.append(" RETURN BEFORE");
+    }
+    if (whereClause != null) {
+      builder.append(" WHERE ");
+      whereClause.toString(params, builder);
     }
     if (limit != null) {
-      result.append(" LIMIT ");
-      result.append(limit);
+      limit.toString(params, builder);
     }
-    return result.toString();
+    if (batch != null) {
+      batch.toString(params, builder);
+    }
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    fromClause.replaceParameters(params);
 
-    if (whereClause != null) {
-      whereClause.replaceParameters(params);
-    }
-
-  }
 }
 /* JavaCC - OriginalChecksum=b62d3046f4bd1b9c1f78ed4f125b06d3 (do not edit this line) */

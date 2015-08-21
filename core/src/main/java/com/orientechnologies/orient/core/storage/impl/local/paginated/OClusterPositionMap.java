@@ -23,14 +23,10 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -42,18 +38,14 @@ import java.util.Arrays;
 public class OClusterPositionMap extends ODurableComponent {
   public static final String DEF_EXTENSION = ".cpm";
 
-  private final ODiskCache   diskCache;
-  private String             name;
-  private long               fileId;
-  private boolean            useWal;
+  private long fileId;
+  private boolean useWal;
 
-  public OClusterPositionMap(OAbstractPaginatedStorage storage, ODiskCache diskCache, String name, boolean useWal) {
-    super(storage);
+  public OClusterPositionMap(OAbstractPaginatedStorage storage, String name, boolean useWal) {
+    super(storage, name, DEF_EXTENSION);
 
     acquireExclusiveLock();
     try {
-      this.diskCache = diskCache;
-      this.name = name;
       this.useWal = useWal;
     } finally {
       releaseExclusiveLock();
@@ -73,7 +65,7 @@ public class OClusterPositionMap extends ODurableComponent {
     acquireExclusiveLock();
     try {
       OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-      fileId = openFile(atomicOperation, name + DEF_EXTENSION, diskCache);
+      fileId = openFile(atomicOperation, getFullName());
     } finally {
       releaseExclusiveLock();
     }
@@ -84,14 +76,14 @@ public class OClusterPositionMap extends ODurableComponent {
 
     acquireExclusiveLock();
     try {
-      fileId = addFile(atomicOperation, name + DEF_EXTENSION, diskCache);
-      endAtomicOperation(false);
+      fileId = addFile(atomicOperation, getFullName());
+      endAtomicOperation(false, null);
     } catch (IOException ioe) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, ioe);
       throw ioe;
     } catch (Exception e) {
-      endAtomicOperation(true);
-      throw new OStorageException("Error during cluster position - physical position map.", e);
+      endAtomicOperation(true, e);
+      throw new OStorageException("Error during cluster position - physical position map", e);
     } finally {
       releaseExclusiveLock();
     }
@@ -102,7 +94,7 @@ public class OClusterPositionMap extends ODurableComponent {
     try {
       acquireSharedLock();
       try {
-        diskCache.flushFile(fileId);
+        writeCache.flush(fileId);
       } finally {
         releaseSharedLock();
       }
@@ -114,7 +106,7 @@ public class OClusterPositionMap extends ODurableComponent {
   public void close(boolean flush) throws IOException {
     acquireExclusiveLock();
     try {
-      diskCache.closeFile(fileId, flush);
+      readCache.closeFile(fileId, flush, writeCache);
     } finally {
       releaseExclusiveLock();
     }
@@ -124,13 +116,13 @@ public class OClusterPositionMap extends ODurableComponent {
     final OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      truncateFile(atomicOperation, fileId, diskCache);
-      endAtomicOperation(false);
+      truncateFile(atomicOperation, fileId);
+      endAtomicOperation(false, null);
     } catch (IOException ioe) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, ioe);
       throw ioe;
     } catch (Exception e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw new OStorageException("Error during truncation of cluster position - physical position map", e);
     } finally {
       releaseExclusiveLock();
@@ -142,14 +134,14 @@ public class OClusterPositionMap extends ODurableComponent {
 
     acquireExclusiveLock();
     try {
-      deleteFile(atomicOperation, fileId, diskCache);
-      endAtomicOperation(false);
+      deleteFile(atomicOperation, fileId);
+      endAtomicOperation(false, null);
     } catch (IOException ioe) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, ioe);
       throw ioe;
     } catch (Exception e) {
-      endAtomicOperation(true);
-      throw new OStorageException("Error during deletion of cluster position - physical position map.", e);
+      endAtomicOperation(true, e);
+      throw new OStorageException("Error during deletion of cluster position - physical position map", e);
     } finally {
       releaseExclusiveLock();
     }
@@ -159,15 +151,15 @@ public class OClusterPositionMap extends ODurableComponent {
     startAtomicOperation();
     acquireExclusiveLock();
     try {
-      diskCache.renameFile(fileId, this.name + DEF_EXTENSION, newName + DEF_EXTENSION);
-      name = newName;
-      endAtomicOperation(false);
+      writeCache.renameFile(fileId, getFullName(), newName + getExtension());
+      setName(newName);
+      endAtomicOperation(false, null);
     } catch (IOException ioe) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, ioe);
       throw ioe;
     } catch (Exception e) {
-      endAtomicOperation(true);
-      throw new OStorageException("Error during rename of cluster position - physical position map.");
+      endAtomicOperation(true, e);
+      throw new OStorageException("Error during rename of cluster position - physical position map", e);
     } finally {
       releaseExclusiveLock();
     }
@@ -178,12 +170,12 @@ public class OClusterPositionMap extends ODurableComponent {
 
     acquireExclusiveLock();
     try {
-      long lastPage = getFilledUpTo(atomicOperation, diskCache, fileId) - 1;
+      long lastPage = getFilledUpTo(atomicOperation, fileId) - 1;
       OCacheEntry cacheEntry;
       if (lastPage < 0)
-        cacheEntry = addPage(atomicOperation, fileId, diskCache);
+        cacheEntry = addPage(atomicOperation, fileId);
       else
-        cacheEntry = loadPage(atomicOperation, fileId, lastPage, false, diskCache);
+        cacheEntry = loadPage(atomicOperation, fileId, lastPage, false);
 
       cacheEntry.acquireExclusiveLock();
       try {
@@ -191,9 +183,9 @@ public class OClusterPositionMap extends ODurableComponent {
         OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, getChangesTree(atomicOperation, cacheEntry));
         if (bucket.isFull()) {
           cacheEntry.releaseExclusiveLock();
-          releasePage(atomicOperation, cacheEntry, diskCache);
+          releasePage(atomicOperation, cacheEntry);
 
-          cacheEntry = addPage(atomicOperation, fileId, diskCache);
+          cacheEntry = addPage(atomicOperation, fileId);
 
           cacheEntry.acquireExclusiveLock();
           bucket = new OClusterPositionMapBucket(cacheEntry, getChangesTree(atomicOperation, cacheEntry));
@@ -202,18 +194,54 @@ public class OClusterPositionMap extends ODurableComponent {
         final long index = bucket.add(pageIndex, recordPosition);
         final long result = index + cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES;
 
-        endAtomicOperation(false);
+        endAtomicOperation(false, null);
         return result;
-      } catch (Throwable e) {
-        endAtomicOperation(true);
-        throw new OStorageException("Error during creation of mapping between logical adn physical record position.", e);
+      } catch (Exception e) {
+        endAtomicOperation(true, e);
+        throw new OStorageException("Error during creation of mapping between logical adn physical record position", e);
       } finally {
         cacheEntry.releaseExclusiveLock();
-        releasePage(atomicOperation, cacheEntry, diskCache);
+        releasePage(atomicOperation, cacheEntry);
       }
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  public void update(long clusterPosition, OClusterPositionMapBucket.PositionEntry entry) throws IOException {
+    OAtomicOperation atomicOperation = startAtomicOperation();
+
+    acquireExclusiveLock();
+    try {
+      long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
+      int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
+
+      if (pageIndex >= getFilledUpTo(atomicOperation, fileId))
+        throw new OStorageException("Passed in cluster position " + clusterPosition
+            + " is outside of range of cluster-position map.");
+
+      final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
+      cacheEntry.acquireExclusiveLock();
+      try {
+        final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, getChangesTree(atomicOperation,
+            cacheEntry));
+        bucket.set(index, entry);
+      } finally {
+        cacheEntry.releaseExclusiveLock();
+        releasePage(atomicOperation, cacheEntry);
+      }
+
+      endAtomicOperation(false, null);
+    } catch (IOException e) {
+      endAtomicOperation(true, e);
+      throw new OStorageException("Error of update of mapping between logical adn physical record position", e);
+    } catch (RuntimeException e) {
+      endAtomicOperation(true, e);
+      throw new OStorageException("Error of update of mapping between logical adn physical record position", e);
+    } finally {
+      releaseExclusiveLock();
+    }
+
   }
 
   public OClusterPositionMapBucket.PositionEntry get(final long clusterPosition) throws IOException {
@@ -226,16 +254,16 @@ public class OClusterPositionMap extends ODurableComponent {
 
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-        if (pageIndex >= getFilledUpTo(atomicOperation, diskCache, fileId))
+        if (pageIndex >= getFilledUpTo(atomicOperation, fileId))
           return null;
 
-        final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, diskCache);
+        final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
         try {
           final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, getChangesTree(atomicOperation,
               cacheEntry));
           return bucket.get(index);
         } finally {
-          releasePage(atomicOperation, cacheEntry, diskCache);
+          releasePage(atomicOperation, cacheEntry);
         }
       } finally {
         releaseSharedLock();
@@ -253,25 +281,27 @@ public class OClusterPositionMap extends ODurableComponent {
       long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
       int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
-      final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, diskCache);
+      final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
       cacheEntry.acquireExclusiveLock();
       try {
         final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, getChangesTree(atomicOperation,
             cacheEntry));
 
         OClusterPositionMapBucket.PositionEntry positionEntry = bucket.remove(index);
-        if (positionEntry == null)
+        if (positionEntry == null) {
+          endAtomicOperation(false, null);
           return null;
+        }
 
-        endAtomicOperation(false);
+        endAtomicOperation(false, null);
         return positionEntry;
-      } catch (Throwable e) {
-        endAtomicOperation(true);
+      } catch (Exception e) {
+        endAtomicOperation(true, e);
 
-        throw new OStorageException("Error during removal of mapping between logical and physical record position.", e);
+        throw new OStorageException("Error during removal of mapping between logical and physical record position", e);
       } finally {
         cacheEntry.releaseExclusiveLock();
-        releasePage(atomicOperation, cacheEntry, diskCache);
+        releasePage(atomicOperation, cacheEntry);
       }
     } finally {
       releaseExclusiveLock();
@@ -307,19 +337,19 @@ public class OClusterPositionMap extends ODurableComponent {
         int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
         OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-        final long filledUpTo = getFilledUpTo(atomicOperation, diskCache, fileId);
+        final long filledUpTo = getFilledUpTo(atomicOperation, fileId);
 
         if (pageIndex >= filledUpTo)
           return OCommonConst.EMPTY_LONG_ARRAY;
 
         long[] result = null;
         do {
-          OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, diskCache);
+          OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
           OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, getChangesTree(atomicOperation, cacheEntry));
           int resultSize = bucket.getSize() - index;
 
           if (resultSize <= 0) {
-            releasePage(atomicOperation, cacheEntry, diskCache);
+            releasePage(atomicOperation, cacheEntry);
             pageIndex++;
             index = 0;
           } else {
@@ -341,7 +371,7 @@ public class OClusterPositionMap extends ODurableComponent {
             } else
               result = Arrays.copyOf(result, entriesCount);
 
-            releasePage(atomicOperation, cacheEntry, diskCache);
+            releasePage(atomicOperation, cacheEntry);
           }
         } while (result == null && pageIndex < filledUpTo);
 
@@ -388,7 +418,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
         OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-        final long filledUpTo = getFilledUpTo(atomicOperation, diskCache, fileId);
+        final long filledUpTo = getFilledUpTo(atomicOperation, fileId);
         long[] result;
 
         if (pageIndex >= filledUpTo) {
@@ -401,7 +431,7 @@ public class OClusterPositionMap extends ODurableComponent {
         }
 
         do {
-          OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, diskCache);
+          OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
           OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, getChangesTree(atomicOperation, cacheEntry));
           if (index == Integer.MIN_VALUE)
             index = bucket.getSize() - 1;
@@ -426,7 +456,7 @@ public class OClusterPositionMap extends ODurableComponent {
           } else
             result = Arrays.copyOf(result, entriesCount);
 
-          releasePage(atomicOperation, cacheEntry, diskCache);
+          releasePage(atomicOperation, cacheEntry);
         } while (result == null && pageIndex >= 0);
 
         if (result == null)
@@ -448,9 +478,9 @@ public class OClusterPositionMap extends ODurableComponent {
       try {
         OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-        final long filledUpTo = getFilledUpTo(atomicOperation, diskCache, fileId);
+        final long filledUpTo = getFilledUpTo(atomicOperation, fileId);
         for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
-          OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, diskCache);
+          OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
           try {
             OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry,
                 getChangesTree(atomicOperation, cacheEntry));
@@ -461,7 +491,7 @@ public class OClusterPositionMap extends ODurableComponent {
                 return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + index;
             }
           } finally {
-            releasePage(atomicOperation, cacheEntry, diskCache);
+            releasePage(atomicOperation, cacheEntry);
           }
         }
 
@@ -480,10 +510,10 @@ public class OClusterPositionMap extends ODurableComponent {
       acquireSharedLock();
       try {
         OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-        final long filledUpTo = getFilledUpTo(atomicOperation, diskCache, fileId);
+        final long filledUpTo = getFilledUpTo(atomicOperation, fileId);
 
         for (long pageIndex = filledUpTo - 1; pageIndex >= 0; pageIndex--) {
-          OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, diskCache);
+          OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
           try {
             OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry,
                 getChangesTree(atomicOperation, cacheEntry));
@@ -494,7 +524,7 @@ public class OClusterPositionMap extends ODurableComponent {
                 return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + index;
             }
           } finally {
-            releasePage(atomicOperation, cacheEntry, diskCache);
+            releasePage(atomicOperation, cacheEntry);
           }
         }
 
@@ -512,7 +542,7 @@ public class OClusterPositionMap extends ODurableComponent {
     try {
       acquireSharedLock();
       try {
-        return diskCache.wasSoftlyClosed(fileId);
+        return writeCache.wasSoftlyClosed(fileId);
       } finally {
         releaseSharedLock();
       }
@@ -521,17 +551,9 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  @Override
-  protected void endAtomicOperation(final boolean rollback) throws IOException {
-    if (useWal)
-      super.endAtomicOperation(rollback);
-  }
 
   @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    if (useWal)
-      return super.startAtomicOperation();
-
-    return atomicOperationsManager.getCurrentOperation();
+    return atomicOperationsManager.startAtomicOperation(this, !useWal);
   }
 }

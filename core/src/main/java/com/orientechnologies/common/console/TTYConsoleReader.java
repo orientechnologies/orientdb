@@ -30,6 +30,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Custom implementation of TTY reader. Supports arrow keys + history.
+ */
 public class TTYConsoleReader implements OConsoleReader {
 
   private static final String   HISTORY_FILE_NAME   = ".orientdb_history";
@@ -75,13 +78,17 @@ public class TTYConsoleReader implements OConsoleReader {
         outStream = System.out;
       }
     } catch (FileNotFoundException fnfe) {
-      OLogManager.instance().error(this, "History file not found", fnfe, "");
+      OLogManager.instance().error(this, "History file not found", fnfe);
     } catch (IOException ioe) {
-      OLogManager.instance().error(this, "Error reading history file.", ioe, "");
+      OLogManager.instance().error(this, "Error reading history file", ioe);
     }
 
     if (inStream == null)
       throw new OException("Cannot access to the input stream. Check permissions of running process");
+  }
+
+  public String readPassword() throws IOException {
+    return readLine();
   }
 
   public String readLine() throws IOException {
@@ -446,14 +453,14 @@ public class TTYConsoleReader implements OConsoleReader {
       try {
         file.createNewFile();
       } catch (IOException ioe) {
-        OLogManager.instance().error(this, "Error creating history file.", ioe, "");
+        OLogManager.instance().error(this, "Error creating history file", ioe);
       }
     } else if (!read) {
       file.delete();
       try {
         file.createNewFile();
       } catch (IOException ioe) {
-        OLogManager.instance().error(this, "Error creating history file.", ioe, "");
+        OLogManager.instance().error(this, "Error creating history file", ioe);
       }
     }
     return file;

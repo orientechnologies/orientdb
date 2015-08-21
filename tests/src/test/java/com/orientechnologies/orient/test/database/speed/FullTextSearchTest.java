@@ -7,7 +7,7 @@ public class FullTextSearchTest {
 	// private static final int DOCUMENTS = 1000;
 
 	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		// OProfiler.getInstance().startRecording();
+    // OProfilerStub.getInstance().startRecording();
 		//
 		// final ODatabaseDocumentTx database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
 		//

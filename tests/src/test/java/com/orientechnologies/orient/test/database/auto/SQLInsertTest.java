@@ -33,7 +33,10 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,13 +55,22 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
   @Test
   public void insertOperator() {
+    if (!database.getMetadata().getSchema().existsClass("Account"))
+      database.getMetadata().getSchema().createClass("Account");
+
     final int clId = database.addCluster("anotherdefault");
     final OClass profileClass = database.getMetadata().getSchema().getClass("Account");
     profileClass.addClusterId(clId);
 
+    if (!database.getMetadata().getSchema().existsClass("Address"))
+      database.getMetadata().getSchema().createClass("Address");
+
     int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
     List<Long> positions = getValidPositions(addressId);
+
+    if (!database.getMetadata().getSchema().existsClass("Profile"))
+      database.getMetadata().getSchema().createClass("Profile");
 
     ODocument doc = (ODocument) database.command(
         new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values ('Luca','Smith', 109.9, #" + addressId
@@ -473,6 +485,36 @@ public class SQLInsertTest extends DocumentDBBaseTest {
         .execute();
 
     Assert.assertTrue(doc.field("embeddedNoLinkedClass") instanceof ODocument);
+  }
+
+  public void testEmbeddedDates() {
+    OClass c = database.getMetadata().getSchema().getOrCreateClass("TestEmbeddedDates");
+
+    database
+        .command(
+            new OCommandSQL(
+                "insert into TestEmbeddedDates set events = [{\"on\": date(\"2005-09-08 04:00:00\", \"yyyy-MM-dd HH:mm:ss\", \"UTC\")}]\n"))
+        .execute();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from TestEmbeddedDates"));
+
+    Assert.assertEquals(result.size(), 1);
+    boolean found = false;
+    ODocument doc = result.get(0);
+    Collection events = doc.field("events");
+    for (Object event : events) {
+      Assert.assertTrue(event instanceof Map);
+      Object dateObj = ((Map) event).get("on");
+      Assert.assertTrue(dateObj instanceof Date);
+      Calendar cal = new GregorianCalendar();
+      cal.setTime((Date) dateObj);
+      Assert.assertEquals(cal.get(Calendar.YEAR), 2005);
+      found = true;
+    }
+
+    doc.delete();
+    Assert.assertEquals(found, true);
+
   }
 
   public void testAutoConversionOfEmbeddededWithLinkedClass() {

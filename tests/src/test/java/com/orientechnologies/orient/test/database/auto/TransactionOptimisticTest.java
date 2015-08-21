@@ -15,6 +15,20 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.tx.ORollbackException;
+import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
@@ -22,22 +36,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.tx.ORollbackException;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = "dictionary")
 public class TransactionOptimisticTest extends DocumentDBBaseTest {
@@ -88,7 +86,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(database.getURL());
     db2.open("admin", "admin");
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    database.activateOnCurrentThread();
     ORecordBytes record1 = new ORecordBytes("This is the first version".getBytes());
     record1.save("binary");
 
@@ -125,6 +123,8 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     } finally {
 
       database.close();
+
+      db2.activateOnCurrentThread();
       db2.close();
     }
   }
@@ -180,7 +180,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
       database.commit();
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(db2);
+      db2.activateOnCurrentThread();
 
       ORecordBytes record2 = db2.load(record1.getIdentity(), "*:-1", true);
       Assert.assertEquals(record2.getRecordVersion().getCounter(), v1 + 1);
@@ -188,7 +188,10 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
     } finally {
 
+      database.activateOnCurrentThread();
       database.close();
+
+      db2.activateOnCurrentThread();
       db2.close();
     }
   }

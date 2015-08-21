@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.base.EnumTest;
 import com.orientechnologies.orient.test.domain.base.JavaAttachDetachTestClass;
@@ -33,11 +32,11 @@ import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.cycle.CycleChild;
 import com.orientechnologies.orient.test.domain.cycle.CycleParent;
 import com.orientechnologies.orient.test.domain.cycle.GrandChild;
+import com.orientechnologies.orient.test.domain.lazy.LazyChild;
+import com.orientechnologies.orient.test.domain.lazy.LazyParent;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 import javassist.util.proxy.Proxy;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -60,25 +59,8 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     super(url);
   }
 
-  @BeforeMethod
-  @Override
-  public void beforeMethod() throws Exception {
-    database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-  }
-
-  @AfterClass
-  @Override
-  public void afterClass() throws Exception {
-    database.close();
-
-    database = createDatabaseInstance(url);
-    super.afterClass();
-  }
-
   @Test
   public void createAnnotatedObjects() {
-    database = new OObjectDatabaseTx(url).open("admin", "admin");
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
@@ -213,7 +195,7 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(database.countClass(Country.class), initCount);
     Assert.assertTrue(country.getId() == null || ((ORID) country.getId()).isNew(), "id=" + country.getId());
-//    Assert.assertNull(country.getVersion());
+    // Assert.assertNull(country.getVersion());
   }
 
   @Test(dependsOnMethods = "testInsertRollback")
@@ -238,7 +220,8 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     database.commit();
 
     loaded = (Country) database.load((ORecordId) country.getId());
-    Assert.assertEquals(database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
+    Assert.assertEquals((Object) database.getRecordByUserObject(loaded, false),
+        (Object) database.getRecordByUserObject(country, false));
     Assert.assertEquals(loaded.getId(), country.getId());
     Assert.assertEquals(((ORecordVersion) loaded.getVersion()).getCounter(), initVersion.getCounter() + 1);
     Assert.assertEquals(loaded.getName(), newName);
@@ -314,16 +297,8 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "testDeleteRollback")
   public void clean() {
-    database.close();
-
-    database = new OObjectDatabaseTx(url).open("admin", "admin");
-    try {
-      database.delete(profile);
-      database.delete(account);
-
-    } finally {
-      database.close();
-    }
+    database.delete(profile);
+    database.delete(account);
   }
 
   public void testAttachDetach() {
@@ -387,7 +362,7 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     ORecordId id = (ORecordId) database.getRecordByUserObject(savedJavaObj, false).getIdentity();
     database.close();
 
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    database = new OObjectDatabaseTx(url).open("admin", "admin");
     JavaAttachDetachTestClass loadedJavaObj = (JavaAttachDetachTestClass) database.load(id);
     database.detach(loadedJavaObj);
     Assert.assertEquals(loadedJavaObj.text, "test");
@@ -487,7 +462,7 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     ORecordId id = (ORecordId) database.getRecordByUserObject(savedJavaObj, false).getIdentity();
     database.close();
 
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    database = new OObjectDatabaseTx(url).open("admin", "admin");
     JavaAttachDetachTestClass loadedJavaObj = (JavaAttachDetachTestClass) database.load(id);
     database.detachAll(loadedJavaObj, false);
     Assert.assertEquals(loadedJavaObj.text, "test");
@@ -574,7 +549,7 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     ORecordId id = (ORecordId) database.getRecordByUserObject(savedJavaObj, false).getIdentity();
     database.close();
 
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    database = new OObjectDatabaseTx(url).open("admin", "admin");
     JavaAttachDetachTestClass loadedJavaObj = (JavaAttachDetachTestClass) database.load(id);
     loadedJavaObj = database.detach(loadedJavaObj, true);
     Assert.assertTrue(!(loadedJavaObj instanceof Proxy));
@@ -666,7 +641,7 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     ORecordId id = (ORecordId) database.getRecordByUserObject(savedJavaObj, false).getIdentity();
     database.close();
 
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    database = new OObjectDatabaseTx(url).open("admin", "admin");
     JavaAttachDetachTestClass loadedJavaObj = (JavaAttachDetachTestClass) database.load(id);
     loadedJavaObj = database.detachAll(loadedJavaObj, true);
     Assert.assertTrue(!(loadedJavaObj instanceof Proxy));
@@ -785,5 +760,21 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     Assert.assertEquals(detachedGrandChild.getName(), grandChild.getName());
     Assert.assertSame(detachedGrandChild.getGrandParent(), detachedParent);
 
+  }
+
+  public void testDetachAllWithLazyOneToOne(){
+    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.lazy");
+    LazyParent parent = new LazyParent();
+    LazyChild theChild = new LazyChild();
+    theChild.setName("name");
+    parent.setChild(theChild);
+    LazyParent saved = database.save(parent);
+    saved.setChildCopy(saved.getChild());
+    LazyParent detached = database.detachAll(saved, true);
+    Assert.assertNotNull(detached.getChild().getId());
+    Assert.assertNull(detached.getChild().getName());
+    Assert.assertSame(detached.getChild(), detached.getChildCopy());
+    LazyChild loaded = database.load(detached.getChild().getId());
+    Assert.assertEquals("name", loaded.getName());
   }
 }

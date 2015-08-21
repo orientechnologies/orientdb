@@ -22,17 +22,11 @@ public class OUpdateAddItem extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    right.replaceParameters(params);
-  }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(left.toString());
-    result.append(" = ");
-    result.append(value.toString());
-    return result.toString();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    left.toString(params, builder);
+    builder.append(" = ");
+    right.toString(params, builder);
   }
 }
 /* JavaCC - OriginalChecksum=769679aa2d2d8df58a13210152b50a9d (do not edit this line) */

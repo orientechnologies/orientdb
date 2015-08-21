@@ -140,7 +140,7 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
    */
   public int getAvailableConnections(final String name, final String userName) {
     setup();
-    return dbPool.getMaxConnections(name, userName);
+    return dbPool.getAvailableConnections(name, userName);
   }
 
 	public int getCreatedInstances(final  String name, final String userName) {

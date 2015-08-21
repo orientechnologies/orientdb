@@ -21,6 +21,7 @@ package com.orientechnologies.common.collection;
 
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
+import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -34,14 +35,15 @@ import java.util.NoSuchElementException;
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OResettable, OSizeable {
+public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OResettable, OSizeable, OAutoConvertToRecord {
   private Collection<Object> sources;
-  private Iterator<?>        iteratorOfInternalCollections;
+  private Iterator<?>        sourcesIterator;
   private Iterator<T>        partialIterator;
 
-  private int                browsed  = 0;
-  private int                limit    = -1;
-  private boolean            embedded = false;
+  private int                browsed            = 0;
+  private int                limit              = -1;
+  private boolean            embedded           = false;
+  private boolean            autoConvert2Record = true;
 
   public OMultiCollectionIterator() {
     sources = new ArrayList<Object>();
@@ -49,23 +51,23 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
 
   public OMultiCollectionIterator(final Collection<Object> iSources) {
     sources = iSources;
-    iteratorOfInternalCollections = iSources.iterator();
+    sourcesIterator = iSources.iterator();
     getNextPartial();
   }
 
   public OMultiCollectionIterator(final Iterator<? extends Collection<?>> iterator) {
-    iteratorOfInternalCollections = iterator;
+    sourcesIterator = iterator;
     getNextPartial();
   }
 
   @Override
   public boolean hasNext() {
-    if (iteratorOfInternalCollections == null) {
+    if (sourcesIterator == null) {
       if (sources == null || sources.isEmpty())
         return false;
 
       // THE FIRST TIME CREATE THE ITERATOR
-      iteratorOfInternalCollections = sources.iterator();
+      sourcesIterator = sources.iterator();
       getNextPartial();
     }
 
@@ -77,7 +79,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
 
     if (partialIterator.hasNext())
       return true;
-    else if (iteratorOfInternalCollections.hasNext())
+    else if (sourcesIterator.hasNext())
       return getNextPartial();
 
     return false;
@@ -100,15 +102,19 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
 
   @Override
   public void reset() {
-    iteratorOfInternalCollections = null;
+    sourcesIterator = null;
     partialIterator = null;
     browsed = 0;
   }
 
   public OMultiCollectionIterator<T> add(final Object iValue) {
     if (iValue != null) {
-      if (iteratorOfInternalCollections != null)
+      if (sourcesIterator != null)
         throw new IllegalStateException("MultiCollection iterator is in use and new collections cannot be added");
+
+      if (iValue instanceof OAutoConvertToRecord)
+        ((OAutoConvertToRecord) iValue).setAutoConvertToRecord(autoConvert2Record);
+
       sources.add(iValue);
     }
     return this;
@@ -152,15 +158,26 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
     this.limit = limit;
   }
 
+  public void setAutoConvertToRecord(final boolean autoConvert2Record) {
+    this.autoConvert2Record = autoConvert2Record;
+  }
+
+  public boolean isAutoConvertToRecord() {
+    return autoConvert2Record;
+  }
+
   @SuppressWarnings("unchecked")
   protected boolean getNextPartial() {
-    if (iteratorOfInternalCollections != null)
-      while (iteratorOfInternalCollections.hasNext()) {
-        Object next = iteratorOfInternalCollections.next();
+    if (sourcesIterator != null)
+      while (sourcesIterator.hasNext()) {
+        Object next = sourcesIterator.next();
         if (next != null) {
 
           if (next instanceof Iterable<?>)
             next = ((Iterable) next).iterator();
+
+          if (next instanceof OAutoConvertToRecord)
+            ((OAutoConvertToRecord) next).setAutoConvertToRecord(autoConvert2Record);
 
           if (next instanceof Iterator<?>) {
             if (next instanceof OResettable)

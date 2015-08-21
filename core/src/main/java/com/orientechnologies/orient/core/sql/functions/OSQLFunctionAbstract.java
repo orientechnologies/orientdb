@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql.functions;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 
 import java.util.List;
@@ -93,11 +94,11 @@ public abstract class OSQLFunctionAbstract implements OSQLFunction {
 
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
-    throw new IllegalStateException("By default SQL function execution result can not be merged");
+    throw new IllegalStateException("By default SQL function execution result cannot be merged");
   }
 
   protected boolean returnDistributedResult() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OAutoshardedStorage;
+    return OScenarioThreadLocal.INSTANCE.get() == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
   }
 
   protected String getDistributedStorageId() {

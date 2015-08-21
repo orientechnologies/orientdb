@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
-
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -31,6 +29,8 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
+import java.util.*;
+
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
  * delegated to the wrapped OIndex instance.
@@ -39,6 +39,31 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
  * 
  */
 public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
+  private static class MapEntry implements Map.Entry<Object, OIdentifiable> {
+    private final Object        key;
+    private final OIdentifiable resultValue;
+
+    public MapEntry(Object key, OIdentifiable resultValue) {
+      this.key = key;
+      this.resultValue = resultValue;
+    }
+
+    @Override
+    public Object getKey() {
+      return key;
+    }
+
+    @Override
+    public OIdentifiable getValue() {
+      return resultValue;
+    }
+
+    @Override
+    public OIdentifiable setValue(OIdentifiable value) {
+      throw new UnsupportedOperationException("setValue");
+    }
+  }
+
   private class PureTxBetweenIndexForwardCursor extends OIndexAbstractCursor {
     private final OTransactionIndexChanges indexChanges;
     private Object                         firstKey;
@@ -207,12 +232,15 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   @Override
   public ODocument checkEntry(final OIdentifiable iRecord, final Object iKey) {
     // CHECK IF ALREADY EXISTS IN TX
-    String storageType = database.getStorage().getType();
     if (!database.getTransaction().isActive()) {
       final OIdentifiable previousRecord = get(iKey);
       if (previousRecord != null && !previousRecord.equals(iRecord)) {
         final ODocument metadata = getMetadata();
-        final boolean mergeSameKey = metadata != null && (Boolean) metadata.field(OIndex.MERGE_KEYS);
+        Boolean mergeKeys = false;
+        if (metadata != null) {
+          mergeKeys = metadata.field(OIndex.MERGE_KEYS);
+        }
+        final boolean mergeSameKey = mergeKeys != null && mergeKeys;
         if (mergeSameKey) {
           return (ODocument) previousRecord.getRecord();
         } else
@@ -388,21 +416,6 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   }
 
   private Map.Entry<Object, OIdentifiable> createMapEntry(final Object key, final OIdentifiable resultValue) {
-    return new Map.Entry<Object, OIdentifiable>() {
-      @Override
-      public Object getKey() {
-        return key;
-      }
-
-      @Override
-      public OIdentifiable getValue() {
-        return resultValue;
-      }
-
-      @Override
-      public OIdentifiable setValue(OIdentifiable value) {
-        throw new UnsupportedOperationException("setValue");
-      }
-    };
+    return new MapEntry(key, resultValue);
   }
 }

@@ -24,7 +24,7 @@ public class VertexPredicateTest {
   @BeforeClass
   public static void setUp() throws Exception {
     graph = new OrientGraph("memory:" + VertexPredicateTest.class.getSimpleName());
-		graph.createEdgeType("Friend");
+    graph.createEdgeType("Friend");
 
     luca = graph.addVertex(null, "name", "Luca");
     bill = graph.addVertex(null, "name", "Bill");
@@ -35,6 +35,8 @@ public class VertexPredicateTest {
 
     steve = graph.addVertex(null, "name", "Steve");
     jay.addEdge("Friend", steve);
+
+    // GRAPH IS: luca -> bill -> jay -> steve
   }
 
   @AfterClass

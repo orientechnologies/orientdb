@@ -16,21 +16,70 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.types.OModifiableLong;
+import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.Orient;
 
 /**
  * @author Andrey Lomakin
  * @since 06.06.13
  */
 public class OOperationUnitId {
-  public static final int SERIALIZED_SIZE = 2 * OLongSerializer.LONG_SIZE;
+  private static final AtomicLong                      sharedId        = new AtomicLong();
 
-  private UUID            uuid;
+  private static volatile ThreadLocal<OModifiableLong> localId         = new ThreadLocal<OModifiableLong>();
+  private static volatile ThreadLocal<Long>            sharedIdCopy    = new ThreadLocal<Long>();
+
+  public static final int                              SERIALIZED_SIZE = 2 * OLongSerializer.LONG_SIZE;
+
+  static {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
+      @Override
+      public void onStartup() {
+        if (localId == null)
+          localId = new ThreadLocal<OModifiableLong>();
+
+        if (sharedIdCopy == null)
+          sharedIdCopy = new ThreadLocal<Long>();
+      }
+
+      @Override
+      public void onShutdown() {
+        localId = null;
+        sharedIdCopy = null;
+      }
+    });
+  }
+
+  private long                                         lId;
+  private long                                         sId;
+
+  public OOperationUnitId(long lId, long sId) {
+    this.lId = lId;
+    this.sId = sId;
+  }
 
   public static OOperationUnitId generateId() {
     OOperationUnitId operationUnitId = new OOperationUnitId();
-    operationUnitId.uuid = UUID.randomUUID();
+
+    OModifiableLong lId = localId.get();
+    if (lId == null) {
+      lId = new OModifiableLong();
+      localId.set(lId);
+    }
+    lId.increment();
+
+    Long sId = sharedIdCopy.get();
+    if (sId == null) {
+      sId = sharedId.incrementAndGet();
+      sharedIdCopy.set(sId);
+    }
+
+    operationUnitId.lId = lId.getValue();
+    operationUnitId.sId = sId;
 
     return operationUnitId;
   }
@@ -38,28 +87,22 @@ public class OOperationUnitId {
   public OOperationUnitId() {
   }
 
-  public OOperationUnitId(UUID uuid) {
-    this.uuid = uuid;
-  }
-
   public int toStream(byte[] content, int offset) {
-    OLongSerializer.INSTANCE.serializeNative(uuid.getMostSignificantBits(), content, offset);
+    OLongSerializer.INSTANCE.serializeNative(sId, content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    OLongSerializer.INSTANCE.serializeNative(uuid.getLeastSignificantBits(), content, offset);
+    OLongSerializer.INSTANCE.serializeNative(lId, content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
     return offset;
   }
 
   public int fromStream(byte[] content, int offset) {
-    long most = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    sId = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    long least = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    lId = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
-
-    uuid = new UUID(most, least);
 
     return offset;
   }
@@ -68,24 +111,27 @@ public class OOperationUnitId {
   public boolean equals(Object o) {
     if (this == o)
       return true;
-    if (o == null || getClass() != o.getClass())
+    if (!(o instanceof OOperationUnitId))
       return false;
 
     OOperationUnitId that = (OOperationUnitId) o;
 
-    if (!uuid.equals(that.uuid))
+    if (lId != that.lId)
       return false;
 
-    return true;
+    return sId == that.sId;
+
   }
 
   @Override
   public int hashCode() {
-    return uuid.hashCode();
+    int result = (int) (lId ^ (lId >>> 32));
+    result = 31 * result + (int) (sId ^ (sId >>> 32));
+    return result;
   }
 
   @Override
   public String toString() {
-    return "OOperationUnitId{" + "uuid=" + uuid + "} ";
+    return "OOperationUnitId{" + "lId=" + lId + ", sId=" + sId + '}';
   }
 }

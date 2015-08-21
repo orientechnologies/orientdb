@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -29,6 +30,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -69,7 +72,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     if (pos == -1)
       throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
 
-    String[] parts = word.toString().split("\\.");
+    String[] parts = split(word);
     if (parts.length != 2)
       throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
 
@@ -107,6 +110,45 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     return this;
   }
 
+
+  private String[] split(StringBuilder word) {
+    List<String> result = new ArrayList<String>();
+    StringBuilder builder = new StringBuilder();
+    boolean quoted = false;
+    for (char c : word.toString().toCharArray()) {
+      if (!quoted) {
+        if (c == '`') {
+          quoted = true;
+        } else if (c == '.') {
+          String nextToken = builder.toString().trim();
+          if (nextToken.length() > 0) {
+            result.add(nextToken);
+          }
+          builder = new StringBuilder();
+        } else {
+          builder.append(c);
+        }
+      } else {
+        if (c == '`') {
+          quoted = false;
+        } else {
+          builder.append(c);
+        }
+      }
+    }
+    String nextToken = builder.toString().trim();
+    if (nextToken.length() > 0) {
+      result.add(nextToken);
+    }
+    return result.toArray(new String[] {});
+    // return word.toString().split("\\.");
+  }
+
+  @Override
+  public long getDistributedTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
+  }
+
   /**
    * Execute the CREATE PROPERTY.
    */
@@ -139,6 +181,11 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     // CREATE IT LOCALLY
     sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass, !unsafe);
     return sourceClass.properties().size();
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.ALL;
   }
 
   @Override

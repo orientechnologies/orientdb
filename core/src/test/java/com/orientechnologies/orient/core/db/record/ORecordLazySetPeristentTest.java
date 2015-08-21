@@ -1,20 +1,18 @@
 package com.orientechnologies.orient.core.db.record;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-
-import java.util.HashSet;
-import java.util.Set;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 
 public class ORecordLazySetPeristentTest {
 
@@ -32,6 +30,7 @@ public class ORecordLazySetPeristentTest {
     ORID orid1;
     ORID orid2;
 
+    db.activateOnCurrentThread();
     db.begin();
     {
       ODocument doc1 = new ODocument();
@@ -70,6 +69,7 @@ public class ORecordLazySetPeristentTest {
     ORID orid1;
     ORID orid2;
 
+    db.activateOnCurrentThread();
     db.begin();
     {
       ODocument doc1 = new ODocument();
@@ -107,6 +107,7 @@ public class ORecordLazySetPeristentTest {
   @AfterTest
   public void close() {
     if (db != null) {
+      db.activateOnCurrentThread();
       db.drop();
     }
   }

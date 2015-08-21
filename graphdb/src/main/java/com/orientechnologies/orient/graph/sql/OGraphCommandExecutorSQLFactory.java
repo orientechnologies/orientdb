@@ -15,22 +15,23 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Graph related command operator executor factory. It's auto-discovered.
@@ -76,22 +77,33 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     if (result != null && (result instanceof OrientGraph)) {
       final ODatabaseDocumentTx graphDb = result.getRawGraph();
 
-      if (!graphDb.isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
-        shouldBeShutDown.setValue(false);
-        return (OrientGraph) result;
+      // CHECK IF THE DATABASE + USER IN TL IS THE SAME IN ORDER TO USE IT
+      if (canReuseActiveGraph(graphDb, database)) {
+
+        if (!graphDb.isClosed()) {
+          ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
+          if (autoStartTx)
+            ((OrientGraph) result).begin();
+
+          shouldBeShutDown.setValue(false);
+          return (OrientGraph) result;
+        }
       }
     }
     // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
     ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) database);
     shouldBeShutDown.setValue(true);
-    return new OrientGraph((ODatabaseDocumentTx) database, autoStartTx);
+
+    final OrientGraph g = new OrientGraph((ODatabaseDocumentTx) database, false);
+    if (autoStartTx)
+      g.begin();
+    return g;
   }
 
   /**
    * @return a Non Transactional OrientGraph implementation from the current database in thread local.
    */
-  public static OrientGraphNoTx getGraphNoTx(OModifiableBoolean shouldBeShutDown) {
+  public static OrientGraphNoTx getGraphNoTx(final OModifiableBoolean shouldBeShutDown) {
     final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
@@ -99,10 +111,42 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     if (result != null && (result instanceof OrientGraphNoTx)) {
       final ODatabaseDocumentTx graphDb = result.getRawGraph();
 
-      if (!graphDb.isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
-        shouldBeShutDown.setValue(false);
-        return (OrientGraphNoTx) result;
+      // CHECK IF THE DATABASE + USER IN TL IS THE SAME IN ORDER TO USE IT
+      if (canReuseActiveGraph(graphDb, database)) {
+
+        if (!graphDb.isClosed()) {
+          ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
+          shouldBeShutDown.setValue(false);
+          return (OrientGraphNoTx) result;
+        }
+      }
+    }
+
+    // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
+    shouldBeShutDown.setValue(true);
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) database);
+    return new OrientGraphNoTx((ODatabaseDocumentTx) database);
+  }
+
+  /**
+   * @return any graph if available, otherwise a Non Transactional OrientGraph implementation from the current database in thread
+   *         local.
+   */
+  public static OrientBaseGraph getAnyGraph(final OModifiableBoolean shouldBeShutDown) {
+    final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
+
+    final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
+
+    if (result != null) {
+      final ODatabaseDocumentTx graphDb = result.getRawGraph();
+
+      // CHECK IF THE DATABASE + USER IN TL IS THE SAME IN ORDER TO USE IT
+      if (canReuseActiveGraph(graphDb, database)) {
+        if (!graphDb.isClosed()) {
+          ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
+          shouldBeShutDown.setValue(false);
+          return result;
+        }
       }
     }
 
@@ -137,12 +181,18 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
   public static <T> T runInTx(final GraphCallBack<T> callBack) {
     OModifiableBoolean shutdownFlag = new OModifiableBoolean();
     ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
-    OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
+    final boolean txAlreadyBegun = curDb.getTransaction().isActive();
+    OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(true, shutdownFlag);
     try {
       return runInTx(graph, callBack);
     } finally {
-      if (shutdownFlag.getValue())
-        graph.shutdown(false, false);
+      if (!txAlreadyBegun) {
+        graph.commit();
+
+        if (shutdownFlag.getValue())
+          graph.shutdown(false, false);
+      }
+
       ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
     }
   }
@@ -174,5 +224,15 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
       throw new OCommandExecutionException("Error in creation of command " + name
           + "(). Probably there is not an empty constructor or the constructor generates errors", e);
     }
+  }
+
+  protected static boolean canReuseActiveGraph(final ODatabaseDocument iGraphDatabase, final ODatabaseDocument iThreadLocalDatabase) {
+    if (iGraphDatabase.getURL().equals(iThreadLocalDatabase.getURL())) {
+      final OSecurityUser gdbUser = iGraphDatabase.getUser();
+      final OSecurityUser tlUser = iThreadLocalDatabase.getUser();
+
+      return gdbUser == null && tlUser == null || (gdbUser != null && tlUser != null && gdbUser.equals(tlUser));
+    }
+    return false;
   }
 }

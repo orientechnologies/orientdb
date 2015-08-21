@@ -2,11 +2,11 @@
  *
  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
  *  *
- *  *  Licensed under the Apache License, Version 2.1-SNAPSHOT (the "License");
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
  *  *  You may obtain a copy of the License at
  *  *
- *  *       http://www.apache.org/licenses/LICENSE-2.1-SNAPSHOT
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
  *  *
  *  *  Unless required by applicable law or agreed to in writing, software
  *  *  distributed under the License is distributed on an "AS IS" BASIS,
@@ -65,8 +65,8 @@ public class OrientdbEdgeTest {
     conf.put("storage.url", "remote:localhost/test");
     conf.put("storage.pool-min", 1);
     conf.put("storage.pool-max", 10);
-    conf.put("storage.user", "admin");
-    conf.put("storage.password", "admin");
+    conf.put("storage.user", "root");
+    conf.put("storage.password", "root");
 
     OGlobalConfiguration.CLIENT_CONNECT_POOL_WAIT_TIMEOUT.setValue(15000);
 
@@ -104,8 +104,6 @@ public class OrientdbEdgeTest {
             + "                <parameter name=\"configuration.db.default\"\n"
             + "                           value=\"src/test/resources/default-distributed-db-config.json\"/>\n"
             + "                <parameter name=\"configuration.hazelcast\" value=\"config/hazelcast.xml\"/>\n"
-            + "                <parameter name=\"conflict.resolver.impl\"\n"
-            + "                           value=\"com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver\"/>\n"
             + "\n"
             + "                <!-- PARTITIONING STRATEGIES -->\n"
             + "                <parameter name=\"sharding.strategy.round-robin\"\n"
@@ -127,7 +125,7 @@ public class OrientdbEdgeTest {
             + "    <storages>\n"
             + "    </storages>\n"
             + "    <users>\n"
-            + "      <user name=\"admin\" password=\"admin\" resources=\"*\"/>\n"
+            + "      <user name=\"root\" password=\"root\" resources=\"*\"/>\n"
             + "    </users>\n"
             + "    <properties>\n"
             + "\n"
@@ -150,7 +148,7 @@ public class OrientdbEdgeTest {
             + "        <!-- <entry name=\"profiler.config\" value=\"30,10,10\" />  -->\n" + "\n"
             + "        <!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info, warning -->\n"
             + "        <entry name=\"log.console.level\" value=\"finest\"/>\n"
-            + "        <entry name=\"log.file.level\" value=\"finest\"/>\n" + "    </properties>\n" + "</orient-server>");
+            + "        <entry name=\"log.file.level\" value=\"finest\"/>\n" + "    </properties>\n" + " <isAfterFirstTime>true</isAfterFirstTime></orient-server>");
 
     server.activate();
   }
