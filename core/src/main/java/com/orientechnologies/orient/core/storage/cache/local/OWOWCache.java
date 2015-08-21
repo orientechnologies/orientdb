@@ -38,6 +38,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.zip.CRC32;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -81,72 +83,72 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCachePointer.WritersListener, OWOWCacheMXBean {
   // we add 8 bytes before and after cache pages to prevent word tearing in mt case.
 
-  private final int MAX_PAGES_PER_FLUSH;
+  private final int                                        MAX_PAGES_PER_FLUSH;
 
-  public static final int PAGE_PADDING = 8;
+  public static final int                                  PAGE_PADDING             = 8;
 
-  public static final String NAME_ID_MAP_EXTENSION = ".cm";
+  public static final String                               NAME_ID_MAP_EXTENSION    = ".cm";
 
-  private static final String NAME_ID_MAP = "name_id_map" + NAME_ID_MAP_EXTENSION;
+  private static final String                              NAME_ID_MAP              = "name_id_map" + NAME_ID_MAP_EXTENSION;
 
-  public static final int MIN_CACHE_SIZE = 16;
+  public static final int                                  MIN_CACHE_SIZE           = 16;
 
-  public static final long MAGIC_NUMBER = 0xFACB03FEL;
+  public static final long                                 MAGIC_NUMBER             = 0xFACB03FEL;
 
-  private final long freeSpaceLimit = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT
-      .getValueAsLong() * 1024L * 1024L;
+  private final long                                       freeSpaceLimit           = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT
+                                                                                        .getValueAsLong() * 1024L * 1024L;
 
-  private final long diskSizeCheckInterval = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL
-      .getValueAsInteger() * 1000L;
-  private final List<WeakReference<OLowDiskSpaceListener>> listeners = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
+  private final long                                       diskSizeCheckInterval    = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL
+                                                                                        .getValueAsInteger() * 1000L;
+  private final List<WeakReference<OLowDiskSpaceListener>> listeners                = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
 
-  private final AtomicLong lastDiskSpaceCheck = new AtomicLong(System.currentTimeMillis());
-  private final String storagePath;
+  private final AtomicLong                                 lastDiskSpaceCheck       = new AtomicLong(System.currentTimeMillis());
+  private final String                                     storagePath;
 
-  private final ConcurrentSkipListMap<PagedKey, PageGroup> writeCachePages = new ConcurrentSkipListMap<PagedKey, PageGroup>();
-  private final ConcurrentSkipListSet<PagedKey> exclusiveWritePages = new ConcurrentSkipListSet<PagedKey>();
+  private final ConcurrentSkipListMap<PagedKey, PageGroup> writeCachePages          = new ConcurrentSkipListMap<PagedKey, PageGroup>();
+  private final ConcurrentSkipListSet<PagedKey>            exclusiveWritePages      = new ConcurrentSkipListSet<PagedKey>();
 
-  private final OBinarySerializer<String> stringSerializer;
-  private final Map<Integer, OFileClassic> files;
-  private final boolean syncOnPageFlush;
-  private final int pageSize;
-  private final long groupTTL;
-  private final OWriteAheadLog writeAheadLog;
+  private final OBinarySerializer<String>                  stringSerializer;
+  private final Map<Integer, OFileClassic>                 files;
+  private final boolean                                    syncOnPageFlush;
+  private final int                                        pageSize;
+  private final long                                       groupTTL;
+  private final OWriteAheadLog                             writeAheadLog;
 
-  private final ODistributedCounter writeCacheSize = new ODistributedCounter();
-  private final ODistributedCounter exclusiveWriteCacheSize = new ODistributedCounter();
+  private final ODistributedCounter                        writeCacheSize           = new ODistributedCounter();
+  private final ODistributedCounter                        exclusiveWriteCacheSize  = new ODistributedCounter();
 
-  private final ONewLockManager<PagedKey> lockManager = new ONewLockManager<PagedKey>();
-  private final OLocalPaginatedStorage storageLocal;
-  private final OReadersWriterSpinLock filesLock = new OReadersWriterSpinLock();
-  private final ScheduledExecutorService commitExecutor;
+  private final ONewLockManager<PagedKey>                  lockManager              = new ONewLockManager<PagedKey>();
+  private final OLocalPaginatedStorage                     storageLocal;
+  private final OReadersWriterSpinLock                     filesLock                = new OReadersWriterSpinLock();
+  private final ScheduledExecutorService                   commitExecutor;
 
-  private final ExecutorService lowSpaceEventsPublisher;
+  private final ExecutorService                            lowSpaceEventsPublisher;
 
-  private Map<String, Integer> nameIdMap;
-  private RandomAccessFile nameIdMapHolder;
-  private final int writeCacheMaxSize;
-  private final int cacheMaxSize;
+  private Map<String, Integer>                             nameIdMap;
+  private RandomAccessFile                                 nameIdMapHolder;
+  private final int                                        writeCacheMaxSize;
+  private final int                                        cacheMaxSize;
 
-  private int fileCounter = 1;
+  private int                                              fileCounter              = 1;
 
-  private PagedKey lastPageKey = new PagedKey(0, -1);
-  private PagedKey lastWritePageKey = new PagedKey(0, -1);
+  private PagedKey                                         lastPageKey              = new PagedKey(0, -1);
+  private PagedKey                                         lastWritePageKey         = new PagedKey(0, -1);
 
-  private File nameIdMapHolderFile;
+  private File                                             nameIdMapHolderFile;
 
-  private final ODistributedCounter allocatedSpace = new ODistributedCounter();
-  private final int id;
+  private final ODistributedCounter                        allocatedSpace           = new ODistributedCounter();
+  private final int                                        id;
 
-  private final AtomicReference<Date> lastFuzzyCheckpointDate = new AtomicReference<Date>();
-  private final AtomicLong lastAmountOfFlushedPages = new AtomicLong();
-  private final AtomicLong durationOfLastFlush = new AtomicLong();
+  private final AtomicReference<Date>                      lastFuzzyCheckpointDate  = new AtomicReference<Date>();
+  private final AtomicLong                                 lastAmountOfFlushedPages = new AtomicLong();
+  private final AtomicLong                                 durationOfLastFlush      = new AtomicLong();
 
-  private final AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
-  public static final String MBEAN_NAME = "com.orientechnologies.orient.core.storage.cache.local:type=OWOWCacheMXBean";
+  private final AtomicBoolean                              mbeanIsRegistered        = new AtomicBoolean();
+  public static final String                               MBEAN_NAME               = "com.orientechnologies.orient.core.storage.cache.local:type=OWOWCacheMXBean";
 
   public OWOWCache(boolean syncOnPageFlush, int pageSize, long groupTTL, OWriteAheadLog writeAheadLog, long pageFlushInterval,
-                   long writeCacheMaxSize, long cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize, int id) {
+      long writeCacheMaxSize, long cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize, int id) {
     filesLock.acquireWriteLock();
     try {
       this.id = id;
@@ -914,6 +916,51 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
+  public OLogSequenceNumber backupPagesWithChanges(OLogSequenceNumber changeLsn, ZipOutputStream stream) throws IOException {
+    filesLock.acquireWriteLock();
+    try {
+      OLogSequenceNumber lastLsn = changeLsn;
+
+      for (Map.Entry<Integer, OFileClassic> entry : files.entrySet()) {
+        final int fileId = entry.getKey();
+        final OFileClassic fileClassic = entry.getValue();
+
+        flush(fileId);
+
+        final boolean closeFile = !fileClassic.isOpen();
+
+        final long filledUpTo = fileClassic.getFileSize();
+        final ZipEntry zipEntry = new ZipEntry(fileClassic.getName());
+
+        stream.putNextEntry(zipEntry);
+
+        for (long pos = 0; pos < filledUpTo; pos += pageSize) {
+          final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
+          fileClassic.read(pos, data, pageSize, OLongSerializer.LONG_SIZE);
+
+          final OLogSequenceNumber pageLsn = ODurablePage.getLogSequenceNumber(OLongSerializer.LONG_SIZE, data);
+          if (changeLsn == null || pageLsn.compareTo(changeLsn) > 0) {
+            OLongSerializer.INSTANCE.serializeNative(pos, data, 0);
+            stream.write(data);
+
+            if (lastLsn == null || pageLsn.compareTo(lastLsn) > 0) {
+              lastLsn = pageLsn;
+            }
+          }
+        }
+
+        if (closeFile)
+          fileClassic.close();
+
+        stream.closeEntry();
+      }
+
+      return lastLsn;
+    } finally {
+      filesLock.releaseWriteLock();
+    }
+  }
+
   public long[] delete() throws IOException {
     long[] result = null;
     filesLock.acquireWriteLock();
@@ -1257,7 +1304,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private static final class NameFileIdEntry {
     private final String name;
-    private final int fileId;
+    private final int    fileId;
 
     private NameFileIdEntry(String name, int fileId) {
       this.name = name;
@@ -1290,7 +1337,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private static final class PagedKey implements Comparable<PagedKey> {
-    private final int fileId;
+    private final int  fileId;
     private final long pageIndex;
 
     private PagedKey(int fileId, long pageIndex) {
@@ -1441,7 +1488,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
 
     private int iterateBySubRing(NavigableMap<PagedKey, PageGroup> subMap, NavigableSet<PagedKey> subSet, int writePagesToFlush,
-                                 int flushedWritePages, boolean forceFlush, boolean iterateByWritePagesFirst) throws IOException {
+        int flushedWritePages, boolean forceFlush, boolean iterateByWritePagesFirst) throws IOException {
       if (!iterateByWritePagesFirst) {
         return iterateByCacheSubRing(subMap, writePagesToFlush, flushedWritePages, forceFlush);
       } else {
@@ -1450,7 +1497,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
 
     private int iterateByWritePagesSubRing(NavigableSet<PagedKey> subSet, int writePagesToFlush, int flushedWritePages,
-                                           boolean forceFlush) throws IOException {
+        boolean forceFlush) throws IOException {
       Iterator<PagedKey> entriesIterator = subSet.iterator();
       long currentTime = System.currentTimeMillis();
 
@@ -1519,7 +1566,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
 
     private int iterateByCacheSubRing(NavigableMap<PagedKey, PageGroup> subMap, int writePagesToFlush, int flushedWritePages,
-                                      boolean forceFlush) throws IOException {
+        boolean forceFlush) throws IOException {
       Iterator<Map.Entry<PagedKey, PageGroup>> entriesIterator = subMap.entrySet().iterator();
       long currentTime = System.currentTimeMillis();
 
