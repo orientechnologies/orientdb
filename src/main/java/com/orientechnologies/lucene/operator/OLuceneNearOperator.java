@@ -53,16 +53,16 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
   public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
       Object iRight, OCommandContext iContext) {
 
-    List<Object> left = (List<Object>) iLeft;
+    List<Number> left = (List<Number>) iLeft;
 
-    double lat = (double) left.get(0);
-    double lon = (double) left.get(1);
+    double lat = left.get(0).doubleValue();
+    double lon = left.get(1).doubleValue();
 
     Shape shape = factory.SPATIAL_CONTEXT.makePoint(lon, lat);
-    List<Object> right = (List<Object>) iRight;
+    List<Number> right = (List<Number>) iRight;
 
-    double lat1 = (double) right.get(0);
-    double lon1 = (double) right.get(1);
+    double lat1 = right.get(0).doubleValue();
+    double lon1 = right.get(1).doubleValue();
     Shape shape1 = factory.SPATIAL_CONTEXT.makePoint(lon1, lat1);
 
     Map map = (Map) right.get(2);
