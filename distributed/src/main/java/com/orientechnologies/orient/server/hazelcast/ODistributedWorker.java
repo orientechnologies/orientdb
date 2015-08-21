@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.Serializable;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.TimeUnit;
-
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
@@ -35,7 +30,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -49,6 +43,11 @@ import com.orientechnologies.orient.server.distributed.task.OResurrectRecordTask
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+
+import java.io.Serializable;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -423,11 +422,5 @@ public class ODistributedWorker extends Thread {
     } catch (Exception e) {
       throw new ODistributedException("Cannot dispatch response to the thread queue " + iRequest.getSenderNodeName(), e);
     }
-  }
-
-  private void createReplicatorUser(ODatabaseDocumentTx database, final OServerUserConfiguration replicatorUser) {
-    final OUser replUser = database.getMetadata().getSecurity().getUser(replicatorUser.name);
-    if (replUser == null)
-      database.getMetadata().getSecurity().createUser(replicatorUser.name, replicatorUser.password, "admin");
   }
 }
