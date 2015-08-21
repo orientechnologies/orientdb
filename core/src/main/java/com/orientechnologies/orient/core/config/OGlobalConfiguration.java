@@ -319,7 +319,10 @@ public enum OGlobalConfiguration {
   // SECURITY
   SECURITY_USER_PASSWORD_SALT_ITERATIONS("security.userPasswordSaltIterations",
       "Number of iterations to generate the salt or user password. Changing this setting does not affect stored passwords",
-      Integer.class, 64000),
+      Integer.class, 65536),
+
+  SECURITY_USER_PASSWORD_SALT_CACHE_SIZE("security.userPasswordSaltCacheSize",
+      "Cache size of hashed salt passwords. The cache works as LRU. Use 0 to disable the cache", Integer.class, 500),
 
   // NETWORK
   NETWORK_MAX_CONCURRENT_SESSIONS("network.maxConcurrentSessions", "Maximum number of concurrent sessions", Integer.class, 1000,

@@ -19,18 +19,21 @@
  */
 package com.orientechnologies.orient.core.security;
 
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-
+import com.orientechnologies.common.collection.OLRUCache;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 
 public class OSecurityManager {
   public static final String            HASH_ALGORITHM          = "SHA-256";
@@ -45,6 +48,15 @@ public class OSecurityManager {
   private static final OSecurityManager instance                = new OSecurityManager();
 
   private MessageDigest                 md;
+
+  private static Map<String, byte[]>    SALT_CACHE              = null;
+
+  static {
+    final int cacheSize = OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_CACHE_SIZE.getValueAsInteger();
+    if (cacheSize > 0) {
+      SALT_CACHE = Collections.synchronizedMap(new OLRUCache<String, byte[]>(cacheSize));
+    }
+  }
 
   public OSecurityManager() {
     try {
@@ -70,7 +82,7 @@ public class OSecurityManager {
 
   /**
    * Checks if an hash string matches a password, based on the algorithm found on hash string.
-   * 
+   *
    * @param iHash
    *          Hash string. Can contain the algorithm as prefix in the format <code>{ALGORITHM}-HASH</code>.
    * @param iPassword
@@ -95,7 +107,7 @@ public class OSecurityManager {
 
   /**
    * Hashes the input string.
-   * 
+   *
    * @param iInput
    *          String to hash
    * @param iIncludeAlgorithm
@@ -173,11 +185,27 @@ public class OSecurityManager {
   }
 
   private static byte[] getPbkdf2(final String iPassword, final byte[] salt, final int iterations, final int bytes) {
+    String cacheKey = null;
+
+    if (SALT_CACHE != null) {
+      // SEACH IN CACHE FIRST
+      cacheKey = iPassword + "|" + Arrays.toString(salt) + "|" + iterations + "|" + bytes;
+      final byte[] encoded = SALT_CACHE.get(cacheKey);
+      if (encoded != null)
+        return encoded;
+    }
+
     final PBEKeySpec spec = new PBEKeySpec(iPassword.toCharArray(), salt, iterations, bytes * 8);
     final SecretKeyFactory skf;
     try {
       skf = SecretKeyFactory.getInstance(PBKDF2_ALGORITHM);
       final byte[] encoded = skf.generateSecret(spec).getEncoded();
+
+      if (SALT_CACHE != null) {
+        // SAVE IT IN CACHE
+        SALT_CACHE.put(cacheKey, encoded);
+      }
+
       return encoded;
     } catch (Exception e) {
       throw new OSecurityException("Cannot create a key with '" + PBKDF2_ALGORITHM + "' algorithm", e);
