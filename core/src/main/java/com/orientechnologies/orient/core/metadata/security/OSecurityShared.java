@@ -59,26 +59,65 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   public static final String      RESTRICTED_CLASSNAME   = "ORestricted";
   public static final String      IDENTITY_CLASSNAME     = "OIdentity";
+
+  /**
+   * Uses the ORestrictedOperation ENUM instead.
+   */
+  @Deprecated
   public static final String      ALLOW_ALL_FIELD        = "_allow";
+
+  /**
+   * Uses the ORestrictedOperation ENUM instead.
+   */
+  @Deprecated
   public static final String      ALLOW_READ_FIELD       = "_allowRead";
+
+  /**
+   * Uses the ORestrictedOperation ENUM instead.
+   */
+  @Deprecated
   public static final String      ALLOW_UPDATE_FIELD     = "_allowUpdate";
+
+  /**
+   * Uses the ORestrictedOperation ENUM instead.
+   */
+  @Deprecated
   public static final String      ALLOW_DELETE_FIELD     = "_allowDelete";
+
   public static final String      ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
   public static final String      ONCREATE_FIELD         = "onCreate.fields";
 
-  @SuppressWarnings("serial")
   public static final Set<String> ALLOW_FIELDS           = new HashSet<String>() {
                                                            {
-                                                             add(ALLOW_ALL_FIELD);
-                                                             add(ALLOW_DELETE_FIELD);
-                                                             add(ALLOW_READ_FIELD);
-                                                             add(ALLOW_UPDATE_FIELD);
+                                                             add(ORestrictedOperation.ALLOW_ALL.getFieldName());
+                                                             add(ORestrictedOperation.ALLOW_READ.getFieldName());
+                                                             add(ORestrictedOperation.ALLOW_UPDATE.getFieldName());
+                                                             add(ORestrictedOperation.ALLOW_DELETE.getFieldName());
                                                            }
                                                          };
 
   public OSecurityShared() {
   }
 
+  @Override
+  public OIdentifiable allowRole(final ODocument iDocument, final ORestrictedOperation iOperation, final String iRoleName) {
+    final ORole role = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getRole(iRoleName);
+    if (role == null)
+      throw new IllegalArgumentException("Role '" + iRoleName + "' not found");
+
+    return allowIdentity(iDocument, iOperation.getFieldName(), role.getDocument().getIdentity());
+  }
+
+  @Override
+  public OIdentifiable allowUser(final ODocument iDocument, final ORestrictedOperation iOperation, final String iUserName) {
+    final OUser user = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUser(iUserName);
+    if (user == null)
+      throw new IllegalArgumentException("User '" + iUserName + "' not found");
+
+    return allowIdentity(iDocument, iOperation.getFieldName(), user.getDocument().getIdentity());
+  }
+
+  @Override
   public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
     final OUser user = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUser(iUserName);
     if (user == null)
@@ -87,6 +126,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     return allowIdentity(iDocument, iAllowFieldName, user.getDocument().getIdentity());
   }
 
+  @Override
   public OIdentifiable allowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName) {
     final ORole role = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getRole(iRoleName);
     if (role == null)
@@ -106,6 +146,25 @@ public class OSecurityShared implements OSecurity, OCloseable {
     return iId;
   }
 
+  @Override
+  public OIdentifiable denyUser(final ODocument iDocument, final ORestrictedOperation iOperation, final String iUserName) {
+    final OUser user = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUser(iUserName);
+    if (user == null)
+      throw new IllegalArgumentException("User '" + iUserName + "' not found");
+
+    return disallowIdentity(iDocument, iOperation.getFieldName(), user.getDocument().getIdentity());
+  }
+
+  @Override
+  public OIdentifiable denyRole(final ODocument iDocument, final ORestrictedOperation iOperation, final String iRoleName) {
+    final ORole role = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getRole(iRoleName);
+    if (role == null)
+      throw new IllegalArgumentException("Role '" + iRoleName + "' not found");
+
+    return disallowIdentity(iDocument, iOperation.getFieldName(), role.getDocument().getIdentity());
+  }
+
+  @Override
   public OIdentifiable disallowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
     final OUser user = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUser(iUserName);
     if (user == null)
@@ -114,6 +173,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     return disallowIdentity(iDocument, iAllowFieldName, user.getDocument().getIdentity());
   }
 
+  @Override
   public OIdentifiable disallowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName) {
     final ORole role = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getRole(iRoleName);
     if (role == null)
@@ -129,6 +189,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     return iId;
   }
 
+  @Override
   public boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation) {
     if (iAllowAll == null || iAllowAll.isEmpty())
       return true;
@@ -318,6 +379,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_NONE);
     readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_NONE);
     readerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.CLASS, "OUser", ORole.PERMISSION_NONE);
     readerRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_READ);
     readerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_READ);
     readerRole.addRule(ORule.ResourceGeneric.RECORD_HOOK, null, ORole.PERMISSION_READ);
@@ -334,6 +396,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_NONE);
     readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_NONE);
     writerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL);
+    writerRole.addRule(ORule.ResourceGeneric.CLASS, "OUser", ORole.PERMISSION_NONE);
     writerRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL);
     writerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
     writerRole.addRule(ORule.ResourceGeneric.RECORD_HOOK, null, ORole.PERMISSION_ALL);

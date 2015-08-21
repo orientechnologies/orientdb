@@ -42,6 +42,26 @@ public class OSecurityNull implements OSecurity {
     return true;
   }
 
+  @Override
+  public OIdentifiable allowUser(ODocument iDocument, ORestrictedOperation iOperationType, String iUserName) {
+    return null;
+  }
+
+  @Override
+  public OIdentifiable allowRole(ODocument iDocument, ORestrictedOperation iOperationType, String iRoleName) {
+    return null;
+  }
+
+  @Override
+  public OIdentifiable denyUser(ODocument iDocument, ORestrictedOperation iOperationType, String iUserName) {
+    return null;
+  }
+
+  @Override
+  public OIdentifiable denyRole(ODocument iDocument, ORestrictedOperation iOperationType, String iRoleName) {
+    return null;
+  }
+
   public OUser create() {
     return null;
   }

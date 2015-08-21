@@ -125,6 +125,7 @@
                         <storage.wal.syncOnPageFlush>false</storage.wal.syncOnPageFlush>
                         <storage.configuration.syncOnUpdate>false</storage.configuration.syncOnUpdate>
                         <index.flushAfterCreate>false</index.flushAfterCreate>
+                        <security.userPasswordSaltIterations>10</security.userPasswordSaltIterations>
                         <buildDirectory>${project.build.directory}</buildDirectory>
                         <url>memory:demo</url>
                         <testPath>${project.basedir}</testPath>
