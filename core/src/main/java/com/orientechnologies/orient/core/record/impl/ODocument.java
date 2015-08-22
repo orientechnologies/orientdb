@@ -101,7 +101,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   private String                                          _className;
   private OImmutableClass                                 _immutableClazz;
   private int                                             _immutableSchemaVersion = 1;
-  private boolean                                         _default_values_prepopulated = false;
 
   /**
    * Internal constructor used on unmarshalling.
@@ -185,8 +184,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    *          Class name
    */
   public ODocument(final String iClassName) {
-    setClassName(iClassName);
     setup();
+    setClassName(iClassName);
   }
 
   /**
@@ -197,15 +196,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    *          OClass instance
    */
   public ODocument(final OClass iClass) {
-
-    if (iClass == null)
-      _className = null;
-    else
-      _className = iClass.getName();
-
-    _immutableClazz = null;
-    _immutableSchemaVersion = -1;
-    setup();
+    this(iClass.getName());
   }
 
   /**
@@ -244,21 +235,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     field(iFieldName, iFieldValue);
   }
   
-  public ODocument populateDefaultValues() {
-    final OImmutableClass immutableSchemaClass = getImmutableSchemaClass();
-    if (immutableSchemaClass != null) {
-      for (OProperty p : immutableSchemaClass.properties()) {
-        String defValue = p.getDefaultValue();
-        if (defValue != null && defValue.length() > 0 && !containsField(p.getName())) {
-          Object curFieldValue = OSQLHelper.parseDefaultValue(this, defValue);
-          Object fieldValue = ODocumentHelper.convertField(this, p.getName(), p.getType(), null, curFieldValue);
-          rawField(p.getName(), fieldValue, p.getType());
-        }
-      }
-    }
-    return this;
-  }
-
   protected static void validateField(ODocument iRecord, OImmutableProperty p) throws OValidationException {
     final Object fieldValue;
     ODocumentEntry entry = iRecord._fields.get(p.getName());
@@ -2538,10 +2514,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     if (_recordFormat == null)
       // GET THE DEFAULT ONE
       _recordFormat = ODatabaseDocumentTx.getDefaultSerializer();
-    if(!_default_values_prepopulated) {
-      populateDefaultValues();
-      _default_values_prepopulated=true;
-    }
   }
 
   protected String checkFieldName(final String iFieldName) {
@@ -2609,14 +2581,20 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    * @param _clazz
    */
   private void convertFieldsToClass(OClass _clazz) {
-    if (_fields == null || _fields.isEmpty())
-      return;
     for (OProperty prop : _clazz.properties()) {
-      ODocumentEntry entry = _fields.get(prop.getName());
-      if (entry != null && entry.exist())
+      ODocumentEntry entry = _fields!=null ? _fields.get(prop.getName()) : null;
+      if (entry != null && entry.exist()) {
         if (entry.type == null || entry.type != prop.getType()) {
           field(prop.getName(), entry.value, prop.getType());
         }
+      } else {
+        String defValue = prop.getDefaultValue();
+        if (defValue != null && defValue.length() > 0 && !containsField(prop.getName())) {
+          Object curFieldValue = OSQLHelper.parseDefaultValue(this, defValue);
+          Object fieldValue = ODocumentHelper.convertField(this, prop.getName(), prop.getType(), null, curFieldValue);
+          rawField(prop.getName(), fieldValue, prop.getType());
+        }
+      }
     }
   }
 

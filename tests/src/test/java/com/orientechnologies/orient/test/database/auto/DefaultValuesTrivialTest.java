@@ -90,14 +90,14 @@ public class DefaultValuesTrivialTest {
       database.create();
       OSchema schema = database.getMetadata().getSchema();
       OClass classPerson = schema.createClass("Person");
-      classPerson.createProperty("users", OType.LINKSET).setDefaultValue("[#3:1]");
+      classPerson.createProperty("users", OType.LINKSET).setDefaultValue("[#5:1]");
 
       ODocument doc = new ODocument("Person");
       ORecord record = database.save(doc);
       ODocument doc1 = database.load(record.getIdentity());
       Set<OIdentifiable> rids = doc1.field("users");
       assertEquals(rids.size(), 1);
-      assertEquals(rids.iterator().next(), new ORecordId(3, 1));
+      assertEquals(rids.iterator().next(), new ORecordId(5, 1));
     } finally {
       database.drop();
     }
@@ -118,10 +118,34 @@ public class DefaultValuesTrivialTest {
       classA.createProperty("date", OType.DATETIME).setDefaultValue("sysdate()");
       classA.createProperty("active", OType.BOOLEAN).setDefaultValue("true");
       
-      ODocument doc = new ODocument(classA);
-      assertEquals("default name", doc.field("name"));
-      assertNotNull(doc.field("date"));
-      assertEquals(true, doc.field("active"));
+      {
+	      ODocument doc = new ODocument(classA);
+	      assertEquals("default name", doc.field("name"));
+	      assertNotNull(doc.field("date"));
+	      assertEquals(true, doc.field("active"));
+      }
+      
+      {
+	      ODocument doc = new ODocument();
+	      assertNull(doc.field("name"));
+	      assertNull(doc.field("date"));
+	      assertNull(doc.field("active"));
+	      doc.setClassName(classA.getName());
+	      assertEquals("default name", doc.field("name"));
+	      assertNotNull(doc.field("date"));
+	      assertEquals(true, doc.field("active"));
+      }
+      
+      {
+	      ODocument doc = new ODocument();
+	      assertNull(doc.field("name"));
+	      assertNull(doc.field("date"));
+	      assertNull(doc.field("active"));
+	      doc.setClassNameIfExists(classA.getName());
+	      assertEquals("default name", doc.field("name"));
+	      assertNotNull(doc.field("date"));
+	      assertEquals(true, doc.field("active"));
+      }
 
       
     } finally {
