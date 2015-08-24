@@ -73,7 +73,7 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
 
       if (identity != null) {
         for (String f : fields)
-          ((OSecurityShared) database.getMetadata().getSecurity()).allowIdentity(iDocument, f, identity);
+          database.getMetadata().getSecurity().allowIdentity(iDocument, f, identity);
         return RESULT.RECORD_CHANGED;
       }
     }
