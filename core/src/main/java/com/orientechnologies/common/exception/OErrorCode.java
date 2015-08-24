@@ -1,5 +1,6 @@
 package com.orientechnologies.common.exception;
 
+import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -7,6 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 /**
  * @author Luigi Dell'Aquila
  */
+@OApi(maturity= OApi.MATURITY.NEW)
 public enum OErrorCode {
 
   // eg.
