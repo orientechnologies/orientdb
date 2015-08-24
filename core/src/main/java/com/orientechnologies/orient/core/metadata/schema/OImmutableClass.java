@@ -52,6 +52,7 @@ public class OImmutableClass implements OClass {
   private final float                     classOverSize;
   private final String                    shortName;
   private final Map<String, String>       customFields;
+  private final String                    description;
 
   private final OImmutableSchema          schema;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
@@ -100,6 +101,7 @@ public class OImmutableClass implements OClass {
       customFields.put(key, oClass.getCustom(key));
 
     this.customFields = Collections.unmodifiableMap(customFields);
+    this.description = oClass.getDescription();
   }
 
   public void init() {
@@ -497,6 +499,16 @@ public class OImmutableClass implements OClass {
   public OClass setShortName(String shortName) {
     throw new UnsupportedOperationException();
   }
+  
+  @Override
+  public String getDescription() {
+    return description;
+  }
+  
+  @Override
+  public OClass setDescription(String iDescription) {
+    throw new UnsupportedOperationException();
+  }
 
   @Override
   public Object get(ATTRIBUTES iAttribute) {
@@ -522,6 +534,8 @@ public class OImmutableClass implements OClass {
       return getClusterSelection();
     case CUSTOM:
       return getCustomInternal();
+    case DESCRIPTION:
+      return getDescription();
     }
 
     throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");

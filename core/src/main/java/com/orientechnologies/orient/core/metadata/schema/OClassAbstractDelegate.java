@@ -331,6 +331,17 @@ public abstract class OClassAbstractDelegate implements OClass {
     delegate.setShortName(shortName);
     return this;
   }
+  
+  @Override
+  public String getDescription() {
+    return delegate.getDescription();
+  }
+  
+  @Override
+  public OClass setDescription(String iDescription) {
+    delegate.setDescription(iDescription);
+    return this;
+  }
 
   @Override
   public Object get(ATTRIBUTES iAttribute) {

@@ -38,7 +38,7 @@ import java.util.Set;
  */
 public interface OClass extends Comparable<OClass> {
   enum ATTRIBUTES {
-    NAME, SHORTNAME, SUPERCLASS, SUPERCLASSES, OVERSIZE, STRICTMODE, ADDCLUSTER, REMOVECLUSTER, CUSTOM, ABSTRACT, CLUSTERSELECTION
+    NAME, SHORTNAME, SUPERCLASS, SUPERCLASSES, OVERSIZE, STRICTMODE, ADDCLUSTER, REMOVECLUSTER, CUSTOM, ABSTRACT, CLUSTERSELECTION, DESCRIPTION
   }
 
   enum INDEX_TYPE {
@@ -87,6 +87,10 @@ public interface OClass extends Comparable<OClass> {
   String getName();
 
   OClass setName(String iName);
+
+  String getDescription();
+
+  OClass setDescription(String iDescription);
 
   String getStreamableName();
 
