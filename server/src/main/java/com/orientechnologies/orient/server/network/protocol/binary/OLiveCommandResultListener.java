@@ -130,13 +130,21 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
         channel.releaseWriteLock();
       }
     } catch (IOException e) {
-      OLiveQueryHook.unsubscribe(iToken);
+      OLiveQueryHook.unsubscribe(iToken, protocol.connection.database);
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e,
           protocol.connection.getRemoteAddress());
       protocol.getServer().getClientConnectionManager().disconnect(protocol.connection);
-      OLiveQueryHook.unsubscribe(iToken);
+      OLiveQueryHook.unsubscribe(iToken, protocol.connection.database);
     }
+
+  }
+
+  @Override public void onError(int iLiveToken) {
+
+  }
+
+  @Override public void onUnsubscribe(int iLiveToken) {
 
   }
 

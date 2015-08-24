@@ -44,9 +44,11 @@ public class OCommandExecutorSQLLiveUnsubscribe extends OCommandExecutorSQLAbstr
   private Object executeUnsubscribe() {
     try {
 
-      OLiveQueryHook.unsubscribe(Integer.parseInt(unsubscribeToken));
+      OLiveQueryHook.unsubscribe(Integer.parseInt(unsubscribeToken), getDatabase());
       ODocument result = new ODocument();
       result.field("unsubscribed", unsubscribeToken);
+      result.field("unsubscribe", true);
+      result.field("token", unsubscribeToken);
 
       return result;
     } catch (Exception e) {

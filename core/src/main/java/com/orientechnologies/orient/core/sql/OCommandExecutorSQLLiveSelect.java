@@ -19,14 +19,12 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Map;
-import java.util.Random;
-
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -41,6 +39,9 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
+
+import java.util.Map;
+import java.util.Random;
 
 /**
  * @author Luigi Dell'Aquila
@@ -57,17 +58,18 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
 
   public Object execute(final Map<Object, Object> iArgs) {
     try {
+      final ODatabaseDocumentInternal db = getDatabase();
       execInSeparateDatabase(new OCallable() {
         @Override
         public Object call(Object iArgument) {
-          return execDb = ((ODatabaseDocumentTx) getDatabase()).copy();
+          return execDb = ((ODatabaseDocumentTx) db).copy();
         }
       });
 
       synchronized (random) {
         token = random.nextInt();// TODO do something better ;-)!
       }
-      subscribeToLiveQuery(token);
+      subscribeToLiveQuery(token, db);
       bindDefaultContextVariables();
 
       if (iArgs != null)
@@ -94,8 +96,8 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     }
   }
 
-  private void subscribeToLiveQuery(Integer token) {
-    OLiveQueryHook.subscribe(token, this);
+  private void subscribeToLiveQuery(Integer token, ODatabaseInternal db) {
+    OLiveQueryHook.subscribe(token, this, db);
   }
 
   public void onLiveResult(final ORecordOperation iOp) {
