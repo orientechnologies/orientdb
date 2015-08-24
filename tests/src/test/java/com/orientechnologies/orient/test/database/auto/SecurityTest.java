@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
@@ -122,24 +123,37 @@ public class SecurityTest extends DocumentDBBaseTest {
     ORole writerChild = security.createRole("writerChild", writer, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
     writerChild.save();
 
-    ORole writerGrandChild = security.createRole("writerGrandChild", writerChild, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
-    writerGrandChild.save();
+    try {
+      ORole writerGrandChild = security.createRole("writerGrandChild", writerChild, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
+      writerGrandChild.save();
 
-    OUser child = security.createUser("writerChild", "writerChild", writerGrandChild);
-    child.save();
+      try {
+        OUser child = security.createUser("writerChild", "writerChild", writerGrandChild);
+        child.save();
 
-    Assert.assertTrue(child.hasRole("writer", true));
-    Assert.assertFalse(child.hasRole("wrter", true));
+        try {
+          Assert.assertTrue(child.hasRole("writer", true));
+          Assert.assertFalse(child.hasRole("wrter", true));
 
-    database.close();
-    if (!(database.getStorage() instanceof OStorageProxy)) {
-      database.open("writerChild", "writerChild");
+          database.close();
+          if (!(database.getStorage() instanceof OStorageProxy)) {
+            database.open("writerChild", "writerChild");
 
-      OSecurityUser user = database.getUser();
-      Assert.assertTrue(user.hasRole("writer", true));
-      Assert.assertFalse(user.hasRole("wrter", true));
+            OSecurityUser user = database.getUser();
+            Assert.assertTrue(user.hasRole("writer", true));
+            Assert.assertFalse(user.hasRole("wrter", true));
 
-      database.close();
+            database.close();
+          }
+          database.open("admin", "admin");
+        } finally {
+          security.dropUser("writerChild");
+        }
+      } finally {
+        security.dropRole("writerGrandChild");
+      }
+    } finally {
+      security.dropRole("writerChild");
     }
   }
 
@@ -187,6 +201,74 @@ public class SecurityTest extends DocumentDBBaseTest {
       database.open("noRole", "noRole");
       Assert.fail();
     } catch (OSecurityAccessException e) {
+      database.open("admin", "admin");
+      security.dropUser("noRole");
+    }
+  }
+
+  @Test
+  public void testAdminCanSeeSystemClusters() {
+    database.open("admin", "admin");
+
+    List<ODocument> result = database.command(new OCommandSQL("select from ouser")).execute();
+    Assert.assertFalse(result.isEmpty());
+
+    Assert.assertTrue(database.browseClass("OUser").hasNext());
+
+    Assert.assertTrue(database.browseCluster("OUser").hasNext());
+  }
+
+  @Test
+  public void testOnlyAdminCanSeeSystemClusters() {
+    database.open("reader", "reader");
+
+    try {
+      database.command(new OCommandSQL("select from ouser")).execute();
+    } catch (OSecurityException e) {
+    }
+
+    try {
+      Assert.assertFalse(database.browseClass("OUser").hasNext());
+      Assert.fail();
+    } catch (OSecurityException e) {
+    }
+
+    try {
+      Assert.assertFalse(database.browseCluster("OUser").hasNext());
+      Assert.fail();
+    } catch (OSecurityException e) {
+    }
+  }
+
+  @Test
+  public void testCannotExtendClassWithNoUpdateProvileges() {
+    database.open("admin", "admin");
+    database.getMetadata().getSchema().createClass("Protected");
+    database.close();
+
+    database.open("writer", "writer");
+
+    try {
+      database.command(new OCommandSQL("alter class Protected superclass OUser")).execute();
+      Assert.fail();
+    } catch (OSecurityException e) {
+    } finally {
+      database.close();
+
+      database.open("admin", "admin");
+      database.getMetadata().getSchema().dropClass("Protected");
+    }
+  }
+
+  @Test
+  public void testSuperUserCanExtendClassWithNoUpdateProvileges() {
+    database.open("admin", "admin");
+    database.getMetadata().getSchema().createClass("Protected");
+
+    try {
+      database.command(new OCommandSQL("alter class Protected superclass OUser")).execute();
+    } finally {
+      database.getMetadata().getSchema().dropClass("Protected");
     }
   }
 }

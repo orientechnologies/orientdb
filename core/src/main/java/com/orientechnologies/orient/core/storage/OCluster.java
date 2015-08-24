@@ -121,6 +121,8 @@ public interface OCluster {
 
   boolean isHashBased();
 
+  boolean isSystemCluster();
+
   OClusterEntryIterator absoluteIterator();
 
   OPhysicalPosition[] higherPositions(OPhysicalPosition position) throws IOException;

@@ -19,12 +19,12 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import java.util.List;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Manages users and roles.
@@ -34,7 +34,12 @@ import java.util.Set;
  */
 public interface OSecurity {
   static final String RESTRICTED_CLASSNAME   = "ORestricted";
-  static final String IDENTITY_CLASSNAME     = "OIdentity";
+  @Deprecated
+  static final String IDENTITY_CLASSNAME     = OIdentity.CLASS_NAME;
+  static final String ALLOW_ALL_FIELD        = "_allow";
+  static final String ALLOW_READ_FIELD       = "_allowRead";
+  static final String ALLOW_UPDATE_FIELD     = "_allowUpdate";
+  static final String ALLOW_DELETE_FIELD     = "_allowDelete";
   static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
   static final String ONCREATE_FIELD         = "onCreate.fields";
 

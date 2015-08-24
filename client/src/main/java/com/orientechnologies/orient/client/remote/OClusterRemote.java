@@ -201,6 +201,11 @@ public class OClusterRemote implements OCluster {
     return false;
   }
 
+  @Override
+  public boolean isSystemCluster() {
+    return false;
+  }
+
   public OClusterEntryIterator absoluteIterator() {
     throw new UnsupportedOperationException("getRecordsSize()");
   }

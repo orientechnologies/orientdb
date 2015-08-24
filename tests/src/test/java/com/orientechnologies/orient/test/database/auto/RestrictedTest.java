@@ -15,6 +15,17 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -26,22 +37,15 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 @Test(groups = "security")
 public class RestrictedTest extends DocumentDBBaseTest {
   private ODocument adminRecord;
   private ODocument writerRecord;
   private OUser     readUser;
+
+  private OUser     readerUser = null;
+  private ORole     readerRole = null;
 
   @Parameters(value = "url")
   public RestrictedTest(@Optional String url) {
@@ -55,7 +59,8 @@ public class RestrictedTest extends DocumentDBBaseTest {
     adminRecord = new ODocument("CMSDocument").field("user", "admin").save();
     adminRecord.reload();
 
-    readUser = database.getMetadata().getSecurity().getUser("reader");
+    readerUser = database.getMetadata().getSecurity().getUser("reader");
+    readerRole = database.getMetadata().getSecurity().getRole("reader");
   }
 
   @Test(dependsOnMethods = "testCreateRestrictedClass")
@@ -162,7 +167,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
   public void testAddReaderAsRole() throws IOException {
     database.open("writer", "writer");
     Set<OIdentifiable> allows = ((ODocument) writerRecord.reload()).field(OSecurityShared.ALLOW_ALL_FIELD);
-    allows.add(database.getMetadata().getSecurity().getRole("reader").getDocument().getIdentity());
+    allows.add(readerRole.getIdentity());
     writerRecord.save();
   }
 

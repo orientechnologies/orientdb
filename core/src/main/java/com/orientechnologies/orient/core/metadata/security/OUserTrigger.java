@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.metadata.security;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -33,6 +34,8 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
  * @author Luca Garulli
  */
 public class OUserTrigger extends ODocumentHookAbstract {
+  private OClass userClass;
+  private OClass roleClass;
 
   public OUserTrigger(ODatabaseDocument database) {
     super(database);
@@ -54,19 +57,16 @@ public class OUserTrigger extends ODocumentHookAbstract {
 
   @Override
   public RESULT onRecordBeforeCreate(final ODocument iDocument) {
-    if ("OUser".equalsIgnoreCase(iDocument.getClassName()))
+    if (ODocumentInternal.getImmutableSchemaClass(iDocument).isOuser())
       return encodePassword(iDocument);
+
     return RESULT.RECORD_NOT_CHANGED;
   }
 
   @Override
   public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
-
-    if ("OUser".equalsIgnoreCase(iDocument.getClassName())) {
-      // REMOVE THE USER FROM THE CACHE
-      final OSecurity sec = database.getMetadata().getSecurity().getUnderlying();
+    if (ODocumentInternal.getImmutableSchemaClass(iDocument).isOuser())
       return encodePassword(iDocument);
-    }
 
     return RESULT.RECORD_NOT_CHANGED;
   }
