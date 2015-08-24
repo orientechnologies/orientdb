@@ -810,22 +810,20 @@ public class OServer {
           openDatabaseBypassingSecurity(database, data);
         } else {
           try {
+            // TRY WITH SERVER'S AUTHENTICATION
+            serverLogin(user, password, "database.passthrough");
+
+            // SERVER AUTHENTICATED, BYPASS SECURITY
+            openDatabaseBypassingSecurity(database, data);
+
+          } catch (OSecurityException ex) {
+
             // TRY DATABASE AUTHENTICATION
             database.open(user, password);
             if (data != null) {
               data.serverUser = false;
               data.serverUsername = null;
             }
-          } catch (OSecurityException e) {
-            // TRY WITH SERVER'S AUTHENTICATION
-            try {
-              serverLogin(user, password, "database.passthrough");
-            } catch (OSecurityException ex) {
-              throw e;
-            }
-
-            // SERVER AUTHENTICATED, BYPASS SECURITY
-            openDatabaseBypassingSecurity(database, data);
           }
         }
       }
