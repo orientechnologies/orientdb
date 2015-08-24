@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -48,6 +42,12 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Shared security class. It's shared by all the database instances that point to the same storage.
  * 
@@ -64,25 +64,25 @@ public class OSecurityShared implements OSecurity, OCloseable {
    * Uses the ORestrictedOperation ENUM instead.
    */
   @Deprecated
-  public static final String      ALLOW_ALL_FIELD        = "_allow";
+  public static final String      ALLOW_ALL_FIELD        = ORestrictedOperation.ALLOW_ALL.getFieldName();
 
   /**
    * Uses the ORestrictedOperation ENUM instead.
    */
   @Deprecated
-  public static final String      ALLOW_READ_FIELD       = "_allowRead";
+  public static final String      ALLOW_READ_FIELD       = ORestrictedOperation.ALLOW_READ.getFieldName();
 
   /**
    * Uses the ORestrictedOperation ENUM instead.
    */
   @Deprecated
-  public static final String      ALLOW_UPDATE_FIELD     = "_allowUpdate";
+  public static final String      ALLOW_UPDATE_FIELD     = ORestrictedOperation.ALLOW_UPDATE.getFieldName();
 
   /**
    * Uses the ORestrictedOperation ENUM instead.
    */
   @Deprecated
-  public static final String      ALLOW_DELETE_FIELD     = "_allowDelete";
+  public static final String      ALLOW_DELETE_FIELD     = ORestrictedOperation.ALLOW_DELETE.getFieldName();
 
   public static final String      ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
   public static final String      ONCREATE_FIELD         = "onCreate.fields";
