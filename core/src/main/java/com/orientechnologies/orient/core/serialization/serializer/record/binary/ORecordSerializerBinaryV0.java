@@ -20,12 +20,21 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
@@ -35,7 +44,6 @@ import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -50,20 +58,9 @@ import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
@@ -601,20 +598,33 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return pointer;
   }
 
-  private int writeLinkMap(BytesContainer bytes, Map<Object, OIdentifiable> map) {
-    int fullPos = OVarIntSerializer.write(bytes, map.size());
-    for (Entry<Object, OIdentifiable> entry : map.entrySet()) {
-      // TODO:check skip of complex types
-      // FIXME: changed to support only string key on map
-      OType type = OType.STRING;
-      writeOType(bytes, bytes.alloc(1), type);
-      writeString(bytes, entry.getKey().toString());
-      if (entry.getValue() == null)
-        writeNullLink(bytes);
-      else
-        writeOptimizedLink(bytes, entry.getValue());
+  private int writeLinkMap(final BytesContainer bytes, final Map<Object, OIdentifiable> map) {
+    final boolean disabledAutoConversion = map instanceof ORecordLazyMultiValue
+        && ((ORecordLazyMultiValue) map).isAutoConvertToRecord();
+
+    if (disabledAutoConversion)
+      // AVOID TO FETCH RECORD
+      ((ORecordLazyMultiValue) map).setAutoConvertToRecord(false);
+
+    try {
+      int fullPos = OVarIntSerializer.write(bytes, map.size());
+      for (Entry<Object, OIdentifiable> entry : map.entrySet()) {
+        // TODO:check skip of complex types
+        // FIXME: changed to support only string key on map
+        OType type = OType.STRING;
+        writeOType(bytes, bytes.alloc(1), type);
+        writeString(bytes, entry.getKey().toString());
+        if (entry.getValue() == null)
+          writeNullLink(bytes);
+        else
+          writeOptimizedLink(bytes, entry.getValue());
+      }
+      return fullPos;
+
+    } finally {
+      if (disabledAutoConversion)
+        ((ORecordLazyMultiValue) map).setAutoConvertToRecord(true);
     }
-    return fullPos;
   }
 
   @SuppressWarnings("unchecked")
@@ -664,7 +674,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       if (real != null)
         link = real;
     }
-    assert link.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "+ link.getIdentity();
+    assert link.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "
+        + link.getIdentity();
     int pos = OVarIntSerializer.write(bytes, link.getIdentity().getClusterId());
     OVarIntSerializer.write(bytes, link.getIdentity().getClusterPosition());
     return pos;
@@ -674,10 +685,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     assert (!(value instanceof OMVRBTreeRIDSet));
     int pos = OVarIntSerializer.write(bytes, value.size());
 
-    final boolean disabledAutoConvertion = value instanceof ORecordLazyMultiValue
+    final boolean disabledAutoConversion = value instanceof ORecordLazyMultiValue
         && ((ORecordLazyMultiValue) value).isAutoConvertToRecord();
 
-    if (disabledAutoConvertion)
+    if (disabledAutoConversion)
       // AVOID TO FETCH RECORD
       ((ORecordLazyMultiValue) value).setAutoConvertToRecord(false);
 
@@ -691,7 +702,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       }
 
     } finally {
-      if (disabledAutoConvertion)
+      if (disabledAutoConversion)
         ((ORecordLazyMultiValue) value).setAutoConvertToRecord(true);
     }
 
