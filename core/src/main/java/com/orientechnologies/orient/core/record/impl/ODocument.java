@@ -58,6 +58,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
@@ -441,20 +442,26 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
           + " but the value is not a record or a record-id");
     final OClass schemaClass = p.getLinkedClass();
-    if (schemaClass != null) {
-      linkedRecord = ((OIdentifiable) fieldValue).getRecord();
-      if (linkedRecord != null) {
-        if (!(linkedRecord instanceof ODocument))
-          throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
-              + schemaClass + "' but the value is the record " + linkedRecord.getIdentity() + " that is not a document");
+    if (schemaClass != null && !schemaClass.isSubClassOf(OIdentity.CLASS_NAME)) {
+      // DON'T VALIDATE OUSER AND OROLE FOR SECURITY RESTRICTIONS
 
-        final ODocument doc = (ODocument) linkedRecord;
+      final ORID rid = ((OIdentifiable) fieldValue).getIdentity();
 
-        // AT THIS POINT CHECK THE CLASS ONLY IF != NULL BECAUSE IN CASE OF GRAPHS THE RECORD COULD BE PARTIAL
-        if (doc.getImmutableSchemaClass() != null && !schemaClass.isSuperClassOf(doc.getImmutableSchemaClass()))
-          throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
-              + schemaClass.getName() + "' but the value is the document " + linkedRecord.getIdentity() + " of class '"
-              + doc.getImmutableSchemaClass() + "'");
+      if (!schemaClass.hasPolymorphicClusterId(rid.getClusterId())) {
+        linkedRecord = ((OIdentifiable) fieldValue).getRecord();
+        if (linkedRecord != null) {
+          if (!(linkedRecord instanceof ODocument))
+            throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
+                + schemaClass + "' but the value is the record " + linkedRecord.getIdentity() + " that is not a document");
+
+          final ODocument doc = (ODocument) linkedRecord;
+
+          // AT THIS POINT CHECK THE CLASS ONLY IF != NULL BECAUSE IN CASE OF GRAPHS THE RECORD COULD BE PARTIAL
+          if (doc.getImmutableSchemaClass() != null && !schemaClass.isSuperClassOf(doc.getImmutableSchemaClass()))
+            throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
+                + schemaClass.getName() + "' but the value is the document " + linkedRecord.getIdentity() + " of class '"
+                + doc.getImmutableSchemaClass() + "'");
+        }
       }
     }
   }
@@ -967,10 +974,10 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     final int lastDotSep = _allowChainedAccess ? iFieldName.lastIndexOf('.') : -1;
     final int lastArraySep = _allowChainedAccess ? iFieldName.lastIndexOf('[') : -1;
-    
+
     final int lastSep = Math.max(lastArraySep, lastDotSep);
     final boolean lastIsArray = lastArraySep > lastDotSep;
-    
+
     if (lastSep > -1) {
       // SUB PROPERTY GET 1 LEVEL BEFORE LAST
       final Object subObject = field(iFieldName.substring(0, lastSep));
@@ -985,36 +992,36 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
           ((Map<String, Object>) subObject).put(subFieldName, iPropertyValue);
         } else if (OMultiValue.isMultiValue(subObject)) {
           if ((subObject instanceof List<?> || subObject.getClass().isArray()) && lastIsArray) {
-              // List // Array Type with a index subscript.
-              final int subFieldNameLen = subFieldName.length();
-              
-              if (subFieldName.charAt(subFieldNameLen - 1) != ']') {
-                  throw new IllegalArgumentException("Missed closing ']'");
-              }
-              
-              final String indexPart = subFieldName.substring(1, subFieldNameLen - 1);
-              String indexAsString = ODocumentHelper.getIndexPart(null, indexPart).toString();
-              
-              try {
-                  final int index = Integer.parseInt(indexAsString);
-                  OMultiValue.setValue(subObject, iPropertyValue, index);
-              } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("List / array subscripts must resolve to integer values.");
-              }
+            // List // Array Type with a index subscript.
+            final int subFieldNameLen = subFieldName.length();
+
+            if (subFieldName.charAt(subFieldNameLen - 1) != ']') {
+              throw new IllegalArgumentException("Missed closing ']'");
+            }
+
+            final String indexPart = subFieldName.substring(1, subFieldNameLen - 1);
+            String indexAsString = ODocumentHelper.getIndexPart(null, indexPart).toString();
+
+            try {
+              final int index = Integer.parseInt(indexAsString);
+              OMultiValue.setValue(subObject, iPropertyValue, index);
+            } catch (NumberFormatException e) {
+              throw new IllegalArgumentException("List / array subscripts must resolve to integer values.");
+            }
           } else {
-              // APPLY CHANGE TO ALL THE ITEM IN SUB-COLLECTION
-              for (Object subObjectItem : OMultiValue.getMultiValueIterable(subObject)) {
-                if (subObjectItem instanceof ODocument) {
-                  // SUB-DOCUMENT, CHECK IF IT'S NOT LINKED
-                  if (!((ODocument) subObjectItem).isEmbedded())
-                    throw new IllegalArgumentException("Property '" + iFieldName
-                        + "' points to linked collection of items. You can only change embedded documents in this way");
-                  ((ODocument) subObjectItem).field(subFieldName, iPropertyValue);
-                } else if (subObjectItem instanceof Map<?, ?>) {
-                  // KEY/VALUE
-                  ((Map<String, Object>) subObjectItem).put(subFieldName, iPropertyValue);
-                }
+            // APPLY CHANGE TO ALL THE ITEM IN SUB-COLLECTION
+            for (Object subObjectItem : OMultiValue.getMultiValueIterable(subObject)) {
+              if (subObjectItem instanceof ODocument) {
+                // SUB-DOCUMENT, CHECK IF IT'S NOT LINKED
+                if (!((ODocument) subObjectItem).isEmbedded())
+                  throw new IllegalArgumentException("Property '" + iFieldName
+                      + "' points to linked collection of items. You can only change embedded documents in this way");
+                ((ODocument) subObjectItem).field(subFieldName, iPropertyValue);
+              } else if (subObjectItem instanceof Map<?, ?>) {
+                // KEY/VALUE
+                ((Map<String, Object>) subObjectItem).put(subFieldName, iPropertyValue);
               }
+            }
           }
           return this;
         }

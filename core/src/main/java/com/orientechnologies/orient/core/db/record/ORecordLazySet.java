@@ -125,7 +125,10 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
   public boolean add(OIdentifiable e) {
     if (map.containsKey(e))
       return false;
-    if (e instanceof ORecord && e.getIdentity().isNew()) {
+
+    if (e == null)
+      map.put(null, null);
+    else if (e instanceof ORecord && e.getIdentity().isNew()) {
       ORecordInternal.addIdentityChangeListener((ORecord) e, this);
       map.put(e, e);
     } else if (!e.getIdentity().isPersistent()) {
