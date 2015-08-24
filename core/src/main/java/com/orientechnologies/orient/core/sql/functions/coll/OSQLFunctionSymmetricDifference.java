@@ -38,7 +38,7 @@ import java.util.Set;
  *
  */
 public class OSQLFunctionSymmetricDifference extends OSQLFunctionMultiValueAbstract<Set<Object>> {
-  public static final String NAME = "difference";
+  public static final String NAME = "symmetricDifference";
 
   private Set<Object>        rejected;
 
