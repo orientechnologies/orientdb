@@ -22,6 +22,8 @@ import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.lucene.OLuceneMapEntryIterator;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
+import com.orientechnologies.orient.core.OOrientListener;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -34,6 +36,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import org.apache.lucene.analysis.Analyzer;
@@ -54,7 +57,8 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.*;
 
-public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
+public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V>,
+    OOrientListener {
 
   public static final String               RID              = "RID";
   public static final String               KEY              = "KEY";
@@ -81,6 +85,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   public OLuceneIndexManagerAbstract() {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
+    Orient.instance().registerListener(this);
   }
 
   @Override
@@ -492,5 +497,20 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   public void setIndexName(String indexName) {
     this.indexName = indexName;
+  }
+
+  @Override
+  public void onShutdown() {
+    close();
+  }
+
+  @Override
+  public void onStorageRegistered(OStorage storage) {
+
+  }
+
+  @Override
+  public void onStorageUnregistered(OStorage storage) {
+
   }
 }

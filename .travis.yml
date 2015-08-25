@@ -1,0 +1,8 @@
+sudo: false
+language: java
+install: mvn install
+branches:
+  only:
+  - develop
+jdk:
+- oraclejdk8
