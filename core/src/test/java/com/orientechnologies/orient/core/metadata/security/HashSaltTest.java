@@ -17,9 +17,10 @@ public class HashSaltTest {
   @Test
   public void testSalt() throws InvalidKeySpecException, NoSuchAlgorithmException {
     final String password = "OrientDBisCool";
-    final String hashed = OSecurityManager.createHashWithSalt(password);
+    final OSecurityManager sm = new OSecurityManager();
+    final String hashed = sm.createHashWithSalt(password);
 
-    Assert.assertTrue(OSecurityManager.checkPasswordWithSalt(password, hashed));
+    Assert.assertTrue(sm.checkPasswordWithSalt(password, hashed));
   }
 
 }

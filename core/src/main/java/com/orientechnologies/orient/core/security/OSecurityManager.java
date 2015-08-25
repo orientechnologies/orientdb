@@ -155,11 +155,11 @@ public class OSecurityManager {
     return null;
   }
 
-  public static String createHashWithSalt(final String iPassword) {
+  public String createHashWithSalt(final String iPassword) {
     return createHashWithSalt(iPassword, OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_ITERATIONS.getValueAsInteger());
   }
 
-  public static String createHashWithSalt(final String iPassword, final int iIterations) {
+  public String createHashWithSalt(final String iPassword, final int iIterations) {
     final SecureRandom random = new SecureRandom();
     final byte[] salt = new byte[SALT_SIZE];
     random.nextBytes(salt);
@@ -170,7 +170,7 @@ public class OSecurityManager {
     return byteArrayToHexStr(hash) + ":" + byteArrayToHexStr(salt) + ":" + iIterations;
   }
 
-  public static boolean checkPasswordWithSalt(final String iPassword, final String iHash) {
+  public boolean checkPasswordWithSalt(final String iPassword, final String iHash) {
     // SPLIT PARTS
     final String[] params = iHash.split(":");
     if (params.length != 3)
@@ -184,12 +184,14 @@ public class OSecurityManager {
     return compareHash(hash, testHash);
   }
 
-  private static byte[] getPbkdf2(final String iPassword, final byte[] salt, final int iterations, final int bytes) {
+  private byte[] getPbkdf2(final String iPassword, final byte[] salt, final int iterations, final int bytes) {
     String cacheKey = null;
 
+    final String hashedPassword = createSHA256(iPassword + new String(salt));
+
     if (SALT_CACHE != null) {
-      // SEACH IN CACHE FIRST
-      cacheKey = iPassword + "|" + Arrays.toString(salt) + "|" + iterations + "|" + bytes;
+      // SEARCH IN CACHE FIRST
+      cacheKey = hashedPassword + "|" + Arrays.toString(salt) + "|" + iterations + "|" + bytes;
       final byte[] encoded = SALT_CACHE.get(cacheKey);
       if (encoded != null)
         return encoded;
