@@ -62,12 +62,13 @@ public class LuceneSpatialMultyPolygonTest extends BaseSpatialLuceneTest {
 
   }
 
+  @Test(enabled = false)
   public void testMultiPolygonWithoutIndex() {
     databaseDocumentTx.command(new OCommandSQL("DROP INDEX Place.location")).execute();
     queryMultiPolygon();
   }
 
-  @Test
+  @Test(enabled = false)
   public void testIndexingMultiPolygon() throws IOException {
 
     ODocument location = loadMultiPolygon();
@@ -85,8 +86,7 @@ public class LuceneSpatialMultyPolygonTest extends BaseSpatialLuceneTest {
 
   }
 
-
-
+  // DISABLED
   protected void queryMultiPolygon() {
     // Should not contain Berlin
     String query = "select * from Place where location ST_CONTAINS { 'shape' : { 'type' : 'Point' , 'coordinates' : [13.383333,52.516667]} } ";

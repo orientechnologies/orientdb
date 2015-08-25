@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 10/08/15.
  */
-public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
+public class  LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
 
   public LuceneTransactionQueryTest() {
   }

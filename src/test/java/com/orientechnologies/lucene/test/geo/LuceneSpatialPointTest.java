@@ -82,14 +82,14 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
 
   }
 
-  @Test
+  @Test(enabled = false)
   public void testPointWithoutIndex() {
 
     databaseDocumentTx.command(new OCommandSQL("Drop INDEX City.location")).execute();
     queryPoint();
   }
 
-  @Test
+  @Test(enabled = false)
   public void testIndexingPoint() {
 
     queryPoint();
@@ -111,7 +111,6 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
 
   @Test
   public void testOldNearQuery() {
-
 
     queryOldNear();
   }

@@ -92,12 +92,12 @@ public abstract class BaseLuceneTest {
         if (drop) {
           // DROP AND RE-CREATE IT
           databaseDocumentTx.drop();
-          databaseDocumentTx = Orient.instance().getDatabaseFactory().createDatabase("graph", url);
+          databaseDocumentTx = new ODatabaseDocumentTx(url);
           databaseDocumentTx.create();
         }
       } else {
         // CREATE IT
-        databaseDocumentTx = Orient.instance().getDatabaseFactory().createDatabase("graph", url);
+        databaseDocumentTx = new ODatabaseDocumentTx(url);
         databaseDocumentTx.create();
       }
       ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTx);
@@ -203,8 +203,7 @@ public abstract class BaseLuceneTest {
         OServer server = OServerMain.create();
         server.startup(ClassLoader.getSystemResourceAsStream("orientdb-server-config.xml"));
         server.activate();
-        final ODatabaseDocumentTx db = Orient.instance().getDatabaseFactory()
-            .createDatabase("graph", getStoragePath(args[0], "plocal"));
+        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getStoragePath(args[0], "plocal"));
 
         if (args.length > 1 && args[1].equals("true")) {
           if (db.exists()) {

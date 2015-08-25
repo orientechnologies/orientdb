@@ -64,14 +64,14 @@ public class LuceneSpatialPolygonTest extends BaseSpatialLuceneTest {
 
   }
 
-  @Test
+  @Test(enabled = false)
   public void testPolygonWithoutIndex() {
 
     databaseDocumentTx.command(new OCommandSQL("drop index Place.location")).execute();
     queryPolygon();
   }
 
-  @Test
+  @Test(enabled = false)
   public void testIndexingPolygon() throws IOException {
 
     InputStream systemResourceAsStream = ClassLoader.getSystemResourceAsStream("germany.json");

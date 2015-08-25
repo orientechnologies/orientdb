@@ -36,7 +36,7 @@ import java.util.Collection;
  * Created by enricorisa on 28/06/14.
  */
 // Renable when solved killing issue
-@Test(groups = "remote", enabled = false)
+@Test(groups = "remote")
 public class LuceneInsertIntegrityRemoteTest extends BaseLuceneTest {
 
   public LuceneInsertIntegrityRemoteTest() {

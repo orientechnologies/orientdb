@@ -71,8 +71,18 @@ public class OLuceneOverlapOperator extends OLuceneSpatialOperator {
   public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
       Object iRight, OCommandContext iContext) {
     Shape shape = factory.fromDoc((ODocument) iLeft);
-    Map map = (Map) iCondition.getRight();
-    Shape shape1 = factory.fromMapGeoJson((Map) map.get("shape"));
+
+    Object right = iCondition.getRight();
+    Shape shape1 = null;
+
+    if (iRight instanceof ODocument) {
+      shape1 = factory.fromDoc((ODocument) iRight);
+    } else {
+      if (right instanceof Map) {
+        Map map = (Map) iCondition.getRight();
+        shape1 = factory.fromMapGeoJson((Map) map.get("shape"));
+      }
+    }
     return SpatialOperation.BBoxIntersects.evaluate(shape, shape1);
   }
 }

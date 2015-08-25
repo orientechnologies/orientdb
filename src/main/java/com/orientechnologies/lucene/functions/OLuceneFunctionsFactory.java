@@ -30,9 +30,9 @@ public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
 
   static {
     register(OSTAsTextFunction.NAME, new OSTAsTextFunction());
-    register(STWithinFunction.NAME, new STWithinFunction());
-    register(STNearFunction.NAME, new STNearFunction());
-    register(STContainsFunction.NAME, new STContainsFunction());
+//    register(STWithinFunction.NAME, new STWithinFunction());
+//    register(STNearFunction.NAME, new STNearFunction());
+//    register(STContainsFunction.NAME, new STContainsFunction());
     register(OSTGeomFromTextFunction.NAME, new OSTGeomFromTextFunction());
   }
 
