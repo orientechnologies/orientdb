@@ -26,7 +26,7 @@ public class OUpdateStatement extends OStatement {
   protected boolean                 lockRecord   = false;
 
   protected OLimit                  limit;
-  protected Number                  timeout;
+  protected OTimeout                  timeout;
 
   public OUpdateStatement(int id) {
     super(id);
@@ -87,7 +87,6 @@ public class OUpdateStatement extends OStatement {
       result.append(limit);
     }
     if (timeout != null) {
-      result.append(" TIMEOUT ");
       result.append(timeout);
     }
 

@@ -170,7 +170,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
     for (Entry<Object, Object> entry : params.entrySet()) {
       final Object value = entry.getValue();
 
-      if (value instanceof Set<?> && ((Set<?>) value).iterator().next() instanceof ORecord) {
+      if (value instanceof Set<?> && !((Set<?>) value).isEmpty() && ((Set<?>) value).iterator().next() instanceof ORecord) {
         // CONVERT RECORDS AS RIDS
         final Set<ORID> newSet = new HashSet<ORID>();
         for (ORecord rec : (Set<ORecord>) value) {
@@ -178,7 +178,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
         }
         newParams.put(entry.getKey(), newSet);
 
-      } else if (value instanceof List<?> && ((List<?>) value).get(0) instanceof ORecord) {
+      } else if (value instanceof List<?> && !((List<?>) value).isEmpty() && ((List<?>) value).get(0) instanceof ORecord) {
         // CONVERT RECORDS AS RIDS
         final List<ORID> newList = new ArrayList<ORID>();
         for (ORecord rec : (List<ORecord>) value) {
@@ -186,17 +186,18 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
         }
         newParams.put(entry.getKey(), newList);
 
-      } else if (value instanceof Map<?, ?> && ((Map<?, ?>) value).values().iterator().next() instanceof ORecord) {
+      } else if (value instanceof Map<?, ?> && !((Map<?, ?>) value).isEmpty()
+          && ((Map<?, ?>) value).values().iterator().next() instanceof ORecord) {
         // CONVERT RECORDS AS RIDS
         final Map<Object, ORID> newMap = new HashMap<Object, ORID>();
         for (Entry<?, ORecord> mapEntry : ((Map<?, ORecord>) value).entrySet()) {
           newMap.put(mapEntry.getKey(), mapEntry.getValue().getIdentity());
         }
         newParams.put(entry.getKey(), newMap);
-      } else if (entry.getValue() instanceof ORecord) {
-        newParams.put(entry.getKey(), ((OIdentifiable) entry.getValue()).getIdentity());
+      } else if (value instanceof OIdentifiable) {
+        newParams.put(entry.getKey(), ((OIdentifiable) value).getIdentity());
       } else
-        newParams.put(entry.getKey(), entry.getValue());
+        newParams.put(entry.getKey(), value);
     }
 
     return newParams;

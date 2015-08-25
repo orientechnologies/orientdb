@@ -1163,6 +1163,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
       checkEmbedded(getDatabase().getStorage());
 
+      deleteDefaultCluster(cls);
+
       for (OClass superClass : cls.getSuperClasses()) {
         // REMOVE DEPENDENCY FROM SUPERCLASS
         ((OClassImpl) superClass).removeBaseClassInternal(cls);
@@ -1178,7 +1180,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
       removeClusterClassMap(cls);
 
-      deleteDefaultCluster(cls);
     } finally {
       releaseSchemaWriteLock();
     }

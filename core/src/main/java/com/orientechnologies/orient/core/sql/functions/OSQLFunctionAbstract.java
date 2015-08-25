@@ -94,7 +94,7 @@ public abstract class OSQLFunctionAbstract implements OSQLFunction {
 
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
-    throw new IllegalStateException("By default SQL function execution result can not be merged");
+    throw new IllegalStateException("By default SQL function execution result cannot be merged");
   }
 
   protected boolean returnDistributedResult() {

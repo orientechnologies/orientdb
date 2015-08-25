@@ -174,7 +174,7 @@ public class OFetchHelper {
             continue;
 
           final int nextLevel = isEmbedded ? iLevelFromRoot : iLevelFromRoot + 1;
-          
+
           if (fieldValue instanceof ORecordId)
             fieldValue = ((ORecordId) fieldValue).getRecord();
 
@@ -220,11 +220,13 @@ public class OFetchHelper {
       final String iFieldPathFromRoot, final OFetchContext iContext) throws IOException {
     final Iterable<OIdentifiable> linked = (Iterable<OIdentifiable>) fieldValue;
     for (OIdentifiable d : linked) {
-      // GO RECURSIVELY
-      d = d.getRecord();
+      if (d != null) {
+        // GO RECURSIVELY
+        d = d.getRecord();
 
-      updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords, iFieldPathFromRoot,
-          iContext);
+        updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords, iFieldPathFromRoot,
+            iContext);
+      }
     }
   }
 

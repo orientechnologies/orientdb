@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -17,25 +16,25 @@ public class ORule implements Serializable{
 	private static final TreeMap<String, ResourceGeneric> nameToGenericMap = new TreeMap<String, ResourceGeneric>();
 	private static final TreeMap<String, ResourceGeneric> legacyToGenericMap = new TreeMap<String, ResourceGeneric>();
 	private static final Map<ResourceGeneric, String>     genericToLegacyMap = new HashMap<ResourceGeneric, String>();
-	
-    public static ResourceGeneric FUNCTION = new ResourceGeneric("FUNCTION", ODatabaseSecurityResources.FUNCTION){private static final long serialVersionUID = 1L;}; 
-    public static ResourceGeneric CLASS = new ResourceGeneric("CLASS", ODatabaseSecurityResources.CLASS){private static final long serialVersionUID = 1L;}; 
-    public static ResourceGeneric CLUSTER = new ResourceGeneric("CLUSTER", ODatabaseSecurityResources.CLUSTER){private static final long serialVersionUID = 1L;};  
-    public static ResourceGeneric BYPASS_RESTRICTED = new ResourceGeneric("BYPASS_RESTRICTED", ODatabaseSecurityResources.BYPASS_RESTRICTED){private static final long serialVersionUID = 1L;};  
-    public static ResourceGeneric DATABASE = new ResourceGeneric("DATABASE", ODatabaseSecurityResources.DATABASE){private static final long serialVersionUID = 1L;};  
-    public static ResourceGeneric SCHEMA = new ResourceGeneric("SCHEMA", ODatabaseSecurityResources.SCHEMA){private static final long serialVersionUID = 1L;};  
-    public static ResourceGeneric COMMAND = new ResourceGeneric("COMMAND", ODatabaseSecurityResources.COMMAND){private static final long serialVersionUID = 1L;};  
-    public static ResourceGeneric RECORD_HOOK = new ResourceGeneric("RECORD_HOOK", ODatabaseSecurityResources.RECORD_HOOK){private static final long serialVersionUID = 1L;}; 
-    
+
+    public static ResourceGeneric FUNCTION = new ResourceGeneric("FUNCTION", ODatabaseSecurityResources.FUNCTION){private static final long serialVersionUID = 1L;};
+    public static ResourceGeneric CLASS = new ResourceGeneric("CLASS", ODatabaseSecurityResources.CLASS){private static final long serialVersionUID = 1L;};
+    public static ResourceGeneric CLUSTER = new ResourceGeneric("CLUSTER", ODatabaseSecurityResources.CLUSTER){private static final long serialVersionUID = 1L;};
+    public static ResourceGeneric BYPASS_RESTRICTED = new ResourceGeneric("BYPASS_RESTRICTED", ODatabaseSecurityResources.BYPASS_RESTRICTED){private static final long serialVersionUID = 1L;};
+    public static ResourceGeneric DATABASE = new ResourceGeneric("DATABASE", ODatabaseSecurityResources.DATABASE){private static final long serialVersionUID = 1L;};
+    public static ResourceGeneric SCHEMA = new ResourceGeneric("SCHEMA", ODatabaseSecurityResources.SCHEMA){private static final long serialVersionUID = 1L;};
+    public static ResourceGeneric COMMAND = new ResourceGeneric("COMMAND", ODatabaseSecurityResources.COMMAND){private static final long serialVersionUID = 1L;};
+    public static ResourceGeneric RECORD_HOOK = new ResourceGeneric("RECORD_HOOK", ODatabaseSecurityResources.RECORD_HOOK){private static final long serialVersionUID = 1L;};
+    public static ResourceGeneric SYSTEM_CLUSTERS = new ResourceGeneric("SYSTEM_CLUSTER", ODatabaseSecurityResources.SYSTEMCLUSTERS){private static final long serialVersionUID = 1L;};
+
     private final String name;
     private final String legacyName;
-    protected ResourceGeneric(String name, String legacyName)
-    {
+    protected ResourceGeneric(String name, String legacyName) {
     	this.name = name;
     	this.legacyName = legacyName!=null?legacyName:name;
     	register(this);
     }
-    
+
     public String getName() {
 		return name;
 	}
@@ -47,7 +46,7 @@ public class ORule implements Serializable{
 	private static void register(ResourceGeneric resource)
     {
 		String legacyNameLowCase = resource.legacyName.toLowerCase();
-		if(nameToGenericMap.containsKey(resource.name) 
+		if(nameToGenericMap.containsKey(resource.name)
 				|| legacyToGenericMap.containsKey(resource.legacyName.toLowerCase())
 				|| genericToLegacyMap.containsKey(resource))
 		{
@@ -57,12 +56,12 @@ public class ORule implements Serializable{
     	legacyToGenericMap.put(legacyNameLowCase, resource);
     	genericToLegacyMap.put(resource, resource.legacyName);
     }
-    
+
     public static ResourceGeneric valueOf(String name)
     {
     	return nameToGenericMap.get(name);
     }
-    
+
     public static ResourceGeneric[] values()
     {
     	return genericToLegacyMap.keySet().toArray(new ResourceGeneric[genericToLegacyMap.size()]);
@@ -72,7 +71,7 @@ public class ORule implements Serializable{
 	public String toString() {
 		return ResourceGeneric.class.getSimpleName()+" [name="+name+", legacyName="+legacyName+"]";
 	}
-    
+
   }
 
   private static final long serialVersionUID  = 1L;

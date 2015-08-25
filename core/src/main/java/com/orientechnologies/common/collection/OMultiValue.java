@@ -19,14 +19,14 @@
  */
 package com.orientechnologies.common.collection;
 
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
-
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Handles Multi-value types such as Arrays, Collections and Maps. It recognizes special Orient collections.
@@ -219,6 +219,26 @@ public class OMultiValue {
       OLogManager.instance().debug(iObject, "Error on reading the first item of the Multi-value field '%s'", iObject);
     }
     return null;
+  }
+  
+  /**
+   * Sets the value of the Multi-value object (array or collection) at iIndex 
+   * 
+   * @param iObject
+   *          Multi-value object (array, collection)
+   * @param iValue
+   *          The value to set at this specified index.      
+   * @param iIndex
+   *          integer as the position requested
+   */
+  public static void setValue(final Object iObject, final Object iValue, final int iIndex) {
+    if (iObject instanceof List<?>) {
+      ((List<Object>)iObject).set(iIndex, iValue);
+    } else if (iObject.getClass().isArray()) {
+      Array.set(iObject, iIndex, iValue);
+    } else {
+      throw new IllegalArgumentException("Can only set positional indices for Lists and Arrays");
+    }
   }
 
   /**
@@ -517,7 +537,7 @@ public class OMultiValue {
 
           if (iAllOccurrences) {
             if (iObject instanceof OCollection)
-              throw new IllegalStateException("Mutable collection can not be used to remove all occurrences.");
+              throw new IllegalStateException("Mutable collection cannot be used to remove all occurrences.");
 
             final Collection<Object> collection = (Collection) iObject;
             OMultiCollectionIterator<?> it = (OMultiCollectionIterator<?>) iToRemove;

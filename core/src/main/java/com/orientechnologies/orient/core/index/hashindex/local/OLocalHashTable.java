@@ -229,7 +229,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     } catch (IOException e) {
       rollback(e);
 
-      throw new OIndexException("Can not set serializer for index keys", e);
+      throw new OIndexException("Cannot set serializer for index keys", e);
     } catch (Exception e) {
       rollback(e);
       throw new OStorageException(null, e);
@@ -284,7 +284,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       endAtomicOperation(false, null);
     } catch (IOException e) {
       rollback(e);
-      throw new OIndexException("Can not set serializer for index values", e);
+      throw new OIndexException("Cannot set serializer for index values", e);
     } catch (Exception e) {
       rollback(e);
       throw new OStorageException(null, e);
@@ -669,10 +669,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       endAtomicOperation(false, null);
     } catch (IOException ioe) {
       rollback(ioe);
-      throw new OIndexException("Can not delete hash table with name " + name, ioe);
+      throw new OIndexException("Cannot delete hash table with name " + name, ioe);
     } catch (Exception e) {
       rollback(e);
-      throw new OIndexException("Can not delete hash table with name " + name, e);
+      throw new OIndexException("Cannot delete hash table with name " + name, e);
     } finally {
       releaseExclusiveLock();
     }

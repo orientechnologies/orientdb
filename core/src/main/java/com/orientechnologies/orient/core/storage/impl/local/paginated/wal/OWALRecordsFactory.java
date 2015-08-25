@@ -62,7 +62,7 @@ public class OWALRecordsFactory {
     else if (typeToIdMap.containsKey(walRecord.getClass())) {
       content[0] = typeToIdMap.get(walRecord.getClass());
     } else
-      throw new IllegalArgumentException(walRecord.getClass().getName() + " class can not be serialized.");
+      throw new IllegalArgumentException(walRecord.getClass().getName() + " class cannot be serialized.");
 
     walRecord.toStream(content, 1);
 
@@ -110,12 +110,12 @@ public class OWALRecordsFactory {
         try {
           walRecord = (OWALRecord) idToTypeMap.get(content[0]).newInstance();
         } catch (InstantiationException e) {
-          throw new IllegalStateException("Can not deserialize passed in record", e);
+          throw new IllegalStateException("Cannot deserialize passed in record", e);
         } catch (IllegalAccessException e) {
-          throw new IllegalStateException("Can not deserialize passed in record", e);
+          throw new IllegalStateException("Cannot deserialize passed in record", e);
         }
       else
-        throw new IllegalStateException("Can not deserialize passed in wal record.");
+        throw new IllegalStateException("Cannot deserialize passed in wal record.");
     }
 
     walRecord.fromStream(content, 1);

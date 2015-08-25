@@ -1028,7 +1028,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
             if (previousContent.getResult() == null)
               // DELETED
-              throw new OTransactionException("Cannot update record '" + rid + "' because has been deleted");
+              throw new ORecordNotFoundException("Cannot update record '" + rid + "' because has been deleted");
 
             final ORecordVersion v = executionModeSynch ? record.getRecordVersion() : record.getRecordVersion().copy();
 
@@ -1103,11 +1103,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           asynchronousExecution(new OAsynchDistributedOperation(getName(), involvedClusters, nodes, txTask, new OCallable() {
             @Override
             public Object call(Object iArgument) {
-              try {
-                processCommitResult(localNodeName, txTask, involvedClusters, tmpEntries, nodes, 0, iArgument);
-              } catch (InterruptedException e) {
-                // IGNORE IT
-              }
+              // processCommitResult(localNodeName, txTask, involvedClusters, tmpEntries, nodes, 0, iArgument);
+              sendTxCompleted(localNodeName, involvedClusters, nodes, (OTxTaskResult) iArgument);
               return null;
             }
           }));
@@ -1154,15 +1151,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           ORecordInternal.unsetDirty(record);
       }
 
-      // SEND FINAL TX COMPLETE TASK TO UNLOCK RECORDS
-      final Object completedResult = dManager.sendRequest(getName(), involvedClusters, nodes, new OCompletedTxTask(txResult.locks),
-          EXECUTION_MODE.RESPONSE);
-
-      if (!(completedResult instanceof Boolean) || !((Boolean) completedResult).booleanValue()) {
-        // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
-        ODistributedServerLog.error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-            "distributed transaction complete error: %s", completedResult);
-      }
+      sendTxCompleted(localNodeName, involvedClusters, nodes, txResult);
 
     } else if (result instanceof ODistributedRecordLockedException) {
       // AUTO RETRY
@@ -1189,6 +1178,18 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       throw new OTransactionException("Error on committing distributed transaction, received unknown response type " + result);
     }
     return true;
+  }
+
+  private void sendTxCompleted(String localNodeName, Set<String> involvedClusters, Set<String> nodes, OTxTaskResult txResult) {
+    // SEND FINAL TX COMPLETE TASK TO UNLOCK RECORDS
+    final Object completedResult = dManager.sendRequest(getName(), involvedClusters, nodes, new OCompletedTxTask(txResult.locks),
+        EXECUTION_MODE.RESPONSE);
+
+    if (!(completedResult instanceof Boolean) || !((Boolean) completedResult).booleanValue()) {
+      // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
+      ODistributedServerLog.error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+          "distributed transaction complete error: %s", completedResult);
+    }
   }
 
   @Override

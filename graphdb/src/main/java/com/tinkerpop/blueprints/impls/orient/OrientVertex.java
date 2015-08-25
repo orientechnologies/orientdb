@@ -152,12 +152,12 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         outType = OType.LINKBAG;
       } else
         throw new IllegalStateException("Type of field provided in schema '" + prop.getType()
-            + "' can not be used for link creation.");
+            + "' cannot be used for link creation.");
 
     } else if (found instanceof OIdentifiable) {
       if (prop != null && propType == OType.LINK)
         throw new IllegalStateException("Type of field provided in schema '" + prop.getType()
-            + "' can not be used for creation to hold several links.");
+            + "' cannot be used for creation to hold several links.");
 
       if (prop != null && "true".equalsIgnoreCase(prop.getCustom(OrientVertexType.OrientVertexProperty.ORDERED))) {
         final Collection coll = new ORecordLazyList(iFromVertex);

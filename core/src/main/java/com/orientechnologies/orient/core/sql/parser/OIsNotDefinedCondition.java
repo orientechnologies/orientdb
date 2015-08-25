@@ -29,6 +29,12 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
   public boolean evaluate(OIdentifiable currentRecord) {
     return false;
   }
+
+  @Override
+  public String toString() {
+    return expression.toString() + " is not defined";
+  }
+
   @Override public void replaceParameters(Map<Object, Object> params) {
     expression.replaceParameters(params);
   }

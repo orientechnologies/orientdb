@@ -400,7 +400,7 @@ public abstract class OStringSerializerHelper {
         if (insideLinkPart > 0 && c != '-' && !Character.isDigit(c) && c != ORID.SEPARATOR && c != LINK)
           insideLinkPart = 0;
 
-        if ((c == '"' || iStringSeparatorExtended && c == '\'') && !encodeMode) {
+        if ((c == '"' || c == '`' || iStringSeparatorExtended && c == '\'' ) && !encodeMode) {
           // START STRING
           stringBeginChar = c;
         }
@@ -418,7 +418,7 @@ public abstract class OStringSerializerHelper {
             continue;
       } else {
         // INSIDE A STRING
-        if ((c == '"' || iStringSeparatorExtended && c == '\'') && !encodeMode) {
+        if ((c == '"' || c == '`' ||iStringSeparatorExtended && c == '\'') && !encodeMode) {
           // CLOSE THE STRING ?
           if (stringBeginChar == c) {
             // SAME CHAR AS THE BEGIN OF THE STRING: CLOSE IT AND PUSH
