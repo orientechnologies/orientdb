@@ -40,6 +40,7 @@
             org.xerial.snappy;resolution:=optional,
             *
         </osgi.import>
+        <osgi.dynamicImport>*</osgi.dynamicImport>
         <osgi.export>com.orientechnologies.orient.core.*,
             com.orientechnologies.common.*,com.orientechnologies.nio.*
         </osgi.export>

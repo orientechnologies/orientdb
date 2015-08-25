@@ -34,6 +34,7 @@
             orient.client.*;resolution:=optional,
             *
         </osgi.import>
+        <osgi.dynamicImport>*</osgi.dynamicImport>
         <osgi.export>com.orientechnologies.orient.server.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	<argLine>-ea -Xmx2048m
