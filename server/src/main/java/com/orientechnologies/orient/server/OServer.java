@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -523,13 +522,13 @@ public class OServer {
       final ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dbPath + databaseName);
       try {
         try {
-          openDatabaseBypassingSecurity(db, null);
+          openDatabaseBypassingSecurity(db, null, "internal");
         } catch (OStorageException e) {
           if (e.getCause() instanceof OSecurityException) {
             if (askForEncryptionKey(databaseName)) {
               // RETRY IT
               try {
-                openDatabaseBypassingSecurity(db, null);
+                openDatabaseBypassingSecurity(db, null, "internal");
               } catch (Exception e2) {
                 // LOOK FOR A SECURITY EXCEPTION
                 Throwable nested = e2;
@@ -593,8 +592,7 @@ public class OServer {
 
   public OServerUserConfiguration serverLogin(final String iUser, final String iPassword, final String iResource) {
     if (!authenticate(iUser, iPassword, iResource))
-      throw new OSecurityAccessException(
-          "Wrong user/password to [connect] to the remote OrientDB Server instance. Get the user/password from the config/orientdb-server-config.xml file");
+      return null;
 
     return getUser(iUser);
   }
@@ -807,17 +805,13 @@ public class OServer {
       } else {
         if (iBypassAccess) {
           // BYPASS SECURITY
-          openDatabaseBypassingSecurity(database, data);
+          openDatabaseBypassingSecurity(database, data, user);
         } else {
-          try {
-            // TRY WITH SERVER'S AUTHENTICATION
-            serverLogin(user, password, "database.passthrough");
-
+          // TRY WITH SERVER'S AUTHENTICATION
+          if (serverLogin(user, password, "database.passthrough") != null)
             // SERVER AUTHENTICATED, BYPASS SECURITY
-            openDatabaseBypassingSecurity(database, data);
-
-          } catch (OSecurityException ex) {
-
+            openDatabaseBypassingSecurity(database, data, user);
+          else {
             // TRY DATABASE AUTHENTICATION
             database.open(user, password);
             if (data != null) {
@@ -832,14 +826,14 @@ public class OServer {
     return database;
   }
 
-  protected void openDatabaseBypassingSecurity(final ODatabaseInternal<?> database, final ONetworkProtocolData data) {
+  public void openDatabaseBypassingSecurity(final ODatabaseInternal<?> database, final ONetworkProtocolData data, final String user) {
     database.activateOnCurrentThread();
     database.resetInitialization();
     database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
-    database.open("internal", "internal");
+    database.open(user, "nopassword");
     if (data != null) {
       data.serverUser = true;
-      data.serverUsername = "internal";
+      data.serverUsername = user;
     }
   }
 
@@ -851,7 +845,7 @@ public class OServer {
         database.create();
       else {
         // SERVER AUTHENTICATED, BYPASS SECURITY
-        openDatabaseBypassingSecurity(database, null);
+        openDatabaseBypassingSecurity(database, null, "internal");
       }
 
     return database;
