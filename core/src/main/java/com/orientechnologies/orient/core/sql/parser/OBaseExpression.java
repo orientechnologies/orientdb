@@ -35,7 +35,8 @@ public class OBaseExpression extends OMathExpression {
     return visitor.visit(this, data);
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return super.toString();
   }
 
@@ -47,7 +48,7 @@ public class OBaseExpression extends OMathExpression {
     } else if (string != null) {
       builder.append(string);
     } else if (inputParam != null) {
-      inputParam.toString(params,builder);
+      inputParam.toString(params, builder);
     }
 
     if (modifier != null) {
@@ -73,11 +74,33 @@ public class OBaseExpression extends OMathExpression {
     return result;
   }
 
-
-
   @Override
   protected boolean supportsBasicCalculation() {
     return true;
   }
+
+  @Override
+  public boolean isIndexedFunctionCall() {
+    if (this.identifier == null) {
+      return false;
+    }
+    return identifier.isIndexedFunctionCall();
+  }
+
+  public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
+    if (this.identifier == null) {
+      return -1;
+    }
+    return identifier.estimateIndexedFunction(target, context, operator, right);
+  }
+
+  public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
+    if (this.identifier == null) {
+      return null;
+    }
+    return identifier.executeIndexedFunction(target, context, operator, right);
+  }
+
 }
 /* JavaCC - OriginalChecksum=71b3e2d1b65c923dc7cfe11f9f449d2b (do not edit this line) */

@@ -3,7 +3,9 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,6 +78,21 @@ public class OBinaryCondition extends OBooleanExpression {
       result.add(right);
     }
     return result;
+  }
+
+  public OBinaryCondition isIndexedFunctionCondition(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+    if(left.isIndexedFunctionCal()){
+      return this;
+    }
+    return null;
+  }
+
+  public long estimateIndexed(OFromClause target, OCommandContext context) {
+    return left.estimateIndexedFunction(target, context, operator, right.execute(null, context));
+  }
+
+  public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context) {
+    return left.executeIndexedFunction(target, context, operator, right.execute(null, context));
   }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

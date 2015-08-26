@@ -44,5 +44,29 @@ public class OBaseIdentifier extends SimpleNode {
     }
     return null;
   }
+
+  public boolean isIndexedFunctionCall() {
+    if(levelZero!=null){
+      return levelZero.isIndexedFunctionCall();
+    }
+    return false;
+  }
+
+  public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
+    if(levelZero!=null){
+      return levelZero.estimateIndexedFunction(target, context, operator, right);
+    }
+
+    return -1;
+  }
+
+  public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
+    if(levelZero!=null){
+      return levelZero.executeIndexedFunction(target, context, operator, right);
+    }
+
+    return null;
+  }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

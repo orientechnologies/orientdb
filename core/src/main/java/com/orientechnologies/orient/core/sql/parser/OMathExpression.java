@@ -12,6 +12,7 @@ import java.util.Map;
 
 public class OMathExpression extends SimpleNode {
 
+
   public enum Operator {
     PLUS {
       @Override
@@ -315,5 +316,27 @@ public class OMathExpression extends SimpleNode {
     return true;
 
   }
-}
+
+  public boolean isIndexedFunctionCall() {
+    if(this.childExpressions.size()!=1){
+      return false;
+    }
+    return this.childExpressions.get(0).isIndexedFunctionCall();
+  }
+
+  public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
+    if(this.childExpressions.size()!=1){
+      return -1;
+    }
+    return this.childExpressions.get(0).estimateIndexedFunction(target, context, operator, right);
+  }
+
+  public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
+    if(this.childExpressions.size()!=1){
+      return null;
+    }
+    return this.childExpressions.get(0).executeIndexedFunction(target, context, operator, right);
+  }
+  }
 /* JavaCC - OriginalChecksum=c255bea24e12493e1005ba2a4d1dbb9d (do not edit this line) */

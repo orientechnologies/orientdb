@@ -3,13 +3,15 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 
+import java.util.List;
 import java.util.Map;
 
 public class OWhereClause extends SimpleNode {
-  OBooleanExpression baseExpression;
+  protected OBooleanExpression baseExpression;
 
   public OWhereClause(int id) {
     super(id);
@@ -52,6 +54,11 @@ public class OWhereClause extends SimpleNode {
       return count / 2;
     }
     return count;
+  }
+
+  public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+
+    return null;//TODO
   }
 }
 /* JavaCC - OriginalChecksum=e8015d01ce1ab2bc337062e9e3f2603e (do not edit this line) */

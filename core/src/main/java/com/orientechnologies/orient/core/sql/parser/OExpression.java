@@ -94,5 +94,26 @@ public class OExpression extends SimpleNode {
     }
     return true;
   }
+
+  public boolean isIndexedFunctionCal() {
+    if(value instanceof OMathExpression){
+      return ((OMathExpression)value).isIndexedFunctionCall();
+    }
+    return false;
+  }
+
+  public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
+    if(value instanceof OMathExpression){
+      return ((OMathExpression)value).estimateIndexedFunction(target, context, operator, right);
+    }
+    return -1;
+  }
+
+  public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
+    if(value instanceof OMathExpression){
+      return ((OMathExpression)value).executeIndexedFunction(target, context, operator, right);
+    }
+    return null;
+  }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

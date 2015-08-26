@@ -35,12 +35,34 @@ public class OLevelZeroIdentifier extends SimpleNode {
     }
   }
 
-
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     if (functionCall != null) {
       return functionCall.execute(iCurrentRecord, ctx);
     }
     throw new UnsupportedOperationException();
+  }
+
+  public boolean isIndexedFunctionCall() {
+    if (functionCall != null) {
+      return functionCall.isIndexedFunctionCall();
+    }
+    return false;
+  }
+
+  public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
+    if (functionCall != null) {
+      return functionCall.estimateIndexedFunction(target, context, operator, right);
+    }
+
+    return -1;
+  }
+
+  public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
+    if (functionCall != null) {
+      return functionCall.executeIndexedFunction(target, context, operator, right);
+    }
+    return null;
   }
 }
 /* JavaCC - OriginalChecksum=0305fcf120ba9395b4c975f85cdade72 (do not edit this line) */
