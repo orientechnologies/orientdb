@@ -100,7 +100,7 @@ public class OSQLHelper {
 
     if (iValue.startsWith("'") && iValue.endsWith("'") || iValue.startsWith("\"") && iValue.endsWith("\""))
       // STRING
-      fieldValue = OStringSerializerHelper.getStringContent(iValue);
+      fieldValue = OIOUtils.getStringContent(iValue);
     else if (iValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN
         && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.LIST_END) {
       // COLLECTION/ARRAY

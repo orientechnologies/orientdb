@@ -19,40 +19,16 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
-import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -67,6 +43,13 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.lang.reflect.Array;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Helper class to manage documents.
@@ -324,7 +307,7 @@ public class ODocumentHelper {
             // MULTI VALUE
             final Object[] values = new Object[indexParts.size()];
             for (int i = 0; i < indexParts.size(); ++i) {
-              values[i] = ((ODocument) record).field(OStringSerializerHelper.getStringContent(indexParts.get(i)));
+              values[i] = ((ODocument) record).field(OIOUtils.getStringContent(indexParts.get(i)));
             }
             value = values;
           } else if (indexRanges.size() > 1) {
@@ -353,7 +336,7 @@ public class ODocumentHelper {
             Object conditionFieldValue = ORecordSerializerStringAbstract.getTypeValue(indexCondition.get(1));
 
             if (conditionFieldValue instanceof String)
-              conditionFieldValue = OStringSerializerHelper.getStringContent(conditionFieldValue);
+              conditionFieldValue = OIOUtils.getStringContent(conditionFieldValue);
 
             final Object fieldValue = getFieldValue(currentRecord, conditionFieldName);
 
@@ -381,7 +364,7 @@ public class ODocumentHelper {
             // MULTI VALUE
             final Object[] values = new Object[indexParts.size()];
             for (int i = 0; i < indexParts.size(); ++i) {
-              values[i] = map.get(OStringSerializerHelper.getStringContent(indexParts.get(i)));
+              values[i] = map.get(OIOUtils.getStringContent(indexParts.get(i)));
             }
             value = values;
           } else if (indexRanges.size() > 1) {
@@ -408,7 +391,7 @@ public class ODocumentHelper {
             Object conditionFieldValue = ORecordSerializerStringAbstract.getTypeValue(indexCondition.get(1));
 
             if (conditionFieldValue instanceof String)
-              conditionFieldValue = OStringSerializerHelper.getStringContent(conditionFieldValue);
+              conditionFieldValue = OIOUtils.getStringContent(conditionFieldValue);
 
             final Object fieldValue = map.get(conditionFieldName);
 
@@ -468,7 +451,7 @@ public class ODocumentHelper {
             Object conditionFieldValue = ORecordSerializerStringAbstract.getTypeValue(indexCondition.get(1));
 
             if (conditionFieldValue instanceof String)
-              conditionFieldValue = OStringSerializerHelper.getStringContent(conditionFieldValue);
+              conditionFieldValue = OIOUtils.getStringContent(conditionFieldValue);
 
             final HashSet<Object> values = new HashSet<Object>();
             for (Object v : OMultiValue.getMultiValueIterable(value)) {
@@ -520,7 +503,7 @@ public class ODocumentHelper {
             Object conditionFieldValue = ORecordSerializerStringAbstract.getTypeValue(indexCondition.get(1));
 
             if (conditionFieldValue instanceof String)
-              conditionFieldValue = OStringSerializerHelper.getStringContent(conditionFieldValue);
+              conditionFieldValue = OIOUtils.getStringContent(conditionFieldValue);
 
             value = filterItem(conditionFieldName, conditionFieldValue, value);
 
@@ -575,7 +558,7 @@ public class ODocumentHelper {
   protected static Object getIndexPart(final OCommandContext iContext, final String indexPart) {
     Object index = indexPart;
     if (indexPart.indexOf(',') == -1 && (indexPart.charAt(0) == '"' || indexPart.charAt(0) == '\''))
-      index = OStringSerializerHelper.getStringContent(indexPart);
+      index = OIOUtils.getStringContent(indexPart);
     else if (indexPart.charAt(0) == '$') {
       final Object ctxValue = iContext.getVariable(indexPart);
       if (ctxValue == null)
@@ -766,9 +749,9 @@ public class ODocumentHelper {
         result = currentValue.toString().charAt(Integer.parseInt(args.get(0)));
       else if (function.startsWith("INDEXOF("))
         if (args.size() == 1)
-          result = currentValue.toString().indexOf(OStringSerializerHelper.getStringContent(args.get(0)));
+          result = currentValue.toString().indexOf(OIOUtils.getStringContent(args.get(0)));
         else
-          result = currentValue.toString().indexOf(OStringSerializerHelper.getStringContent(args.get(0)),
+          result = currentValue.toString().indexOf(OIOUtils.getStringContent(args.get(0)),
               Integer.parseInt(args.get(1)));
       else if (function.startsWith("SUBSTRING("))
         if (args.size() == 1)
@@ -776,14 +759,14 @@ public class ODocumentHelper {
         else
           result = currentValue.toString().substring(Integer.parseInt(args.get(0)), Integer.parseInt(args.get(1)));
       else if (function.startsWith("APPEND("))
-        result = currentValue.toString() + OStringSerializerHelper.getStringContent(args.get(0));
+        result = currentValue.toString() + OIOUtils.getStringContent(args.get(0));
       else if (function.startsWith("PREFIX("))
-        result = OStringSerializerHelper.getStringContent(args.get(0)) + currentValue.toString();
+        result = OIOUtils.getStringContent(args.get(0)) + currentValue.toString();
       else if (function.startsWith("FORMAT("))
         if (currentValue instanceof Date)
-          result = new SimpleDateFormat(OStringSerializerHelper.getStringContent(args.get(0))).format(currentValue);
+          result = new SimpleDateFormat(OIOUtils.getStringContent(args.get(0))).format(currentValue);
         else
-          result = String.format(OStringSerializerHelper.getStringContent(args.get(0)), currentValue.toString());
+          result = String.format(OIOUtils.getStringContent(args.get(0)), currentValue.toString());
       else if (function.startsWith("LEFT(")) {
         final int len = Integer.parseInt(args.get(0));
         final String stringValue = currentValue.toString();

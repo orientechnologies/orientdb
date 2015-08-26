@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.graph.sql.functions;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -29,13 +30,14 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.*;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -76,7 +78,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
 
           @Override
           public Object call(final Object iArgument) {
-            return OStringSerializerHelper.getStringContent(iArgument);
+            return OIOUtils.getStringContent(iArgument);
           }
         });
       else

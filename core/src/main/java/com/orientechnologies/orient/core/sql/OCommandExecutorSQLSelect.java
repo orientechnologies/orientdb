@@ -23,6 +23,7 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.collection.OSortedMultiIterator;
 import com.orientechnologies.common.concur.resource.OSharedResource;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OPair;
@@ -980,7 +981,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           continue;
         }
 
-        fieldName = OStringSerializerHelper.getStringContent(fieldName);
+        fieldName = OIOUtils.getStringContent(fieldName);
 
         projectionDefinition.put(fieldName, projection);
       }
@@ -1071,7 +1072,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     int position = parserGetCurrentPosition();
     while (!parserIsEnded()) {
-      final String word = OStringSerializerHelper.getStringContent(parserNextWord(true));
+      final String word = OIOUtils.getStringContent(parserNextWord(true));
       if (!OPatternConst.PATTERN_FETCH_PLAN.matcher(word).matches()) {
         break;
       }
@@ -1084,9 +1085,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     parserSetCurrentPosition(position);
 
     if (end < 0) {
-      fetchPlan = OStringSerializerHelper.getStringContent(parserText.substring(start));
+      fetchPlan = OIOUtils.getStringContent(parserText.substring(start));
     } else {
-      fetchPlan = OStringSerializerHelper.getStringContent(parserText.substring(start, end));
+      fetchPlan = OIOUtils.getStringContent(parserText.substring(start, end));
     }
 
     request.setFetchPlan(fetchPlan);

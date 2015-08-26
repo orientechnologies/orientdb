@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
@@ -1339,7 +1340,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (iAttribute == null)
       throw new IllegalArgumentException("attribute is null");
 
-    final String stringValue = OStringSerializerHelper.getStringContent(iValue != null ? iValue.toString() : null);
+    final String stringValue = OIOUtils.getStringContent(iValue != null ? iValue.toString() : null);
 
     switch (iAttribute) {
     case STATUS:

@@ -40,6 +40,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -851,7 +852,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
               final String clsName = jsonReader.getValue();
 
-              superClassNames.add(OStringSerializerHelper.getStringContent(clsName));
+              superClassNames.add(OIOUtils.getStringContent(clsName));
             }
             jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
 

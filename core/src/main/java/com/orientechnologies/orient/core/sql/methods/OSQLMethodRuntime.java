@@ -1,25 +1,26 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.methods;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
@@ -91,7 +92,7 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
                   iCurrentResult, iContext);
           } else if (configuredParameters[i] instanceof OSQLMethodRuntime)
             runtimeParameters[i] = ((OSQLMethodRuntime) configuredParameters[i]).execute(iThis, iCurrentRecord, iCurrentResult,
-                                                                                          iContext);
+                iContext);
           else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
             runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iThis, iCurrentRecord, iCurrentResult,
                 iContext);
@@ -120,7 +121,7 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
                 (iCurrentRecord instanceof ODocument ? (ODocument) iCurrentResult : null), iContext);
           else if (configuredParameters[i] instanceof String) {
             if (configuredParameters[i].toString().startsWith("\"") || configuredParameters[i].toString().startsWith("'"))
-              runtimeParameters[i] = OStringSerializerHelper.getStringContent(configuredParameters[i]);
+              runtimeParameters[i] = OIOUtils.getStringContent(configuredParameters[i]);
           }
         }
       }
