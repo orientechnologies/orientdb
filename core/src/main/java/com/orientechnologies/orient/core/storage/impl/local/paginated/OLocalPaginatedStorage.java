@@ -217,7 +217,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     try {
       ((OWOWCache) writeCache).unregisterMBean();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for write cache can not unregistered", e);
+      OLogManager.instance().error(this, "MBean for write cache cannot unregistered", e);
     }
 
     try {
@@ -225,7 +225,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         checkpointExecutor.shutdown();
         if (!checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(),
             TimeUnit.SECONDS))
-          throw new OStorageException("Can not terminate full checkpoint task");
+          throw new OStorageException("Cannot terminate full checkpoint task");
       }
     } catch (InterruptedException e) {
       Thread.interrupted();
@@ -310,7 +310,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     try {
       wowCache.registerMBean();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for write cache can not be registered.");
+      OLogManager.instance().error(this, "MBean for write cache cannot be registered.");
     }
 
     writeCache = wowCache;

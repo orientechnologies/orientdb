@@ -86,6 +86,7 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
 import java.io.BufferedInputStream;
@@ -195,7 +196,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       try {
         atomicOperationsManager.registerMBean();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "MBean for atomic operations manager can not be registered.", e);
+        OLogManager.instance().error(this, "MBean for atomic operations manager cannot be registered.", e);
       }
 
       restoreIfNeeded();
@@ -275,7 +276,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       try {
         atomicOperationsManager.registerMBean();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "MBean for atomic operations manager can not be registered.", e);
+        OLogManager.instance().error(this, "MBean for atomic operations manager cannot be registered.", e);
       }
 
       preCreateSteps();
@@ -713,7 +714,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           : OCommonConst.EMPTY_LONG_ARRAY;
 
     } catch (IOException ioe) {
-      throw new OStorageException("Can not retrieve information about data range", ioe);
+      throw new OStorageException("Cannot retrieve information about data range", ioe);
     } finally {
       stateLock.releaseReadLock();
     }
@@ -806,7 +807,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   @Override
   public ORecordMetadata getRecordMetadata(ORID rid) {
     if (rid.isNew())
-      throw new OStorageException("Passed record with id " + rid + " is new and can not be stored.");
+      throw new OStorageException("Passed record with id " + rid + " is new and cannot be stored.");
 
     checkOpeness();
 
@@ -1175,7 +1176,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
           if (transaction.get().getClientTx().getId() != clientTx.getId())
             throw new OStorageException(
-                "Passed in and active transaction are different transactions. Passed in transaction can not be rolled back.");
+                "Passed in and active transaction are different transactions. Passed in transaction cannot be rolled back.");
 
           makeStorageDirty();
           rollbackStorageTx();
@@ -1315,7 +1316,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       return size;
 
     } catch (IOException ioe) {
-      throw new OStorageException("Can not calculate records size", ioe);
+      throw new OStorageException("Cannot calculate records size", ioe);
     }
   }
 
@@ -2257,7 +2258,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       try {
         atomicOperationsManager.unregisterMBean();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "MBean for atomic opeations manager can not be unregistered.", e);
+        OLogManager.instance().error(this, "MBean for atomic opeations manager cannot be unregistered.", e);
       }
 
       status = STATUS.CLOSED;
@@ -2364,8 +2365,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           rec.getRecordVersion().copyFrom(ppos.recordVersion);
           clientTx.updateIdentityAfterCommit(oldRID, rid);
         } else {
-          // ORecordInternal.setContentChanged(rec, true);
-          rec.getRecordVersion().copyFrom(updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, rec.getRecordVersion(),
+          // USE -2 AS VESION TO AVOID INCREMENTING THE VERSION
+          rec.getRecordVersion().copyFrom(updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, new OSimpleVersion(-2),
               ORecordInternal.getRecordType(rec), -1, null).getResult());
         }
         break;
@@ -2647,7 +2648,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (!backUpDir.exists()) {
         final boolean created = backUpDir.mkdir();
         if (!created) {
-          OLogManager.instance().error(this, "Can not create directory for backup files " + backUpDir.getAbsolutePath());
+          OLogManager.instance().error(this, "Cannot create directory for backup files " + backUpDir.getAbsolutePath());
           return;
         }
       }
@@ -2660,7 +2661,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       final File archiveFile = new File(backUpDir, archiveName);
       if (!archiveFile.createNewFile()) {
-        OLogManager.instance().error(this, "Can not create backup file " + archiveFile.getAbsolutePath());
+        OLogManager.instance().error(this, "Cannot create backup file " + archiveFile.getAbsolutePath());
         return;
       }
 

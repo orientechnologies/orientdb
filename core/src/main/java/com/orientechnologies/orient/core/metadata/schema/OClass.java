@@ -439,4 +439,6 @@ public interface OClass extends Comparable<OClass> {
   Set<String> getCustomKeys();
 
   boolean hasClusterId(int clusterId);
+
+  boolean hasPolymorphicClusterId(int clusterId);
 }

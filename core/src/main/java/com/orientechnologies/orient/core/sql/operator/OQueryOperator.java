@@ -44,7 +44,7 @@ public abstract class OQueryOperator {
 
   public static enum ORDER {
     /**
-     * Used when order compared to other operator can not be evaluated or has no consequences.
+     * Used when order compared to other operator cannot be evaluated or has no consequences.
      */
     UNKNOWNED,
     /**
@@ -197,7 +197,7 @@ public abstract class OQueryOperator {
     }
 
     if (thisPosition == -1 || otherPosition == -1) {
-      // can not decide which comes first
+      // cannot decide which comes first
       return ORDER.UNKNOWNED;
     }
 

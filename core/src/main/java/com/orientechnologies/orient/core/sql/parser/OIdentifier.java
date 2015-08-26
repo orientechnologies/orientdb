@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 public class OIdentifier extends SimpleNode {
 
   protected String value;
+  protected boolean quoted = false;
 
   public OIdentifier(int id) {
     super(id);
@@ -29,11 +30,17 @@ public class OIdentifier extends SimpleNode {
 
   @Override
   public String toString(String prefix) {
+    if(quoted){
+      return '`'+value+'`';
+    }
     return value;
   }
 
   @Override
   public String toString() {
+    if(quoted){
+      return '`'+value+'`';
+    }
     return value;
   }
 

@@ -241,6 +241,11 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
+  public boolean isSystemCluster() {
+    return false;
+  }
+
+  @Override
   public OClusterEntryIterator absoluteIterator() {
     return null;
   }

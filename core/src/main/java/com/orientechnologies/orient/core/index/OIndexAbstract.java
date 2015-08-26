@@ -19,6 +19,19 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
@@ -53,19 +66,6 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Handles indexing when records change.
@@ -167,14 +167,14 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       if (Boolean.TRUE.equals(isAutomatic)) {
         final int pos = indexName.lastIndexOf('.');
         if (pos < 0)
-          throw new OIndexException("Can not convert from old index model to new one. "
-              + "Invalid index name. Dot (.) separator should be present.");
+          throw new OIndexException("Cannot convert from old index model to new one. "
+              + "Invalid index name. Dot (.) separator should be present");
         final String className = indexName.substring(0, pos);
         final String propertyName = indexName.substring(pos + 1);
 
         final String keyTypeStr = config.field(OIndexInternal.CONFIG_KEYTYPE);
         if (keyTypeStr == null)
-          throw new OIndexException("Can not convert from old index model to new one. " + "Index key type is absent.");
+          throw new OIndexException("Cannot convert from old index model to new one. " + "Index key type is absent");
         final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
 
         loadedIndexDefinition = new OPropertyIndexDefinition(className, propertyName, keyType);
@@ -244,7 +244,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
         indexEngine.deleteWithoutLoad(name);
         removeValuesContainer();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during deletion of index %s .", name);
+        OLogManager.instance().error(this, "Error during deletion of index '%s'", name);
       }
 
       indexEngine.create(indexDefinition, clusterIndexName, valueSerializer, isAutomatic());
@@ -254,12 +254,12 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
       updateConfiguration();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Exception during index %s creation.", e, name);
+      OLogManager.instance().error(this, "Exception during index '%s' creation", e, name);
 
       try {
         indexEngine.delete();
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "Exception during index %s deletion.", ex, name);
+        OLogManager.instance().error(this, "Exception during index '%s' deletion", ex, name);
       }
 
       if (e instanceof OIndexException)
@@ -291,7 +291,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       try {
         indexEngine.load(rid, name, indexDefinition, determineValueSerializer(), isAutomatic());
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during load of index %s .", e, name != null ? name : "null");
+        OLogManager.instance().error(this, "Error during load of index '%s'", e, name != null ? name : "null");
 
         if (isAutomatic() && getStorage() instanceof OAbstractPaginatedStorage) {
           // AUTOMATIC REBUILD IT
@@ -412,7 +412,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
         try {
           indexEngine.deleteWithoutLoad(name);
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during index %s delete .", name);
+          OLogManager.instance().error(this, "Error during index '%s' delete", name);
         }
 
         removeValuesContainer();
@@ -947,7 +947,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     try {
       getStorage().markDirty();
     } catch (IOException e) {
-      throw new OIndexException("Can not mark storage as dirty", e);
+      throw new OIndexException("Cannot mark storage as dirty", e);
     }
   }
 
@@ -1024,7 +1024,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   protected void checkForRebuild() {
     if (rebuilding && !Thread.currentThread().equals(rebuildThread)) {
-      throw new OIndexException("Index " + name + " is rebuilding now and can not be used.");
+      throw new OIndexException("Index " + name + " is rebuilding now and cannot be used");
     }
   }
 
@@ -1051,7 +1051,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
               OLogManager.instance().error(
                   this,
                   "Exception during index rebuild. Exception was caused by following key/ value pair - key %s, value %s."
-                      + " Rebuild will continue from this point.", e, fieldValue, doc.getIdentity());
+                      + " Rebuild will continue from this point", e, fieldValue, doc.getIdentity());
             }
 
             ++documentIndexed;

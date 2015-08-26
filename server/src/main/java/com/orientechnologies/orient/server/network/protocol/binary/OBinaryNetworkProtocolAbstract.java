@@ -431,6 +431,10 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected abstract String getRecordSerializerName();
 
   private void writeRecord(final ORecord iRecord) throws IOException {
+    if (iRecord.isDirty())
+      // AVOID ANY RECORD SAVING
+      ORecordInternal.unsetDirty(iRecord);
+
     channel.writeShort((short) 0);
     channel.writeByte(ORecordInternal.getRecordType(iRecord));
     channel.writeRID(iRecord.getIdentity());
