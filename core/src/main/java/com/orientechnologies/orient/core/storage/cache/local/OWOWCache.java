@@ -25,13 +25,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.management.ManagementFactory;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -290,6 +284,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     } finally {
       filesLock.releaseWriteLock();
     }
+  }
+
+  @Override
+  public int pageSize() {
+    return pageSize;
   }
 
   public long openFile(String fileName) throws IOException {
@@ -553,6 +552,22 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       }
 
       return future;
+    } finally {
+      filesLock.releaseReadLock();
+    }
+  }
+
+  @Override
+  public Map<String, Long> files() {
+    filesLock.acquireReadLock();
+    try {
+      final Map<String, Long> result = new HashMap<String, Long>();
+
+      for (Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
+        result.put(entry.getKey(), composeFileId(id, entry.getValue()));
+      }
+
+      return result;
     } finally {
       filesLock.releaseReadLock();
     }
@@ -911,51 +926,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       }
 
       return errors.toArray(new OPageDataVerificationError[errors.size()]);
-    } finally {
-      filesLock.releaseWriteLock();
-    }
-  }
-
-  public OLogSequenceNumber backupPagesWithChanges(OLogSequenceNumber changeLsn, ZipOutputStream stream) throws IOException {
-    filesLock.acquireWriteLock();
-    try {
-      OLogSequenceNumber lastLsn = changeLsn;
-
-      for (Map.Entry<Integer, OFileClassic> entry : files.entrySet()) {
-        final int fileId = entry.getKey();
-        final OFileClassic fileClassic = entry.getValue();
-
-        flush(fileId);
-
-        final boolean closeFile = !fileClassic.isOpen();
-
-        final long filledUpTo = fileClassic.getFileSize();
-        final ZipEntry zipEntry = new ZipEntry(fileClassic.getName());
-
-        stream.putNextEntry(zipEntry);
-
-        for (long pos = 0; pos < filledUpTo; pos += pageSize) {
-          final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
-          fileClassic.read(pos, data, pageSize, OLongSerializer.LONG_SIZE);
-
-          final OLogSequenceNumber pageLsn = ODurablePage.getLogSequenceNumber(OLongSerializer.LONG_SIZE, data);
-          if (changeLsn == null || pageLsn.compareTo(changeLsn) > 0) {
-            OLongSerializer.INSTANCE.serializeNative(pos, data, 0);
-            stream.write(data);
-
-            if (lastLsn == null || pageLsn.compareTo(lastLsn) > 0) {
-              lastLsn = pageLsn;
-            }
-          }
-        }
-
-        if (closeFile)
-          fileClassic.close();
-
-        stream.closeEntry();
-      }
-
-      return lastLsn;
     } finally {
       filesLock.releaseWriteLock();
     }

@@ -21,9 +21,11 @@
 package com.orientechnologies.orient.core.storage.cache;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 public interface OWriteCache {
@@ -96,4 +98,8 @@ public interface OWriteCache {
   String fileNameById(long fileId);
 
   int getId();
+
+  Map<String, Long> files();
+
+  int pageSize();
 }

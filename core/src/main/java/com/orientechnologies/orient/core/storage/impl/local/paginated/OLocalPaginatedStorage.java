@@ -35,12 +35,15 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
@@ -314,7 +317,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     return index;
   }
 
-  public void incrementalBackup(final OutputStream stream, OLogSequenceNumber logSequenceNumber) throws IOException {
+  public void incrementalBackup(final OutputStream stream, OLogSequenceNumber fromLsn) throws IOException {
     checkOpeness();
 
     freeze(false);
@@ -329,7 +332,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
               .getCharset()));
           try {
             final Date startedOn = new Date();
-            final OLogSequenceNumber lastLsn = ((OWOWCache) writeCache).backupPagesWithChanges(logSequenceNumber, zipOutputStream);
+            final OLogSequenceNumber lastLsn = backupPagesWithChanges(fromLsn, zipOutputStream);
             final Date completedOn = new Date();
 
             final ZipEntry backupJson = new ZipEntry("backup.json");
@@ -357,6 +360,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
             zipOutputStream.write(binaryLsn);
             zipOutputStream.closeEntry();
+
+            final ZipEntry fullBackup = new ZipEntry("full.backup");
+            zipOutputStream.putNextEntry(fullBackup);
+            if (fromLsn == null)
+              zipOutputStream.write(1);
+            else
+              zipOutputStream.write(0);
           } finally {
             zipOutputStream.close();
           }
@@ -370,6 +380,62 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     } finally {
       release();
     }
+  }
+
+  private OLogSequenceNumber backupPagesWithChanges(OLogSequenceNumber changeLsn, ZipOutputStream stream) throws IOException {
+    OLogSequenceNumber lastLsn = changeLsn;
+
+    final Map<String, Long> files = writeCache.files();
+    final int pageSize = writeCache.pageSize();
+
+    for (Map.Entry<String, Long> entry : files.entrySet()) {
+      final String fileName = entry.getKey();
+      final long fileId = entry.getValue();
+      final boolean closeFile;
+      if (writeCache.isOpen(fileId))
+        closeFile = false;
+      else {
+        readCache.openFile(fileId, writeCache);
+        closeFile = true;
+      }
+
+      final long filledUpTo = writeCache.getFilledUpTo(fileId);
+      final ZipEntry zipEntry = new ZipEntry(fileName);
+
+      stream.putNextEntry(zipEntry);
+
+      for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
+        final OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache);
+        cacheEntry.acquireSharedLock();
+        try {
+          final OLogSequenceNumber pageLsn = ODurablePage.getLogSequenceNumberFromPage(cacheEntry.getCachePointer()
+              .getDataPointer());
+
+          if (changeLsn == null || pageLsn.compareTo(changeLsn) > 0) {
+
+            final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
+            OLongSerializer.INSTANCE.serializeNative(pageIndex, data, 0);
+            ODurablePage.getPageData(cacheEntry.getCachePointer().getDataPointer(), data, OLongSerializer.LONG_SIZE, pageSize);
+
+            stream.write(data);
+
+            if (lastLsn == null || pageLsn.compareTo(lastLsn) > 0) {
+              lastLsn = pageLsn;
+            }
+          }
+        } finally {
+          cacheEntry.releaseSharedLock();
+          readCache.release(cacheEntry, writeCache);
+        }
+      }
+
+      if (closeFile)
+        readCache.closeFile(fileId, true, writeCache);
+
+      stream.closeEntry();
+    }
+
+    return lastLsn;
   }
 
   @Override
