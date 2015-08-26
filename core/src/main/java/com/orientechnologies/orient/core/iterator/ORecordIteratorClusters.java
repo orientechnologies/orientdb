@@ -54,16 +54,14 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
       final int[] iClusterIds, final boolean iUseCache, final boolean iterateThroughTombstones,
       final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
+
+    checkForSystemClusters(iDatabase, iClusterIds);
+
     clusterIds = iClusterIds;
 
     Arrays.sort(clusterIds);
 
     config();
-  }
-
-  protected ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
-      final boolean iUseCache) {
-    this(iDatabase, iLowLevelDatabase, iUseCache, false, OStorage.LOCKING_STRATEGY.NONE);
   }
 
   @Deprecated

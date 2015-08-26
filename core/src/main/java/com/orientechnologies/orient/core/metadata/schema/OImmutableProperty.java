@@ -26,6 +26,7 @@ public class OImmutableProperty implements OProperty {
   private final String              name;
   private final String              fullName;
   private final OType               type;
+  private final String              description;
 
   // do not make it volatile it is already thread safe.
   private OClass                    linkedClass = null;
@@ -51,6 +52,7 @@ public class OImmutableProperty implements OProperty {
     name = property.getName();
     fullName = property.getFullName();
     type = property.getType();
+    description = property.getDescription();
 
     if (property.getLinkedClass() != null)
       linkedClassName = property.getLinkedClass().getName();
@@ -130,9 +132,20 @@ public class OImmutableProperty implements OProperty {
   public String getFullName() {
     return fullName;
   }
+  
 
   @Override
   public OProperty setName(String iName) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public String getDescription() {
+    return description;
+  }
+  
+  @Override
+  public OProperty setDescription(String iDescription) {
     throw new UnsupportedOperationException();
   }
 
@@ -372,6 +385,8 @@ public class OImmutableProperty implements OProperty {
       return getType();
     case COLLATE:
       return getCollate();
+    case DESCRIPTION:
+      return getDescription();
     }
 
     throw new IllegalArgumentException("Cannot find attribute '" + attribute + "'");

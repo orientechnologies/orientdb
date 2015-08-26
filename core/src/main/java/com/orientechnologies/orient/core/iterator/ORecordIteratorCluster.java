@@ -58,6 +58,8 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
     if (iClusterId == ORID.CLUSTER_ID_INVALID)
       throw new IllegalArgumentException("The clusterId is invalid");
 
+    checkForSystemClusters(iDatabase, new int[] { iClusterId });
+
     current.clusterId = iClusterId;
     final long[] range = database.getStorage().getClusterDataRange(current.clusterId);
 

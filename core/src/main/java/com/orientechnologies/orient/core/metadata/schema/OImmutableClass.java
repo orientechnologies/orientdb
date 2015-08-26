@@ -1,16 +1,5 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -24,6 +13,17 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OScheduler;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -52,6 +52,7 @@ public class OImmutableClass implements OClass {
   private final float                     classOverSize;
   private final String                    shortName;
   private final Map<String, String>       customFields;
+  private final String                    description;
 
   private final OImmutableSchema          schema;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
@@ -100,6 +101,7 @@ public class OImmutableClass implements OClass {
       customFields.put(key, oClass.getCustom(key));
 
     this.customFields = Collections.unmodifiableMap(customFields);
+    this.description = oClass.getDescription();
   }
 
   public void init() {
@@ -497,6 +499,16 @@ public class OImmutableClass implements OClass {
   public OClass setShortName(String shortName) {
     throw new UnsupportedOperationException();
   }
+  
+  @Override
+  public String getDescription() {
+    return description;
+  }
+  
+  @Override
+  public OClass setDescription(String iDescription) {
+    throw new UnsupportedOperationException();
+  }
 
   @Override
   public Object get(ATTRIBUTES iAttribute) {
@@ -522,6 +534,8 @@ public class OImmutableClass implements OClass {
       return getClusterSelection();
     case CUSTOM:
       return getCustomInternal();
+    case DESCRIPTION:
+      return getDescription();
     }
 
     throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");
@@ -672,7 +686,7 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
-  public String getCustom(String iName) {
+  public String getCustom(final String iName) {
     return customFields.get(iName);
   }
 
@@ -697,12 +711,17 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
-  public boolean hasClusterId(int clusterId) {
+  public boolean hasClusterId(final int clusterId) {
     return Arrays.binarySearch(clusterIds, clusterId) >= 0;
   }
 
   @Override
-  public int compareTo(OClass other) {
+  public boolean hasPolymorphicClusterId(final int clusterId) {
+    return Arrays.binarySearch(polymorphicClusterIds, clusterId) >= 0;
+  }
+
+  @Override
+  public int compareTo(final OClass other) {
     return name.compareTo(other.getName());
   }
 

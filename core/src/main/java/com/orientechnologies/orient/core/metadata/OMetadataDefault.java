@@ -223,7 +223,7 @@ public class OMetadataDefault implements OMetadataInternal {
         new Callable<OFunctionLibrary>() {
           public OFunctionLibrary call() {
             final OFunctionLibraryImpl instance = new OFunctionLibraryImpl();
-            if (iLoad)
+            if (iLoad && !(database.getStorage() instanceof OStorageProxy))
               instance.load();
             return instance;
           }
@@ -232,7 +232,7 @@ public class OMetadataDefault implements OMetadataInternal {
         new Callable<OSchedulerListener>() {
           public OSchedulerListener call() {
             final OSchedulerListenerImpl instance = new OSchedulerListenerImpl();
-            if (iLoad)
+            if (iLoad && !(database.getStorage() instanceof OStorageProxy))
               instance.load();
             return instance;
           }

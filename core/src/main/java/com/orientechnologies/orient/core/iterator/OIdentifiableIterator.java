@@ -27,8 +27,12 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -388,6 +392,18 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   protected long currentPosition() {
     return currentEntry;
+  }
+
+  protected void checkForSystemClusters(final ODatabaseDocumentInternal iDatabase, final int[] iClusterIds) {
+    for (int clId : iClusterIds) {
+      final OCluster cl = iDatabase.getStorage().getClusterById(clId);
+      if (cl != null && cl.isSystemCluster()) {
+        final OSecurityUser dbUser = iDatabase.getUser();
+        if (dbUser == null || dbUser.allow(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_READ) != null)
+          // AUTHORIZED
+          break;
+      }
+    }
   }
 
   private void decrementEntreePosition() {

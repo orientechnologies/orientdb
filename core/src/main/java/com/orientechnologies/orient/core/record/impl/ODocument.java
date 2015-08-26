@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
@@ -184,8 +185,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    *          Class name
    */
   public ODocument(final String iClassName) {
-    setClassName(iClassName);
     setup();
+    setClassName(iClassName);
   }
 
   /**
@@ -196,15 +197,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    *          OClass instance
    */
   public ODocument(final OClass iClass) {
-    setup();
-
-    if (iClass == null)
-      _className = null;
-    else
-      _className = iClass.getName();
-
-    _immutableClazz = null;
-    _immutableSchemaVersion = -1;
+    this(iClass.getName());
   }
 
   /**
@@ -242,7 +235,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     this(iFields);
     field(iFieldName, iFieldValue);
   }
-
+  
   protected static void validateField(ODocument iRecord, OImmutableProperty p) throws OValidationException {
     final Object fieldValue;
     ODocumentEntry entry = iRecord._fields.get(p.getName());
@@ -262,17 +255,10 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       }
 
     } else {
-      String defValue = p.getDefaultValue();
-      if (defValue != null && defValue.length() > 0) {
-        Object curFieldValue = OSQLHelper.parseDefaultValue(iRecord, defValue);
-        fieldValue = ODocumentHelper.convertField(iRecord, p.getName(), p.getType(), null, curFieldValue);
-        iRecord.rawField(p.getName(), fieldValue, p.getType());
-      } else {
         if (p.isMandatory()) {
           throw new OValidationException("The field '" + p.getFullName() + "' is mandatory, but not found on record: " + iRecord);
         }
         fieldValue = null;
-      }
     }
 
     final OType type = p.getType();
@@ -445,20 +431,26 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
           + " but the value is not a record or a record-id");
     final OClass schemaClass = p.getLinkedClass();
-    if (schemaClass != null) {
-      linkedRecord = ((OIdentifiable) fieldValue).getRecord();
-      if (linkedRecord != null) {
-        if (!(linkedRecord instanceof ODocument))
-          throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
-              + schemaClass + "' but the value is the record " + linkedRecord.getIdentity() + " that is not a document");
+    if (schemaClass != null && !schemaClass.isSubClassOf(OIdentity.CLASS_NAME)) {
+      // DON'T VALIDATE OUSER AND OROLE FOR SECURITY RESTRICTIONS
 
-        final ODocument doc = (ODocument) linkedRecord;
+      final ORID rid = ((OIdentifiable) fieldValue).getIdentity();
 
-        // AT THIS POINT CHECK THE CLASS ONLY IF != NULL BECAUSE IN CASE OF GRAPHS THE RECORD COULD BE PARTIAL
-        if (doc.getImmutableSchemaClass() != null && !schemaClass.isSuperClassOf(doc.getImmutableSchemaClass()))
-          throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
-              + schemaClass.getName() + "' but the value is the document " + linkedRecord.getIdentity() + " of class '"
-              + doc.getImmutableSchemaClass() + "'");
+      if (!schemaClass.hasPolymorphicClusterId(rid.getClusterId())) {
+        linkedRecord = ((OIdentifiable) fieldValue).getRecord();
+        if (linkedRecord != null) {
+          if (!(linkedRecord instanceof ODocument))
+            throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
+                + schemaClass + "' but the value is the record " + linkedRecord.getIdentity() + " that is not a document");
+
+          final ODocument doc = (ODocument) linkedRecord;
+
+          // AT THIS POINT CHECK THE CLASS ONLY IF != NULL BECAUSE IN CASE OF GRAPHS THE RECORD COULD BE PARTIAL
+          if (doc.getImmutableSchemaClass() != null && !schemaClass.isSuperClassOf(doc.getImmutableSchemaClass()))
+            throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
+                + schemaClass.getName() + "' but the value is the document " + linkedRecord.getIdentity() + " of class '"
+                + doc.getImmutableSchemaClass() + "'");
+        }
       }
     }
   }
@@ -2596,14 +2588,20 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    * @param _clazz
    */
   private void convertFieldsToClass(OClass _clazz) {
-    if (_fields == null || _fields.isEmpty())
-      return;
     for (OProperty prop : _clazz.properties()) {
-      ODocumentEntry entry = _fields.get(prop.getName());
-      if (entry != null && entry.exist())
+      ODocumentEntry entry = _fields!=null ? _fields.get(prop.getName()) : null;
+      if (entry != null && entry.exist()) {
         if (entry.type == null || entry.type != prop.getType()) {
           field(prop.getName(), entry.value, prop.getType());
         }
+      } else {
+        String defValue = prop.getDefaultValue();
+        if (defValue != null && defValue.length() > 0 && !containsField(prop.getName())) {
+          Object curFieldValue = OSQLHelper.parseDefaultValue(this, defValue);
+          Object fieldValue = ODocumentHelper.convertField(this, prop.getName(), prop.getType(), null, curFieldValue);
+          rawField(prop.getName(), fieldValue, prop.getType());
+        }
+      }
     }
   }
 

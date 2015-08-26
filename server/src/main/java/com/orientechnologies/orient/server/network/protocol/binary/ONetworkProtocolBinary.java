@@ -19,18 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -51,7 +39,6 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -98,7 +85,6 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -113,6 +99,18 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
+
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -604,33 +602,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
-  protected ODatabase<?> openDatabase(final ODatabaseInternal<?> database, final String iUser, final String iPassword) {
-
-    if (database.isClosed())
-      if (database.getStorage() instanceof ODirectMemoryStorage && !database.exists())
-        database.create();
-      else {
-        try {
-          database.open(iUser, iPassword);
-        } catch (OSecurityException e) {
-          // TRY WITH SERVER'S USER
-          try {
-            connection.serverUser = server.serverLogin(iUser, iPassword, "database.passthrough");
-          } catch (OSecurityException ex) {
-            throw e;
-          }
-
-          // SERVER AUTHENTICATED, BYPASS SECURITY
-          database.activateOnCurrentThread();
-          database.resetInitialization();
-          database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
-          database.open(iUser, iPassword);
-        }
-      }
-
-    return database;
-  }
-
   protected void removeCluster() throws IOException {
     setDataCommandInfo("Remove cluster");
 
@@ -819,6 +790,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     readConnectionData();
 
     connection.serverUser = server.serverLogin(channel.readString(), channel.readString(), "connect");
+
+    if (connection.serverUser == null)
+      throw new OSecurityAccessException(
+          "Wrong user/password to [connect] to the remote OrientDB Server instance. Get the user/password from the config/orientdb-server-config.xml file");
+
     beginResponse();
     try {
       sendOk(clientTxId);
@@ -1022,11 +998,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     setDataCommandInfo("Drop database");
     String dbName = channel.readString();
 
-    String storageType;
+    String storageType = null;
     if (connection.data.protocolVersion >= 16)
       storageType = channel.readString();
-    else
-      storageType = "local";
 
     if (storageType == null)
       storageType = "plocal";
@@ -1036,12 +1010,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
 
     if (connection.database.exists()) {
-      OLogManager.instance().info(this, "Dropped database '%s'", connection.database.getName());
-
       if (connection.database.isClosed())
-        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+        server.openDatabaseBypassingSecurity(connection.database, connection.data, connection.serverUser.name);
 
       connection.database.drop();
+
+      OLogManager.instance().info(this, "Dropped database '%s'", connection.database.getName());
+
       connection.close();
     } else {
       throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
@@ -1058,12 +1033,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void existsDatabase() throws IOException {
     setDataCommandInfo("Exists database");
     final String dbName = channel.readString();
-    final String storageType;
 
+    String storageType = null;
     if (connection.data.protocolVersion >= 16)
       storageType = channel.readString();
-    else
-      storageType = "local";
+
+    if (storageType == null)
+      storageType = "plocal";
 
     checkServerAccess("database.exists");
 
@@ -1891,12 +1867,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.freeze");
 
-    final String storageType;
-
+    String storageType = null;
     if (connection.data.protocolVersion >= 16)
       storageType = channel.readString();
-    else
-      storageType = "local";
+
+    if (storageType == null)
+      storageType = "plocal";
 
     connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
 
@@ -1904,7 +1880,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       OLogManager.instance().info(this, "Freezing database '%s'", connection.database.getURL());
 
       if (connection.database.isClosed())
-        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+        server.openDatabaseBypassingSecurity(connection.database, connection.data, connection.serverUser.name);
 
       connection.database.freeze(true);
     } else {
@@ -1925,11 +1901,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.release");
 
-    final String storageType;
+    String storageType = null;
     if (connection.data.protocolVersion >= 16)
       storageType = channel.readString();
-    else
-      storageType = "local";
+
+    if (storageType == null)
+      storageType = "plocal";
 
     connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
 
@@ -1937,7 +1914,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       OLogManager.instance().info(this, "Realising database '%s'", connection.database.getURL());
 
       if (connection.database.isClosed())
-        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+        server.openDatabaseBypassingSecurity(connection.database, connection.data, connection.serverUser.name);
 
       connection.database.release();
     } else {
@@ -1959,12 +1936,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.freeze");
 
-    final String storageType;
-
+    String storageType = null;
     if (connection.data.protocolVersion >= 16)
       storageType = channel.readString();
-    else
-      storageType = "local";
+
+    if (storageType == null)
+      storageType = "plocal";
 
     connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
 
@@ -1972,7 +1949,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       OLogManager.instance().info(this, "Freezing database '%s' cluster %d", connection.database.getURL(), clusterId);
 
       if (connection.database.isClosed()) {
-        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+        server.openDatabaseBypassingSecurity(connection.database, connection.data, connection.serverUser.name);
       }
 
       connection.database.freezeCluster(clusterId);
@@ -1995,11 +1972,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.release");
 
-    final String storageType;
+    String storageType = null;
     if (connection.data.protocolVersion >= 16)
       storageType = channel.readString();
-    else
-      storageType = "local";
+
+    if (storageType == null)
+      storageType = "plocal";
 
     connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
 
@@ -2007,7 +1985,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       OLogManager.instance().info(this, "Realising database '%s' cluster %d", connection.database.getURL(), clusterId);
 
       if (connection.database.isClosed()) {
-        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+        server.openDatabaseBypassingSecurity(connection.database, connection.data, connection.serverUser.name);
       }
 
       connection.database.releaseCluster(clusterId);

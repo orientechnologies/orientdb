@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -35,6 +43,7 @@ import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -46,14 +55,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -71,6 +72,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   private volatile OCompression                          compression;
   private volatile OEncryption                           encryption;
   private volatile String                                encryptionKey;
+  private final    boolean                               systemCluster;
   private          OClusterPositionMap                   clusterPositionMap;
   private          OAbstractPaginatedStorage             storageLocal;
   private volatile int                                   id;
@@ -104,8 +106,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
   }
 
-  public OPaginatedCluster(String name, OAbstractPaginatedStorage storage) {
+  public OPaginatedCluster(final String name, final OAbstractPaginatedStorage storage) {
     super(storage, name, ".pcl");
+
+    systemCluster = OMetadata.SYSTEM_CLUSTER.contains(name);
   }
 
   @Override
@@ -364,7 +368,11 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     } finally {
       releaseSharedLock();
     }
+  }
 
+  @Override
+  public boolean isSystemCluster() {
+    return systemCluster;
   }
 
   @Override
@@ -1824,6 +1832,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   @Override
   public String toString() {
-    return "pcluster name=" + getName();
+    return "plocal cluster: " + getName();
   }
 }

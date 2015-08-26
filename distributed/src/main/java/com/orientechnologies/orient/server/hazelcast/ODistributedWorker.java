@@ -146,14 +146,14 @@ public class ODistributedWorker extends Thread {
   public void initDatabaseInstance() {
     if (database == null) {
       // OPEN IT
-      database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase(databaseName, "bypass", "bypass", null, true);
+      database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase(databaseName, "internal", "internal", null, true);
 
       // AVOID RELOADING DB INFORMATION BECAUSE OF DEADLOCKS
       // database.reload();
 
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
-      manager.getServerInstance().openDatabase(database, "bypass", "bypass", null, true);
+      manager.getServerInstance().openDatabase(database, "internal", "internal", null, true);
 
       // AVOID RELOADING DB INFORMATION BECAUSE OF DEADLOCKS
       // database.reload();

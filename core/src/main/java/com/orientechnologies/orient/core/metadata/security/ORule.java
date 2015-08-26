@@ -50,6 +50,11 @@ public class ORule implements Serializable {
                                                                                private static final long serialVersionUID = 1L;
                                                                              };
 
+    public static ResourceGeneric                         SYSTEM_CLUSTERS    = new ResourceGeneric("SYSTEM_CLUSTER",
+                                                                                 ODatabaseSecurityResources.SYSTEMCLUSTERS) {
+                                                                               private static final long serialVersionUID = 1L;
+                                                                             };
+
     private final String                                  name;
     private final String                                  legacyName;
 
@@ -90,7 +95,6 @@ public class ORule implements Serializable {
     public String toString() {
       return ResourceGeneric.class.getSimpleName() + " [name=" + name + ", legacyName=" + legacyName + "]";
     }
-
   }
 
   private static final long       serialVersionUID  = 1L;

@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClust
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -78,6 +79,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private final Map<String, OProperty>       properties              = new HashMap<String, OProperty>();
   private int                                defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
   private String                             name;
+  private String                             description;
   private Class<?>                           javaClass;
   private int[]                              clusterIds;
   private List<OClassImpl>                   superClasses            = new ArrayList<OClassImpl>();
@@ -318,8 +320,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   @Override
-  public boolean hasClusterId(int clusterId) {
+  public boolean hasClusterId(final int clusterId) {
     return Arrays.binarySearch(clusterIds, clusterId) >= 0;
+  }
+
+  @Override
+  public boolean hasPolymorphicClusterId(final int clusterId) {
+    return Arrays.binarySearch(polymorphicClusterIds, clusterId) >= 0;
   }
 
   @Override
@@ -501,6 +508,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         cls = (OClassImpl) superClass;
 
       if (cls != null) {
+
+        // CHECK THE USER HAS UPDATE PRIVILEGE AGAINST EXTENDING CLASS
+        final OSecurityUser user = getDatabase().getUser();
+        if (user != null)
+          user.allow(ORule.ResourceGeneric.CLASS, cls.getName(), ORole.PERMISSION_UPDATE);
+
         cls.checkParametersConflict(this);
         cls.addBaseClass(this);
         superClasses.add(cls);
@@ -620,6 +633,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       releaseSchemaReadLock();
     }
   }
+  
 
   public OClass setShortName(String shortName) {
     if (shortName != null) {
@@ -648,6 +662,48 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         setShortNameInternal(shortName);
       } else
         setShortNameInternal(shortName);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
+  }
+
+  public String getDescription() {
+    acquireSchemaReadLock();
+    try {
+      return description;
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+  
+  public OClass setDescription(String iDescription) {
+    if (iDescription != null) {
+      iDescription = iDescription.trim();
+      if (iDescription.isEmpty())
+        iDescription = null;
+    }
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock();
+    try {
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OStorage storage = database.getStorage();
+
+      if (storage instanceof OStorageProxy) {
+        final String cmd = String.format("alter class %s description %s", name, shortName);
+        database.command(new OCommandSQL(cmd)).execute();
+      } else if (isDistributedCommand()) {
+
+        final String cmd = String.format("alter class %s description %s", name, shortName);
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+        setDescriptionInternal(iDescription);
+      } else
+        setDescriptionInternal(iDescription);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -847,6 +903,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       shortName = document.field("shortName");
     else
       shortName = null;
+    if (document.containsField("description"))
+      description = document.field("description");
+    else
+      description = null;
     defaultClusterId = document.field("defaultClusterId");
     if (document.containsField("strictMode"))
       strictMode = document.field("strictMode");
@@ -912,6 +972,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     try {
       document.field("name", name);
       document.field("shortName", shortName);
+      document.field("description", description);
       document.field("defaultClusterId", defaultClusterId);
       document.field("clusterIds", clusterIds);
       document.field("clusterSelection", clusterSelection.getName());
@@ -1405,8 +1466,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     getDatabase().checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_UPDATE);
 
     if (isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
-      throw new OSecurityException("Class " + getName()
-          + " cannot be truncated because has record level security enabled (extends " + OSecurityShared.RESTRICTED_CLASSNAME + ")");
+      throw new OSecurityException("Class '" + getName()
+          + "' cannot be truncated because has record level security enabled (extends '" + OSecurityShared.RESTRICTED_CLASSNAME
+          + "')");
     }
 
     final OStorage storage = getDatabase().getStorage();
@@ -1516,6 +1578,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       return getClusterSelection();
     case CUSTOM:
       return getCustomInternal();
+    case DESCRIPTION:
+      return getDescription();
     }
 
     throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");
@@ -1536,6 +1600,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       setShortName(stringValue);
       break;
     case SUPERCLASS:
+      if (stringValue == null)
+        throw new IllegalArgumentException("Superclass is null");
+
       if (stringValue.startsWith("+")) {
         addSuperClass(getDatabase().getMetadata().getSchema().getClass(stringValue.substring(1)));
       } else if (stringValue.startsWith("-")) {
@@ -1584,6 +1651,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         else
           setCustom(customName, customValue);
       }
+      break;
+    case DESCRIPTION:
+      setDescription(stringValue);
       break;
     }
     return this;
@@ -2067,6 +2137,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       releaseSchemaWriteLock();
     }
   }
+  
+  private void setDescriptionInternal(final String iDescription) {
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+      this.description = iDescription;
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
 
   private void dropPropertyInternal(final String iPropertyName) {
     if (getDatabase().getTransaction().isActive())
@@ -2259,7 +2339,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           + "' is a reserved keyword, it cannot be used as a property name");
     }
 
-    if(getDatabase().getStorage().getConfiguration().isStrictSql()){
+    if (getDatabase().getStorage().getConfiguration().isStrictSql()) {
       validatePropertyName(propertyName);
     }
     if (getDatabase().getTransaction().isActive())
@@ -2324,8 +2404,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void validatePropertyName(String propertyName) {
-    if(propertyName.contains("-")){
-      throw new OSchemaException("Character '-' not allowed in property name ("+propertyName+") when strictSql is enabled");
+    if (propertyName.contains("-")) {
+      throw new OSchemaException("Character '-' not allowed in property name (" + propertyName + ") when strictSql is enabled");
     }
   }
 

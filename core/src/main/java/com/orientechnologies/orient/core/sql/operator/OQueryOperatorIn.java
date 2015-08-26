@@ -72,11 +72,11 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
     if (indexDefinition.getParamCount() == 1) {
       final Object inKeyValue = keyParams.get(0);
-      final List<Object> inParams;
+      final Collection<Object> inParams;
       if (inKeyValue instanceof List<?>)
-        inParams = (List<Object>) inKeyValue;
+        inParams = (Collection<Object>) inKeyValue;
       else if (inKeyValue instanceof OSQLFilterItem)
-        inParams = (List<Object>) ((OSQLFilterItem) inKeyValue).getValue(null, null, iContext);
+        inParams = (Collection<Object>) ((OSQLFilterItem) inKeyValue).getValue(null, null, iContext);
       else
         throw new IllegalArgumentException("Key '" + inKeyValue + "' is not valid");
 
@@ -104,11 +104,11 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
       final Object inKeyValue = keyParams.get(keyParams.size() - 1);
 
-      final List<Object> inParams;
+      final Collection<Object> inParams;
       if (inKeyValue instanceof List<?>)
-        inParams = (List<Object>) inKeyValue;
+        inParams = (Collection<Object>) inKeyValue;
       else if (inKeyValue instanceof OSQLFilterItem)
-        inParams = (List<Object>) ((OSQLFilterItem) inKeyValue).getValue(null, null, iContext);
+        inParams = (Collection<Object>) ((OSQLFilterItem) inKeyValue).getValue(null, null, iContext);
       else
         throw new IllegalArgumentException("Key '" + inKeyValue + "' is not valid");
 
@@ -227,7 +227,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       } else {
         // AGAINST SINGLE ITEM
         if (iLeft instanceof Set<?>)
-          return ((Set)iLeft).contains(iRight);
+          return ((Set) iLeft).contains(iRight);
 
         for (final Object o : OMultiValue.getMultiValueIterable(iLeft)) {
           if (OQueryOperatorEquals.equals(iRight, o))
@@ -237,7 +237,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     } else if (OMultiValue.isMultiValue(iRight)) {
 
       if (iRight instanceof Set<?>)
-        return ((Set)iRight).contains(iLeft);
+        return ((Set) iRight).contains(iLeft);
 
       for (final Object o : OMultiValue.getMultiValueIterable(iRight)) {
         if (OQueryOperatorEquals.equals(iLeft, o))

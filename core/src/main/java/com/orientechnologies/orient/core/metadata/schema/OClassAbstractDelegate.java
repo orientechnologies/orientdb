@@ -16,16 +16,16 @@
 
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Abstract Delegate for OClass interface.
@@ -331,6 +331,17 @@ public abstract class OClassAbstractDelegate implements OClass {
     delegate.setShortName(shortName);
     return this;
   }
+  
+  @Override
+  public String getDescription() {
+    return delegate.getDescription();
+  }
+  
+  @Override
+  public OClass setDescription(String iDescription) {
+    delegate.setDescription(iDescription);
+    return this;
+  }
 
   @Override
   public Object get(ATTRIBUTES iAttribute) {
@@ -450,6 +461,11 @@ public abstract class OClassAbstractDelegate implements OClass {
   @Override
   public boolean hasClusterId(final int clusterId) {
     return delegate.hasClusterId(clusterId);
+  }
+
+  @Override
+  public boolean hasPolymorphicClusterId(final int clusterId) {
+    return delegate.hasPolymorphicClusterId(clusterId);
   }
 
   @Override

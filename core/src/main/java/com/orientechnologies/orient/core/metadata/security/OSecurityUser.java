@@ -11,51 +11,50 @@ import java.util.Set;
  * @since 03/11/14
  */
 public interface OSecurityUser extends Serializable {
-	public enum STATUSES {
-		SUSPENDED, ACTIVE
-	}
+  enum STATUSES {
+    SUSPENDED, ACTIVE
+  }
 
-  public OSecurityRole allow(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
+  OSecurityRole allow(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
 
-  public OSecurityRole checkIfAllowed(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
+  OSecurityRole checkIfAllowed(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
 
-  public boolean isRuleDefined(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific);
+  boolean isRuleDefined(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific);
 
-	@Deprecated
-	public OSecurityRole allow(final String iResource, final int iOperation);
+  @Deprecated
+  OSecurityRole allow(final String iResource, final int iOperation);
 
-	@Deprecated
-	public OSecurityRole checkIfAllowed(final String iResource, final int iOperation);
+  @Deprecated
+  OSecurityRole checkIfAllowed(final String iResource, final int iOperation);
 
-	@Deprecated
-	public boolean isRuleDefined(final String iResource);
+  @Deprecated
+  boolean isRuleDefined(final String iResource);
 
+  boolean checkPassword(final String iPassword);
 
-  public boolean checkPassword(final String iPassword);
+  String getName();
 
-  public String getName();
+  OSecurityUser setName(final String iName);
 
-  public OSecurityUser setName(final String iName);
+  String getPassword();
 
-  public String getPassword();
+  OSecurityUser setPassword(final String iPassword);
 
-  public OSecurityUser setPassword(final String iPassword);
+  OSecurityUser.STATUSES getAccountStatus();
 
-  public OSecurityUser.STATUSES getAccountStatus();
+  void setAccountStatus(OSecurityUser.STATUSES accountStatus);
 
-  public void setAccountStatus(OSecurityUser.STATUSES accountStatus);
+  Set<? extends OSecurityRole> getRoles();
 
-  public Set<? extends OSecurityRole> getRoles();
+  OSecurityUser addRole(final String iRole);
 
-  public OSecurityUser addRole(final String iRole);
+  OSecurityUser addRole(final OSecurityRole iRole);
 
-  public OSecurityUser addRole(final OSecurityRole iRole);
+  boolean removeRole(final String iRoleName);
 
-  public boolean removeRole(final String iRoleName);
+  boolean hasRole(final String iRoleName, final boolean iIncludeInherited);
 
-  public boolean hasRole(final String iRoleName, final boolean iIncludeInherited);
+  OIdentifiable getIdentity();
 
-  public OIdentifiable getIdentity();
-  
-  public ODocument getDocument();
+  ODocument getDocument();
 }
