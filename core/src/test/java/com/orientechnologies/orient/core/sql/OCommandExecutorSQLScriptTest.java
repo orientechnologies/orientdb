@@ -96,7 +96,7 @@ public class OCommandExecutorSQLScriptTest {
     script.append("sleep 500");
     db.command(new OCommandScript("sql", script.toString())).execute();
 
-    Assert.assertTrue(System.currentTimeMillis() - begin > 500);
+    Assert.assertTrue(System.currentTimeMillis() - begin >= 500);
   }
 
   @Test
