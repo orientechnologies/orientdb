@@ -39,14 +39,24 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
-import javax.script.*;
+import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import javax.script.SimpleBindings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Executes Script Commands.
@@ -248,8 +258,17 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
               } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "sleep ")) {
                 executeSleep(lastCommand);
 
+              } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "console.log ")) {
+                executeConsoleLog(lastCommand);
+
+              } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "console.output ")) {
+                executeConsoleOutput(lastCommand);
+
+              } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "console.error ")) {
+                executeConsoleError(lastCommand);
+
               } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "return ")) {
-                lastResult = executeReturn(lastCommand, lastResult);
+                lastResult = getValue(lastCommand, lastResult);
 
                 // END OF SCRIPT
                 break;
@@ -328,7 +347,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     return parameters;
   }
 
-  private Object executeReturn(String lastCommand, Object lastResult) {
+  private Object getValue(String lastCommand, Object lastResult) {
     final String variable = lastCommand.substring("return ".length()).trim();
 
     if (variable.equalsIgnoreCase("NULL"))
@@ -409,6 +428,21 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     } catch (InterruptedException e) {
       OLogManager.instance().error(this, "Sleep was interrupted", e);
     }
+  }
+
+  private void executeConsoleLog(final String lastCommand) {
+    final String value = lastCommand.substring("console.log ".length()).trim();
+    OLogManager.instance().info(this, "%s", getValue(value, null));
+  }
+
+  private void executeConsoleOutput(final String lastCommand) {
+    final String value = lastCommand.substring("console.output ".length()).trim();
+    System.out.println(getValue(value, null));
+  }
+
+  private void executeConsoleError(final String lastCommand) {
+    final String value = lastCommand.substring("console.error ".length()).trim();
+    System.err.println(getValue(value, null));
   }
 
   private Object executeLet(final String lastCommand, final ODatabaseDocument db) {
