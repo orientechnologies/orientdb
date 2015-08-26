@@ -68,18 +68,21 @@ public class OCommandExecutorSQLScriptTest {
   public void testReturnExpanded() throws Exception {
     StringBuilder script = new StringBuilder();
     script.append("let $a = insert into V set test = 'sql script test'\n");
-    script.append("return expand( $a )\n");
-    ODocument qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+    script.append("return $a.toJSON()\n");
+    String qResult = db.command(new OCommandScript("sql", script.toString())).execute();
 
     Assert.assertNotNull(qResult);
 
+    new ODocument().fromJSON(qResult);
+
     script = new StringBuilder();
     script.append("let $a = select from V limit 2\n");
-    script.append("return expand( $a )\n");
-    List<ODocument> result = db.command(new OCommandScript("sql", script.toString())).execute();
+    script.append("return $a.toJSON()\n");
+    List<String> result = db.command(new OCommandScript("sql", script.toString())).execute();
 
     Assert.assertNotNull(result);
-    for (ODocument d : result) {
+    for (String d : result) {
+      new ODocument().fromJSON(d);
     }
   }
 

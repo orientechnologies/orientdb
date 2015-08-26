@@ -355,8 +355,6 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
     if (iValue.equalsIgnoreCase("NULL"))
       lastResult = null;
-    else if (iValue.startsWith("$"))
-      lastResult = getContext().getVariable(iValue);
     else if (iValue.startsWith("[") && iValue.endsWith("]")) {
       // ARRAY - COLLECTION
       final List<String> items = new ArrayList<String>();
