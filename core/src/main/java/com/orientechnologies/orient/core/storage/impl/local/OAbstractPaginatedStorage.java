@@ -86,6 +86,7 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
 import java.io.BufferedInputStream;
@@ -2364,8 +2365,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           rec.getRecordVersion().copyFrom(ppos.recordVersion);
           clientTx.updateIdentityAfterCommit(oldRID, rid);
         } else {
-          // ORecordInternal.setContentChanged(rec, true);
-          rec.getRecordVersion().copyFrom(updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, rec.getRecordVersion(),
+          // USE -2 AS VESION TO AVOID INCREMENTING THE VERSION
+          rec.getRecordVersion().copyFrom(updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, new OSimpleVersion(-2),
               ORecordInternal.getRecordType(rec), -1, null).getResult());
         }
         break;
