@@ -7,9 +7,9 @@ angular.module('notification.controller', ['notification.services']).controller(
         Notification.clear();
     }
     $scope.onAlertHover = function () {
-        $rootScope.$broadcast("alert:hover");
+        //$rootScope.$broadcast("alert:hover");
     }
     $scope.onAlertOut = function () {
-        $rootScope.$broadcast("alert:out");
+        //$rootScope.$broadcast("alert:out");
     }
 }]);

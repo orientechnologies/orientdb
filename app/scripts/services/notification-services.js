@@ -28,14 +28,16 @@ notification.factory('Notification', function ($timeout, $rootScope) {
         this.notifications.push(notification);
       }
       var self = this;
-      self.stopTimer();
-      self.startTimer();
+      if (!notification.error) {
+        self.stopTimer();
+        self.startTimer();
+      }
     },
     startTimer: function () {
       var self = this;
       self.timePromise = $timeout(function () {
         self.clear();
-      }, 3000)
+      }, 4000)
     },
     stopTimer: function () {
       var self = this;
