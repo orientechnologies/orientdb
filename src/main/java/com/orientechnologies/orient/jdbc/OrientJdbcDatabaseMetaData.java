@@ -48,9 +48,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli (Orient Technologies - l.garulli--at--orientechnologies.com)
  */
 public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
-  private final static Set<String>    SYSTEM_TABLES = new HashSet<String>(Arrays.asList(new String[] { "OUser", "ORole",
-      "OIdentity", "ORIDs", "ORestricted", "OFunction", "OTriggered", "OSchedule" }));
-  protected final static List<String> TABLE_TYPES   = Arrays.asList("TABLE", "SYSTEM TABLE");
+  protected final static List<String> TABLE_TYPES = Arrays.asList("TABLE", "SYSTEM TABLE");
   private final OrientJdbcConnection  connection;
   private final ODatabaseDocument     database;
   private final OMetadata             metadata;
@@ -631,7 +629,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     for (OClass cls : classes) {
       final String className = cls.getName();
       final String type;
-      if (SYSTEM_TABLES.contains(cls.getName()))
+      if (OMetadata.SYSTEM_CLUSTER.contains(cls.getName()))
         type = "SYSTEM TABLE";
       else
         type = "TABLE";
