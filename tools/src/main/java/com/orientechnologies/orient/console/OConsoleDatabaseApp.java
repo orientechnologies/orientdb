@@ -97,7 +97,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
-  protected static final int    DEFAULT_WIDTH      = 150;
+  protected static final int    DEFAULT_WIDTH        = 150;
 
   protected ODatabaseDocumentTx currentDatabase;
   protected String              currentDatabaseName;
@@ -106,11 +106,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected List<OIdentifiable> currentResultSet;
   protected Object              currentResult;
   protected OServerAdmin        serverAdmin;
-  private int                   windowSize         = DEFAULT_WIDTH;
+  private int                   windowSize           = DEFAULT_WIDTH;
   private int                   lastPercentStep;
   private String                currentDatabaseUserName;
   private String                currentDatabaseUserPassword;
-  private int                   collectionMaxItems = 10;
+  private int                   maxMultiValueEntries = 10;
 
   public OConsoleDatabaseApp(final String[] args) {
     super(args);
@@ -2365,7 +2365,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   protected void dumpResultSet(final int limit) {
-    new OTableFormatter(this).setMaxWidthSize(getWindowSize()).writeRecords(currentResultSet, limit);
+    new OTableFormatter(this).setMaxWidthSize(getWindowSize()).setMaxMultiValueEntries(getMaxMultiValueEntries())
+        .writeRecords(currentResultSet, limit);
   }
 
   protected float getElapsedSecs(final long start) {
@@ -2502,10 +2503,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return windowSize;
   }
 
-  protected int getCollectionMaxItems() {
-    if (properties.containsKey("collectionMaxItems"))
-      return Integer.parseInt(properties.get("collectionMaxItems"));
-    return collectionMaxItems;
+  public int getMaxMultiValueEntries() {
+    if (properties.containsKey("maxMultiValueEntries"))
+      return Integer.parseInt(properties.get("maxMultiValueEntries"));
+    return maxMultiValueEntries;
   }
 
   private void dumpRecordDetails() {
@@ -2530,16 +2531,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
             coll.add(((Iterator<?>) value).next());
           value = coll;
         } else if (OMultiValue.isMultiValue(value)) {
-          final int size = OMultiValue.getSize(value);
-          if (size < getCollectionMaxItems()) {
-            final StringBuilder buffer = new StringBuilder(50);
-            for (Object o : OMultiValue.getMultiValueIterable(value)) {
-              if (buffer.length() > 0)
-                buffer.append(',');
-              buffer.append(o);
-            }
-            value = "[" + buffer.toString() + "]";
-          }
+          value = OTableFormatter.getPrettyFieldMultiValue(OMultiValue.getMultiValueIterator(value), getMaxMultiValueEntries());
         }
 
         message("\n| %24s | %-68s |", fieldName, value);
@@ -2583,7 +2575,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   private void browseRecords(final int limit, final OIdentifiableIterator<?> it) {
-    final OTableFormatter tableFormatter = new OTableFormatter(this).setMaxWidthSize(getWindowSize());
+    final OTableFormatter tableFormatter = new OTableFormatter(this).setMaxWidthSize(getWindowSize()).setMaxMultiValueEntries(
+        maxMultiValueEntries);
 
     setResultset(new ArrayList<OIdentifiable>());
     while (it.hasNext() && currentResultSet.size() <= limit)
