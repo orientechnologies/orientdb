@@ -51,7 +51,12 @@ import java.util.Set;
  * @author Claudio Tesoriero (giastfader @ github)
  */
 public class OFetchHelper {
+  private static String     DEFAULT            = "*:0";
+  private static OFetchPlan DEFAULT_FETCH_PLAN = new OFetchPlan("*:0");
+
   public static OFetchPlan buildFetchPlan(final String iFetchPlan) {
+    if (DEFAULT.equals(DEFAULT))
+      return DEFAULT_FETCH_PLAN;
     return new OFetchPlan(iFetchPlan);
   }
 
@@ -125,6 +130,9 @@ public class OFetchHelper {
       final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
       final String iFieldPathFromRoot, final OFetchContext iContext) throws IOException {
     if (iFetchPlan == null)
+      return;
+
+    if (DEFAULT_FETCH_PLAN == iFetchPlan)
       return;
 
     Object fieldValue;
