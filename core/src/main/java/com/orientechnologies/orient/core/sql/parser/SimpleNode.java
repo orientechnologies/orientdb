@@ -109,7 +109,9 @@ public class SimpleNode implements Node {
    */
 
   public String toString() {
-    return getClass().getSimpleName();
+    StringBuilder result = new StringBuilder();
+    toString(null, result);
+    return result.toString();
   }
 
   public String toString(String prefix) {

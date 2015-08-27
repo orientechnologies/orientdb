@@ -63,7 +63,7 @@ public class OExpression extends SimpleNode {
     // return null;// TODO
     // }
 
-    return "" + value;
+    return ("" + value).replaceAll("\\.", "_").replaceAll(" ", "_").replaceAll("\n", "_").replaceAll("\b", "_");
 
   }
 

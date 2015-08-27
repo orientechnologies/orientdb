@@ -1,24 +1,20 @@
 package com.orientechnologies.orient.graph.sql;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.Assert.*;
 
 public class OMatchStatementExecutionTest {
   private static String      DB_STORAGE = "memory";
@@ -235,6 +231,51 @@ public class OMatchStatementExecutionTest {
         .execute();
     assertEquals(1, qResult.size());
     assertEquals("n2", qResult.get(0).field("name"));
+  }
+
+  @Test
+  public void testCommonFriends2() throws Exception {
+
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name as name"))
+        .execute();
+    assertEquals(1, qResult.size());
+    assertEquals("n2", qResult.get(0).field("name"));
+  }
+
+  @Test
+  public void testReturnMethod() throws Exception {
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name.toUppercase() as name"))
+        .execute();
+    assertEquals(1, qResult.size());
+    assertEquals("N2", qResult.get(0).field("name"));
+  }
+
+  @Test
+  public void testReturnExpression() throws Exception {
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name + ' ' +friend.name as name"))
+        .execute();
+    assertEquals(1, qResult.size());
+    assertEquals("n2 n2", qResult.get(0).field("name"));
+  }
+
+  @Test
+  public void testReturnDefaultAlias() throws Exception {
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name"))
+        .execute();
+    assertEquals(1, qResult.size());
+    assertEquals("n2", qResult.get(0).field("friend_name"));
   }
 
   @Test

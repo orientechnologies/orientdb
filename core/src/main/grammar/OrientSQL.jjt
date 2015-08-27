@@ -846,7 +846,8 @@ OTraverseStatement TraverseStatement():
 OMatchStatement MatchStatement():
 {
     OMatchExpression lastMatchExpr = null;
-    OIdentifier lastReturn = null;
+    OExpression lastReturn = null;
+    OIdentifier lastReturnAlias = null;
 }
 {
     (
@@ -857,10 +858,20 @@ OMatchStatement MatchStatement():
             lastMatchExpr = MatchExpression() { jjtThis.matchExpressions.add(lastMatchExpr); }
         )*
         <RETURN>
-        lastReturn = Identifier() { jjtThis.returnItems.add(lastReturn); }
+        lastReturn = Expression() {lastReturnAlias = null;}
+        [ <AS> lastReturnAlias = Identifier() ]
+        {
+            jjtThis.returnAliases.add(lastReturnAlias);
+            jjtThis.returnItems.add(lastReturn);
+        }
         (
             <COMMA>
-            lastReturn = Identifier() { jjtThis.returnItems.add(lastReturn); }
+            lastReturn = Expression() {lastReturnAlias = null;}
+            [ <AS> lastReturnAlias = Identifier() ]
+            {
+                jjtThis.returnAliases.add(lastReturnAlias);
+                jjtThis.returnItems.add(lastReturn);
+            }
         )*
         [ jjtThis.limit = Limit() ]
     ){ return jjtThis; }
