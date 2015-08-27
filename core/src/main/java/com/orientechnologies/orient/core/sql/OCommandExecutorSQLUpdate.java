@@ -19,14 +19,8 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OTriple;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -55,6 +49,8 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.*;
 
 /**
  * SQL UPDATE command.
@@ -156,9 +152,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
           upsertMode = true;
         else if (word.equals(KEYWORD_RETURN))
           parseReturn();
-        else if (word.equals(KEYWORD_RETRY))
+        else if (word.equals(KEYWORD_RETRY)) {
+          OLogManager.instance().warn(this, "RETRY keyword will be ignored in " + originalQuery);
           parseRetry();
-        else
+        } else
           break;
 
         parserNextWord(true);
@@ -224,26 +221,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     if (lockStrategy.equals("RECORD"))
       query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK);
 
-    for (int r = 0; r < retry; ++r) {
-      try {
-
-        getDatabase().query(query, queryArgs);
-
-        break;
-
-      } catch (OConcurrentModificationException e) {
-        if (r + 1 >= retry)
-          // NO RETRY; PROPAGATE THE EXCEPTION
-          throw e;
-
-        // RETRY?
-        if (wait > 0)
-          try {
-            Thread.sleep(wait);
-          } catch (InterruptedException ignored) {
-          }
-      }
-    }
+    getDatabase().query(query, queryArgs);
 
     if (upsertMode && !updated) {
       // IF UPDATE DOES NOT PRODUCE RESULTS AND UPSERT MODE IS ENABLED, CREATE DOCUMENT AND APPLY SET/ADD/PUT/MERGE and so on

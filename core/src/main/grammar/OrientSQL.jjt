@@ -2265,6 +2265,8 @@ OBinaryCompareOperator CompareOperator():
       | result = LuceneOperator()
       | result = NearOperator()
       | result = WithinOperator()
+      | result = ScAndOperator()
+
 ){return result;}
 }
 
@@ -2353,6 +2355,14 @@ OWithinOperator WithinOperator():
 {
 (
 	<WITHIN>
+){return jjtThis;}
+}
+
+OScAndOperator ScAndOperator():
+{}
+{
+(
+	<SC_AND>
 ){return jjtThis;}
 }
 
