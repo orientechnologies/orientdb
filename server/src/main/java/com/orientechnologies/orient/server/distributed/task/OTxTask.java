@@ -96,7 +96,7 @@ public class OTxTask extends OAbstractReplicatedTask {
         if (task instanceof OAbstractRecordReplicatedTask) {
           final ORecord record = ((OAbstractRecordReplicatedTask) task).getRecord();
 
-          if (record != null)
+          if (record instanceof ODocument)
             for (String f : ((ODocument) record).fieldNames()) {
               final Object fValue = ((ODocument) record).field(f);
               if (fValue instanceof ORecordLazyMultiValue)
