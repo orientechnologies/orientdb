@@ -415,7 +415,7 @@ public enum OGlobalConfiguration {
   CACHE_LOCAL_IMPL("cache.local.impl", "Local Record cache implementation", String.class, ORecordCacheWeakRefs.class.getName()),
 
   // COMMAND
-  COMMAND_TIMEOUT("command.timeout", "Default timeout for commands expressed in milliseconds", Long.class, 0),
+  COMMAND_TIMEOUT("command.timeout", "Default timeout for commands expressed in milliseconds", Long.class, 0, true),
 
   COMMAND_CACHE_ENABLED("command.cache.enabled", "Enable command cache", Boolean.class, false),
 
