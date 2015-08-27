@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableA
 public class OSQLFunctionFirst extends OSQLFunctionConfigurableAbstract {
   public static final String NAME  = "first";
 
-  private Object             first = this;
+  private Object             first;
 
   public OSQLFunctionFirst() {
     super(NAME, 1, 1);
@@ -50,9 +50,7 @@ public class OSQLFunctionFirst extends OSQLFunctionConfigurableAbstract {
     if (OMultiValue.isMultiValue(value))
       value = OMultiValue.getFirstValue(value);
 
-    if (first == this)
-      // ONLY THE FIRST TIME
-      first = value;
+    first = value;
 
     return value;
   }
