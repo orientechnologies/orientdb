@@ -365,16 +365,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
       for (int i = 0; i < items.size(); ++i) {
         String item = items.get(i);
 
-        Object res;
-        if (item.startsWith("$"))
-          res = getContext().getVariable(item);
-        else
-          res = item;
-
-        if (OMultiValue.isMultiValue(res) && OMultiValue.getSize(res) == 1)
-          res = OMultiValue.getFirstValue(res);
-
-        result.add(res);
+        result.add(getValue(item, db));
       }
       lastResult = result;
     } else if (iValue.startsWith("{") && iValue.endsWith("}")) {

@@ -8,7 +8,9 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @Test
 public class OCommandExecutorSQLScriptTest {
@@ -94,7 +96,7 @@ public class OCommandExecutorSQLScriptTest {
     script.append("sleep 500");
     db.command(new OCommandScript("sql", script.toString())).execute();
 
-    Assert.assertTrue(System.currentTimeMillis() - begin > 500);
+    Assert.assertTrue(System.currentTimeMillis() - begin >= 500);
   }
 
   @Test
@@ -119,5 +121,18 @@ public class OCommandExecutorSQLScriptTest {
     script.append("LET $a = 'error'\n");
     script.append("console.error This is a test of log for ${a}");
     db.command(new OCommandScript("sql", script.toString())).execute();
+  }
+
+  @Test
+  public void testReturnObject() throws Exception {
+    StringBuilder script = new StringBuilder();
+    script.append("return [{ a: 'b' }]");
+    Collection<Object> result = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertNotNull(result);
+
+    Assert.assertEquals(result.size(), 1);
+
+    Assert.assertTrue(result.iterator().next() instanceof Map);
   }
 }
