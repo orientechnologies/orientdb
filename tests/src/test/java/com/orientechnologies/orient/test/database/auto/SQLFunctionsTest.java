@@ -471,4 +471,30 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
       Assert.assertEquals(OSecurityManager.createHash(name, "SHA-512"), d.field("n512"));
     }
   }
+
+  @Test
+  public void testFirstFunction() throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    long[] sequence = new long[100];
+    for (long i = 0; i < 100; ++i) {
+      sequence[(int)i] = i;
+    }
+    new ODocument("V").field("sequence", sequence).save();
+
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select first(sequence) from V where sequence is not null")).execute();
+
+    Assert.assertEquals(result.get(0).field("first"), 0l);
+  }
+
+  @Test
+  public void testLastFunction() throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    long[] sequence = new long[100];
+    for (long i = 0; i < 100; ++i) {
+      sequence[(int)i] = i;
+    }
+    new ODocument("V").field("sequence2", sequence).save();
+
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select last(sequence2) from V where sequence2 is not null")).execute();
+
+    Assert.assertEquals(result.get(0).field("last"), 99l);
+  }
 }
