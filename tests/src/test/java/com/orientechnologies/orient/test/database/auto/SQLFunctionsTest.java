@@ -15,22 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -45,6 +29,22 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Test(groups = "sql-select")
 public class SQLFunctionsTest extends DocumentDBBaseTest {
@@ -474,27 +474,38 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
   @Test
   public void testFirstFunction() throws UnsupportedEncodingException, NoSuchAlgorithmException {
-    long[] sequence = new long[100];
+    List<Long> sequence = new ArrayList<Long>(100);
     for (long i = 0; i < 100; ++i) {
-      sequence[(int)i] = i;
+      sequence.add(i);
     }
     new ODocument("V").field("sequence", sequence).save();
+    sequence.remove(0);
+    new ODocument("V").field("sequence", sequence).save();
 
-    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select first(sequence) from V where sequence is not null")).execute();
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select first(sequence) from V where sequence is not null")).execute();
 
+    Assert.assertEquals(result.size(), 2);
     Assert.assertEquals(result.get(0).field("first"), 0l);
+    Assert.assertEquals(result.get(1).field("first"), 1l);
   }
 
   @Test
   public void testLastFunction() throws UnsupportedEncodingException, NoSuchAlgorithmException {
-    long[] sequence = new long[100];
+    List<Long> sequence = new ArrayList<Long>(100);
     for (long i = 0; i < 100; ++i) {
-      sequence[(int)i] = i;
+      sequence.add(i);
     }
     new ODocument("V").field("sequence2", sequence).save();
+    sequence.remove(sequence.size() - 1);
+    new ODocument("V").field("sequence2", sequence).save();
 
-    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select last(sequence2) from V where sequence2 is not null")).execute();
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select last(sequence2) from V where sequence2 is not null")).execute();
 
+    Assert.assertEquals(result.size(), 2);
     Assert.assertEquals(result.get(0).field("last"), 99l);
+    Assert.assertEquals(result.get(1).field("last"), 98l);
+
   }
 }
