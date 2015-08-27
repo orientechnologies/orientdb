@@ -360,4 +360,11 @@ public class OCommandExecutorSQLSelectTest {
     return Orient.instance().getProfiler();
 
   }
+
+  public void testBackspace(){
+    List<ODocument> qResult = db.command(new OCommandSQL("select\nname\nas\nfoobar\nfrom\nouser\nwhere\nname\n=\n'admin'\norder\nby\nname\nasc\ngroup\nby\nname"))
+        .execute();
+    assertEquals(qResult.size(), 1);
+    assertEquals(qResult.get(0).field("foobar"), "admin");
+  }
 }
