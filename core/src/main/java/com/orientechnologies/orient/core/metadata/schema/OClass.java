@@ -213,7 +213,7 @@ public interface OClass extends Comparable<OClass> {
    * Returns true if the current instance extends the passed schema class (iClass).
    * 
    * @param iClass
-   * @return
+   * @return true if the current instance extends the passed schema class (iClass).
    * @see #isSuperClassOf(OClass)
    */
   boolean isSubClassOf(OClass iClass);
@@ -222,7 +222,7 @@ public interface OClass extends Comparable<OClass> {
    * Returns true if the passed schema class (iClass) extends the current instance.
    * 
    * @param iClass
-   * @return Returns true if the passed schema class extends the current instance
+   * @return Returns true if the passed schema class extends the current instance.
    * @see #isSubClassOf(OClass)
    */
   boolean isSuperClassOf(OClass iClass);
@@ -415,15 +415,14 @@ public interface OClass extends Comparable<OClass> {
 
   /**
    * Internal.
-   * 
-   * @return Copy all the indexes for given class, not the inherited ones, in the collection received as argument.
+   * Copy all the indexes for given class, not the inherited ones,
+   * in the collection received as argument.
    */
   void getClassIndexes(Collection<OIndex<?>> indexes);
 
   /**
    * Internal.
-   * 
-   * @return All indexes for given class and its super classes.
+   * All indexes for given class and its super classes.
    */
   void getIndexes(Collection<OIndex<?>> indexes);
 
