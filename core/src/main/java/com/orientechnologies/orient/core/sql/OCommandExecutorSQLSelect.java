@@ -776,7 +776,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (projectionDefinition == null)
           throw new OCommandSQLParsingException("Projection not allowed with FLATTEN() and EXPAND() operators");
 
-        final List<String> words = OStringSerializerHelper.smartSplit(projection, ' ');
+        final List<String> words = OStringSerializerHelper.smartSplit(projection, new char[]{' ', '\n', '\b'});
 
         String fieldName;
         if (words.size() > 1 && words.get(1).trim().equalsIgnoreCase(KEYWORD_AS)) {

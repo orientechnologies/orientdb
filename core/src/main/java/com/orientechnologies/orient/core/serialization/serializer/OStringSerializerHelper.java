@@ -173,6 +173,10 @@ public abstract class OStringSerializerHelper {
     return source.substring(startIndex, length);
   }
 
+  public static List<String> smartSplit(final String iSource, final char[] iRecordSeparators, final char... iJumpChars) {
+    return smartSplit(iSource, iRecordSeparators, 0, -1, true, true, false, false, iJumpChars);
+  }
+
   public static List<String> smartSplit(final String iSource, final char iRecordSeparator, final char... iJumpChars) {
     return smartSplit(iSource, new char[] { iRecordSeparator }, 0, -1, true, true, false, false, iJumpChars);
   }
