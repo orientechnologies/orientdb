@@ -316,10 +316,9 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
   @Test
   public void queryComposedAggregates() {
-    List<ODocument> result = database
-        .command(
-            new OSQLSynchQuery<ODocument>(
-                "select MIN(id) as min, max(id) as max, AVG(id) as average, sum(id) as total from Account")).execute();
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select MIN(id) as min, max(id) as max, AVG(id) as average, sum(id) as total from Account"))
+        .execute();
 
     Assert.assertTrue(result.size() == 1);
     for (ODocument d : result) {
@@ -508,6 +507,5 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.get(0).field("last"), 99l);
     Assert.assertEquals(result.get(1).field("last"), 98l);
 
->>>>>>> 0cfaa58... Fixed issue #4247
   }
 }
