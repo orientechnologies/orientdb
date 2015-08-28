@@ -40,7 +40,7 @@ public abstract class BaseHttpTest {
   private String             serverCfg          = "/com/orientechnologies/orient/server/network/orientdb-server-config-httponly.xml";
   private String             protocol           = "http";
   private String             host               = "localhost";
-  private int                port               = 2480;
+  private int                port               = 2498;
   private String             realm              = "OrientDB-";
   private String             userName           = "admin";
   private String             userPassword       = "admin";
