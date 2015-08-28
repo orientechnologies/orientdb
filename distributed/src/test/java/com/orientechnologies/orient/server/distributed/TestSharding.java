@@ -154,7 +154,7 @@ public class TestSharding extends AbstractServerClusterTest {
           OrientEdge e = result.iterator().next();
           Assert.assertEquals(e.getProperty("real"), true);
 
-          Assert.assertEquals(2, e.getRecord().getVersion());
+          Assert.assertEquals(1, e.getRecord().getVersion());
           e.getOutVertex().getRecord().reload();
           Assert.assertEquals(versions[i] + 1, e.getOutVertex().getRecord().getVersion());
 
