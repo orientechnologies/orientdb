@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageVariablePars
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.*;
 import java.lang.String;
@@ -330,6 +331,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     return index;
   }
 
+  @SuppressFBWarnings("BC_UNCONFIRMED_CAST")
   public void incrementalBackup(final OutputStream stream, OLogSequenceNumber fromLsn) throws IOException {
     checkOpeness();
 
@@ -494,6 +496,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     }
   }
 
+  @SuppressFBWarnings("BC_UNCONFIRMED_CAST")
   private void fullRestoreFromIBUFile(InputStream inputStream) throws IOException {
     final int pageSize = writeCache.pageSize();
 
@@ -537,6 +540,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     open("", "", loadProperties);
   }
 
+  @SuppressFBWarnings("BC_UNCONFIRMED_CAST")
   private void incrementalRestoreFromIBUFile(InputStream inputStream) throws IOException {
     closeClusters(false);
 
