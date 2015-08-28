@@ -22,120 +22,129 @@ package com.orientechnologies.orient.core.storage;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import java.io.IOException;
 
 public interface OCluster {
 
-  public static enum ATTRIBUTES {
-    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION, CONFLICTSTRATEGY, STATUS
+  enum ATTRIBUTES {
+    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION, CONFLICTSTRATEGY, STATUS, ENCRYPTION
   }
 
-  public void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException;
+  void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException;
 
-  public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException;
+  void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException;
 
-  public void create(int iStartSize) throws IOException;
+  void create(int iStartSize) throws IOException;
 
-  public void open() throws IOException;
+  void open() throws IOException;
 
-  public void close() throws IOException;
+  void close() throws IOException;
 
-  public void close(boolean flush) throws IOException;
+  void close(boolean flush) throws IOException;
 
-  public void delete() throws IOException;
+  void delete() throws IOException;
 
-  public OModificationLock getExternalModificationLock();
+  OModificationLock getExternalModificationLock();
 
-  public Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
+  Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
 
-  public void convertToTombstone(long iPosition) throws IOException;
+  String encryption();
 
-  public long getTombstonesCount();
+  void convertToTombstone(long iPosition) throws IOException;
 
-  public boolean hasTombstonesSupport();
+  long getTombstonesCount();
+
+  boolean hasTombstonesSupport();
 
   /**
    * Truncates the cluster content. All the entries will be removed.
-   * 
+   *
    * @throws IOException
    */
-  public void truncate() throws IOException;
+  void truncate() throws IOException;
 
-  public OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException;
+  OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException;
 
-  public boolean deleteRecord(long clusterPosition) throws IOException;
+  boolean deleteRecord(long clusterPosition) throws IOException;
 
-  public void updateRecord(long clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException;
+  void updateRecord(long clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException;
 
-  public ORawBuffer readRecord(long clusterPosition) throws IOException;
+  ORawBuffer readRecord(long clusterPosition) throws IOException;
 
-  public boolean exists();
+  ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, ORecordVersion recordVersion) throws IOException,
+      ORecordNotFoundException;
+
+  boolean exists();
 
   /**
    * Fills and return the PhysicalPosition object received as parameter with the physical position of logical record iPosition
-   * 
+   *
    * @throws IOException
    */
-  public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
+  OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
 
-  public long getEntries();
+  long getEntries();
 
-  public long getFirstPosition() throws IOException;
+  long getFirstPosition() throws IOException;
 
-  public long getLastPosition() throws IOException;
+  long getLastPosition() throws IOException;
 
-  public int getId();
+  String getFileName();
 
-  public void synch() throws IOException;
+  int getId();
 
-  public void setSoftlyClosed(boolean softlyClosed) throws IOException;
+  void synch() throws IOException;
 
-  public boolean wasSoftlyClosed() throws IOException;
+  void setSoftlyClosed(boolean softlyClosed) throws IOException;
 
-  public String getName();
+  boolean wasSoftlyClosed() throws IOException;
+
+  String getName();
 
   /**
    * Returns the size of the records contained in the cluster in bytes.
-   * 
+   *
    * @return
    */
-  public long getRecordsSize() throws IOException;
+  long getRecordsSize() throws IOException;
 
-  public boolean useWal();
+  boolean useWal();
 
-  public float recordGrowFactor();
+  float recordGrowFactor();
 
-  public float recordOverflowGrowFactor();
+  float recordOverflowGrowFactor();
 
-  public String compression();
+  String compression();
 
-  public boolean isHashBased();
+  boolean isHashBased();
 
-  public OClusterEntryIterator absoluteIterator();
+  boolean isSystemCluster();
 
-  public OPhysicalPosition[] higherPositions(OPhysicalPosition position) throws IOException;
+  OClusterEntryIterator absoluteIterator();
 
-  public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) throws IOException;
+  OPhysicalPosition[] higherPositions(OPhysicalPosition position) throws IOException;
 
-  public OPhysicalPosition[] lowerPositions(OPhysicalPosition position) throws IOException;
+  OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) throws IOException;
 
-  public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException;
+  OPhysicalPosition[] lowerPositions(OPhysicalPosition position) throws IOException;
+
+  OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException;
 
   /**
    * Hides records content by putting tombstone on the records position but does not delete record itself.
-   * 
-   * This method is used in case of record content itself is broken and can not be read or deleted. So it is emergence method.
-   * 
+   * <p>
+   * This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method.
+   *
    * @param position
    *          Position of record in cluster
+   * @return false if record does not exist.
    * @throws java.lang.UnsupportedOperationException
    *           In case current version of cluster does not support given operation.
-   * 
-   * @return false if record does not exist.
    */
-  public boolean hideRecord(long position) throws IOException;
+  boolean hideRecord(long position) throws IOException;
 
-  public ORecordConflictStrategy getRecordConflictStrategy();
+  ORecordConflictStrategy getRecordConflictStrategy();
 }

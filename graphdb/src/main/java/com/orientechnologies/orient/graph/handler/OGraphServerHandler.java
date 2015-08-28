@@ -79,7 +79,8 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
 
   @Override
   public void bind(Bindings binding) {
-    if (binding.get("orient") == null)
+    Object scriptGraph = binding.get("orient");
+    if (scriptGraph == null || !(scriptGraph instanceof OScriptGraphOrientWrapper))
       binding.put("orient", new OScriptGraphOrientWrapper());
   }
 

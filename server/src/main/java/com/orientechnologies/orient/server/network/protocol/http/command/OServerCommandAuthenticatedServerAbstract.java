@@ -19,12 +19,12 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
+import java.io.IOException;
+
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-
-import java.io.IOException;
 
 /**
  * Server based authenticated commands. Authenticates against the OrientDB server users found in configuration.
@@ -52,9 +52,11 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
 
   protected boolean authenticate(final OHttpRequest iRequest, final OHttpResponse iResponse, final boolean iAskForAuthentication)
       throws IOException {
-    if (checkGuestAccess())
-      // GUEST ACCESSES TO THE RESOURCE: OK ALSO WITHOUT AN AUTHENTICATION
+    if (checkGuestAccess()) {
+      // GUEST ACCESSES TO THE RESOURCE: OK ALSO WITHOUT AN AUTHENTICATION.
+      iResponse.sessionId = null;
       return true;
+    }
 
     if (iAskForAuthentication)
       if (iRequest.authorization == null || SESSIONID_LOGOUT.equals(iRequest.sessionId)) {
@@ -66,6 +68,12 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
     if (iRequest.authorization != null) {
       // GET CREDENTIALS
       final String[] authParts = iRequest.authorization.split(":");
+      if (authParts.length != 2) {
+        // NO USER : PASSWD
+        sendAuthorizationRequest(iRequest, iResponse);
+        return false;
+      }
+
       serverUser = authParts[0];
       serverPassword = authParts[1];
       if (authParts.length == 2 && server.authenticate(serverUser, serverPassword, resource))
@@ -79,7 +87,7 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
   }
 
   protected boolean checkGuestAccess() {
-    return server.authenticate(OServerConfiguration.SRV_ROOT_GUEST, null, resource);
+    return server.isAllowed(OServerConfiguration.GUEST_USER, resource);
   }
 
   protected void sendNotAuthorizedResponse(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {

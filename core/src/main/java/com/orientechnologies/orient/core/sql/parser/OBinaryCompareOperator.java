@@ -6,4 +6,5 @@ package com.orientechnologies.orient.core.sql.parser;
 public interface OBinaryCompareOperator {
   public boolean execute(Object left, Object right);
 
+  boolean supportsBasicCalculation();
 }

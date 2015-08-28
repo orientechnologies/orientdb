@@ -18,17 +18,7 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -36,11 +26,27 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Parameter;
+import com.tinkerpop.blueprints.Predicate;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 public class GraphTests {
 
@@ -97,6 +103,26 @@ public class GraphTests {
       }
 
     }
+  }
+
+  @Test
+  public void testIndexCollate() {
+    OrientGraph g = new OrientGraph(URL, "admin", "admin");
+
+    OrientVertexType vCollate = g.createVertexType("VCollate");
+
+    vCollate.createProperty("name", OType.STRING);
+
+    g.createKeyIndex("name", Vertex.class, new Parameter<String, String>("class", "VCollate"), new Parameter<String, String>(
+        "type", "UNIQUE"), new Parameter<String, OType>("keytype", OType.STRING), new Parameter<String, String>("collate", "ci"));
+    OrientVertex vertex = g.addVertex("class:VCollate", new Object[] { "name", "Enrico" });
+
+    g.commit();
+
+    Iterable<Vertex> enrico = g.getVertices("VCollate.name", "ENRICO");
+
+    Assert.assertEquals(true, enrico.iterator().hasNext());
+
   }
 
   @Test
@@ -227,6 +253,87 @@ public class GraphTests {
 
     } finally {
       g.shutdown();
+    }
+  }
+
+  @Test
+  public void shouldAddVertexAndEdgeInTheSameCluster() {
+    OrientGraphFactory orientGraphFactory = new OrientGraphFactory("memory:shouldAddVertexAndEdgeInTheSameCluster");
+    final OrientGraphNoTx graphDbNoTx = orientGraphFactory.getNoTx();
+    try {
+      OrientVertexType deviceVertex = graphDbNoTx.createVertexType("Device");
+      OrientEdgeType edgeType = graphDbNoTx.createEdgeType("Link");
+
+      edgeType.addCluster("Links");
+
+      OrientVertex dev1 = graphDbNoTx.addVertex("Device");
+      OrientVertex dev2 = graphDbNoTx.addVertex("Device");
+
+      final OrientEdge e = graphDbNoTx.addEdge("class:Link,cluster:Links", dev1, dev2, null);
+
+      Assert.assertEquals(e.getIdentity().getClusterId(), graphDbNoTx.getRawGraph().getClusterIdByName("Links"));
+
+    } finally {
+      graphDbNoTx.shutdown();
+      orientGraphFactory.close();
+    }
+  }
+
+  @Test
+  public void testPropertyWithDash() {
+    OrientGraphFactory orientGraphFactory = new OrientGraphFactory("memory:GraphTestsTestPropertyWithDash");
+    final OrientGraphNoTx graphDbNoTx = orientGraphFactory.getNoTx();
+    try {
+      graphDbNoTx.addVertex("class:Test");
+      OrientVertexType vertex = graphDbNoTx.getVertexType("Test");
+      if (vertex.getProperty("vdevicedataKey") == null) {
+        vertex.createProperty("vdevicedataKey", OType.STRING);
+      }
+
+      try {
+
+        if (vertex.getProperty("vdevice-dataKey") == null) {
+          vertex.createProperty("vdevice-dataKey", OType.STRING);
+        }
+        fail();
+      } catch (OSchemaException e) {
+
+      }
+    } finally {
+      graphDbNoTx.shutdown();
+      orientGraphFactory.close();
+    }
+  }
+
+  @Test
+  public void testCustomPredicate() {
+    OrientGraphFactory orientGraphFactory = new OrientGraphFactory("memory:testCustomPredicate");
+    final OrientGraphNoTx g = orientGraphFactory.getNoTx();
+    try {
+      g.addVertex(null).setProperty("test", true);
+      g.addVertex(null).setProperty("test", false);
+      g.addVertex(null).setProperty("no", true);
+
+      g.commit();
+
+      GraphQuery query = g.query();
+      query.has("test", new Predicate() {
+        @Override
+        public boolean evaluate(Object first, Object second) {
+          return first != null && first.equals(second);
+        }
+      }, true);
+
+      Iterable<Vertex> vertices = query.vertices();
+
+      final Iterator<Vertex> it = vertices.iterator();
+      Assert.assertTrue(it.hasNext());
+      Assert.assertTrue((Boolean) it.next().getProperty("test"));
+      Assert.assertFalse(it.hasNext());
+
+    } finally {
+      g.shutdown();
+      orientGraphFactory.close();
     }
   }
 }

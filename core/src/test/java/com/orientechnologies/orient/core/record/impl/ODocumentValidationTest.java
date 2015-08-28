@@ -1,5 +1,16 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import org.testng.Assert;
+import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,17 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.testng.AssertJUnit;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OValidationException;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-
 public class ODocumentValidationTest {
 
   @Test
@@ -31,6 +31,10 @@ public class ODocumentValidationTest {
     try {
       ODocument doc = new ODocument();
       OIdentifiable id = db.save(doc).getIdentity();
+
+      OClass embeddedClazz = db.getMetadata().getSchema().createClass("EmbeddedValidation");
+      embeddedClazz.createProperty("int", OType.INTEGER).setMandatory(true);
+
       OClass clazz = db.getMetadata().getSchema().createClass("Validation");
       clazz.createProperty("int", OType.INTEGER).setMandatory(true);
       clazz.createProperty("long", OType.LONG).setMandatory(true);
@@ -45,11 +49,15 @@ public class ODocumentValidationTest {
       clazz.createProperty("short", OType.SHORT).setMandatory(true);
       clazz.createProperty("string", OType.STRING).setMandatory(true);
       clazz.createProperty("link", OType.LINK).setMandatory(true);
-      clazz.createProperty("embedded", OType.EMBEDDED).setMandatory(true);
+      clazz.createProperty("embedded", OType.EMBEDDED, embeddedClazz).setMandatory(true);
 
-      clazz.createProperty("embeddedList", OType.EMBEDDEDLIST).setMandatory(true);
-      clazz.createProperty("embeddedSet", OType.EMBEDDEDSET).setMandatory(true);
-      clazz.createProperty("embeddedMap", OType.EMBEDDEDMAP).setMandatory(true);
+      clazz.createProperty("embeddedListNoClass", OType.EMBEDDEDLIST).setMandatory(true);
+      clazz.createProperty("embeddedSetNoClass", OType.EMBEDDEDSET).setMandatory(true);
+      clazz.createProperty("embeddedMapNoClass", OType.EMBEDDEDMAP).setMandatory(true);
+
+      clazz.createProperty("embeddedList", OType.EMBEDDEDLIST, embeddedClazz).setMandatory(true);
+      clazz.createProperty("embeddedSet", OType.EMBEDDEDSET, embeddedClazz).setMandatory(true);
+      clazz.createProperty("embeddedMap", OType.EMBEDDEDMAP, embeddedClazz).setMandatory(true);
 
       clazz.createProperty("linkList", OType.LINKLIST).setMandatory(true);
       clazz.createProperty("linkSet", OType.LINKSET).setMandatory(true);
@@ -69,13 +77,40 @@ public class ODocumentValidationTest {
       d.field("short", 10);
       d.field("string", "yeah");
       d.field("link", id);
-      d.field("embedded", new ODocument().field("test", "test"));
-      d.field("embeddedList", new ArrayList<String>());
-      d.field("embeddedSet", new HashSet<String>());
-      d.field("embeddedMap", new HashMap<String, String>());
       d.field("linkList", new ArrayList<ORecordId>());
       d.field("linkSet", new HashSet<ORecordId>());
       d.field("linkMap", new HashMap<String, ORecordId>());
+
+      d.field("embeddedListNoClass", new ArrayList<ORecordId>());
+      d.field("embeddedSetNoClass", new HashSet<ORecordId>());
+      d.field("embeddedMapNoClass", new HashMap<String, ORecordId>());
+
+      ODocument embedded = new ODocument("EmbeddedValidation");
+      embedded.field("int", 20);
+      embedded.field("long", 20);
+      d.field("embedded", embedded);
+
+      ODocument embeddedInList = new ODocument("EmbeddedValidation");
+      embeddedInList.field("int", 30);
+      embeddedInList.field("long", 30);
+      final ArrayList<ODocument> embeddedList = new ArrayList<ODocument>();
+      embeddedList.add(embeddedInList);
+      d.field("embeddedList", embeddedList);
+
+      ODocument embeddedInSet = new ODocument("EmbeddedValidation");
+      embeddedInSet.field("int", 30);
+      embeddedInSet.field("long", 30);
+      final Set<ODocument> embeddedSet = new HashSet<ODocument>();
+      embeddedSet.add(embeddedInSet);
+      d.field("embeddedSet", embeddedSet);
+
+      ODocument embeddedInMap = new ODocument("EmbeddedValidation");
+      embeddedInMap.field("int", 30);
+      embeddedInMap.field("long", 30);
+      final Map<String, ODocument> embeddedMap = new HashMap<String, ODocument>();
+      embeddedMap.put("testEmbedded", embeddedInMap);
+      d.field("embeddedMap", embeddedMap);
+
       d.validate();
 
       checkRequireField(d, "int");
@@ -98,6 +133,160 @@ public class ODocumentValidationTest {
       checkRequireField(d, "linkList");
       checkRequireField(d, "linkSet");
       checkRequireField(d, "linkMap");
+
+    } finally {
+      db.drop();
+    }
+
+  }
+
+  @Test
+  public void testValidationNotValidEmbedded() {
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    db.create();
+    try {
+      OClass embeddedClazz = db.getMetadata().getSchema().createClass("EmbeddedValidation");
+      embeddedClazz.createProperty("int", OType.INTEGER).setMandatory(true);
+
+      OClass clazz = db.getMetadata().getSchema().createClass("Validation");
+      clazz.createProperty("int", OType.INTEGER).setMandatory(true);
+      clazz.createProperty("long", OType.LONG).setMandatory(true);
+      clazz.createProperty("embedded", OType.EMBEDDED, embeddedClazz).setMandatory(true);
+
+      ODocument d = new ODocument(clazz);
+      d.field("int", 30);
+      d.field("long", 30);
+      d.field("embedded", new ODocument("EmbeddedValidation").field("test", "test"));
+      try {
+        d.validate();
+        Assert.fail("Validation doesn't throw exception");
+      } catch (OValidationException e) {
+        Assert.assertTrue(e.toString().contains("EmbeddedValidation.int"));
+      }
+
+    } finally {
+      db.drop();
+    }
+  }
+
+  @Test
+  public void testValidationNotValidEmbeddedSet() {
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    db.create();
+    try {
+      OClass embeddedClazz = db.getMetadata().getSchema().createClass("EmbeddedValidation");
+      embeddedClazz.createProperty("int", OType.INTEGER).setMandatory(true);
+      embeddedClazz.createProperty("long", OType.LONG).setMandatory(true);
+
+      OClass clazz = db.getMetadata().getSchema().createClass("Validation");
+      clazz.createProperty("int", OType.INTEGER).setMandatory(true);
+      clazz.createProperty("long", OType.LONG).setMandatory(true);
+      clazz.createProperty("embeddedSet", OType.EMBEDDEDSET, embeddedClazz).setMandatory(true);
+
+      ODocument d = new ODocument(clazz);
+      d.field("int", 30);
+      d.field("long", 30);
+      final Set<ODocument> embeddedSet = new HashSet<ODocument>();
+      d.field("embeddedSet", embeddedSet);
+
+      ODocument embeddedInSet = new ODocument("EmbeddedValidation");
+      embeddedInSet.field("int", 30);
+      embeddedInSet.field("long", 30);
+      embeddedSet.add(embeddedInSet);
+
+      ODocument embeddedInSet2 = new ODocument("EmbeddedValidation");
+      embeddedInSet2.field("int", 30);
+      embeddedSet.add(embeddedInSet2);
+
+      try {
+        d.validate();
+        Assert.fail("Validation doesn't throw exception");
+      } catch (OValidationException e) {
+        Assert.assertTrue(e.toString().contains("EmbeddedValidation.long"));
+      }
+
+    } finally {
+      db.drop();
+    }
+  }
+
+  @Test
+  public void testValidationNotValidEmbeddedList() {
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    db.create();
+    try {
+      OClass embeddedClazz = db.getMetadata().getSchema().createClass("EmbeddedValidation");
+      embeddedClazz.createProperty("int", OType.INTEGER).setMandatory(true);
+      embeddedClazz.createProperty("long", OType.LONG).setMandatory(true);
+
+      OClass clazz = db.getMetadata().getSchema().createClass("Validation");
+      clazz.createProperty("int", OType.INTEGER).setMandatory(true);
+      clazz.createProperty("long", OType.LONG).setMandatory(true);
+      clazz.createProperty("embeddedList", OType.EMBEDDEDLIST, embeddedClazz).setMandatory(true);
+
+      ODocument d = new ODocument(clazz);
+      d.field("int", 30);
+      d.field("long", 30);
+      final ArrayList<ODocument> embeddedList = new ArrayList<ODocument>();
+      d.field("embeddedList", embeddedList);
+
+      ODocument embeddedInList = new ODocument("EmbeddedValidation");
+      embeddedInList.field("int", 30);
+      embeddedInList.field("long", 30);
+      embeddedList.add(embeddedInList);
+
+      ODocument embeddedInList2 = new ODocument("EmbeddedValidation");
+      embeddedInList2.field("int", 30);
+      embeddedList.add(embeddedInList2);
+
+      try {
+        d.validate();
+        Assert.fail("Validation doesn't throw exception");
+      } catch (OValidationException e) {
+        Assert.assertTrue(e.toString().contains("EmbeddedValidation.long"));
+      }
+
+    } finally {
+      db.drop();
+    }
+
+  }
+
+  @Test
+  public void testValidationNotValidEmbeddedMap() {
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    db.create();
+    try {
+      OClass embeddedClazz = db.getMetadata().getSchema().createClass("EmbeddedValidation");
+      embeddedClazz.createProperty("int", OType.INTEGER).setMandatory(true);
+      embeddedClazz.createProperty("long", OType.LONG).setMandatory(true);
+
+      OClass clazz = db.getMetadata().getSchema().createClass("Validation");
+      clazz.createProperty("int", OType.INTEGER).setMandatory(true);
+      clazz.createProperty("long", OType.LONG).setMandatory(true);
+      clazz.createProperty("embeddedMap", OType.EMBEDDEDMAP, embeddedClazz).setMandatory(true);
+
+      ODocument d = new ODocument(clazz);
+      d.field("int", 30);
+      d.field("long", 30);
+      final Map<String, ODocument> embeddedMap = new HashMap<String, ODocument>();
+      d.field("embeddedMap", embeddedMap);
+
+      ODocument embeddedInMap = new ODocument("EmbeddedValidation");
+      embeddedInMap.field("int", 30);
+      embeddedInMap.field("long", 30);
+      embeddedMap.put("1", embeddedInMap);
+
+      ODocument embeddedInMap2 = new ODocument("EmbeddedValidation");
+      embeddedInMap2.field("int", 30);
+      embeddedMap.put("2", embeddedInMap2);
+
+      try {
+        d.validate();
+        Assert.fail("Validation doesn't throw exception");
+      } catch (OValidationException e) {
+        Assert.assertTrue(e.toString().contains("EmbeddedValidation.long"));
+      }
 
     } finally {
       db.drop();

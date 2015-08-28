@@ -38,7 +38,7 @@ public class ORecordIteratorClassDescendentOrder<REC extends ORecord> extends OR
   public ORecordIteratorClassDescendentOrder(ODatabaseDocumentInternal iDatabase, ODatabaseDocumentInternal iLowLevelDatabase,
       String iClassName, boolean iPolymorphic, boolean iUseCache, boolean iterateThroughTombstones,
       OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    super(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, iUseCache, iterateThroughTombstones, iLockingStrategy);
+    super(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, iUseCache, false, iterateThroughTombstones, iLockingStrategy);
 
     currentClusterIdx = clusterIds.length - 1; // START FROM THE LAST CLUSTER
   }

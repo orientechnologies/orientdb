@@ -19,18 +19,11 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.sql.parser.OrientSql;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL UPDATE command.
@@ -39,7 +32,7 @@ import java.util.Map;
  * 
  */
 public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  protected OCommandExecutorSQLAbstract delegate;
+  protected OCommandExecutor delegate;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDelegate parse(final OCommandRequest iCommand) {
@@ -51,33 +44,23 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract imp
 
       final String textUpperCase = upperCase(text);
 
-      if (textUpperCase.startsWith("SELECT") && false) {
-        InputStream is = new ByteArrayInputStream(text.getBytes());
-        OrientSql osql = new OrientSql(is);
-        try {
-          // TODO create a cache of parsed statements
-          OStatement stm = osql.parse();
-          delegate = stm.buildExecutor(iCommand);
-          delegate.setContext(context);
-          delegate.setLimit(iCommand.getLimit());
-          delegate.setProgressListener(progressListener);
-          is.close();
-        } catch (Exception e) {
-          throwParsingException(e.getMessage());
-        }
-      } else {
-        delegate = (OCommandExecutorSQLAbstract) OSQLEngine.getInstance().getCommand(textUpperCase);
-        if (delegate == null)
-          throw new OCommandExecutorNotFoundException("Cannot find a command executor for the command request: " + iCommand);
+      delegate = OSQLEngine.getInstance().getCommand(textUpperCase);
+      if (delegate == null)
+        throw new OCommandExecutorNotFoundException("Cannot find a command executor for the command request: " + iCommand);
 
-        delegate.setContext(context);
-        delegate.setLimit(iCommand.getLimit());
-        delegate.parse(iCommand);
-        delegate.setProgressListener(progressListener);
-      }
+      delegate.setContext(context);
+      delegate.setLimit(iCommand.getLimit());
+      delegate.parse(iCommand);
+      delegate.setProgressListener(progressListener);
+
     } else
       throw new OCommandExecutionException("Cannot find a command executor for the command request: " + iCommand);
     return this;
+  }
+
+  @Override
+  public long getDistributedTimeout() {
+    return delegate.getDistributedTimeout();
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
@@ -107,8 +90,13 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract imp
     return delegate.isIdempotent();
   }
 
-  public OCommandExecutorSQLAbstract getDelegate() {
+  public OCommandExecutor getDelegate() {
     return delegate;
+  }
+
+  @Override
+  public boolean isCacheable() {
+    return delegate.isCacheable();
   }
 
   @Override
@@ -116,5 +104,10 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract imp
     if (delegate instanceof OCommandDistributedReplicateRequest)
       return ((OCommandDistributedReplicateRequest) delegate).getQuorumType();
     return QUORUM_TYPE.ALL;
+  }
+
+  @Override
+  public Set<String> getInvolvedClusters() {
+    return delegate.getInvolvedClusters();
   }
 }

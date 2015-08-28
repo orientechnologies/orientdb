@@ -87,15 +87,6 @@ public class OFuzzyCheckpointStartRecord extends OAbstractCheckPointStartRecord 
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-    return true;
-  }
-
-  @Override
   public String toString() {
     return "OFuzzyCheckpointStartRecord{" + "lsn=" + lsn + "} " + super.toString();
   }

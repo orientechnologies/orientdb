@@ -20,18 +20,18 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Iterator;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Direction;
+
+import java.util.Iterator;
 
 /**
  * Lazy iterator of edges.
@@ -60,6 +60,12 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
 
     final OIdentifiable rec = (OIdentifiable) iObject;
 
+    if (rec == null) {
+      // SKIP IT
+      OLogManager.instance().warn(this, "Record (%s) is null", iObject);
+      return null;
+    }
+
     final ORecord record = rec.getRecord();
     if (record == null) {
       // SKIP IT
@@ -70,7 +76,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     if (!(record instanceof ODocument)) {
       // SKIP IT
       OLogManager.instance().warn(this,
-          "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s, Database : %s .", rec,
+          "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s, Database : %s", rec,
           sourceVertex != null ? sourceVertex.getIdentity() : null, targetVertex != null ? targetVertex.getIdentity() : null,
           record.getDatabase().getURL());
       return null;
@@ -82,7 +88,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
       return null;
     }
 
-    OClass immutableSchema = ODocumentInternal.getImmutableSchemaClass(value);
+    OImmutableClass immutableSchema = ODocumentInternal.getImmutableSchemaClass(value);
     if (immutableSchema == null) {
       ODatabaseDocument db = value.getDatabaseIfDefined();
       if (db == null) {
@@ -97,7 +103,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     }
 
     final OrientEdge edge;
-    if (immutableSchema.isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    if (immutableSchema.isVertexType()) {
       // DIRECT VERTEX, CREATE DUMMY EDGE
       if (connection.getKey() == Direction.OUT)
         edge = new OrientEdge(this.sourceVertex.getGraph(), this.sourceVertex.getIdentity(), rec.getIdentity(),
@@ -105,7 +111,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
       else
         edge = new OrientEdge(this.sourceVertex.getGraph(), rec.getIdentity(), this.sourceVertex.getIdentity(),
             connection.getValue());
-    } else if (ODocumentInternal.getImmutableSchemaClass(value).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+    } else if (immutableSchema.isEdgeType()) {
       // EDGE
       edge = new OrientEdge(this.sourceVertex.getGraph(), rec.getIdentity(), connection.getValue());
     } else

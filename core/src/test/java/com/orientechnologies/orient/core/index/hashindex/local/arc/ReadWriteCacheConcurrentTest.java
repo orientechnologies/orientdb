@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -18,9 +18,9 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
@@ -95,6 +95,7 @@ public class ReadWriteCacheConcurrentTest {
 
   private void initBuffer() throws IOException {
     writeBuffer = new OWOWCache(false, 8 + systemOffset, 10000, null, -1, 15000 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING),
+        4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING) + 15000 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING),
         storageLocal, true, 1);
     readBuffer = new O2QCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, true);
   }
@@ -191,8 +192,7 @@ public class ReadWriteCacheConcurrentTest {
   private void validateFileContent(byte version, int k) throws IOException {
     String path = storageLocal.getConfiguration().getDirectory() + "/readWriteCacheTest" + k + ".tst";
 
-    OFileClassic fileClassic = new OFileClassic();
-    fileClassic.init(path, "r");
+    OFileClassic fileClassic = new OFileClassic(path, "r");
     fileClassic.open();
 
     for (int i = 0; i < PAGE_COUNT; i++) {

@@ -70,6 +70,9 @@ public class ODistributedResponseManager {
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
       final Collection<String> expectedResponses, final int iExpectedSynchronousResponses, final int iQuorum,
       final boolean iWaitForLocalNode, final long iSynchTimeout, final long iTotalTimeout, final boolean iGroupResponsesByResult) {
+    assert iSynchTimeout > 0;
+    assert iTotalTimeout > 0;
+
     this.dManager = iManager;
     this.request = iRequest;
     this.sentOn = System.currentTimeMillis();
@@ -559,7 +562,7 @@ public class ODistributedResponseManager {
               conflicts, quorum, request);
 
       final StringBuilder msg = new StringBuilder(256);
-      msg.append("Quorum " + getQuorum() + " not reached for request (" + request + "). Timeout="
+      msg.append("Quorum " + getQuorum() + " not reached for request (" + request + "). Elapsed="
           + (System.currentTimeMillis() - sentOn) + "ms");
       final List<ODistributedResponse> res = getConflictResponses();
       if (res.isEmpty())

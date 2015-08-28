@@ -75,6 +75,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   private OClass              linkedClass;
   transient private String    linkedClassName;
 
+  private String              description;
   private boolean             mandatory;
   private boolean             notNull = false;
   private String              min;
@@ -96,7 +97,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   OPropertyImpl(final OClassImpl owner) {
-    document = new ODocument();
+    document = new ODocument().setTrackingChanges(false);
     this.owner = owner;
   }
 
@@ -682,7 +683,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     return this;
   }
 
-
   public String getRegexp() {
     acquireSchemaReadLock();
     try {
@@ -708,7 +708,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(commandSQL).execute();
 
         setRegexpInternal(regexp);
       } else
@@ -843,6 +843,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       return getType();
     case COLLATE:
       return getCollate();
+    case DESCRIPTION:
+      return getDescription();
     }
 
     throw new IllegalArgumentException("Cannot find attribute '" + attribute + "'");
@@ -907,6 +909,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
           setCustom(customName, customValue);
       }
       break;
+    case DESCRIPTION:
+      setDescription(stringValue);
+      break;
     }
   }
 
@@ -954,6 +959,45 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     return this;
   }
+  
+  @Override
+  public String getDescription() {
+    acquireSchemaReadLock();
+    try {
+      return description;
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+  
+  @Override
+  public OPropertyImpl setDescription(final String iDescription) {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock();
+    try {
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OStorage storage = database.getStorage();
+
+      if (storage instanceof OStorageProxy) {
+        final String cmd = String.format("alter property %s description %s", getFullName(), iDescription);
+        database.command(new OCommandSQL(cmd)).execute();
+      } else if (isDistributedCommand()) {
+        final String cmd = String.format("alter property %s description %s", getFullName(), iDescription);
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(new OCommandSQL(cmd)).execute();
+
+        setDescriptionInternal(iDescription);
+      } else
+        setDescriptionInternal(iDescription);
+
+    } finally {
+      releaseSchemaWriteLock();
+    }
+    return this;
+  }
 
   @Override
   public String toString() {
@@ -997,7 +1041,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     try {
       if (this == obj)
         return true;
-      if (!OProperty.class.isAssignableFrom(obj.getClass()))
+      if (obj == null || !OProperty.class.isAssignableFrom(obj.getClass()))
         return false;
       OProperty other = (OProperty) obj;
       if (owner == null) {
@@ -1031,6 +1075,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     mandatory = document.containsField("mandatory") ? (Boolean) document.field("mandatory") : false;
     readonly = document.containsField("readonly") ? (Boolean) document.field("readonly") : false;
     notNull = document.containsField("notNull") ? (Boolean) document.field("notNull") : false;
+    defaultValue = (String) (document.containsField("defaultValue") ? document.field("defaultValue") : null);
     if (document.containsField("collate"))
       collate = OSQLEngine.getCollate((String) document.field("collate"));
 
@@ -1041,6 +1086,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     linkedType = document.field("linkedType") != null ? OType.getById(((Integer) document.field("linkedType")).byteValue()) : null;
     customFields = (Map<String, String>) (document.containsField("customFields") ? document
         .field("customFields", OType.EMBEDDEDMAP) : null);
+    description = (String) (document.containsField("description") ? document.field("description") : null);
   }
 
   public Collection<OIndex<?>> getAllIndexes() {
@@ -1072,6 +1118,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       document.field("mandatory", mandatory);
       document.field("readonly", readonly);
       document.field("notNull", notNull);
+      document.field("defaultValue", defaultValue);
 
       document.field("min", min);
       document.field("max", max);
@@ -1084,6 +1131,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
       document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
       document.field("collate", collate.getName());
+      document.field("description", description);
 
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
@@ -1217,6 +1265,19 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     acquireSchemaWriteLock();
     try {
       this.regexp = regexp;
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+  
+  private void setDescriptionInternal(final String iDescription) {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+
+      this.description = iDescription;
     } finally {
       releaseSchemaWriteLock();
     }

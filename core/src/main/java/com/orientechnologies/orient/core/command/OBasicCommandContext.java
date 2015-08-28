@@ -45,6 +45,8 @@ public class OBasicCommandContext implements OCommandContext {
   protected OCommandContext                                                          child;
   protected Map<String, Object>                                                      variables;
 
+  protected Map<Object, Object>                                                      inputParameters;
+
   // MANAGES THE TIMEOUT
   private long                                                                       executionStartedOn;
   private long                                                                       timeoutMs;
@@ -271,9 +273,38 @@ public class OBasicCommandContext implements OCommandContext {
     return true;
   }
 
+  @Override
+  public OCommandContext copy() {
+    final OBasicCommandContext copy = new OBasicCommandContext();
+    copy.init();
+    copy.variables.putAll(variables);
+
+    copy.recordMetrics = recordMetrics;
+    copy.parent = parent;
+    copy.child = child;
+    return copy;
+  }
+
+  @Override
+  public void merge(final OCommandContext iContext) {
+    // TODO: SOME VALUES NEED TO BE MERGED
+  }
+
   private void init() {
     if (variables == null)
       variables = new HashMap<String, Object>();
   }
 
+  public Map<Object, Object> getInputParameters() {
+    if (inputParameters != null) {
+      return inputParameters;
+    }
+
+    return parent == null ? null : parent.getInputParameters();
+  }
+
+  public void setInputParameters(Map<Object, Object> inputParameters) {
+    this.inputParameters = inputParameters;
+
+  }
 }

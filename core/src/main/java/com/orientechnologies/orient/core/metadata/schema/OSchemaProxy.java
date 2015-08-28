@@ -20,15 +20,15 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Proxy class to use the shared OSchemaShared instance. Before to delegate each operations it sets the current database in the
@@ -46,12 +46,10 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 
   @Override
   public OImmutableSchema makeSnapshot() {
-    setCurrentDatabaseInThreadLocal();
     return delegate.makeSnapshot();
   }
 
   public void create() {
-    setCurrentDatabaseInThreadLocal();
     delegate.create();
   }
 
@@ -60,22 +58,21 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   public OClass createClass(final Class<?> iClass) {
-    setCurrentDatabaseInThreadLocal();
     return delegate.createClass(iClass);
   }
 
   public OClass createClass(final Class<?> iClass, final int iDefaultClusterId) {
-    setCurrentDatabaseInThreadLocal();
+
     return delegate.createClass(iClass, iDefaultClusterId);
   }
 
   public OClass createClass(final String iClassName) {
-    setCurrentDatabaseInThreadLocal();
+
     return delegate.createClass(iClassName);
   }
 
   public OClass getOrCreateClass(final String iClassName) {
-    return getOrCreateClass(iClassName, (OClass)null);
+    return getOrCreateClass(iClassName, (OClass) null);
   }
 
   public OClass getOrCreateClass(final String iClassName, final OClass iSuperClass) {
@@ -86,81 +83,76 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     if (cls != null)
       return cls;
 
-    setCurrentDatabaseInThreadLocal();
     cls = delegate.getOrCreateClass(iClassName, iSuperClass);
 
     return cls;
   }
-  
-  
 
   @Override
   public OClass getOrCreateClass(String iClassName, OClass... superClasses) {
-	  setCurrentDatabaseInThreadLocal();
-	  return delegate.getOrCreateClass(iClassName, superClasses);
+
+    return delegate.getOrCreateClass(iClassName, superClasses);
   }
 
   @Override
   public OClass createClass(final String iClassName, final OClass iSuperClass) {
-    setCurrentDatabaseInThreadLocal();
+
     return delegate.createClass(iClassName, iSuperClass, (int[]) null);
   }
-  
+
   @Override
   public OClass createClass(String iClassName, OClass... superClasses) {
-	  setCurrentDatabaseInThreadLocal();
-	  return delegate.createClass(iClassName, superClasses);
+
+    return delegate.createClass(iClassName, superClasses);
   }
 
-
   public OClass createClass(final String iClassName, final int iDefaultClusterId) {
-    setCurrentDatabaseInThreadLocal();
+
     return delegate.createClass(iClassName, iDefaultClusterId);
   }
 
   public OClass createClass(final String iClassName, final OClass iSuperClass, final int iDefaultClusterId) {
-    setCurrentDatabaseInThreadLocal();
+
     return delegate.createClass(iClassName, iSuperClass, iDefaultClusterId);
   }
 
   public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
-    setCurrentDatabaseInThreadLocal();
+
     return delegate.createClass(iClassName, iSuperClass, iClusterIds);
   }
-  
+
   @Override
-	public OClass createClass(String className, int[] clusterIds,
-			OClass... superClasses) {
-	    setCurrentDatabaseInThreadLocal();
-	    return delegate.createClass(className, clusterIds, superClasses);
-	}
+  public OClass createClass(String className, int[] clusterIds, OClass... superClasses) {
+
+    return delegate.createClass(className, clusterIds, superClasses);
+  }
 
   @Override
   public OClass createAbstractClass(final Class<?> iClass) {
-    setCurrentDatabaseInThreadLocal();
+
     return delegate.createAbstractClass(iClass);
   }
 
   @Override
   public OClass createAbstractClass(final String iClassName) {
-    setCurrentDatabaseInThreadLocal();
+
     return delegate.createAbstractClass(iClassName);
   }
 
   @Override
   public OClass createAbstractClass(final String iClassName, final OClass iSuperClass) {
-    setCurrentDatabaseInThreadLocal();
+
     return delegate.createAbstractClass(iClassName, iSuperClass);
   }
-  
+
   @Override
-	public OClass createAbstractClass(String iClassName, OClass... superClasses) {
-	  setCurrentDatabaseInThreadLocal();
-	  return delegate.createAbstractClass(iClassName, superClasses);
-	}
+  public OClass createAbstractClass(String iClassName, OClass... superClasses) {
+
+    return delegate.createAbstractClass(iClassName, superClasses);
+  }
 
   public void dropClass(final String iClassName) {
-    setCurrentDatabaseInThreadLocal();
+
     delegate.dropClass(iClassName);
   }
 
@@ -190,30 +182,30 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   public void load() {
-    setCurrentDatabaseInThreadLocal();
+
     delegate.load();
 
   }
 
   public <RET extends ODocumentWrapper> RET reload() {
-    setCurrentDatabaseInThreadLocal();
+
     delegate.reload();
 
     return (RET) delegate;
   }
 
   public <RET extends ODocumentWrapper> RET save() {
-    setCurrentDatabaseInThreadLocal();
+
     return (RET) delegate.save();
   }
 
   public int getVersion() {
-    setCurrentDatabaseInThreadLocal();
+
     return delegate.getVersion();
   }
 
   public ORID getIdentity() {
-    setCurrentDatabaseInThreadLocal();
+
     return delegate.getIdentity();
   }
 
@@ -221,7 +213,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   public String toString() {
-    setCurrentDatabaseInThreadLocal();
+
     return delegate.toString();
   }
 

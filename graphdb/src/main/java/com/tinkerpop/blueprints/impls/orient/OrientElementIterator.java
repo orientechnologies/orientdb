@@ -21,6 +21,7 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Element;
@@ -66,11 +67,12 @@ class OrientElementIterator<T extends Element> implements Iterator<T> {
       if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED)
         currentDocument.load();
 
-      if (ODocumentInternal.getImmutableSchemaClass(currentDocument) == null)
+      OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(currentDocument);
+      if (immutableClass == null)
         throw new IllegalArgumentException(
             "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
 
-      if (ODocumentInternal.getImmutableSchemaClass(currentDocument).isSubClassOf(graph.getEdgeBaseType()))
+      if (immutableClass.isEdgeType())
         currentElement = new OrientEdge(graph, currentDocument);
       else
         currentElement = new OrientVertex(graph, currentDocument);

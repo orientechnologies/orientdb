@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.common.listener.OProgressListener;
@@ -40,7 +40,7 @@ public interface OCommandExecutor {
    * @see #execute(Map<Object, Object>...)
    * @return
    */
-  public <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest);
+  <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest);
 
   /**
    * Execute the requested command parsed previously.
@@ -51,7 +51,7 @@ public interface OCommandExecutor {
    * @see #parse(OCommandRequest)
    * @return
    */
-  public Object execute(final Map<Object, Object> iArgs);
+  Object execute(final Map<Object, Object> iArgs);
 
   /**
    * Set the listener invoked while the command is executing.
@@ -60,34 +60,49 @@ public interface OCommandExecutor {
    *          OProgressListener implementation
    * @return
    */
-  public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener);
+  <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener);
 
-  public <RET extends OCommandExecutor> RET setLimit(int iLimit);
+  <RET extends OCommandExecutor> RET setLimit(int iLimit);
 
-  public String getFetchPlan();
+  String getFetchPlan();
 
-  public Map<Object, Object> getParameters();
+  Map<Object, Object> getParameters();
 
-  public OCommandContext getContext();
+  OCommandContext getContext();
 
-  public void setContext(OCommandContext context);
+  void setContext(OCommandContext context);
 
   /**
    * Returns true if the command doesn't change the database, otherwise false.
    */
-  public boolean isIdempotent();
+  boolean isIdempotent();
 
   /**
    * Returns the involved clusters.
    */
-  public Set<String> getInvolvedClusters();
+  Set<String> getInvolvedClusters();
 
   /**
    * Returns the security operation type use to check about security.
    * 
+   * @see com.orientechnologies.orient.core.metadata.security.ORole PERMISSION_*
    * @return
    */
-  public int getSecurityOperationType();
+  int getSecurityOperationType();
 
   boolean involveSchema();
+
+  String getSyntax();
+
+  /**
+   * Returns true if the command must be executed on local node on distributed configuration.
+   */
+  boolean isLocalExecution();
+
+  /**
+   * Returns true if the command results can be cached.
+   */
+  boolean isCacheable();
+
+  long getDistributedTimeout();
 }

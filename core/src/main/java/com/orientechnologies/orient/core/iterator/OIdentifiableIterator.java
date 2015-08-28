@@ -19,21 +19,26 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
@@ -64,6 +69,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   private long                              currentEntry           = ORID.CLUSTER_POS_INVALID;
   private int                               currentEntryPosition   = -1;
   private OPhysicalPosition[]               positionsToProcess     = null;
+  protected boolean                         updateCache            = false;
 
   public OIdentifiableIterator(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final boolean useCache) {
@@ -73,8 +79,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   @Deprecated
   /**
    * @deprecated usage of this constructor may lead to deadlocks.
-   */
-  public OIdentifiableIterator(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
+   */public OIdentifiableIterator(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final boolean useCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     database = iDatabase;
     lowLevelDatabase = iLowLevelDatabase;
@@ -116,7 +121,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   /**
    * Tells if the iterator is using the same record for browsing.
-   * 
+   *
    * @see #setReuseSameRecord(boolean)
    */
   public boolean isReuseSameRecord() {
@@ -127,7 +132,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
    * Tell to the iterator to use the same record for browsing. The record will be reset before every use. This improve the
    * performance and reduce memory utilization since it does not create a new one for each operation, but pay attention to copy the
    * data of the record once read otherwise they will be reset to the next operation.
-   * 
+   *
    * @param reuseSameRecord
    *          if true the same record will be used for iteration. If false new record will be created each time iterator retrieves
    *          record from db.
@@ -157,7 +162,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   /**
    * Return the current limit on browsing record. -1 means no limits (default).
-   * 
+   *
    * @return The limit if setted, otherwise -1
    * @see #setLimit(long)
    */
@@ -167,7 +172,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   /**
    * Set the limit on browsing record. -1 means no limits. You can set the limit even while you're browsing.
-   * 
+   *
    * @param limit
    *          The current limit on browsing record. -1 means no limits (default).
    * @see #getLimit()
@@ -179,7 +184,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   /**
    * Return current configuration of live updates.
-   * 
+   *
    * @return True to activate it, otherwise false (default)
    * @see #setLiveUpdated(boolean)
    */
@@ -282,12 +287,15 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       try {
         if (iRecord != null) {
           ORecordInternal.setIdentity(iRecord, new ORecordId(current.clusterId, current.clusterPosition));
-          iRecord = lowLevelDatabase.load(iRecord, fetchPlan, !useCache, iterateThroughTombstones, lockingStrategy);
+          iRecord = lowLevelDatabase.load(iRecord, fetchPlan, !useCache, updateCache, iterateThroughTombstones, lockingStrategy);
         } else
-          iRecord = lowLevelDatabase.load(current, fetchPlan, !useCache, iterateThroughTombstones, lockingStrategy);
+          iRecord = lowLevelDatabase.load(current, fetchPlan, !useCache, updateCache, iterateThroughTombstones, lockingStrategy);
       } catch (ODatabaseException e) {
         if (Thread.interrupted() || lowLevelDatabase.isClosed())
           // THREAD INTERRUPTED: RETURN
+          throw e;
+
+        if (e.getCause() instanceof OSecurityException)
           throw e;
 
         OLogManager.instance().error(this, "Error on fetching record during browsing. The record has been skipped", e);
@@ -384,6 +392,18 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   protected long currentPosition() {
     return currentEntry;
+  }
+
+  protected void checkForSystemClusters(final ODatabaseDocumentInternal iDatabase, final int[] iClusterIds) {
+    for (int clId : iClusterIds) {
+      final OCluster cl = iDatabase.getStorage().getClusterById(clId);
+      if (cl != null && cl.isSystemCluster()) {
+        final OSecurityUser dbUser = iDatabase.getUser();
+        if (dbUser == null || dbUser.allow(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_READ) != null)
+          // AUTHORIZED
+          break;
+      }
+    }
   }
 
   private void decrementEntreePosition() {

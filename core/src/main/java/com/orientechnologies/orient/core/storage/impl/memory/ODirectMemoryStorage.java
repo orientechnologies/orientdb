@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.version.OSimpleVersion;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -46,8 +47,8 @@ import java.util.concurrent.Callable;
 public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   private static final int ONE_KB = 1024;
 
-  public ODirectMemoryStorage(String name, String filePath, String mode) {
-    super(name, filePath, mode);
+  public ODirectMemoryStorage(String name, String filePath, String mode, int id) {
+    super(name, filePath, mode, id);
     configuration = new OStorageMemoryConfiguration(this);
   }
 
@@ -98,8 +99,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener,
-      int compressionLevel, int bufferSize) throws IOException {
+  public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     throw new UnsupportedOperationException();
   }
 

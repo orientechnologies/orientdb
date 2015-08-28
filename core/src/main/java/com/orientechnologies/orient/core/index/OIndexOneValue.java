@@ -43,9 +43,9 @@ import java.util.Set;
  * 
  */
 public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
-  public OIndexOneValue(final String type, String algorithm, OIndexEngine<OIdentifiable> engine, String valueContainerAlgorithm,
-      ODocument metadata) {
-    super(type, algorithm, engine, valueContainerAlgorithm, metadata);
+  public OIndexOneValue(String name, final String type, String algorithm, OIndexEngine<OIdentifiable> engine,
+      String valueContainerAlgorithm, ODocument metadata) {
+    super(name, type, algorithm, engine, valueContainerAlgorithm, metadata);
   }
 
   public OIdentifiable get(Object iKey) {
@@ -53,12 +53,22 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     iKey = getCollatingValue(iKey);
 
-    acquireSharedLock();
+    final ODatabase database = getDatabase();
+    final boolean txIsActive = database.getTransaction().isActive();
+    if (!txIsActive)
+      keyLockManager.acquireSharedLock(iKey);
     try {
-      return indexEngine.get(iKey);
+      acquireSharedLock();
+      try {
+        return indexEngine.get(iKey);
+      } finally {
+        releaseSharedLock();
+      }
     } finally {
-      releaseSharedLock();
+      if (!txIsActive)
+        keyLockManager.releaseSharedLock(iKey);
     }
+
   }
 
   public long count(Object iKey) {
@@ -66,11 +76,21 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     iKey = getCollatingValue(iKey);
 
-    acquireSharedLock();
+    final ODatabase database = getDatabase();
+    final boolean txIsActive = database.getTransaction().isActive();
+    if (!txIsActive)
+      keyLockManager.acquireSharedLock(iKey);
+
     try {
-      return indexEngine.contains(iKey) ? 1 : 0;
+      acquireSharedLock();
+      try {
+        return indexEngine.contains(iKey) ? 1 : 0;
+      } finally {
+        releaseSharedLock();
+      }
     } finally {
-      releaseSharedLock();
+      if (!txIsActive)
+        keyLockManager.releaseSharedLock(iKey);
     }
   }
 
@@ -80,11 +100,11 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     key = getCollatingValue(key);
 
-		final ODatabase database = getDatabase();
-		final boolean txIsActive = database.getTransaction().isActive();
+    final ODatabase database = getDatabase();
+    final boolean txIsActive = database.getTransaction().isActive();
 
-		if (txIsActive)
-			keyLockManager.acquireSharedLock(key);
+    if (!txIsActive)
+      keyLockManager.acquireSharedLock(key);
     try {
       // CHECK IF ALREADY EXIST
       final OIdentifiable indexedRID = get(key);
@@ -98,14 +118,14 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
       }
       return null;
     } finally {
-			if (txIsActive)
-      	keyLockManager.releaseSharedLock(key);
+      if (!txIsActive)
+        keyLockManager.releaseSharedLock(key);
     }
   }
 
   public OIndexOneValue create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
-    return (OIndexOneValue) super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
+    return (OIndexOneValue) super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
         determineValueSerializer());
   }
 
@@ -213,22 +233,22 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   public long getSize() {
     checkForRebuild();
 
-    acquireExclusiveLock();
+    acquireSharedLock();
     try {
       return indexEngine.size(null);
     } finally {
-      releaseExclusiveLock();
+      releaseSharedLock();
     }
   }
 
   public long getKeySize() {
     checkForRebuild();
 
-    acquireExclusiveLock();
+    acquireSharedLock();
     try {
       return indexEngine.size(null);
     } finally {
-      releaseExclusiveLock();
+      releaseSharedLock();
     }
   }
 

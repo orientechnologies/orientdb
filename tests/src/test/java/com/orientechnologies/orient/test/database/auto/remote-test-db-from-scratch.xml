@@ -24,13 +24,11 @@
     </test>
     <test name="Population">
         <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectInheritanceTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ComplexTypesTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentValidationTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.RecordMetadataTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest"/>
@@ -155,6 +153,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.HideRecordTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.PoolTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.RemoteProtocolCommandsTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.RecordReloadTest"/>
         </classes>
     </test>
     <test name="DbTools">

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -33,9 +34,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableA
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 /**
  * Hi-level function that return the label for both edges and vertices. The label could be bound to the class name.
@@ -54,7 +53,7 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
       OCommandContext iContext) {
     final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
     ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getAnyGraph(shutdownFlag);
     try {
       if (iCurrentResult != null) {
         return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
@@ -75,19 +74,19 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
   private Object getLabel(final OrientBaseGraph graph, final OIdentifiable iCurrentRecord) {
     final ODocument rec = iCurrentRecord.getRecord();
 
-    if (ODocumentInternal.getImmutableSchemaClass(rec).isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(rec);
+    if (immutableClass.isVertexType()) {
       // VERTEX
       final OrientVertex vertex = graph.getVertex(iCurrentRecord);
       return vertex.getLabel();
 
-    } else if (ODocumentInternal.getImmutableSchemaClass(rec).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+    } else if (immutableClass.isEdgeType()) {
       // EDGE
       final OrientEdge edge = graph.getEdge(iCurrentRecord);
       return edge.getLabel();
 
     } else
-      throw new OCommandExecutionException("Invalid record: is neither a vertex nor an edge. Found class: "
-          + ODocumentInternal.getImmutableSchemaClass(rec));
+      throw new OCommandExecutionException("Invalid record: is neither a vertex nor an edge. Found class: " + immutableClass);
   }
 
   public String getSyntax() {

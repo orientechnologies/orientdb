@@ -22,21 +22,13 @@ public class OUpdateRemoveItem extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (right != null) {
-      right.replaceParameters(params);
-    }
-  }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(left.toString());
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    left.toString(params, builder);
     if (right != null) {
-      result.append(" = ");
-      result.append(right.toString());
+      builder.append(" = ");
+      right.toString(params, builder);
     }
-    return result.toString();
   }
 }
 /* JavaCC - OriginalChecksum=72e240d3dc1196fdea69e8fdc2bd69ca (do not edit this line) */

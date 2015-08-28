@@ -20,15 +20,9 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Arrays;
-import java.util.Map;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -50,6 +44,14 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.util.ElementHelper;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Base Graph Element where OrientVertex and OrientEdge classes extends from. Labels are managed as OrientDB classes.
@@ -106,7 +108,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     try {
       getRecord().load();
     } catch (ORecordNotFoundException e) {
-      throw new IllegalStateException("The elements " + getIdentity() + " has already been deleted");
+      throw new IllegalStateException("The elements " + getIdentity() + " has already been deleted", e);
     }
 
     getRecord().delete();
@@ -132,8 +134,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
 
   /**
    * (Blueprints Extension) Sets multiple properties in one shot against Vertices and Edges. This improves performance avoiding to
-   * save the graph element at every property set. After calling this method, the vertex is dirty and need to be saved by calling
-   * the {@link #save()} method.<br>
+   * save the graph element at every property set.<br>
    * Example:
    * 
    * <code>
@@ -162,6 +163,20 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     setPropertiesInternal(fields);
     save();
     return (T) this;
+  }
+
+  /**
+   * (Blueprints Extension) Gets all the properties from a Vertex or Edge in one shot.
+   * 
+   * @return a map containing all the properties of the Vertex/Edge.
+   */
+  public Map<String, Object> getProperties() {
+    if (this.rawElement == null)
+      return null;
+    ODocument raw = this.rawElement.getRecord();
+    if (raw == null)
+      return null;
+    return raw.toMap();
   }
 
   /**
@@ -221,6 +236,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public <T> T removeProperty(final String key) {
+    if (checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+
     final OrientBaseGraph graph = getGraph();
 
     if (graph != null)
@@ -262,7 +280,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       if (firstValue instanceof ODocument) {
         final ODocument document = (ODocument) firstValue;
 
-        if (document.isEmbedded())
+        if (document.isEmbedded() || ODocumentInternal.getImmutableSchemaClass(document) == null)
           return (T) fieldValue;
       }
 
@@ -693,6 +711,16 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
         if (f instanceof Map<?, ?>) {
           for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) f).entrySet())
             setPropertyInternal(this, (ODocument) rawElement.getRecord(), entry.getKey().toString(), entry.getValue());
+
+        } else if (f instanceof Collection) {
+          for (Object o : (Collection) f) {
+            if (!(o instanceof OPair))
+              throw new IllegalArgumentException(
+                  "Invalid fields: expecting a pairs of fields as String,Object, but found the item: " + o);
+
+            final OPair entry = (OPair) o;
+            setPropertyInternal(this, (ODocument) rawElement.getRecord(), entry.getKey().toString(), entry.getValue());
+          }
 
         } else
           throw new IllegalArgumentException(

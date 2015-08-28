@@ -25,11 +25,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
@@ -42,6 +38,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -427,4 +425,20 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     treeBag.setCollectionPointer(pointer);
     delegate = treeBag;
   }
+
+  public void debugPrint(PrintStream writer) throws IOException {
+    if (delegate instanceof OSBTreeRidBag) {
+      writer.append("tree [\n");
+      ((OSBTreeRidBag) delegate).debugPrint(writer);
+      writer.append("]\n");
+    } else {
+      writer.append(delegate.toString());
+      writer.append("\n");
+    }
+  }
+
+  protected ORidBagDelegate getDelegate() {
+    return delegate;
+  }
+
 }

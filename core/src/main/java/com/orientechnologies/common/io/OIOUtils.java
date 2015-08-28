@@ -269,7 +269,22 @@ public class OIOUtils {
         && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'' || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"'))
       return s.substring(1, s.length() - 1);
 
+    if (s.length() > 1 && (s.charAt(0) == '`' && s.charAt(s.length() - 1) == '`'))
+      return s.substring(1, s.length() - 1);
+
     return s;
+  }
+
+  public static String wrapStringContent(final Object iValue, final char iStringDelimiter) {
+    if (iValue == null)
+      return null;
+
+    final String s = iValue.toString();
+
+    if (s == null)
+      return null;
+
+    return iStringDelimiter + s + iStringDelimiter;
   }
 
   public static boolean equals(final byte[] buffer, final byte[] buffer2) {

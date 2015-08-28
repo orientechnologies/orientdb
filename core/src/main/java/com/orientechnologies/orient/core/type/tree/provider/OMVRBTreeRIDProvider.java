@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.StringTokenizer;
 
-import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -63,7 +62,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
   private final StringBuilder           buffer                = new StringBuilder(128);
   private boolean                       marshalling           = true;
 
-  protected static final OProfilerMBean PROFILER              = Orient.instance().getProfiler();
+  protected static final OProfiler PROFILER              = Orient.instance().getProfiler();
 
   /**
    * Copy constructor

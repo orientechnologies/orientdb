@@ -28,19 +28,21 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
  * 
  */
 public interface ODatabaseLifecycleListener {
-  public enum PRIORITY {
+  enum PRIORITY {
     FIRST, EARLY, REGULAR, LATE, LAST
   }
 
-  public PRIORITY getPriority();
+  PRIORITY getPriority();
 
-  public void onCreate(ODatabaseInternal iDatabase);
+  void onCreate(ODatabaseInternal iDatabase);
 
-  public void onOpen(ODatabaseInternal iDatabase);
+  void onOpen(ODatabaseInternal iDatabase);
 
-  public void onClose(ODatabaseInternal iDatabase);
+  void onClose(ODatabaseInternal iDatabase);
 
-  public void onCreateClass(ODatabaseInternal iDatabase, OClass iClass);
+  void onDrop(ODatabaseInternal iDatabase);
 
-  public void onDropClass(ODatabaseInternal iDatabase, OClass iClass);
+  void onCreateClass(ODatabaseInternal iDatabase, OClass iClass);
+
+  void onDropClass(ODatabaseInternal iDatabase, OClass iClass);
 }

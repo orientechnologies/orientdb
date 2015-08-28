@@ -29,6 +29,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -40,19 +41,35 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
   private static OrientEdgeType   knows;
   private static int              customerGeniusCluster;
 
-  @BeforeClass
-  public static void setUp() throws Exception {
-    if (graph.getVertexType("Customer") == null) {
-      customer = (OrientVertexType) graph.createVertexType("Customer").setClusterSelection("default");
-      customer.addCluster("Customer_genius");
-      customerGeniusCluster = graph.getRawGraph().getClusterIdByName("Customer_genius");
+  @Before
+  public void setUp() throws Exception {
+    customer = graph.getVertexType("Customer");
+    if (customer != null) {
+      graph.command(new OCommandSQL("delete vertex Customer"));
+      graph.dropVertexType("Customer");
     }
 
-    if (graph.getVertexType("Provider") == null)
-      provider = (OrientVertexType) graph.createVertexType("Provider").setClusterSelection("default");
+    if (graph.getRawGraph().existsCluster("Customer_genius"))
+      graph.getRawGraph().dropCluster("Customer_genius", true);
 
-    if (graph.getEdgeType("Knows") == null)
-      knows = graph.createEdgeType("Knows");
+    customer = (OrientVertexType) graph.createVertexType("Customer").setClusterSelection("default");
+    customer.addCluster("Customer_genius");
+    customerGeniusCluster = graph.getRawGraph().getClusterIdByName("Customer_genius");
+
+    provider = graph.getVertexType("Provider");
+    if (provider != null) {
+      graph.command(new OCommandSQL("delete vertex Provider"));
+      graph.dropVertexType("Provider");
+    }
+
+    provider = (OrientVertexType) graph.createVertexType("Provider").setClusterSelection("default");
+
+    knows = graph.getEdgeType("Knows");
+    if (knows != null) {
+      graph.command(new OCommandSQL("delete edge Knows"));
+      graph.dropVertexType("Knows");
+    }
+    knows = graph.createEdgeType("Knows");
   }
 
   @Test
@@ -135,10 +152,17 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
 
   @Test
   public void testMoveMultipleRecordToAnotherCluster() {
-    new ODocument("Customer").field("name", "Jay").field("workedOn", "Amiga").save();
-    new ODocument("Customer").field("name", "Steve").field("workedOn", "Mac").save();
-    new ODocument("Customer").field("name", "Bill").field("workedOn", "Ms-Dos").save();
-    new ODocument("Customer").field("name", "Tim").field("workedOn", "Amiga").save();
+    ODocument doc = new ODocument("Customer").field("name", "Jay").field("workedOn", "Amiga").save();
+    Assert.assertEquals(doc.getIdentity().getClusterId(), customer.getDefaultClusterId());
+
+    doc = new ODocument("Customer").field("name", "Steve").field("workedOn", "Mac").save();
+    Assert.assertEquals(doc.getIdentity().getClusterId(), customer.getDefaultClusterId());
+
+    doc = new ODocument("Customer").field("name", "Bill").field("workedOn", "Ms-Dos").save();
+    Assert.assertEquals(doc.getIdentity().getClusterId(), customer.getDefaultClusterId());
+
+    doc = new ODocument("Customer").field("name", "Tim").field("workedOn", "Amiga").save();
+    Assert.assertEquals(doc.getIdentity().getClusterId(), customer.getDefaultClusterId());
 
     Iterable<OrientVertex> result = graph.command(
         new OCommandSQL("MOVE VERTEX (select from Customer where workedOn = 'Amiga') TO CLUSTER:Customer_genius")).execute();
@@ -262,5 +286,10 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
     }
 
     Assert.assertEquals(tot, 2);
+  }
+
+  @BeforeClass
+  public static void init() {
+    init(SQLMoveVertexCommandTest.class.getSimpleName());
   }
 }

@@ -19,6 +19,14 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -39,18 +47,9 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper.ODbRelatedCall;
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-
-import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
 
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   private OStorage              storage1;
@@ -147,6 +146,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
               if (!rid.isPersistent())
                 return null;
 
+              databaseDocumentTxTwo.activateOnCurrentThread();
               final OIdentifiable result = exportImportHashTable.get(rid);
               if (result == null)
                 return null;
@@ -593,7 +593,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       listener.onMessage("\n- Checking cluster " + String.format("%-25s: ", "'" + clusterName + "'"));
 
       if (cluster2Id == -1) {
-        listener.onMessage("ERR: cluster name " + clusterName + " was not found on database " + storage2);
+        listener.onMessage("ERR: cluster name '" + clusterName + "' was not found on database " + storage2);
         ++differences;
         ok = false;
       }
@@ -772,9 +772,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
                     listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " content length is different: "
                         + buffer1.buffer.length + " <-> " + buffer2.buffer.length);
 
-                    if (buffer1.recordType == ODocument.RECORD_TYPE || buffer1.recordType == ORecordFlat.RECORD_TYPE)
+                    if (buffer1.recordType == ODocument.RECORD_TYPE)
                       listener.onMessage("\n--- REC1: " + rec1);
-                    if (buffer2.recordType == ODocument.RECORD_TYPE || buffer2.recordType == ORecordFlat.RECORD_TYPE)
+                    if (buffer2.recordType == ODocument.RECORD_TYPE)
                       listener.onMessage("\n--- REC2: " + rec2);
                     listener.onMessage("\n");
 

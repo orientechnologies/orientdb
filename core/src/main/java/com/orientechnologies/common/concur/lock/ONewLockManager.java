@@ -175,16 +175,39 @@ public class ONewLockManager<T> {
     return lock;
   }
 
+  public void lockAllExclusive() {
+    if (useSpinLock) {
+      for (OReadersWriterSpinLock spinLock : spinLocks) {
+        spinLock.acquireWriteLock();
+      }
+    } else {
+      for (ReadWriteLock readWriteLock : locks) {
+        readWriteLock.writeLock().lock();
+      }
+    }
+  }
+
+  public void unlockAllExclusive() {
+    if (useSpinLock) {
+      for (OReadersWriterSpinLock spinLock : spinLocks) {
+        spinLock.releaseWriteLock();
+      }
+    } else {
+      for (ReadWriteLock readWriteLock : locks) {
+        readWriteLock.writeLock().unlock();
+      }
+    }
+  }
+
   public boolean tryAcquireExclusiveLock(T value, long timeout) throws InterruptedException {
-		if (useSpinLock)
-			throw new IllegalStateException("Spin lock does not support try lock mode");
+    if (useSpinLock)
+      throw new IllegalStateException("Spin lock does not support try lock mode");
 
-		final int index;
-		if (value == null)
-			index = 0;
-		else
-			index = index(value.hashCode());
-
+    final int index;
+    if (value == null)
+      index = 0;
+    else
+      index = index(value.hashCode());
 
     final ReadWriteLock rwLock = locks[index];
 
@@ -284,14 +307,14 @@ public class ONewLockManager<T> {
   }
 
   public boolean tryAcquireSharedLock(T value, long timeout) throws InterruptedException {
-		if (useSpinLock)
-			throw new IllegalStateException("Spin lock does not support try lock mode");
+    if (useSpinLock)
+      throw new IllegalStateException("Spin lock does not support try lock mode");
 
-		final int index;
-		if (value == null)
-			index = 0;
-		else
-			index = index(value.hashCode());
+    final int index;
+    if (value == null)
+      index = 0;
+    else
+      index = index(value.hashCode());
 
     final ReadWriteLock rwLock = locks[index];
 
@@ -317,14 +340,13 @@ public class ONewLockManager<T> {
   }
 
   public Lock acquireSharedLock(T value) {
-		final int index;
-		if (value == null)
-			index = 0;
-		else
-			index = index(value.hashCode());
+    final int index;
+    if (value == null)
+      index = 0;
+    else
+      index = index(value.hashCode());
 
-
-		if (useSpinLock) {
+    if (useSpinLock) {
       OReadersWriterSpinLock spinLock = spinLocks[index];
       spinLock.acquireReadLock();
 
@@ -368,13 +390,13 @@ public class ONewLockManager<T> {
   }
 
   public void releaseSharedLock(T value) {
-		final int index;
-		if (value == null)
-			index = 0;
-		else
-			index = index(value.hashCode());
+    final int index;
+    if (value == null)
+      index = 0;
+    else
+      index = index(value.hashCode());
 
-		if (useSpinLock) {
+    if (useSpinLock) {
       OReadersWriterSpinLock spinLock = spinLocks[index];
       spinLock.releaseReadLock();
       return;

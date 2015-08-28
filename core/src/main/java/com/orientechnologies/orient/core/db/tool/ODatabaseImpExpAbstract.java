@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -88,7 +89,7 @@ public abstract class ODatabaseImpExpAbstract {
           parseSetting(o, Collections.EMPTY_LIST);
         } else {
           final String option = o.substring(0, sep);
-          final String value = OStringSerializerHelper.getStringContent(o.substring(sep + 1));
+          final String value = OIOUtils.getStringContent(o.substring(sep + 1));
           final List<String> items = OStringSerializerHelper.smartSplit(value, ' ');
           parseSetting(option, items);
         }

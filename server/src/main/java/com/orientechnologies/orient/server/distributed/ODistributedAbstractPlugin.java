@@ -19,6 +19,23 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -28,22 +45,6 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-
 /**
  * Abstract plugin to manage the distributed environment.
  *
@@ -52,9 +53,6 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
  */
 public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract implements ODistributedServerManager,
     ODatabaseLifecycleListener {
-  public static final String                               REPLICATOR_USER             = "replicator";
-  protected static final String                            MASTER_AUTO                 = "$auto";
-
   protected static final String                            PAR_DEF_DISTRIB_DB_CONFIG   = "configuration.db.default";
   protected static final String                            FILE_DISTRIBUTED_DB_CONFIG  = "distributed-config.json";
 
@@ -66,7 +64,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   protected File                                           defaultDatabaseConfigFile;
   protected ConcurrentHashMap<String, ODistributedStorage> storages                    = new ConcurrentHashMap<String, ODistributedStorage>();
 
-  public static Object runInDistributedMode(Callable iCall) throws Exception {
+  public static Object runInDistributedMode(final Callable iCall) throws Exception {
     final OScenarioThreadLocal.RUN_MODE currentRunningMode = OScenarioThreadLocal.INSTANCE.get();
     if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
       OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
@@ -76,7 +74,21 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     } finally {
 
       if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
-        OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+        OScenarioThreadLocal.INSTANCE.set(currentRunningMode);
+    }
+  }
+
+  public static Object runInDefaultMode(final Callable iCall) throws Exception {
+    final OScenarioThreadLocal.RUN_MODE currentRunningMode = OScenarioThreadLocal.INSTANCE.get();
+    if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
+      OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+
+    try {
+      return iCall.call();
+    } finally {
+
+      if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
+        OScenarioThreadLocal.INSTANCE.set(currentRunningMode);
     }
   }
 
@@ -98,23 +110,24 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
           enabled = false;
           return;
         }
-      } else if (param.name.equalsIgnoreCase("nodeName"))
+      } else if (param.name.equalsIgnoreCase("nodeName")) {
         nodeName = param.value;
-      else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
+        if (nodeName.contains("."))
+          throw new OConfigurationException("Illegal node name '" + nodeName + "'. '.' is not allowed in node name");
+      } else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
         setDefaultDatabaseConfigFile(param.value);
-      } else if (param.name.equalsIgnoreCase("conflict.resolver.impl")) {
-        // NOT USED ANYMORE
       }
     }
 
-    if (serverInstance.getUser(REPLICATOR_USER) == null)
-      // CREATE THE REPLICATOR USER
-      try {
-        serverInstance.addUser(REPLICATOR_USER, null, "database.passthrough");
-        serverInstance.saveConfiguration();
-      } catch (IOException e) {
-        throw new OConfigurationException("Error on creating 'replicator' user", e);
-      }
+    if (serverInstance.getUser("replicator") == null)
+      // DROP THE REPLICATOR USER. THIS USER WAS NEEDED BEFORE 2.2, BUT IT'S NOT REQUIRED ANYMORE
+      OLogManager.instance().config(this,
+          "Found 'replicator' user. Starting from OrientDB v2.2 this internal user is no needed anymore. Removing it...");
+    try {
+      serverInstance.dropUser("replicator");
+    } catch (IOException e) {
+      throw new OConfigurationException("Error on deleting 'replicator' user", e);
+    }
   }
 
   public void setDefaultDatabaseConfigFile(final String iFile) {
@@ -197,6 +210,22 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   }
 
   @Override
+  public void onDrop(final ODatabaseInternal iDatabase) {
+    synchronized (cachedDatabaseConfiguration) {
+      storages.remove(iDatabase.getURL());
+    }
+
+    final ODistributedMessageService msgService = getMessageService();
+    if (msgService != null) {
+      msgService.unregisterDatabase(iDatabase.getName());
+    }
+  }
+
+  @Override
+  public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
+  }
+
+  @Override
   public void sendShutdown() {
     super.sendShutdown();
   }
@@ -223,7 +252,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
       if (oldCfg != null && oldVersion > currVersion) {
         // NO CHANGE, SKIP IT
-        OLogManager.instance().warn(this,
+        OLogManager.instance().debug(this,
             "Skip saving of distributed configuration file for database '%s' because is unchanged (version %d)", iDatabaseName,
             (Integer) cfg.field("version"));
         return false;

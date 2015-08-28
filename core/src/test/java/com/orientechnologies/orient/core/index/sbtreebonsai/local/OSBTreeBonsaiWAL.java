@@ -10,8 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import org.testng.Assert;
@@ -27,10 +28,9 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
@@ -122,7 +122,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
     writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, actualStorage);
 
     actualWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
-        writeAheadLog, 100, 1648L * 1024 * 1024, actualStorage, false, 1);
+        writeAheadLog, 100, 1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, actualStorage, false, 1);
 
     actualReadCache = new O2QCache(400L * 1024 * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
         false);
@@ -138,8 +138,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".sbt", true, actualStorage);
-    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
+    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>("actualSBTree", ".sbt", true, actualStorage);
+    sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
   }
 
   private void createExpectedSBTree() {
@@ -163,7 +163,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
       expectedStorageDirFile.mkdirs();
 
     expectedWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
-        writeAheadLog, 100, 1648L * 1024 * 1024, expectedStorage, false, 2);
+        writeAheadLog, 100, 1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, expectedStorage, false, 2);
     expectedReadCache = new O2QCache(400L * 1024 * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false);
 
@@ -180,8 +180,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".sbt", true, expectedStorage);
-    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
+    expectedSBTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>("expectedSBTree", ".sbt", true, expectedStorage);
+    expectedSBTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
   }
 
   @Override
@@ -355,8 +355,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
     byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
     byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
 
-    fileOne.seek(OAbstractFile.HEADER_SIZE);
-    fileTwo.seek(OAbstractFile.HEADER_SIZE);
+    fileOne.seek(OFileClassic.HEADER_SIZE);
+    fileTwo.seek(OFileClassic.HEADER_SIZE);
 
     int bytesRead = fileOne.read(expectedContent);
     while (bytesRead >= 0) {

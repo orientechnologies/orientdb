@@ -1,7 +1,35 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,21 +37,8 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.orient.core.config.*;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
-import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Andrey Lomakin
@@ -83,21 +98,21 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, storage);
 
     writeCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, writeAheadLog,
-        100, 1648L * 1024 * 1024, storage, false, 1);
+        100, 1648L * 1024 * 1024, 2 * 1648L * 1024 * 1024, storage, false, 1);
 
     readCache = new O2QCache(1648L * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false);
 
+    when(storage.getReadCache()).thenReturn(readCache);
+    when(storage.getWriteCache()).thenReturn(writeCache);
     when(storage.getStorageTransaction()).thenReturn(null);
     when(storage.getWALInstance()).thenReturn(writeAheadLog);
     atomicOperationsManager = new OAtomicOperationsManager(storage);
     when(storage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
-    when(storage.getReadCache()).thenReturn(readCache);
     when(storage.getConfiguration()).thenReturn(storageConfiguration);
     when(storage.getMode()).thenReturn("rw");
-
     when(storageConfiguration.getDirectory()).thenReturn(storageDir);
 
-    paginatedCluster = new OPaginatedCluster(storage);
+    paginatedCluster = new OPaginatedCluster("testPaginatedClusterWithWALTest", storage);
     paginatedCluster.configure(storage, 6, "testPaginatedClusterWithWALTest", buildDirectory, -1);
     paginatedCluster.create(-1);
   }
@@ -126,24 +141,27 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
       storageDirTwoFile.mkdirs();
 
     testWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
-        writeAheadLog, 100, 1648L * 1024 * 1024, storage, false, 1);
+        writeAheadLog, 100, 1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, testStorage, false, 1);
+
     testReadCache = new O2QCache(400L * 1024 * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
         false);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(testStorageDir);
     final OAtomicOperationsManager testAtomicOperationsManager = new OAtomicOperationsManager(testStorage);
 
+    when(testStorage.getReadCache()).thenReturn(testReadCache);
+    when(testStorage.getWriteCache()).thenReturn(testWriteCache);
     when(testStorage.getWALInstance()).thenReturn(null);
     when(testStorage.getStorageTransaction()).thenReturn(null);
     when(testStorage.getAtomicOperationsManager()).thenReturn(testAtomicOperationsManager);
-    when(testStorage.getReadCache()).thenReturn(testReadCache);
+
     when(testStorage.getVariableParser()).thenReturn(variableParser);
     when(testStorage.getConfiguration()).thenReturn(storageConfiguration);
     when(testStorage.getMode()).thenReturn("rw");
 
     when(storageConfiguration.getDirectory()).thenReturn(testStorageDir);
 
-    testCluster = new OPaginatedCluster(testStorage);
+    testCluster = new OPaginatedCluster("testPaginatedClusterWithWALTest", testStorage);
     testCluster.configure(testStorage, 6, "testPaginatedClusterWithWALTest", buildDirectory, -1);
     testCluster.create(-1);
   }
@@ -153,7 +171,6 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     Assert.assertNull(atomicOperationsManager.getCurrentOperation());
 
     writeAheadLog.delete();
-    paginatedCluster.delete();
     readCache.deleteStorage(writeCache);
 
     testCluster.delete();
@@ -465,8 +482,8 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
     byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
 
-    datFileOne.seek(OAbstractFile.HEADER_SIZE);
-    datFileTwo.seek(OAbstractFile.HEADER_SIZE);
+    datFileOne.seek(OFileClassic.HEADER_SIZE);
+    datFileTwo.seek(OFileClassic.HEADER_SIZE);
 
     int bytesRead = datFileOne.read(expectedContent);
     while (bytesRead >= 0) {

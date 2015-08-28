@@ -27,7 +27,11 @@ package com.orientechnologies.orient.core.command;
 public interface OCommandDistributedReplicateRequest {
 
   enum DISTRIBUTED_EXECUTION_MODE {
-    LOCAL, REPLICATE, SHARDED
+    LOCAL, REPLICATE
+  }
+
+  enum DISTRIBUTED_RESULT_MGMT {
+    CHECK_FOR_EQUALS, MERGE
   }
 
   enum QUORUM_TYPE {
@@ -45,6 +49,15 @@ public interface OCommandDistributedReplicateRequest {
   DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode();
 
   /**
+   * Returns how to manage the distributed result between:
+   * <ul>
+   * <li>CHECK_FOR_EQUALS: all results must be the same</li>
+   * <li>MERGE: merges results. This is typically used on sharding</li>
+   * </ul>
+   */
+  DISTRIBUTED_RESULT_MGMT getDistributedResultManagement();
+
+  /**
    * Returns the quorum type for the command:
    * <ul>
    * <li>NONE: no quorum</li>
@@ -54,4 +67,9 @@ public interface OCommandDistributedReplicateRequest {
    * </ul>
    */
   QUORUM_TYPE getQuorumType();
+
+  /**
+   * Returns the distributed timeout in milliseconds.
+   */
+  long getDistributedTimeout();
 }

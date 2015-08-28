@@ -10,8 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import org.mockito.Mockito;
@@ -24,11 +25,10 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -142,7 +142,7 @@ public class SBTreeWAL extends SBTreeTest {
     actualAtomicOperationsManager = new OAtomicOperationsManager(actualStorage);
 
     actualWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
-        writeAheadLog, 100, 1648L * 1024 * 1024, actualStorage, true, 10);
+        writeAheadLog, 100, 1648L * 1024 * 1024, 2 * 1648L * 1024 * 1024, actualStorage, true, 10);
 
     actualReadCache = new O2QCache(1648L * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true);
 
@@ -154,8 +154,8 @@ public class SBTreeWAL extends SBTreeTest {
 
     when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", true, ".nbt", actualStorage);
-    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
+    sbTree = new OSBTree<Integer, OIdentifiable>("actualSBTree", ".sbt", true, ".nbt", actualStorage);
+    sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
   }
 
   private void createExpectedSBTree() {
@@ -180,7 +180,7 @@ public class SBTreeWAL extends SBTreeTest {
     when(expectedStorage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(expectedStorageConfiguration));
 
     expectedWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
-        writeAheadLog, 100, 1648L * 1024 * 1024, expectedStorage, true, 20);
+        writeAheadLog, 100, 1648L * 1024 * 1024, 400L * 1024 * 1024 * 1024 + 1648L * 1024 * 1024, expectedStorage, true, 20);
     expectedReadCache = new O2QCache(400L * 1024 * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false);
 
@@ -196,8 +196,8 @@ public class SBTreeWAL extends SBTreeTest {
 
     when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", true, ".nbt", expectedStorage);
-    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
+    expectedSBTree = new OSBTree<Integer, OIdentifiable>("expectedSBTree", ".sbt", true, ".nbt", expectedStorage);
+    expectedSBTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
   }
 
   @Override
@@ -394,8 +394,8 @@ public class SBTreeWAL extends SBTreeTest {
     byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
     byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
 
-    fileOne.seek(OAbstractFile.HEADER_SIZE);
-    fileTwo.seek(OAbstractFile.HEADER_SIZE);
+    fileOne.seek(OFileClassic.HEADER_SIZE);
+    fileTwo.seek(OFileClassic.HEADER_SIZE);
 
     int bytesRead = fileOne.read(expectedContent);
     while (bytesRead >= 0) {

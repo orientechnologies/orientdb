@@ -3,12 +3,12 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -109,10 +109,10 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", murmurHash3HashFunction, true,
-        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
-    localHashTable.create("actualLocalHashTable", OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance()
-        .<String> getObjectSerializer(OType.STRING), null, true);
+    localHashTable = new OLocalHashTable<Integer, String>("actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
+        murmurHash3HashFunction, true, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+    localHashTable.create(OIntegerSerializer.INSTANCE,
+        OBinarySerializerFactory.getInstance().<String> getObjectSerializer(OType.STRING), null, true);
   }
 
   @Override
@@ -343,8 +343,8 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
     byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
 
-    fileOne.seek(OAbstractFile.HEADER_SIZE);
-    fileTwo.seek(OAbstractFile.HEADER_SIZE);
+    fileOne.seek(OFileClassic.HEADER_SIZE);
+    fileTwo.seek(OFileClassic.HEADER_SIZE);
 
     int bytesRead = fileOne.read(expectedContent);
     while (bytesRead >= 0) {

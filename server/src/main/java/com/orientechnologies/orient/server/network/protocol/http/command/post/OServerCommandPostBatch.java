@@ -112,7 +112,7 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
       try {
         operations = batch.field("operations");
       } catch (Exception e) {
-        throw new IllegalArgumentException("Expected 'operations' field as a collection of objects");
+        throw new IllegalArgumentException("Expected 'operations' field as a collection of objects", e);
       }
 
       if (operations == null || operations.isEmpty())

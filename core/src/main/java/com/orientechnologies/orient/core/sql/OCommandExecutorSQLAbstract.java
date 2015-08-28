@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -39,8 +32,15 @@ import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.sql.parser.OrientSql;
-import com.orientechnologies.orient.core.sql.parser.ParseException;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL abstract Command Executor implementation.
@@ -79,10 +79,11 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
   protected long             timeoutMs                = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
   protected TIMEOUT_STRATEGY timeoutStrategy          = TIMEOUT_STRATEGY.EXCEPTION;
+  protected OStatement       preParsedStatement;
 
   /**
    * The command is replicated
-   * 
+   *
    * @return
    */
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
@@ -122,12 +123,13 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
     word = parserNextWord(true);
 
-    if (word.equals(TIMEOUT_STRATEGY.EXCEPTION.toString()))
-      timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
-    else if (word.equals(TIMEOUT_STRATEGY.RETURN.toString()))
-      timeoutStrategy = TIMEOUT_STRATEGY.RETURN;
-    else
-      parserGoBack();
+    if (word != null)
+      if (word.equals(TIMEOUT_STRATEGY.EXCEPTION.toString()))
+        timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
+      else if (word.equals(TIMEOUT_STRATEGY.RETURN.toString()))
+        timeoutStrategy = TIMEOUT_STRATEGY.RETURN;
+      else
+        parserGoBack();
 
     return true;
   }
@@ -154,7 +156,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     for (String clazz : iClassNames) {
       final OClass cls = ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClass(clazz);
       if (cls != null)
-        for (int clId : cls.getClusterIds()) {
+        for (int clId : cls.getPolymorphicClusterIds()) {
           // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
           if (clId > -1 && checkClusterAccess(db, db.getClusterNameById(clId)))
             clusters.add(db.getClusterNameById(clId).toLowerCase());
@@ -186,7 +188,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
     final OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
     final OIndex<?> idx = metadata.getIndexManager().getIndex(iIndexName);
-    if (idx != null) {
+    if (idx != null && idx.getDefinition() != null) {
       final String clazz = idx.getDefinition().getClassName();
 
       if (clazz != null) {
@@ -204,8 +206,8 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   }
 
   protected boolean checkClusterAccess(final ODatabaseDocument db, final String iClusterName) {
-    return db.getUser() != null
-        && db.getUser().checkIfAllowed(ORule.ResourceGeneric.CLUSTER, iClusterName, getSecurityOperationType()) != null;
+    return db.getUser() == null
+        || db.getUser().checkIfAllowed(ORule.ResourceGeneric.CLUSTER, iClusterName, getSecurityOperationType()) != null;
   }
 
   protected void bindDefaultContextVariables() {
@@ -222,20 +224,19 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     if (strict) {
       final InputStream is = new ByteArrayInputStream(queryText.getBytes());
       final OrientSql osql = new OrientSql(is);
-      try {
-        final OStatement result = osql.parse();
 
-        if (iRequest instanceof OCommandRequestAbstract) {
-          final Map<Object, Object> params = ((OCommandRequestAbstract) iRequest).getParameters();
-          result.replaceParameters(params);
-        }
+      final OStatement result = OStatementCache.get(queryText, getDatabase());
+      preParsedStatement = result;
 
-        return result.toString();
-      } catch (ParseException e) {
-        e.printStackTrace();// TODO remove this
-        throwParsingException(e.getMessage());
+      if (iRequest instanceof OCommandRequestAbstract) {
+        final Map<Object, Object> params = ((OCommandRequestAbstract) iRequest).getParameters();
+        StringBuilder builder = new StringBuilder();
+        result.toString(params, builder);
+        return builder.toString();
       }
-      return "ERROR!";
+
+      return result.toString();
+
     }
     return queryText;
   }

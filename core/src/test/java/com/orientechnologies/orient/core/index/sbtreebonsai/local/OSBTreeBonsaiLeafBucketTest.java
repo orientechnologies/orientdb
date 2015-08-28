@@ -13,8 +13,8 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 public class OSBTreeBonsaiLeafBucketTest {
   public void testInitialization() throws Exception {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES);
-    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
+    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
@@ -59,7 +59,7 @@ public class OSBTreeBonsaiLeafBucketTest {
     }
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES);
-    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
+    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
@@ -99,7 +99,7 @@ public class OSBTreeBonsaiLeafBucketTest {
     }
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES);
-    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
+    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
@@ -147,7 +147,7 @@ public class OSBTreeBonsaiLeafBucketTest {
     }
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES);
-    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
+    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
 
     cachePointer.incrementReferrer();
@@ -223,7 +223,7 @@ public class OSBTreeBonsaiLeafBucketTest {
     }
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES);
-    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
+    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
@@ -293,7 +293,7 @@ public class OSBTreeBonsaiLeafBucketTest {
 
   public void testSetLeftSibling() throws Exception {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES);
-    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
+    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
@@ -309,7 +309,7 @@ public class OSBTreeBonsaiLeafBucketTest {
 
   public void testSetRightSibling() throws Exception {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES);
-    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
+    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);

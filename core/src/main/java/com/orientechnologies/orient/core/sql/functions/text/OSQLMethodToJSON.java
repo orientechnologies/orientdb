@@ -16,11 +16,15 @@
  */
 package com.orientechnologies.orient.core.sql.functions.text;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,12 +52,28 @@ public class OSQLMethodToJSON extends OAbstractSQLMethod {
       return null;
     }
 
-    if (iThis instanceof ODocument) {
-      final ODocument doc = (ODocument) iThis;
-      return iParams.length == 1 ? doc.toJSON(((String) iParams[0]).replace("\"", "")) : doc.toJSON();
+    final String format = iParams.length > 0 ? ((String) iParams[0]).replace("\"", "") : null;
+
+    if (iThis instanceof ORecord) {
+
+      final ORecord record = (ORecord) iThis;
+      return iParams.length == 1 ? record.toJSON(format) : record.toJSON();
+
     } else if (iThis instanceof Map) {
+
       final ODocument doc = new ODocument().fromMap((Map<String, Object>) iThis);
-      return iParams.length == 1 ? doc.toJSON(((String) iParams[0]).replace("\"", "")) : doc.toJSON();
+      return iParams.length == 1 ? doc.toJSON(format) : doc.toJSON();
+
+    } else if (OMultiValue.isMultiValue(iThis)) {
+
+      final List<String> result = new ArrayList<String>();
+      for (Object o : OMultiValue.getMultiValueIterable(iThis)) {
+        if (o != null && o instanceof OIdentifiable) {
+          final ORecord record = ((OIdentifiable) o).getRecord();
+          result.add(iParams.length == 1 ? record.toJSON(format) : record.toJSON());
+        }
+      }
+      return result;
     }
     return null;
   }

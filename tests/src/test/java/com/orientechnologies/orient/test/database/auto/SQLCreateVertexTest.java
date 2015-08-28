@@ -55,9 +55,9 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
       resultMessages.add(document.<String> field("message"));
     }
 
-    // TODO re-enable this and fix
-    // Assert.assertEqualsNoOrder(messages.toArray(), resultMessages.toArray(),
-    // "arrays are different: "+toString(messages)+" - "+toString(resultMessages) );
+    //issue #1787, works fine locally, not on CI
+//    Assert.assertEqualsNoOrder(messages.toArray(), resultMessages.toArray(),
+//    "arrays are different: "+toString(messages)+" - "+toString(resultMessages) );
   }
 
   private String toString(List<String> resultMessages) {
@@ -90,6 +90,14 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
     // database.command(new OCommandSQL("create vertex set")).execute();
     // database.command(new OCommandSQL("create vertex set set set = 1")).execute();
 
+  }
+
+  public void testIsClassName(){
+    OrientGraph graph = new OrientGraph(database, false);
+    graph.shutdown();
+    database.open("admin", "admin");
+    graph.createVertexType("Like").createProperty("anything", OType.STRING);
+    graph.createVertexType("Is").createProperty("anything", OType.STRING);
   }
 
 }

@@ -19,25 +19,20 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
+import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -68,7 +63,7 @@ public class ODistributedWorker extends Thread {
   protected final OHazelcastPlugin                    manager;
   protected final OHazelcastDistributedMessageService msgService;
   protected final String                              databaseName;
-  protected final IQueue<ODistributedRequest>         requestQueue;
+  protected final IQueue                              requestQueue;
   protected Queue<ODistributedRequest>                localQueue          = new ArrayBlockingQueue<ODistributedRequest>(
                                                                               LOCAL_QUEUE_MAXSIZE);
   protected volatile ODatabaseDocumentTx              database;
@@ -76,7 +71,7 @@ public class ODistributedWorker extends Thread {
   protected boolean                                   restoringMessages;
   protected volatile boolean                          running             = true;
 
-  public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final IQueue<ODistributedRequest> iRequestQueue,
+  public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final IQueue iRequestQueue,
       final String iDatabaseName, final int i, final boolean iRestoringMessages) {
     setName("OrientDB DistributedWorker node=" + iDistributed.getLocalNodeName() + " db=" + iDatabaseName + " id=" + i);
     distributed = iDistributed;
@@ -101,7 +96,6 @@ public class ODistributedWorker extends Thread {
             queuedMsg, databaseName, lastMessageId);
 
         restoringMessages = false;
-        break;
       }
 
       String senderNode = null;
@@ -135,17 +129,13 @@ public class ODistributedWorker extends Thread {
       } catch (HazelcastInstanceNotActiveException e) {
         Thread.interrupted();
         break;
-      } catch (HazelcastException e) {
+      } catch (Throwable e) {
         if (e.getCause() instanceof InterruptedException)
           Thread.interrupted();
         else
           ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
               "error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
               message != null ? message.getTask() : "-");
-      } catch (Throwable e) {
-        ODistributedServerLog.error(this, getLocalNodeName(), senderNode, DIRECTION.IN,
-            "error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
-            message != null ? message.getTask() : "-");
       }
     }
 
@@ -156,27 +146,17 @@ public class ODistributedWorker extends Thread {
   public void initDatabaseInstance() {
     if (database == null) {
       // OPEN IT
-      final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
-          ODistributedAbstractPlugin.REPLICATOR_USER);
-      database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
-          replicatorUser.password);
+      database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase(databaseName, "internal", "internal", null, true);
+
+      // AVOID RELOADING DB INFORMATION BECAUSE OF DEADLOCKS
+      // database.reload();
 
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
-      final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
-          ODistributedAbstractPlugin.REPLICATOR_USER);
-      database.open(replicatorUser.name, replicatorUser.password);
+      manager.getServerInstance().openDatabase(database, "internal", "internal", null, true);
 
-    } else {
-      // After initialize database, create replicator user in DB and reset database with OSecurityShared instead of OSecurityNull
-      // OSecurity security = database.getMetadata().getSecurity();
-      // if (security == null || security instanceof OSecurityNull) {
-      // final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
-      // ODistributedAbstractPlugin.REPLICATOR_USER);
-      // createReplicatorUser(database, replicatorUser);
-      // database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
-      // replicatorUser.password);
-      // }
+      // AVOID RELOADING DB INFORMATION BECAUSE OF DEADLOCKS
+      // database.reload();
     }
   }
 
@@ -199,8 +179,10 @@ public class ODistributedWorker extends Thread {
 
       localQueue.clear();
 
-      if (database != null)
+      if (database != null) {
+        database.activateOnCurrentThread();
         database.close();
+      }
 
     } catch (Exception e) {
       ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
@@ -251,7 +233,7 @@ public class ODistributedWorker extends Thread {
   protected ODistributedRequest nextMessage() throws InterruptedException {
     while (localQueue.isEmpty()) {
       // WAIT FOR THE FIRST MESSAGE
-      localQueue.offer(requestQueue.take());
+      localQueue.offer((ODistributedRequest) requestQueue.take());
 
       // READ MULTIPLE MSGS IN ONE SHOT BY USING LOCAL QUEUE TO IMPROVE PERFORMANCE
       requestQueue.drainTo(localQueue, LOCAL_QUEUE_MAXSIZE - 1);
@@ -280,7 +262,7 @@ public class ODistributedWorker extends Thread {
         if (task.isRequiredOpenDatabase())
           initDatabaseInstance();
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(database);
+        database.activateOnCurrentThread();
 
         task.setNodeSource(iRequest.getSenderNodeName());
 
@@ -289,8 +271,8 @@ public class ODistributedWorker extends Thread {
         if (database != null) {
           origin = database.getUser();
           try {
-            if (lastUser == null || !(lastUser.getName()).equals(iRequest.getUserName()))
-              lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserName());
+            if (lastUser == null || !(lastUser.getIdentity()).equals(iRequest.getUserRID()))
+              lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserRID());
             database.setUser(lastUser);// set to new user
           } catch (Throwable ex) {
             OLogManager.instance().error(this, "failed to convert to OUser " + ex.getMessage());
@@ -301,6 +283,7 @@ public class ODistributedWorker extends Thread {
 
       } finally {
         if (database != null) {
+          database.activateOnCurrentThread();
           database.rollback();
           database.getLocalCache().clear();
           database.setUser(origin);
@@ -430,8 +413,8 @@ public class ODistributedWorker extends Thread {
 
     try {
       // GET THE SENDER'S RESPONSE QUEUE
-      final IQueue<ODistributedResponse> queue = msgService.getQueue(OHazelcastDistributedMessageService
-          .getResponseQueueName(iRequest.getSenderNodeName()));
+      final IQueue queue = msgService.getQueue(OHazelcastDistributedMessageService.getResponseQueueName(iRequest
+          .getSenderNodeName()));
 
       if (!queue.offer(response, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS))
         throw new ODistributedException("Timeout on dispatching response to the thread queue " + iRequest.getSenderNodeName());
@@ -439,11 +422,5 @@ public class ODistributedWorker extends Thread {
     } catch (Exception e) {
       throw new ODistributedException("Cannot dispatch response to the thread queue " + iRequest.getSenderNodeName(), e);
     }
-  }
-
-  private void createReplicatorUser(ODatabaseDocumentTx database, final OServerUserConfiguration replicatorUser) {
-    final OUser replUser = database.getMetadata().getSecurity().getUser(replicatorUser.name);
-    if (replUser == null)
-      database.getMetadata().getSecurity().createUser(replicatorUser.name, replicatorUser.password, "admin");
   }
 }

@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -33,10 +29,15 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Distributed updated record task used for synchronization.
@@ -50,8 +51,8 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   protected byte[]          previousContent;
   protected ORecordVersion  previousVersion;
   protected byte            recordType;
-
   protected byte[]          content;
+
   private transient ORecord record;
 
   public OUpdateRecordTask() {
@@ -81,30 +82,43 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "updating record %s/%s v.%s",
         database.getName(), rid.toString(), version.toString());
 
-    ORecord loadedRecord = rid.getRecord();
-    if (loadedRecord == null)
-      throw new ORecordNotFoundException("Record " + rid + " was not found on update");
+    final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
+    if (!inTx) {
+      // TRY LOCKING RECORD
+      if (!ddb.lockRecord(rid, nodeSource))
+        throw new ODistributedRecordLockedException(rid);
+    }
 
-    if (loadedRecord instanceof ODocument) {
-      // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
-      final ODocument newDocument = (ODocument) getRecord();
+    try {
+      ORecord loadedRecord = rid.getRecord();
+      if (loadedRecord == null)
+        throw new ORecordNotFoundException("Record " + rid + " was not found on update");
 
-      ODocument loadedDocument = (ODocument) loadedRecord;
-      ORecordVersion loadedRecordVersion = loadedDocument.merge(newDocument, false, false).getRecordVersion();
-      if (loadedRecordVersion.getCounter() != version.getCounter()) {
-        loadedDocument.setDirty();
-      }
-      loadedRecordVersion.copyFrom(version);
-    } else
-      ORecordInternal.fill(loadedRecord, rid, version, content, true);
+      if (loadedRecord instanceof ODocument) {
+        // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
+        final ODocument newDocument = (ODocument) getRecord();
 
-    loadedRecord = database.save(loadedRecord);
+        ODocument loadedDocument = (ODocument) loadedRecord;
+        ORecordVersion loadedRecordVersion = loadedDocument.merge(newDocument, false, false).getRecordVersion();
+        if (loadedRecordVersion.getCounter() != version.getCounter()) {
+          loadedDocument.setDirty();
+        }
+        loadedRecordVersion.copyFrom(version);
+      } else
+        ORecordInternal.fill(loadedRecord, rid, version, content, true);
 
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> updated record %s/%s v.%s",
-        database.getName(), rid.toString(), loadedRecord.getRecordVersion().toString());
+      loadedRecord = database.save(loadedRecord);
 
-    // RETURN THE SAME OBJECT (NOT A COPY), SO AFTER COMMIT THE VERSIONS IS UPDATED AND SENT TO THE CALLER
-    return loadedRecord.getRecordVersion();
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+          "+-> updated record %s/%s v.%s", database.getName(), rid.toString(), loadedRecord.getRecordVersion().toString());
+
+      // RETURN THE SAME OBJECT (NOT A COPY), SO AFTER COMMIT THE VERSIONS IS UPDATED AND SENT TO THE CALLER
+      return loadedRecord.getRecordVersion();
+
+    } finally {
+      if (!inTx)
+        ddb.unlockRecord(rid);
+    }
   }
 
   @Override

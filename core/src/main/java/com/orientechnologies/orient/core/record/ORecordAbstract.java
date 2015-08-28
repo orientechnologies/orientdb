@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.record;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -29,6 +30,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
@@ -60,6 +62,7 @@ public abstract class ORecordAbstract implements ORecord {
   protected transient Set<ORecordListener>       _listeners                 = null;
 
   private transient Set<OIdentityChangeListener> newIdentityChangeListeners = null;
+  protected ODirtyManager                        _dirtyManager;
 
   public ORecordAbstract() {
   }
@@ -245,22 +248,29 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   public ORecord reload() {
-    return reload(null);
+    return reload(null, true, true);
   }
 
-  public ORecord reload(final String iFetchPlan) {
-    return reload(null, true);
+  public ORecord reload(final String fetchPlan) {
+    return reload(fetchPlan, true);
   }
 
-  public ORecord reload(final String iFetchPlan, final boolean iIgnoreCache) {
+  public ORecord reload(final String fetchPlan, final boolean ignoreCache) {
+    return reload(fetchPlan, ignoreCache, true);
+  }
+
+  @Override
+  public ORecord reload(String fetchPlan, boolean ignoreCache, boolean force) throws ORecordNotFoundException {
     if (!getIdentity().isValid())
       throw new ORecordNotFoundException("The record has no id. It is probably new or still transient");
 
     try {
-      getDatabase().reload(this, iFetchPlan, iIgnoreCache);
+      getDatabase().reload(this, fetchPlan, ignoreCache, force);
 
       return this;
     } catch (OOfflineClusterException e) {
+      throw e;
+    } catch (OException e) {
       throw e;
     } catch (Exception e) {
       throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found", e);
@@ -398,6 +408,7 @@ public abstract class ORecordAbstract implements ORecord {
   protected void unsetDirty() {
     _contentChanged = false;
     _dirty = false;
+    _dirtyManager = null;
   }
 
   protected abstract byte getRecordType();
@@ -496,6 +507,32 @@ public abstract class ORecordAbstract implements ORecord {
 
   protected void clearSource() {
     this._source = null;
+  }
+
+  protected ODirtyManager getDirtyManager() {
+    if (this._dirtyManager == null) {
+      this._dirtyManager = new ODirtyManager();
+      if (this.getIdentity().isNew() && getOwner() == null)
+        this._dirtyManager.setDirty(this);
+    }
+    return this._dirtyManager;
+  }
+
+  protected void setDirtyManager(ODirtyManager dirtyManager) {
+    if (this._dirtyManager != null && dirtyManager != null) {
+      dirtyManager.merge(this._dirtyManager);
+    }
+    this._dirtyManager = dirtyManager;
+    if (this.getIdentity().isNew() && getOwner() == null && this._dirtyManager != null)
+      this._dirtyManager.setDirty(this);
+  }
+
+  protected void track(OIdentifiable id) {
+    this.getDirtyManager().track(this, id);
+  }
+
+  protected void unTrack(OIdentifiable id) {
+    this.getDirtyManager().unTrack(this, id);
   }
 
 }

@@ -23,9 +23,8 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
@@ -43,22 +42,17 @@ public class OHashTableDirectory extends ODurableComponent {
 
   public static final int                 BINARY_LEVEL_SIZE = LEVEL_SIZE * ITEM_SIZE + 3 * OByteSerializer.BYTE_SIZE;
 
-  private final String                    defaultExtension;
-  private final String                    name;
 
   private long                            fileId;
 
   private final long                      firstEntryIndex;
 
   private final boolean                   durableInNonTxMode;
-  private final OAbstractPaginatedStorage storage;
+
 
   public OHashTableDirectory(String defaultExtension, String name, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
-    super(storage);
-    this.defaultExtension = defaultExtension;
-    this.name = name;
+    super(storage, name, defaultExtension);
     this.durableInNonTxMode = durableInNonTxMode;
-    this.storage = storage;
     this.firstEntryIndex = 0;
   }
 
@@ -67,15 +61,15 @@ public class OHashTableDirectory extends ODurableComponent {
     acquireExclusiveLock();
     try {
 
-      fileId = addFile(atomicOperation, name + defaultExtension);
+      fileId = addFile(atomicOperation, getFullName());
       init();
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
-      throw new OStorageException("Error during creation of hash table.", e);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
+      throw new OStorageException("Error during creation of hash table", e);
     } finally {
       releaseExclusiveLock();
     }
@@ -105,12 +99,12 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(atomicOperation, firstEntry);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     }
   }
@@ -120,7 +114,7 @@ public class OHashTableDirectory extends ODurableComponent {
     try {
       OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-      fileId = openFile(atomicOperation, name + defaultExtension);
+      fileId = openFile(atomicOperation, getFullName());
       final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
 
       for (int i = 0; i < filledUpTo; i++) {
@@ -149,12 +143,12 @@ public class OHashTableDirectory extends ODurableComponent {
     acquireExclusiveLock();
     try {
       deleteFile(atomicOperation, fileId);
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
     } catch (Exception e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw new OStorageException("Error during hash table deletion", e);
     } finally {
       releaseExclusiveLock();
@@ -165,17 +159,17 @@ public class OHashTableDirectory extends ODurableComponent {
     final OAtomicOperation atomicOperation = startAtomicOperation();
     acquireExclusiveLock();
     try {
-      if (isFileExists(atomicOperation, name + defaultExtension)) {
-        fileId = openFile(atomicOperation, name + defaultExtension);
+      if (isFileExists(atomicOperation, getFullName())) {
+        fileId = openFile(atomicOperation, getFullName());
         deleteFile(atomicOperation, fileId);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
     } catch (Exception e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw new OStorageException("", e);
     } finally {
       releaseExclusiveLock();
@@ -252,13 +246,13 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(atomicOperation, firstEntry);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
 
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (RuntimeException e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -300,12 +294,12 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(atomicOperation, firstEntry);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -345,12 +339,12 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(page, true, atomicOperation);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -389,12 +383,12 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(page, true, atomicOperation);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -432,12 +426,12 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(page, true, atomicOperation);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -484,12 +478,12 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(page, true, atomicOperation);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -527,12 +521,12 @@ public class OHashTableDirectory extends ODurableComponent {
         releasePage(page, true, atomicOperation);
       }
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
-    } catch (Throwable e) {
-      endAtomicOperation(true);
+    } catch (Exception e) {
+      endAtomicOperation(true, e);
       throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
@@ -547,13 +541,13 @@ public class OHashTableDirectory extends ODurableComponent {
 
       init();
 
-      endAtomicOperation(false);
+      endAtomicOperation(false, null);
     } catch (IOException e) {
-      endAtomicOperation(true);
+      endAtomicOperation(true, e);
       throw e;
     } catch (Exception e) {
-      endAtomicOperation(true);
-      throw new OStorageException("Error during removing of hash table directory content.", e);
+      endAtomicOperation(true, e);
+      throw new OStorageException("Error during removing of hash table directory content", e);
     } finally {
       releaseExclusiveLock();
     }
@@ -608,19 +602,9 @@ public class OHashTableDirectory extends ODurableComponent {
     return (nodeIndex - ODirectoryFirstPage.NODES_PER_PAGE) % ODirectoryPage.NODES_PER_PAGE;
   }
 
-  @Override
-  protected void endAtomicOperation(boolean rollback) throws IOException {
-    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return;
-
-    super.endAtomicOperation(rollback);
-  }
 
   @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return atomicOperationsManager.getCurrentOperation();
-
-    return super.startAtomicOperation();
+    return atomicOperationsManager.startAtomicOperation(this, !durableInNonTxMode);
   }
 }

@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
+import java.io.IOException;
+import java.util.List;
+
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -32,11 +35,12 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.OTokenHandler;
-import com.orientechnologies.orient.server.network.protocol.http.*;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 /**
  * Database based authenticated command. Authenticates against the database taken as second parameter of the URL. The URL must be in
@@ -160,8 +164,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       final List<String> iAuthenticationParts, final String iDatabaseName) throws IOException {
     ODatabaseDocumentTx db = null;
     try {
-      db = (ODatabaseDocumentTx) server.openDatabase("document", iDatabaseName, iAuthenticationParts.get(0),
-          iAuthenticationParts.get(1));
+      db = (ODatabaseDocumentTx) server.openDatabase(iDatabaseName, iAuthenticationParts.get(0), iAuthenticationParts.get(1));
       // if (db.getUser() == null)
       // // MAYBE A PREVIOUS ROOT REALM? UN AUTHORIZE
       // return false;
@@ -208,7 +211,6 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   }
 
   protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
-    final OHttpSession session = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
     if (iRequest.bearerToken != null) {
       return getProfiledDatabaseInstanceToken(iRequest);
     } else {
@@ -220,11 +222,11 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user
     ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (localDatabase == null) {
-      localDatabase = (ODatabaseDocumentTx) server.openDatabase("document", iRequest.databaseName, iRequest.bearerToken);
+      localDatabase = (ODatabaseDocumentTx) server.openDatabase(iRequest.databaseName, iRequest.bearerToken);
     } else {
       ORID currentUserId = iRequest.bearerToken.getUserId();
       if (currentUserId != null && localDatabase != null && localDatabase.getUser() != null) {
-        if (!currentUserId.equals(localDatabase.getUser().getDocument().getIdentity().toString())) {
+        if (!currentUserId.equals(localDatabase.getUser().getDocument().getIdentity())) {
           ODocument userDoc = localDatabase.load(currentUserId);
           localDatabase.setUser(new OUser(userDoc));
         }
@@ -246,7 +248,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
     if (localDatabase == null) {
-      localDatabase = (ODatabaseDocumentTx) server.openDatabase("document", iRequest.databaseName, session.getUserName(),
+      localDatabase = (ODatabaseDocumentTx) server.openDatabase(iRequest.databaseName, session.getUserName(),
           session.getUserPassword());
     } else {
 

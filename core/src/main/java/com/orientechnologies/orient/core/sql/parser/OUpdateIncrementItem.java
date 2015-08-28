@@ -6,6 +6,7 @@ import java.util.Map;
 
 public class OUpdateIncrementItem extends SimpleNode {
   protected OIdentifier left;
+  protected OModifier   leftModifier;
   protected OExpression right;
 
   public OUpdateIncrementItem(int id) {
@@ -21,17 +22,14 @@ public class OUpdateIncrementItem extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    right.replaceParameters(params);
-  }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(left.toString());
-    result.append(" = ");
-    result.append(right.toString());
-    return result.toString();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    left.toString(params, builder);
+    if (leftModifier != null) {
+      leftModifier.toString(params, builder);
+    }
+    builder.append(" = ");
+    right.toString(params, builder);
   }
 }
 /* JavaCC - OriginalChecksum=94dd82febb904e4e31130bdcbbb48fe3 (do not edit this line) */

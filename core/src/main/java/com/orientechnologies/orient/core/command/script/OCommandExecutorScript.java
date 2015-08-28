@@ -22,6 +22,9 @@ package com.orientechnologies.orient.core.command.script;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
+import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OContextVariableResolver;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -37,6 +40,7 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
@@ -46,13 +50,16 @@ import javax.script.CompiledScript;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
+import javax.script.SimpleBindings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * Executes Script Commands.
@@ -62,6 +69,7 @@ import java.util.Map;
  * 
  */
 public class OCommandExecutorScript extends OCommandExecutorAbstract implements OCommandDistributedReplicateRequest {
+  private static final int MAX_DELAY = 100;
   protected OCommandScript request;
 
   public OCommandExecutorScript() {
@@ -183,7 +191,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
           for (; (lastLine = reader.readLine()) != null; ++line) {
             lastLine = lastLine.trim();
 
-            final List<String> lineParts = OStringSerializerHelper.smartSplit(lastLine, ';');
+            final List<String> lineParts = OStringSerializerHelper.smartSplit(lastLine, ';', true);
 
             if (line == txBegunAtLine)
               // SKIP PREVIOUS COMMAND PART AND JUMP TO THE BEGIN IF ANY
@@ -253,8 +261,17 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
               } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "sleep ")) {
                 executeSleep(lastCommand);
 
+              } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "console.log ")) {
+                executeConsoleLog(lastCommand, db);
+
+              } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "console.output ")) {
+                executeConsoleOutput(lastCommand, db);
+
+              } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "console.error ")) {
+                executeConsoleError(lastCommand, db);
+
               } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "return ")) {
-                lastResult = executeReturn(lastCommand, lastResult);
+                lastResult = getValue(lastCommand.substring("return ".length()), db);
 
                 // END OF SCRIPT
                 break;
@@ -278,12 +295,16 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         if (retry >= maxRetry)
           throw e;
 
+        waitForNextRetry();
+
       } catch (ORecordDuplicatedException e) {
         // THIS CASE IS ON UPSERT
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
         if (retry >= maxRetry)
           throw e;
+
+        waitForNextRetry();
 
       } catch (ORecordNotFoundException e) {
         // THIS CASE IS ON UPSERT
@@ -297,48 +318,59 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         getDatabase().getLocalCache().clear();
         if (retry >= maxRetry)
           throw e;
+
+        waitForNextRetry();
       }
     }
 
     return lastResult;
   }
 
-  private Object executeCommand(final String lastCommand, final ODatabaseDocument db) {
-    return db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute(parameters);
+  /**
+   * Wait before to retry
+   */
+  protected void waitForNextRetry() {
+    try {
+      Thread.sleep(new Random().nextInt(MAX_DELAY - 1) + 1);
+    } catch (InterruptedException e) {
+      OLogManager.instance().error(this, "Wait was interrupted", e);
+    }
   }
 
-  private Object executeReturn(String lastCommand, Object lastResult) {
-    final String variable = lastCommand.substring("return ".length()).trim();
+  private Object executeCommand(final String lastCommand, final ODatabaseDocument db) {
+    return db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute(toMap(parameters));
+  }
 
-    if (variable.equalsIgnoreCase("NULL"))
+  private Object toMap(Object parameters) {
+    if (parameters instanceof SimpleBindings) {
+      HashMap<Object, Object> result = new LinkedHashMap<Object, Object>();
+      result.putAll((SimpleBindings) parameters);
+      return result;
+    }
+    return parameters;
+  }
+
+  private Object getValue(final String iValue, final ODatabaseDocument db) {
+    Object lastResult = null;
+
+    if (iValue.equalsIgnoreCase("NULL"))
       lastResult = null;
-    else if (variable.startsWith("$"))
-      lastResult = getContext().getVariable(variable);
-    else if (variable.startsWith("[") && variable.endsWith("]")) {
+    else if (iValue.startsWith("[") && iValue.endsWith("]")) {
       // ARRAY - COLLECTION
       final List<String> items = new ArrayList<String>();
 
-      OStringSerializerHelper.getCollection(variable, 0, items);
+      OStringSerializerHelper.getCollection(iValue, 0, items);
       final List<Object> result = new ArrayList<Object>(items.size());
 
       for (int i = 0; i < items.size(); ++i) {
         String item = items.get(i);
 
-        Object res;
-        if (item.startsWith("$"))
-          res = getContext().getVariable(item);
-        else
-          res = item;
-
-        if (OMultiValue.isMultiValue(res) && OMultiValue.getSize(res) == 1)
-          res = OMultiValue.getFirstValue(res);
-
-        result.add(res);
+        result.add(getValue(item, db));
       }
       lastResult = result;
-    } else if (variable.startsWith("{") && variable.endsWith("}")) {
+    } else if (iValue.startsWith("{") && iValue.endsWith("}")) {
       // MAP
-      final Map<String, String> map = OStringSerializerHelper.getMap(variable);
+      final Map<String, String> map = OStringSerializerHelper.getMap(iValue);
       final Map<Object, Object> result = new HashMap<Object, Object>(map.size());
 
       for (Map.Entry<String, String> entry : map.entrySet()) {
@@ -374,8 +406,12 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         result.put(key, value);
       }
       lastResult = result;
-    } else
-      lastResult = variable;
+    } else if (iValue.startsWith("\"") && iValue.endsWith("\"") || iValue.startsWith("'") && iValue.endsWith("'"))
+      lastResult = new OContextVariableResolver(context).parse(OIOUtils.getStringContent(iValue));
+    else if (iValue.startsWith("(") && iValue.endsWith(")"))
+      lastResult = executeCommand(iValue, db);
+    else
+      lastResult = new OSQLPredicate(iValue).evaluate(context);
 
     // END OF THE SCRIPT
     return lastResult;
@@ -386,15 +422,41 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     try {
       Thread.sleep(Integer.parseInt(sleepTimeInMs));
     } catch (InterruptedException e) {
+      OLogManager.instance().error(this, "Sleep was interrupted", e);
     }
+  }
+
+  private void executeConsoleLog(final String lastCommand, final ODatabaseDocument db) {
+    final String value = lastCommand.substring("console.log ".length()).trim();
+    OLogManager.instance().info(this, "%s", getValue(OIOUtils.wrapStringContent(value, '\''), db));
+  }
+
+  private void executeConsoleOutput(final String lastCommand, final ODatabaseDocument db) {
+    final String value = lastCommand.substring("console.output ".length()).trim();
+    System.out.println(getValue(OIOUtils.wrapStringContent(value, '\''), db));
+  }
+
+  private void executeConsoleError(final String lastCommand, final ODatabaseDocument db) {
+    final String value = lastCommand.substring("console.error ".length()).trim();
+    System.err.println(getValue(OIOUtils.wrapStringContent(value, '\''), db));
   }
 
   private Object executeLet(final String lastCommand, final ODatabaseDocument db) {
     final int equalsPos = lastCommand.indexOf('=');
     final String variable = lastCommand.substring("let ".length(), equalsPos).trim();
-    String cmd = lastCommand.substring(equalsPos + 1).trim();
+    final String cmd = lastCommand.substring(equalsPos + 1).trim();
+    if (cmd == null)
+      return null;
 
-    final Object lastResult = executeCommand(cmd, db);
+    Object lastResult = null;
+
+    if (cmd.equalsIgnoreCase("NULL") || cmd.startsWith("$") || (cmd.startsWith("[") && cmd.endsWith("]"))
+        || (cmd.startsWith("{") && cmd.endsWith("}"))
+        || (cmd.startsWith("\"") && cmd.endsWith("\"") || cmd.startsWith("'") && cmd.endsWith("'"))
+        || (cmd.startsWith("(") && cmd.endsWith(")")))
+      lastResult = getValue(cmd, db);
+    else
+      lastResult = executeCommand(cmd, db);
 
     // PUT THE RESULT INTO THE CONTEXT
     getContext().setVariable(variable, lastResult);

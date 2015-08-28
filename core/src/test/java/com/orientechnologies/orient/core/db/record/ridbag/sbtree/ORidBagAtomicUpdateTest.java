@@ -842,10 +842,17 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertEquals(ridBagTwo.size(), 3);
   }
 
-  public void testRandomChangedInTx() {
+  public void testRandomChangedInTxLevel2() {
+    testRandomChangedInTx(2);
+  }
+
+  public void testRandomChangedInTxLevel1() {
+    testRandomChangedInTx(1);
+  }
+
+  private void testRandomChangedInTx(final int levels) {
     Random rnd = new Random();
 
-    final int levels = rnd.nextInt(2) + 1;
     final List<Integer> amountOfAddedDocsPerLevel = new ArrayList<Integer>();
     final List<Integer> amountOfAddedDocsAfterSavePerLevel = new ArrayList<Integer>();
     final List<Integer> amountOfDeletedDocsPerLevel = new ArrayList<Integer>();
@@ -1314,7 +1321,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
   private void deleteDocsForLevel(List<Integer> amountOfDeletedDocsPerLevel, int level, int levels, ODocument rootDoc, Random rnd) {
     ORidBag ridBag = rootDoc.field("ridBag");
-    for (OIdentifiable identifiable : ridBag) {
+    Iterator<OIdentifiable> iter = ridBag.iterator();
+    while (iter.hasNext()) {
+      OIdentifiable identifiable = iter.next();
       ODocument doc = identifiable.getRecord();
       if (level + 1 < levels)
         deleteDocsForLevel(amountOfDeletedDocsPerLevel, level + 1, levels, doc, rnd);

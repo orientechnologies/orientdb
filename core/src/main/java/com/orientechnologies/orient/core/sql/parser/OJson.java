@@ -23,27 +23,19 @@ public class OJson extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    for (OJsonItem item : items) {
-      item.replaceParameters(params);
-    }
-  }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("{");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("{");
     boolean first = true;
     for (OJsonItem item : items) {
       if (!first) {
-        result.append(", ");
+        builder.append(", ");
       }
-      result.append(item.toString());
+      item.toString(params, builder);
 
       first = false;
     }
-    result.append("}");
-    return result.toString();
+    builder.append("}");
   }
 }
 /* JavaCC - OriginalChecksum=3beec9f6db486de944498588b51a505d (do not edit this line) */

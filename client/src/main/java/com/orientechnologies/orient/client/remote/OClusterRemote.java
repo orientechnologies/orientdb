@@ -19,17 +19,18 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
 
 /**
  * Remote cluster implementation
@@ -112,6 +113,12 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
+  public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, ORecordVersion recordVersion) throws IOException,
+      ORecordNotFoundException {
+    throw new UnsupportedOperationException("readRecordIfVersionIsNotLatest");
+  }
+
+  @Override
   public boolean exists() {
     throw new UnsupportedOperationException("exists");
   }
@@ -123,13 +130,17 @@ public class OClusterRemote implements OCluster {
     return null;
   }
 
+  @Override
+  public String encryption() {
+    throw new UnsupportedOperationException("encryption");
+  }
+
   public void truncate() throws IOException {
   }
 
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
     return null;
   }
-
 
   public long getEntries() {
     return 0;
@@ -158,6 +169,11 @@ public class OClusterRemote implements OCluster {
     return 0;
   }
 
+  @Override
+  public String getFileName() {
+    throw new UnsupportedOperationException("getFileName()");
+  }
+
   public int getId() {
     return id;
   }
@@ -182,6 +198,11 @@ public class OClusterRemote implements OCluster {
   }
 
   public boolean isHashBased() {
+    return false;
+  }
+
+  @Override
+  public boolean isSystemCluster() {
     return false;
   }
 

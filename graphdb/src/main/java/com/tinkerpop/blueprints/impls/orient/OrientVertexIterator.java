@@ -23,6 +23,7 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -49,6 +50,10 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
     if (iObject instanceof OrientVertex)
       return (OrientVertex) iObject;
 
+    if (iObject == null) {
+      return null;
+    }
+
     final ORecord rec = ((OIdentifiable) iObject).getRecord();
 
     if (rec == null || !(rec instanceof ODocument))
@@ -57,10 +62,11 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
     final ODocument value = (ODocument) rec;
 
     final OrientVertex v;
-    if (ODocumentInternal.getImmutableSchemaClass(value).isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(value);
+    if (immutableClass.isVertexType()) {
       // DIRECT VERTEX
       v = new OrientVertex(vertex.getGraph(), value);
-    } else if (ODocumentInternal.getImmutableSchemaClass(value).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+    } else if (immutableClass.isEdgeType()) {
       // EDGE
       if (vertex.settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
         v = new OrientVertex(vertex.getGraph(), OrientEdge.getConnection(value, connection.getKey().opposite()));
@@ -82,10 +88,11 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
     final ODocument value = (ODocument) rec;
 
     final OIdentifiable v;
-    if (ODocumentInternal.getImmutableSchemaClass(value).isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(value);
+    if (immutableClass.isVertexType()) {
       // DIRECT VERTEX
       v = value;
-    } else if (ODocumentInternal.getImmutableSchemaClass(value).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+    } else if (immutableClass.isEdgeType()) {
       // EDGE
       if (vertex.settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
         v = OrientEdge.getConnection(value, connection.getKey().opposite());
@@ -98,9 +105,6 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
   }
 
   public boolean filter(final Vertex iObject) {
-    if (iObject instanceof OrientVertex && ((OrientVertex) iObject).getRecord() == null) {
-      return false;
-    }
-    return true;
+    return !(iObject instanceof OrientVertex && ((OrientVertex) iObject).getRecord() == null);
   }
 }

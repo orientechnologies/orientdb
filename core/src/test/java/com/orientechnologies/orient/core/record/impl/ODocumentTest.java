@@ -7,6 +7,8 @@ import static org.testng.Assert.assertNull;
 
 import org.testng.annotations.Test;
 
+import java.util.*;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -221,6 +223,36 @@ public class ODocumentTest {
     } finally {
       db.drop();
     }
+  }
+  
+  @Test
+  public void testSetFieldAtListIndex() {
+      ODocument doc = new ODocument();
+      
+      Map<String, Object> data = new HashMap<String, Object>();
+      
+      List<Object> parentArray = new ArrayList<Object>();
+      parentArray.add(1);
+      parentArray.add(2);
+      parentArray.add(3);
+      
+      Map<String, Object> object4 = new HashMap<String, Object>();
+      object4.put("prop", "A");
+      parentArray.add(object4);
+      
+      data.put("array", parentArray);
+      
+      doc.field("data", data);
+      
+      assertEquals(doc.field("data.array[3].prop"), "A");
+      doc.field("data.array[3].prop", "B");
+      
+      assertEquals(doc.field("data.array[3].prop"), "B");
+      
+      assertEquals(doc.field("data.array[0]"), 1);
+      doc.field("data.array[0]", 5);
+      
+      assertEquals(doc.field("data.array[0]"), 5);
   }
   
   @Test

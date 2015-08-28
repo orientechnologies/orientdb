@@ -53,7 +53,7 @@ public class OGZIPCompression extends OAbstractCompression {
 
       return result;
     } catch (IOException ioe) {
-      throw new IllegalStateException("Exception during data compression.", ioe);
+      throw new IllegalStateException("Exception during data compression", ioe);
     }
   }
 
@@ -92,7 +92,7 @@ public class OGZIPCompression extends OAbstractCompression {
       }
 
     } catch (IOException ioe) {
-      throw new IllegalStateException("Exception during data uncompression.", ioe);
+      throw new IllegalStateException("Exception during data uncompression", ioe);
     }
   }
 

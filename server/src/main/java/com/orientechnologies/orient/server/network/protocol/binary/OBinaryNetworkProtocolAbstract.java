@@ -67,10 +67,6 @@ import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.logging.Level;
-
 /**
  * Abstract base class for binary network implementations.
  *
@@ -98,9 +94,14 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       final OContextConfiguration iConfig) throws IOException {
     server = iServer;
     channel = new OChannelBinaryServer(iSocket, iConfig);
-    tokenHandler = server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
-    if (tokenHandler != null && !tokenHandler.isEnabled())
-      tokenHandler = null;
+
+    try {
+      tokenHandler = server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
+      if (tokenHandler != null && !tokenHandler.isEnabled())
+        tokenHandler = null;
+    } catch (ODatabaseException e) {
+      OLogManager.instance().debug(this, "Error on retrieving plugin '%s'", e, OTokenHandler.TOKEN_HANDLER_NAME);
+    }
   }
 
   @Override
@@ -212,6 +213,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       try {
         onBeforeRequest();
       } catch (Exception e) {
+        sendError(clientTxId, e);
         handleConnectionError(channel, e);
         sendShutdown();
         return;
@@ -323,7 +325,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     } else
       throw new IllegalArgumentException("Cannot create database: storage mode '" + storageType + "' is not supported.");
 
-    return Orient.instance().getDatabaseFactory().createDatabase(dbType, path);
+    return new ODatabaseDocumentTx(path);
   }
 
   protected int deleteRecord(final ODatabaseDocument iDatabase, final ORID rid, final ORecordVersion version) {
@@ -370,7 +372,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     fillRecord(rid, buffer, version, newRecord, null);
 
     ORecordInternal.setContentChanged(newRecord, updateContent);
-
+    ORecordInternal.getDirtyManager(newRecord).cleanForSave();
     final ORecord currentRecord;
     if (newRecord instanceof ODocument) {
       currentRecord = iDatabase.load(rid);
@@ -399,6 +401,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     try {
       channel.flush();
     } catch (IOException e1) {
+      OLogManager.instance().debug(this, "Error during channel flush", e1);
     }
   }
 

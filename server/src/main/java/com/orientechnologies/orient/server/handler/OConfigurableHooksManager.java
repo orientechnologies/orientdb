@@ -90,7 +90,12 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
     }
   }
 
+  @Override
   public void onClose(ODatabaseInternal iDatabase) {
+  }
+
+  @Override
+  public void onDrop(ODatabaseInternal iDatabase) {
   }
 
   @Override

@@ -43,6 +43,11 @@ public class ODefaultComparator implements Comparator<Object> {
         return -1;
     } else if (objectTwo == null)
       return 1;
+
+    if (objectOne == objectTwo)
+      // FAST COMPARISON
+      return 0;
+
     if (objectOne instanceof Comparable)
       return ((Comparable<Object>) objectOne).compareTo(objectTwo);
 
@@ -51,6 +56,6 @@ public class ODefaultComparator implements Comparator<Object> {
     if (comparator != null)
       return ((Comparator<Object>) comparator).compare(objectOne, objectTwo);
 
-    throw new IllegalStateException("Object of class" + objectOne.getClass().getName() + " can not be compared");
+    throw new IllegalStateException("Object of class '" + objectOne.getClass().getName() + "' cannot be compared");
   }
 }

@@ -29,6 +29,8 @@ import java.util.Map;
  */
 @SuppressWarnings("serial")
 public class OLimitedMap<K, V> extends LinkedHashMap<K, V> {
+  private static final long serialVersionUID = -8351565305916627957L;
+
   protected final int limit;
 
   public OLimitedMap(final int initialCapacity, final float loadFactor, final int limit) {

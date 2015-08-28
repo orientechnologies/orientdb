@@ -36,12 +36,14 @@ import java.util.Map;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 1/30/14
  */
-public class OPropertyRidBagIndexDefinition extends OAbstractIndexDefinitionMultiValue implements OIndexDefinitionMultiValue {
+public class OPropertyRidBagIndexDefinition extends OAbstractIndexDefinitionMultiValue {
+  private static final long serialVersionUID = -8315498456603024776L;
+
   public OPropertyRidBagIndexDefinition() {
   }
 
-  public OPropertyRidBagIndexDefinition(String className, String field, int version) {
-    super(className, field, OType.LINK, version);
+  public OPropertyRidBagIndexDefinition(String className, String field) {
+    super(className, field, OType.LINK);
   }
 
   @Override
@@ -99,7 +101,7 @@ public class OPropertyRidBagIndexDefinition extends OAbstractIndexDefinitionMult
   }
 
   @Override
-  public String toCreateIndexDDL(String indexName, String indexType) {
-    return createIndexDDLWithoutFieldType(indexName, indexType).toString();
+  public String toCreateIndexDDL(String indexName, String indexType,String engine) {
+    return createIndexDDLWithoutFieldType(indexName, indexType,engine).toString();
   }
 }

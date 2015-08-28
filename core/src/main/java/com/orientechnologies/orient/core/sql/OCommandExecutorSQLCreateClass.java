@@ -19,17 +19,19 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL CREATE CLASS command: Creates a new property in the target class.
@@ -44,10 +46,12 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   public static final String KEYWORD_EXTENDS  = "EXTENDS";
   public static final String KEYWORD_ABSTRACT = "ABSTRACT";
   public static final String KEYWORD_CLUSTER  = "CLUSTER";
+  public static final String KEYWORD_CLUSTERS = "CLUSTERS";
 
   private String             className;
   private List<OClass>       superClasses     = new ArrayList<OClass>();
   private int[]              clusterIds;
+  private Integer            clusters         = null;
 
   public OCommandExecutorSQLCreateClass parse(final OCommandRequest iRequest) {
     final ODatabaseDocumentInternal database = getDatabase();
@@ -124,10 +128,18 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
             try {
               database.getStorage().getClusterById(clusterIds[i]);
             } catch (Exception e) {
-              throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos);
+              throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos, e);
             }
           }
         }
+      } else if (k.equals(KEYWORD_CLUSTERS)) {
+        oldPos = pos;
+        pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false, " =><()");
+        if (pos == -1)
+          throw new OCommandSQLParsingException("Syntax error after CLUSTERS for class " + className
+              + ". Expected the number of clusters. Use " + getSyntax(), parserText, oldPos);
+
+        clusters = Integer.parseInt(word.toString());
       } else if (k.equals(KEYWORD_ABSTRACT))
         clusterIds = new int[] { -1 };
       else
@@ -147,6 +159,11 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   }
 
   @Override
+  public long getDistributedTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
+  }
+
+  @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
   }
@@ -159,14 +176,17 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     final ODatabaseDocument database = getDatabase();
-    database.getMetadata().getSchema().createClass(className, clusterIds, superClasses.toArray(new OClass[0]));
+    final OClass cls = database.getMetadata().getSchema().createClass(className, clusterIds, superClasses.toArray(new OClass[0]));
+
+    if (clusters != null)
+      OClassImpl.addClusters(cls, clusters);
 
     return database.getMetadata().getSchema().getClasses().size();
   }
 
   @Override
   public String getSyntax() {
-    return "CREATE CLASS <class> [EXTENDS <super-class> [,<super-class2>*] ] [CLUSTER <clusterId>*] [ABSTRACT]";
+    return "CREATE CLASS <class> [EXTENDS <super-class> [,<super-class2>*] ] [CLUSTER <clusterId>*] [CLUSTERS <total-cluster-number>] [ABSTRACT]";
   }
 
   @Override

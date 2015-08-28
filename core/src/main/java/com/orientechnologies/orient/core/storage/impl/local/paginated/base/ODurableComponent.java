@@ -23,8 +23,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 import java.io.IOException;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -47,7 +47,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
  * To support of "atomic operation" concept following should be done:
  * <ol>
  * <li>Call {@link #startAtomicOperation()} method.</li>
- * <li>Call {@link #endAtomicOperation(boolean)} method when atomic operation completes, passed in parameter should be
+ * <li>Call {@link #endAtomicOperation(boolean, Exception)} method when atomic operation completes, passed in parameter should be
  * <code>false</code> if atomic operation completes with success and <code>true</code> if there were some exceptions and it is
  * needed to rollback given operation.</li>
  * </ol>
@@ -62,14 +62,40 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected final OReadCache                readCache;
   protected final OWriteCache               writeCache;
 
-  public ODurableComponent(OAbstractPaginatedStorage storage) {
+  private volatile String                   name;
+  private volatile String                   fullName;
+
+  protected final String                    extension;
+
+  public ODurableComponent(OAbstractPaginatedStorage storage, String name, String extension) {
     super(true);
 
+    assert name != null;
+    this.extension = extension;
     this.storage = storage;
+    this.fullName = name + extension;
+    this.name = name;
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
 
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+    this.fullName = name + extension;
+  }
+
+  public String getFullName() {
+    return fullName;
+  }
+
+  public String getExtension() {
+    return extension;
   }
 
   @Override
@@ -77,12 +103,12 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     super.acquireExclusiveLock();
   }
 
-  protected void endAtomicOperation(boolean rollback) throws IOException {
-    atomicOperationsManager.endAtomicOperation(rollback);
+  protected void endAtomicOperation(boolean rollback, Exception e) throws IOException {
+    atomicOperationsManager.endAtomicOperation(rollback, e);
   }
 
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this);
+    return atomicOperationsManager.startAtomicOperation(this, false);
   }
 
   protected OWALChangesTree getChangesTree(OAtomicOperation atomicOperation, OCacheEntry entry) {

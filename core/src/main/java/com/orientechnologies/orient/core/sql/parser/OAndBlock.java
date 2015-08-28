@@ -2,11 +2,12 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 public class OAndBlock extends OBooleanExpression {
   List<OBooleanExpression> subBlocks = new ArrayList<OBooleanExpression>();
@@ -20,25 +21,19 @@ public class OAndBlock extends OBooleanExpression {
   }
 
   @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
 
     if (getSubBlocks() == null) {
       return true;
     }
 
     for (OBooleanExpression block : subBlocks) {
-      if (!block.evaluate(currentRecord)) {
+      if (!block.evaluate(currentRecord, ctx)) {
         return false;
       }
     }
     return true;
 
-  }
-
-  @Override public void replaceParameters(Map<Object, Object> params) {
-    for(OBooleanExpression sub:subBlocks){
-      sub.replaceParameters(params);
-    }
   }
 
   public List<OBooleanExpression> getSubBlocks() {
@@ -49,24 +44,48 @@ public class OAndBlock extends OBooleanExpression {
     this.subBlocks = subBlocks;
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (subBlocks == null || subBlocks.size() == 0) {
-      return "";
+      return;
     }
-    if (subBlocks.size() == 1) {
-      return subBlocks.get(0).toString();
-    }
-    StringBuilder result = new StringBuilder();
+//    if (subBlocks.size() == 1) {
+//      subBlocks.get(0).toString(params, builder);
+//    }
+
     boolean first = true;
     for (OBooleanExpression expr : subBlocks) {
       if (!first) {
-        result.append(" AND ");
+        builder.append(" AND ");
       }
-      result.append(expr.toString());
+      expr.toString(params, builder);
       first = false;
     }
-    return result.toString();
+  }
+
+  @Override protected boolean supportsBasicCalculation() {
+    for(OBooleanExpression expr:subBlocks){
+      if(!expr.supportsBasicCalculation()){
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    int result = 0;
+    for (OBooleanExpression expr : subBlocks) {
+      result += expr.getNumberOfExternalCalculations();
+    }
+    return result;
+  }
+
+  @Override protected List<Object> getExternalCalculationConditions() {
+    List<Object> result = new ArrayList<Object>();
+    for(OBooleanExpression expr:subBlocks) {
+      result.addAll(expr.getExternalCalculationConditions());
+    }
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */

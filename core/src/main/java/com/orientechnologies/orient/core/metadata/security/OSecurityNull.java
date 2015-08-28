@@ -19,12 +19,13 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.List;
-import java.util.Set;
-
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Dummy security implementation.
@@ -33,10 +34,32 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OSecurityNull implements OSecurity {
+  public OSecurityNull(final OSecurity iDelegate, final ODatabaseDocumentInternal iDatabase) {
+  }
 
   @Override
   public boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation) {
     return true;
+  }
+
+  @Override
+  public OIdentifiable allowUser(ODocument iDocument, ORestrictedOperation iOperationType, String iUserName) {
+    return null;
+  }
+
+  @Override
+  public OIdentifiable allowRole(ODocument iDocument, ORestrictedOperation iOperationType, String iRoleName) {
+    return null;
+  }
+
+  @Override
+  public OIdentifiable denyUser(ODocument iDocument, ORestrictedOperation iOperationType, String iUserName) {
+    return null;
+  }
+
+  @Override
+  public OIdentifiable denyRole(ODocument iDocument, ORestrictedOperation iOperationType, String iRoleName) {
+    return null;
   }
 
   public OUser create() {

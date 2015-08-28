@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -33,6 +32,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public abstract class ORemoteFetchListener implements OFetchListener {
+  public boolean requireFieldProcessing() {
+    return false;
+  }
 
   public ORemoteFetchListener() {
   }

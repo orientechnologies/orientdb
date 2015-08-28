@@ -47,7 +47,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    *          Class name to iterate
    * @return Iterator of ODocument instances
    */
-  public ORecordIteratorClass<ODocument> browseClass(String iClassName);
+  ORecordIteratorClass<ODocument> browseClass(String iClassName);
 
   /**
    * Browses all the records of the specified class and if iPolymorphic is true also all the subclasses. If you've a class Vehicle
@@ -60,7 +60,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    *          Consider also the instances of the subclasses or not
    * @return Iterator of ODocument instances
    */
-  public ORecordIteratorClass<ODocument> browseClass(String iClassName, boolean iPolymorphic);
+  ORecordIteratorClass<ODocument> browseClass(String iClassName, boolean iPolymorphic);
 
   /**
    * Flush all indexes and cached storage content to the disk.
@@ -72,12 +72,12 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    * 
    * IMPORTANT: This command is not reentrant.
    */
-  public void freeze();
+  void freeze();
 
   /**
    * Allows to execute write-related commands on DB. Called after {@link #freeze()} command.
    */
-  public void release();
+  void release();
 
   /**
    * Flush all indexes and cached storage content to the disk.
@@ -92,7 +92,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    *          If <code>true</code> {@link com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException}
    *          exception will be thrown in case of write command will be performed.
    */
-  public void freeze(boolean throwException);
+  void freeze(boolean throwException);
 
   /**
    * Browses all the records of the specified cluster.
@@ -101,9 +101,9 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    *          Cluster name to iterate
    * @return Iterator of ODocument instances
    */
-  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName);
+  <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName);
 
-  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, long startClusterPosition,
+  <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, long startClusterPosition,
       long endClusterPosition, boolean loadTombstones);
 
   /**
@@ -115,13 +115,13 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    *          The record class expected
    * @return Iterator of ODocument instances
    */
-  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass);
+  <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass);
 
-  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
+  <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
       long startClusterPosition, long endClusterPosition);
 
   @Deprecated
-  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
+  <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
       long startClusterPosition, long endClusterPosition, boolean loadTombstones);
 
   /**
@@ -131,19 +131,19 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    * @param iIdentifiable
    * @return A ORecord instance
    */
-  public <RET extends ORecord> RET getRecord(OIdentifiable iIdentifiable);
+  <RET extends ORecord> RET getRecord(OIdentifiable iIdentifiable);
 
   /**
    * Returns the default record type for this kind of database.
    */
-  public byte getRecordType();
+  byte getRecordType();
 
   /**
    * Returns true if current configuration retains objects, otherwise false
    *
    * @see #setRetainRecords(boolean)
    */
-  public boolean isRetainRecords();
+  boolean isRetainRecords();
 
   /**
    * Specifies if retain handled objects in memory or not. Setting it to false can improve performance on large inserts. Default is
@@ -153,19 +153,20 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    *          True to enable, false to disable it.
    * @see #isRetainRecords()
    */
-  public ODatabaseDocument setRetainRecords(boolean iValue);
+  ODatabaseDocument setRetainRecords(boolean iValue);
 
   /**
    * Checks if the operation on a resource is allowed for the current user.
    *
-   * @param iResource
-   *          Resource where to execute the operation
+   * @param resourceGeneric
+   *          Generic Resource where to execute the operation
+   * @param resourceGeneric
+   *          Specific resource name where to execute the operation
    * @param iOperation
    *          Operation to execute against the resource
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific,
-      int iOperation);
+  <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific, int iOperation);
 
   /**
    * Checks if the operation on a resource is allowed for the current user. The check is made in two steps:
@@ -184,8 +185,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    *          Target resource, i.e.: "employee" to specify the cluster name.
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation,
-      Object iResourceSpecific);
+  <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation, Object iResourceSpecific);
 
   /**
    * Checks if the operation against multiple resources is allowed for the current user. The check is made in two steps:
@@ -204,7 +204,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    *          Target resources as an array of Objects, i.e.: ["employee", 2] to specify cluster name and id.
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation,
+  <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation,
       Object... iResourcesSpecific);
 
   /**
@@ -212,7 +212,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    *
    * @return true if it's active, otherwise false.
    */
-  public boolean isValidationEnabled();
+  boolean isValidationEnabled();
 
   /**
    * Enables or disables the record validation.
@@ -221,7 +221,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    *          True to enable, false to disable
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <DB extends ODatabaseDocument> DB setValidationEnabled(boolean iEnabled);
+  <DB extends ODatabaseDocument> DB setValidationEnabled(boolean iEnabled);
 
   /**
    * Checks if the operation on a resource is allowed for the current user.
@@ -233,7 +233,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   @Deprecated
-  public <DB extends ODatabaseDocument> DB checkSecurity(String iResource, int iOperation);
+  <DB extends ODatabaseDocument> DB checkSecurity(String iResource, int iOperation);
 
   /**
    * Checks if the operation on a resource is allowed for the current user. The check is made in two steps:
@@ -253,7 +253,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   @Deprecated
-  public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object iResourceSpecific);
+  <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object iResourceSpecific);
 
   /**
    * Checks if the operation against multiple resources is allowed for the current user. The check is made in two steps:
@@ -273,5 +273,5 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   @Deprecated
-  public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific);
+  <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific);
 }

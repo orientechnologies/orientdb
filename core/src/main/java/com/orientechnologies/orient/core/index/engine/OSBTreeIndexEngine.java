@@ -45,18 +45,18 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
  * @since 8/30/13
  */
 public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
-  public static final int          VERSION                    = 1;
+  public static final int VERSION = 1;
 
-  public static final String       DATA_FILE_EXTENSION        = ".sbt";
-  public static final String       NULL_BUCKET_FILE_EXTENSION = ".nbt";
+  public static final String DATA_FILE_EXTENSION        = ".sbt";
+  public static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private ORID                     identity;
   private final OSBTree<Object, V> sbTree;
   private int                      version;
 
-  public OSBTreeIndexEngine(Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
-    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
-        .getValueAsInteger(), true);
+  public OSBTreeIndexEngine(String name, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
+    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
+        OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
 
     boolean durableInNonTx;
 
@@ -67,7 +67,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
     this.version = version;
 
-    sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, durableInNonTx, NULL_BUCKET_FILE_EXTENSION, storage);
+    sbTree = new OSBTree<Object, V>(name, DATA_FILE_EXTENSION, durableInNonTx, NULL_BUCKET_FILE_EXTENSION, storage);
   }
 
   @Override
@@ -85,8 +85,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public void create(String indexName, OIndexDefinition indexDefinition, String clusterIndexName,
-      OStreamSerializer valueSerializer, boolean isAutomatic) {
+  public void create(OIndexDefinition indexDefinition, String clusterIndexName, OStreamSerializer valueSerializer,
+      boolean isAutomatic) {
     acquireExclusiveLock();
     try {
 
@@ -96,12 +96,14 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       final ORecordBytes identityRecord = new ORecordBytes();
       ODatabaseDocumentInternal database = getDatabase();
 
-      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
-
       database.save(identityRecord, clusterIndexName);
       identity = identityRecord.getIdentity();
 
-      sbTree.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer,
+      if (!(valueSerializer instanceof OBinarySerializer))
+        throw new IllegalArgumentException(
+            "Value serializer should implement " + OBinarySerializer.class.getSimpleName() + " interface.");
+
+      sbTree.create(keySerializer, (OBinarySerializer<V>) valueSerializer,
           indexDefinition != null ? indexDefinition.getTypes() : null, keySize,
           indexDefinition != null && !indexDefinition.isNullValuesIgnored());
     } finally {
@@ -159,12 +161,9 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       boolean isAutomatic) {
     acquireExclusiveLock();
     try {
-      ODatabaseDocumentInternal database = getDatabase();
-      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
-
       sbTree.load(indexName, determineKeySerializer(indexDefinition), valueSerializer,
-          indexDefinition != null ? indexDefinition.getTypes() : null, determineKeySize(indexDefinition), indexDefinition != null
-              && !indexDefinition.isNullValuesIgnored());
+          indexDefinition != null ? indexDefinition.getTypes() : null, determineKeySize(indexDefinition),
+          indexDefinition != null && !indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();
     }
@@ -344,7 +343,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer) {
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer<V> transformer) {
     acquireSharedLock();
     try {
       return new OSBTreeIndexCursor<V>(sbTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder), transformer);
@@ -397,8 +397,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     private final OSBTree.OSBTreeCursor<Object, V> treeCursor;
     private final ValuesTransformer<V>             valuesTransformer;
 
-    private Iterator<OIdentifiable>                currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-    private Object                                 currentKey      = null;
+    private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
+    private Object                  currentKey      = null;
 
     private OSBTreeIndexCursor(OSBTree.OSBTreeCursor<Object, V> treeCursor, ValuesTransformer<V> valuesTransformer) {
       this.treeCursor = treeCursor;

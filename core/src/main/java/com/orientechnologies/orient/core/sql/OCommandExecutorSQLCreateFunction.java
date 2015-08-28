@@ -19,8 +19,10 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -52,7 +54,7 @@ public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstra
     parserRequiredKeyword("FUNCTION");
 
     name = parserNextWord(false);
-    code = OStringSerializerHelper.getStringContent(parserNextWord(false));
+    code = OIOUtils.getStringContent(parserNextWord(false));
 
     String temp = parseOptionalWord(true);
     while (temp != null) {
@@ -75,6 +77,11 @@ public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstra
         break;
     }
     return this;
+  }
+
+  @Override
+  public long getDistributedTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
   /**

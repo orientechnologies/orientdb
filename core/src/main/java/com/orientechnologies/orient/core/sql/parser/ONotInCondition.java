@@ -2,8 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class ONotInCondition extends OBooleanExpression {
@@ -33,32 +36,25 @@ public class ONotInCondition extends OBooleanExpression {
   }
 
   @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return false;
   }
 
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(left.toString());
-    result.append(" NOT IN ");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+
+    left.toString(params, builder);
+    builder.append(" NOT IN ");
     if (rightStatement != null) {
-      result.append("(");
-      result.append(rightStatement.toString());
-      result.append(")");
+      builder.append("(");
+      rightStatement.toString(params, builder);
+      builder.append(")");
     } else if (right != null) {
-      result.append(convertToString(right));
+      builder.append(convertToString(right));
     } else if (rightParam != null) {
-      if (inputFinalValue == UNSET) {
-        result.append(rightParam.toString());
-      } else if (inputFinalValue == null) {
-        result.append("NULL");
-      } else {
-        result.append(inputFinalValue.toString());
-      }
+      rightParam.toString(params, builder);
     } else if (rightMathExpression != null) {
-      result.append(rightMathExpression.toString());
+      rightMathExpression.toString(params, builder);
     }
-    return result.toString();
   }
 
   private String convertToString(Object o) {
@@ -68,22 +64,49 @@ public class ONotInCondition extends OBooleanExpression {
     return o.toString();
   }
 
+
   @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    left.replaceParameters(params);
-    if (rightStatement != null) {
-      rightStatement.replaceParameters(params);
+  public boolean supportsBasicCalculation() {
+
+    if (operator != null && !operator.supportsBasicCalculation()) {
+      return false;
     }
-    if (rightParam != null) {
-      Object result = rightParam.bindFromInputParams(params);
-      if (rightParam != result) {
-        inputFinalValue = result;
-      }
+    if (left != null && !left.supportsBasicCalculation()) {
+      return false;
     }
-    if (rightMathExpression != null) {
-      rightMathExpression.replaceParameters(params);
+    if (rightMathExpression != null && !rightMathExpression.supportsBasicCalculation()) {
+      return false;
     }
+    return true;
 
   }
+
+  @Override
+  protected int getNumberOfExternalCalculations() {
+    int total = 0;
+    if (operator != null && !operator.supportsBasicCalculation()) {
+      total++;
+    }
+    if (left != null && !left.supportsBasicCalculation()) {
+      total++;
+    }
+    if (rightMathExpression != null && !rightMathExpression.supportsBasicCalculation()) {
+      total++;
+    }
+    return total;
+  }
+
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
+    List<Object> result = new ArrayList<Object>();
+    if (operator != null && !operator.supportsBasicCalculation()) {
+      result.add(this);
+    }
+    if (rightMathExpression != null && !rightMathExpression.supportsBasicCalculation()) {
+      result.add(rightMathExpression);
+    }
+    return result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=8fb82bf72cc7d9cbdf2f9e2323ca8ee1 (do not edit this line) */

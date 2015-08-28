@@ -26,6 +26,7 @@ import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
 import java.util.Hashtable;
+import java.util.Map.Entry;
 
 @SuppressWarnings("restriction")
 public class OSignalHandler implements SignalHandler {
@@ -88,5 +89,17 @@ public class OSignalHandler implements SignalHandler {
     } catch (IllegalArgumentException e) {
       // NOT AVAILABLE
     }
+  }
+
+  public void cancel() {
+    for (Entry<Signal, SignalHandler> entry : redefinedHandlers.entrySet()) {
+      try {
+        // re-install the original handler we replaced
+        Signal.handle(entry.getKey(), entry.getValue());
+      } catch (IllegalStateException e) {
+        // not expected as we were able to redefine it earlier, but just in case
+      }
+    }
+    redefinedHandlers.clear();
   }
 }

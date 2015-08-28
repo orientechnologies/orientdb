@@ -20,11 +20,6 @@
 
 package com.orientechnologies.orient.client.remote;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -36,6 +31,11 @@ import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Implementation of {@link OSBTreeBonsai} for remote storage.
@@ -97,55 +97,55 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
             serializerId);
         return serializer.deserialize(stream, OByteSerializer.BYTE_SIZE);
       } catch (Exception e) {
-        storage.handleException(client, "Can't get by key from sb-tree bonsai.", e);
+        storage.handleException(client, "Cannot get by key from sb-tree bonsai", e);
       }
     }
   }
 
   @Override
   public boolean put(K key, V value) {
-    throw new UnsupportedOperationException("Not implemented yet.");
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
   public V remove(K key) {
-    throw new UnsupportedOperationException("Not implemented yet.");
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
   public void clear() {
-    throw new UnsupportedOperationException("Not implemented yet.");
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
   public void delete() {
-    throw new UnsupportedOperationException("Not implemented yet.");
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
   public long size() {
-    throw new UnsupportedOperationException("Not implemented yet.");
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
   public Collection<V> getValuesMinor(K key, boolean inclusive, int maxValuesToFetch) {
-    throw new UnsupportedOperationException("Not implemented yet.");
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
   public void loadEntriesMinor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
-    throw new UnsupportedOperationException("Not implemented yet.");
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
   public Collection<V> getValuesMajor(K key, boolean inclusive, int maxValuesToFetch) {
-    throw new UnsupportedOperationException("Not implemented yet.");
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
   public void loadEntriesMajor(K key, boolean inclusive, boolean ascSortOrder, RangeResultListener<K, V> listener) {
     if (!ascSortOrder)
-      throw new IllegalStateException("Descending sort order is not supported.");
+      throw new IllegalStateException("Descending sort order is not supported");
 
     List<Map.Entry<K, V>> entries = fetchEntriesMajor(key, inclusive);
 
@@ -205,7 +205,7 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
         return list;
 
       } catch (Exception e) {
-        storage.handleException(client, "Can't get first key from sb-tree bonsai.", e);
+        storage.handleException(client, "Cannot get first key from sb-tree bonsai", e);
       }
     }
   }
@@ -213,7 +213,7 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   @Override
   public Collection<V> getValuesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, int maxValuesToFetch) {
 
-    throw new UnsupportedOperationException("Not implemented yet.");
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
@@ -239,20 +239,20 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
             serializerId);
         return serializer.deserialize(stream, OByteSerializer.BYTE_SIZE);
       } catch (Exception e) {
-        storage.handleException(client, "Can't get first key from sb-tree bonsai.", e);
+        storage.handleException(client, "Cannot get first key from sb-tree bonsai", e);
       }
     }
   }
 
   @Override
   public K lastKey() {
-    throw new UnsupportedOperationException("Not implemented yet.");
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
   public void loadEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, RangeResultListener<K, V> listener) {
 
-    throw new UnsupportedOperationException("Not implemented yet.");
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
@@ -281,7 +281,7 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
         return result;
       } catch (Exception e) {
-        storage.handleException(client, "Can't get by real bag size sb-tree bonsai.", e);
+        storage.handleException(client, "Cannot get by real bag size sb-tree bonsai", e);
       }
     }
   }
