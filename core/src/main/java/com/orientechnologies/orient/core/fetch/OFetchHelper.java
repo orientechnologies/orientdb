@@ -52,7 +52,7 @@ import java.util.Set;
  */
 public class OFetchHelper {
   private static String     DEFAULT            = "*:0";
-  private static OFetchPlan DEFAULT_FETCH_PLAN = new OFetchPlan("*:0");
+  public static OFetchPlan DEFAULT_FETCH_PLAN = new OFetchPlan("*:0");
 
   public static OFetchPlan buildFetchPlan(final String iFetchPlan) {
     if (DEFAULT.equals(DEFAULT))
