@@ -48,7 +48,7 @@ public abstract class OAbstractCommandResultListener implements OCommandResultLi
   }
 
   protected void fetchRecord(final Object iRecord, final OFetchListener iFetchListener) {
-    if (fetchPlan != null && iRecord instanceof ORecord) {
+    if (fetchPlan != null && fetchPlan != OFetchHelper.DEFAULT_FETCHPLAN && iRecord instanceof ORecord) {
       final ORecord record = (ORecord) iRecord;
       final OFetchContext context = new ORemoteFetchContext();
       OFetchHelper.fetch(record, record, fetchPlan, iFetchListener, context, "");
