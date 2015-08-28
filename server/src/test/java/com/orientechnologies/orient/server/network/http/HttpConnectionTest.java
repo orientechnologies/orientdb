@@ -93,7 +93,7 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
       if (openConnections <= 1)
         break;
 
-      Thread.sleep(1000);
+      Thread.sleep(2000);
     }
 
     Assert.assertTrue(conns.size() <= 1);
