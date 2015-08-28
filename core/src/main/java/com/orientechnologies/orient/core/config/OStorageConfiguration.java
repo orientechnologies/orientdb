@@ -38,13 +38,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import java.io.IOException;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  * Versions:
@@ -100,6 +94,7 @@ public class OStorageConfiguration implements OSerializableStream {
   private volatile String                            recordSerializer;
   private volatile int                               recordSerializerVersion;
   private volatile boolean                           strictSQL;
+  private volatile Map<String, Object>               loadProperties;
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
@@ -152,7 +147,14 @@ public class OStorageConfiguration implements OSerializableStream {
       throw new OStorageException("Cannot load database configuration. The database seems to be corrupted");
 
     fromStream(record);
+
+    this.loadProperties = new HashMap<String, Object>(iProperties);
+
     return this;
+  }
+
+  public Map<String, Object> getLoadProperties() {
+    return Collections.unmodifiableMap(loadProperties);
   }
 
   public void update() throws OSerializationException {

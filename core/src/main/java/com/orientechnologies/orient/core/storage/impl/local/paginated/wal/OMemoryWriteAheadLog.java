@@ -106,4 +106,8 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   @Override
   public void removeFullCheckpointListener(OFullCheckpointRequestListener listener) {
   }
+
+  @Override
+  public void moveLsnAfter(OLogSequenceNumber lsn) {
+  }
 }

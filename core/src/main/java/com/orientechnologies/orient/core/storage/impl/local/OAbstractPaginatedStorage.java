@@ -132,6 +132,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private final String                              PROFILER_UPDATE_RECORD;
   private final String                              PROFILER_DELETE_RECORD;
   private final Map<String, OCluster>               clusterMap                                 = new HashMap<String, OCluster>();
+  private List<OCluster>                            clusters                                   = new ArrayList<OCluster>();
+
   private volatile ThreadLocal<OStorageTransaction> transaction                                = new ThreadLocal<OStorageTransaction>();
   private final OModificationLock                   modificationLock                           = new OModificationLock();
   private final AtomicBoolean                       checkpointInProgress                       = new AtomicBoolean();
@@ -143,7 +145,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private volatile ORecordConflictStrategy          recordConflictStrategy                     = Orient.instance()
                                                                                                    .getRecordConflictStrategy()
                                                                                                    .newInstanceOfDefaultClass();
-  private List<OCluster>                            clusters                                   = new ArrayList<OCluster>();
+
   private volatile int                              defaultClusterId                           = -1;
   private volatile OAtomicOperationsManager         atomicOperationsManager;
   private volatile boolean                          wereDataRestoredAfterOpen                  = false;
@@ -206,41 +208,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       restoreIfNeeded();
-
-      // OPEN BASIC SEGMENTS
-      int pos;
-      addDefaultClusters();
-
-      // REGISTER CLUSTER
-      for (int i = 0; i < configuration.clusters.size(); ++i) {
-        final OStorageClusterConfiguration clusterConfig = configuration.clusters.get(i);
-
-        if (clusterConfig != null) {
-          pos = createClusterFromConfig(clusterConfig);
-
-          try {
-            if (pos == -1) {
-              clusters.get(i).open();
-            } else {
-              if (clusterConfig.getName().equals(CLUSTER_DEFAULT_NAME))
-                defaultClusterId = pos;
-
-              clusters.get(pos).open();
-            }
-          } catch (FileNotFoundException e) {
-            OLogManager.instance().warn(
-                this,
-                "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i
-                    + "): file not found. It will be excluded from current database '" + getName() + "'.");
-
-            clusterMap.remove(clusters.get(i).getName().toLowerCase(configuration.getLocaleInstance()));
-
-            setCluster(i, null);
-          }
-        } else {
-          setCluster(i, null);
-        }
-      }
+      openClusters();
 
       if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN.getValueAsBoolean())
         makeFullCheckpoint();
@@ -267,6 +235,43 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       throw new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode, e);
     } finally {
       stateLock.releaseWriteLock();
+    }
+  }
+
+  protected void openClusters() throws IOException {
+    // OPEN BASIC SEGMENTS
+    int pos;
+    addDefaultClusters();
+
+    // REGISTER CLUSTER
+    for (int i = 0; i < configuration.clusters.size(); ++i) {
+      final OStorageClusterConfiguration clusterConfig = configuration.clusters.get(i);
+
+      if (clusterConfig != null) {
+        pos = createClusterFromConfig(clusterConfig);
+
+        try {
+          if (pos == -1) {
+            clusters.get(i).open();
+          } else {
+            if (clusterConfig.getName().equals(CLUSTER_DEFAULT_NAME))
+              defaultClusterId = pos;
+
+            clusters.get(pos).open();
+          }
+        } catch (FileNotFoundException e) {
+          OLogManager.instance().warn(
+              this,
+              "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i
+                  + "): file not found. It will be excluded from current database '" + getName() + "'.");
+
+          clusterMap.remove(clusters.get(i).getName().toLowerCase(configuration.getLocaleInstance()));
+
+          setCluster(i, null);
+        }
+      } else {
+        setCluster(i, null);
+      }
     }
   }
 
@@ -2325,13 +2330,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       cluster = OPaginatedClusterFactory.INSTANCE.createCluster(clusterName, configuration.version, this);
       cluster.configure(this, clusterPos, clusterName, parameters);
-
-      if (clusterName.equals(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME.toLowerCase(configuration.getLocaleInstance()))) {
-        cluster.set(OCluster.ATTRIBUTES.USE_WAL, false);
-        cluster.set(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR, 5);
-        cluster.set(OCluster.ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR, 2);
-      }
-
     } else {
       cluster = null;
     }
@@ -2374,12 +2372,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       preCloseSteps();
 
-      for (OCluster cluster : clusters)
-        if (cluster != null)
-          cluster.close(!onDelete);
-
-      clusters.clear();
-      clusterMap.clear();
+      closeClusters(onDelete);
 
       if (configuration != null)
         configuration.close();
@@ -2417,6 +2410,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       Orient.instance().getProfiler().stopChrono("db." + name + ".close", "Close a database", timer, "db.*.close");
       stateLock.releaseWriteLock();
     }
+  }
+
+  protected void closeClusters(boolean onDelete) throws IOException {
+    for (OCluster cluster : clusters)
+      if (cluster != null)
+        cluster.close(!onDelete);
+
+    clusters.clear();
+    clusterMap.clear();
   }
 
   @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")

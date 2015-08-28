@@ -70,7 +70,9 @@ public interface OWriteAheadLog {
 
   void cutTill(OLogSequenceNumber lsn) throws IOException;
 
-	public void addFullCheckpointListener(OFullCheckpointRequestListener listener);
+  void addFullCheckpointListener(OFullCheckpointRequestListener listener);
 
-	public void removeFullCheckpointListener(OFullCheckpointRequestListener listener);
+  void removeFullCheckpointListener(OFullCheckpointRequestListener listener);
+
+  void moveLsnAfter(OLogSequenceNumber lsn) throws IOException;
 }

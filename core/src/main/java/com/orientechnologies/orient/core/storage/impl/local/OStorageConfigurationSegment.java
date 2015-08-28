@@ -38,9 +38,9 @@ import java.util.Map;
 @SuppressWarnings("serial")
 @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED")
 public class OStorageConfigurationSegment extends OStorageConfiguration {
-  private static final long serialVersionUID = 638874446554389034L;
+  private static final long                  serialVersionUID = 638874446554389034L;
 
-  private static final int START_SIZE = 10000;
+  private static final int                   START_SIZE       = 10000;
   private final transient OSingleFileSegment segment;
 
   public OStorageConfigurationSegment(final OLocalPaginatedStorage iStorage) throws IOException {
@@ -138,5 +138,9 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   @Override
   public void setSoftlyClosed(boolean softlyClosed) throws IOException {
     segment.getFile().setSoftlyClosed(softlyClosed);
+  }
+
+  public String getFileName() {
+    return segment.getFile().getName();
   }
 }
