@@ -775,10 +775,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       final OProperty prop = properties != null ? properties.get(key) : null;
       if (prop != null)
         type = prop.getType();
-
-      if (type == null || OType.ANY == type)
-        type = OType.getTypeByValue(fieldValue);
     }
+    if (type == null || OType.ANY == type)
+      type = OType.getTypeByValue(fieldValue);
     return type;
   }
 
