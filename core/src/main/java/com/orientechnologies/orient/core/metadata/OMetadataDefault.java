@@ -59,21 +59,12 @@ public class OMetadataDefault implements OMetadataInternal {
 
   protected int                     schemaClusterId;
 
-<<<<<<< HEAD
-  protected OSchemaProxy                schema;
-  protected OSecurity                   security;
-  protected OIndexManagerProxy          indexManager;
-  protected OFunctionLibraryProxy       functionLibrary;
-  protected OSequenceLibraryProxy       sequenceLibrary;
-  protected OSchedulerListenerProxy     scheduler;
-  protected static final OProfilerMBean PROFILER                  = Orient.instance().getProfiler();
-=======
   protected OSchemaProxy            schema;
   protected OSecurity               security;
   protected OIndexManagerProxy      indexManager;
   protected OFunctionLibraryProxy   functionLibrary;
   protected OSchedulerListenerProxy scheduler;
->>>>>>> develop
+  protected OSequenceLibraryProxy   sequenceLibrary;
 
   protected OCommandCache           commandCache;
   protected static final OProfiler  PROFILER                  = Orient.instance().getProfiler();
@@ -242,7 +233,7 @@ public class OMetadataDefault implements OMetadataInternal {
             return instance;
           }
         }), database);
-      sequenceLibrary = new OSequenceLibraryProxy(database.getStorage().getResource(OSequenceLibrary.class.getSimpleName(),
+    sequenceLibrary = new OSequenceLibraryProxy(database.getStorage().getResource(OSequenceLibrary.class.getSimpleName(),
         new Callable<OSequenceLibrary>() {
           @Override
           public OSequenceLibrary call() throws Exception {
@@ -276,14 +267,10 @@ public class OMetadataDefault implements OMetadataInternal {
       security.load();
     if (functionLibrary != null)
       functionLibrary.load();
-<<<<<<< HEAD
-    if (sequenceLibrary != null) {
-        sequenceLibrary.load();
-    }
-=======
+    if (sequenceLibrary != null)
+      sequenceLibrary.load();
     if (commandCache != null)
       commandCache.clear();
->>>>>>> develop
   }
 
   /**
@@ -308,10 +295,10 @@ public class OMetadataDefault implements OMetadataInternal {
 
   @Override
   public OSequenceLibrary getSequenceLibrary() {
-      return sequenceLibrary;
+    return sequenceLibrary;
   }
 
-    public OSchedulerListener getSchedulerListener() {
+  public OSchedulerListener getSchedulerListener() {
     return scheduler;
   }
 }
