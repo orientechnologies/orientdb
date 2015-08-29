@@ -19,6 +19,14 @@
  */
 package com.orientechnologies.orient.console;
 
+import java.io.*;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
+
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -87,13 +95,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginated
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedClusterDebug;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
-import java.io.*;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected static final int    DEFAULT_WIDTH        = 150;
@@ -405,7 +406,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(splitInWords = false, description = "Alters a cluster in the current database. The cluster can be physical or memory")
   public void alterCluster(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("alter", iCommandText, "\nCluster updated successfully\n", false);
+    sqlCommand("alter", iCommandText, "\nCluster updated successfully.\n", false);
     updateDatabaseInfo();
   }
 
@@ -553,12 +554,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(splitInWords = false, description = "Grant privileges to a role", onlineHelp = "SQL-Grant")
   public void grant(@ConsoleParameter(name = "text", description = "Grant command") String iCommandText) {
-    sqlCommand("grant", iCommandText, "\nPrivilege granted to the role: %s\n", true);
+    sqlCommand("grant", iCommandText, "\nPrivilege granted to the role: %s.\n", true);
   }
 
   @ConsoleCommand(splitInWords = false, description = "Revoke privileges to a role", onlineHelp = "SQL-Revoke")
   public void revoke(@ConsoleParameter(name = "text", description = "Revoke command") String iCommandText) {
-    sqlCommand("revoke", iCommandText, "\nPrivilege revoked to the role: %s\n", true);
+    sqlCommand("revoke", iCommandText, "\nPrivilege revoked to the role: %s.\n", true);
   }
 
   @ConsoleCommand(splitInWords = false, description = "Create a link from a JOIN", onlineHelp = "SQL-Create-Link")
@@ -575,7 +576,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(splitInWords = false, description = "Alter a database property", onlineHelp = "SQL-Alter-Database")
   public void alterDatabase(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("alter", iCommandText, "\nDatabase updated successfully\n", false);
+    sqlCommand("alter", iCommandText, "\nDatabase updated successfully.\n", false);
     updateDatabaseInfo();
   }
 
@@ -696,31 +697,36 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(splitInWords = false, description = "Alter a class in the database schema")
   public void alterClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("alter", iCommandText, "\nClass updated successfully\n", false);
+    sqlCommand("alter", iCommandText, "\nClass updated successfully.\n", false);
     updateDatabaseInfo();
   }
 
   @ConsoleCommand(splitInWords = false, description = "Create a class", onlineHelp = "SQL-Create-Class")
   public void createClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("create", iCommandText, "\nClass created successfully. Total classes in database now: %d\n", true);
+    sqlCommand("create", iCommandText, "\nClass created successfully. Total classes in database now: %d.\n", true);
     updateDatabaseInfo();
   }
 
-<<<<<<< HEAD
   @ConsoleCommand(splitInWords = false, description = "Create a sequence in the database")
-  public void createSequence(@ConsoleParameter(name="command-text", description="The command text to execute") String iCommandText) {
-    sqlCommand("create", iCommandText, "\nSequence created successfully. Total sequences in database now: %d\n", true);
+  public void createSequence(
+      @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+    sqlCommand("create", iCommandText, "\nSequence created successfully. Total sequences in database now: %d.\n", true);
+    updateDatabaseInfo();
+  }
+
+  @ConsoleCommand(splitInWords = false, description = "Alter an existent sequence in the database")
+  public void alterSequence(
+      @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+    sqlCommand("alter", iCommandText, "\nSequence altered successfully.\n", true);
     updateDatabaseInfo();
   }
 
   @ConsoleCommand(splitInWords = false, description = "Remove a sequence from the database")
-  public void dropSequence(@ConsoleParameter(name="command-text", description="The command text to execute") String iCommandText) {
-    sqlCommand("drop", iCommandText, "Sequence removed successfully\n", false);
+  public void dropSequence(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+    sqlCommand("drop", iCommandText, "Sequence removed successfully.\n", false);
     updateDatabaseInfo();
   }
 
-  @ConsoleCommand(splitInWords = false, description = "Alter a class property in the database schema")
-=======
   @ConsoleCommand(splitInWords = false, description = "Create a user", onlineHelp = "SQL-Create-User")
   public void createUser(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
     sqlCommand("create", iCommandText, "\nUser created successfully.\n", false);
@@ -734,17 +740,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(splitInWords = false, description = "Alter a class property in the database schema", onlineHelp = "SQL-Alter-Property")
->>>>>>> develop
   public void alterProperty(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("alter", iCommandText, "\nProperty updated successfully\n", false);
+    sqlCommand("alter", iCommandText, "\nProperty updated successfully.\n", false);
     updateDatabaseInfo();
   }
 
   @ConsoleCommand(splitInWords = false, description = "Create a property", onlineHelp = "SQL-Create-Property")
   public void createProperty(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("create", iCommandText, "\nProperty created successfully with id=%d\n", true);
+    sqlCommand("create", iCommandText, "\nProperty created successfully with id=%d.\n", true);
     updateDatabaseInfo();
   }
 
@@ -758,7 +763,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(splitInWords = false, description = "Create a stored function", onlineHelp = "SQL-Create-Function")
   public void createFunction(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("create", iCommandText, "\nFunction created successfully with id=%s\n", true);
+    sqlCommand("create", iCommandText, "\nFunction created successfully with id=%s.\n", true);
     updateDatabaseInfo();
   }
 
