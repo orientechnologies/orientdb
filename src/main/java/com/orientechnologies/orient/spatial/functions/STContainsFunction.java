@@ -13,38 +13,45 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
-package com.orientechnologies.lucene.functions.spatial;
+package com.orientechnologies.orient.spatial.functions;
 
-import com.orientechnologies.lucene.shape.OShapeFactory;
+import com.orientechnologies.orient.spatial.shape.OShapeFactory;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.spatial4j.core.shape.Shape;
+import com.spatial4j.core.shape.SpatialRelation;
+
+import java.util.Map;
 
 /**
- * Created by Enrico Risa on 06/08/15.
+ * Created by Enrico Risa on 12/08/15.
  */
-public class OSTAsTextFunction extends OSQLFunctionAbstract {
+public class STContainsFunction extends OSQLFunctionAbstract {
 
-  public static final String NAME    = "ST_AsText";
+  public static final String NAME    = "st_contains";
 
   OShapeFactory              factory = OShapeFactory.INSTANCE;
 
-  public OSTAsTextFunction() {
-    super(NAME, 1, 1);
+  public STContainsFunction() {
+    super(NAME, 2, 2);
   }
 
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
-    return factory.asText((ODocument) iParams[0]);
+    Shape shape = factory.fromDoc((ODocument) iParams[0]);
+    Map map = (Map) iParams[1];
+    Shape shape1 = factory.fromMapGeoJson((Map) map.get("shape"));
+    return shape.relate(shape1) == SpatialRelation.CONTAINS;
   }
 
   @Override
   public String getSyntax() {
-    return "ST_AsText(<doc>)";
+    return null;
   }
 }

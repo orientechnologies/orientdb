@@ -19,8 +19,8 @@
 package com.orientechnologies.lucene.operator;
 
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
-import com.orientechnologies.lucene.strategy.SpatialQueryBuilderAbstract;
-import com.orientechnologies.lucene.strategy.SpatialQueryBuilderOverlap;
+import com.orientechnologies.orient.spatial.strategy.SpatialQueryBuilderAbstract;
+import com.orientechnologies.orient.spatial.strategy.SpatialQueryBuilderOverlap;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -34,6 +34,7 @@ import com.spatial4j.core.shape.Shape;
 import org.apache.lucene.spatial.query.SpatialOperation;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -54,10 +55,16 @@ public class OLuceneOverlapOperator extends OLuceneSpatialOperator {
     OIndexCursor cursor;
     Object key;
     key = keyParams.get(0);
+    Object indexParam = key;
     if (key instanceof Map) {
       ((Map) key).put(SpatialQueryBuilderAbstract.GEO_FILTER, SpatialQueryBuilderOverlap.NAME);
+    } else if (key instanceof ODocument) {
+      Map<String, Object> newKey = new HashMap<>();
+      newKey.put(SpatialQueryBuilderAbstract.GEO_FILTER, SpatialQueryBuilderOverlap.NAME);
+      newKey.put("shape", key);
+      indexParam = newKey;
     }
-    Object indexResult = index.get(key);
+    Object indexResult = index.get(indexParam);
     if (indexResult == null || indexResult instanceof OIdentifiable)
       cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
     else

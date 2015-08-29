@@ -17,7 +17,7 @@
 package com.orientechnologies.lucene.operator;
 
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
-import com.orientechnologies.lucene.shape.OShapeFactory;
+import com.orientechnologies.orient.spatial.shape.OShapeFactory;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;

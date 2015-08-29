@@ -18,9 +18,9 @@
 
 package com.orientechnologies.lucene.test.geo;
 
-import com.orientechnologies.lucene.shape.*;
 import com.orientechnologies.lucene.test.BaseSpatialLuceneTest;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.spatial.shape.*;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.Rectangle;
 import com.spatial4j.core.shape.Shape;

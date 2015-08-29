@@ -22,7 +22,7 @@ import com.orientechnologies.lucene.collections.LuceneResultSet;
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.query.SpatialQueryContext;
-import com.orientechnologies.lucene.shape.OShapeBuilder;
+import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;

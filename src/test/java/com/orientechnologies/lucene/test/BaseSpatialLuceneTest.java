@@ -18,7 +18,7 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.lucene.shape.OMultiPolygonShapeBuilder;
+import com.orientechnologies.orient.spatial.shape.OMultiPolygonShapeBuilder;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.context.jts.JtsSpatialContext;
 import com.spatial4j.core.shape.jts.JtsGeometry;

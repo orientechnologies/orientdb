@@ -19,18 +19,16 @@
 package com.orientechnologies.lucene.test.geo;
 
 import com.orientechnologies.lucene.test.BaseSpatialLuceneTest;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import junit.framework.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +48,7 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
   public void init() {
     initDB();
 
-    databaseDocumentTx.set(ODatabase.ATTRIBUTES.CUSTOM, "strictSql=false");
+//    databaseDocumentTx.set(ODatabase.ATTRIBUTES.CUSTOM, "strictSql=false");
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     OClass oClass = schema.createClass("City");
@@ -82,7 +80,7 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
 
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testPointWithoutIndex() {
 
     databaseDocumentTx.command(new OCommandSQL("Drop INDEX City.location")).execute();
@@ -96,17 +94,18 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
   }
 
   protected void queryPoint() {
-    String query = "select * from City where location ST_WITHIN { 'shape' : { 'type' : 'Rectangle' , 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} } ";
+    String query = "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'Rectangle' , 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} })  ";
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(1, docs.size());
 
-    query = "select *,$distance from City where location ST_NEAR { 'shape' : { 'type' : 'Point' , 'coordinates' : [12.482778,41.893056] } , 'maxDistance' : 2  } ";
-    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-
-    Assert.assertEquals(1, docs.size());
-
-    Assert.assertEquals(1.6229442709302933, docs.get(0).field("$distance"));
+    // query =
+    // "select *,$distance from City where location ST_NEAR { 'shape' : { 'type' : 'Point' , 'coordinates' : [12.482778,41.893056] } , 'maxDistance' : 2  } ";
+    // docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
+    //
+    // Assert.assertEquals(1, docs.size());
+    //
+    // Assert.assertEquals(1.6229442709302933, docs.get(0).field("$distance"));
   }
 
   @Test
@@ -147,6 +146,16 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
     return city;
   }
 
+
+  @Test
+  public void testJava(){
+    Double d = new Double(3.4);
+
+    long doubleAsLong = Double.doubleToRawLongBits( d );
+    // Convert the long to a String
+    String doubleAsString = Long.toHexString( doubleAsLong );
+    System.out.printf(doubleAsString);
+  }
   @AfterClass
   public void deInit() {
     deInitDB();

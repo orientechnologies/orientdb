@@ -16,7 +16,7 @@
  *
  */
 
-package com.orientechnologies.lucene.shape;
+package com.orientechnologies.orient.spatial.shape;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -25,28 +25,43 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.shape.jts.JtsGeometry;
 import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.MultiPoint;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class OLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
+public class OMultiPointShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   @Override
   public String getName() {
-    return "LineString";
+    return "MultiPoint";
   }
 
   @Override
   public OShapeType getType() {
-    return OShapeType.LINESTRING;
+    return OShapeType.MULTIPOINT;
+  }
+
+  @Override
+  public JtsGeometry fromDoc(ODocument document) {
+    validate(document);
+    List<List<Number>> coordinates = document.field(COORDINATES);
+    Coordinate[] coords = new Coordinate[coordinates.size()];
+    int i = 0;
+    for (List<Number> coordinate : coordinates) {
+      coords[i] = new Coordinate(coordinate.get(0).doubleValue(), coordinate.get(1).doubleValue());
+      i++;
+    }
+    return toShape(GEOMETRY_FACTORY.createMultiPoint(coords));
   }
 
   @Override
   public void initClazz(ODatabaseDocumentTx db) {
 
     OSchemaProxy schema = db.getMetadata().getSchema();
-    OClass lineString = schema.createClass(getName());
-    lineString.addSuperClass(superClass(db));
-    lineString.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
+    OClass multiPoint = schema.createClass("MultiPoint");
+    multiPoint.addSuperClass(superClass(db));
+    multiPoint.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
   }
 
   @Override
@@ -55,25 +70,18 @@ public class OLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   }
 
   @Override
-  public JtsGeometry fromDoc(ODocument document) {
+  public ODocument toDoc(final JtsGeometry shape) {
+    final MultiPoint geom = (MultiPoint) shape.getGeom();
 
-    validate(document);
-    List<List<Number>> coordinates = document.field(COORDINATES);
-
-    Coordinate[] coords = new Coordinate[coordinates.size()];
-    int i = 0;
-    for (List<Number> coordinate : coordinates) {
-      coords[i] = new Coordinate(coordinate.get(0).doubleValue(), coordinate.get(1).doubleValue());
-      i++;
-    }
-    return toShape(GEOMETRY_FACTORY.createLineString(coords));
-  }
-
-  @Override
-  public ODocument toDoc(JtsGeometry shape) {
     ODocument doc = new ODocument(getName());
-    LineString lineString = (LineString) shape.getGeom();
-    doc.field(COORDINATES, coordinatesFromLineString(lineString));
+    doc.field(COORDINATES, new ArrayList<List<Double>>() {
+      {
+        Coordinate[] coordinates = geom.getCoordinates();
+        for (Coordinate coordinate : coordinates) {
+          add(Arrays.asList(coordinate.x, coordinate.y));
+        }
+      }
+    });
     return doc;
   }
 }

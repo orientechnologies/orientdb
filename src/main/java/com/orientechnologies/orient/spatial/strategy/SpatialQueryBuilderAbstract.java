@@ -16,11 +16,11 @@
  *
  */
 
-package com.orientechnologies.lucene.strategy;
+package com.orientechnologies.orient.spatial.strategy;
 
 import com.orientechnologies.lucene.manager.OLuceneSpatialIndexContainer;
 import com.orientechnologies.lucene.query.SpatialQueryContext;
-import com.orientechnologies.lucene.shape.OShapeBuilder;
+import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
 import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.shape.Shape;
@@ -49,14 +49,22 @@ public abstract class SpatialQueryBuilderAbstract {
 
   protected Shape parseShape(Map<String, Object> query) {
 
-    Map<String, Object> geometry = (Map<String, Object>) query.get(SHAPE);
+    Object geometry = query.get(SHAPE);
 
+    ODocument docGeom = null;
     if (geometry == null) {
       throw new OIndexEngineException("Invalid spatial query. Missing shape field " + query, null);
     }
-    ODocument doc = new ODocument((String) geometry.get(SHAPE_TYPE));
-    doc.field(COORDINATES, geometry.get(COORDINATES));
-    return factory.fromDoc(doc);
+    if (geometry instanceof ODocument) {
+      docGeom = (ODocument) geometry;
+    } else if (geometry instanceof Map) {
+      String type = (String) ((Map) geometry).get(SHAPE_TYPE);
+      ODocument doc = new ODocument(type);
+      doc.field(COORDINATES, ((Map) geometry).get(COORDINATES));
+      docGeom = doc;
+    }
+
+    return factory.fromDoc(docGeom);
   }
 
   public abstract String getName();

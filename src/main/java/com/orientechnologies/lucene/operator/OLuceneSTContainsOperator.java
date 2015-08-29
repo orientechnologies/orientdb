@@ -19,8 +19,8 @@
 package com.orientechnologies.lucene.operator;
 
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
-import com.orientechnologies.lucene.strategy.SpatialQueryBuilderAbstract;
-import com.orientechnologies.lucene.strategy.SpatialQueryBuilderContains;
+import com.orientechnologies.orient.spatial.strategy.SpatialQueryBuilderAbstract;
+import com.orientechnologies.orient.spatial.strategy.SpatialQueryBuilderContains;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;

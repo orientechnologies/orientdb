@@ -18,7 +18,7 @@
 
 package com.orientechnologies.lucene;
 
-import com.orientechnologies.lucene.shape.OShapeBuilder;
+import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 /**

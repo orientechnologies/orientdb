@@ -16,16 +16,17 @@
  *  
  */
 
-package com.orientechnologies.lucene.functions.spatial;
+package com.orientechnologies.orient.spatial.functions;
 
-import com.orientechnologies.lucene.shape.OShapeFactory;
+import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
+import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
+import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.sql.parser.OFromClause;
+import com.orientechnologies.orient.spatial.shape.OShapeFactory;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
-import com.spatial4j.core.distance.DistanceUtils;
-import com.spatial4j.core.shape.Circle;
-import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.Shape;
 import com.spatial4j.core.shape.SpatialRelation;
 
@@ -34,40 +35,38 @@ import java.util.Map;
 /**
  * Created by Enrico Risa on 12/08/15.
  */
-public class STNearFunction extends OSQLFunctionAbstract {
+public class STWithinFunction extends OSQLFunctionAbstract implements OIndexableSQLFunction {
 
-  public static final String NAME    = "st_near";
+  public static final String NAME    = "st_within";
 
   OShapeFactory              factory = OShapeFactory.INSTANCE;
 
-  public STNearFunction() {
+  public STWithinFunction() {
     super(NAME, 2, 2);
   }
 
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
+
     Shape shape = factory.fromDoc((ODocument) iParams[0]);
     Map map = (Map) iParams[1];
     Shape shape1 = factory.fromMapGeoJson((Map) map.get("shape"));
-
-    double distance = 0;
-
-    Number n = (Number) map.get("maxDistance");
-    if (n != null) {
-      distance = n.doubleValue();
-    }
-    Point p = (Point) shape1;
-    Circle circle = factory.SPATIAL_CONTEXT.makeCircle(p.getX(), p.getY(),
-        DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM));
-    double docDistDEG = factory.SPATIAL_CONTEXT.getDistCalc().distance((Point) shape, p);
-    final double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
-    iContext.setVariable("distance", docDistInKM);
-    return shape.relate(circle) == SpatialRelation.WITHIN;
+    return shape.relate(shape1) == SpatialRelation.WITHIN;
   }
 
   @Override
   public String getSyntax() {
     return null;
+  }
+
+  @Override
+  public Iterable<OIdentifiable> searchFromTarget(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx, OExpression... args) {
+    return null;
+  }
+
+  @Override
+  public long estimate(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx, OExpression... args) {
+    return 0;
   }
 }

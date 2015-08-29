@@ -16,43 +16,35 @@
  *  
  */
 
-package com.orientechnologies.lucene.functions.spatial;
+package com.orientechnologies.orient.spatial.functions;
 
-import com.orientechnologies.lucene.shape.OShapeFactory;
+import com.orientechnologies.orient.spatial.shape.OShapeFactory;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
-import com.spatial4j.core.shape.Shape;
-import com.spatial4j.core.shape.SpatialRelation;
-
-import java.util.Map;
 
 /**
- * Created by Enrico Risa on 12/08/15.
+ * Created by Enrico Risa on 06/08/15.
  */
-public class STWithinFunction extends OSQLFunctionAbstract {
+public class OSTAsTextFunction extends OSQLFunctionAbstract {
 
-  public static final String NAME    = "st_within";
+  public static final String NAME    = "ST_AsText";
 
   OShapeFactory              factory = OShapeFactory.INSTANCE;
 
-  public STWithinFunction() {
-    super(NAME, 2, 2);
+  public OSTAsTextFunction() {
+    super(NAME, 1, 1);
   }
 
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
-
-    Shape shape = factory.fromDoc((ODocument) iParams[0]);
-    Map map = (Map) iParams[1];
-    Shape shape1 = factory.fromMapGeoJson((Map) map.get("shape"));
-    return shape.relate(shape1) == SpatialRelation.WITHIN;
+    return factory.asText((ODocument) iParams[0]);
   }
 
   @Override
   public String getSyntax() {
-    return null;
+    return "ST_AsText(<doc>)";
   }
 }

@@ -16,7 +16,7 @@
  *  
  */
 
-package com.orientechnologies.lucene.shape;
+package com.orientechnologies.orient.spatial.shape;
 
 import com.spatial4j.core.shape.*;
 import com.spatial4j.core.shape.jts.JtsGeometry;

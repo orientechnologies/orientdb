@@ -21,7 +21,7 @@ import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.lucene.index.OLuceneSpatialIndex;
 import com.orientechnologies.lucene.manager.OLuceneFullTextIndexManager;
 import com.orientechnologies.lucene.manager.OLuceneGeoSpatialIndexManager;
-import com.orientechnologies.lucene.shape.OShapeFactory;
+import com.orientechnologies.orient.spatial.shape.OShapeFactory;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;

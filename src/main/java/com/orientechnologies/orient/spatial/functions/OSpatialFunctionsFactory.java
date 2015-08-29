@@ -1,19 +1,21 @@
 /*
- * Copyright 2014 Orient Technologies.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2014 Orient Technologies.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *      http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
-package com.orientechnologies.lucene.functions;
+package com.orientechnologies.orient.spatial.functions;
 
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
@@ -23,12 +25,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
+public class OSpatialFunctionsFactory implements OSQLFunctionFactory {
 
   public static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
 
   static {
-
+    register(OSTAsTextFunction.NAME, new OSTAsTextFunction());
+    register(STWithinFunction.NAME, new STWithinFunction());
+//    register(STNearFunction.NAME, new STNearFunction());
+//    register(STContainsFunction.NAME, new STContainsFunction());
+    register(OSTGeomFromTextFunction.NAME, new OSTGeomFromTextFunction());
   }
 
   @Override

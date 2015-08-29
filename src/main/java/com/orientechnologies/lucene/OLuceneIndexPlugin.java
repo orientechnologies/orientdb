@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.orient.spatial.functions.OSpatialFunctionsFactory;
 
 import java.util.Map;
 import java.util.Set;
@@ -73,6 +74,12 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
 
   protected void registerFunctions() {
     Map<String, Object> functions = OLuceneFunctionsFactory.FUNCTIONS;
+
+    for (String s : functions.keySet()) {
+      OSQLEngine.getInstance().registerFunction(s, (OSQLFunction) functions.get(s));
+    }
+
+    functions = OSpatialFunctionsFactory.FUNCTIONS;
 
     for (String s : functions.keySet()) {
       OSQLEngine.getInstance().registerFunction(s, (OSQLFunction) functions.get(s));

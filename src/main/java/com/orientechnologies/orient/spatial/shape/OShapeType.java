@@ -16,7 +16,7 @@
  *
  */
 
-package com.orientechnologies.lucene.shape;
+package com.orientechnologies.orient.spatial.shape;
 
 /**
  * Created by Enrico Risa on 06/08/15.

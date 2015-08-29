@@ -16,11 +16,11 @@
  *
  */
 
-package com.orientechnologies.lucene.strategy;
+package com.orientechnologies.orient.spatial.strategy;
 
 import com.orientechnologies.lucene.manager.OLuceneSpatialIndexContainer;
 import com.orientechnologies.lucene.query.SpatialQueryContext;
-import com.orientechnologies.lucene.shape.OShapeBuilder;
+import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
 import com.spatial4j.core.distance.DistanceUtils;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.Shape;

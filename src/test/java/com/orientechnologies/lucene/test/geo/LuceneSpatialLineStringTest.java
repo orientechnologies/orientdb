@@ -108,9 +108,13 @@ public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
   }
 
   protected void queryLineString() {
-    // Should contain Berlin
     String query = "select * from Place where location && { 'shape' : { 'type' : 'LineString' , 'coordinates' : [[1,2],[4,6]]} } ";
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
+
+    Assert.assertEquals(docs.size(), 1);
+
+    query = "select * from Place where location && ST_GeomFromText('LINESTRING(1 2, 4 6)') ";
+    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(docs.size(), 1);
 

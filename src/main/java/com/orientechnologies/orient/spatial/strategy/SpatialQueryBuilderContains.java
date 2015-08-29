@@ -13,14 +13,14 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *
+ *  
  */
 
-package com.orientechnologies.lucene.strategy;
+package com.orientechnologies.orient.spatial.strategy;
 
 import com.orientechnologies.lucene.manager.OLuceneSpatialIndexContainer;
 import com.orientechnologies.lucene.query.SpatialQueryContext;
-import com.orientechnologies.lucene.shape.OShapeBuilder;
+import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
 import com.spatial4j.core.shape.Shape;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -32,20 +32,18 @@ import java.util.Map;
 /**
  * Created by Enrico Risa on 11/08/15.
  */
-public class SpatialQueryBuilderOverlap extends SpatialQueryBuilderAbstract {
+public class SpatialQueryBuilderContains extends SpatialQueryBuilderAbstract {
 
-  public static final String NAME = "&&";
+  public static final String NAME = "contains";
 
-  public SpatialQueryBuilderOverlap(OLuceneSpatialIndexContainer manager, OShapeBuilder factory) {
+  public SpatialQueryBuilderContains(OLuceneSpatialIndexContainer manager, OShapeBuilder factory) {
     super(manager, factory);
   }
 
-
-  // TODO check PGIS
   @Override
   public SpatialQueryContext build(Map<String, Object> query) throws Exception {
     Shape shape = parseShape(query);
-    SpatialArgs args = new SpatialArgs(SpatialOperation.Intersects, shape.getBoundingBox());
+    SpatialArgs args = new SpatialArgs(SpatialOperation.Intersects, shape);
     Filter filter = manager.strategy().makeFilter(args);
     return new SpatialQueryContext(null, manager.searcher(), new MatchAllDocsQuery(), filter);
   }
