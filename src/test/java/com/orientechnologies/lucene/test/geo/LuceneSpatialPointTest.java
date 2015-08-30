@@ -145,17 +145,7 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
     city.field("location", location);
     return city;
   }
-
-
-  @Test
-  public void testJava(){
-    Double d = new Double(3.4);
-
-    long doubleAsLong = Double.doubleToRawLongBits( d );
-    // Convert the long to a String
-    String doubleAsString = Long.toHexString( doubleAsLong );
-    System.out.printf(doubleAsString);
-  }
+  
   @AfterClass
   public void deInit() {
     deInitDB();
