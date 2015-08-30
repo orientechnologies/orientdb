@@ -244,4 +244,83 @@ public class OCommandExecutorSQLUpdateTest {
       db.close();
     }
   }
+
+  
+  @Test
+  public void testSingleQuoteInNamedParameter() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestSingleQuoteInNamedParameter");
+    db.create();
+
+    db.command(new OCommandSQL("CREATE class test")).execute();
+
+    final ODocument test = new ODocument("test");
+    test.field("text", "initial value");
+    
+    db.save(test);
+
+    ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM test")).get(0);
+    assertEquals(queried.field("text"), "initial value");
+    
+    OCommandSQL command = new OCommandSQL("UPDATE test SET text = :text");
+    Map<String, Object> params = new HashMap<String,Object>();
+    params.put("text", "single \"");
+    
+    db.command(command).execute(params);
+    queried.reload(); 
+    assertEquals(queried.field("text"), "single \"");
+    
+    db.close();
+  }
+  
+  @Test
+  public void testQuotedStringInNamedParameter() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestQuotedStringInNamedParameter");
+    db.create();
+
+    db.command(new OCommandSQL("CREATE class test")).execute();
+
+    final ODocument test = new ODocument("test");
+    test.field("text", "initial value");
+    
+    db.save(test);
+
+    ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM test")).get(0);
+    assertEquals(queried.field("text"), "initial value");
+    
+    OCommandSQL command = new OCommandSQL("UPDATE test SET text = :text");
+    Map<String, Object> params = new HashMap<String,Object>();
+    params.put("text", "quoted \"value\" string");
+    
+    db.command(command).execute(params);
+    queried.reload(); 
+    assertEquals(queried.field("text"), "quoted \"value\" string");
+    
+    db.close();
+  }
+
+  @Test
+  public void testSingleQuoteStringInNamedParameter() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestSingleQuoteStringInNamedParameter");
+    db.create();
+
+    db.command(new OCommandSQL("CREATE class test")).execute();
+
+    final ODocument test = new ODocument("test");
+    test.field("text", "initial value");
+
+    db.save(test);
+
+    ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM test")).get(0);
+    assertEquals(queried.field("text"), "initial value");
+
+    OCommandSQL command = new OCommandSQL("UPDATE test SET text = :text");
+    Map<String, Object> params = new HashMap<String,Object>();
+    params.put("text", "quoted 'value' string");
+
+    db.command(command).execute(params);
+    queried.reload();
+    assertEquals(queried.field("text"), "quoted 'value' string");
+
+    db.close();
+  }
 }
