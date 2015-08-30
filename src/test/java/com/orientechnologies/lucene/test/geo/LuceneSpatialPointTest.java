@@ -145,7 +145,7 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
     city.field("location", location);
     return city;
   }
-  
+
   @AfterClass
   public void deInit() {
     deInitDB();

@@ -59,7 +59,7 @@ public class OLuceneOverlapOperator extends OLuceneSpatialOperator {
     if (key instanceof Map) {
       ((Map) key).put(SpatialQueryBuilderAbstract.GEO_FILTER, SpatialQueryBuilderOverlap.NAME);
     } else if (key instanceof ODocument) {
-      Map<String, Object> newKey = new HashMap<>();
+      Map<String, Object> newKey = new HashMap<String,Object>();
       newKey.put(SpatialQueryBuilderAbstract.GEO_FILTER, SpatialQueryBuilderOverlap.NAME);
       newKey.put("shape", key);
       indexParam = newKey;
