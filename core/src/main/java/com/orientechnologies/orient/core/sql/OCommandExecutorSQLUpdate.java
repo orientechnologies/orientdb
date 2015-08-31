@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OTriple;
@@ -55,6 +48,13 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL UPDATE command.
@@ -727,14 +727,14 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         && !parserGetLastWord().equals(KEYWORD_WHERE)) {
 
       fieldName = parserRequiredWord(false, "Field name expected");
-      final boolean found = parserOptionalKeyword("=", "WHERE");
+      final boolean found = parserOptionalKeyword("=", "WHERE", "RETURN", "LOCK", "LIMIT");
       if (found)
-        if (parserGetLastWord().equals("WHERE")) {
-          parserGoBack();
-          value = EMPTY_VALUE;
-        } else {
+        if (parserGetLastWord().equals("=")) {
           fieldValue = getBlock(parserRequiredWord(false, "Value expected", " =><,\r\n"));
           value = getFieldValueCountingParameters(fieldValue);
+        } else {
+          parserGoBack();
+          value = EMPTY_VALUE;
         }
       else
         value = EMPTY_VALUE;
