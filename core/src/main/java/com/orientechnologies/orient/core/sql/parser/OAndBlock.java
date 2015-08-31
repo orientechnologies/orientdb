@@ -3,7 +3,9 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,9 +50,9 @@ public class OAndBlock extends OBooleanExpression {
     if (subBlocks == null || subBlocks.size() == 0) {
       return;
     }
-//    if (subBlocks.size() == 1) {
-//      subBlocks.get(0).toString(params, builder);
-//    }
+    // if (subBlocks.size() == 1) {
+    // subBlocks.get(0).toString(params, builder);
+    // }
 
     boolean first = true;
     for (OBooleanExpression expr : subBlocks) {
@@ -62,9 +64,10 @@ public class OAndBlock extends OBooleanExpression {
     }
   }
 
-  @Override protected boolean supportsBasicCalculation() {
-    for(OBooleanExpression expr:subBlocks){
-      if(!expr.supportsBasicCalculation()){
+  @Override
+  protected boolean supportsBasicCalculation() {
+    for (OBooleanExpression expr : subBlocks) {
+      if (!expr.supportsBasicCalculation()) {
         return false;
       }
     }
@@ -80,12 +83,28 @@ public class OAndBlock extends OBooleanExpression {
     return result;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
-    for(OBooleanExpression expr:subBlocks) {
+    for (OBooleanExpression expr : subBlocks) {
       result.addAll(expr.getExternalCalculationConditions());
     }
     return result;
   }
+
+  public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+    if (subBlocks == null) {
+      return null;
+    }
+    List<OBinaryCondition> result = new ArrayList<OBinaryCondition>();
+    for (OBooleanExpression exp : subBlocks) {
+      List<OBinaryCondition> sub = exp.getIndexedFunctionConditions(iSchemaClass, database);
+      if (sub != null && sub.size() > 0) {
+        result.addAll(sub);
+      }
+    }
+    return result.size() == 0 ? null : result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */
