@@ -252,8 +252,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *          of graph
    */
   public OrientBaseGraph(final Configuration configuration) {
-    this(configuration.getString("blueprints.orientdb.url", null), configuration.getString("blueprints.orientdb.username", null),
-        configuration.getString("blueprints.orientdb.password", null));
+    this(configuration.getString("blueprints.orientdb.url", null), configuration.getString("blueprints.orientdb.username", null), configuration.getString("blueprints.orientdb.password", null));
     super.init(configuration);
   }
 
@@ -289,7 +288,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * (Internal) Returns the case sensitive edge class names.
    */
   public static void getEdgeClassNames(final OrientBaseGraph graph, final String... iLabels) {
-    if (iLabels != null && graph.isUseClassForEdgeLabel()) {
+    if (iLabels != null && graph != null && graph.isUseClassForEdgeLabel()) {
       for (int i = 0; i < iLabels.length; ++i) {
         final OrientEdgeType edgeType = graph.getEdgeType(iLabels[i]);
         if (edgeType != null)

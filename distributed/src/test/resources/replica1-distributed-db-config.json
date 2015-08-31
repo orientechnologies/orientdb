@@ -1,0 +1,24 @@
+{
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "offlineMsgQueueSize": 0,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,
+  "servers": {
+    "europe0": "master",
+    "*": "replica"
+  },
+  "clusters": {
+    "internal": {
+    },
+    "index": {
+    },
+    "*": {
+      "servers": [
+        "<NEW_NODE>"
+      ]
+    }
+  }
+}

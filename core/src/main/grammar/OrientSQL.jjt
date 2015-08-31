@@ -184,6 +184,8 @@ TOKEN:
 	|
 	< MAXDEPTH: ( "m" | "M" ) ( "a" | "A" ) ( "x" | "X" ) ( "d" | "D" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) >
 	|
+	< EXCEPTION: ( "e" | "E" ) ( "x" | "X" ) ( "c" | "C" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -380,8 +382,8 @@ TOKEN :
 TOKEN :
 {
   < IDENTIFIER: ( (<DOLLAR>)? <LETTER> (<PART_LETTER>)* ) >
-//|
-//  < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
+|
+  < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
 |
   < INDEX_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ":" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
 |
@@ -434,7 +436,7 @@ OStatement parse() :
 
 OIdentifier Identifier():
 {
-    //Token quotedToken = null;
+    Token quotedToken = null;
     Token token = null;
 
 }
@@ -476,6 +478,10 @@ OIdentifier Identifier():
     |
     token = <WITHIN>
     |
+    token = <EXCEPTION>
+    |
+    quotedToken = <QUOTED_IDENTIFIER>
+    /*
     (
     //TODO REPLACE THIS WITH <QUOTED_IDENTIFIER>
         <BACKTICK>
@@ -621,24 +627,27 @@ OIdentifier Identifier():
             token = <INSTANCEOF>
             |
             token = <CLUSTER>
+            |
+            token = <EXCEPTION>
         )
         <BACKTICK>
     )
+    */
 ) {
 
-    //if(token!=null){
-    jjtThis.value = token.image;
-    /*
+    if(token!=null){
+        jjtThis.value = token.image;
     }else{
+        jjtThis.quoted = true;
         jjtThis.value = quotedToken.image;
         jjtThis.value = jjtThis.value.substring(1, jjtThis.value.length() - 1);
-        try{
+        /*try{
             jjtThis.value = java.net.URLEncoder.encode(jjtThis.value, null);
         }catch(Exception e){
 
-        }
+        }*/
     }
-    */
+
     return jjtThis;
 
 
@@ -1265,18 +1274,6 @@ OUpdatePutItem UpdatePutItem():
     { return jjtThis; }
 }
 
-
-OUpdateAddItem UpdateAddItem():
-{}
-{
-    (
-    	jjtThis.left = Identifier() <EQ>
-    	jjtThis.right = Expression()
-    )
-    { return jjtThis; }
-}
-
-
 OInsertStatement InsertStatement():
 {}
 {
@@ -1290,8 +1287,19 @@ OInsertStatement InsertStatement():
 	    |
 	    jjtThis.targetIndex = IndexIdentifier()
 	)
-	[ <RETURN> jjtThis.returnStatement = Projection() ]
-    jjtThis.insertBody = InsertBody()
+    [ LOOKAHEAD(InsertBody()) jjtThis.insertBody = InsertBody() ]
+    [ <RETURN> jjtThis.returnStatement = Projection() ]
+    [
+        [ <FROM> { jjtThis.selectWithFrom = true; } ]
+        (
+             jjtThis.selectStatement = SelectStatement()
+             |
+             LOOKAHEAD(2)
+            (
+                <LPAREN> jjtThis.selectStatement = SelectStatement() { jjtThis.selectInParentheses = true; } <RPAREN>
+            )
+        )
+    ]
     [ <UNSAFE> { jjtThis.unsafe = true; }]
 ) {return jjtThis;}
 }
@@ -1368,21 +1376,9 @@ OInsertBody InsertBody():
                 )*
             )
             |
-            (
-                [ <FROM> ]
-                (
-                     jjtThis.selectStatement = SelectStatement()
-                     |
-                     LOOKAHEAD(2)
-                    (
-                        <LPAREN> jjtThis.selectStatement = SelectStatement() { jjtThis.selectInParentheses = true; } <RPAREN>
-                    )
-                )
-            )
-            |
             ( <CONTENT> jjtThis.content = Json() )
          )
-        [ <RETURN> jjtThis.returnProjection = Projection() ]
+         //[ <RETURN> jjtThis.returnProjection = Projection() ]
     )
     { return jjtThis; }
 }
@@ -2736,13 +2732,20 @@ OBatch Batch():
     { return jjtThis; }
 }
 
-java.lang.Number Timeout():
+OTimeout Timeout():
 { OInteger val; }
 {
+    <TIMEOUT>
+
     (
-	    <TIMEOUT> val = Integer()
+	    val = Integer() { jjtThis.val = val.getValue(); }
+	    [
+	        ( <RETURN> { jjtThis.failureStrategy = OTimeout.RETURN;} )
+	        |
+	        ( <EXCEPTION> { jjtThis.failureStrategy = OTimeout.EXCEPTION;} )
+	    ]
 	)
-	{ return val.getValue(); }
+	{ return jjtThis; }
 }
 
 

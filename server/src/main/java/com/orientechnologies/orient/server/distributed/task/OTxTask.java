@@ -108,7 +108,7 @@ public class OTxTask extends OAbstractReplicatedTask {
         for (OAbstractRecordReplicatedTask task : tasks) {
           final ORecord record = task.getRecord();
 
-          if (record != null) {
+          if (record instanceof ODocument) {
             // ASSURE ALL RIDBAGS ARE UNMARSHALLED TO AVOID STORING TEMP RIDS
             for (String f : ((ODocument) record).fieldNames()) {
               final Object fValue = ((ODocument) record).field(f);
@@ -253,7 +253,7 @@ public class OTxTask extends OAbstractReplicatedTask {
    * @return
    */
   @Override
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     final long to = OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong();
     return to + ((to / 2) * tasks.size());
   }

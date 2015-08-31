@@ -93,6 +93,8 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
     clusterIds = polymorphic ? targetClass.getPolymorphicClusterIds() : targetClass.getClusterIds();
     clusterIds = OClassImpl.readableClusters(iDatabase, clusterIds);
 
+    checkForSystemClusters(iDatabase, clusterIds);
+
     Arrays.sort(clusterIds);
     config();
   }

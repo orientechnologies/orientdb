@@ -28,7 +28,6 @@ public interface OrientSqlVisitor
   public Object visit(OUpdateIncrementItem node, Object data);
   public Object visit(OUpdateRemoveItem node, Object data);
   public Object visit(OUpdatePutItem node, Object data);
-  public Object visit(OUpdateAddItem node, Object data);
   public Object visit(OInsertStatement node, Object data);
   public Object visit(OInsertBody node, Object data);
   public Object visit(OCreateVertexStatementEmptyNoTarget node, Object data);

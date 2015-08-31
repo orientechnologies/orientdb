@@ -33,7 +33,7 @@
                       name="http"/>
         </protocols>
         <listeners>
-            <listener protocol="http" port-range="2480-2490" ip-address="0.0.0.0">
+            <listener protocol="http" port-range="2498-2500" ip-address="0.0.0.0">
                 <commands>
                     <command
                             implementation="com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent"

@@ -1980,24 +1980,24 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       final Map<String, String> values = serverAdmin.getGlobalConfigurations();
 
       message("\nREMOTE SERVER CONFIGURATION:");
-      message("\n+--------------------------------------------------------+---------------------------+");
-      message("\n| %-55s| %-25s |", "NAME", "VALUE");
-      message("\n+--------------------------------------------------------+---------------------------+");
+      message("\n+--------------------------------------------------------------------------------------+---------------------------+");
+      message("\n| %-85s| %-25s |", "NAME", "VALUE");
+      message("\n+--------------------------------------------------------------------------------------+---------------------------+");
       for (Entry<String, String> p : values.entrySet()) {
-        message("\n| %-55s| %-25s |", p.getKey(), p.getValue());
+        message("\n| %-85s| %-25s |", p.getKey(), p.getValue());
       }
     } else {
       // LOCAL STORAGE
       message("\nLOCAL SERVER CONFIGURATION:");
-      message("\n+--------------------------------------------------------+---------------------------+");
-      message("\n| %-55s| %-25s |", "NAME", "VALUE");
-      message("\n+--------------------------------------------------------+---------------------------+");
+      message("\n+--------------------------------------------------------------------------------------+---------------------------+");
+      message("\n| %-85s| %-25s |", "NAME", "VALUE");
+      message("\n+--------------------------------------------------------------------------------------+---------------------------+");
       for (OGlobalConfiguration cfg : OGlobalConfiguration.values()) {
-        message("\n| %-55s| %-25s |", cfg.getKey(), cfg.getValue());
+        message("\n| %-85s| %-25s |", cfg.getKey(), cfg.getValue());
       }
     }
 
-    message("\n+--------------------------------------------------------+---------------------------+");
+    message("\n+--------------------------------------------------------------------------------------+---------------------------+");
   }
 
   /** Should be used only by console commands */

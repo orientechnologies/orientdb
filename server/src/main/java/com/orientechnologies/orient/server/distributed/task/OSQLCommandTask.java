@@ -133,7 +133,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   }
 
   @Override
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     return timeout;
   }
 

@@ -103,6 +103,9 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='foo'")).execute();
     db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='bar'")).execute();
 
+    db.command(new OCommandSQL("CREATE class TestBacktick")).execute();
+    db.command(new OCommandSQL("insert into TestBacktick  set foo = 1, bar = 2, `foo-bar` = 10")).execute();
+
     // /*** from issue #2743
     OSchema schema = db.getMetadata().getSchema();
     if (!schema.existsClass("alphabet")) {
@@ -444,6 +447,19 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
+  public void testUnwindOrder() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest order by coll unwind coll")).execute();
+
+    assertEquals(qResult.size(), 4);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+      assertFalse(doc.getIdentity().isPersistent());
+    }
+  }
+
+  @Test
   public void testUnwindSkip() {
     List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll skip 1")).execute();
 
@@ -683,6 +699,18 @@ public class OCommandExecutorSQLSelectTest {
       }
     }
     assertTrue(nullFound);
+
+  }
+
+  @Test
+  public void testBacktick() {
+
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT `foo-bar` as r from TestBacktick");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 1);
+    ODocument doc = results.get(0);
+    assertEquals(doc.field("r"), 10);
+
 
   }
 

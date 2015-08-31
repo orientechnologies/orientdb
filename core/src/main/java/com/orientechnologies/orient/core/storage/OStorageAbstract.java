@@ -20,7 +20,9 @@
 package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
-import com.orientechnologies.common.concur.resource.*;
+import com.orientechnologies.common.concur.resource.OSharedContainer;
+import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -33,7 +35,6 @@ import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -204,9 +205,9 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
       final Set<OClass> classes = ((OMetadataInternal) metaData).getImmutableSchemaSnapshot().getClassesRelyOnCluster(iClusterName);
       for (OClass c : classes) {
         if (c.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME))
-          throw new OSecurityException("Class " + c.getName()
-              + " cannot be truncated because has record level security enabled (extends " + OSecurityShared.RESTRICTED_CLASSNAME
-              + ")");
+          throw new OSecurityException("Class '" + c.getName()
+              + "' cannot be truncated because has record level security enabled (extends '" + OSecurityShared.RESTRICTED_CLASSNAME
+              + "')");
       }
     }
   }

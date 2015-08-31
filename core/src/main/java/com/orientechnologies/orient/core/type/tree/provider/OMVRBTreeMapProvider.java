@@ -203,7 +203,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
       return (OBinarySerializer<K>) OLongSerializer.INSTANCE;
 
     throw new OSerializationException("Given serializer " + streamKeySerializer.getClass().getName()
-        + " can not be converted into " + OBinarySerializer.class.getName() + ".");
+        + " cannot be converted into " + OBinarySerializer.class.getName() + ".");
   }
 
   public OBinarySerializer<K> getKeySerializer() {

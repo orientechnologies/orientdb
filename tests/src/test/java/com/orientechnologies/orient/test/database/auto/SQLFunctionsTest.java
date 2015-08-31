@@ -37,6 +37,7 @@ import org.testng.annotations.Test;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -315,10 +316,9 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
   @Test
   public void queryComposedAggregates() {
-    List<ODocument> result = database
-        .command(
-            new OSQLSynchQuery<ODocument>(
-                "select MIN(id) as min, max(id) as max, AVG(id) as average, sum(id) as total from Account")).execute();
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select MIN(id) as min, max(id) as max, AVG(id) as average, sum(id) as total from Account"))
+        .execute();
 
     Assert.assertTrue(result.size() == 1);
     for (ODocument d : result) {
@@ -470,5 +470,42 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
       Assert.assertEquals(OSecurityManager.digest2String(name, "SHA-256"), d.field("n256"));
       Assert.assertEquals(OSecurityManager.digest2String(name, "SHA-512"), d.field("n512"));
     }
+  }
+
+  @Test
+  public void testFirstFunction() throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    List<Long> sequence = new ArrayList<Long>(100);
+    for (long i = 0; i < 100; ++i) {
+      sequence.add(i);
+    }
+    new ODocument("V").field("sequence", sequence).save();
+    sequence.remove(0);
+    new ODocument("V").field("sequence", sequence).save();
+
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select first(sequence) from V where sequence is not null")).execute();
+
+    Assert.assertEquals(result.size(), 2);
+    Assert.assertEquals(result.get(0).field("first"), 0l);
+    Assert.assertEquals(result.get(1).field("first"), 1l);
+  }
+
+  @Test
+  public void testLastFunction() throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    List<Long> sequence = new ArrayList<Long>(100);
+    for (long i = 0; i < 100; ++i) {
+      sequence.add(i);
+    }
+    new ODocument("V").field("sequence2", sequence).save();
+    sequence.remove(sequence.size() - 1);
+    new ODocument("V").field("sequence2", sequence).save();
+
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select last(sequence2) from V where sequence2 is not null")).execute();
+
+    Assert.assertEquals(result.size(), 2);
+    Assert.assertEquals(result.get(0).field("last"), 99l);
+    Assert.assertEquals(result.get(1).field("last"), 98l);
+
   }
 }

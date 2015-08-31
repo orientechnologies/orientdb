@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -44,10 +48,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * SQL UPDATE command.
@@ -267,7 +267,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
    * Deletes the current record.
    */
   public boolean result(final Object iRecord) {
-    final ORecordAbstract record = ((OIdentifiable) iRecord ).getRecord();
+    final ORecordAbstract record = ((OIdentifiable) iRecord).getRecord();
 
     try {
       if (record.getIdentity().isValid()) {
@@ -358,8 +358,10 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     return QUORUM_TYPE.WRITE;
   }
 
+  @Override
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return indexName != null || query != null ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+    return (indexName != null || query != null) && !getDatabase().getTransaction().isActive() ? DISTRIBUTED_EXECUTION_MODE.REPLICATE
+        : DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
   public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {

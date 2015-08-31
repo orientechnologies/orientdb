@@ -42,7 +42,7 @@ public class OSelectStatement extends OStatement {
 
   protected OLetClause   letClause;
 
-  protected Number       timeout;
+  protected OTimeout       timeout;
 
   protected Boolean      parallel;
 
@@ -210,14 +210,14 @@ public class OSelectStatement extends OStatement {
       builder.append(groupBy.toString());
     }
 
-    if (unwind != null) {
-      builder.append(" ");
-      builder.append(unwind.toString());
-    }
-
     if (orderBy != null) {
       builder.append(" ");
       builder.append(orderBy.toString());
+    }
+
+    if (unwind != null) {
+      builder.append(" ");
+      builder.append(unwind.toString());
     }
 
     if (skip != null) {
@@ -238,7 +238,6 @@ public class OSelectStatement extends OStatement {
     }
 
     if (timeout != null) {
-      builder.append(" TIMEOUT ");
       builder.append(timeout);
     }
 

@@ -49,7 +49,12 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL UPDATE command.
@@ -317,7 +322,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     if (distributedMode == null)
       // REPLICATE MODE COULD BE MORE EFFICIENT ON MASSIVE UPDATES
-      distributedMode = upsertMode || query == null ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+      distributedMode = upsertMode || query == null || getDatabase().getTransaction().isActive() ? DISTRIBUTED_EXECUTION_MODE.LOCAL
+          : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
     return distributedMode;
   }
 
@@ -721,14 +727,14 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         && !parserGetLastWord().equals(KEYWORD_WHERE)) {
 
       fieldName = parserRequiredWord(false, "Field name expected");
-      final boolean found = parserOptionalKeyword("=", "WHERE");
+      final boolean found = parserOptionalKeyword("=", "WHERE", "RETURN", "LOCK", "LIMIT");
       if (found)
-        if (parserGetLastWord().equals("WHERE")) {
-          parserGoBack();
-          value = EMPTY_VALUE;
-        } else {
+        if (parserGetLastWord().equals("=")) {
           fieldValue = getBlock(parserRequiredWord(false, "Value expected", " =><,\r\n"));
           value = getFieldValueCountingParameters(fieldValue);
+        } else {
+          parserGoBack();
+          value = EMPTY_VALUE;
         }
       else
         value = EMPTY_VALUE;

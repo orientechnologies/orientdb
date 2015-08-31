@@ -20,16 +20,6 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -39,6 +29,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
@@ -63,6 +54,16 @@ import com.orientechnologies.orient.core.serialization.serializer.ONetworkThread
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
+
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
@@ -692,13 +693,28 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   private int writeLinkCollection(BytesContainer bytes, Collection<OIdentifiable> value) {
     assert (!(value instanceof OMVRBTreeRIDSet));
     int pos = OVarIntSerializer.write(bytes, value.size());
-    for (OIdentifiable itemValue : value) {
-      // TODO: handle the null links
-      if (itemValue == null)
-        writeNullLink(bytes);
-      else
-        writeOptimizedLink(bytes, itemValue);
+
+    final boolean disabledAutoConvertion = value instanceof ORecordLazyMultiValue
+        && ((ORecordLazyMultiValue) value).isAutoConvertToRecord();
+
+    if (disabledAutoConvertion)
+      // AVOID TO FETCH RECORD
+      ((ORecordLazyMultiValue) value).setAutoConvertToRecord(false);
+
+    try {
+      for (OIdentifiable itemValue : value) {
+        // TODO: handle the null links
+        if (itemValue == null)
+          writeNullLink(bytes);
+        else
+          writeOptimizedLink(bytes, itemValue);
+      }
+
+    } finally {
+      if (disabledAutoConvertion)
+        ((ORecordLazyMultiValue) value).setAutoConvertToRecord(true);
     }
+
     return pos;
   }
 
@@ -735,9 +751,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       if (prop != null)
         type = prop.getType();
 
-      if (type == null || OType.ANY == type)
-        type = OType.getTypeByValue(entry.value);
     }
+    if (type == null || OType.ANY == type)
+      type = OType.getTypeByValue(entry.value);
     return type;
   }
 

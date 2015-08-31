@@ -34,6 +34,7 @@ public class ODatabaseSecurityResources {
   public final static String ALL_CLASSES       = "database.class.*";
   public final static String CLUSTER           = "database.cluster";
   public final static String ALL_CLUSTERS      = "database.cluster.*";
+  public final static String SYSTEMCLUSTERS    = "database.systemclusters";
   public final static String COMMAND           = "database.command";
   public final static String FUNCTION          = "database.function";
   public final static String DATABASE_CONFIG   = "database.config";

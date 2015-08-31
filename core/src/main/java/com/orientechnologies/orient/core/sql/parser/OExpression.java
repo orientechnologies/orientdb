@@ -73,9 +73,9 @@ public class OExpression extends SimpleNode {
       return value.toString();
     } else if (value instanceof String) {
       if (Boolean.TRUE.equals(singleQuotes)) {
-        return "'" + value + "'";
+        return "'" + encodeSingle((String)value)+ "'";
       }
-      return "\"" + value + "\"";
+      return "\"" + encode((String)value) + "\"";
     } else {
       return "" + value;
     }
@@ -83,6 +83,10 @@ public class OExpression extends SimpleNode {
 
   public static String encode(String s) {
     return s.replaceAll("\"", "\\\\\"");
+  }
+
+  public static String encodeSingle(String s) {
+    return s.replaceAll("'", "\\\\'");
   }
 
   public void replaceParameters(Map<Object, Object> params) {

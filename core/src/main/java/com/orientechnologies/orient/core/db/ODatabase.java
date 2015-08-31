@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.io.Closeable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -46,6 +40,12 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.Closeable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
@@ -738,7 +738,7 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
   /**
    * Hides records content by putting tombstone on the records position but does not delete record itself.
    *
-   * This method is used in case of record content itself is broken and can not be read or deleted. So it is emergence method. This
+   * This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method. This
    * method can be used only if there is no active transaction in database.
    *
    *
