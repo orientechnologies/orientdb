@@ -55,7 +55,7 @@ public class OFetchHelper {
   public static OFetchPlan DEFAULT_FETCH_PLAN = new OFetchPlan("*:0");
 
   public static OFetchPlan buildFetchPlan(final String iFetchPlan) {
-    if (DEFAULT.equals(DEFAULT))
+    if (DEFAULT.equals(iFetchPlan))
       return DEFAULT_FETCH_PLAN;
     return new OFetchPlan(iFetchPlan);
   }
