@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener;
 
 /**
@@ -66,6 +67,8 @@ public interface OMetadata {
   void close();
 
   OFunctionLibrary getFunctionLibrary();
+
+  OSequenceLibrary getSequenceLibrary();
 
   OSchedulerListener getSchedulerListener();
 }
