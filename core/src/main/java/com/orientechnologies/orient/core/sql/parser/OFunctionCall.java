@@ -108,10 +108,6 @@ public class OFunctionCall extends SimpleNode {
       Object rightValue) {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getValue());
     if (function instanceof OIndexableSQLFunction) {
-      List<Object> paramValues = new ArrayList<Object>();
-      for (OExpression expr : this.getParams()) {
-        paramValues.add(expr.execute(null, ctx));
-      }
       return ((OIndexableSQLFunction) function).searchFromTarget(target, operator, rightValue, ctx,
           this.getParams().toArray(new OExpression[] {}));
     }
@@ -130,10 +126,6 @@ public class OFunctionCall extends SimpleNode {
       Object rightValue) {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getValue());
     if (function instanceof OIndexableSQLFunction) {
-      List<Object> paramValues = new ArrayList<Object>();
-      for (OExpression expr : this.getParams()) {
-        paramValues.add(expr.execute(null, ctx));
-      }
       return ((OIndexableSQLFunction) function).estimate(target, operator, rightValue, ctx,
           this.getParams().toArray(new OExpression[] {}));
     }

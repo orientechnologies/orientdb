@@ -27,5 +27,9 @@ public class OFromClause extends SimpleNode {
     }
   }
 
+
+  public OFromItem getItem() {
+    return item;
+  }
 }
 /* JavaCC - OriginalChecksum=051839d20dabfa4cce26ebcbe0d03a86 (do not edit this line) */
