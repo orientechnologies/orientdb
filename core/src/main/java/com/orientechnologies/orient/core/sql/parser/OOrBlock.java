@@ -3,7 +3,9 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +36,6 @@ public class OOrBlock extends OBooleanExpression {
     return false;
   }
 
-
   public List<OBooleanExpression> getSubBlocks() {
     return subBlocks;
   }
@@ -47,10 +48,10 @@ public class OOrBlock extends OBooleanExpression {
     if (subBlocks == null || subBlocks.size() == 0) {
       return;
     }
-//    if (subBlocks.size() == 1) {
-//      subBlocks.get(0).toString(params, builder);
-//      return;
-//    }
+    // if (subBlocks.size() == 1) {
+    // subBlocks.get(0).toString(params, builder);
+    // return;
+    // }
 
     boolean first = true;
     for (OBooleanExpression expr : subBlocks) {
@@ -81,12 +82,28 @@ public class OOrBlock extends OBooleanExpression {
     return result;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
-    for(OBooleanExpression expr:subBlocks) {
+    for (OBooleanExpression expr : subBlocks) {
       result.addAll(expr.getExternalCalculationConditions());
     }
     return result;
   }
+
+  public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+    if (subBlocks == null || subBlocks.size() > 1) {
+      return null;
+    }
+    List<OBinaryCondition> result = new ArrayList<OBinaryCondition>();
+    for (OBooleanExpression exp : subBlocks) {
+      List<OBinaryCondition> sub = exp.getIndexedFunctionConditions(iSchemaClass, database);
+      if (sub != null && sub.size() > 0) {
+        result.addAll(sub);
+      }
+    }
+    return result.size() == 0 ? null : result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=98d3077303a598705894dbb7bd4e1573 (do not edit this line) */

@@ -35,11 +35,10 @@ public class OWhereClause extends SimpleNode {
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (baseExpression == null) {
-      return ;
+      return;
     }
     baseExpression.toString(params, builder);
   }
-
 
   /**
    * estimates how many items of this class will be returned applying this filter
@@ -57,8 +56,10 @@ public class OWhereClause extends SimpleNode {
   }
 
   public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
-
-    return null;//TODO
+    if (baseExpression == null) {
+      return null;
+    }
+    return this.baseExpression.getIndexedFunctionConditions(iSchemaClass, database);
   }
 }
 /* JavaCC - OriginalChecksum=e8015d01ce1ab2bc337062e9e3f2603e (do not edit this line) */
