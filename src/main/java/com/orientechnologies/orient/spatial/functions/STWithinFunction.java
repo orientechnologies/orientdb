@@ -18,28 +18,23 @@
 
 package com.orientechnologies.orient.spatial.functions;
 
-import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
-import com.orientechnologies.orient.spatial.shape.OShapeFactory;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.spatial.strategy.SpatialQueryBuilderWithin;
 import com.spatial4j.core.shape.Shape;
 import com.spatial4j.core.shape.SpatialRelation;
 
-import java.util.Map;
+import java.util.Collection;
 
 /**
  * Created by Enrico Risa on 12/08/15.
  */
-public class STWithinFunction extends OSQLFunctionAbstract implements OIndexableSQLFunction {
+public class STWithinFunction extends OSpatialFunctionAbstract {
 
-  public static final String NAME    = "st_within";
-
-  OShapeFactory              factory = OShapeFactory.INSTANCE;
+  public static final String NAME = "st_within";
 
   public STWithinFunction() {
     super(NAME, 2, 2);
@@ -49,9 +44,10 @@ public class STWithinFunction extends OSQLFunctionAbstract implements OIndexable
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
 
-    Shape shape = factory.fromDoc((ODocument) iParams[0]);
-    Map map = (Map) iParams[1];
-    Shape shape1 = factory.fromMapGeoJson((Map) map.get("shape"));
+    Shape shape = factory.fromObject(iParams[0]);
+
+    Shape shape1 = factory.fromObject(iParams[1]);
+
     return shape.relate(shape1) == SpatialRelation.WITHIN;
   }
 
@@ -61,12 +57,21 @@ public class STWithinFunction extends OSQLFunctionAbstract implements OIndexable
   }
 
   @Override
-  public Iterable<OIdentifiable> searchFromTarget(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx, OExpression... args) {
-    return null;
+  public Iterable<OIdentifiable> searchFromTarget(OFromClause target, OBinaryCompareOperator operator, Object rightValue,
+      OCommandContext ctx, OExpression... args) {
+    return results(target, args, ctx);
   }
 
   @Override
-  public long estimate(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx, OExpression... args) {
-    return 0;
+  public long estimate(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
+      OExpression... args) {
+
+    Collection resultSet = results(target, args, ctx);
+    return resultSet == null ? -1 : resultSet.size();
+  }
+
+  @Override
+  protected String operator() {
+    return SpatialQueryBuilderWithin.NAME;
   }
 }

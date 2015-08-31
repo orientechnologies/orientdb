@@ -87,14 +87,15 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
     queryPoint();
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testIndexingPoint() {
 
     queryPoint();
   }
 
   protected void queryPoint() {
-    String query = "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'Rectangle' , 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} })  ";
+    // TODO remove = true when parser will support index function without expression
+    String query = "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'Rectangle' , 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} })" + " = true";
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(1, docs.size());

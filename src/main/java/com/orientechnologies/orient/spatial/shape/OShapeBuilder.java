@@ -42,6 +42,10 @@ public abstract class OShapeBuilder<T extends Shape> {
 
   public abstract T fromDoc(ODocument doc);
 
+  public T fromObject(Object obj) {
+    throw new UnsupportedOperationException();
+  }
+
   public T fromMapGeoJson(Map<String, Object> geoJsonMap) {
     ODocument doc = new ODocument(getName());
     doc.field(COORDINATES, geoJsonMap.get(COORDINATES));

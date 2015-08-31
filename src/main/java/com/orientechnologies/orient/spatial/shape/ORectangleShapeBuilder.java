@@ -86,10 +86,10 @@ public class ORectangleShapeBuilder extends OShapeBuilder<Rectangle> {
   @Override
   public Rectangle fromDoc(ODocument document) {
     validate(document);
-    List<Double> coordinates = document.field(COORDINATES);
+    List<Number> coordinates = document.field(COORDINATES);
 
-    Point topLeft = SPATIAL_CONTEXT.makePoint(coordinates.get(0), coordinates.get(1));
-    Point bottomRight = SPATIAL_CONTEXT.makePoint(coordinates.get(2), coordinates.get(3));
+    Point topLeft = SPATIAL_CONTEXT.makePoint(coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue());
+    Point bottomRight = SPATIAL_CONTEXT.makePoint(coordinates.get(2).doubleValue(), coordinates.get(3).doubleValue());
     Rectangle rectangle = SPATIAL_CONTEXT.makeRectangle(topLeft, bottomRight);
     return rectangle;
   }

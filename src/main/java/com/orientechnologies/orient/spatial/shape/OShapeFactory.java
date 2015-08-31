@@ -90,6 +90,25 @@ public class OShapeFactory extends OComplexShapeBuilder {
   }
 
   @Override
+  public Shape fromObject(Object obj) {
+
+    if (obj instanceof String) {
+      return fromText((String) obj);
+    }
+    if (obj instanceof ODocument) {
+      return fromDoc((ODocument) obj);
+    }
+    if (obj instanceof Map) {
+      Map map = (Map) ((Map) obj).get("shape");
+      if (map == null) {
+        map = (Map) obj;
+      }
+      return fromMapGeoJson(map);
+    }
+    return null;
+  }
+
+  @Override
   public String asText(ODocument document) {
     OShapeBuilder oShapeBuilder = factories.get(document.getClassName());
     if (oShapeBuilder != null) {
