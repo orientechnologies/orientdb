@@ -78,13 +78,11 @@ public class OFunctionCall extends SimpleNode {
     for (OExpression expr : this.params) {
       paramValues.add(expr.execute((OIdentifiable) ctx.getVariable("$current"), ctx));
     }
-    if (OMethodCall.graphMethods.contains(name)) {
-      OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
+    if (function != null) {
       return function.execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null, paramValues.toArray(), ctx);
-
     }
     throw new UnsupportedOperationException("finisho OFunctionCall implementation!");
-
   }
 
   public static ODatabaseDocumentInternal getDatabase() {
@@ -98,6 +96,7 @@ public class OFunctionCall extends SimpleNode {
 
   /**
    * see OIndexableSQLFunction.searchFromTarget()
+   * 
    * @param target
    * @param ctx
    * @param operator
@@ -116,14 +115,17 @@ public class OFunctionCall extends SimpleNode {
 
   /**
    *
-   * @param target query target
-   * @param ctx execution context
-   * @param operator operator at the right of the function
-   * @param rightValue value to compare to funciton result
+   * @param target
+   *          query target
+   * @param ctx
+   *          execution context
+   * @param operator
+   *          operator at the right of the function
+   * @param rightValue
+   *          value to compare to funciton result
    * @return the approximate number of items returned by the condition execution, -1 if the extimation cannot be executed
    */
-  public long estimateIndexedFunction(OFromClause target, OCommandContext ctx, OBinaryCompareOperator operator,
-      Object rightValue) {
+  public long estimateIndexedFunction(OFromClause target, OCommandContext ctx, OBinaryCompareOperator operator, Object rightValue) {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getValue());
     if (function instanceof OIndexableSQLFunction) {
       return ((OIndexableSQLFunction) function).estimate(target, operator, rightValue, ctx,
