@@ -27,6 +27,7 @@ import com.spatial4j.core.shape.ShapeCollection;
 import com.spatial4j.core.shape.jts.JtsGeometry;
 import com.vividsolutions.jts.geom.Geometry;
 
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -93,7 +94,12 @@ public class OShapeFactory extends OComplexShapeBuilder {
   public Shape fromObject(Object obj) {
 
     if (obj instanceof String) {
-      return fromText((String) obj);
+      try {
+        return fromText((String) obj);
+      } catch (ParseException e) {
+        // TODO handle parse shape exception
+        e.printStackTrace();
+      }
     }
     if (obj instanceof ODocument) {
       return fromDoc((ODocument) obj);
@@ -119,12 +125,18 @@ public class OShapeFactory extends OComplexShapeBuilder {
   }
 
   @Override
-  public String asText(Shape shape) {
-    return null;
-  }
+  public String asText(Object obj) {
 
-  @Override
-  public Shape fromText(String wkt) {
+    if (obj instanceof ODocument) {
+      return asText((ODocument) obj);
+    }
+    if (obj instanceof Map) {
+      Map map = (Map) ((Map) obj).get("shape");
+      if (map == null) {
+        map = (Map) obj;
+      }
+      return asText(map);
+    }
     return null;
   }
 

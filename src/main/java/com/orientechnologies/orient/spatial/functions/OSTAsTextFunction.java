@@ -18,11 +18,10 @@
 
 package com.orientechnologies.orient.spatial.functions;
 
-import com.orientechnologies.orient.spatial.shape.OShapeFactory;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.spatial.shape.OShapeFactory;
 
 /**
  * Created by Enrico Risa on 06/08/15.
@@ -40,7 +39,7 @@ public class OSTAsTextFunction extends OSQLFunctionAbstract {
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
-    return factory.asText((ODocument) iParams[0]);
+    return factory.asText(iParams[0]);
   }
 
   @Override

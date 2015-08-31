@@ -72,6 +72,14 @@ public abstract class OShapeBuilder<T extends Shape> {
     return asText(fromDoc(document));
   }
 
+  public String asText(Map<String, Object> geoJson) {
+    return asText(fromMapGeoJson(geoJson));
+  }
+
+  public String asText(Object object) {
+    throw new UnsupportedOperationException();
+  }
+
   public String asGeoJson(T shape) {
     return null;
   }
@@ -101,7 +109,9 @@ public abstract class OShapeBuilder<T extends Shape> {
     return db.getMetadata().getSchema().getClass(BASE_CLASS);
   }
 
-  public abstract T fromText(String wkt);
+  public T fromText(String wkt) throws ParseException {
+    return (T) SPATIAL_CONTEXT.getWktShapeParser().parse(wkt);
+  }
 
   public abstract ODocument toDoc(T shape);
 
