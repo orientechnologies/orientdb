@@ -25,7 +25,9 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -52,6 +54,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.*;
 import java.lang.String;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -192,49 +197,66 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       }
     }
 
-    final String[] files = fetchIBUFiles(backupDirectory);
-
-    final OLogSequenceNumber lastLsn;
-    final long nextIndex;
-
-    if (files.length == 0) {
-      lastLsn = null;
-      nextIndex = 0;
-    } else {
-      lastLsn = extractIBULsn(backupDirectory, files[files.length - 1]);
-      nextIndex = extractIndexFromIBUFile(files[files.length - 1]) + 1;
-    }
-
-    final SimpleDateFormat dateFormat = new SimpleDateFormat("HH_mm_ss_dd_MM_yyyy");
-    final String fileName;
-
-    if (lastLsn != null)
-      fileName = nextIndex + "_" + dateFormat.format(new Date()) + incrementalBackupExtension;
-    else
-      fileName = nextIndex + "_" + dateFormat.format(new Date()) + "_full" + incrementalBackupExtension;
-
-    final File ibuFile = new File(backupDirectory, fileName);
-    final FileOutputStream fileOutputStream;
+    RandomAccessFile rndIBUFile = null;
     try {
-      fileOutputStream = new FileOutputStream(ibuFile);
-    } catch (IOException e) {
-      throw new OStorageException("Error during incremental backup", e);
-    }
+      final String[] files = fetchIBUFiles(backupDirectory);
 
-    try {
-      incrementalBackup(fileOutputStream, lastLsn);
+      final OLogSequenceNumber lastLsn;
+      final long nextIndex;
+
+      if (files.length == 0) {
+        lastLsn = null;
+        nextIndex = 0;
+      } else {
+        lastLsn = extractIBULsn(backupDirectory, files[files.length - 1]);
+        nextIndex = extractIndexFromIBUFile(files[files.length - 1]) + 1;
+      }
+
+      final SimpleDateFormat dateFormat = new SimpleDateFormat("HH_mm_ss_dd_MM_yyyy");
+      final String fileName;
+
+      if (lastLsn != null)
+        fileName = nextIndex + "_" + dateFormat.format(new Date()) + incrementalBackupExtension;
+      else
+        fileName = nextIndex + "_" + dateFormat.format(new Date()) + "_full" + incrementalBackupExtension;
+
+      final File ibuFile = new File(backupDirectory, fileName);
+
+      rndIBUFile = new RandomAccessFile(ibuFile, "w");
+      final FileChannel ibuChannel = rndIBUFile.getChannel();
+
+      ibuChannel.position(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
+
+      final OLogSequenceNumber maxLsn = incrementalBackup(Channels.newOutputStream(ibuChannel), lastLsn);
+      final ByteBuffer dataBuffer = ByteBuffer.allocate(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
+
+      dataBuffer.putLong(nextIndex);
+      dataBuffer.putLong(maxLsn.getSegment());
+      dataBuffer.putLong(maxLsn.getPosition());
+
+      if (lastLsn == null)
+        dataBuffer.put((byte) 1);
+      else
+        dataBuffer.put((byte) 0);
+
+      dataBuffer.rewind();
+
+      ibuChannel.position(0);
+      ibuChannel.write(dataBuffer);
     } catch (IOException e) {
       throw new OStorageException("Error during incremental backup", e);
     } finally {
       try {
-        fileOutputStream.close();
+        if (rndIBUFile != null)
+          rndIBUFile.close();
+
       } catch (IOException e) {
         throw new OStorageException("Error during incremental backup", e);
       }
     }
   }
 
-  private String[] fetchIBUFiles(File backupDirectory) {
+  private String[] fetchIBUFiles(File backupDirectory) throws IOException {
     String[] files = backupDirectory.list(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
@@ -245,94 +267,78 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     if (files == null)
       throw new OStorageException("Can not read list of backup files from directory " + backupDirectory.getAbsolutePath());
 
-    Arrays.sort(files, new Comparator<String>() {
-      @Override
-      public int compare(String firsFile, String secondFile) {
-        final long firstIndex = extractIndexFromIBUFile(firsFile);
-        final long secondIndex = extractIndexFromIBUFile(secondFile);
+    final List<OPair<Long, String>> indexedFiles = new ArrayList<OPair<Long, String>>(files.length);
 
-        if (firstIndex > secondIndex)
-          return 1;
-        if (firstIndex < secondIndex)
-          return -1;
+    for (String file : files) {
+      final long fileIndex = extractIndexFromIBUFile(file);
+      indexedFiles.add(new OPair<Long, String>(fileIndex, file));
+    }
 
-        return 0;
-      }
-    });
+    Collections.sort(indexedFiles);
 
-    return files;
+    final String[] sortedFiles = new String[files.length];
+
+    int index = 0;
+    for (OPair<Long, String> indexedFile : indexedFiles) {
+      sortedFiles[index] = indexedFile.getValue();
+      index++;
+    }
+
+    return sortedFiles;
   }
 
   private OLogSequenceNumber extractIBULsn(File backupDirectory, String file) {
     final File ibuFile = new File(backupDirectory, file);
-    final FileInputStream fileInputStream;
+    final RandomAccessFile rndIBUFile;
     try {
-      fileInputStream = new FileInputStream(ibuFile);
+      rndIBUFile = new RandomAccessFile(ibuFile, "r");
     } catch (FileNotFoundException e) {
       throw new OStorageException("Backup file was not found", e);
     }
 
     try {
-      final ZipInputStream zipInputStream = new ZipInputStream(fileInputStream);
       try {
-        ZipEntry zipEntry;
-        while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-          if (zipEntry.getName().equals("last.lsn")) {
-            final byte[] data = new byte[2 * OLongSerializer.LONG_SIZE];
+        final FileChannel ibuChannel = rndIBUFile.getChannel();
+        ibuChannel.position(OLongSerializer.LONG_SIZE);
 
-            int bytesRead = 0;
+        ByteBuffer lsnData = ByteBuffer.allocate(2 * OLongSerializer.LONG_SIZE);
 
-            while (bytesRead < data.length) {
-              final int rb = zipInputStream.read(data, bytesRead, data.length - bytesRead);
+        final long segment = lsnData.getLong();
+        final long position = lsnData.getLong();
 
-              if (rb >= 0)
-                bytesRead += rb;
-              else {
-                throw new OStorageException("Can not read last backed up LSN during incremental backup");
-              }
-            }
-
-            final long segment = OLongSerializer.INSTANCE.deserializeNative(data, 0);
-            final long position = OLongSerializer.INSTANCE.deserializeNative(data, OLongSerializer.LONG_SIZE);
-
-            return new OLogSequenceNumber(segment, position);
-          }
-        }
+        return new OLogSequenceNumber(segment, position);
       } finally {
-        zipInputStream.close();
+        rndIBUFile.close();
       }
-
     } catch (IOException e) {
       throw new OStorageException("Error during read of backup file", e);
     } finally {
       try {
-        fileInputStream.close();
+        rndIBUFile.close();
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error during read of backup file", e);
       }
     }
-
-    throw new OStorageException("Can not find latest backed up LSN in last IBU file");
   }
 
-  private long extractIndexFromIBUFile(String fileName) {
-    final int indexPosition = fileName.indexOf('_');
-    if (indexPosition < 1)
-      throw new OStorageException("Invalid file name : " + fileName);
-
-    final String indexStr = fileName.substring(0, indexPosition);
+  private long extractIndexFromIBUFile(String fileName) throws IOException {
+    final File file = new File(storagePath, fileName);
+    final RandomAccessFile rndFile = new RandomAccessFile(file, "r");
     final long index;
+
     try {
-      index = Long.parseLong(indexStr);
-    } catch (NumberFormatException e) {
-      throw new OStorageException("Invalid file name : " + fileName);
+      index = rndFile.readLong();
+    } finally {
+      rndFile.close();
     }
 
     return index;
   }
 
   @SuppressFBWarnings("BC_UNCONFIRMED_CAST")
-  public void incrementalBackup(final OutputStream stream, OLogSequenceNumber fromLsn) throws IOException {
+  public OLogSequenceNumber incrementalBackup(final OutputStream stream, OLogSequenceNumber fromLsn) throws IOException {
+    final OLogSequenceNumber lastLsn;
+
     checkOpeness();
 
     freeze(false);
@@ -347,7 +353,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
               .getCharset()));
           try {
             final Date startedOn = new Date();
-            final OLogSequenceNumber lastLsn = backupPagesWithChanges(fromLsn, zipOutputStream);
+            lastLsn = backupPagesWithChanges(fromLsn, zipOutputStream);
+
             final Date completedOn = new Date();
 
             final ZipEntry backupJson = new ZipEntry("backup.json");
@@ -364,16 +371,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
             writer.flush();
 
-            zipOutputStream.closeEntry();
-
-            final ZipEntry lastLsnEntry = new ZipEntry("last.lsn");
-            zipOutputStream.putNextEntry(lastLsnEntry);
-
-            final byte[] binaryLsn = new byte[2 * OLongSerializer.LONG_SIZE];
-            OLongSerializer.INSTANCE.serializeNative(lastLsn.getSegment(), binaryLsn, 0);
-            OLongSerializer.INSTANCE.serializeNative(lastLsn.getPosition(), binaryLsn, OLongSerializer.LONG_SIZE);
-
-            zipOutputStream.write(binaryLsn);
             zipOutputStream.closeEntry();
 
             final ZipEntry configurationEntry = new ZipEntry(((OStorageConfigurationSegment) configuration).getFileName());
@@ -397,6 +394,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     } finally {
       release();
     }
+
+    return lastLsn;
   }
 
   private OLogSequenceNumber backupPagesWithChanges(OLogSequenceNumber changeLsn, ZipOutputStream stream) throws IOException {
@@ -470,12 +469,23 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     stateLock.acquireWriteLock();
     try {
       for (String file : files) {
-        final boolean fullBackup = file.endsWith("_full" + incrementalBackupExtension);
         final File ibuFile = new File(storagePath, file);
 
-        final FileInputStream inputStream = new FileInputStream(ibuFile);
+        final RandomAccessFile rndIBUFile = new RandomAccessFile(ibuFile, "rw");
+        try {
+          final FileChannel ibuChannel = rndIBUFile.getChannel();
+          ibuChannel.position(3 * OLongSerializer.LONG_SIZE);
 
-        restoreFromIncrementalBackup(inputStream, fullBackup);
+          final ByteBuffer buffer = ByteBuffer.allocate(1);
+          ibuChannel.read(buffer);
+          final boolean fullBackup = buffer.get() == 1;
+
+          final InputStream inputStream = Channels.newInputStream(ibuChannel);
+          restoreFromIncrementalBackup(inputStream, fullBackup);
+        } finally {
+          rndIBUFile.close();
+        }
+
       }
     } finally {
       stateLock.releaseWriteLock();
@@ -511,7 +521,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     ZipEntry zipEntry;
 
     while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-      if (zipEntry.getName().equals("last.lsn"))
+      if (zipEntry.getName().equals("backup.json"))
         continue;
 
       if (zipEntry.getName().equals(configurationFileName)) {
@@ -558,7 +568,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     List<String> processedFiles = new ArrayList<String>();
 
     while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-      if (zipEntry.getName().equals("last.lsn"))
+      if (zipEntry.getName().equals("backup.json"))
         continue;
 
       if (zipEntry.getName().equals(configurationFileName)) {

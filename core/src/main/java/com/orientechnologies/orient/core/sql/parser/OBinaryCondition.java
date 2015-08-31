@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -81,7 +82,7 @@ public class OBinaryCondition extends OBooleanExpression {
   }
 
   public OBinaryCondition isIndexedFunctionCondition(OClass iSchemaClass, ODatabaseDocumentInternal database) {
-    if(left.isIndexedFunctionCal()){
+    if (left.isIndexedFunctionCal()) {
       return this;
     }
     return null;
@@ -93,6 +94,13 @@ public class OBinaryCondition extends OBooleanExpression {
 
   public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context) {
     return left.executeIndexedFunction(target, context, operator, right.execute(null, context));
+  }
+
+  public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+    if (left.isIndexedFunctionCal()) {
+      return Collections.singletonList(this);
+    }
+    return null;
   }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

@@ -3,7 +3,9 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 import java.util.List;
 import java.util.Map;
@@ -71,5 +73,14 @@ public class ONotBlock extends OBooleanExpression {
     return sub.getExternalCalculationConditions();
   }
 
+  public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+    if (sub == null) {
+      return null;
+    }
+    if (negate) {
+      return null;
+    }
+    return sub.getIndexedFunctionConditions(iSchemaClass, database);
+  }
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

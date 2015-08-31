@@ -141,6 +141,10 @@ public class SimpleNode implements Node {
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     throw new UnsupportedOperationException("not implemented in " + getClass().getSimpleName());
   }
+
+  public Object getValue() {
+    return value;
+  }
 }
 
 /* JavaCC - OriginalChecksum=d5ed710e8a3f29d574adbb1d37e08f3b (do not edit this line) */

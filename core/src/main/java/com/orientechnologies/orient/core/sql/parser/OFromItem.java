@@ -83,5 +83,9 @@ public class OFromItem extends SimpleNode {
     }
   }
 
+
+  public OBaseIdentifier getIdentifier() {
+    return identifier;
+  }
 }
 /* JavaCC - OriginalChecksum=f64e3b4d2a2627a1b5d04a7dcb95fa94 (do not edit this line) */
