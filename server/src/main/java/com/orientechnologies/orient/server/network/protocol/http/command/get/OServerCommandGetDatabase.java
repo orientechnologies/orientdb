@@ -44,7 +44,12 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OServerCommandGetDatabase extends OServerCommandGetConnect {
   private static final String[] NAMES = { "GET|database/*" };
@@ -79,6 +84,8 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.writeAttribute("records", db.countClass(cls.getName()));
     } catch (OSecurityAccessException e) {
       json.writeAttribute("records", "? (Unauthorized)");
+    } catch (Exception e) {
+      json.writeAttribute("records", "? (Error)");
     }
 
     if (cls.properties() != null && cls.properties().size() > 0) {
@@ -230,7 +237,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       if (db.getUser() != null) {
         json.writeAttribute("currentUser", db.getUser().getName());
 
-        //exportSecurityInfo(db, json);
+        // exportSecurityInfo(db, json);
       }
       final OIndexManagerProxy idxManager = db.getMetadata().getIndexManager();
       json.beginCollection("indexes");
