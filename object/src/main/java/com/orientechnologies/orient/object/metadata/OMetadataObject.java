@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener;
 import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
 
@@ -69,7 +70,6 @@ public class OMetadataObject implements OMetadataInternal {
   @Override
   public void create() throws IOException {
     underlying.create();
-
   }
 
   @Override
@@ -115,6 +115,11 @@ public class OMetadataObject implements OMetadataInternal {
   }
 
   @Override
+  public OSequenceLibrary getSequenceLibrary() {
+    return underlying.getSequenceLibrary();
+  }
+
+    @Override
   public OSchedulerListener getSchedulerListener() {
     return underlying.getSchedulerListener();
   }

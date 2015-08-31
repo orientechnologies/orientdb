@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.parser.OMatchStatement;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.parser.OMatchStatement;
 
 /**
  * Default command operator executor factory.
@@ -82,15 +82,20 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
         OCommandExecutorSQLTruncateRecord.class);
     commands.put(OCommandExecutorSQLAlterCluster.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterCluster.KEYWORD_CLUSTER,
         OCommandExecutorSQLAlterCluster.class);
+    commands.put(OCommandExecutorSQLCreateSequence.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateSequence.KEYWORD_SEQUENCE,
+        OCommandExecutorSQLCreateSequence.class);
+    commands.put(OCommandExecutorSQLAlterSequence.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterSequence.KEYWORD_SEQUENCE,
+        OCommandExecutorSQLAlterSequence.class);
+    commands.put(OCommandExecutorSQLDropSequence.KEYWORD_DROP + " " + OCommandExecutorSQLDropSequence.KEYWORD_SEQUENCE,
+        OCommandExecutorSQLDropSequence.class);
     commands.put(OCommandExecutorSQLCreateUser.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateUser.KEYWORD_USER,
-            OCommandExecutorSQLCreateUser.class);
+        OCommandExecutorSQLCreateUser.class);
     commands.put(OCommandExecutorSQLDropUser.KEYWORD_DROP + " " + OCommandExecutorSQLDropUser.KEYWORD_USER,
-            OCommandExecutorSQLDropUser.class);
+        OCommandExecutorSQLDropUser.class);
     commands.put(OCommandExecutorSQLExplain.KEYWORD_EXPLAIN, OCommandExecutorSQLExplain.class);
     commands.put(OCommandExecutorSQLTransactional.KEYWORD_TRANSACTIONAL, OCommandExecutorSQLTransactional.class);
 
     commands.put(OMatchStatement.KEYWORD_MATCH, OMatchStatement.class);
-    
     commands.put(OCommandExecutorSQLOptimizeDatabase.KEYWORD_OPTIMIZE, OCommandExecutorSQLOptimizeDatabase.class);
 
     COMMANDS = Collections.unmodifiableMap(commands);
