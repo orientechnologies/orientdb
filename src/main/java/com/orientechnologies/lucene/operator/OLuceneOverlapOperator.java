@@ -55,16 +55,12 @@ public class OLuceneOverlapOperator extends OLuceneSpatialOperator {
     OIndexCursor cursor;
     Object key;
     key = keyParams.get(0);
-    Object indexParam = key;
-    if (key instanceof Map) {
-      ((Map) key).put(SpatialQueryBuilderAbstract.GEO_FILTER, SpatialQueryBuilderOverlap.NAME);
-    } else if (key instanceof ODocument) {
-      Map<String, Object> newKey = new HashMap<String,Object>();
-      newKey.put(SpatialQueryBuilderAbstract.GEO_FILTER, SpatialQueryBuilderOverlap.NAME);
-      newKey.put("shape", key);
-      indexParam = newKey;
-    }
-    Object indexResult = index.get(indexParam);
+
+    Map<String, Object> queryParams = new HashMap<String, Object>();
+    queryParams.put(SpatialQueryBuilderAbstract.GEO_FILTER, SpatialQueryBuilderOverlap.NAME);
+    queryParams.put(SpatialQueryBuilderAbstract.SHAPE, key);
+
+    Object indexResult = index.get(queryParams);
     if (indexResult == null || indexResult instanceof OIdentifiable)
       cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
     else
@@ -79,17 +75,8 @@ public class OLuceneOverlapOperator extends OLuceneSpatialOperator {
       Object iRight, OCommandContext iContext) {
     Shape shape = factory.fromDoc((ODocument) iLeft);
 
-    Object right = iCondition.getRight();
-    Shape shape1 = null;
+    Shape shape1 = factory.fromObject(iCondition.getRight());
 
-    if (iRight instanceof ODocument) {
-      shape1 = factory.fromDoc((ODocument) iRight);
-    } else {
-      if (right instanceof Map) {
-        Map map = (Map) iCondition.getRight();
-        shape1 = factory.fromMapGeoJson((Map) map.get("shape"));
-      }
-    }
-    return SpatialOperation.BBoxIntersects.evaluate(shape, shape1);
+    return SpatialOperation.BBoxIntersects.evaluate(shape, shape1.getBoundingBox());
   }
 }
