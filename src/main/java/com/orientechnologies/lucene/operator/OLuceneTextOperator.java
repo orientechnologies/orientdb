@@ -38,7 +38,7 @@ import java.util.List;
 public class OLuceneTextOperator extends OQueryTargetOperator {
 
   public OLuceneTextOperator() {
-    this("LUCENE", 5, false);
+    this("  LUCENE", 5, false);
   }
 
   public OLuceneTextOperator(String iKeyword, int iPrecedence, boolean iLogical) {

@@ -24,10 +24,22 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Assert;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.memory.MemoryIndex;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.util.Version;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
+import javax.mail.Store;
 import java.util.List;
 
 /**
@@ -77,4 +89,23 @@ public class LuceneBooleanIndex extends BaseLuceneTest {
     Assert.assertEquals(500, docs.size());
     Assert.assertEquals(true, docs.get(0).field("isDeleted"));
   }
+
+
+  public void testMemoryIndex() throws ParseException {
+    MemoryIndex index = new MemoryIndex();
+
+    Document doc = new Document();
+    doc.add(new StringField("text","my text", Field.Store.YES));
+    StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_47);
+
+    for (IndexableField field : doc.getFields()) {
+      index.addField(field.name(),field.stringValue(), analyzer);
+    }
+
+    QueryParser parser = new QueryParser(Version.LUCENE_47,"text",analyzer);
+    float score = index.search(parser.parse("+text:my"));
+
+
+  }
+
 }
