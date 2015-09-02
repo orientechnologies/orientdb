@@ -17,6 +17,8 @@
 package com.orientechnologies.lucene;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.lucene.builder.ODocBuilder;
+import com.orientechnologies.lucene.builder.OQueryBuilderImpl;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.lucene.index.OLuceneSpatialIndex;
 import com.orientechnologies.lucene.manager.OLuceneFullTextIndexManager;
@@ -139,7 +141,8 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
       String valueContainerAlgorithm, ODocument metadata) {
     if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
       return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
-          new OLuceneFullTextIndexManager(), indexType), valueContainerAlgorithm, metadata);
+          new OLuceneFullTextIndexManager(new ODocBuilder(), new OQueryBuilderImpl()), indexType), valueContainerAlgorithm,
+          metadata);
     } else if (OClass.INDEX_TYPE.SPATIAL.toString().equals(indexType)) {
       return new OLuceneSpatialIndex(name, indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
           new OLuceneGeoSpatialIndexManager(OShapeFactory.INSTANCE), indexType), valueContainerAlgorithm, metadata);

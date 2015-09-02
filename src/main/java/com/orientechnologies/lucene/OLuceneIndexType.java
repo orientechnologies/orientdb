@@ -39,7 +39,7 @@ import java.util.Map;
  */
 public class OLuceneIndexType {
 
-  public static Field createField(String fieldName, OIdentifiable oIdentifiable, Object value, Field.Store store,
+  public static Field createField(String fieldName, Object value, Field.Store store,
       Field.Index analyzed) {
     Field field = null;
 

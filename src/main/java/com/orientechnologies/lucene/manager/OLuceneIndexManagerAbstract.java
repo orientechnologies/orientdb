@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import org.apache.lucene.analysis.Analyzer;
@@ -493,4 +494,13 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   public void setIndexName(String indexName) {
     this.indexName = indexName;
   }
+
+  public abstract Document buildDocument(Object key);
+
+  // TODO we could chose different analyzer for fields
+  public Analyzer getAnalyzer(String field) {
+    return getAnalyzer(metadata);
+  }
+
+  public abstract Query buildQuery(Object query) throws ParseException;
 }

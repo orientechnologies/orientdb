@@ -18,6 +18,8 @@ package com.orientechnologies.lucene.manager;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.OLuceneIndexType;
+import com.orientechnologies.lucene.builder.DocBuilder;
+import com.orientechnologies.lucene.builder.OQueryBuilder;
 import com.orientechnologies.lucene.collections.LuceneResultSet;
 import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
 import com.orientechnologies.lucene.query.QueryContext;
@@ -27,12 +29,12 @@ import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
@@ -45,8 +47,12 @@ import java.util.*;
 public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
   protected OLuceneFacetManager facetManager;
+  private DocBuilder            builder;
+  private OQueryBuilder         queryBuilder;
 
-  public OLuceneFullTextIndexManager() {
+  public OLuceneFullTextIndexManager(DocBuilder builder, OQueryBuilder queryBuilder) {
+    this.builder = builder;
+    this.queryBuilder = queryBuilder;
   }
 
   @Override
@@ -81,8 +87,6 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
   }
 
-
-
   @Override
   public boolean contains(Object key) {
     return false;
@@ -102,7 +106,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   public Object get(Object key) {
     Query q = null;
     try {
-      q = OLuceneIndexType.createFullQuery(index, key, mgrWriter.getIndexWriter().getAnalyzer(), getLuceneVersion(metadata));
+      q = queryBuilder.query(index, key, mgrWriter.getIndexWriter().getAnalyzer(), getLuceneVersion(metadata));
       OCommandContext context = null;
       if (key instanceof OFullTextCompositeKey) {
         context = ((OFullTextCompositeKey) key).getContext();
@@ -118,7 +122,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     Set<OIdentifiable> container = (Set<OIdentifiable>) value;
     for (OIdentifiable oIdentifiable : container) {
       Document doc = new Document();
-      doc.add(OLuceneIndexType.createField(RID, oIdentifiable, oIdentifiable.getIdentity().toString(), Field.Store.YES,
+      doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES,
           Field.Index.NOT_ANALYZED_NO_NORMS));
       int i = 0;
       if (index.isAutomatic()) {
@@ -137,10 +141,9 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
             } else {
 
               if (isToStore(f).equals(Field.Store.YES)) {
-                doc.add(OLuceneIndexType.createField(f + STORED, oIdentifiable, val, Field.Store.YES,
-                    Field.Index.NOT_ANALYZED_NO_NORMS));
+                doc.add(OLuceneIndexType.createField(f + STORED, val, Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
               }
-              doc.add(OLuceneIndexType.createField(f, oIdentifiable, val, Field.Store.NO, Field.Index.ANALYZED));
+              doc.add(OLuceneIndexType.createField(f, val, Field.Store.NO, Field.Index.ANALYZED));
             }
           }
 
@@ -153,17 +156,17 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
           int k = 0;
           for (Object o : keys) {
-            doc.add(OLuceneIndexType.createField("k" + k, oIdentifiable, val, Field.Store.NO, Field.Index.ANALYZED));
+            doc.add(OLuceneIndexType.createField("k" + k, val, Field.Store.NO, Field.Index.ANALYZED));
           }
         } else if (key instanceof Collection) {
           Collection<Object> keys = (Collection<Object>) key;
           int k = 0;
           for (Object o : keys) {
-            doc.add(OLuceneIndexType.createField("k" + k, oIdentifiable, o, Field.Store.NO, Field.Index.ANALYZED));
+            doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO, Field.Index.ANALYZED));
           }
         } else {
           val = key;
-          doc.add(OLuceneIndexType.createField("k0", oIdentifiable, val, Field.Store.NO, Field.Index.ANALYZED));
+          doc.add(OLuceneIndexType.createField("k0", val, Field.Store.NO, Field.Index.ANALYZED));
         }
       }
       if (facetManager.supportsFacets()) {
@@ -257,6 +260,17 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   @Override
   public int getVersion() {
     return 0;
+  }
+
+  @Override
+  public Document buildDocument(Object key) {
+    return builder.build(index, key, metadata);
+  }
+
+  @Override
+  public Query buildQuery(Object query) throws ParseException {
+
+    return queryBuilder.query(index, query, mgrWriter.getIndexWriter().getAnalyzer(), getLuceneVersion(metadata));
   }
 
   @Override

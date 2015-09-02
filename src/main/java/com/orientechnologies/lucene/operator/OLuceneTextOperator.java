@@ -17,9 +17,13 @@
 package com.orientechnologies.lucene.operator;
 
 import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
+import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
@@ -29,11 +33,16 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperator;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.memory.MemoryIndex;
+import org.apache.lucene.search.Query;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class OLuceneTextOperator extends OQueryTargetOperator {
 
@@ -54,7 +63,6 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     else
       cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), new OFullTextCompositeKey(
           keyParams));
-    iContext.setVariable("$luceneIndex", true);
     return cursor;
   }
 
@@ -89,13 +97,76 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
       Object iRight, OCommandContext iContext) {
 
-    if (iContext.getVariable("$luceneIndex") != null) {
-      return true;
-    } else {
-      return false;
-    }
+    OLuceneFullTextIndex index = involvedIndex(iRecord, iCurrentResult, iCondition, iLeft, iRight);
 
+    if (index == null) {
+      throw new OCommandExecutionException("Cannot evaluate lucene condition without index configuration.");
+    }
+    MemoryIndex memoryIndex = (MemoryIndex) iContext.getVariable("_memoryIndex");
+    if (memoryIndex == null) {
+      memoryIndex = new MemoryIndex();
+      iContext.setVariable("_memoryIndex", memoryIndex);
+    }
+    memoryIndex.reset();
+    Document doc = index.buildDocument(iLeft);
+
+    for (IndexableField field : doc.getFields()) {
+      memoryIndex.addField(field.name(), field.stringValue(), index.analyzer(field.name()));
+    }
+    Query query = null;
+    try {
+      query = index.buildQuery(iRight);
+    } catch (ParseException e) {
+      e.printStackTrace();
+    }
+    return memoryIndex.search(query) > 0.0f;
   }
 
+  protected OLuceneFullTextIndex involvedIndex(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition,
+      Object iLeft, Object iRight) {
+
+    ODocument doc = iRecord.getRecord();
+    Set<OIndex<?>> classInvolvedIndexes = getDatabase().getMetadata().getIndexManager()
+        .getClassInvolvedIndexes(doc.getClassName(), fields(iCondition));
+
+    OLuceneFullTextIndex idx = null;
+    for (OIndex<?> classInvolvedIndex : classInvolvedIndexes) {
+
+      if (classInvolvedIndex.getInternal() instanceof OLuceneFullTextIndex) {
+        idx = (OLuceneFullTextIndex) classInvolvedIndex.getInternal();
+        break;
+      }
+    }
+    return idx;
+  }
+
+  protected Collection<String> fields(OSQLFilterCondition iCondition) {
+
+    Object left = iCondition.getLeft();
+
+    if (left instanceof String) {
+      String fName = (String) left;
+      return Arrays.asList(fName);
+    }
+    if (left instanceof Collection) {
+      Collection<OSQLFilterItemField> f = (Collection<OSQLFilterItemField>) left;
+
+      List<String> fields = new ArrayList<String>();
+      for (OSQLFilterItemField field : f) {
+        fields.add(field.toString());
+      }
+      return fields;
+    }
+    if (left instanceof OSQLFilterItemField) {
+
+      OSQLFilterItemField fName = (OSQLFilterItemField) left;
+      return Arrays.asList(fName.toString());
+    }
+    return Collections.emptyList();
+  }
+
+  protected static ODatabaseDocumentInternal getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
 
 }

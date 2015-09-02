@@ -169,6 +169,16 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     }
   }
 
+  @Override
+  public Document buildDocument(Object key) {
+    return null;
+  }
+
+  @Override
+  public Query buildQuery(Object query) {
+    throw new UnsupportedOperationException();
+  }
+
   public Object searchWithin(OSpatialCompositeKey key, OCommandContext context) throws IOException {
 
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
@@ -245,7 +255,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
 
     Document doc = new Document();
 
-    doc.add(OLuceneIndexType.createField(RID, oIdentifiable, oIdentifiable.getIdentity().toString(), Field.Store.YES,
+    doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES,
         Field.Index.NOT_ANALYZED_NO_NORMS));
     for (IndexableField f : strategy.createIndexableFields(shape)) {
       doc.add(f);

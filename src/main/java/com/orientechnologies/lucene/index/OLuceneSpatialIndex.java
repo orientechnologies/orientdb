@@ -18,6 +18,7 @@ package com.orientechnologies.lucene.index;
 
 import com.orientechnologies.lucene.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.apache.lucene.document.Document;
 
 public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
 
@@ -25,5 +26,11 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
       String valueContainerAlgorithm, ODocument metadata) {
     super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata);
   }
+
+
+
+
+
+
 
 }
