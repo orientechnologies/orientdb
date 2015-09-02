@@ -52,6 +52,7 @@ import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Versions:
@@ -75,40 +76,40 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId                      CONFIG_RID                    = new OImmutableRecordId(0, 0);
+  public static final ORecordId                           CONFIG_RID                    = new OImmutableRecordId(0, 0);
 
-  public static final String                         DEFAULT_CHARSET               = "UTF-8";
-  private String                                     charset                       = DEFAULT_CHARSET;
-  public static final int                            CURRENT_VERSION               = 16;
-  public static final int                            CURRENT_BINARY_FORMAT_VERSION = 12;
-  private final List<OStorageEntryConfiguration>     properties                    = Collections
-                                                                                       .synchronizedList(new ArrayList<OStorageEntryConfiguration>());
-  protected final transient OStorage                 storage;
-  private final OContextConfiguration                configuration                 = new OContextConfiguration();
-  public volatile int                                version                       = -1;
-  public volatile String                             name;
-  public volatile String                             schemaRecordId;
-  public volatile String                             dictionaryRecordId;
-  public volatile String                             indexMgrRecordId;
-  public volatile String                             dateFormat                    = "yyyy-MM-dd";
-  public volatile String                             dateTimeFormat                = "yyyy-MM-dd HH:mm:ss";
-  public volatile int                                binaryFormatVersion;
-  public volatile OStorageSegmentConfiguration       fileTemplate;
-  public volatile List<OStorageClusterConfiguration> clusters                      = Collections
-                                                                                       .synchronizedList(new ArrayList<OStorageClusterConfiguration>());
-  private volatile String                            localeLanguage                = Locale.getDefault().getLanguage();
-  private volatile String                            localeCountry                 = Locale.getDefault().getCountry();
-  private volatile TimeZone                          timeZone                      = TimeZone.getDefault();
-  private transient volatile Locale                  localeInstance;
-  private transient volatile DecimalFormatSymbols    unusualSymbols;
-  private volatile String                            clusterSelection;
-  private volatile String                            conflictStrategy;
-  private volatile int                               minimumClusters               = 1;
-  private volatile String                            recordSerializer;
-  private volatile int                               recordSerializerVersion;
-  private volatile boolean                           strictSQL;
-  private volatile Map<String, Object>               loadProperties;
-  private volatile Map<String, IndexEngineData>      indexEngines                  = new ConcurrentHashMap<String, IndexEngineData>();
+  public static final String                              DEFAULT_CHARSET               = "UTF-8";
+  private String                                          charset                       = DEFAULT_CHARSET;
+  public static final int                                 CURRENT_VERSION               = 16;
+  public static final int                                 CURRENT_BINARY_FORMAT_VERSION = 12;
+  private final List<OStorageEntryConfiguration>          properties                    = Collections
+                                                                                            .synchronizedList(new ArrayList<OStorageEntryConfiguration>());
+  protected final transient OStorage                      storage;
+  private final OContextConfiguration                     configuration                 = new OContextConfiguration();
+  public volatile int                                     version                       = -1;
+  public volatile String                                  name;
+  public volatile String                                  schemaRecordId;
+  public volatile String                                  dictionaryRecordId;
+  public volatile String                                  indexMgrRecordId;
+  public volatile String                                  dateFormat                    = "yyyy-MM-dd";
+  public volatile String                                  dateTimeFormat                = "yyyy-MM-dd HH:mm:ss";
+  public volatile int                                     binaryFormatVersion;
+  public volatile OStorageSegmentConfiguration            fileTemplate;
+  public volatile List<OStorageClusterConfiguration>      clusters                      = Collections
+                                                                                            .synchronizedList(new ArrayList<OStorageClusterConfiguration>());
+  private volatile String                                 localeLanguage                = Locale.getDefault().getLanguage();
+  private volatile String                                 localeCountry                 = Locale.getDefault().getCountry();
+  private volatile TimeZone                               timeZone                      = TimeZone.getDefault();
+  private transient volatile Locale                       localeInstance;
+  private transient volatile DecimalFormatSymbols         unusualSymbols;
+  private volatile String                                 clusterSelection;
+  private volatile String                                 conflictStrategy;
+  private volatile int                                    minimumClusters               = 1;
+  private volatile String                                 recordSerializer;
+  private volatile int                                    recordSerializerVersion;
+  private volatile boolean                                strictSQL;
+  private volatile Map<String, Object>                    loadProperties;
+  private volatile ConcurrentMap<String, IndexEngineData> indexEngines                  = new ConcurrentHashMap<String, IndexEngineData>();
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
