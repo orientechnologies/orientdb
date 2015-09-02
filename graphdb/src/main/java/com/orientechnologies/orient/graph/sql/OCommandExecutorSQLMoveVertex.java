@@ -166,8 +166,10 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
         result.add(new ODocument().setTrackingChanges(false).field("old", oldVertex, OType.LINK)
             .field("new", newVertex, OType.LINK));
 
-        if (batch > 0 && result.size() % batch == 0)
+        if (batch > 0 && result.size() % batch == 0) {
           graph.commit();
+          graph.begin();
+        }
       }
 
       graph.commit();

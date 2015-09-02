@@ -781,11 +781,11 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         final String inFieldName = OrientVertex.getConnectionFieldName(Direction.IN, oe.getLabel(),
             graph.isUseVertexFieldsForEdgeLabels());
 
-        replaceLinks(inV.getRecord(), inFieldName, oldIdentity, newIdentity);
+        replaceLinks(inV.getRecord(), inFieldName, oldIdentity, doc);
       } else {
         // REPLACE WITH NEW VERTEX
-        oe.vOut = newIdentity;
-        oe.getRecord().field(OrientBaseGraph.CONNECTION_OUT, newIdentity);
+        oe.vOut = doc;
+        oe.getRecord().field(OrientBaseGraph.CONNECTION_OUT, doc);
         oe.save();
       }
     }
@@ -799,11 +799,11 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         final String outFieldName = OrientVertex.getConnectionFieldName(Direction.OUT, oe.getLabel(),
             graph.isUseVertexFieldsForEdgeLabels());
 
-        replaceLinks(outV.getRecord(), outFieldName, oldIdentity, newIdentity);
+        replaceLinks(outV.getRecord(), outFieldName, oldIdentity, doc);
       } else {
         // REPLACE WITH NEW VERTEX
-        oe.vIn = newIdentity;
-        oe.getRecord().field(OrientBaseGraph.CONNECTION_IN, newIdentity);
+        oe.vIn = doc;
+        oe.getRecord().field(OrientBaseGraph.CONNECTION_IN, doc);
         oe.save();
       }
     }
