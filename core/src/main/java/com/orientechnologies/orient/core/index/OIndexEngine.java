@@ -24,8 +24,10 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
@@ -33,59 +35,60 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  * @author Andrey Lomakin
  * @since 6/29/13
  */
-public interface OIndexEngine<V> {
+public interface OIndexEngine {
   void init();
 
   void flush();
 
-  void create(OIndexDefinition indexDefinition, String clusterIndexName, OStreamSerializer valueSerializer, boolean isAutomatic);
+  void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
+      OBinarySerializer keySerializer, int keySize);
 
   void delete();
 
   void deleteWithoutLoad(String indexName);
 
-  void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
-      boolean isAutomatic);
+  void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
+      OType[] keyTypes, boolean nullPointerSupport, int keySize);
 
   boolean contains(Object key);
 
   boolean remove(Object key);
 
-  ORID getIdentity();
-
   void clear();
 
   void close();
 
-  V get(Object key);
+  Object get(Object key);
 
-  void put(Object key, V value);
+  void put(Object key, Object value);
 
-  public Object getFirstKey();
+  Object getFirstKey();
 
-  public Object getLastKey();
+  Object getLastKey();
 
   OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      boolean ascSortOrder, ValuesTransformer<V> transformer);
+      boolean ascSortOrder, ValuesTransformer transformer);
 
-  OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer);
+  OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer);
 
   OIndexCursor iterateEntriesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer<V> transformer);
+      ValuesTransformer transformer);
 
-  OIndexCursor cursor(ValuesTransformer<V> valuesTransformer);
+  OIndexCursor cursor(ValuesTransformer valuesTransformer);
 
-  OIndexCursor descCursor(ValuesTransformer<V> valuesTransformer);
+  OIndexCursor descCursor(ValuesTransformer valuesTransformer);
 
   OIndexKeyCursor keyCursor();
 
-  long size(ValuesTransformer<V> transformer);
+  long size(ValuesTransformer transformer);
 
   boolean hasRangeQuerySupport();
 
   int getVersion();
 
-  interface ValuesTransformer<V> {
-    Collection<OIdentifiable> transformFromValue(V value);
+  String getName();
+
+  interface ValuesTransformer {
+    Collection<OIdentifiable> transformFromValue(Object value);
   }
 }

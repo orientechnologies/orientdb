@@ -48,6 +48,7 @@ import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
@@ -59,6 +60,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -77,9 +79,11 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -87,6 +91,9 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
@@ -111,7 +118,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
-import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -157,6 +163,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   private final int                                 id;
 
+  private Map<String, OIndexEngine>                 indexEngineNameMap                         = new HashMap<String, OIndexEngine>();
+  private List<OIndexEngine>                        indexEngines                               = new ArrayList<OIndexEngine>();
+
   public OAbstractPaginatedStorage(String name, String filePath, String mode, int id) {
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
 
@@ -191,8 +200,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (!exists())
         throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
-      status = STATUS.OPEN;
-
       configuration.load(iProperties);
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
@@ -208,13 +215,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       restoreIfNeeded();
+
       openClusters();
+      openIndexes(componentsFactory.binarySerializerFactory);
 
       if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN.getValueAsBoolean())
         makeFullCheckpoint();
 
       writeCache.startFuzzyCheckpoints();
 
+      status = STATUS.OPEN;
     } catch (Exception e) {
       for (OCluster c : clusters) {
         try {
@@ -225,6 +235,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       try {
+        status = STATUS.OPEN;
         doClose(true, false);
       } catch (RuntimeException re) {
         OLogManager.instance().error(this, "Error during storage close", e);
@@ -235,6 +246,29 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       throw new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode, e);
     } finally {
       stateLock.releaseWriteLock();
+    }
+  }
+
+  protected void openIndexes(OBinarySerializerFactory binarySerializerFactory) {
+    final Set<String> indexNames = configuration.indexEngines();
+    for (String indexName : indexNames) {
+      final OStorageConfiguration.IndexEngineData engineData = configuration.getIndexEngine(indexName);
+      final OIndexEngine engine = OIndexes.createIndexEngine(engineData.getName(), engineData.getAlgorithm(),
+          engineData.getDurableInNonTxMode(), this, engineData.getVersion());
+
+      try {
+        engine.load(engineData.getName(), binarySerializerFactory.getObjectSerializer(engineData.getValueSerializerId()),
+            engineData.isAutomatic(), binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()),
+            engineData.getKeyTypes(), engineData.isNullValuesSupport(), engineData.getKeySize());
+
+        indexEngineNameMap.put(engineData.getName().toLowerCase(configuration.getLocaleInstance()), engine);
+        indexEngines.add(engine);
+      } catch (RuntimeException e) {
+        OLogManager.instance().error(this,
+            "Index " + engineData.getName() + " can not be created and will be removed from configuration");
+
+        engine.deleteWithoutLoad(engineData.getName());
+      }
     }
   }
 
@@ -380,52 +414,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   public void onStartup() {
     if (transaction == null)
       transaction = new ThreadLocal<OStorageTransaction>();
-  }
-
-  public void startAtomicOperation(boolean rollbackOnlyMode) throws IOException {
-    checkOpeness();
-    stateLock.acquireReadLock();
-    try {
-      checkOpeness();
-      makeStorageDirty();
-
-      atomicOperationsManager.startAtomicOperation((String) null, rollbackOnlyMode);
-    } finally {
-      stateLock.releaseReadLock();
-    }
-  }
-
-  public void commitAtomicOperation() throws IOException {
-    checkOpeness();
-    stateLock.acquireReadLock();
-    try {
-      checkOpeness();
-      atomicOperationsManager.endAtomicOperation(false, null);
-    } finally {
-      stateLock.releaseReadLock();
-    }
-  }
-
-  public void rollbackAtomicOperation() throws IOException {
-    checkOpeness();
-    stateLock.acquireReadLock();
-    try {
-      checkOpeness();
-      atomicOperationsManager.endAtomicOperation(true, null);
-    } finally {
-      stateLock.releaseReadLock();
-    }
-  }
-
-  public void markDirty() throws IOException {
-    checkOpeness();
-    stateLock.acquireReadLock();
-    try {
-      checkOpeness();
-      makeStorageDirty();
-    } finally {
-      stateLock.releaseReadLock();
-    }
   }
 
   @Override
@@ -1209,6 +1197,657 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     } finally {
       stateLock.releaseReadLock();
     }
+  }
+
+  public int loadIndexEngine(String name) {
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+
+      final OIndexEngine engine = indexEngineNameMap.get(name.toLowerCase(configuration.getLocaleInstance()));
+      if (engine == null)
+        return -1;
+
+      final int indexId = indexEngines.indexOf(engine);
+      assert indexId >= 0;
+
+      return indexId;
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  public int addIndexEngine(String engineName, String algorithm, OIndexDefinition indexDefinition,
+      OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version) {
+    checkOpeness();
+
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      checkLowDiskSpaceAndFullCheckpointRequests();
+
+      final String originalName = engineName;
+      engineName = engineName.toLowerCase(configuration.getLocaleInstance());
+
+      if (indexEngineNameMap.containsKey(engineName))
+        throw new OIndexException("Index with name " + engineName + " already exists");
+
+      makeStorageDirty();
+
+      final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
+      final int keySize = determineKeySize(indexDefinition);
+      final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
+      final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
+
+      final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
+          durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport,
+          keySize);
+
+      final OIndexEngine engine = OIndexes.createIndexEngine(originalName, algorithm, durableInNonTxMode, this, version);
+      engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize);
+
+      indexEngineNameMap.put(engineName, engine);
+      indexEngines.add(engine);
+      configuration.addIndexEngine(engineName, engineData);
+
+      if (OGlobalConfiguration.DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE.getValueAsBoolean())
+        makeFullCheckpoint();
+
+      return indexEngines.size() - 1;
+    } catch (IOException e) {
+      throw new OStorageException("Can not add index engine " + engineName + " in storage.", e);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
+  private int determineKeySize(OIndexDefinition indexDefinition) {
+    if (indexDefinition == null || indexDefinition instanceof ORuntimeKeyIndexDefinition)
+      return 1;
+    else
+      return indexDefinition.getTypes().length;
+  }
+
+  private OBinarySerializer determineKeySerializer(OIndexDefinition indexDefinition) {
+    final OBinarySerializer keySerializer;
+    if (indexDefinition != null) {
+      if (indexDefinition instanceof ORuntimeKeyIndexDefinition) {
+        keySerializer = ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer();
+      } else {
+        if (indexDefinition.getTypes().length > 1) {
+          keySerializer = OCompositeKeySerializer.INSTANCE;
+        } else {
+          OCurrentStorageComponentsFactory currentStorageComponentsFactory = componentsFactory;
+          if (currentStorageComponentsFactory != null)
+            keySerializer = currentStorageComponentsFactory.binarySerializerFactory
+                .getObjectSerializer(indexDefinition.getTypes()[0]);
+          else
+            throw new IllegalStateException("Can not load binary serializer, storage is not porperly initialized");
+        }
+      }
+    } else {
+      keySerializer = new OSimpleKeySerializer();
+    }
+    return keySerializer;
+  }
+
+  public void deleteIndexEngine(int indexId) {
+    checkOpeness();
+
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      checkLowDiskSpaceAndFullCheckpointRequests();
+
+      checkIndexId(indexId);
+
+      makeStorageDirty();
+      final OIndexEngine engine = indexEngines.get(indexId);
+      indexEngines.set(indexId, null);
+
+      engine.delete();
+
+      final String engineName = engine.getName().toLowerCase(configuration.getLocaleInstance());
+      indexEngineNameMap.remove(engineName);
+      configuration.deleteIndexEngine(engineName);
+
+      if (OGlobalConfiguration.DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE.getValueAsBoolean())
+        makeFullCheckpoint();
+    } catch (IOException e) {
+      throw new OStorageException("Error on index deletion", e);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+
+  }
+
+  private void checkIndexId(int indexId) {
+    if (indexId < 0 || indexId >= indexEngines.size())
+      throw new OIndexException("Engine with id " + indexId + " is not registered inside of storage");
+  }
+
+  public boolean indexContainsKey(int indexId, Object key) {
+    if (transaction.get() != null)
+      return doIndexContainsKey(indexId, key);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+
+      dataLock.acquireSharedLock();
+      try {
+        return doIndexContainsKey(indexId, key);
+      } finally {
+        dataLock.releaseSharedLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private boolean doIndexContainsKey(int indexId, Object key) {
+    checkIndexId(indexId);
+
+    final OIndexEngine engine = indexEngines.get(indexId);
+
+    return engine.contains(key);
+  }
+
+  public boolean removeKeyFromIndex(int indexId, Object key) {
+    if (transaction.get() != null)
+      doRemoveKeyFromIndex(indexId, key);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+
+      checkLowDiskSpaceAndFullCheckpointRequests();
+
+      modificationLock.requestModificationLock();
+      try {
+        dataLock.acquireSharedLock();
+        try {
+          return doRemoveKeyFromIndex(indexId, key);
+        } finally {
+          dataLock.releaseSharedLock();
+        }
+      } finally {
+        modificationLock.releaseModificationLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private boolean doRemoveKeyFromIndex(int indexId, Object key) {
+    try {
+      checkIndexId(indexId);
+
+      makeStorageDirty();
+      final OIndexEngine engine = indexEngines.get(indexId);
+
+      return engine.remove(key);
+    } catch (IOException e) {
+      throw new OStorageException("Error during removal of entry with key " + key + " from index ");
+    }
+  }
+
+  public void clearIndex(int indexId) {
+    if (transaction.get() != null)
+      doClearIndex(indexId);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+
+      checkLowDiskSpaceAndFullCheckpointRequests();
+
+      modificationLock.requestModificationLock();
+      try {
+        dataLock.acquireSharedLock();
+        try {
+          doClearIndex(indexId);
+        } finally {
+          dataLock.releaseSharedLock();
+        }
+      } finally {
+        modificationLock.releaseModificationLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private void doClearIndex(int indexId) {
+    try {
+      checkIndexId(indexId);
+
+      final OIndexEngine engine = indexEngines.get(indexId);
+
+      makeStorageDirty();
+      engine.clear();
+    } catch (IOException e) {
+      throw new OStorageException("Error during clearing of index", e);
+    }
+
+  }
+
+  public Object getIndexValue(int indexId, Object key) {
+    if (transaction.get() != null)
+      return doGetIndexValue(indexId, key);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+      dataLock.acquireSharedLock();
+      try {
+        return doGetIndexValue(indexId, key);
+      } finally {
+        dataLock.releaseSharedLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private Object doGetIndexValue(int indexId, Object key) {
+    checkIndexId(indexId);
+
+    final OIndexEngine engine = indexEngines.get(indexId);
+
+    return engine.get(key);
+  }
+
+  public void updateIndexEntry(int indexId, Object key, Callable<Object> valueCreator) {
+    if (transaction.get() != null)
+      doUpdateIndexEntry(indexId, key, valueCreator);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+      checkLowDiskSpaceAndFullCheckpointRequests();
+
+      modificationLock.requestModificationLock();
+      try {
+        dataLock.acquireSharedLock();
+        try {
+          doUpdateIndexEntry(indexId, key, valueCreator);
+        } finally {
+          dataLock.releaseSharedLock();
+        }
+      } finally {
+        modificationLock.releaseModificationLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private void doUpdateIndexEntry(int indexId, Object key, Callable<Object> valueCreator) {
+    try {
+      atomicOperationsManager.startAtomicOperation((String) null, false);
+      checkIndexId(indexId);
+
+      final OIndexEngine engine = indexEngines.get(indexId);
+      makeStorageDirty();
+
+      final Object value = valueCreator.call();
+      if (value == null)
+        engine.remove(key);
+      else
+        engine.put(key, value);
+
+      atomicOperationsManager.endAtomicOperation(false, null);
+    } catch (Exception e) {
+      try {
+        atomicOperationsManager.endAtomicOperation(true, e);
+        throw new OStorageException("Can not put key value entry in index", e);
+      } catch (IOException ioe) {
+        throw new OStorageException("Error during operation rollback", ioe);
+      }
+    }
+  }
+
+  public void putIndexValue(int indexId, Object key, Object value) {
+    if (transaction.get() != null)
+      doPutIndexValue(indexId, key, value);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+
+      checkLowDiskSpaceAndFullCheckpointRequests();
+
+      modificationLock.requestModificationLock();
+      try {
+        dataLock.acquireSharedLock();
+        try {
+          doPutIndexValue(indexId, key, value);
+        } finally {
+          dataLock.releaseSharedLock();
+        }
+      } finally {
+        modificationLock.releaseModificationLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private void doPutIndexValue(int indexId, Object key, Object value) {
+    try {
+      checkIndexId(indexId);
+
+      final OIndexEngine engine = indexEngines.get(indexId);
+      makeStorageDirty();
+
+      engine.put(key, value);
+    } catch (IOException e) {
+      throw new OStorageException("Can not put key " + key + " value " + value + " entry to the index");
+    }
+  }
+
+  public Object getIndexFirstKey(int indexId) {
+    if (transaction.get() != null)
+      return doGetIndexFirstKey(indexId);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+      dataLock.acquireSharedLock();
+      try {
+        return doGetIndexFirstKey(indexId);
+      } finally {
+        dataLock.releaseSharedLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private Object doGetIndexFirstKey(int indexId) {
+    checkIndexId(indexId);
+
+    final OIndexEngine engine = indexEngines.get(indexId);
+
+    return engine.getFirstKey();
+  }
+
+  public Object getIndexLastKey(int indexId) {
+    if (transaction.get() != null)
+      return doGetIndexFirstKey(indexId);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+      dataLock.acquireSharedLock();
+      try {
+        return doGetIndexLastKey(indexId);
+      } finally {
+        dataLock.releaseSharedLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private Object doGetIndexLastKey(int indexId) {
+    checkIndexId(indexId);
+
+    final OIndexEngine engine = indexEngines.get(indexId);
+
+    return engine.getLastKey();
+  }
+
+  public OIndexCursor iterateIndexEntriesBetween(int indexId, Object rangeFrom, boolean fromInclusive, Object rangeTo,
+      boolean toInclusive, boolean ascSortOrder, OIndexEngine.ValuesTransformer transformer) {
+    if (transaction.get() != null)
+      return doIterateIndexEntriesBetween(indexId, rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+      dataLock.acquireSharedLock();
+      try {
+        return doIterateIndexEntriesBetween(indexId, rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
+      } finally {
+        dataLock.releaseSharedLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private OIndexCursor doIterateIndexEntriesBetween(int indexId, Object rangeFrom, boolean fromInclusive, Object rangeTo,
+      boolean toInclusive, boolean ascSortOrder, OIndexEngine.ValuesTransformer transformer) {
+    checkIndexId(indexId);
+
+    final OIndexEngine engine = indexEngines.get(indexId);
+
+    return engine.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
+  }
+
+  public OIndexCursor iterateIndexEntriesMajor(int indexId, Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      OIndexEngine.ValuesTransformer transformer) {
+    if (transaction.get() != null)
+      return doIterateIndexEntriesMajor(indexId, fromKey, isInclusive, ascSortOrder, transformer);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+      dataLock.acquireSharedLock();
+      try {
+        return doIterateIndexEntriesMajor(indexId, fromKey, isInclusive, ascSortOrder, transformer);
+      } finally {
+        dataLock.releaseSharedLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private OIndexCursor doIterateIndexEntriesMajor(int indexId, Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      OIndexEngine.ValuesTransformer transformer) {
+    checkIndexId(indexId);
+
+    final OIndexEngine engine = indexEngines.get(indexId);
+
+    return engine.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder, transformer);
+  }
+
+  public OIndexCursor iterateIndexEntriesMinor(int indexId, final Object toKey, final boolean isInclusive, boolean ascSortOrder,
+      OIndexEngine.ValuesTransformer transformer) {
+
+    if (transaction.get() != null)
+      return doIterateIndexEntriesMinor(indexId, toKey, isInclusive, ascSortOrder, transformer);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+      dataLock.acquireSharedLock();
+      try {
+        return doIterateIndexEntriesMinor(indexId, toKey, isInclusive, ascSortOrder, transformer);
+      } finally {
+        dataLock.releaseSharedLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private OIndexCursor doIterateIndexEntriesMinor(int indexId, Object toKey, boolean isInclusive, boolean ascSortOrder,
+      OIndexEngine.ValuesTransformer transformer) {
+    checkIndexId(indexId);
+
+    final OIndexEngine engine = indexEngines.get(indexId);
+
+    return engine.iterateEntriesMinor(toKey, isInclusive, ascSortOrder, transformer);
+  }
+
+  public OIndexCursor getIndexCursor(int indexId, OIndexEngine.ValuesTransformer valuesTransformer) {
+    if (transaction.get() != null)
+      return doGetIndexCursor(indexId, valuesTransformer);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+      dataLock.acquireSharedLock();
+      try {
+        return doGetIndexCursor(indexId, valuesTransformer);
+      } finally {
+        dataLock.releaseSharedLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private OIndexCursor doGetIndexCursor(int indexId, OIndexEngine.ValuesTransformer valuesTransformer) {
+    checkIndexId(indexId);
+
+    final OIndexEngine engine = indexEngines.get(indexId);
+
+    return engine.cursor(valuesTransformer);
+  }
+
+  public OIndexCursor getIndexDescCursor(int indexId, OIndexEngine.ValuesTransformer valuesTransformer) {
+    if (transaction.get() != null)
+      return doGetIndexDescCursor(indexId, valuesTransformer);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+      dataLock.acquireSharedLock();
+      try {
+        return doGetIndexDescCursor(indexId, valuesTransformer);
+      } finally {
+        dataLock.releaseSharedLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private OIndexCursor doGetIndexDescCursor(int indexId, OIndexEngine.ValuesTransformer valuesTransformer) {
+    checkIndexId(indexId);
+
+    final OIndexEngine engine = indexEngines.get(indexId);
+
+    return engine.descCursor(valuesTransformer);
+  }
+
+  public OIndexKeyCursor getIndexKeyCursor(int indexId) {
+    if (transaction.get() != null)
+      return doGetIndexKeyCursor(indexId);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+      dataLock.acquireSharedLock();
+      try {
+        return doGetIndexKeyCursor(indexId);
+      } finally {
+        dataLock.releaseSharedLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private OIndexKeyCursor doGetIndexKeyCursor(int indexId) {
+    checkIndexId(indexId);
+
+    final OIndexEngine engine = indexEngines.get(indexId);
+
+    return engine.keyCursor();
+  }
+
+  public long getIndexSize(int indexId, OIndexEngine.ValuesTransformer transformer) {
+    if (transaction.get() != null)
+      return doGetIndexSize(indexId, transformer);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+      dataLock.acquireSharedLock();
+      try {
+        return doGetIndexSize(indexId, transformer);
+      } finally {
+        dataLock.releaseSharedLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private long doGetIndexSize(int indexId, OIndexEngine.ValuesTransformer transformer) {
+    checkIndexId(indexId);
+
+    final OIndexEngine engine = indexEngines.get(indexId);
+
+    return engine.size(transformer);
+  }
+
+  public boolean hasIndexRangeQuerySupport(int indexId) {
+    if (transaction.get() != null)
+      return doHasRangeQuerySupport(indexId);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+      dataLock.acquireSharedLock();
+      try {
+        return doHasRangeQuerySupport(indexId);
+      } finally {
+        dataLock.releaseSharedLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private boolean doHasRangeQuerySupport(int indexId) {
+    checkIndexId(indexId);
+
+    final OIndexEngine engine = indexEngines.get(indexId);
+
+    return engine.hasRangeQuerySupport();
   }
 
   private void makeRollback(OTransaction clientTx, Exception e) {
@@ -2373,6 +3012,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       preCloseSteps();
 
       closeClusters(onDelete);
+      closeIndexes(onDelete);
 
       if (configuration != null)
         configuration.close();
@@ -2419,6 +3059,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     clusters.clear();
     clusterMap.clear();
+  }
+
+  protected void closeIndexes(boolean onDelete) {
+    for (OIndexEngine engine : indexEngines) {
+      if (engine != null) {
+        if (onDelete)
+          engine.delete();
+        else
+          engine.close();
+      }
+    }
+
+    indexEngines.clear();
+    indexEngineNameMap.clear();
   }
 
   @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")

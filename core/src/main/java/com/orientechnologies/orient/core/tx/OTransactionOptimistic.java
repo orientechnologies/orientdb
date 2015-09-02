@@ -69,8 +69,8 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static AtomicInteger txSerial = new AtomicInteger();
 
-  private boolean usingLog = true;
-  private int     txStartCounter;
+  private boolean              usingLog = true;
+  private int                  txStartCounter;
 
   private class CommitIndexesCallback implements Runnable {
     private final Map<String, OIndex<?>> indexes;
@@ -230,11 +230,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     if (txRecord != null) {
       if (iRecord != null && txRecord != iRecord)
-        OLogManager.instance().warn(this,
+        OLogManager.instance().warn(
+            this,
             "Found record in transaction with the same RID %s but different instance. "
                 + "Probably the record has been loaded from another transaction and reused on the current one: reload it "
-                + "from current transaction before to update or delete it",
-            iRecord.getIdentity());
+                + "from current transaction before to update or delete it", iRecord.getIdentity());
       return txRecord;
     }
 
@@ -242,8 +242,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       return null;
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
-    final ORecord record = database.executeReadRecord((ORecordId) rid, iRecord, null, fetchPlan, ignoreCache, iUpdateCache, loadTombstone,
-        lockingStrategy, new ODatabaseDocumentTx.SimpleRecordReader());
+    final ORecord record = database.executeReadRecord((ORecordId) rid, iRecord, null, fetchPlan, ignoreCache, iUpdateCache,
+        loadTombstone, lockingStrategy, new ODatabaseDocumentTx.SimpleRecordReader());
 
     if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ)
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
@@ -299,11 +299,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     if (txRecord != null) {
       if (passedRecord != null && txRecord != passedRecord)
-        OLogManager.instance().warn(this,
+        OLogManager.instance().warn(
+            this,
             "Found record in transaction with the same RID %s but different instance. "
                 + "Probably the record has been loaded from another transaction and reused on the current one: reload it "
-                + "from current transaction before to update or delete it",
-            passedRecord.getIdentity());
+                + "from current transaction before to update or delete it", passedRecord.getIdentity());
       return txRecord;
     }
 
@@ -394,8 +394,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     } while (dirtyManager.getNewRecord() != null || dirtyManager.getUpdateRecord() != null);
 
     if (!originalSaved && iRecord.isDirty()) {
-      final byte operation = iForceCreate ? ORecordOperation.CREATED
-          : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
+      final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED
+          : ORecordOperation.CREATED;
       addRecord(iRecord, operation, iClusterName);
     }
     return iRecord;
@@ -591,29 +591,24 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
         database.getStorage().commit(this, null);
       else {
-        List<OIndexAbstract<?>> lockedIndexes = acquireIndexLocks();
-        try {
-          final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
-          for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
-            indexes.put(index.getName(), index);
+        final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
+        for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
+          indexes.put(index.getName(), index);
 
-          final Runnable callback = new CommitIndexesCallback(indexes);
+        final Runnable callback = new CommitIndexesCallback(indexes);
 
-          final String storageType = database.getStorage().getUnderlying().getType();
+        final String storageType = database.getStorage().getUnderlying().getType();
 
-          if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
-            database.getStorage().commit(OTransactionOptimistic.this, callback);
-          else {
-            database.getStorage().callInLock(new Callable<Object>() {
-              @Override
-              public Object call() throws Exception {
-                database.getStorage().commit(OTransactionOptimistic.this, callback);
-                return null;
-              }
-            }, true);
-          }
-        } finally {
-          releaseIndexLocks(lockedIndexes);
+        if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
+          database.getStorage().commit(OTransactionOptimistic.this, callback);
+        else {
+          database.getStorage().callInLock(new Callable<Object>() {
+            @Override
+            public Object call() throws Exception {
+              database.getStorage().commit(OTransactionOptimistic.this, callback);
+              return null;
+            }
+          }, true);
         }
       }
     }
@@ -621,39 +616,5 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     close();
 
     status = TXSTATUS.COMPLETED;
-  }
-
-  private List<OIndexAbstract<?>> acquireIndexLocks() {
-    List<OIndexAbstract<?>> lockedIndexes = null;
-    final List<String> involvedIndexes = getInvolvedIndexes();
-
-    if (involvedIndexes != null)
-      Collections.sort(involvedIndexes);
-
-    try {
-      // LOCK INVOLVED INDEXES
-      if (involvedIndexes != null)
-        for (String indexName : involvedIndexes) {
-          final OIndexAbstract<?> index = (OIndexAbstract<?>) database.getMetadata().getIndexManager().getIndexInternal(indexName);
-          if (lockedIndexes == null)
-            lockedIndexes = new ArrayList<OIndexAbstract<?>>();
-
-          index.acquireModificationLock();
-          lockedIndexes.add(index);
-        }
-
-      return lockedIndexes;
-    } catch (RuntimeException e) {
-      releaseIndexLocks(lockedIndexes);
-      throw e;
-    }
-  }
-
-  private void releaseIndexLocks(List<OIndexAbstract<?>> lockedIndexes) {
-    if (lockedIndexes != null) {
-      for (OIndexAbstract<?> index : lockedIndexes)
-        index.releaseModificationLock();
-
-    }
   }
 }

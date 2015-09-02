@@ -479,7 +479,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
-  public void load(String name, OBinarySerializer<K> keySerializer, OStreamSerializer valueSerializer, OType[] keyTypes,
+  public void load(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
       int keySize, boolean nullPointerSupport) {
     acquireExclusiveLock();
     try {
@@ -498,12 +498,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         nullBucketFileId = openFile(atomicOperation, name + nullFileExtension);
 
       this.keySerializer = keySerializer;
-
-      if (!(valueSerializer instanceof OBinarySerializer))
-        throw new IllegalArgumentException("Value serializer should implement " + OBinarySerializer.class.getSimpleName()
-            + " interface.");
-
-      this.valueSerializer = (OBinarySerializer<V>) valueSerializer;
+      this.valueSerializer = valueSerializer;
     } catch (IOException e) {
       throw new OSBTreeException("Exception during loading of sbtree " + name, e);
     } finally {

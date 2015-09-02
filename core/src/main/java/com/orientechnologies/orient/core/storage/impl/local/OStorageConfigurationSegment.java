@@ -50,6 +50,8 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   }
 
   public void close() throws IOException {
+    super.close();
+
     segment.close();
   }
 

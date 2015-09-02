@@ -454,10 +454,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return (DB) this;
   }
 
-  public boolean isKeepStorageOpen() {
-    return keepStorageOpen;
-  }
-
   @Override
   public void drop() {
     checkOpeness();
@@ -1820,9 +1816,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     record.setInternalStatus(ORecordElement.STATUS.MARSHALLING);
     try {
-      if (record instanceof ODocument)
-        acquireIndexModificationLock((ODocument) record, lockedIndexes);
-
       final boolean wasNew = forceCreate || rid.isNew();
 
       if (wasNew && rid.clusterId == -1 && (clusterName != null || storage.isAssigningClusterIds())) {
@@ -1949,7 +1942,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         throw new ODatabaseException("Error on saving record " + record.getIdentity(), t);
 
     } finally {
-      releaseIndexModificationLock(lockedIndexes);
       record.setInternalStatus(ORecordElement.STATUS.LOADED);
     }
     return (RET) record;
@@ -1986,7 +1978,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
     try {
       if (record instanceof ODocument) {
-        acquireIndexModificationLock((ODocument) record, lockedIndexes);
         ODocumentInternal.checkClass((ODocument) record, this);
       }
       try {
@@ -2034,7 +2025,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         throw new ODatabaseException("Error on deleting record in cluster #" + record.getIdentity().getClusterId(), t);
       }
     } finally {
-      releaseIndexModificationLock(lockedIndexes);
       ORecordSerializationContext.pullContext();
       ((OMetadataInternal) getMetadata()).clearThreadLocalSchemaSnapshot();
     }
@@ -2149,7 +2139,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
     final List<OIndexAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
 
-    freezeIndexes(indexesToLock, true);
     flushIndexes(indexesToLock);
 
     final OFreezableStorage storage = getFreezableStorage();
@@ -2179,7 +2168,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
     final List<OIndexAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
 
-    freezeIndexes(indexesToLock, false);
     flushIndexes(indexesToLock);
 
     final OFreezableStorage storage = getFreezableStorage();
@@ -2209,9 +2197,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (storage != null) {
       storage.release();
     }
-
-    Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
-    releaseIndexes(indexes);
 
     Orient.instance().getProfiler()
         .stopChrono("db." + getName() + ".release", "Time to release the database", startTime, "db.*.release");
@@ -3006,42 +2991,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return record.toStream();
   }
 
-  private void releaseIndexModificationLock(final Set<OIndex<?>> lockedIndexes) {
-    if (metadata == null)
-      return;
-
-    final OIndexManager indexManager = metadata.getIndexManager();
-    if (indexManager == null)
-      return;
-
-    for (OIndex<?> index : lockedIndexes) {
-      index.getInternal().releaseModificationLock();
-    }
-  }
-
-  private void acquireIndexModificationLock(final ODocument doc, final Set<OIndex<?>> lockedIndexes) {
-    if (getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
-      final OClass cls = ODocumentInternal.getImmutableSchemaClass(doc);
-      if (cls != null) {
-        final Collection<OIndex<?>> indexes = cls.getIndexes();
-        if (indexes != null) {
-          final SortedSet<OIndex<?>> indexesToLock = new TreeSet<OIndex<?>>(new Comparator<OIndex<?>>() {
-            public int compare(OIndex<?> indexOne, OIndex<?> indexTwo) {
-              return indexOne.getName().compareTo(indexTwo.getName());
-            }
-          });
-
-          indexesToLock.addAll(indexes);
-
-          for (final OIndex<?> index : indexesToLock) {
-            index.getInternal().acquireModificationLock();
-            lockedIndexes.add(index);
-          }
-        }
-      }
-    }
-  }
-
   private void init() {
     currentTx = new OTransactionNoTx(this);
   }
@@ -3053,14 +3002,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     else {
       OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation");
       return null;
-    }
-  }
-
-  private void freezeIndexes(final List<OIndexAbstract<?>> indexesToFreeze, final boolean throwException) {
-    if (indexesToFreeze != null) {
-      for (OIndexAbstract<?> indexToLock : indexesToFreeze) {
-        indexToLock.freeze(throwException);
-      }
     }
   }
 
@@ -3086,16 +3027,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     }
     return indexesToFreeze;
-  }
-
-  private void releaseIndexes(final Collection<? extends OIndex<?>> indexesToRelease) {
-    if (indexesToRelease != null) {
-      Iterator<? extends OIndex<?>> it = indexesToRelease.iterator();
-      while (it.hasNext()) {
-        it.next().getInternal().release();
-        it.remove();
-      }
-    }
   }
 
   /**
