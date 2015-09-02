@@ -32,14 +32,11 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
-import javax.mail.Store;
 import java.util.List;
 
 /**
@@ -92,6 +89,7 @@ public class LuceneBooleanIndex extends BaseLuceneTest {
 
 
   public void testMemoryIndex() throws ParseException {
+    // TODO To be used in evaluate Record
     MemoryIndex index = new MemoryIndex();
 
     Document doc = new Document();
