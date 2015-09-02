@@ -17,7 +17,6 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-bbbbbbbbbbbbbbbb
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
