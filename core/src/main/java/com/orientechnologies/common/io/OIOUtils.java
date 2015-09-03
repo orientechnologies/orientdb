@@ -24,6 +24,7 @@ import com.orientechnologies.common.util.OPatternConst;
 import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
@@ -123,10 +124,14 @@ public class OIOUtils {
 
   public static Date getTodayWithTime(final String iTime) throws ParseException {
     final SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss");
-    final long today = System.currentTimeMillis();
-    final Date rslt = new Date();
-    rslt.setTime(today - (today % DAY) + df.parse(iTime).getTime());
-    return rslt;
+    Calendar calParsed = Calendar.getInstance();
+    calParsed.setTime(df.parse(iTime));
+    Calendar cal = Calendar.getInstance();
+    cal.set(Calendar.HOUR, calParsed.get(Calendar.HOUR));
+    cal.set(Calendar.MINUTE, calParsed.get(Calendar.MINUTE));
+    cal.set(Calendar.SECOND, calParsed.get(Calendar.SECOND));
+    cal.set(Calendar.MILLISECOND, 0);
+    return cal.getTime();
   }
 
   public static String readFileAsString(final File iFile) throws IOException {
