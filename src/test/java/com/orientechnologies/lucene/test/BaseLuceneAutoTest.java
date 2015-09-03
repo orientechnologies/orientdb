@@ -34,6 +34,6 @@ public abstract class BaseLuceneAutoTest extends BaseLuceneTest {
 
     @AfterClass
     public void deInit() {
-        deInitDB();
-    }
+       deInitDB();
+   }
 }
