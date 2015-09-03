@@ -47,6 +47,7 @@ import java.io.ObjectOutput;
 public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   private static final long serialVersionUID = 1L;
   private boolean           delayed          = false;
+  private transient boolean lockRecord       = true;
 
   public ODeleteRecordTask() {
   }
@@ -69,7 +70,7 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
     // TRY LOCKING RECORD
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
     if (!inTx) {
-      if (!ddb.lockRecord(rid, nodeSource))
+      if (lockRecord && !ddb.lockRecord(rid, nodeSource))
         throw new ODistributedRecordLockedException(rid);
     }
 
@@ -108,6 +109,15 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
     return new OResurrectRecordTask(rid, version);
+  }
+
+  public boolean isLockRecord() {
+    return lockRecord;
+  }
+
+  @Override
+  public void setLockRecord(final boolean lockRecord) {
+    this.lockRecord = lockRecord;
   }
 
   @Override
