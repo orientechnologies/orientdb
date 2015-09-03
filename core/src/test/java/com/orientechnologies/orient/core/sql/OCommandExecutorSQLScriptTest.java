@@ -1,16 +1,17 @@
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Test
 public class OCommandExecutorSQLScriptTest {
@@ -72,7 +73,6 @@ public class OCommandExecutorSQLScriptTest {
     script.append("let $a = insert into V set test = 'sql script test'\n");
     script.append("return $a.toJSON()\n");
     String qResult = db.command(new OCommandScript("sql", script.toString())).execute();
-
     Assert.assertNotNull(qResult);
 
     new ODocument().fromJSON(qResult);
@@ -134,5 +134,18 @@ public class OCommandExecutorSQLScriptTest {
     Assert.assertEquals(result.size(), 1);
 
     Assert.assertTrue(result.iterator().next() instanceof Map);
+  }
+
+  @Test
+  public void testIncrementAndLet() throws Exception {
+
+    StringBuilder script = new StringBuilder();
+    script.append("CREATE CLASS TestCounter;\n");
+    script.append("INSERT INTO TestCounter set weight = 3;\n");
+    script.append("LET counter = SELECT count(*) FROM TestCounter;\n");
+    script.append("UPDATE TestCounter INCREMENT weight = $counter[0].count RETURN AfTER @this;\n");
+    List<ODocument> qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertEquals(qResult.get(0).field("weight"), 4l);
   }
 }
