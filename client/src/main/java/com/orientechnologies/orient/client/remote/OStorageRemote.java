@@ -2033,6 +2033,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         lastURL = useNewServerURL(lastURL);
         if (lastURL == null) {
           parseServerURLs();
+          if (cause instanceof IOException)
+            throw (IOException) cause;
           throw new OIOException("Cannot open a connection to remote server: " + iCurrentURL, cause);
         }
       } else if (!network.isConnected()) {
