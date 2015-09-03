@@ -286,8 +286,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           final OCommandExecutorSQLSelect select = exec instanceof OCommandExecutorSQLSelect ? (OCommandExecutorSQLSelect) exec
               : null;
 
-          if (select != null && select.isAnyFunctionAggregates()) {
-            result = mergeResultByAggegation(select, results);
+          if (select != null && select.isAnyFunctionAggregates() && !select.hasGroupBy()) {
+            result = mergeResultByAggregation(select, results);
           } else {
             // MIX & FILTER RESULT SET AVOIDING DUPLICATES
             // TODO: ONCE OPTIMIZED (SEE ABOVE) AVOID TO FILTER HERE
@@ -392,7 +392,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return results;
   }
 
-  protected Object mergeResultByAggegation(final OCommandExecutorSQLSelect select, final Map<String, Object> iResults) {
+  protected Object mergeResultByAggregation(final OCommandExecutorSQLSelect select, final Map<String, Object> iResults) {
     final List<Object> list = new ArrayList<Object>();
     final ODocument doc = new ODocument();
     list.add(doc);
@@ -418,7 +418,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             for (Map.Entry<String, Object> p : proj.entrySet()) {
               // WRITE THE FIELD AS IS
               if (!(p.getValue() instanceof OSQLFunctionRuntime))
-                d.field(p.getKey(), p.getValue());
+                doc.field(p.getKey(), ((ODocument) r).field(p.getKey()));
             }
           }
         }

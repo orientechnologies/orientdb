@@ -163,7 +163,8 @@ public class TestSharding extends AbstractServerClusterTest {
 
           final Iterable<OrientVertex> explain = graph.command(new OCommandSQL("explain select from " + e.getIdentity())).execute();
 
-          System.out.println("explain select from " + e.getIdentity() + " -> " + ((ODocument) explain.iterator().next().getRecord()).field("servers"));
+          System.out.println("explain select from " + e.getIdentity() + " -> "
+              + ((ODocument) explain.iterator().next().getRecord()).field("servers"));
 
           result = graph.command(new OCommandSQL("select from " + e.getIdentity())).execute();
 
@@ -283,6 +284,53 @@ public class TestSharding extends AbstractServerClusterTest {
           int count = 0;
           for (OrientVertex v : result) {
             System.out.println("select max(amount), avg(amount), sum(amount) from Client -> " + v.getRecord());
+            count++;
+          }
+
+          Assert.assertEquals("Returned wrong vertices count on server " + server, 1, count);
+        } finally {
+          g.shutdown();
+        }
+      }
+
+      // TEST DISTRIBUTED QUERY AGAINST ALL 3 DATABASES TO TEST AGGREGATION + GROUP BY
+      for (int server = 0; server < vertices.length; ++server) {
+        OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName());
+        OrientGraphNoTx g = f.getNoTx();
+        try {
+
+          Iterable<OrientVertex> result = g.command(new OCommandSQL("select name, count(*) from Client group by name")).execute();
+
+          int count = 0;
+          for (OrientVertex v : result) {
+            System.out.println("select name, count(*) from Client group by name -> " + v.getRecord());
+
+            Assert.assertEquals(((Number) v.getProperty("count")).intValue(), 1);
+
+            count++;
+          }
+
+          Assert.assertEquals("Returned wrong vertices count on server " + server, vertices.length, count);
+        } finally {
+          g.shutdown();
+        }
+      }
+
+      // TEST DISTRIBUTED QUERY AGAINST ALL 3 DATABASES TO TEST AGGREGATION + ADDITIONAL FIELD
+      for (int server = 0; server < vertices.length; ++server) {
+        OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName());
+        OrientGraphNoTx g = f.getNoTx();
+        try {
+
+          Iterable<OrientVertex> result = g.command(new OCommandSQL("select name, count(*) from Client")).execute();
+
+          int count = 0;
+          for (OrientVertex v : result) {
+            System.out.println("select name, count(*) from Client -> " + v.getRecord());
+
+            Assert.assertEquals(((Number) v.getProperty("count")).intValue(), vertices.length);
+            Assert.assertNotNull(v.getProperty("name"));
+
             count++;
           }
 
