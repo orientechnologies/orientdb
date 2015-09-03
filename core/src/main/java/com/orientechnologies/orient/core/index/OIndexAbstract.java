@@ -302,23 +302,27 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       algorithm = indexMetadata.getAlgorithm();
       valueContainerAlgorithm = indexMetadata.getValueContainerAlgorithm();
 
-      final ORID rid = config.field(CONFIG_MAP_RID, ORID.class);
-
       try {
         indexId = storage.loadIndexEngine(name);
+
+        if (indexId == -1) {
+          indexId = storage.loadExternalIndexEngine(name, algorithm, indexDefinition, determineValueSerializer(), isAutomatic(),
+              isDurableInNonTxMode(), version);
+        }
+
+        if (indexId == -1)
+          return false;
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error during load of index '%s'", e, name != null ? name : "null");
 
         if (isAutomatic()) {
           // AUTOMATIC REBUILD IT
-          OLogManager.instance()
-              .warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(), rid);
+          OLogManager.instance().warn(this, "Cannot load index '%s' rebuilt it from scratch", getName());
           try {
             rebuild();
           } catch (Throwable t) {
             OLogManager.instance().error(this,
-                "Cannot rebuild index '%s' from storage (rid=%s) because '" + t + "'. The index will be removed in configuration",
-                e, getName(), rid);
+                "Cannot rebuild index '%s'  because '" + t + "'. The index will be removed in configuration", e, getName());
             // REMOVE IT
             return false;
           }

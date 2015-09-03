@@ -1219,6 +1219,55 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
+  public int loadExternalIndexEngine(String engineName, String algorithm, OIndexDefinition indexDefinition,
+      OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version) {
+    checkOpeness();
+
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      checkLowDiskSpaceAndFullCheckpointRequests();
+
+      // this method introduced for binary compatibility only
+      if (configuration.binaryFormatVersion > 15)
+        return -1;
+
+      final String originalName = engineName;
+      engineName = engineName.toLowerCase(configuration.getLocaleInstance());
+
+      if (indexEngineNameMap.containsKey(engineName))
+        throw new OIndexException("Index with name " + engineName + " already exists");
+
+      makeStorageDirty();
+
+      final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
+      final int keySize = determineKeySize(indexDefinition);
+      final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
+      final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
+
+      final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
+          durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport,
+          keySize);
+
+      final OIndexEngine engine = OIndexes.createIndexEngine(originalName, algorithm, durableInNonTxMode, this, version);
+      engine.load(originalName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullValuesSupport, keySize);
+
+      indexEngineNameMap.put(engineName, engine);
+      indexEngines.add(engine);
+      configuration.addIndexEngine(engineName, engineData);
+
+      if (OGlobalConfiguration.DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE.getValueAsBoolean())
+        makeFullCheckpoint();
+
+      return indexEngines.size() - 1;
+    } catch (IOException e) {
+      throw new OStorageException("Can not add index engine " + engineName + " in storage.", e);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
   public int addIndexEngine(String engineName, String algorithm, OIndexDefinition indexDefinition,
       OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version) {
     checkOpeness();
