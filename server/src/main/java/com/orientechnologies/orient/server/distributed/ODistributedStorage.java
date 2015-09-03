@@ -35,10 +35,12 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -77,6 +79,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.task.*;
+import com.orientechnologies.orient.server.security.OSecurityServerUser;
 
 import java.io.File;
 import java.io.IOException;
@@ -176,9 +179,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             Thread.interrupted();
 
           } catch (Throwable e) {
-            // ASYNCH: IGNORE IT
-            ODistributedServerLog.error(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
-                ODistributedServerLog.DIRECTION.OUT, "Error on executing asynch operation", e);
+            if (running)
+              // ASYNC: IGNORE IT
+              if (e instanceof ONeedRetryException)
+                ODistributedServerLog.debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
+                    ODistributedServerLog.DIRECTION.OUT, "Error on executing asynchronous operation", e);
+              else
+                ODistributedServerLog.error(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
+                    ODistributedServerLog.DIRECTION.OUT, "Error on executing asynchronous operation", e);
           }
         }
         ODistributedServerLog.warn(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
@@ -1102,10 +1110,58 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           // ASYNCHRONOUSLY REPLICATE IT TO ALL THE OTHER NODES
           asynchronousExecution(new OAsynchDistributedOperation(getName(), involvedClusters, nodes, txTask, new OCallable() {
             @Override
-            public Object call(Object iArgument) {
-              // processCommitResult(localNodeName, txTask, involvedClusters, tmpEntries, nodes, 0, iArgument);
-              sendTxCompleted(localNodeName, involvedClusters, nodes, (OTxTaskResult) iArgument);
-              return null;
+            public Object call(final Object iArgument) {
+              if (iArgument instanceof OTxTaskResult) {
+                sendTxCompleted(localNodeName, involvedClusters, nodes, (OTxTaskResult) iArgument);
+                return null;
+              } else if (iArgument instanceof Throwable) {
+                final OAbstractRemoteTask undo = txTask.getUndoTaskForLocalStorage(iArgument);
+
+                if (undo != null)
+                  try {
+
+                    final ODatabaseDocumentTx database = new ODatabaseDocumentTx(getURL());
+                    database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
+                    database.open("system", "system");
+
+                    try {
+
+                      undo.execute(serverInstance, dManager, database);
+                    } finally {
+                      database.close();
+                    }
+
+                  } catch (Exception e) {
+                    ODistributedServerLog
+                        .error(
+                            this,
+                            localNodeName,
+                            null,
+                            ODistributedServerLog.DIRECTION.NONE,
+                            "async distributed transaction failed, cannot revert local transaction. Current node could have a not aligned database. Remote answer: %s",
+                            e, iArgument);
+                    throw new OTransactionException(
+                        "Error on execution async distributed transaction, the database could be inconsistent",
+                        (Throwable) iArgument);
+                  }
+
+                if (ODistributedServerLog.isDebugEnabled())
+                  ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                      "async distributed transaction failed: %s", iArgument);
+
+                if (iArgument instanceof RuntimeException)
+                  throw (RuntimeException) iArgument;
+                else
+                  throw new OTransactionException("Error on execution async distributed transaction", (Throwable) iArgument);
+              }
+
+              // UNKNOWN RESPONSE TYPE
+              if (ODistributedServerLog.isDebugEnabled())
+                ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                    "async distributed transaction error, received unknown response type: %s", iArgument);
+
+              throw new OTransactionException("Error on committing async distributed transaction, received unknown response type "
+                  + iArgument);
             }
           }));
       }
