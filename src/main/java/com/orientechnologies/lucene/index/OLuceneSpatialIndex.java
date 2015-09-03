@@ -16,15 +16,14 @@
 
 package com.orientechnologies.lucene.index;
 
-import com.orientechnologies.lucene.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.apache.lucene.document.Document;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
 
-  public OLuceneSpatialIndex(String name, String typeId, String algorithm, OLuceneIndexEngine engine,
+  public OLuceneSpatialIndex(String name, String typeId, String algorithm,int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata);
+    super(name, typeId, algorithm,version, storage, valueContainerAlgorithm, metadata);
   }
 
 

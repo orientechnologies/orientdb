@@ -22,16 +22,15 @@ import com.orientechnologies.lucene.collections.LuceneResultSet;
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.query.SpatialQueryContext;
-import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.distance.DistanceUtils;
 import com.spatial4j.core.shape.Point;
@@ -105,11 +104,6 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
   @Override
   public boolean remove(Object key) {
     return false;
-  }
-
-  @Override
-  public ORID getIdentity() {
-    return null;
   }
 
   @Override

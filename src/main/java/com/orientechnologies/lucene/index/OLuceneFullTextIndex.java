@@ -17,36 +17,39 @@
 package com.orientechnologies.lucene.index;
 
 import com.orientechnologies.lucene.OLuceneIndex;
-import com.orientechnologies.lucene.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.Query;
 
 public class OLuceneFullTextIndex extends OLuceneIndexNotUnique implements OLuceneIndex {
 
-  public OLuceneFullTextIndex(String name, String typeId, String algorithm, OLuceneIndexEngine indexEngine,
+  public OLuceneFullTextIndex(String name, String typeId, String algorithm,int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, indexEngine, valueContainerAlgorithm, metadata);
-    indexEngine.setIndexMetadata(metadata);
+    super(name, typeId, algorithm,version, storage, valueContainerAlgorithm, metadata);
   }
 
   public Document buildDocument(Object key) {
 
-    OLuceneIndexEngine luceneIndexEngine = (OLuceneIndexEngine) indexEngine;
-
-    return luceneIndexEngine.buildDocument(key);
+//    OLuceneIndexEngine luceneIndexEngine = (OLuceneIndexEngine) indexEngine;
+//
+//    return luceneIndexEngine.buildDocument(key);
+    return null;
   }
 
   public Query buildQuery(Object query) throws ParseException {
 
-    OLuceneIndexEngine luceneIndexEngine = (OLuceneIndexEngine) indexEngine;
-    return luceneIndexEngine.buildQuery(query);
+//    OLuceneIndexEngine luceneIndexEngine = (OLuceneIndexEngine) indexEngine;
+//    return luceneIndexEngine.buildQuery(query);
+    return null;
   }
 
   public Analyzer analyzer(String field) {
-    OLuceneIndexEngine luceneIndexEngine = (OLuceneIndexEngine) indexEngine;
-    return luceneIndexEngine.analyzer(field);
+//    OLuceneIndexEngine luceneIndexEngine = (OLuceneIndexEngine) indexEngine;
+//    return luceneIndexEngine.analyzer(field);
+
+    return null;
   }
 }

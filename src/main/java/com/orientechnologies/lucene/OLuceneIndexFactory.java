@@ -17,25 +17,23 @@
 package com.orientechnologies.lucene;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.lucene.builder.ODocBuilder;
-import com.orientechnologies.lucene.builder.OQueryBuilderImpl;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.lucene.index.OLuceneSpatialIndex;
-import com.orientechnologies.lucene.manager.OLuceneFullTextIndexManager;
-import com.orientechnologies.lucene.manager.OLuceneGeoSpatialIndexManager;
-import com.orientechnologies.orient.spatial.shape.OShapeFactory;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.spatial.shape.OShapeFactory;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -84,7 +82,13 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   @Override
   public OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
-    return createIndex(name, database, indexType, algorithm, valueContainerAlgorithm, metadata);
+    return createLuceneIndex(name, (OAbstractPaginatedStorage) database.getStorage().getUnderlying(), indexType, algorithm,
+        valueContainerAlgorithm, metadata, version);
+  }
+
+  @Override
+  public OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version) {
+    return null;
   }
 
   @Override
@@ -132,20 +136,12 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   }
 
-  protected OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal oDatabaseRecord, String indexType,
-      String algorithm, String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException {
-    return createLuceneIndex(name, oDatabaseRecord, indexType, valueContainerAlgorithm, metadata);
-  }
-
-  private OIndexInternal<?> createLuceneIndex(String name, ODatabaseDocumentInternal oDatabaseRecord, String indexType,
-      String valueContainerAlgorithm, ODocument metadata) {
-    if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
-          new OLuceneFullTextIndexManager(new ODocBuilder(), new OQueryBuilderImpl()), indexType), valueContainerAlgorithm,
-          metadata);
-    } else if (OClass.INDEX_TYPE.SPATIAL.toString().equals(indexType)) {
-      return new OLuceneSpatialIndex(name, indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
-          new OLuceneGeoSpatialIndexManager(OShapeFactory.INSTANCE), indexType), valueContainerAlgorithm, metadata);
+  private OIndexInternal<?> createLuceneIndex(String name, OAbstractPaginatedStorage storage, String type, String indexType,
+      String valueContainerAlgorithm, ODocument metadata, int version) {
+    if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(type)) {
+      return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+    } else if (OClass.INDEX_TYPE.SPATIAL.toString().equals(type)) {
+      return new OLuceneSpatialIndex(name, indexType, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     }
     throw new OConfigurationException("Unsupported type : " + indexType);
   }

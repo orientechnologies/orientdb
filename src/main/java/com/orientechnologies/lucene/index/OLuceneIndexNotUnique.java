@@ -19,105 +19,99 @@ package com.orientechnologies.lucene.index;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.lucene.LuceneTxOperations;
 import com.orientechnologies.lucene.OLuceneIndex;
-import com.orientechnologies.lucene.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexMultiValues;
 import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.lucene.search.IndexSearcher;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneIndex {
 
-  public OLuceneIndexNotUnique(String name, String typeId, String algorithm, OLuceneIndexEngine engine,
+  public OLuceneIndexNotUnique(String name, String typeId, String algorithm,int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata);
+    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
 
-    engine.setIndexMetadata(metadata);
   }
 
   @Override
   public OIndexMultiValues create(String name, OIndexDefinition indexDefinition, String clusterIndexName,
       Set<String> clustersToIndex, boolean rebuild, OProgressListener progressListener) {
-    OLuceneIndexEngine engine = (OLuceneIndexEngine) indexEngine;
-    engine.setManagedIndex(this);
-    engine.setIndexName(name);
     return super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener);
   }
 
-  @Override
-  public OIndexMultiValues put(Object key, OIdentifiable iSingleValue) {
-    checkForRebuild();
+//  @Override
+//  public OIndexMultiValues put(Object key, OIdentifiable iSingleValue) {
+//    checkForRebuild();
+//
+//    key = getCollatingValue(key);
+//
+//    modificationLock.requestModificationLock();
+//    try {
+//      acquireExclusiveLock();
+//      try {
+//        checkForKeyType(key);
+//        Set<OIdentifiable> values = new HashSet<OIdentifiable>();
+//        values.add(iSingleValue);
+//        indexEngine.put(key, values);
+//        return this;
+//
+//      } finally {
+//        releaseExclusiveLock();
+//      }
+//    } finally {
+//      modificationLock.releaseModificationLock();
+//    }
+//  }
 
-    key = getCollatingValue(key);
+//  @Override
+//  protected void commitSnapshot(Map<Object, Object> snapshot) {
+//    for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
+//      Object key = snapshotEntry.getKey();
+//      LuceneTxOperations operations = (LuceneTxOperations) snapshotEntry.getValue();
+//      checkForKeyType(key);
+//
+//      for (OIdentifiable oIdentifiable : operations.removed) {
+//        ((OLuceneIndexEngine) indexEngine).remove(key, oIdentifiable);
+//      }
+//
+//    }
+//    for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
+//      Object key = snapshotEntry.getKey();
+//      LuceneTxOperations operations = (LuceneTxOperations) snapshotEntry.getValue();
+//      checkForKeyType(key);
+//
+//      indexEngine.put(key, operations.added);
+//
+//    }
+//
+//  }
 
-    modificationLock.requestModificationLock();
-    try {
-      acquireExclusiveLock();
-      try {
-        checkForKeyType(key);
-        Set<OIdentifiable> values = new HashSet<OIdentifiable>();
-        values.add(iSingleValue);
-        indexEngine.put(key, values);
-        return this;
-
-      } finally {
-        releaseExclusiveLock();
-      }
-    } finally {
-      modificationLock.releaseModificationLock();
-    }
-  }
-
-  @Override
-  protected void commitSnapshot(Map<Object, Object> snapshot) {
-    for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
-      Object key = snapshotEntry.getKey();
-      LuceneTxOperations operations = (LuceneTxOperations) snapshotEntry.getValue();
-      checkForKeyType(key);
-
-      for (OIdentifiable oIdentifiable : operations.removed) {
-        ((OLuceneIndexEngine) indexEngine).remove(key, oIdentifiable);
-      }
-
-    }
-    for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
-      Object key = snapshotEntry.getKey();
-      LuceneTxOperations operations = (LuceneTxOperations) snapshotEntry.getValue();
-      checkForKeyType(key);
-
-      indexEngine.put(key, operations.added);
-
-    }
-
-  }
-
-  @Override
-  public Set<OIdentifiable> get(Object key) {
-    checkForRebuild();
-
-    key = getCollatingValue(key);
-
-    acquireSharedLock();
-    try {
-
-      final Set<OIdentifiable> values = indexEngine.get(key);
-
-      if (values == null)
-        return Collections.emptySet();
-
-      return values;
-
-    } finally {
-      releaseSharedLock();
-    }
-  }
+//  @Override
+//  public Set<OIdentifiable> get(Object key) {
+//    checkForRebuild();
+//
+//    key = getCollatingValue(key);
+//
+//    acquireSharedLock();
+//    try {
+//
+//      final Set<OIdentifiable> values = indexEngine.get(key);
+//
+//      if (values == null)
+//        return Collections.emptySet();
+//
+//      return values;
+//
+//    } finally {
+//      releaseSharedLock();
+//    }
+//  }
 
   @Override
   protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
@@ -151,46 +145,46 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
     indexTxSnapshot.clear = true;
     indexTxSnapshot.indexSnapshot.clear();
   }
+//
+//  @Override
+//  public boolean remove(Object key, OIdentifiable value) {
+//    checkForRebuild();
+//
+//    key = getCollatingValue(key);
+//    modificationLock.requestModificationLock();
+//    try {
+//      acquireExclusiveLock();
+//      try {
+//
+//        if (indexEngine instanceof OLuceneIndexEngine) {
+//          return ((OLuceneIndexEngine) indexEngine).remove(key, value);
+//        } else {
+//          return false;
+//        }
+//
+//      } finally {
+//        releaseExclusiveLock();
+//      }
+//    } finally {
+//      modificationLock.releaseModificationLock();
+//    }
+//  }
 
-  @Override
-  public boolean remove(Object key, OIdentifiable value) {
-    checkForRebuild();
-
-    key = getCollatingValue(key);
-    modificationLock.requestModificationLock();
-    try {
-      acquireExclusiveLock();
-      try {
-
-        if (indexEngine instanceof OLuceneIndexEngine) {
-          return ((OLuceneIndexEngine) indexEngine).remove(key, value);
-        } else {
-          return false;
-        }
-
-      } finally {
-        releaseExclusiveLock();
-      }
-    } finally {
-      modificationLock.releaseModificationLock();
-    }
-  }
-
-  @Override
-  public long rebuild(OProgressListener iProgressListener) {
-
-    OLuceneIndexEngine engine = (OLuceneIndexEngine) indexEngine;
-    try {
-      engine.setRebuilding(true);
-      super.rebuild(iProgressListener);
-    } finally {
-      engine.setRebuilding(false);
-
-    }
-    engine.flush();
-    return ((OLuceneIndexEngine) indexEngine).size(null);
-
-  }
+//  @Override
+//  public long rebuild(OProgressListener iProgressListener) {
+//
+//    OLuceneIndexEngine engine = (OLuceneIndexEngine) indexEngine;
+//    try {
+//      engine.setRebuilding(true);
+//      super.rebuild(iProgressListener);
+//    } finally {
+//      engine.setRebuilding(false);
+//
+//    }
+//    engine.flush();
+//    return ((OLuceneIndexEngine) indexEngine).size(null);
+//
+//  }
 
   @Override
   public Object getCollatingValue(Object key) {
@@ -199,9 +193,8 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
 
   @Override
   public IndexSearcher searcher() throws IOException {
-    return ((OLuceneIndexEngine) indexEngine).searcher();
-
-
+//    return ((OLuceneIndexEngine) indexEngine).searcher();
+    return null;
   }
 
   @Override
@@ -209,5 +202,3 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
     return false;
   }
 }
-
-
