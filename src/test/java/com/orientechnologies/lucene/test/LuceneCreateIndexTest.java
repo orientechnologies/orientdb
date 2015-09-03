@@ -55,14 +55,26 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
     databaseDocumentTx.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
     databaseDocumentTx.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE")).execute();
 
+    ODocument doc = new ODocument("Song");
+
+    doc.field("title", "Local");
+    doc.field("author", "Local");
+
+    databaseDocumentTx.save(doc);
+
     assertQuery();
+
+    assertNewQuery();
 
     databaseDocumentTx.close();
 
     databaseDocumentTx.open("admin", "admin");
 
     assertQuery();
+
+    assertNewQuery();
   }
+
 
   protected void assertQuery() {
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
@@ -82,6 +94,13 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
     Assert.assertEquals(docs.size(), 1);
   }
 
+  protected void assertNewQuery() {
+
+    List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+            "select * from Song where [title] LUCENE \"(title:Local)\""));
+
+    Assert.assertEquals(docs.size(), 1);
+  }
   @BeforeClass
   @Override
   public void init() {
