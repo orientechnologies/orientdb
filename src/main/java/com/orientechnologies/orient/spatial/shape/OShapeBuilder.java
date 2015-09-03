@@ -120,4 +120,8 @@ public abstract class OShapeBuilder<T extends Shape> {
     return toDoc(parsed);
   }
 
+
+  public static SpatialContext getSpatialContext() {
+    return SPATIAL_CONTEXT;
+  }
 }

@@ -24,8 +24,6 @@ import com.orientechnologies.lucene.collections.LuceneResultSet;
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.query.SpatialQueryContext;
-import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
-import com.orientechnologies.orient.spatial.strategy.SpatialQueryBuilder;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
@@ -36,6 +34,8 @@ import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
+import com.orientechnologies.orient.spatial.strategy.SpatialQueryBuilder;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.distance.DistanceUtils;
 import com.spatial4j.core.shape.Point;
@@ -52,7 +52,7 @@ import org.apache.lucene.queries.function.ValueSource;
 import org.apache.lucene.search.*;
 import org.apache.lucene.spatial.SpatialStrategy;
 import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
-import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
+import org.apache.lucene.spatial.prefix.tree.QuadPrefixTree;
 import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
 import org.apache.lucene.spatial.query.SpatialArgs;
 import org.apache.lucene.spatial.query.SpatialOperation;
@@ -67,6 +67,23 @@ import java.util.Set;
 
 public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract implements OLuceneSpatialIndexContainer {
 
+  /** Earth ellipsoid major axis defined by WGS 84 in meters */
+  public static final double EARTH_SEMI_MAJOR_AXIS = 6378137.0;      // meters (WGS 84)
+
+  /** Earth ellipsoid minor axis defined by WGS 84 in meters */
+  public static final double EARTH_SEMI_MINOR_AXIS = 6356752.314245; // meters (WGS 84)
+
+  /** Earth mean radius defined by WGS 84 in meters */
+  public static final double EARTH_MEAN_RADIUS = 6371008.7714D;      // meters (WGS 84)
+
+  /** Earth axis ratio defined by WGS 84 (0.996647189335) */
+  public static final double EARTH_AXIS_RATIO = EARTH_SEMI_MINOR_AXIS / EARTH_SEMI_MAJOR_AXIS;
+
+  /** Earth ellipsoid equator length in meters */
+  public static final double EARTH_EQUATOR = 2*Math.PI * EARTH_SEMI_MAJOR_AXIS;
+
+  /** Earth ellipsoid polar distance in meters */
+  public static final double EARTH_POLAR_DISTANCE = Math.PI * EARTH_SEMI_MINOR_AXIS;
   protected final OShapeBuilder factory;
   private SpatialContext        ctx;
   private SpatialStrategy       strategy;
@@ -75,12 +92,13 @@ public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract i
 
   public OLuceneGeoSpatialIndexManager(OShapeBuilder factory) {
     super();
-    this.ctx = SpatialContext.GEO;
+    this.ctx = factory.getSpatialContext();
     this.factory = factory;
-    SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 11);
+    SpatialPrefixTree grid = new QuadPrefixTree(ctx, 11);
     this.strategy = new RecursivePrefixTreeStrategy(grid, "location");
     queryStrategy = new SpatialQueryBuilder(this, factory);
   }
+
 
   @Override
   public IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException {

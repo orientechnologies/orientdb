@@ -118,7 +118,7 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
     polyCoordinates.add(coordinatesFromLineString(exteriorRing));
     int i = polygon.getNumInteriorRing();
     for (int j = 0; j < i; j++) {
-      LineString interiorRingN = polygon.getInteriorRingN(i);
+      LineString interiorRingN = polygon.getInteriorRingN(j);
       polyCoordinates.add(coordinatesFromLineString(interiorRingN));
     }
     return polyCoordinates;

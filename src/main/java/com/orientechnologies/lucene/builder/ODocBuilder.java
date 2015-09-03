@@ -25,29 +25,42 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by Enrico Risa on 02/09/15.
  */
 public class ODocBuilder implements DocBuilder {
-  @Override
-  public Document build(OIndexDefinition definition, Object key, ODocument metadata) {
-    Document doc = new Document();
-    int i = 0;
-    for (String f : definition.getFields()) {
-      Object val = null;
-      if (key instanceof OCompositeKey) {
-        val = ((OCompositeKey) key).getKeys().get(i);
-
-      } else if (key instanceof List) {
-        val = ((List) key).get(i);
-      } else {
-        val = key;
-      }
-      i++;
-      doc.add(OLuceneIndexType.createField(f, val, Field.Store.NO, Field.Index.ANALYZED));
+    @Override
+    public Document build(OIndexDefinition definition, Object key, ODocument metadata) {
+        Document doc = new Document();
+        int i = 0;
+        List<Object> formattedKey = formatKeys(definition, key);
+        for (String f : definition.getFields()) {
+            Object val = formattedKey.get(i);
+            i++;
+            doc.add(OLuceneIndexType.createField(f, val, Field.Store.NO, Field.Index.ANALYZED));
+        }
+        return doc;
     }
-    return doc;
-  }
+
+    private List<Object> formatKeys(OIndexDefinition definition, Object key) {
+        List<Object> keys;
+
+        if (key instanceof OCompositeKey) {
+            keys = ((OCompositeKey) key).getKeys();
+
+        } else if (key instanceof List) {
+            keys = ((List) key);
+        } else {
+            keys = new ArrayList<Object>();
+            keys.add(key);
+        }
+
+        for (int i = keys.size(); i < definition.getFields().size(); i++) {
+            keys.add("");
+        }
+        return keys;
+    }
 }
