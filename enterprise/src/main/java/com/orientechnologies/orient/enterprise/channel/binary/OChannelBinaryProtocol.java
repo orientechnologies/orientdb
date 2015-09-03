@@ -91,33 +91,33 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_PUSH_LIVE_QUERY                   = 81;                 // SINCE 2.1
 
   // DISTRIBUTED
-  public static final byte  REQUEST_DB_COPY                           = 90;                 // SINCE 1.0rc8
-  public static final byte  REQUEST_REPLICATION                       = 91;                 // SINCE 1.0
-  public static final byte  REQUEST_CLUSTER                           = 92;                 // SINCE 1.0
-  public static final byte  REQUEST_DB_TRANSFER                       = 93;                 // SINCE 1.0.2
+  public static final byte REQUEST_DB_COPY     = 90; // SINCE 1.0rc8
+  public static final byte REQUEST_REPLICATION = 91; // SINCE 1.0
+  public static final byte REQUEST_CLUSTER     = 92; // SINCE 1.0
+  public static final byte REQUEST_DB_TRANSFER = 93; // SINCE 1.0.2
 
   // Lock + sync
-  public static final byte  REQUEST_DB_FREEZE                         = 94;                 // SINCE 1.1.0
-  public static final byte  REQUEST_DB_RELEASE                        = 95;                 // SINCE 1.1.0
+  public static final byte REQUEST_DB_FREEZE  = 94; // SINCE 1.1.0
+  public static final byte REQUEST_DB_RELEASE = 95; // SINCE 1.1.0
 
-  public static final byte  REQUEST_DATACLUSTER_FREEZE                = 96;
-  public static final byte  REQUEST_DATACLUSTER_RELEASE               = 97;
+  public static final byte REQUEST_DATACLUSTER_FREEZE  = 96;
+  public static final byte REQUEST_DATACLUSTER_RELEASE = 97;
 
   // REMOTE SB-TREE COLLECTIONS
-  public static final byte  REQUEST_CREATE_SBTREE_BONSAI              = 110;
-  public static final byte  REQUEST_SBTREE_BONSAI_GET                 = 111;
-  public static final byte  REQUEST_SBTREE_BONSAI_FIRST_KEY           = 112;
-  public static final byte  REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR   = 113;
-  public static final byte  REQUEST_RIDBAG_GET_SIZE                   = 114;
+  public static final byte REQUEST_CREATE_SBTREE_BONSAI            = 110;
+  public static final byte REQUEST_SBTREE_BONSAI_GET               = 111;
+  public static final byte REQUEST_SBTREE_BONSAI_FIRST_KEY         = 112;
+  public static final byte REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR = 113;
+  public static final byte REQUEST_RIDBAG_GET_SIZE                 = 114;
 
   // INCOMING
-  public static final byte  RESPONSE_STATUS_OK                        = 0;
-  public static final byte  RESPONSE_STATUS_ERROR                     = 1;
-  public static final byte  PUSH_DATA                                 = 3;
+  public static final byte RESPONSE_STATUS_OK    = 0;
+  public static final byte RESPONSE_STATUS_ERROR = 1;
+  public static final byte PUSH_DATA             = 3;
 
   // CONSTANTS
-  public static final short RECORD_NULL                               = -2;
-  public static final short RECORD_RID                                = -3;
+  public static final short RECORD_NULL = -2;
+  public static final short RECORD_RID  = -3;
 
   // FOR MORE INFO: https://github.com/orientechnologies/orientdb/wiki/Network-Binary-Protocol#wiki-Compatibility
   public static final int   PROTOCOL_VERSION_21                       = 21;

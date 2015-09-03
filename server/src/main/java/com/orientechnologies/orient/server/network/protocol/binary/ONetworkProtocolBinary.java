@@ -895,7 +895,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
       if (Boolean.TRUE.equals(tokenBased) && token != null && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
-          && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
+          && (requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN || connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_31)) {
         // TODO: Check if the token is expiring and if it is send a new token
         byte[] renewedToken = tokenHandler.renewIfNeeded(token);
         channel.writeBytes(renewedToken);
