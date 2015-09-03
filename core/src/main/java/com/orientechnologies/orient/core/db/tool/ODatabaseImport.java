@@ -63,6 +63,7 @@ import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexFactory;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -1194,7 +1195,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     long total = 0;
 
     database.getMetadata().getIndexManager().dropIndex(EXPORT_IMPORT_MAP_NAME);
-    OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(), null);
+    OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(),
+        OHashIndexFactory.HASH_INDEX_ALGORITHM);
 
     exportImportHashTable = (OIndex<OIdentifiable>) database
         .getMetadata()

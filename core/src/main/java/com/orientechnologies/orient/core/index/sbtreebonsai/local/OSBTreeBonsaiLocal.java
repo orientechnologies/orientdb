@@ -452,9 +452,9 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       try {
         OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<K, V>(rootCacheEntry, this.rootBucketPointer.getPageOffset(),
             keySerializer, valueSerializer, getChangesTree(atomicOperation, rootCacheEntry));
-        keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance()
+        keySerializer = (OBinarySerializer<K>) storage.getComponentsFactory().binarySerializerFactory
             .getObjectSerializer(rootBucket.getKeySerializerId());
-        valueSerializer = (OBinarySerializer<V>) OBinarySerializerFactory.getInstance()
+        valueSerializer = (OBinarySerializer<V>) storage.getComponentsFactory().binarySerializerFactory
             .getObjectSerializer(rootBucket.getValueSerializerId());
       } finally {
         rootCacheEntry.releaseSharedLock();

@@ -481,11 +481,6 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  @Override
-  public void deleteWithoutIndexLoad(String indexName) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
   public String getType() {
     throw new UnsupportedOperationException("Not allowed operation");
   }

@@ -110,41 +110,41 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
-  private static final AsyncResult PARALLEL_END_EXECUTION_THREAD = new AsyncResult(null, null);
+  private static final AsyncResult              PARALLEL_END_EXECUTION_THREAD = new AsyncResult(null, null);
 
-  private final OOrderByOptimizer           orderByOptimizer     = new OOrderByOptimizer();
-  private final OMetricRecorder             metricRecorder       = new OMetricRecorder();
-  private final OFilterOptimizer            filterOptimizer      = new OFilterOptimizer();
-  private final OFilterAnalyzer             filterAnalyzer       = new OFilterAnalyzer();
-  private       Map<String, String>         projectionDefinition = null;
+  private final OOrderByOptimizer               orderByOptimizer              = new OOrderByOptimizer();
+  private final OMetricRecorder                 metricRecorder                = new OMetricRecorder();
+  private final OFilterOptimizer                filterOptimizer               = new OFilterOptimizer();
+  private final OFilterAnalyzer                 filterAnalyzer                = new OFilterAnalyzer();
+  private Map<String, String>                   projectionDefinition          = null;
   // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT IT'S USED THE PROJECTIONS IN GROUPED-RESULTS
-  private       Map<String, Object>         projections          = null;
-  private       List<OPair<String, String>> orderedFields        = new ArrayList<OPair<String, String>>();
-  private List<String>                groupByFields;
-  private Map<Object, ORuntimeResult> groupedResult;
-  private List<String>                unwindFields;
-  private Object                      expandTarget;
-  private int fetchLimit = -1;
-  private          OIdentifiable lastRecord;
-  private          String        fetchPlan;
-  private volatile boolean       executing;
-  private boolean          fullySortedByIndex = false;
-  private LOCKING_STRATEGY lockingStrategy    = LOCKING_STRATEGY.DEFAULT;
+  private Map<String, Object>                   projections                   = null;
+  private List<OPair<String, String>>           orderedFields                 = new ArrayList<OPair<String, String>>();
+  private List<String>                          groupByFields;
+  private Map<Object, ORuntimeResult>           groupedResult;
+  private List<String>                          unwindFields;
+  private Object                                expandTarget;
+  private int                                   fetchLimit                    = -1;
+  private OIdentifiable                         lastRecord;
+  private String                                fetchPlan;
+  private volatile boolean                      executing;
+  private boolean                               fullySortedByIndex            = false;
+  private LOCKING_STRATEGY                      lockingStrategy               = LOCKING_STRATEGY.DEFAULT;
 
-  private          Boolean isAnyFunctionAggregates = null;
-  private volatile boolean parallel                = false;
-  private volatile boolean parallelRunning;
-  private final ArrayBlockingQueue<AsyncResult> resultQueue = new ArrayBlockingQueue<AsyncResult>(
-      OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE
-          .getValueAsInteger());
+  private Boolean                               isAnyFunctionAggregates       = null;
+  private volatile boolean                      parallel                      = false;
+  private volatile boolean                      parallelRunning;
+  private final ArrayBlockingQueue<AsyncResult> resultQueue                   = new ArrayBlockingQueue<AsyncResult>(
+                                                                                  OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE
+                                                                                      .getValueAsInteger());
 
-  private ConcurrentHashMap<ORID, ORID> uniqueResult;
-  private boolean noCache           = false;
-  private int     tipLimitThreshold = OGlobalConfiguration.QUERY_LIMIT_THRESHOLD_TIP
-      .getValueAsInteger();
-  private String  NULL_VALUE        = "null";
+  private ConcurrentHashMap<ORID, ORID>         uniqueResult;
+  private boolean                               noCache                       = false;
+  private int                                   tipLimitThreshold             = OGlobalConfiguration.QUERY_LIMIT_THRESHOLD_TIP
+                                                                                  .getValueAsInteger();
+  private String                                NULL_VALUE                    = "null";
 
-  private AtomicLong tmpQueueOffer = new AtomicLong();
+  private AtomicLong                            tmpQueueOffer                 = new AtomicLong();
 
   public OCommandExecutorSQLSelect() {
   }
@@ -2106,19 +2106,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private Iterator<OIdentifiable> tryIndexedFunctions(OClass iSchemaClass) {
-    //TODO profiler
-    if(this.preParsedStatement==null){
+    // TODO profiler
+    if (this.preParsedStatement == null) {
       return null;
     }
     OWhereClause where = ((OSelectStatement) this.preParsedStatement).getWhereClause();
-    if(where==null){
+    if (where == null) {
       return null;
     }
     List<OBinaryCondition> conditions = where.getIndexedFunctionConditions(iSchemaClass, getDatabase());
 
     long lastEstimation = Long.MAX_VALUE;
     OBinaryCondition bestCondition = null;
-    if(conditions==null){
+    if (conditions == null) {
       return null;
     }
     for (OBinaryCondition condition : conditions) {
@@ -2522,22 +2522,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
 
       try {
+
         // ADD ALL THE ITEMS AS RESULT
         if (ascOrder) {
-          final Object firstKey = index.getFirstKey();
-          if (firstKey == null) {
-            return;
-          }
-
-          final OIndexCursor cursor = index.iterateEntriesMajor(firstKey, true, true);
+          final OIndexCursor cursor = index.cursor();
           fetchEntriesFromIndexCursor(cursor);
         } else {
-          final Object lastKey = index.getLastKey();
-          if (lastKey == null) {
-            return;
-          }
 
-          final OIndexCursor cursor = index.iterateEntriesMinor(lastKey, true, false);
+          final OIndexCursor cursor = index.descCursor();
           fetchEntriesFromIndexCursor(cursor);
         }
       } finally {

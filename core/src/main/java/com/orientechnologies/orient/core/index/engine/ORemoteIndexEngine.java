@@ -21,16 +21,27 @@ package com.orientechnologies.orient.core.index.engine;
 
 import java.util.Map;
 
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
  * @author Andrey Lomakin
  * @since 18.07.13
  */
 public class ORemoteIndexEngine implements OIndexEngine {
+  private final String name;
+
+  public ORemoteIndexEngine(String name) {
+    this.name = name;
+  }
+
+  @Override
+  public String getName() {
+    return name;
+  }
+
   @Override
   public void init() {
   }
@@ -40,8 +51,8 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void create(OIndexDefinition indexDefinition, String clusterIndexName, OStreamSerializer valueSerializer,
-      boolean isAutomatic) {
+  public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
+      OBinarySerializer keySerializer, int keySize) {
   }
 
   @Override
@@ -53,8 +64,8 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
-      boolean isAutomatic) {
+  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
+      OType[] keyTypes, boolean nullPointerSupport, int keySize) {
   }
 
   @Override
@@ -65,11 +76,6 @@ public class ORemoteIndexEngine implements OIndexEngine {
   @Override
   public boolean remove(Object key) {
     return false;
-  }
-
-  @Override
-  public ORID getIdentity() {
-    return null;
   }
 
   @Override

@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
  * Index implementation that allows only one value for a key.
@@ -32,9 +33,9 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
  * 
  */
 public class OIndexUnique extends OIndexOneValue {
-  public OIndexUnique(String name, String typeId, String algorithm, OIndexEngine<OIdentifiable> engine,
+  public OIndexUnique(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata);
+    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
   }
 
   @Override
@@ -50,43 +51,36 @@ public class OIndexUnique extends OIndexOneValue {
       keyLockManager.acquireExclusiveLock(key);
 
     try {
-      modificationLock.requestModificationLock();
+
+      checkForKeyType(key);
+      acquireSharedLock();
       try {
-        checkForKeyType(key);
-        acquireSharedLock();
-        try {
-          final OIdentifiable value = indexEngine.get(key);
+        final OIdentifiable value = (OIdentifiable) storage.getIndexValue(indexId, key);
 
-          if (value != null) {
-            // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
-            if (!value.equals(iSingleValue)) {
-              final Boolean mergeSameKey = metadata != null ? (Boolean) metadata.field(OIndex.MERGE_KEYS) : Boolean.FALSE;
-              if (mergeSameKey != null && mergeSameKey)
-                // IGNORE IT, THE EXISTENT KEY HAS BEEN MERGED
-                ;
-              else
-                throw new ORecordDuplicatedException(String.format(
-                    "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                    iSingleValue.getIdentity(), key, getName(), value.getIdentity()), value.getIdentity());
-            } else
-              return this;
-          }
-
-          if (!iSingleValue.getIdentity().isPersistent())
-            ((ORecord) iSingleValue.getRecord()).save();
-
-          markStorageDirty();
-
-          indexEngine.put(key, iSingleValue.getIdentity());
-          return this;
-
-        } finally {
-          releaseSharedLock();
+        if (value != null) {
+          // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
+          if (!value.equals(iSingleValue)) {
+            final Boolean mergeSameKey = metadata != null ? (Boolean) metadata.field(OIndex.MERGE_KEYS) : Boolean.FALSE;
+            if (mergeSameKey != null && mergeSameKey)
+              // IGNORE IT, THE EXISTENT KEY HAS BEEN MERGED
+              ;
+            else
+              throw new ORecordDuplicatedException(String.format(
+                  "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                  iSingleValue.getIdentity(), key, getName(), value.getIdentity()), value.getIdentity());
+          } else
+            return this;
         }
-      } finally {
-        modificationLock.releaseModificationLock();
-      }
 
+        if (!iSingleValue.getIdentity().isPersistent())
+          ((ORecord) iSingleValue.getRecord()).save();
+
+        storage.putIndexValue(indexId, key, iSingleValue.getIdentity());
+        return this;
+
+      } finally {
+        releaseSharedLock();
+      }
     } finally {
       if (!txIsActive)
         keyLockManager.releaseExclusiveLock(key);
@@ -100,6 +94,6 @@ public class OIndexUnique extends OIndexOneValue {
 
   @Override
   public boolean supportsOrderedIterations() {
-    return indexEngine.hasRangeQuerySupport();
+    return storage.hasIndexRangeQuerySupport(indexId);
   }
 }
