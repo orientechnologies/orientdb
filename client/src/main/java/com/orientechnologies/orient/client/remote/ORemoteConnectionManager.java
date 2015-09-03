@@ -176,6 +176,15 @@ public class ORemoteConnectionManager implements OChannelListener {
     return pool.getAvailableResources();
   }
 
+  public int getReusableConnections(final String url){
+    final OResourcePool<String, OChannelBinaryAsynchClient> pool = connections.get(url);
+    if (pool == null)
+      return 0;
+
+    return pool.getInPoolResources();
+  }
+
+
   public int getCreatedInstancesInPool(final String url) {
     final OResourcePool<String, OChannelBinaryAsynchClient> pool = connections.get(url);
     if (pool == null)
