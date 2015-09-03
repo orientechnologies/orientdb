@@ -39,12 +39,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
 
 public class OAutomaticBackup extends OServerPluginAbstract {
 
@@ -76,6 +72,12 @@ public class OAutomaticBackup extends OServerPluginAbstract {
       else if (param.name.equalsIgnoreCase("firstTime")) {
         try {
           firstTime = OIOUtils.getTodayWithTime(param.value);
+          if (firstTime.before(new Date())) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(firstTime);
+            cal.add(Calendar.DAY_OF_MONTH, 1);
+            firstTime = cal.getTime();
+          }
         } catch (ParseException e) {
           throw new OConfigurationException("Parameter 'firstTime' has invalid format, expected: HH:mm:ss", e);
         }
@@ -133,18 +135,18 @@ public class OAutomaticBackup extends OServerPluginAbstract {
           if (include) {
             final String fileName = (String) OVariableParser.resolveVariables(targetFileName, OSystemVariableResolver.VAR_BEGIN,
                 OSystemVariableResolver.VAR_END, new OVariableParserListener() {
-                  @Override
-                  public String resolve(final String iVariable) {
-                    if (iVariable.equalsIgnoreCase(VARIABLES.DBNAME.toString()))
-                      return dbName.getKey();
-                    else if (iVariable.startsWith(VARIABLES.DATE.toString())) {
-                      return new SimpleDateFormat(iVariable.substring(VARIABLES.DATE.toString().length() + 1)).format(new Date());
-                    }
+              @Override
+              public String resolve(final String iVariable) {
+                if (iVariable.equalsIgnoreCase(VARIABLES.DBNAME.toString()))
+                  return dbName.getKey();
+                else if (iVariable.startsWith(VARIABLES.DATE.toString())) {
+                  return new SimpleDateFormat(iVariable.substring(VARIABLES.DATE.toString().length() + 1)).format(new Date());
+                }
 
-                    // NOT FOUND
-                    throw new IllegalArgumentException("Variable '" + iVariable + "' wasn't found");
-                  }
-                });
+                // NOT FOUND
+                throw new IllegalArgumentException("Variable '" + iVariable + "' wasn't found");
+              }
+            });
 
             final String exportFilePath = targetDirectory + fileName;
             ODatabaseDocumentTx db = null;
@@ -163,10 +165,8 @@ public class OAutomaticBackup extends OServerPluginAbstract {
                 }
               }, compressionLevel, bufferSize);
 
-              OLogManager.instance().info(
-                  this,
-                  "[OAutomaticBackup] - Backup of database '" + dbName.getValue() + "' completed in "
-                      + (System.currentTimeMillis() - begin) + "ms");
+              OLogManager.instance().info(this, "[OAutomaticBackup] - Backup of database '" + dbName.getValue() + "' completed in "
+                  + (System.currentTimeMillis() - begin) + "ms");
               ok++;
 
             } catch (Exception e) {
