@@ -59,10 +59,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.Version;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract implements OLuceneSpatialIndexContainer {
 
@@ -89,8 +86,8 @@ public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract i
 
   private SpatialQueryBuilder   queryStrategy;
 
-  public OLuceneGeoSpatialIndexManager(OShapeBuilder factory) {
-    super();
+  public OLuceneGeoSpatialIndexManager(String name, OShapeBuilder factory) {
+    super(name);
     this.ctx = factory.getSpatialContext();
     this.factory = factory;
     SpatialPrefixTree grid = new QuadPrefixTree(ctx, 11);
@@ -181,7 +178,7 @@ public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract i
     SpatialArgs args = new SpatialArgs(operation, ctx.makeCircle(lng, lat,
         DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM)));
     Filter filter = strategy.makeFilter(args);
-    IndexSearcher searcher = getSearcher();
+    IndexSearcher searcher = searcher();
     ValueSource valueSource = strategy.makeDistanceValueSource(p);
     Sort distSort = new Sort(valueSource.getSortField(false)).rewrite(searcher);
 
@@ -223,7 +220,7 @@ public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract i
     if (shape == null)
       return null;
     SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, shape);
-    IndexSearcher searcher = getSearcher();
+    IndexSearcher searcher = searcher();
 
     Filter filter = strategy.makeFilter(args);
 
@@ -235,14 +232,14 @@ public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract i
 
     if (key instanceof OCompositeKey) {
       OCompositeKey compositeKey = (OCompositeKey) key;
-      Set<OIdentifiable> container = (Set<OIdentifiable>) value;
+      Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
       for (OIdentifiable oIdentifiable : container) {
         addDocument(newGeoDocument(oIdentifiable, factory.makeShape(compositeKey, ctx)));
       }
     } else if (key instanceof OIdentifiable) {
 
       ODocument location = ((OIdentifiable) key).getRecord();
-      Set<OIdentifiable> container = (Set<OIdentifiable>) value;
+      Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
       for (OIdentifiable oIdentifiable : container) {
         addDocument(newGeoDocument(oIdentifiable, factory.fromDoc(location)));
       }
@@ -311,11 +308,6 @@ public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract i
 
   public SpatialStrategy getStrategy() {
     return strategy;
-  }
-
-  @Override
-  public IndexSearcher searcher() throws IOException {
-    return getSearcher();
   }
 
   @Override

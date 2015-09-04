@@ -20,12 +20,11 @@ package com.orientechnologies.lucene.test;
 
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 /**
  * Created by enricorisa on 19/09/14.
  */
-@Test(groups = "remote")
+//@Test(groups = "remote", enabled = false)
 public class LuceneSingleFieldRemoteTest extends LuceneSingleFieldEmbeddedTest {
 
   public LuceneSingleFieldRemoteTest() {

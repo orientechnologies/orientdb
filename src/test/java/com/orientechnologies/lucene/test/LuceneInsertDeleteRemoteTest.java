@@ -20,13 +20,12 @@ package com.orientechnologies.lucene.test;
 
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 /**
  * Created by Enrico Risa on 17/12/14.
  */
 
-@Test(groups = "remote")
+//@Test(groups = "remote",enabled = false)
 public class LuceneInsertDeleteRemoteTest extends LuceneInsertDeleteTest {
 
   public LuceneInsertDeleteRemoteTest() {

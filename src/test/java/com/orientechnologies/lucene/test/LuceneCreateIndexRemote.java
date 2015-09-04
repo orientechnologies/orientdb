@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
-import org.testng.annotations.Test;
 
 import java.io.InputStream;
 import java.util.List;
@@ -31,7 +30,7 @@ import java.util.List;
 /**
  * Created by enricorisa on 26/09/14.
  */
-@Test(groups = "remote")
+//@Test(groups = "remote",enabled = false)
 public class LuceneCreateIndexRemote extends LuceneCreateIndexTest {
 
   public LuceneCreateIndexRemote() {

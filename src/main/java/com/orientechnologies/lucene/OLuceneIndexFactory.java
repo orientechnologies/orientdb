@@ -17,6 +17,8 @@
 package com.orientechnologies.lucene;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngineDelegate;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.lucene.index.OLuceneSpatialIndex;
 import com.orientechnologies.orient.core.Orient;
@@ -30,6 +32,7 @@ import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -88,7 +91,8 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   @Override
   public OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version) {
-    return null;
+
+    return new OLuceneIndexEngineDelegate(name, durableInNonTxMode, storage, version);
   }
 
   @Override
@@ -138,10 +142,17 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   private OIndexInternal<?> createLuceneIndex(String name, OAbstractPaginatedStorage storage, String type, String indexType,
       String valueContainerAlgorithm, ODocument metadata, int version) {
+
+    OBinarySerializer<?> objectSerializer = storage.getComponentsFactory().binarySerializerFactory
+        .getObjectSerializer(OLuceneMockSpatialSerializer.INSTANCE.getId());
+    if (objectSerializer == null) {
+      storage.getComponentsFactory().binarySerializerFactory.registerSerializer(OLuceneMockSpatialSerializer.INSTANCE,
+          OType.EMBEDDED);
+    }
     if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(type)) {
-      return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OLuceneFullTextIndex(name, type, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.SPATIAL.toString().equals(type)) {
-      return new OLuceneSpatialIndex(name, indexType, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OLuceneSpatialIndex(name, type, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     }
     throw new OConfigurationException("Unsupported type : " + indexType);
   }

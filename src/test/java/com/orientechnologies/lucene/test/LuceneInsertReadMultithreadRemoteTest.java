@@ -18,12 +18,10 @@
 
 package com.orientechnologies.lucene.test;
 
-import org.testng.annotations.Test;
-
 /**
  * Created by Enrico Risa on 11/12/14.
  */
-@Test(groups = "remote")
+//@Test(groups = "remote",enabled = false)
 public class LuceneInsertReadMultithreadRemoteTest extends LuceneInsertReadMultithreadTest {
 
   public LuceneInsertReadMultithreadRemoteTest() {

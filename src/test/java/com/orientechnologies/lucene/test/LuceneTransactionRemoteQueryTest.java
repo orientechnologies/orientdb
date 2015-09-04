@@ -21,6 +21,7 @@ package com.orientechnologies.lucene.test;
 /**
  * Created by Enrico Risa on 10/08/15.
  */
+//@Test(enabled = false)
 public class LuceneTransactionRemoteQueryTest extends LuceneTransactionQueryTest {
 
   public LuceneTransactionRemoteQueryTest() {

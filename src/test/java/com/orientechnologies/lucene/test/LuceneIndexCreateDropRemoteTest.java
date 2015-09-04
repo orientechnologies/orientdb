@@ -18,12 +18,10 @@
 
 package com.orientechnologies.lucene.test;
 
-import org.testng.annotations.Test;
-
 /**
  * Created by Enrico Risa on 14/08/15.
  */
-@Test
+//@Test(enabled = false)
 public class LuceneIndexCreateDropRemoteTest extends LuceneIndexCreateDropTest {
 
   public LuceneIndexCreateDropRemoteTest() {

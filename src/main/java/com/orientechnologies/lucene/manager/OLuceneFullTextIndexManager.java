@@ -26,7 +26,6 @@ import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
@@ -50,7 +49,8 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   private DocBuilder            builder;
   private OQueryBuilder         queryBuilder;
 
-  public OLuceneFullTextIndexManager(DocBuilder builder, OQueryBuilder queryBuilder) {
+  public OLuceneFullTextIndexManager(String idxName, DocBuilder builder, OQueryBuilder queryBuilder) {
+    super(idxName);
     this.builder = builder;
     this.queryBuilder = queryBuilder;
   }
@@ -97,7 +97,6 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     return false;
   }
 
-
   @Override
   public Object get(Object key) {
     Query q = null;
@@ -115,7 +114,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
   @Override
   public void put(Object key, Object value) {
-    Set<OIdentifiable> container = (Set<OIdentifiable>) value;
+    Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
     for (OIdentifiable oIdentifiable : container) {
       Document doc = new Document();
       doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES,
@@ -186,7 +185,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   private Set<OIdentifiable> getResults(Query query, OCommandContext context, Object key) {
 
     try {
-      IndexSearcher searcher = getSearcher();
+      IndexSearcher searcher = searcher();
       QueryContext queryContext = new QueryContext(context, searcher, query);
       if (facetManager.supportsFacets()) {
         facetManager.addFacetContext(queryContext, key);
@@ -264,15 +263,22 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   @Override
-  public Query buildQuery(Object query) throws ParseException {
+  public Query buildQuery(Object query) {
 
-    return queryBuilder.query(index, query, mgrWriter.getIndexWriter().getAnalyzer(), getLuceneVersion(metadata));
+    try {
+      return queryBuilder.query(index, query, mgrWriter.getIndexWriter().getAnalyzer(), getLuceneVersion(metadata));
+    } catch (ParseException e) {
+      throw new OIndexEngineException("Error parsing query", e);
+    }
   }
 
   @Override
   public void delete() {
     super.delete();
-    facetManager.delete();
+    if (facetManager != null) {
+      facetManager.delete();
+    }
+
   }
 
   public class LuceneIndexCursor implements OIndexCursor {

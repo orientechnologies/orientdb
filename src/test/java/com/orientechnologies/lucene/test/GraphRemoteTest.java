@@ -18,12 +18,10 @@
 
 package com.orientechnologies.lucene.test;
 
-import org.testng.annotations.Test;
-
 /**
  * Created by enricorisa on 04/10/14.
  */
-@Test(groups = "remote")
+//@Test(groups = "remote",enabled = false)
 public class GraphRemoteTest extends GraphEmbeddedTest {
   @Override
   protected String getDatabaseName() {
@@ -34,4 +32,10 @@ public class GraphRemoteTest extends GraphEmbeddedTest {
     super(true);
   }
 
+
+//  @Test(enabled = false)
+  @Override
+  public void embedded() {
+    super.embedded();
+  }
 }

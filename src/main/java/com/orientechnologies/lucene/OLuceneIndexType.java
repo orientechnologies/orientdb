@@ -93,14 +93,14 @@ public class OLuceneIndexType {
   }
 
   public static Query createQueryId(OIdentifiable value) {
-    return new TermQuery(new Term(OLuceneIndexManagerAbstract.RID, value.toString()));
+    return new TermQuery(new Term(OLuceneIndexManagerAbstract.RID, value.getIdentity().toString()));
   }
 
   public static Query createDeleteQuery(OIdentifiable value, List<String> fields, Object key) {
 
     BooleanQuery booleanQuery = new BooleanQuery();
 
-    booleanQuery.add(new TermQuery(new Term(OLuceneIndexManagerAbstract.RID, value.toString())), BooleanClause.Occur.MUST);
+    booleanQuery.add(new TermQuery(new Term(OLuceneIndexManagerAbstract.RID, value.getIdentity().toString())), BooleanClause.Occur.MUST);
 
     Map<String, String> values = new HashMap<String, String>();
     // TODO Implementation of Composite keys with Collection

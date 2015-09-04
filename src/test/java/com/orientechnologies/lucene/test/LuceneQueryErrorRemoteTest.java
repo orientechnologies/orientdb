@@ -18,9 +18,7 @@
 
 package com.orientechnologies.lucene.test;
 
-import org.testng.annotations.Test;
-
-@Test(groups = "remote")
+//@Test(groups = "remote", enabled = false)
 public class LuceneQueryErrorRemoteTest extends LuceneQueryErrorTest {
 
   public LuceneQueryErrorRemoteTest() {

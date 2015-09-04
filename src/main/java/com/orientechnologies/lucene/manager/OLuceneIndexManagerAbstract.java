@@ -21,6 +21,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.lucene.OLuceneMapEntryIterator;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
 import com.orientechnologies.orient.core.OOrientListener;
@@ -31,14 +32,13 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -60,7 +60,8 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.*;
 
-public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine,OOrientListener {
+public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdaptiveExternal implements OLuceneIndexEngine,
+    OOrientListener {
 
   public static final String               RID              = "RID";
   public static final String               KEY              = "KEY";
@@ -70,38 +71,30 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   public static final String               OLUCENE_BASE_DIR = "luceneIndexes";
 
   protected SearcherManager                searcherManager;
+  private String                           indexType;
   protected OIndexDefinition               index;
   protected TrackingIndexWriter            mgrWriter;
   protected String                         indexName;
   protected String                         clusterIndexName;
-  protected OStreamSerializer              serializer;
   protected boolean                        automatic;
   protected ControlledRealTimeReopenThread nrt;
   protected ODocument                      metadata;
   protected Version                        version;
-  private OIndex                           managedIndex;
   private boolean                          rebuilding;
   private long                             reopenToken;
   protected Map<String, Boolean>           collectionFields = new HashMap<String, Boolean>();
 
-  public OLuceneIndexManagerAbstract() {
+  public OLuceneIndexManagerAbstract(String indexName) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
-            .getValueAsInteger(), true);
+        .getValueAsInteger(), true);
+    this.indexName = indexName;
     Orient.instance().registerListener(this);
   }
 
-
   @Override
-  public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport, OBinarySerializer keySerializer, int keySize) {
-
-  }
-
-
-
-  public void createIndex(OIndexDefinition indexDefinition, String clusterIndexName, OStreamSerializer valueSerializer,
-      boolean isAutomatic, ODocument metadata) {
-    // PREVENT EXCEPTION
-    initIndex(indexName, indexDefinition, clusterIndexName, valueSerializer, isAutomatic, metadata);
+  public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
+      OBinarySerializer keySerializer, int keySize) {
+    // initIndex(indexName, null, isAutomatic, metadata);
   }
 
   public abstract IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException;
@@ -201,7 +194,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   public Iterator<Map.Entry<Object, V>> iterator() {
     try {
-      IndexReader reader = getSearcher().getIndexReader();
+      IndexReader reader = searcher().getIndexReader();
       return new OLuceneMapEntryIterator<Object, V>(reader, index);
 
     } catch (IOException e) {
@@ -249,15 +242,10 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     }
   }
 
-
   @Override
-  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer, OType[] keyTypes, boolean nullPointerSupport, int keySize) {
-
-  }
-
-  public void load(final ORID indexRid, final String indexName, final OIndexDefinition indexDefinition, final boolean isAutomatic,
-      final ODocument metadata) {
-    initIndex(indexName, indexDefinition, null, null, isAutomatic, metadata);
+  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
+      OType[] keyTypes, boolean nullPointerSupport, int keySize) {
+    // initIndex(indexName, indexDefinition, isAutomatic, metadata);
   }
 
   public long size(final ValuesTransformer transformer) {
@@ -265,7 +253,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     IndexReader reader = null;
     IndexSearcher searcher = null;
     try {
-      reader = getSearcher().getIndexReader();
+      reader = searcher().getIndexReader();
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on getting size of Lucene index", e);
     } finally {
@@ -282,10 +270,6 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on releasing index searcher  of Lucene index", e);
     }
-  }
-
-  public void setManagedIndex(OIndex index) {
-    this.managedIndex = index;
   }
 
   public boolean isRebuilding() {
@@ -336,13 +320,12 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     return version;
   }
 
-  protected void initIndex(String indexName, OIndexDefinition indexDefinition, String clusterIndexName,
-      OStreamSerializer valueSerializer, boolean isAutomatic, ODocument metadata) {
+  public void initIndex(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic,
+      ODocument metadata) {
+    this.indexType = indexType;
     this.index = indexDefinition;
     this.indexName = indexName;
-    this.serializer = valueSerializer;
     this.automatic = isAutomatic;
-    this.clusterIndexName = clusterIndexName;
     this.metadata = metadata;
     try {
 
@@ -384,13 +367,16 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     return collectionDelete;
   }
 
-  public IndexSearcher getSearcher() throws IOException {
+  @Override
+  public IndexSearcher searcher() throws IOException {
     try {
       nrt.waitForGeneration(reopenToken);
+      return searcherManager.acquire();
     } catch (InterruptedException e) {
       OLogManager.instance().error(this, "Error on get searcher from Lucene index", e);
     }
-    return searcherManager.acquire();
+    return null;
+
   }
 
   protected void closeIndex() throws IOException {
@@ -503,7 +489,6 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     this.indexName = indexName;
   }
 
-
   @Override
   public String getName() {
     return indexName;
@@ -512,12 +497,10 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   public abstract Document buildDocument(Object key);
 
   // TODO we could chose different analyzer for fields
-  public Analyzer getAnalyzer(String field) {
+  @Override
+  public Analyzer analyzer(String field) {
     return getAnalyzer(metadata);
   }
-
-  public abstract Query buildQuery(Object query) throws ParseException;
-
 
   @Override
   public void onShutdown() {

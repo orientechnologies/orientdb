@@ -18,17 +18,15 @@
 
 package com.orientechnologies.lucene.test;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * Created by enricorisa on 03/09/14.
@@ -49,7 +47,7 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
   @BeforeClass
   public void init() {
     initDB();
-    graph = new OrientGraph((ODatabaseDocumentTx) databaseDocumentTx, false);
+    graph = new OrientGraph(databaseDocumentTx, false);
     OrientVertexType type = graph.createVertexType("City");
     type.createProperty("latitude", OType.DOUBLE);
     type.createProperty("longitude", OType.DOUBLE);

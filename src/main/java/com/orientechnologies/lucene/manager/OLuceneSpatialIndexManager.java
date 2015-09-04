@@ -65,8 +65,8 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
   private SpatialContext      ctx;
   private SpatialStrategy     strategy;
 
-  public OLuceneSpatialIndexManager(OShapeBuilder factory) {
-    super();
+  public OLuceneSpatialIndexManager(String name,OShapeBuilder factory) {
+    super(name);
     this.ctx = SpatialContext.GEO;
     this.factory = factory;
     SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 11);
@@ -139,7 +139,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     SpatialArgs args = new SpatialArgs(operation, ctx.makeCircle(lng, lat,
         DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM)));
     Filter filter = strategy.makeFilter(args);
-    IndexSearcher searcher = getSearcher();
+    IndexSearcher searcher = searcher();
     ValueSource valueSource = strategy.makeDistanceValueSource(p);
     Sort distSort = new Sort(valueSource.getSortField(false)).rewrite(searcher);
 
@@ -181,7 +181,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     if (shape == null)
       return null;
     SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, shape);
-    IndexSearcher searcher = getSearcher();
+    IndexSearcher searcher = searcher();
 
     Filter filter = strategy.makeFilter(args);
 
