@@ -19,20 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-
-import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -51,7 +37,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContai
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -60,13 +45,17 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Handles indexing when records change.
@@ -247,6 +236,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
           version);
       assert indexId >= 0;
 
+      onIndexEngineChange(indexId);
+
       if (rebuild)
         rebuild(progressListener);
 
@@ -312,6 +303,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
         if (indexId == -1)
           return false;
+
+        onIndexEngineChange(indexId);
+
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error during load of index '%s'", e, name != null ? name : "null");
 
@@ -422,6 +416,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
       indexId = storage.addIndexEngine(name, algorithm, indexDefinition, determineValueSerializer(), isAutomatic(),
           isDurableInNonTxMode(), version);
+
+      onIndexEngineChange(indexId);
 
       long documentNum = 0;
       long documentTotal = 0;
@@ -1080,6 +1076,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     }
   }
 
+  protected void onIndexEngineChange(int indexId){
+
+  }
   private static class IndexTxSnapshotThreadLocal extends ThreadLocal<IndexTxSnapshot> {
     @Override
     protected IndexTxSnapshot initialValue() {
