@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -129,7 +130,8 @@ public class ODefaultIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version) {
+  public OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version,
+      Map<String, String> engineProperties) {
 
     final OIndexEngine indexEngine;
 

@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexFactory
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
  * Utility class to create indexes. New OIndexFactory can be registered
@@ -179,11 +178,11 @@ public final class OIndexes {
   }
 
   public static OIndexEngine createIndexEngine(String name, String algorithm, Boolean durableInNonTxMode, OStorage storage,
-      int version) {
+      int version, Map<String, String> indexProperties) {
 
     final OIndexFactory factory = findFactoryByAlgorithm(algorithm);
 
-    return factory.createIndexEngine(name, durableInNonTxMode, storage, version);
+    return factory.createIndexEngine(name, durableInNonTxMode, storage, version, indexProperties);
   }
 
   public static String chooseDefaultIndexAlgorithm(String type) {

@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.config;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -48,9 +47,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
-import java.io.IOException;
-import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -456,8 +452,21 @@ public class OStorageConfiguration implements OSerializableStream {
           types[n] = type;
         }
 
+        final int propertiesSize = Integer.parseInt(read(values[index++]));
+        final Map<String, String> engineProperties;
+        if (propertiesSize == 0)
+          engineProperties = null;
+        else {
+          engineProperties = new HashMap<String, String>(propertiesSize);
+          for (int n = 0; n < propertiesSize; n++) {
+            final String key = read(values[index++]);
+            final String value = read(values[index++]);
+            engineProperties.put(key, value);
+          }
+        }
+
         final IndexEngineData indexEngineData = new IndexEngineData(name, algorithm, durableInNonTxMode, version,
-            valueSerializerId, keySerializerId, isAutomatic, types, nullValuesSupport, keySize);
+            valueSerializerId, keySerializerId, isAutomatic, types, nullValuesSupport, keySize, engineProperties);
 
         indexEngines.put(name.toLowerCase(getLocaleInstance()), indexEngineData);
       }
@@ -586,6 +595,16 @@ public class OStorageConfiguration implements OSerializableStream {
         }
       } else {
         write(buffer, 0);
+      }
+
+      if (engineData.engineProperties == null) {
+        write(buffer, 0);
+      } else {
+        write(buffer, engineData.engineProperties.size());
+        for (Map.Entry<String, String> property : engineData.engineProperties.entrySet()) {
+          write(buffer, property.getKey());
+          write(buffer, property.getValue());
+        }
       }
     }
 
@@ -885,19 +904,21 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public static final class IndexEngineData {
-    private final String  name;
-    private final String  algorithm;
-    private final Boolean durableInNonTxMode;
-    private final int     version;
-    private final byte    valueSerializerId;
-    private final byte    keySerializedId;
-    private final boolean isAutomatic;
-    private final OType[] keyTypes;
-    private final boolean nullValuesSupport;
-    private final int     keySize;
+    private final String              name;
+    private final String              algorithm;
+    private final Boolean             durableInNonTxMode;
+    private final int                 version;
+    private final byte                valueSerializerId;
+    private final byte                keySerializedId;
+    private final boolean             isAutomatic;
+    private final OType[]             keyTypes;
+    private final boolean             nullValuesSupport;
+    private final int                 keySize;
+    private final Map<String, String> engineProperties;
 
     public IndexEngineData(String name, String algorithm, Boolean durableInNonTxMode, int version, byte valueSerializerId,
-        byte keySerializedId, boolean isAutomatic, OType[] keyTypes, boolean nullValuesSupport, int keySize) {
+        byte keySerializedId, boolean isAutomatic, OType[] keyTypes, boolean nullValuesSupport, int keySize,
+        Map<String, String> engineProperties) {
       this.name = name;
       this.algorithm = algorithm;
       this.durableInNonTxMode = durableInNonTxMode;
@@ -908,6 +929,10 @@ public class OStorageConfiguration implements OSerializableStream {
       this.keyTypes = keyTypes;
       this.nullValuesSupport = nullValuesSupport;
       this.keySize = keySize;
+      if (engineProperties == null)
+        this.engineProperties = null;
+      else
+        this.engineProperties = new HashMap<String, String>(engineProperties);
     }
 
     public int getKeySize() {
@@ -948,6 +973,13 @@ public class OStorageConfiguration implements OSerializableStream {
 
     public boolean isNullValuesSupport() {
       return nullValuesSupport;
+    }
+
+    public Map<String, String> getEngineProperties() {
+      if (engineProperties == null)
+        return null;
+
+      return Collections.unmodifiableMap(engineProperties);
     }
   }
 }

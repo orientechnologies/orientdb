@@ -244,7 +244,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       final Boolean durableInNonTxMode = isDurableInNonTxMode();
 
       indexId = storage.addIndexEngine(name, algorithm, indexDefinition, valueSerializer, isAutomatic(), durableInNonTxMode,
-          version);
+          version, getEngineProperties());
       assert indexId >= 0;
 
       if (rebuild)
@@ -307,7 +307,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
         if (indexId == -1) {
           indexId = storage.loadExternalIndexEngine(name, algorithm, indexDefinition, determineValueSerializer(), isAutomatic(),
-              isDurableInNonTxMode(), version);
+              isDurableInNonTxMode(), version, getEngineProperties());
         }
 
         if (indexId == -1)
@@ -333,6 +333,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  protected Map<String, String> getEngineProperties() {
+    return Collections.emptyMap();
   }
 
   @Override
@@ -421,7 +425,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       removeValuesContainer();
 
       indexId = storage.addIndexEngine(name, algorithm, indexDefinition, determineValueSerializer(), isAutomatic(),
-          isDurableInNonTxMode(), version);
+          isDurableInNonTxMode(), version, getEngineProperties());
 
       long documentNum = 0;
       long documentTotal = 0;

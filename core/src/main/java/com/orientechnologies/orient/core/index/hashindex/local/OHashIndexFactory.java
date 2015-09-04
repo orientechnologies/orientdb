@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -108,7 +109,8 @@ public class OHashIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version) {
+  public OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version,
+      Map<String, String> engineProperties) {
     OIndexEngine indexEngine;
 
     final String storageType = storage.getType();

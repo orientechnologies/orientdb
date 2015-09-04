@@ -84,7 +84,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -255,7 +254,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     for (String indexName : indexNames) {
       final OStorageConfiguration.IndexEngineData engineData = configuration.getIndexEngine(indexName);
       final OIndexEngine engine = OIndexes.createIndexEngine(engineData.getName(), engineData.getAlgorithm(),
-          engineData.getDurableInNonTxMode(), this, engineData.getVersion());
+          engineData.getDurableInNonTxMode(), this, engineData.getVersion(), engineData.getEngineProperties());
 
       try {
         engine.load(engineData.getName(), cf.binarySerializerFactory.getObjectSerializer(engineData.getValueSerializerId()),
@@ -1221,7 +1220,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public int loadExternalIndexEngine(String engineName, String algorithm, OIndexDefinition indexDefinition,
-      OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version) {
+      OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version,
+      Map<String, String> engineProperties) {
     checkOpeness();
 
     stateLock.acquireWriteLock();
@@ -1249,9 +1249,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
           durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport,
-          keySize);
+          keySize, engineProperties);
 
-      final OIndexEngine engine = OIndexes.createIndexEngine(originalName, algorithm, durableInNonTxMode, this, version);
+      final OIndexEngine engine = OIndexes.createIndexEngine(originalName, algorithm, durableInNonTxMode, this, version,
+          engineProperties);
       engine.load(originalName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullValuesSupport, keySize);
 
       indexEngineNameMap.put(engineName, engine);
@@ -1270,7 +1271,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public int addIndexEngine(String engineName, String algorithm, OIndexDefinition indexDefinition,
-      OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version) {
+      OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version,
+      Map<String, String> engineProperties) {
     checkOpeness();
 
     stateLock.acquireWriteLock();
@@ -1294,9 +1296,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
           durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport,
-          keySize);
+          keySize, engineProperties);
 
-      final OIndexEngine engine = OIndexes.createIndexEngine(originalName, algorithm, durableInNonTxMode, this, version);
+      final OIndexEngine engine = OIndexes.createIndexEngine(originalName, algorithm, durableInNonTxMode, this, version,
+          engineProperties);
       engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize);
 
       indexEngineNameMap.put(engineName, engine);
@@ -1545,6 +1548,61 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     } finally {
       stateLock.releaseReadLock();
     }
+  }
+
+  public <T> T callIndexEngine(boolean atomicOperation, boolean readOperation, int indexId, OIndexEngineCallback<T> callback) {
+    if (transaction.get() != null)
+      return doCallIndexEngine(atomicOperation, readOperation, indexId, callback);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      modificationLock.requestModificationLock();
+      try {
+        dataLock.acquireSharedLock();
+        try {
+          return doCallIndexEngine(atomicOperation, readOperation, indexId, callback);
+        } finally {
+          dataLock.releaseSharedLock();
+        }
+      } finally {
+        modificationLock.releaseModificationLock();
+      }
+
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private <T> T doCallIndexEngine(boolean atomicOperation, boolean readOperation, int indexId, OIndexEngineCallback<T> callback) {
+    checkIndexId(indexId);
+
+    try {
+      if (atomicOperation)
+        atomicOperationsManager.startAtomicOperation((String) null, false);
+
+      if (!readOperation)
+        makeStorageDirty();
+
+      final OIndexEngine engine = indexEngines.get(indexId);
+      T result = callback.callEngine(engine);
+
+      if (atomicOperation)
+        atomicOperationsManager.endAtomicOperation(false, null);
+
+      return result;
+    } catch (Exception e) {
+      try {
+        if (atomicOperation)
+          atomicOperationsManager.endAtomicOperation(true, e);
+
+        throw new OStorageException("Can not put key value entry in index", e);
+      } catch (IOException ioe) {
+        throw new OStorageException("Error during operation rollback", ioe);
+      }
+    }
+
   }
 
   private void doUpdateIndexEntry(int indexId, Object key, Callable<Object> valueCreator) {
