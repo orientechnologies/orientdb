@@ -97,7 +97,9 @@ public class OModificationLock {
   public void prohibitModifications(boolean throwException) {
     lock.acquireWriteLock();
     try {
-      this.throwException = throwException;
+      if (vetos.get() == 0)
+        this.throwException = throwException;
+
       vetos.incrementAndGet();
     } finally {
       lock.releaseWriteLock();

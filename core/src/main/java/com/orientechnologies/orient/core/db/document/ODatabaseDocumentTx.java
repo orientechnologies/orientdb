@@ -2137,10 +2137,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     final long startTime = Orient.instance().getProfiler().startChrono();
 
     final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
-    final List<OIndexAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
-
-    flushIndexes(indexesToLock);
-
     final OFreezableStorage storage = getFreezableStorage();
     if (storage != null) {
       storage.freeze(throwException);
@@ -2164,11 +2160,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
 
     final long startTime = Orient.instance().getProfiler().startChrono();
-
-    final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
-    final List<OIndexAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
-
-    flushIndexes(indexesToLock);
 
     final OFreezableStorage storage = getFreezableStorage();
     if (storage != null) {
@@ -3009,24 +3000,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     for (OIndexAbstract<?> index : indexesToFlush) {
       index.flush();
     }
-  }
-
-  private List<OIndexAbstract<?>> prepareIndexesToFreeze(final Collection<? extends OIndex<?>> indexes) {
-    List<OIndexAbstract<?>> indexesToFreeze = null;
-    if (indexes != null && !indexes.isEmpty()) {
-      indexesToFreeze = new ArrayList<OIndexAbstract<?>>(indexes.size());
-      for (OIndex<?> index : indexes) {
-        indexesToFreeze.add((OIndexAbstract<?>) index.getInternal());
-      }
-
-      Collections.sort(indexesToFreeze, new Comparator<OIndex<?>>() {
-        public int compare(OIndex<?> o1, OIndex<?> o2) {
-          return o1.getName().compareTo(o2.getName());
-        }
-      });
-
-    }
-    return indexesToFreeze;
   }
 
   /**
