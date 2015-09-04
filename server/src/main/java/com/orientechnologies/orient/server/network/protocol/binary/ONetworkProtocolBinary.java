@@ -23,15 +23,8 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -60,12 +53,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
@@ -82,7 +70,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -94,12 +81,7 @@ import com.orientechnologies.orient.core.sql.query.OConcurrentResultSet;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -110,7 +92,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
@@ -183,43 +164,54 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           connection.data.sessionId = clientTxId;
         }
       }
+      this.tokenBytes = null;
+
     } else {
       if (requestType != OChannelBinaryProtocol.REQUEST_CONNECT && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
-        tokenBytes = channel.readBytes();
-        try {
-          this.token = tokenHandler.parseBinaryToken(tokenBytes);
-        } catch (Exception e) {
-          throw new OException("error on token parse", e);
-        }
-        if (this.token == null || !this.token.getIsVerified()) {
-          throw new OSecurityException("The token provided is not a valid token, signature doesn't match");
-        }
+        byte[] bytes = channel.readBytes();
+        if (bytes.length == 0 || !Arrays.equals(bytes, tokenBytes) || connection.database == null) {
+          if (connection.database != null && !connection.database.isClosed()) {
+            connection.database.activateOnCurrentThread();
+            connection.database.close();
+            connection.database = null;
+          }
+          this.tokenBytes = bytes;
 
-        if (tokenBased == null)
-          tokenBased = Boolean.TRUE;
-        if (token != null) {
-          if (!tokenHandler.validateBinaryToken(token)) {
-            throw new OSecurityException("The token provided is expired");
+          try {
+            this.token = tokenHandler.parseBinaryToken(tokenBytes);
+          } catch (Exception e) {
+            throw new OException("error on token parse", e);
           }
-          if (requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN && clientTxId < 0)
-            connection = server.getClientConnectionManager().reConnect(this, tokenBytes, token);
-          else
-            connection = new OClientConnection(clientTxId, this);
-          connection.data = tokenHandler.getProtocolDataFromToken(token);
-          String db = token.getDatabase();
-          String type = token.getDatabaseType();
-          if (db != null && type != null && requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
-            final ODatabaseDocumentTx database = new ODatabaseDocumentTx(type + ":" + db);
+          if (this.token == null || !this.token.getIsVerified()) {
+            throw new OSecurityException("The token provided is not a valid token, signature doesn't match");
+          }
+
+          if (tokenBased == null)
+            tokenBased = Boolean.TRUE;
+          if (token != null) {
+            if (!tokenHandler.validateBinaryToken(token)) {
+              throw new OSecurityException("The token provided is expired");
+            }
+            if (requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN && clientTxId < 0)
+              connection = server.getClientConnectionManager().reConnect(this, tokenBytes, token);
+            else
+              connection = new OClientConnection(clientTxId, this);
+            connection.data = tokenHandler.getProtocolDataFromToken(token);
+            String db = token.getDatabase();
+            String type = token.getDatabaseType();
+            if (db != null && type != null && requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
+              final ODatabaseDocumentTx database = new ODatabaseDocumentTx(type + ":" + db);
+              if (connection.data.serverUser) {
+                database.resetInitialization();
+                database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
+                database.open(connection.data.serverUsername, null);
+              } else
+                database.open(token);
+              connection.database = database;
+            }
             if (connection.data.serverUser) {
-              database.resetInitialization();
-              database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
-              database.open(connection.data.serverUsername, null);
-            } else
-              database.open(token);
-            connection.database = database;
-          }
-          if (connection.data.serverUser) {
-            connection.serverUser = server.getUser(connection.data.serverUsername);
+              connection.serverUser = server.getUser(connection.data.serverUsername);
+            }
           }
         }
       }
@@ -258,15 +250,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
 
     if (connection != null) {
-      if (!Boolean.TRUE.equals(tokenBased)) {
-        if (connection.database != null)
-          if (!connection.database.isClosed() && connection.database.getLocalCache() != null)
-            connection.database.getLocalCache().clear();
-      } else {
-        if (connection.database != null && !connection.database.isClosed())
-          connection.database.close();
-        connection.database = null;
-      }
+      if (connection.database != null)
+        if (!connection.database.isClosed() && connection.database.getLocalCache() != null)
+          connection.database.getLocalCache().clear();
 
       connection.data.lastCommandExecutionTime = System.currentTimeMillis() - connection.data.lastCommandReceived;
       connection.data.totalCommandExecutionTime += connection.data.lastCommandExecutionTime;
