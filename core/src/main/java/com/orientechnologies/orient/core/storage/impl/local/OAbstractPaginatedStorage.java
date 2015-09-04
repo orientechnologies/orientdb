@@ -1201,8 +1201,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       stateLock.releaseReadLock();
     }
   }
-  
-  public OIndexEngine get(int indexId) {
+
+
+  public OIndexEngine getIndexEngine(int indexId) {
     return indexEngines.get(indexId);
   }
 
