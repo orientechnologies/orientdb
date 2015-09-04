@@ -67,10 +67,8 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
           if (!alreadySent.contains(iLinked.getIdentity())) {
             alreadySent.add(iLinked.getIdentity());
             try {
-              if (protocol.connection.data.protocolVersion >= 17) {
-                protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
-                protocol.writeIdentifiable(iLinked);
-              }
+              protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
+              protocol.writeIdentifiable(iLinked);
             } catch (IOException e) {
               OLogManager.instance().error(this, "Cannot write against channel", e);
             }

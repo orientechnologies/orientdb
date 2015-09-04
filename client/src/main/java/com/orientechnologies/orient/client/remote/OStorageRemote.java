@@ -1898,10 +1898,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             sendClientInfo(network);
 
             network.writeString(name);
-
-            if (network.getSrvProtocolVersion() >= 8)
-              network.writeString(connectionDbType);
-
             network.writeString(connectionUserName);
             network.writeString(connectionUserPassword);
 

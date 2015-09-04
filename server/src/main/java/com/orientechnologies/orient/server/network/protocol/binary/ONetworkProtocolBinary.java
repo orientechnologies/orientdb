@@ -82,6 +82,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -109,6 +110,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
@@ -592,7 +594,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       serializeValue(listener, result, true);
 
-      if (connection.data.protocolVersion >= 17 && listener instanceof OSyncCommandResultListener) {
+      if (listener instanceof OSyncCommandResultListener) {
         // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
         for (ORecord rec : ((OSyncCommandResultListener) listener).getFetchedRecordsToSend()) {
           channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
@@ -667,23 +669,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     int clusterId = -1;
 
     final String location;
-    if (connection.data.protocolVersion >= 10 && connection.data.protocolVersion < 24 || type.equalsIgnoreCase("PHYSICAL"))
+    if (connection.data.protocolVersion < 24 || type.equalsIgnoreCase("PHYSICAL"))
       location = channel.readString();
     else
       location = null;
 
     if (connection.data.protocolVersion < 24) {
       final String dataSegmentName;
-      if (connection.data.protocolVersion >= 10)
-        dataSegmentName = channel.readString();
-      else {
-        channel.readInt(); // OLD INIT SIZE, NOT MORE USED
-        dataSegmentName = null;
-      }
+      dataSegmentName = channel.readString();
     }
 
-    if (connection.data.protocolVersion >= 18)
-      clusterId = channel.readShort();
+    clusterId = channel.readShort();
 
     final int num;
     if (clusterId < 0)
@@ -729,8 +725,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       clusterIds[i] = channel.readShort();
 
     boolean countTombstones = false;
-    if (connection.data.protocolVersion >= 13)
-      countTombstones = channel.readByte() > 0;
+    countTombstones = channel.readByte() > 0;
 
     final long count = connection.database.countClusterElements(clusterIds, countTombstones);
 
@@ -768,7 +763,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String dbURL = channel.readString();
 
     String dbType = ODatabaseDocument.TYPE;
-    if (connection.data.protocolVersion >= 8)
+    if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_31)
       // READ DB-TYPE FROM THE CLIENT. NOT USED ANYMORE
       dbType = channel.readString();
 
@@ -910,7 +905,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       sendErrorDetails(current);
 
-      if (connection != null && connection.data.protocolVersion >= 19) {
+      if (connection != null) {
         serializeExceptionObject(current);
       }
 
@@ -1073,8 +1068,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     String dbName = channel.readString();
 
     String storageType = null;
-    if (connection.data.protocolVersion >= 16)
-      storageType = channel.readString();
+    storageType = channel.readString();
 
     if (storageType == null)
       storageType = "plocal";
@@ -1109,8 +1103,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String dbName = channel.readString();
 
     String storageType = null;
-    if (connection.data.protocolVersion >= 16)
-      storageType = channel.readString();
+    storageType = channel.readString();
 
     if (storageType == null)
       storageType = "plocal";
@@ -1148,9 +1141,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     String dbName = channel.readString();
     String dbType = ODatabaseDocument.TYPE;
-    if (connection.data.protocolVersion >= 8)
-      // READ DB-TYPE FROM THE CLIENT
-      dbType = channel.readString();
+    // READ DB-TYPE FROM THE CLIENT
+    dbType = channel.readString();
     String storageType = channel.readString();
 
     checkServerAccess("database.create");
@@ -1441,7 +1433,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         serializeValue(listener, result, false);
 
-        if (connection.data.protocolVersion >= 17 && listener instanceof OSyncCommandResultListener) {
+        if (listener instanceof OSyncCommandResultListener) {
           // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
           for (ORecord rec : ((OSyncCommandResultListener) listener).getFetchedRecordsToSend()) {
             channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
@@ -1660,7 +1652,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (!isConnectionAlive())
       return;
 
-    final int dataSegmentId = connection.data.protocolVersion >= 10 && connection.data.protocolVersion < 24 ? channel.readInt() : 0;
+    final int dataSegmentId = connection.data.protocolVersion < 24 ? channel.readInt() : 0;
 
     final ORecordId rid = new ORecordId(channel.readShort(), ORID.CLUSTER_POS_INVALID);
     final byte[] buffer = channel.readBytes();
@@ -1676,8 +1668,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_25)
           channel.writeShort((short) record.getIdentity().getClusterId());
         channel.writeLong(record.getIdentity().getClusterPosition());
-        if (connection.data.protocolVersion >= 11)
-          channel.writeVersion(record.getRecordVersion());
+        channel.writeVersion(record.getRecordVersion());
 
         if (connection.data.protocolVersion >= 20)
           sendCollectionChanges();
@@ -1716,12 +1707,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final ORecordId rid = channel.readRID();
     final String fetchPlanString = channel.readString();
     boolean ignoreCache = false;
-    if (connection.data.protocolVersion >= 9)
-      ignoreCache = channel.readByte() == 1;
+    ignoreCache = channel.readByte() == 1;
 
     boolean loadTombstones = false;
-    if (connection.data.protocolVersion >= 13)
-      loadTombstones = channel.readByte() > 0;
+    loadTombstones = channel.readByte() > 0;
 
     if (rid.clusterId == 0 && rid.clusterPosition == 0) {
       // @COMPATIBILITY 0.9.25
@@ -1974,8 +1963,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     checkServerAccess("database.freeze");
 
     String storageType = null;
-    if (connection.data.protocolVersion >= 16)
-      storageType = channel.readString();
+    storageType = channel.readString();
 
     if (storageType == null)
       storageType = "plocal";
@@ -2008,8 +1996,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     checkServerAccess("database.release");
 
     String storageType = null;
-    if (connection.data.protocolVersion >= 16)
-      storageType = channel.readString();
+    storageType = channel.readString();
 
     if (storageType == null)
       storageType = "plocal";
@@ -2043,8 +2030,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     checkServerAccess("database.freeze");
 
     String storageType = null;
-    if (connection.data.protocolVersion >= 16)
-      storageType = channel.readString();
+    storageType = channel.readString();
 
     if (storageType == null)
       storageType = "plocal";
@@ -2079,8 +2065,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     checkServerAccess("database.release");
 
     String storageType = null;
-    if (connection.data.protocolVersion >= 16)
-      storageType = channel.readString();
+    storageType = channel.readString();
 
     if (storageType == null)
       storageType = "plocal";
@@ -2487,17 +2472,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         ++clusterCount;
       }
     }
-    if (connection.data.protocolVersion >= 7)
-      channel.writeShort((short) clusterCount);
-    else
-      channel.writeInt(clusterCount);
+    channel.writeShort((short) clusterCount);
 
     for (OCluster c : clusters) {
       if (c != null) {
         channel.writeString(c.getName());
         channel.writeShort((short) c.getId());
 
-        if (connection.data.protocolVersion >= 12 && connection.data.protocolVersion < 24) {
+        if (connection.data.protocolVersion < 24) {
           channel.writeString("none");
           channel.writeShort((short) -1);
         }

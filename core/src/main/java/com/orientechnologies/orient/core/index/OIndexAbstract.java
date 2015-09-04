@@ -316,7 +316,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
             rebuild();
           } catch (Throwable t) {
             OLogManager.instance().error(this,
-                "Cannot rebuild index '%s'  because '" + t + "'. The index will be removed in configuration", e, getName());
+                "Cannot rebuild index '%s'  BECAUSE '" + t + "'. The index will be removed in configuration", e, getName());
             // REMOVE IT
             return false;
           }

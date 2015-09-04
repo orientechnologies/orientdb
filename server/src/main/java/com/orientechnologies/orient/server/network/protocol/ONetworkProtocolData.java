@@ -49,6 +49,5 @@ public class ONetworkProtocolData {
   public String              serializationImpl         = null;
   public boolean             serverUser                = false;
   public String              serverUsername            = null;
-  public boolean             stateFull                 = false;
   public OCommandRequestText command                   = null;
 }
