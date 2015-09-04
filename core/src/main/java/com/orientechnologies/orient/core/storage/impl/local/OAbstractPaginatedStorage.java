@@ -20,37 +20,30 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
@@ -108,6 +101,7 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
@@ -129,6 +123,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 public abstract class OAbstractPaginatedStorage extends OStorageAbstract implements OLowDiskSpaceListener,
     OFullCheckpointRequestListener, OIdentifiableStorage, OOrientStartupListener, OOrientShutdownListener {
+  public static final String                        IBU_EXTENSION                              = ".ibu";
+  public static final String                        CONF_ENTRY_NAME                            = "database.ocf";
+
   private static final int                          RECORD_LOCK_TIMEOUT                        = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
                                                                                                    .getValueAsInteger();
 
@@ -217,7 +214,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       restoreIfNeeded();
 
       openClusters();
-      openIndexes(componentsFactory.binarySerializerFactory);
+      openIndexes();
 
       if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN.getValueAsBoolean())
         makeFullCheckpoint();
@@ -249,7 +246,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  protected void openIndexes(OBinarySerializerFactory binarySerializerFactory) {
+  protected void openIndexes() {
+    OCurrentStorageComponentsFactory cf = componentsFactory;
+    if (cf == null)
+      throw new OStorageException("Stroage " + name + " is not properly initialized");
+
     final Set<String> indexNames = configuration.indexEngines();
     for (String indexName : indexNames) {
       final OStorageConfiguration.IndexEngineData engineData = configuration.getIndexEngine(indexName);
@@ -257,8 +258,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           engineData.getDurableInNonTxMode(), this, engineData.getVersion());
 
       try {
-        engine.load(engineData.getName(), binarySerializerFactory.getObjectSerializer(engineData.getValueSerializerId()),
-            engineData.isAutomatic(), binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()),
+        engine.load(engineData.getName(), cf.binarySerializerFactory.getObjectSerializer(engineData.getValueSerializerId()),
+            engineData.isAutomatic(), cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()),
             engineData.getKeyTypes(), engineData.isNullValuesSupport(), engineData.getKeySize());
 
         indexEngineNameMap.put(engineData.getName().toLowerCase(configuration.getLocaleInstance()), engine);
@@ -2463,6 +2464,462 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   public void setConflictStrategy(final ORecordConflictStrategy conflictResolver) {
     this.recordConflictStrategy = conflictResolver;
+  }
+
+  public void incrementalBackup(String backupDirectory) {
+    incrementalBackup(new File(backupDirectory));
+  }
+
+  public void incrementalBackup(File backupDirectory) {
+    if (!backupDirectory.exists()) {
+      if (!backupDirectory.mkdirs()) {
+        throw new OStorageException("Backup directory " + backupDirectory.getAbsolutePath()
+            + " does not exist and can not be created");
+      }
+    }
+
+    RandomAccessFile rndIBUFile = null;
+    try {
+      final String[] files = fetchIBUFiles(backupDirectory);
+
+      final OLogSequenceNumber lastLsn;
+      final long nextIndex;
+
+      if (files.length == 0) {
+        lastLsn = null;
+        nextIndex = 0;
+      } else {
+        lastLsn = extractIBULsn(backupDirectory, files[files.length - 1]);
+        nextIndex = extractIndexFromIBUFile(backupDirectory, files[files.length - 1]) + 1;
+      }
+
+      final SimpleDateFormat dateFormat = new SimpleDateFormat("HH_mm_ss_dd_MM_yyyy");
+      final String fileName;
+
+      if (lastLsn != null)
+        fileName = nextIndex + "_" + dateFormat.format(new Date()) + IBU_EXTENSION;
+      else
+        fileName = nextIndex + "_" + dateFormat.format(new Date()) + "_full" + IBU_EXTENSION;
+
+      final File ibuFile = new File(backupDirectory, fileName);
+
+      rndIBUFile = new RandomAccessFile(ibuFile, "w");
+      final FileChannel ibuChannel = rndIBUFile.getChannel();
+
+      ibuChannel.position(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
+
+      final OLogSequenceNumber maxLsn = incrementalBackup(Channels.newOutputStream(ibuChannel), lastLsn);
+      final ByteBuffer dataBuffer = ByteBuffer.allocate(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
+
+      dataBuffer.putLong(nextIndex);
+      dataBuffer.putLong(maxLsn.getSegment());
+      dataBuffer.putLong(maxLsn.getPosition());
+
+      if (lastLsn == null)
+        dataBuffer.put((byte) 1);
+      else
+        dataBuffer.put((byte) 0);
+
+      dataBuffer.rewind();
+
+      ibuChannel.position(0);
+      ibuChannel.write(dataBuffer);
+    } catch (IOException e) {
+      throw new OStorageException("Error during incremental backup", e);
+    } finally {
+      try {
+        if (rndIBUFile != null)
+          rndIBUFile.close();
+
+      } catch (IOException e) {
+        throw new OStorageException("Error during incremental backup", e);
+      }
+    }
+  }
+
+  private String[] fetchIBUFiles(File backupDirectory) throws IOException {
+    String[] files = backupDirectory.list(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return name.toLowerCase(configuration.getLocaleInstance()).endsWith(IBU_EXTENSION);
+      }
+    });
+
+    if (files == null)
+      throw new OStorageException("Can not read list of backup files from directory " + backupDirectory.getAbsolutePath());
+
+    final List<OPair<Long, String>> indexedFiles = new ArrayList<OPair<Long, String>>(files.length);
+
+    for (String file : files) {
+      final long fileIndex = extractIndexFromIBUFile(backupDirectory, file);
+      indexedFiles.add(new OPair<Long, String>(fileIndex, file));
+    }
+
+    Collections.sort(indexedFiles);
+
+    final String[] sortedFiles = new String[files.length];
+
+    int index = 0;
+    for (OPair<Long, String> indexedFile : indexedFiles) {
+      sortedFiles[index] = indexedFile.getValue();
+      index++;
+    }
+
+    return sortedFiles;
+  }
+
+  private OLogSequenceNumber extractIBULsn(File backupDirectory, String file) {
+    final File ibuFile = new File(backupDirectory, file);
+    final RandomAccessFile rndIBUFile;
+    try {
+      rndIBUFile = new RandomAccessFile(ibuFile, "r");
+    } catch (FileNotFoundException e) {
+      throw new OStorageException("Backup file was not found", e);
+    }
+
+    try {
+      try {
+        final FileChannel ibuChannel = rndIBUFile.getChannel();
+        ibuChannel.position(OLongSerializer.LONG_SIZE);
+
+        ByteBuffer lsnData = ByteBuffer.allocate(2 * OLongSerializer.LONG_SIZE);
+
+        final long segment = lsnData.getLong();
+        final long position = lsnData.getLong();
+
+        return new OLogSequenceNumber(segment, position);
+      } finally {
+        rndIBUFile.close();
+      }
+    } catch (IOException e) {
+      throw new OStorageException("Error during read of backup file", e);
+    } finally {
+      try {
+        rndIBUFile.close();
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error during read of backup file", e);
+      }
+    }
+  }
+
+  private long extractIndexFromIBUFile(File backupDirectory, String fileName) throws IOException {
+    final File file = new File(backupDirectory, fileName);
+    final RandomAccessFile rndFile = new RandomAccessFile(file, "r");
+    final long index;
+
+    try {
+      index = rndFile.readLong();
+    } finally {
+      rndFile.close();
+    }
+
+    return index;
+  }
+
+  public OLogSequenceNumber incrementalBackup(final OutputStream stream, OLogSequenceNumber fromLsn) throws IOException {
+    final OLogSequenceNumber lastLsn;
+
+    checkOpeness();
+    freeze(false);
+
+    try {
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+
+        final BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(stream);
+        try {
+          final ZipOutputStream zipOutputStream = new ZipOutputStream(bufferedOutputStream, Charset.forName(configuration
+              .getCharset()));
+          try {
+            final Date startedOn = new Date();
+            lastLsn = backupPagesWithChanges(fromLsn, zipOutputStream);
+
+            final Date completedOn = new Date();
+
+            final ZipEntry backupJson = new ZipEntry("backup.json");
+            zipOutputStream.putNextEntry(backupJson);
+
+            final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh-mm-ss.SSS");
+
+            final OutputStreamWriter writer = new OutputStreamWriter(zipOutputStream, configuration.getCharset());
+            writer.append("{\r\n");
+            writer.append("\t\"lsn\":").append(lastLsn.toString()).append(",\r\n");
+            writer.append("\t\"startedOn\":").append(dateFormat.format(startedOn)).append(",\r\n");
+            writer.append("\t\"completedOn\":").append(dateFormat.format(completedOn)).append("\r\n");
+            writer.append("}\r\n");
+
+            writer.flush();
+
+            zipOutputStream.closeEntry();
+
+            final ZipEntry configurationEntry = new ZipEntry(CONF_ENTRY_NAME);
+
+            zipOutputStream.putNextEntry(configurationEntry);
+            final byte[] btConf = configuration.toStream();
+
+            zipOutputStream.write(btConf);
+            zipOutputStream.closeEntry();
+
+          } finally {
+            zipOutputStream.close();
+          }
+
+        } finally {
+          bufferedOutputStream.close();
+        }
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } finally {
+      release();
+    }
+
+    return lastLsn;
+  }
+
+  private OLogSequenceNumber backupPagesWithChanges(OLogSequenceNumber changeLsn, ZipOutputStream stream) throws IOException {
+    OLogSequenceNumber lastLsn = changeLsn;
+
+    final Map<String, Long> files = writeCache.files();
+    final int pageSize = writeCache.pageSize();
+
+    for (Map.Entry<String, Long> entry : files.entrySet()) {
+      final String fileName = entry.getKey();
+      final long fileId = entry.getValue();
+      final boolean closeFile;
+      if (writeCache.isOpen(fileId))
+        closeFile = false;
+      else {
+        readCache.openFile(fileId, writeCache);
+        closeFile = true;
+      }
+
+      final long filledUpTo = writeCache.getFilledUpTo(fileId);
+      final ZipEntry zipEntry = new ZipEntry(fileName);
+
+      stream.putNextEntry(zipEntry);
+
+      for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
+        final OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache);
+        cacheEntry.acquireSharedLock();
+        try {
+          final OLogSequenceNumber pageLsn = ODurablePage.getLogSequenceNumberFromPage(cacheEntry.getCachePointer()
+              .getDataPointer());
+
+          if (changeLsn == null || pageLsn.compareTo(changeLsn) > 0) {
+
+            final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
+            OLongSerializer.INSTANCE.serializeNative(pageIndex, data, 0);
+            ODurablePage.getPageData(cacheEntry.getCachePointer().getDataPointer(), data, OLongSerializer.LONG_SIZE, pageSize);
+
+            stream.write(data);
+
+            if (lastLsn == null || pageLsn.compareTo(lastLsn) > 0) {
+              lastLsn = pageLsn;
+            }
+          }
+        } finally {
+          cacheEntry.releaseSharedLock();
+          readCache.release(cacheEntry, writeCache);
+        }
+      }
+
+      if (closeFile)
+        readCache.closeFile(fileId, true, writeCache);
+
+      stream.closeEntry();
+    }
+
+    return lastLsn;
+  }
+
+  public void restoreFromIncrementalBackup(File backupDirectory) throws IOException {
+    if (!backupDirectory.exists()) {
+      throw new OStorageException("Directory which should contain incremental backup files (files with extension " + IBU_EXTENSION
+          + " ) is absent. It should be located at " + backupDirectory.getAbsolutePath());
+    }
+
+    final String[] files = fetchIBUFiles(backupDirectory);
+    if (files.length == 0) {
+      throw new OStorageException("Can not find incremental backup files (files with extension " + IBU_EXTENSION
+          + " ) in directory " + backupDirectory.getAbsolutePath());
+    }
+
+    stateLock.acquireWriteLock();
+    try {
+      for (String file : files) {
+        final File ibuFile = new File(backupDirectory, file);
+
+        final RandomAccessFile rndIBUFile = new RandomAccessFile(ibuFile, "rw");
+        try {
+          final FileChannel ibuChannel = rndIBUFile.getChannel();
+          ibuChannel.position(3 * OLongSerializer.LONG_SIZE);
+
+          final ByteBuffer buffer = ByteBuffer.allocate(1);
+          ibuChannel.read(buffer);
+          final boolean fullBackup = buffer.get() == 1;
+
+          final InputStream inputStream = Channels.newInputStream(ibuChannel);
+          restoreFromIncrementalBackup(inputStream, fullBackup);
+        } finally {
+          rndIBUFile.close();
+        }
+
+      }
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
+  public void restoreFromIncrementalBackup(final InputStream inputStream, final boolean isFull) throws IOException {
+    stateLock.acquireWriteLock();
+    try {
+      closeClusters(false);
+      closeIndexes(false);
+
+      final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+      final ZipInputStream zipInputStream = new ZipInputStream(bufferedInputStream, Charset.forName(configuration.getCharset()));
+      final int pageSize = writeCache.pageSize();
+
+      ZipEntry zipEntry;
+      OLogSequenceNumber maxLsn = null;
+
+      List<String> processedFiles = new ArrayList<String>();
+
+      while ((zipEntry = zipInputStream.getNextEntry()) != null) {
+        if (zipEntry.getName().equals("backup.json"))
+          continue;
+
+        if (zipEntry.getName().equals(CONF_ENTRY_NAME)) {
+          replaceConfiguration(zipInputStream);
+
+          continue;
+        }
+
+        Long fileId;
+        final boolean isClosed;
+
+        if (!writeCache.exists(zipEntry.getName())) {
+          fileId = readCache.addFile(zipEntry.getName(), writeCache);
+          isClosed = true;
+        } else {
+          fileId = writeCache.isOpen(zipEntry.getName());
+
+          if (fileId == null) {
+            isClosed = true;
+            fileId = readCache.openFile(zipEntry.getName(), writeCache);
+          } else
+            isClosed = false;
+        }
+
+        if (isFull)
+          readCache.truncateFile(fileId, writeCache);
+
+        while (zipInputStream.available() > 0) {
+          final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
+
+          int rb = 0;
+
+          while (rb < data.length) {
+            final int b = zipInputStream.read(data, rb, data.length - rb);
+
+            if (b == -1)
+              throw new OStorageException("Can not read data from file " + zipEntry.getName());
+
+            rb += b;
+          }
+
+          final long pageIndex = OLongSerializer.INSTANCE.deserializeNative(data, 0);
+
+          OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache);
+
+          if (cacheEntry == null) {
+            do {
+              readCache.release(cacheEntry, writeCache);
+              cacheEntry = readCache.allocateNewPage(fileId, writeCache);
+            } while (cacheEntry.getPageIndex() != pageIndex);
+          }
+
+          cacheEntry.acquireSharedLock();
+          try {
+            final ODirectMemoryPointer pointer = cacheEntry.getCachePointer().getDataPointer();
+            final OLogSequenceNumber backedUpPageLsn = ODurablePage.getLogSequenceNumber(OLongSerializer.LONG_SIZE, data);
+            if (isFull) {
+              pointer.set(OWOWCache.PAGE_PADDING, data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
+
+              if (maxLsn == null || maxLsn.compareTo(backedUpPageLsn) > 0) {
+                maxLsn = backedUpPageLsn;
+              }
+            } else {
+              final OLogSequenceNumber currentPageLsn = ODurablePage.getLogSequenceNumberFromPage(pointer);
+              if (backedUpPageLsn.compareTo(currentPageLsn) > 0) {
+                pointer.set(OWOWCache.PAGE_PADDING, data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
+
+                if (maxLsn == null || maxLsn.compareTo(backedUpPageLsn) > 0) {
+                  maxLsn = backedUpPageLsn;
+                }
+              }
+            }
+          } finally {
+            cacheEntry.releaseSharedLock();
+            readCache.release(cacheEntry, writeCache);
+          }
+        }
+
+        if (isClosed)
+          readCache.closeFile(fileId, true, writeCache);
+
+        processedFiles.add(zipEntry.getName());
+      }
+
+      final List<String> currentFiles = new ArrayList<String>(writeCache.files().keySet());
+      currentFiles.removeAll(processedFiles);
+
+      for (String file : currentFiles) {
+        final long fileId = readCache.openFile(file, writeCache);
+        readCache.deleteFile(fileId, writeCache);
+      }
+
+      if (maxLsn != null && writeAheadLog != null) {
+        writeAheadLog.moveLsnAfter(maxLsn);
+      }
+
+      openClusters();
+      openIndexes();
+
+      makeFullCheckpoint();
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
+  private void replaceConfiguration(ZipInputStream zipInputStream) throws IOException {
+    final Map<String, Object> loadProperties = configuration.getLoadProperties();
+
+    byte[] buffer = new byte[1024];
+
+    int rb = 0;
+    while (zipInputStream.available() > 0) {
+      final int b = zipInputStream.read(buffer, rb, buffer.length - rb);
+
+      if (b == -1)
+        break;
+
+      rb += b;
+
+      if (rb == buffer.length) {
+        byte[] oldBuffer = buffer;
+
+        buffer = new byte[buffer.length << 1];
+        System.arraycopy(oldBuffer, 0, buffer, 0, oldBuffer.length);
+      }
+    }
+
+    configuration.fromStream(buffer, 0, rb);
+    configuration.update();
+
+    configuration.load(loadProperties);
   }
 
   /**

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.config;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -79,41 +80,75 @@ public class OStorageConfiguration implements OSerializableStream {
   public static final ORecordId                           CONFIG_RID                    = new OImmutableRecordId(0, 0);
 
   public static final String                              DEFAULT_CHARSET               = "UTF-8";
-  private String                                          charset                       = DEFAULT_CHARSET;
+  private String                                          charset;
   public static final int                                 CURRENT_VERSION               = 16;
   public static final int                                 CURRENT_BINARY_FORMAT_VERSION = 12;
-  private final List<OStorageEntryConfiguration>          properties                    = Collections
-                                                                                            .synchronizedList(new ArrayList<OStorageEntryConfiguration>());
+  private volatile List<OStorageEntryConfiguration>       properties;
   protected final transient OStorage                      storage;
-  private final OContextConfiguration                     configuration                 = new OContextConfiguration();
-  public volatile int                                     version                       = -1;
+  private volatile OContextConfiguration                  configuration;
+  public volatile int                                     version;
   public volatile String                                  name;
   public volatile String                                  schemaRecordId;
   public volatile String                                  dictionaryRecordId;
   public volatile String                                  indexMgrRecordId;
-  public volatile String                                  dateFormat                    = "yyyy-MM-dd";
-  public volatile String                                  dateTimeFormat                = "yyyy-MM-dd HH:mm:ss";
+  public volatile String                                  dateFormat;
+  public volatile String                                  dateTimeFormat;
   public volatile int                                     binaryFormatVersion;
   public volatile OStorageSegmentConfiguration            fileTemplate;
-  public volatile List<OStorageClusterConfiguration>      clusters                      = Collections
-                                                                                            .synchronizedList(new ArrayList<OStorageClusterConfiguration>());
-  private volatile String                                 localeLanguage                = Locale.getDefault().getLanguage();
-  private volatile String                                 localeCountry                 = Locale.getDefault().getCountry();
-  private volatile TimeZone                               timeZone                      = TimeZone.getDefault();
+  public volatile List<OStorageClusterConfiguration>      clusters;
+  private volatile String                                 localeLanguage;
+  private volatile String                                 localeCountry;
+  private volatile TimeZone                               timeZone;
   private transient volatile Locale                       localeInstance;
   private transient volatile DecimalFormatSymbols         unusualSymbols;
   private volatile String                                 clusterSelection;
   private volatile String                                 conflictStrategy;
-  private volatile int                                    minimumClusters               = 1;
+  private volatile int                                    minimumClusters;
   private volatile String                                 recordSerializer;
   private volatile int                                    recordSerializerVersion;
   private volatile boolean                                strictSQL;
   private volatile Map<String, Object>                    loadProperties;
-  private volatile ConcurrentMap<String, IndexEngineData> indexEngines                  = new ConcurrentHashMap<String, IndexEngineData>();
+  private volatile ConcurrentMap<String, IndexEngineData> indexEngines;
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
+
+    clear();
+
+    initConfiguration();
+  }
+
+  public void initConfiguration() {
+    configuration = new OContextConfiguration();
+  }
+
+  public void clear() {
     fileTemplate = new OStorageSegmentConfiguration();
+
+    charset = DEFAULT_CHARSET;
+    properties = Collections.synchronizedList(new ArrayList<OStorageEntryConfiguration>());
+
+    version = -1;
+    name = null;
+    schemaRecordId = null;
+    dictionaryRecordId = null;
+    indexMgrRecordId = null;
+    dateFormat = "yyyy-MM-dd";
+    dateTimeFormat = "yyyy-MM-dd HH:mm:ss";
+    binaryFormatVersion = 0;
+    clusters = Collections.synchronizedList(new ArrayList<OStorageClusterConfiguration>());
+    localeLanguage = Locale.getDefault().getLanguage();
+    localeCountry = Locale.getDefault().getCountry();
+    timeZone = TimeZone.getDefault();
+    localeInstance = null;
+    unusualSymbols = null;
+    clusterSelection = null;
+    conflictStrategy = null;
+    minimumClusters = 1;
+    recordSerializer = null;
+    recordSerializerVersion = 0;
+    strictSQL = false;
+    indexEngines = new ConcurrentHashMap<String, IndexEngineData>();
 
     binaryFormatVersion = CURRENT_BINARY_FORMAT_VERSION;
   }
@@ -140,6 +175,8 @@ public class OStorageConfiguration implements OSerializableStream {
    * @param iProperties
    */
   public OStorageConfiguration load(final Map<String, Object> iProperties) throws OSerializationException {
+    initConfiguration();
+
     final String compressionMethod = (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey()
         .toLowerCase());
     if (compressionMethod != null)
@@ -217,8 +254,10 @@ public class OStorageConfiguration implements OSerializableStream {
     return unusualSymbols;
   }
 
-  public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-    final String[] values = new String(iStream).split("\\|");
+  public void fromStream(final byte[] stream, int offset, int length) {
+    clear();
+
+    final String[] values = new String(stream, offset, length).split("\\|");
     int index = 0;
     version = Integer.parseInt(read(values[index++]));
 
@@ -424,6 +463,10 @@ public class OStorageConfiguration implements OSerializableStream {
       }
     }
 
+  }
+
+  public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
+    fromStream(iStream, 0, iStream.length);
     return this;
   }
 
@@ -570,7 +613,9 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public void close() throws IOException {
-    indexEngines.clear();
+    clear();
+
+    initConfiguration();
   }
 
   public void setCluster(final OStorageClusterConfiguration config) {

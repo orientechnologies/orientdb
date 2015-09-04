@@ -48,6 +48,8 @@ public class OStorageMemoryConfiguration extends OStorageConfiguration {
 
   @Override
   public OStorageConfiguration load(final Map<String, Object> iProperties) throws OSerializationException {
+    initConfiguration();
+
     bindPropertiesToContext(iProperties);
 
     try {
