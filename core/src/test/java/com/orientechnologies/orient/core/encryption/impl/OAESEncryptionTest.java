@@ -52,11 +52,10 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
   public void testCreatedAESEncryptedDatabase() {
     String buildDirectory = System.getProperty("buildDirectory", ".");
 
-    final ODatabase db = new ODatabaseDocumentTx("plocal:" + buildDirectory + File.separator + DBNAME_DATABASETEST);
-    if (db.exists()) {
-      db.open("admin", "admin");
-      db.drop();
-    }
+    final String dbPath = buildDirectory + File.separator + DBNAME_DATABASETEST;
+    OFileUtils.deleteRecursively(new File(dbPath));
+
+    final ODatabase db = new ODatabaseDocumentTx("plocal:" + dbPath);
 
     db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey(), "aes");
     db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
@@ -127,13 +126,11 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
   }
 
   public void testCreatedAESEncryptedCluster() {
-    String buildDirectory = System.getProperty("buildDirectory", ".");
-    final ODatabase db = new ODatabaseDocumentTx("plocal:" + buildDirectory + File.separator + DBNAME_CLUSTERTEST);
+    final String buildDirectory = System.getProperty("buildDirectory", ".");
+    final String dbPath = buildDirectory + File.separator + DBNAME_CLUSTERTEST;
 
-    if (db.exists()) {
-      db.open("admin", "admin");
-      db.drop();
-    }
+    OFileUtils.deleteRecursively(new File(dbPath));
+    final ODatabase db = new ODatabaseDocumentTx("plocal:" + dbPath);
 
     db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
 

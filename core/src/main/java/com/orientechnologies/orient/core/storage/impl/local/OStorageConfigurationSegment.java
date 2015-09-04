@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
@@ -67,6 +68,8 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   @Override
   public OStorageConfiguration load(final Map<String, Object> iProperties) throws OSerializationException {
     try {
+      initConfiguration();
+
       bindPropertiesToContext(iProperties);
 
       if (segment.getFile().exists())
