@@ -5,14 +5,15 @@ import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.Properties;
 
+import org.hamcrest.Matchers;
 import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static java.sql.ResultSet.CONCUR_READ_ONLY;
 import static java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT;
 import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.*;
 
 public class OrientJdbcConnectionTest extends OrientJdbcBaseTest {
 
@@ -51,7 +52,7 @@ public class OrientJdbcConnectionTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  public void connectUsingPool() throws Exception {
+  public void shouldConnectUsingPool() throws Exception {
     String dbUrl = "memory:test";
     Properties p = new Properties();
     p.setProperty("db.usePool", "TRUE");
@@ -59,6 +60,7 @@ public class OrientJdbcConnectionTest extends OrientJdbcBaseTest {
     Connection connection = DriverManager.getConnection(dbUrl, p);
     assertNotNull(connection);
 
+    assertThat(connection,is(notNullValue()));
     connection.close();
   }
 

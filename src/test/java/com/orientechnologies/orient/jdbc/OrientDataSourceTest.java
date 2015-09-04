@@ -1,12 +1,13 @@
 package com.orientechnologies.orient.jdbc;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertThat;
 
 public class OrientDataSourceTest extends OrientJdbcBaseTest {
 
@@ -20,9 +21,9 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
 
     Connection conn = ds.getConnection();
 
-    assertNotNull(conn);
+    assertThat(conn, is(notNullValue()));
     conn.close();
-    assertTrue(conn.isClosed());
+    assertThat(conn.isClosed(), is(true));
 
   }
 

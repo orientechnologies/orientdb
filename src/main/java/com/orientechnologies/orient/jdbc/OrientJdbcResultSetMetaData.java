@@ -40,9 +40,8 @@ import java.util.Map;
 @SuppressWarnings("boxing")
 public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
 
-  private OrientJdbcResultSet              resultSet;
-
   private final static Map<OType, Integer> typesSqlTypes = new HashMap<OType, Integer>();
+
   static {
     typesSqlTypes.put(OType.STRING, Types.VARCHAR);
     typesSqlTypes.put(OType.INTEGER, Types.INTEGER);
@@ -69,8 +68,14 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
     typesSqlTypes.put(OType.TRANSIENT, Types.NULL);
   }
 
+  private OrientJdbcResultSet              resultSet;
+
   public OrientJdbcResultSetMetaData(final OrientJdbcResultSet iResultSet) {
     resultSet = iResultSet;
+  }
+
+  public static Integer getSqlType(final OType iType) {
+    return typesSqlTypes.get(iType);
   }
 
   public int getColumnCount() throws SQLException {
@@ -290,10 +295,6 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
   private boolean isANumericColumn(final OType type) {
     return type == OType.BYTE || type == OType.DOUBLE || type == OType.FLOAT || type == OType.INTEGER || type == OType.LONG
         || type == OType.SHORT;
-  }
-
-  public static Integer getSqlType(final OType iType) {
-    return typesSqlTypes.get(iType);
   }
 
   protected OProperty getProperty(final int column) throws SQLException {

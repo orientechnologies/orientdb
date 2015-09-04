@@ -39,6 +39,10 @@ public class OrientJdbcDriver implements java.sql.Driver {
     }
   }
 
+  public static String getVersion() {
+    return "OrientDB " + MAJOR_VERSION + "." + MINOR_VERSION + " JDBC Driver";
+  }
+
   public boolean acceptsURL(String url) throws SQLException {
 
     return url.startsWith("jdbc:orient:");
@@ -62,10 +66,6 @@ public class OrientJdbcDriver implements java.sql.Driver {
 
   public int getMinorVersion() {
     return MINOR_VERSION;
-  }
-
-  public static String getVersion() {
-    return "OrientDB " + MAJOR_VERSION + "." + MINOR_VERSION + " JDBC Driver";
   }
 
   public Logger getParentLogger() throws SQLFeatureNotSupportedException {

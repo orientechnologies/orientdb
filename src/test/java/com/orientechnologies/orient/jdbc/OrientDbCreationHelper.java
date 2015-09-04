@@ -81,8 +81,6 @@ public class OrientDbCreationHelper {
     // link article-->author
     article.createProperty("author", OType.LINK, author);
 
-    schema.save();
-
     schema.reload();
 
   }
@@ -188,16 +186,16 @@ public class OrientDbCreationHelper {
     byte[] chunk;
 
     database.declareIntent(new OIntentMassiveInsert());
-    ORecordBytes recordChunck;
+    ORecordBytes recordChunk;
     for (int i = 0; i < numberOfRecords; i++) {
       if (i == numberOfRecords - 1)
         chunk = new byte[remainder];
       else
         chunk = new byte[bufferSize];
       binaryStream.read(chunk);
-      recordChunck = new ORecordBytes(database, chunk);
-      database.save(recordChunck);
-      binaryChuncks.add(recordChunck.getIdentity());
+      recordChunk = new ORecordBytes(database, chunk);
+      database.save(recordChunk);
+      binaryChuncks.add(recordChunk.getIdentity());
     }
     database.declareIntent(null);
 

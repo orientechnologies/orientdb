@@ -56,8 +56,7 @@ public abstract class OrientJdbcBaseTest {
 
   @After
   public void closeConnection() throws Exception {
-    if (conn != null && !conn.isClosed()) {
+    if (conn != null && !conn.isClosed())
       conn.close();
-    }
   }
 }

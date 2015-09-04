@@ -24,12 +24,7 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLSyntaxErrorException;
-import java.sql.SQLWarning;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -143,7 +138,7 @@ public class OrientJdbcStatement implements Statement {
     else if (rawResult instanceof Integer)
       return (Integer) rawResult;
     else if (rawResult instanceof Collection)
-      return ((Collection) rawResult ).size();
+      return ((Collection) rawResult).size();
 
     return 0;
   }
