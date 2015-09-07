@@ -40,6 +40,7 @@ import com.orientechnologies.orient.spatial.shape.OShapeFactory;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
@@ -90,10 +91,10 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version) {
-
+  public OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version, Map<String, String> engineProperties) {
     return new OLuceneIndexEngineDelegate(name, durableInNonTxMode, storage, version);
   }
+
 
   @Override
   public PRIORITY getPriority() {

@@ -21,11 +21,10 @@ import com.orientechnologies.lucene.LuceneTxOperations;
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexMultiValues;
-import com.orientechnologies.orient.core.index.OIndexNotUnique;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
 import org.apache.lucene.search.IndexSearcher;
 
 import java.io.IOException;
@@ -58,9 +57,15 @@ public abstract class OLuceneIndexNotUnique extends OIndexNotUnique implements O
 
   @Override
   protected void onIndexEngineChange(int indexId) {
-    OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) storage.getIndexEngine(indexId);
-    oIndexEngine.initIndex(getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
-    super.onIndexEngineChange(indexId);
+
+    storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Object>() {
+      @Override
+      public Object callEngine(OIndexEngine engine) {
+        OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
+        oIndexEngine.initIndex(getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
+        return null;
+      }
+    });
   }
 
   @Override
@@ -77,9 +82,14 @@ public abstract class OLuceneIndexNotUnique extends OIndexNotUnique implements O
   }
 
   @Override
-  public boolean remove(Object key, OIdentifiable value) {
-    OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) storage.getIndexEngine(indexId);
-    return indexEngine.remove(key, value);
+  public boolean remove(final Object key, final OIdentifiable value) {
+    return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Boolean>() {
+      @Override
+      public Boolean callEngine(OIndexEngine engine) {
+        OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+        return indexEngine.remove(key, value);
+      }
+    });
   }
 
   @Override
@@ -112,28 +122,34 @@ public abstract class OLuceneIndexNotUnique extends OIndexNotUnique implements O
   // }
 
   @Override
-  protected void commitSnapshot(Map<Object, Object> snapshot) {
+  protected void commitSnapshot(final Map<Object, Object> snapshot) {
 
-    OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) storage.getIndexEngine(indexId);
+    storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Object>() {
+      @Override
+      public Boolean callEngine(OIndexEngine engine) {
+        OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
 
-    for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
-      Object key = snapshotEntry.getKey();
-      LuceneTxOperations operations = (LuceneTxOperations) snapshotEntry.getValue();
-      checkForKeyType(key);
+        for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
+          Object key = snapshotEntry.getKey();
+          LuceneTxOperations operations = (LuceneTxOperations) snapshotEntry.getValue();
+          checkForKeyType(key);
 
-      for (OIdentifiable oIdentifiable : operations.removed) {
-        indexEngine.remove(key, oIdentifiable);
+          for (OIdentifiable oIdentifiable : operations.removed) {
+            indexEngine.remove(key, oIdentifiable);
+          }
+
+        }
+        for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
+          Object key = snapshotEntry.getKey();
+          LuceneTxOperations operations = (LuceneTxOperations) snapshotEntry.getValue();
+          checkForKeyType(key);
+
+          indexEngine.put(key, operations.added);
+
+        }
+        return null;
       }
-
-    }
-    for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
-      Object key = snapshotEntry.getKey();
-      LuceneTxOperations operations = (LuceneTxOperations) snapshotEntry.getValue();
-      checkForKeyType(key);
-
-      indexEngine.put(key, operations.added);
-
-    }
+    });
 
   }
 
@@ -141,7 +157,6 @@ public abstract class OLuceneIndexNotUnique extends OIndexNotUnique implements O
   public boolean remove(Object key) {
     return super.remove(key);
   }
-
 
   // @Override
   // public Set<OIdentifiable> get(Object key) {
@@ -245,9 +260,17 @@ public abstract class OLuceneIndexNotUnique extends OIndexNotUnique implements O
 
   @Override
   public IndexSearcher searcher() throws IOException {
-
-    OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) storage.getIndexEngine(indexId);
-    return indexEngine.searcher();
+    return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<IndexSearcher>() {
+      @Override
+      public IndexSearcher callEngine(OIndexEngine engine) {
+        OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+        try {
+          return indexEngine.searcher();
+        } catch (IOException e) {
+          throw new OIndexException("Cannot get searcher from index " + getName(), e);
+        }
+      }
+    });
 
   }
 
