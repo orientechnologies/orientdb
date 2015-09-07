@@ -1254,33 +1254,31 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       final int tot = network.readInt();
       final Collection<OIdentifiable> coll;
 
-      if (tot < 0) {
-        // STREAMING MODE
-        coll = type == 's' ? new HashSet<OIdentifiable>() : new ArrayList<OIdentifiable>();
-        while (true) {
-          final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
-          if (resultItem == null)
-            break;
-
-          if (resultItem instanceof ORecord)
-            database.getLocalCache().updateRecord((ORecord) resultItem);
-
-          coll.add(resultItem);
-        }
-
-      } else {
-        coll = type == 's' ? new HashSet<OIdentifiable>(tot) : new ArrayList<OIdentifiable>(tot);
-        for (int i = 0; i < tot; ++i) {
-          final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
-          if (resultItem instanceof ORecord)
-            database.getLocalCache().updateRecord((ORecord) resultItem);
-          coll.add(resultItem);
-        }
+      coll = type == 's' ? new HashSet<OIdentifiable>(tot) : new ArrayList<OIdentifiable>(tot);
+      for (int i = 0; i < tot; ++i) {
+        final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
+        if (resultItem instanceof ORecord)
+          database.getLocalCache().updateRecord((ORecord) resultItem);
+        coll.add(resultItem);
       }
 
       result = coll;
       break;
-
+    case 'i':
+      coll = new ArrayList<OIdentifiable>();
+      byte status;
+      while ((status = network.readByte()) > 0) {
+        final OIdentifiable record = OChannelBinaryProtocol.readIdentifiable(network);
+        if (record == null)
+          continue;
+        if (status == 1) {
+          if (record instanceof ORecord)
+            database.getLocalCache().updateRecord((ORecord) record);
+          coll.add(record);
+        }
+      }
+      result = coll;
+      break;
     case 'a':
       final String value = new String(network.readBytes());
       result = ORecordSerializerStringAbstract.fieldTypeFromStream(null, ORecordSerializerStringAbstract.getType(value), value);
