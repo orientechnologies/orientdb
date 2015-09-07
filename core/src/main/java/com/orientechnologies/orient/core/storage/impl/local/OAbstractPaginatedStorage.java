@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
@@ -122,6 +123,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private volatile ThreadLocal<OStorageTransaction> transaction                                = new ThreadLocal<OStorageTransaction>();
   private final OModificationLock                   modificationLock                           = new OModificationLock();
   private final AtomicBoolean                       checkpointInProgress                       = new AtomicBoolean();
+  private final OSBTreeCollectionManagerShared      sbTreeCollectionManager;
+
   protected volatile OWriteAheadLog                 writeAheadLog;
 
   protected volatile OReadCache                     readCache;
@@ -155,6 +158,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     PROFILER_READ_RECORD = "db." + this.name + ".readRecord";
     PROFILER_UPDATE_RECORD = "db." + this.name + ".updateRecord";
     PROFILER_DELETE_RECORD = "db." + this.name + ".deleteRecord";
+
+    sbTreeCollectionManager = new OSBTreeCollectionManagerShared(this);
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -632,8 +637,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   @Override
-  public Class<OSBTreeCollectionManagerShared> getCollectionManagerClass() {
-    return OSBTreeCollectionManagerShared.class;
+  public OSBTreeCollectionManager getSBtreeCollectionManager() {
+    return sbTreeCollectionManager;
   }
 
   public OReadCache getReadCache() {
@@ -1200,11 +1205,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     } finally {
       stateLock.releaseReadLock();
     }
-  }
-
-
-  public OIndexEngine getIndexEngine(int indexId) {
-    return indexEngines.get(indexId);
   }
 
   public int loadExternalIndexEngine(String engineName, String algorithm, OIndexDefinition indexDefinition,
@@ -2824,6 +2824,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       closeClusters(false);
       closeIndexes(false);
 
+      sbTreeCollectionManager.clear();
+
       final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
       final ZipInputStream zipInputStream = new ZipInputStream(bufferedInputStream, Charset.forName(configuration.getCharset()));
       final int pageSize = writeCache.pageSize();
@@ -3562,6 +3564,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         makeFullCheckpoint();
 
       preCloseSteps();
+
+      sbTreeCollectionManager.close();
 
       closeClusters(onDelete);
       closeIndexes(onDelete);

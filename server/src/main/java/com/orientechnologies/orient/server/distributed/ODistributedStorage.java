@@ -207,11 +207,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return true;
   }
 
-  @Override
-  public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass() {
-    return wrapped.getCollectionManagerClass();
-  }
-
   public Object command(final OCommandRequestText iCommand) {
 
     List<String> servers = (List<String>) iCommand.getContext().getVariable("servers");
@@ -691,6 +686,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       // UNREACHABLE
       return null;
     }
+  }
+
+  @Override
+  public OSBTreeCollectionManager getSBtreeCollectionManager() {
+    return wrapped.getSBtreeCollectionManager();
   }
 
   @Override
