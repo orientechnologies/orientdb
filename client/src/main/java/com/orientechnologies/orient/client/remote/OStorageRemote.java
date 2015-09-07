@@ -95,14 +95,14 @@ import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEvent
  * This object is bound to each remote ODatabase instances.
  */
 public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
-  public static final String            PARAM_MIN_POOL       = "minpool";
-  public static final String            PARAM_MAX_POOL       = "maxpool";
-  public static final String            PARAM_DB_TYPE        = "dbtype";
-  private static final String           DEFAULT_HOST         = "localhost";
-  private static final int              DEFAULT_PORT;
-  private static final int              DEFAULT_SSL_PORT     = 2434;
-  private static final String           ADDRESS_SEPARATOR    = ";";
-  private static final String           DRIVER_NAME          = "OrientDB Java";
+  public static final String                   PARAM_MIN_POOL          = "minpool";
+  public static final String                   PARAM_MAX_POOL          = "maxpool";
+  public static final String                   PARAM_DB_TYPE           = "dbtype";
+  private static final String                  DEFAULT_HOST            = "localhost";
+  private static final int                     DEFAULT_PORT;
+  private static final int                     DEFAULT_SSL_PORT        = 2434;
+  private static final String                  ADDRESS_SEPARATOR       = ";";
+  private static final String                  DRIVER_NAME             = "OrientDB Java";
 
   static {
     int serverPort = -1;
@@ -126,31 +126,32 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     DEFAULT_PORT = serverPort;
   }
 
-  protected final List<String>          serverURLs           = new ArrayList<String>();
-  protected final Map<String, OCluster> clusterMap           = new ConcurrentHashMap<String, OCluster>();
-  private final ExecutorService         asynchExecutor;
-  private final ODocument               clusterConfiguration = new ODocument();
-  private final String                  clientId;
-  private OContextConfiguration         clientConfiguration;
-  private int                           connectionRetry;
-  private int                           connectionRetryDelay;
+  private final OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote();
+  protected final List<String>                 serverURLs              = new ArrayList<String>();
+  protected final Map<String, OCluster>        clusterMap              = new ConcurrentHashMap<String, OCluster>();
+  private final ExecutorService                asynchExecutor;
+  private final ODocument                      clusterConfiguration    = new ODocument();
+  private final String                         clientId;
+  private OContextConfiguration                clientConfiguration;
+  private int                                  connectionRetry;
+  private int                                  connectionRetryDelay;
   @Deprecated
-  private int                           networkPoolCursor    = 0;
-  private OCluster[]                    clusters             = OCommonConst.EMPTY_CLUSTER_ARRAY;
-  private int                           defaultClusterId;
+  private int                                  networkPoolCursor       = 0;
+  private OCluster[]                           clusters                = OCommonConst.EMPTY_CLUSTER_ARRAY;
+  private int                                  defaultClusterId;
   @Deprecated
-  private int                           minPool;
+  private int                                  minPool;
   @Deprecated
-  private int                           maxPool;
-  private ORemoteServerEventListener    asynchEventListener;
-  private String                        connectionDbType;
+  private int                                  maxPool;
+  private ORemoteServerEventListener           asynchEventListener;
+  private String                               connectionDbType;
 
-  private volatile String               connectionUserName;
+  private volatile String                      connectionUserName;
 
-  private String                        connectionUserPassword;
-  private Map<String, Object>           connectionOptions;
-  private OEngineRemote                 engine;
-  private String                        recordFormat;
+  private String                               connectionUserPassword;
+  private Map<String, Object>                  connectionOptions;
+  private OEngineRemote                        engine;
+  private String                               recordFormat;
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
     this(iClientId, iURL, iMode, null);
@@ -262,6 +263,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
+  @Override
+  public OSBTreeCollectionManager getSBtreeCollectionManager() {
+    return sbTreeCollectionManager;
+  }
+
   public void reload() {
 
     stateLock.acquireWriteLock();
@@ -331,6 +337,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       status = STATUS.CLOSING;
       // CLOSE ALL THE CONNECTIONS
       engine.getConnectionManager().closePool(getCurrentServerURL());
+
+      sbTreeCollectionManager.close();
 
       super.close(iForce, onDelete);
       status = STATUS.CLOSED;
@@ -1642,11 +1650,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   @Override
   public String getType() {
     return OEngineRemote.NAME;
-  }
-
-  @Override
-  public Class<OSBTreeCollectionManagerRemote> getCollectionManagerClass() {
-    return OSBTreeCollectionManagerRemote.class;
   }
 
   public OEngineRemote getEngine() {

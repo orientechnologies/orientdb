@@ -241,7 +241,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   boolean isAssigningClusterIds();
 
-  Class<? extends OSBTreeCollectionManager> getCollectionManagerClass();
+  OSBTreeCollectionManager getSBtreeCollectionManager();
 
   OCurrentStorageComponentsFactory getComponentsFactory();
 

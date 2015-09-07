@@ -49,7 +49,6 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHook;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerProxy;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -382,21 +381,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       status = STATUS.OPEN;
 
       componentsFactory = getStorage().getComponentsFactory();
+      sbTreeCollectionManager = getStorage().getSBtreeCollectionManager();
 
-      sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
-          OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
-            @Override
-            public OSBTreeCollectionManager call() throws Exception {
-              Class<? extends OSBTreeCollectionManager> managerClass = getStorage().getCollectionManagerClass();
-
-              if (managerClass == null) {
-                OLogManager.instance().warn(this, "Current implementation of storage does not support sbtree collections");
-                return null;
-              } else {
-                return managerClass.newInstance();
-              }
-            }
-          }));
       localCache.startup();
 
       getStorage().getConfiguration().setRecordSerializer(getSerializer().toString());
@@ -2819,23 +2805,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new ODatabaseException("Persistent record serializer version is not support by the current implementation");
 
     componentsFactory = getStorage().getComponentsFactory();
-
-    final OSBTreeCollectionManager sbTreeCM = getStorage().getResource(OSBTreeCollectionManager.class.getSimpleName(),
-        new Callable<OSBTreeCollectionManager>() {
-          @Override
-          public OSBTreeCollectionManager call() throws Exception {
-            Class<? extends OSBTreeCollectionManager> managerClass = getStorage().getCollectionManagerClass();
-
-            if (managerClass == null) {
-              OLogManager.instance().warn(this, "Current implementation of storage does not support sbtree collections");
-              return null;
-            } else {
-              return managerClass.newInstance();
-            }
-          }
-        });
-
-    sbTreeCollectionManager = sbTreeCM != null ? new OSBTreeCollectionManagerProxy(this, sbTreeCM) : null;
+    sbTreeCollectionManager = getStorage().getSBtreeCollectionManager();
 
     localCache.startup();
 

@@ -159,6 +159,10 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
     treeCache.clear();
   }
 
+  public void clear() {
+    treeCache.clear();
+  }
+
   protected abstract OSBTreeBonsai<OIdentifiable, Integer> createTree(int clusterId);
 
   protected abstract OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer);

@@ -96,11 +96,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.isDistributed();
   }
 
-  @Override
-  public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass() {
-    return delegate.getCollectionManagerClass();
-  }
-
   public void create(final Map<String, Object> iOptions) {
     pushSession();
     try {
@@ -211,6 +206,16 @@ public class OStorageRemoteThread implements OStorageProxy {
     pushSession();
     try {
       return delegate.getClusterNames();
+    } finally {
+      popSession();
+    }
+  }
+
+  @Override
+  public OSBTreeCollectionManager getSBtreeCollectionManager() {
+    pushSession();
+    try {
+      return delegate.getSBtreeCollectionManager();
     } finally {
       popSession();
     }
