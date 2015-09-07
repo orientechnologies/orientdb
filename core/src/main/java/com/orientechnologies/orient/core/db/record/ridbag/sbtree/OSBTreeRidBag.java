@@ -386,6 +386,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         }
       }
 
+      if (OSBTreeRidBag.this.owner != null)
+        ORecordInternal.unTrack(OSBTreeRidBag.this.owner, currentValue);
+
       if (updateOwner && !changeListeners.isEmpty())
         fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
             OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue, false));
@@ -538,6 +541,14 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (owner != null && this.owner != null && !this.owner.equals(owner)) {
       throw new IllegalStateException("This data structure is owned by document " + owner
           + " if you want to use it in other document create new rid bag instance and copy content of current one.");
+    }
+    if (this.owner != null) {
+      for (OIdentifiable entry : newEntries.keySet()) {
+        ORecordInternal.unTrack(this.owner, entry);
+      }
+      for (OIdentifiable entry : changes.keySet()) {
+        ORecordInternal.unTrack(this.owner, entry);
+      }
     }
 
     this.owner = owner;
@@ -701,6 +712,28 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (updateOwner && !changeListeners.isEmpty())
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
           OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable, false));
+  }
+
+  @Override
+  public boolean contains(OIdentifiable identifiable) {
+    if (newEntries.containsKey(identifiable))
+      return true;
+
+    Change counter = changes.get(identifiable);
+
+    if (counter != null) {
+      AbsoluteChange absoluteValue = getAbsoluteValue(identifiable);
+
+      if (counter.isUndefined()) {
+        changes.put(identifiable, absoluteValue);
+      }
+
+      counter = absoluteValue;
+    } else {
+      counter = getAbsoluteValue(identifiable);
+    }
+
+    return counter.applyTo(0) > 0;
   }
 
   public int size() {
@@ -944,11 +977,15 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   private AbsoluteChange getAbsoluteValue(OIdentifiable identifiable) {
     final OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
     try {
-      final Integer oldValue;
+      Integer oldValue;
+
       if (tree == null)
         oldValue = 0;
       else
         oldValue = tree.get(identifiable);
+
+      if (oldValue == null)
+        oldValue = 0;
 
       final Change change = changes.get(identifiable);
 

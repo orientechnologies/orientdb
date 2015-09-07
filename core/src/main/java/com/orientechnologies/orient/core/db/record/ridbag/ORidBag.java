@@ -128,6 +128,17 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return copy;
   }
 
+  /**
+   * THIS IS VERY EXPENSIVE METHOD AND CAN NOT BE CALLED IN REMOTE STORAGE.
+   *
+   * @param identifiable
+   *          Object to check.
+   * @return true if ridbag contains at leas one instance with the same rid as passed in identifiable.
+   */
+  public boolean contains(OIdentifiable identifiable) {
+    return delegate.contains(identifiable);
+  }
+
   public void addAll(Collection<OIdentifiable> values) {
     delegate.addAll(values);
   }
