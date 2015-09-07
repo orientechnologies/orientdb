@@ -1202,10 +1202,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-
-  public OIndexEngine getIndexEngine(int indexId) {
-    return indexEngines.get(indexId);
-  }
+  
 
   public int loadExternalIndexEngine(String engineName, String algorithm, OIndexDefinition indexDefinition,
       OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version,
