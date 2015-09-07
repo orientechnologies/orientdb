@@ -1395,9 +1395,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
     } else if (OMultiValue.isIterable(result)) {
       if (connection.data.protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_32) {
-        final byte collectionType = result instanceof Set ? (byte) 's' : (byte) 'l';
-        channel.writeByte(collectionType);
-        channel.writeInt(-1);
+        channel.writeByte((byte)'i');
         for (Object o : OMultiValue.getMultiValueIterable(result)) {
           try {
             if (load && o instanceof ORecordId)
@@ -1405,13 +1403,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             if (listener != null)
               listener.result(o);
 
+            channel.writeByte((byte) 1); // ONE MORE RECORD
             writeIdentifiable((OIdentifiable) o);
           } catch (Exception e) {
             OLogManager.instance().warn(this, "Cannot serialize record: " + o);
           }
         }
-        // WRITE NULL RECORD TO SIGNAL THE END OF CONTENT
-        writeIdentifiable(null);
+        channel.writeByte((byte) 0); // NO MORE RECORD
       } else {
         // OLD RELEASES: TRANSFORM IN A COLLECTION
         final byte collectionType = result instanceof Set ? (byte) 's' : (byte) 'l';
