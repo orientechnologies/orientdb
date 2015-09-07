@@ -1281,10 +1281,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       final int keySize = determineKeySize(indexDefinition);
       final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
       final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
+      final byte serializerId;
+
+      if (valueSerializer != null)
+        serializerId = valueSerializer.getId();
+      else
+        serializerId = -1;
 
       final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
-          durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport,
-          keySize, engineProperties);
+          durableInNonTxMode, version, serializerId, keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport, keySize,
+          engineProperties);
 
       final OIndexEngine engine = OIndexes.createIndexEngine(originalName, algorithm, durableInNonTxMode, this, version,
           engineProperties);
