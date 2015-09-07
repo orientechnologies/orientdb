@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -171,7 +172,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
    */
   long getSize();
 
-
   /**
    * Returns the total number of records.
    */
@@ -254,4 +254,8 @@ public interface OStorage extends OBackupable, OSharedContainer {
   ORecordConflictStrategy getConflictStrategy();
 
   void setConflictStrategy(ORecordConflictStrategy iResolver);
+
+  void incrementalBackup(String backupDirectory);
+
+  void restoreFromIncrementalBackup(String filePath);
 }

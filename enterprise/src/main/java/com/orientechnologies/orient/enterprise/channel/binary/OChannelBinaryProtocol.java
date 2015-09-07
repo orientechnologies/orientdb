@@ -57,6 +57,9 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_DATASEGMENT_ADD                   = 20;
   public static final byte  REQUEST_DATASEGMENT_DROP                  = 21;
 
+  public static final byte  REQUEST_INCREMENTAL_BACKUP                = 27;                 // since 2.2
+  public static final byte  REQUEST_INCREMENTAL_RESTORE               = 28;                 // since 2.2
+
   public static final byte  REQUEST_RECORD_METADATA                   = 29;                 // since 1.4.0
   public static final byte  REQUEST_RECORD_LOAD                       = 30;
   public static final byte  REQUEST_RECORD_CREATE                     = 31;
@@ -131,7 +134,9 @@ public class OChannelBinaryProtocol {
                                                                                              // ENCRYPTION
   public static final int   PROTOCOL_VERSION_32                       = 32;                 // STREAMABLE RESULT SET
 
-  public static final int   CURRENT_PROTOCOL_VERSION                  = PROTOCOL_VERSION_32;
+  public static final int   PROTOCOL_VERSION_33                       = 33;                 // INCREMENTAL BACKUP/RESTORE
+
+  public static final int   CURRENT_PROTOCOL_VERSION                  = PROTOCOL_VERSION_33;
 
   public static OIdentifiable readIdentifiable(final OChannelBinaryAsynchClient network) throws IOException {
     final int classId = network.readShort();

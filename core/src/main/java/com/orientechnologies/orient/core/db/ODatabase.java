@@ -922,4 +922,29 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   <DB extends ODatabase<?>> DB setConflictStrategy(ORecordConflictStrategy iResolver);
+
+  /**
+   * Performs incremental backup of database content to the selected folder. This is thread safe operation and can be done in normal
+   * operational mode.
+   *
+   * If it will be first backup of data full content of database will be copied into folder otherwise only changes after last backup
+   * in the same folder will be copied.
+   *
+   * @param path
+   *          Path to backup folder.
+   * @since 2.2
+   * 
+   */
+  void incrementalBackup(String path);
+
+  /**
+   * Restores content of database stored using {@link #incrementalBackup(String)} method.
+   *
+   * During data restore database can not be used in normal mode you should wait till database restore will be finished.
+   * 
+   * @param path
+   *          Path to backup folder.
+   * @since 2.2
+   */
+  void incrementalRestore(String path);
 }

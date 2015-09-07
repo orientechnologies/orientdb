@@ -198,6 +198,26 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
+  public void incrementalBackup(String backupDirectory) {
+    pushSession();
+    try {
+      delegate.incrementalBackup(backupDirectory);
+    } finally {
+      popSession();
+    }
+  }
+
+  @Override
+  public void restoreFromIncrementalBackup(String filePath) {
+    pushSession();
+    try {
+      delegate.restoreFromIncrementalBackup(filePath);
+    } finally {
+      popSession();
+    }
+  }
+
+  @Override
   public OStorage getUnderlying() {
     return delegate;
   }

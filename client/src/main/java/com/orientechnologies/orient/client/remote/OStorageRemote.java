@@ -650,6 +650,57 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } while (true);
   }
 
+  @Override
+  public void incrementalBackup(String backupDirectory) {
+    OChannelBinaryAsynchClient network = null;
+
+    do {
+      try {
+        network = beginRequest(OChannelBinaryProtocol.REQUEST_INCREMENTAL_BACKUP);
+        try {
+          network.writeString(backupDirectory);
+        } finally {
+          endRequest(network);
+        }
+
+        beginResponse(network);
+        endResponse(network);
+
+        return;
+      } catch (OModificationOperationProhibitedException mope) {
+        handleDBFreeze();
+      } catch (Exception e) {
+        handleException(network, "Error on incremental backup", e);
+      }
+    } while (true);
+  }
+
+  @Override
+  public void restoreFromIncrementalBackup(String filePath) {
+    OChannelBinaryAsynchClient network = null;
+
+    do {
+      try {
+        network = beginRequest(OChannelBinaryProtocol.REQUEST_INCREMENTAL_RESTORE);
+        try {
+          network.writeString(filePath);
+        } finally {
+          endRequest(network);
+        }
+
+        beginResponse(network);
+        endResponse(network);
+
+        return;
+      } catch (OModificationOperationProhibitedException mope) {
+        handleDBFreeze();
+      } catch (Exception e) {
+        handleException(network, "Error on restore from incremental backup", e);
+      }
+    } while (true);
+
+  }
+
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, boolean updateContent, final byte[] iContent,
       final ORecordVersion iVersion, final byte iRecordType, int iMode, final ORecordCallback<ORecordVersion> iCallback) {
 

@@ -1207,8 +1207,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  
-
   public int loadExternalIndexEngine(String engineName, String algorithm, OIndexDefinition indexDefinition,
       OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version,
       Map<String, String> engineProperties) {
@@ -2668,13 +2666,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     final OLogSequenceNumber lastLsn;
 
     checkOpeness();
-    freeze(false);
 
+    stateLock.acquireReadLock();
     try {
-      stateLock.acquireReadLock();
-      try {
-        checkOpeness();
+      checkOpeness();
 
+      modificationLock.prohibitModifications();
+      try {
         final BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(stream);
         try {
           final ZipOutputStream zipOutputStream = new ZipOutputStream(bufferedOutputStream, Charset.forName(configuration
@@ -2712,15 +2710,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           } finally {
             zipOutputStream.close();
           }
-
         } finally {
           bufferedOutputStream.close();
         }
       } finally {
-        stateLock.releaseReadLock();
+        modificationLock.allowModifications();
       }
     } finally {
-      release();
+      stateLock.releaseReadLock();
     }
 
     return lastLsn;
@@ -2782,41 +2779,49 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     return lastLsn;
   }
 
-  public void restoreFromIncrementalBackup(File backupDirectory) throws IOException {
+  public void restoreFromIncrementalBackup(String filePath) {
+    restoreFromIncrementalBackup(new File(filePath));
+  }
+
+  public void restoreFromIncrementalBackup(File backupDirectory) {
     if (!backupDirectory.exists()) {
       throw new OStorageException("Directory which should contain incremental backup files (files with extension " + IBU_EXTENSION
           + " ) is absent. It should be located at " + backupDirectory.getAbsolutePath());
     }
 
-    final String[] files = fetchIBUFiles(backupDirectory);
-    if (files.length == 0) {
-      throw new OStorageException("Can not find incremental backup files (files with extension " + IBU_EXTENSION
-          + " ) in directory " + backupDirectory.getAbsolutePath());
-    }
-
-    stateLock.acquireWriteLock();
     try {
-      for (String file : files) {
-        final File ibuFile = new File(backupDirectory, file);
-
-        final RandomAccessFile rndIBUFile = new RandomAccessFile(ibuFile, "rw");
-        try {
-          final FileChannel ibuChannel = rndIBUFile.getChannel();
-          ibuChannel.position(3 * OLongSerializer.LONG_SIZE);
-
-          final ByteBuffer buffer = ByteBuffer.allocate(1);
-          ibuChannel.read(buffer);
-          final boolean fullBackup = buffer.get() == 1;
-
-          final InputStream inputStream = Channels.newInputStream(ibuChannel);
-          restoreFromIncrementalBackup(inputStream, fullBackup);
-        } finally {
-          rndIBUFile.close();
-        }
-
+      final String[] files = fetchIBUFiles(backupDirectory);
+      if (files.length == 0) {
+        throw new OStorageException("Can not find incremental backup files (files with extension " + IBU_EXTENSION
+            + " ) in directory " + backupDirectory.getAbsolutePath());
       }
-    } finally {
-      stateLock.releaseWriteLock();
+
+      stateLock.acquireWriteLock();
+      try {
+        for (String file : files) {
+          final File ibuFile = new File(backupDirectory, file);
+
+          final RandomAccessFile rndIBUFile = new RandomAccessFile(ibuFile, "rw");
+          try {
+            final FileChannel ibuChannel = rndIBUFile.getChannel();
+            ibuChannel.position(3 * OLongSerializer.LONG_SIZE);
+
+            final ByteBuffer buffer = ByteBuffer.allocate(1);
+            ibuChannel.read(buffer);
+            final boolean fullBackup = buffer.get() == 1;
+
+            final InputStream inputStream = Channels.newInputStream(ibuChannel);
+            restoreFromIncrementalBackup(inputStream, fullBackup);
+          } finally {
+            rndIBUFile.close();
+          }
+
+        }
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+    } catch (IOException e) {
+      throw new OStorageException("Error during incremental backup", e);
     }
   }
 

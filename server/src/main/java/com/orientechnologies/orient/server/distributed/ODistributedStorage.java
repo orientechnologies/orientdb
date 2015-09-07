@@ -944,6 +944,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
+  public void incrementalBackup(String backupDirectory) {
+    wrapped.incrementalBackup(backupDirectory);
+  }
+
+  @Override
+  public void restoreFromIncrementalBackup(String filePath) {
+    wrapped.restoreFromIncrementalBackup(filePath);
+  }
+
+  @Override
   public void close() {
     close(false, false);
   }

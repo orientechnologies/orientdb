@@ -2716,6 +2716,24 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
+  public void incrementalBackup(String path) {
+    checkOpeness();
+    checkIfActive();
+
+    storage.incrementalBackup(path);
+  }
+
+  @Override
+  public void incrementalRestore(String path) {
+    checkOpeness();
+    checkIfActive();
+
+    storage.restoreFromIncrementalBackup(path);
+    metadata.reload();
+
+  }
+
+  @Override
   @Deprecated
   public <DB extends ODatabaseDocument> DB checkSecurity(String iResource, int iOperation) {
     final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);

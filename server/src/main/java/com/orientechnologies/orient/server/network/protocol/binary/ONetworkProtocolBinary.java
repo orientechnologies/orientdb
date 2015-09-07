@@ -458,6 +458,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         ridBagSize();
         break;
 
+      case OChannelBinaryProtocol.REQUEST_INCREMENTAL_BACKUP:
+        incrementalBackup();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_INCREMENTAL_RESTORE:
+        incrementalRestore();
+        break;
+
       default:
         setDataCommandInfo("Command not supported");
         return false;
@@ -810,6 +818,42 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.writeBytes(token);
       }
 
+    } finally {
+      endResponse();
+    }
+  }
+
+  private void incrementalBackup() throws IOException {
+    setDataCommandInfo("Incremental backup");
+
+    if (!isConnectionAlive())
+      return;
+
+    final String path = channel.readString();
+
+    connection.database.incrementalBackup(path);
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+    } finally {
+      endResponse();
+    }
+  }
+
+  private void incrementalRestore() throws IOException {
+    setDataCommandInfo("Incremental backup");
+
+    if (!isConnectionAlive())
+      return;
+
+    final String path = channel.readString();
+
+    connection.database.incrementalBackup(path);
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
     } finally {
       endResponse();
     }
