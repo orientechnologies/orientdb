@@ -148,6 +148,19 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   @Override
+  public boolean contains(OIdentifiable identifiable) {
+    if (identifiable == null)
+      return false;
+
+    for (int i = 0; i < entriesLength; i++) {
+      if (identifiable.equals(entries[i]))
+        return true;
+    }
+
+    return false;
+  }
+
+  @Override
   public void setOwner(ORecord owner) {
     if (owner != null && this.owner != null && !this.owner.equals(owner)) {
       throw new IllegalStateException("This data structure is owned by document " + owner

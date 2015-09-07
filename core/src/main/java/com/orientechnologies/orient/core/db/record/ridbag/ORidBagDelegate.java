@@ -32,17 +32,17 @@ import com.orientechnologies.orient.core.record.ORecord;
 
 public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMultiValue,
     OTrackedMultiValue<OIdentifiable, OIdentifiable> {
-  public void addAll(Collection<OIdentifiable> values);
+  void addAll(Collection<OIdentifiable> values);
 
-  public void add(OIdentifiable identifiable);
+  void add(OIdentifiable identifiable);
 
-  public void remove(OIdentifiable identifiable);
+  void remove(OIdentifiable identifiable);
 
-  public boolean isEmpty();
+  boolean isEmpty();
 
-  public int getSerializedSize();
+  int getSerializedSize();
 
-  public int getSerializedSize(byte[] stream, int offset);
+  int getSerializedSize(byte[] stream, int offset);
 
   /**
    * Writes content of bag to stream.
@@ -57,11 +57,20 @@ public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMul
    *          id of delegate owner
    * @return offset where content of stream is ended
    */
-  public int serialize(byte[] stream, int offset, UUID ownerUuid);
+  int serialize(byte[] stream, int offset, UUID ownerUuid);
 
-  public int deserialize(byte[] stream, int offset);
+  int deserialize(byte[] stream, int offset);
 
-  public void requestDelete();
+  void requestDelete();
+
+  /**
+   * THIS IS VERY EXPENSIVE METHOD AND CAN NOT BE CALLED IN REMOTE STORAGE.
+   *
+   * @param identifiable
+   *          Object to check.
+   * @return true if ridbag contains at leas one instance with the same rid as passed in identifiable.
+   */
+  boolean contains(OIdentifiable identifiable);
 
   public void setOwner(ORecord owner);
 
