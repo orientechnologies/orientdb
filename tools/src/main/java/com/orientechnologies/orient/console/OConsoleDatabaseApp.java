@@ -1534,7 +1534,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Display all the configured clusters", aliases = { "clusters" }, onlineHelp = "Console-Command-List-Clusters")
   public void listClusters() {
     if (currentDatabaseName != null) {
-      message("\n\nCLUSTERS");
+      message("\n\nCLUSTERS (collections)");
       message("\n----------------------------------------------+-------+-------------------+----------------+");
       message("\n NAME                                         | ID    | CONFLICT STRATEGY | RECORDS        |");
       message("\n----------------------------------------------+-------+-------------------+----------------+");

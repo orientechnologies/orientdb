@@ -19,6 +19,18 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -99,18 +111,6 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -1428,6 +1428,44 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           writeIdentifiable(null);
         }
       }
+    } else if (OMultiValue.isIterable(result)) {
+      if (connection.data.protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_32) {
+        final byte collectionType = result instanceof Set ? (byte) 's' : (byte) 'l';
+        channel.writeByte(collectionType);
+        channel.writeInt(-1);
+        for (Object o : OMultiValue.getMultiValueIterable(result)) {
+          try {
+            if (load && o instanceof ORecordId)
+              o = ((ORecordId) o).getRecord();
+            if (listener != null)
+              listener.result(o);
+
+            writeIdentifiable((OIdentifiable) o);
+          } catch (Exception e) {
+            OLogManager.instance().warn(this, "Cannot serialize record: " + o);
+          }
+        }
+        // WRITE NULL RECORD TO SIGNAL THE END OF CONTENT
+        writeIdentifiable(null);
+      } else {
+        // OLD RELEASES: TRANSFORM IN A COLLECTION
+        final byte collectionType = result instanceof Set ? (byte) 's' : (byte) 'l';
+        channel.writeByte(collectionType);
+        channel.writeInt(OMultiValue.getSize(result));
+        for (Object o : OMultiValue.getMultiValueIterable(result)) {
+          try {
+            if (load && o instanceof ORecordId)
+              o = ((ORecordId) o).getRecord();
+            if (listener != null)
+              listener.result(o);
+
+            writeIdentifiable((OIdentifiable) o);
+          } catch (Exception e) {
+            OLogManager.instance().warn(this, "Cannot serialize record: " + o);
+          }
+        }
+      }
+
     } else {
       // ANY OTHER (INCLUDING LITERALS)
       channel.writeByte((byte) 'a');
