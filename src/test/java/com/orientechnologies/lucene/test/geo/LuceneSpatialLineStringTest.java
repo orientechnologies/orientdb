@@ -113,11 +113,15 @@ public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
 
     Assert.assertEquals(docs.size(), 1);
 
-    query = "select * from Place where location && ST_GeomFromText('LINESTRING(1 2, 4 6)') ";
+    query = "select * from Place where location && 'LINESTRING(1 2, 4 6)' ";
     docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(docs.size(), 1);
 
+    query = "select * from Place where location && ST_GeomFromText('LINESTRING(1 2, 4 6)') ";
+    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
+
+    Assert.assertEquals(docs.size(), 1);
   }
 
   @AfterClass
