@@ -1,13 +1,11 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.tinkerpop.gremlin.structure.*;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 

@@ -19,8 +19,6 @@ import org.apache.tinkerpop.gremlin.structure.*;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Logger;
-import java.util.stream.Stream;
 
 public final class OrientVertex extends OrientElement implements Vertex {
     public static final String CONNECTION_OUT_PREFIX = OrientGraphUtils.CONNECTION_OUT + "_";

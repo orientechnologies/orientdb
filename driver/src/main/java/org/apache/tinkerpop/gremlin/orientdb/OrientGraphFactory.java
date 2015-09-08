@@ -1,8 +1,5 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import com.orientechnologies.orient.core.db.ODatabaseFactory;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.structure.Graph;
