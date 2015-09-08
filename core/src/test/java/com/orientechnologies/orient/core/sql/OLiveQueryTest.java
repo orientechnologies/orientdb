@@ -79,7 +79,7 @@ public class OLiveQueryTest {
 
       db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bar'")).execute();
       db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'baz'")).execute();
-      db.command(new OCommandSQL("insert into test2 set name = 'foo'"));
+      db.command(new OCommandSQL("insert into test2 set name = 'foo'")).execute();
 
       db.command(new OCommandSQL("live unsubscribe " + token)).execute();
 
