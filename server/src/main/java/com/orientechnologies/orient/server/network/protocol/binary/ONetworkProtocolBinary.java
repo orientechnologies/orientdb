@@ -749,7 +749,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String dbURL = channel.readString();
 
     String dbType = ODatabaseDocument.TYPE;
-    if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_31)
+    if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32)
       // READ DB-TYPE FROM THE CLIENT. NOT USED ANYMORE
       dbType = channel.readString();
 
@@ -876,7 +876,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
       if (Boolean.TRUE.equals(tokenBased) && token != null && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
-          && (requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN || connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_31)) {
+          && (requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN || connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32)) {
         // TODO: Check if the token is expiring and if it is send a new token
         byte[] renewedToken = tokenHandler.renewIfNeeded(token);
         channel.writeBytes(renewedToken);
