@@ -1,18 +1,10 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import com.orientechnologies.orient.core.db.ODatabaseFactory;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
-import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Test;
 
 import java.lang.System;
-import java.util.Collection;
 import java.util.Iterator;
-
-import static org.junit.Assert.*;
 
 public class OrientSampleTest {
 

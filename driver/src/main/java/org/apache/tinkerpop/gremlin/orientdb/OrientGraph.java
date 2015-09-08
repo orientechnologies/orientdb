@@ -2,6 +2,7 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -10,10 +11,11 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -22,20 +24,28 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
+import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_STANDARD)
 public final class OrientGraph implements Graph {
+    static {
+        TraversalStrategies.GlobalCache.registerStrategies(
+                OrientGraph.class,
+                TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone()
+                        .addStrategies(OrientGraphStepStrategy.instance()));
+    }
+
     public static String CONFIG_URL = "orient-url";
     public static String CONFIG_USER = "orient-user";
     public static String CONFIG_PASS = "orient-pass";
@@ -52,11 +62,10 @@ public final class OrientGraph implements Graph {
     public OrientGraph(Configuration config) {
         this.url = config.getString(CONFIG_URL, "memory:test-" + Math.random());
         this.database = getDatabase(url,
-            config.getString(CONFIG_USER, "admin"),
-            config.getString(CONFIG_PASS, "admin"),
-            config.getBoolean(CONFIG_CREATE, true),
-            config.getBoolean(CONFIG_OPEN, true));
-        makeActive();
+                config.getString(CONFIG_USER, "admin"),
+                config.getString(CONFIG_PASS, "admin"),
+                config.getBoolean(CONFIG_CREATE, true),
+                config.getBoolean(CONFIG_OPEN, true));
     }
 
     @Override
@@ -68,15 +77,15 @@ public final class OrientGraph implements Graph {
 //        activeGraph.set(this);
 
         final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-        if (database != null && tlDb != database)
+        if (database != null && tlDb != database) {
+            database.activateOnCurrentThread();
             ODatabaseRecordThreadLocal.INSTANCE.set(database);
+        }
     }
 
     /**
-     * @param create
-     *          if true automatically creates database if database with given URL does not exist
-     * @param open
-     *          if true automatically opens the database
+     * @param create if true automatically creates database if database with given URL does not exist
+     * @param open   if true automatically opens the database
      */
     protected ODatabaseDocumentTx getDatabase(String url, String user, String password, boolean create, boolean open) {
         final ODatabaseDocumentTx db = new ODatabaseFactory().createDatabase("graph", url);
@@ -107,6 +116,7 @@ public final class OrientGraph implements Graph {
         OCommandRequest command = database.command(new OCommandSQL(sql));
         return command.execute();
     }
+
     public Object executeCommand(OCommandRequest command) {
         return command.execute();
     }
@@ -130,6 +140,101 @@ public final class OrientGraph implements Graph {
                 vertexIds);
     }
 
+    protected Object convertKey(final OIndex<?> idx, Object iValue) {
+        if (iValue != null) {
+            final OType[] types = idx.getKeyTypes();
+            if (types.length == 0)
+                iValue = iValue.toString();
+            else
+                iValue = OType.convert(iValue, types[0].getDefaultJavaType());
+        }
+        return iValue;
+    }
+
+    /**
+     * Get all the (indexed) Vertices in Graph, filtering by field name and value. Example:<code>
+     * Stream<Vertex> resultset = getIndexedVertices("name", "Jay");
+     * </code>
+     *
+     * @param iKey   indexed Field name
+     * @param iValue Field value
+     * @return Vertices as Iterable
+     */
+    public Stream<OrientVertex> getIndexedVertices(final String iKey, Object iValue) {
+        makeActive();
+
+//        if (iKey.equals("@class"))
+//            return getVerticesOfClass(iValue.toString());
+
+        // Most of this is copied from the TinkerPop2 driver.
+        String indexName;
+        final String key;
+        int pos = iKey.indexOf('.');
+        if (pos > -1) {
+            indexName = iKey;
+
+            final String className = iKey.substring(0, pos);
+            key = iKey.substring(iKey.indexOf('.') + 1);
+
+            final OClass clazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(className);
+
+            final Collection<? extends OIndex<?>> indexes = clazz.getIndexes();
+            for (OIndex<?> index : indexes) {
+                final String oInName = index.getName();
+                final int point = oInName.indexOf(".");
+                final String okey = oInName.substring(point + 1);
+                if (okey.equals(key)) {
+                    indexName = oInName;
+                    break;
+                }
+            }
+        } else {
+            indexName = OrientVertexType.CLASS_NAME + "." + iKey;
+        }
+
+        final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(indexName);
+        if (idx != null) {
+            iValue = convertKey(idx, iValue);
+
+            Object indexValue = idx.get(iValue);
+            if (indexValue != null && !(indexValue instanceof Iterable<?>))
+                indexValue = Collections.singletonList(indexValue);
+
+            Iterable<ORecordId> iterableIds = (Iterable<ORecordId>) indexValue;
+
+            Stream<ORecordId> ids = StreamSupport.stream(iterableIds.spliterator(), false);
+            Stream<ORecord> records = ids.map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
+            return records.map(r -> new OrientVertex(this, getRawDocument(r)));
+        }
+
+        // NO INDEX
+        return Collections.<OrientVertex>emptyList().stream();
+    }
+
+    private OIndexManager getIndexManager() {
+        return database.getMetadata().getIndexManager();
+    }
+
+    public Set<String> getIndexedKeys(String className) {
+        Iterator<OIndex<?>> indexes = getIndexManager().getClassIndexes(className).iterator();
+        HashSet<String> indexedKeys = new HashSet<>();
+        indexes.forEachRemaining(index -> {
+            index.getDefinition().getFields().forEach(indexedKeys::add);
+        });
+        return indexedKeys;
+    }
+
+    public Set<String> getIndexedKeys(final Class<? extends Element> elementClass) {
+        // TODO: allow use of indexes on subclasses of V and E
+        if (Vertex.class.isAssignableFrom(elementClass)) {
+            return getIndexedKeys("V");
+        } else if (Edge.class.isAssignableFrom(elementClass)) {
+            return getIndexedKeys("E");
+        } else {
+            throw new IllegalArgumentException("Class is not indexable: " + elementClass);
+        }
+    }
+
     @Override
     public Iterator<Edge> edges(Object... edgeIds) {
         makeActive();
@@ -139,7 +244,6 @@ public final class OrientGraph implements Graph {
                 edgeIds);
     }
 
-
     protected <A extends Element> Iterator<A> elements(String elementClass, Function<ORecord, A> toA, Object... elementIds) {
         boolean polymorphic = true;
         if (elementIds.length == 0) {
@@ -148,16 +252,16 @@ public final class OrientGraph implements Graph {
             return asStream(itty).map(toA).iterator();
         } else {
             Stream<ORecordId> ids = Stream.of(elementIds).map(OrientGraph::createRecordId);
-            Stream<ORecord> records = ids.filter(id -> id.isValid()).map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
+            Stream<ORecord> records = ids.filter(ORecordId::isValid).map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
             return records.map(toA).iterator();
         }
     }
 
     protected static ORecordId createRecordId(Object id) {
         if (id instanceof ORecordId)
-            return (ORecordId)id;
+            return (ORecordId) id;
         else if (id instanceof String)
-            return new ORecordId((String)id);
+            return new ORecordId((String) id);
         else
             throw new IllegalArgumentException("Orient IDs have to be a String or ORecordId - you provided a " + id.getClass());
     }
@@ -171,7 +275,7 @@ public final class OrientGraph implements Graph {
             currentDocument.load();
         if (ODocumentInternal.getImmutableSchemaClass(currentDocument) == null)
             throw new IllegalArgumentException(
-                "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
+                    "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
         return currentDocument;
     }
 
@@ -261,8 +365,7 @@ public final class OrientGraph implements Graph {
     /**
      * Returns the persistent class for type iTypeName as OrientEdgeType instance.
      *
-     * @param iTypeName
-     *          Edge class name
+     * @param iTypeName Edge class name
      */
     public final OrientEdgeType getEdgeType(final String iTypeName) {
         makeActive();
@@ -274,5 +377,104 @@ public final class OrientGraph implements Graph {
         return new OrientEdgeType(this, cls);
     }
 
+    protected <T> String getClassName(final Class<T> elementClass) {
+        if (elementClass.isAssignableFrom(Vertex.class))
+            return OrientVertexType.CLASS_NAME;
+        else if (elementClass.isAssignableFrom(Edge.class))
+            return OrientEdgeType.CLASS_NAME;
+        throw new IllegalArgumentException("Class '" + elementClass + "' is neither a Vertex, nor an Edge");
+    }
+
+    protected void prepareIndexConfiguration(Configuration config) {
+        String defaultIndexType = OClass.INDEX_TYPE.NOTUNIQUE.name();
+        OType defaultKeyType = OType.STRING;
+        String defaultClassName = null;
+        String defaultCollate = null;
+        ODocument defaultMetadata = null;
+
+        if (!config.containsKey("type"))
+            config.setProperty("type", defaultIndexType);
+        if (!config.containsKey("keytype"))
+            config.setProperty("keytype", defaultKeyType);
+        if (!config.containsKey("class"))
+            config.setProperty("class", defaultClassName);
+        if (!config.containsKey("collate"))
+            config.setProperty("collate", defaultCollate);
+        if (!config.containsKey("metadata"))
+            config.setProperty("metadata", defaultMetadata);
+    }
+
+    /**
+     * Creates an automatic indexing structure for indexing provided key for element class.
+     *
+     * @param key           the key to create the index for
+     * @param elementClass  the element class that the index is for
+     * @param configuration a collection of parameters for the underlying index implementation:
+     *                      <ul>
+     *                      <li>"type" is the index type between the supported types (UNIQUE, NOTUNIQUE, FULLTEXT). The default type is NOT_UNIQUE
+     *                      <li>"class" is the class to index when it's a custom type derived by Vertex (V) or Edge (E)
+     *                      <li>"keytype" to use a key type different by OType.STRING,</li>
+     *                      </li>
+     *                      </ul>
+     * @param <T>           the element class specification
+     */
+    @SuppressWarnings({"rawtypes"})
+    public <T extends Element> void createIndex(final String key, final Class<T> elementClass, final Configuration configuration) {
+        makeActive();
+
+        if (elementClass == null)
+            throw new RuntimeException("class for element cannot be null");
+
+        prepareIndexConfiguration(configuration);
+
+        OCallable<OClass, OrientGraph> callable = new OCallable<OClass, OrientGraph>() {
+            @Override
+            public OClass call(final OrientGraph g) {
+                final String ancestorClassName = getClassName(elementClass);
+
+                String indexType = configuration.getString("type");
+                OType keyType = (OType) configuration.getProperty("keytype");
+                String className = configuration.getString("class");
+                String collate = configuration.getString("collate");
+                ODocument metadata = (ODocument) configuration.getProperty("metadata");
+
+                if (className == null)
+                    className = ancestorClassName;
+
+                final ODatabaseDocumentTx db = getRawDatabase();
+                final OSchema schema = db.getMetadata().getSchema();
+
+                final OClass cls = schema.getOrCreateClass(className, schema.getClass(ancestorClassName));
+                final OProperty property = cls.getProperty(key);
+                if (property != null)
+                    keyType = property.getType();
+
+                OPropertyIndexDefinition indexDefinition = new OPropertyIndexDefinition(className, key, keyType);
+                if (collate != null)
+                    indexDefinition.setCollate(collate);
+                db.getMetadata().getIndexManager()
+                        .createIndex(className + "." + key, indexType, indexDefinition, cls.getPolymorphicClusterIds(), null, metadata);
+                return null;
+            }
+        };
+        execute(callable, "create key index on '", elementClass.getSimpleName(), ".", key, "'");
+    }
+
+    public <RET> RET execute(final OCallable<RET, OrientGraph> iCallable, final String... iOperationStrings) throws RuntimeException {
+        makeActive();
+
+        if (OLogManager.instance().isWarnEnabled() && iOperationStrings.length > 0) {
+            // COMPOSE THE MESSAGE
+            final StringBuilder msg = new StringBuilder(256);
+            for (String s : iOperationStrings)
+                msg.append(s);
+
+            // ASSURE PENDING TX IF ANY IS COMMITTED
+            OLogManager.instance().warn(
+                    this,
+                    msg.toString());
+        }
+        return iCallable.call(this);
+    }
 
 }

@@ -1,11 +1,17 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import org.apache.tinkerpop.gremlin.structure.*;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import java.util.*;
-import java.util.stream.Stream;
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.tinkerpop.gremlin.structure.Element;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Property;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.stream.Stream;
 
 
 public class OrientElement implements Element {

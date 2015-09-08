@@ -55,6 +55,12 @@
              <version>3.0.0.M9-incubating</version>
              <scope>test</scope>
          </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <distributionManagement>
         <snapshotRepository>
@@ -67,7 +73,7 @@
         <finalName>${project.artifactId}-${project.version}</finalName>
         <resources>
             <resource>
-                <directory>${basedir}/src/main/resources
+                <directory>driver/src/main/resources
                 </directory>
             </resource>
         </resources>

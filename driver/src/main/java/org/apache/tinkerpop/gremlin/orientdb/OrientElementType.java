@@ -1,15 +1,7 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassAbstractDelegate;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.Arrays;
 
 public abstract class OrientElementType extends OClassAbstractDelegate {
     protected final OrientGraph graph;
