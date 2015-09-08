@@ -59,6 +59,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdaptiveExternal implements OLuceneIndexEngine,
     OOrientListener {
@@ -83,12 +84,14 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   private boolean                          rebuilding;
   private long                             reopenToken;
   protected Map<String, Boolean>           collectionFields = new HashMap<String, Boolean>();
+  protected TimerTask                      commitTask;
+
+  protected AtomicBoolean                  closed           = new AtomicBoolean(true);
 
   public OLuceneIndexManagerAbstract(String indexName) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
     this.indexName = indexName;
-    Orient.instance().registerListener(this);
   }
 
   @Override
@@ -322,6 +325,18 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   public void initIndex(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic,
       ODocument metadata) {
+
+    Orient.instance().registerListener(this);
+    commitTask = new TimerTask() {
+      @Override
+      public void run() {
+        if (Boolean.FALSE.equals(closed.get())) {
+          commit();
+        }
+      }
+    };
+    Orient.instance().scheduleTask(commitTask, 10000, 10000);
+
     this.indexType = indexType;
     this.index = indexDefinition;
     this.indexName = indexName;
@@ -385,6 +400,9 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     if (nrt != null) {
       nrt.interrupt();
       nrt.close();
+    }
+    if (commitTask != null) {
+      commitTask.cancel();
     }
 
     if (searcherManager != null)

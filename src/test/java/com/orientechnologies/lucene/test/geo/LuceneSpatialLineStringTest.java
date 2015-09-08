@@ -43,6 +43,9 @@ import java.util.List;
 
 @Test(groups = "embedded")
 public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
+
+  public static String LINEWKT = "LINESTRING(-149.8871332 61.1484656,-149.8871655 61.1489556,-149.8871569 61.15043,-149.8870366 61.1517722)";
+
   @Override
   protected String getDatabaseName() {
     return "spatialPolygonTest";
@@ -103,6 +106,11 @@ public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
     OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("Place.location");
 
     Assert.assertEquals(index.getSize(), 2);
+
+    databaseDocumentTx.command(
+        new OCommandSQL("insert into Place set name = 'LineString3' , location = ST_GeomFromText('" + LINEWKT + "')")).execute();
+
+    Assert.assertEquals(index.getSize(), 3);
     queryLineString();
 
   }
@@ -119,6 +127,11 @@ public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
     Assert.assertEquals(docs.size(), 1);
 
     query = "select * from Place where location && ST_GeomFromText('LINESTRING(1 2, 4 6)') ";
+    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
+
+    Assert.assertEquals(docs.size(), 1);
+
+    query = "select * from Place where location && 'POLYGON((-150.205078125 61.40723633876356,-149.2657470703125 61.40723633876356,-149.2657470703125 61.05562700886678,-150.205078125 61.05562700886678,-150.205078125 61.40723633876356))' ";
     docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(docs.size(), 1);
