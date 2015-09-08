@@ -29,7 +29,7 @@
         <surefire.version>2.17</surefire.version>
 
         <orientdb.version>${version}</orientdb.version>
-        <lucene.version>4.7.0</lucene.version>
+        <lucene.version>4.10.4</lucene.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 

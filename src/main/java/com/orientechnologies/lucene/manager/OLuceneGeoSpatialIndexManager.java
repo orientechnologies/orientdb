@@ -63,23 +63,6 @@ import java.util.*;
 
 public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract implements OLuceneSpatialIndexContainer {
 
-  /** Earth ellipsoid major axis defined by WGS 84 in meters */
-  public static final double    EARTH_SEMI_MAJOR_AXIS = 6378137.0;                                    // meters (WGS 84)
-
-  /** Earth ellipsoid minor axis defined by WGS 84 in meters */
-  public static final double    EARTH_SEMI_MINOR_AXIS = 6356752.314245;                               // meters (WGS 84)
-
-  /** Earth mean radius defined by WGS 84 in meters */
-  public static final double    EARTH_MEAN_RADIUS     = 6371008.7714D;                                // meters (WGS 84)
-
-  /** Earth axis ratio defined by WGS 84 (0.996647189335) */
-  public static final double    EARTH_AXIS_RATIO      = EARTH_SEMI_MINOR_AXIS / EARTH_SEMI_MAJOR_AXIS;
-
-  /** Earth ellipsoid equator length in meters */
-  public static final double    EARTH_EQUATOR         = 2 * Math.PI * EARTH_SEMI_MAJOR_AXIS;
-
-  /** Earth ellipsoid polar distance in meters */
-  public static final double    EARTH_POLAR_DISTANCE  = Math.PI * EARTH_SEMI_MINOR_AXIS;
   protected final OShapeBuilder factory;
   private SpatialContext        ctx;
   private SpatialStrategy       strategy;
