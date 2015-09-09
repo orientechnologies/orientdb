@@ -19,11 +19,11 @@ package com.orientechnologies.common.serialization.types;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * @author Andrey Lomakin
@@ -57,7 +57,7 @@ public class DecimalSerializerTest {
 
   public void testNativeDirectMemoryCompatibility() {
     decimalSerializer.serializeNativeObject(OBJECT, stream, 0);
-    ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
+    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(stream);
     try {
       Assert.assertEquals(decimalSerializer.deserializeFromDirectMemoryObject(pointer, 0), OBJECT);
     } finally {

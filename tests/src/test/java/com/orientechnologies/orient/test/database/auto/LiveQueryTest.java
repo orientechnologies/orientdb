@@ -65,7 +65,7 @@ public class LiveQueryTest extends DocumentDBBaseTest implements OCommandOutputL
     super(url);
   }
 
-  @Test
+  @Test(enabled = false)
   public void checkLiveQuery1() throws IOException {
     final String className1 = "LiveQueryTest1_1";
     final String className2 = "LiveQueryTest1_2";
