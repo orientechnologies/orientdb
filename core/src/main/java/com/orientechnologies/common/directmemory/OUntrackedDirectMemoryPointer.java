@@ -53,8 +53,7 @@ public class OUntrackedDirectMemoryPointer implements ODirectMemoryPointer {
   private final long          pageSize;
   private final long          dataPointer;
 
-  OUntrackedDirectMemoryPointer(boolean safeMode, ODirectMemory directMemory, final long pageSize,
-      ODirectMemoryPointerFactory factory) {
+  OUntrackedDirectMemoryPointer(boolean safeMode, ODirectMemory directMemory, final long pageSize) {
     this.safeMode = safeMode;
     this.directMemory = directMemory;
     if (pageSize <= 0)
@@ -65,7 +64,7 @@ public class OUntrackedDirectMemoryPointer implements ODirectMemoryPointer {
     this.pageSize = pageSize;
   }
 
-  OUntrackedDirectMemoryPointer(final byte[] data, boolean safeMode, ODirectMemory directMemory, ODirectMemoryPointerFactory factory) {
+  OUntrackedDirectMemoryPointer(final byte[] data, boolean safeMode, ODirectMemory directMemory) {
     this.safeMode = safeMode;
     this.directMemory = directMemory;
     if (data.length == 0)

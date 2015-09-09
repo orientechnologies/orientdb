@@ -114,7 +114,7 @@ public class ODirectMemoryPointerFactory extends NotificationBroadcasterSupport 
       return pointer;
     }
 
-    return new OUntrackedDirectMemoryPointer(data, safeMode, directMemory, this);
+    return new OUntrackedDirectMemoryPointer(data, safeMode, directMemory);
   }
 
   public ODirectMemoryPointer createPointer(final long pageSize) {
@@ -125,7 +125,7 @@ public class ODirectMemoryPointerFactory extends NotificationBroadcasterSupport 
       return pointer;
     }
 
-    return new OUntrackedDirectMemoryPointer(safeMode, directMemory, pageSize, this);
+    return new OUntrackedDirectMemoryPointer(safeMode, directMemory, pageSize);
   }
 
   public void memoryLeakDetected(StackTraceElement[] allocationStackTrace) {
