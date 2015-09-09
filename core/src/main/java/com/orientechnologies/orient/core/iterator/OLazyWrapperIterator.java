@@ -38,18 +38,22 @@ public abstract class OLazyWrapperIterator<T> implements OAutoConvertToRecord, I
   protected T                 nextElement;
   protected final int         size;                      // -1 = UNKNOWN
   protected boolean           autoConvertToRecord = true;
+  protected Object            multiValue;
 
   public OLazyWrapperIterator(final Iterator<?> iterator) {
     this.iterator = iterator;
     this.size = -1;
   }
 
-  public OLazyWrapperIterator(final Iterator<?> iterator, final int iSize) {
+  public OLazyWrapperIterator(final Iterator<?> iterator, final int iSize, final Object iOriginalValue) {
     this.iterator = iterator;
     this.size = iSize;
+    this.multiValue = iOriginalValue;
   }
 
   public abstract boolean filter(T iObject);
+
+  public abstract boolean canUseMultiValueDirectly();
 
   public abstract T createGraphElement(Object iObject);
 
@@ -138,5 +142,9 @@ public abstract class OLazyWrapperIterator<T> implements OAutoConvertToRecord, I
   @Override
   public boolean isAutoConvertToRecord() {
     return autoConvertToRecord;
+  }
+
+  public Object getMultiValue() {
+    return multiValue;
   }
 }

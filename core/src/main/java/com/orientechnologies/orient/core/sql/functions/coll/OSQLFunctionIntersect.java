@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql.functions.coll;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.util.OSupportsContains;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -99,7 +100,7 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Object
   static Iterator intersectWith(final Iterator current, Object value) {
     final HashSet tempSet = new HashSet();
 
-    if (value instanceof Iterator)
+    if (value instanceof Iterator && (!(value instanceof OSupportsContains)) || !((OSupportsContains) value).supportsFastContains())
       value = OMultiValue.toSet(value);
 
     for (Iterator it = current; it.hasNext();) {
@@ -109,6 +110,9 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Object
           tempSet.add(curr);
       } else if (value instanceof Collection) {
         if (((Collection) value).contains(curr))
+          tempSet.add(curr);
+      } else if (value instanceof OSupportsContains) {
+        if (((OSupportsContains) value).contains(curr))
           tempSet.add(curr);
       }
     }

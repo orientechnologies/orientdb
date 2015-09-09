@@ -21,12 +21,17 @@ package com.orientechnologies.common.collection;
 
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
+import com.orientechnologies.common.util.OSupportsContains;
 import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -35,24 +40,19 @@ import java.util.NoSuchElementException;
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OResettable, OSizeable, OAutoConvertToRecord {
-  private Collection<Object> sources;
-  private Iterator<?>        sourcesIterator;
-  private Iterator<T>        partialIterator;
+public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OResettable, OSizeable, OSupportsContains,
+    OAutoConvertToRecord {
+  private List<Object> sources;
+  private Iterator<?>  sourcesIterator;
+  private Iterator<T>  partialIterator;
 
-  private int                browsed            = 0;
-  private int                limit              = -1;
-  private boolean            embedded           = false;
-  private boolean            autoConvert2Record = true;
+  private int          browsed            = 0;
+  private int          limit              = -1;
+  private boolean      embedded           = false;
+  private boolean      autoConvert2Record = true;
 
   public OMultiCollectionIterator() {
     sources = new ArrayList<Object>();
-  }
-
-  public OMultiCollectionIterator(final Collection<Object> iSources) {
-    sources = iSources;
-    sourcesIterator = iSources.iterator();
-    getNextPartial();
   }
 
   public OMultiCollectionIterator(final Iterator<? extends Collection<?>> iterator) {
@@ -123,7 +123,10 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
   public int size() {
     // SUM ALL THE COLLECTION SIZES
     int size = 0;
-    for (Object o : sources) {
+    final int totSources = sources.size();
+    for (int i = 0; i < totSources; ++i) {
+      final Object o = sources.get(i);
+
       if (o != null)
         if (o instanceof Collection<?>)
           size += ((Collection<?>) o).size();
@@ -164,6 +167,50 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
 
   public boolean isAutoConvertToRecord() {
     return autoConvert2Record;
+  }
+
+  @Override
+  public boolean supportsFastContains() {
+    final int totSources = sources.size();
+    for (int i = 0; i < totSources; ++i) {
+      final Object o = sources.get(i);
+
+      if (o != null) {
+        if (o instanceof Collection<?> || o instanceof ORidBag) {
+          // OK
+        } else if (o instanceof OLazyWrapperIterator) {
+          if (!((OLazyWrapperIterator) o).canUseMultiValueDirectly())
+            return false;
+        } else {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  @Override
+  public boolean contains(final Object value) {
+    final int totSources = sources.size();
+    for (int i = 0; i < totSources; ++i) {
+      Object o = sources.get(i);
+
+      if (o != null) {
+        if (o instanceof OLazyWrapperIterator)
+          o = ((OLazyWrapperIterator) o).getMultiValue();
+
+        if (o instanceof Collection<?>) {
+          if (((Collection<?>) o).contains(value))
+            return true;
+        } else if (o instanceof ORidBag) {
+          if (((ORidBag) o).contains((OIdentifiable) value))
+            return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   @SuppressWarnings("unchecked")
