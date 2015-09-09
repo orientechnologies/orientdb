@@ -57,7 +57,7 @@ public class LuceneSpatialMultiPolygonTest extends BaseSpatialLuceneTest {
     OClass v = schema.getClass("V");
     OClass oClass = schema.createClass("Place");
     oClass.setSuperClass(v);
-    oClass.createProperty("location", OType.EMBEDDED, schema.getClass("MultiPolygon"));
+    oClass.createProperty("location", OType.EMBEDDED, schema.getClass("OMultiPolygon"));
     oClass.createProperty("name", OType.STRING);
 
     databaseDocumentTx.command(new OCommandSQL("CREATE INDEX Place.location ON Place(location) SPATIAL ENGINE LUCENE")).execute();

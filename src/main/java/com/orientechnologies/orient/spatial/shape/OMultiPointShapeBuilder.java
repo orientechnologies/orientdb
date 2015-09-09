@@ -34,7 +34,7 @@ import java.util.List;
 public class OMultiPointShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   @Override
   public String getName() {
-    return "MultiPoint";
+    return "OMultiPoint";
   }
 
   @Override
@@ -59,7 +59,7 @@ public class OMultiPointShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   public void initClazz(ODatabaseDocumentTx db) {
 
     OSchemaProxy schema = db.getMetadata().getSchema();
-    OClass multiPoint = schema.createClass("MultiPoint");
+    OClass multiPoint = schema.createClass(getName());
     multiPoint.addSuperClass(superClass(db));
     multiPoint.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
   }

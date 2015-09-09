@@ -34,7 +34,7 @@ public abstract class OShapeBuilder<T extends Shape> {
   public static final JtsSpatialContext SPATIAL_CONTEXT  = JtsSpatialContext.GEO;
   public static final GeometryFactory   GEOMETRY_FACTORY = JtsSpatialContext.GEO.getGeometryFactory();
   public static final String            COORDINATES      = "coordinates";
-  public static final String            BASE_CLASS       = "Shape";
+  public static final String            BASE_CLASS       = "OShape";
 
   public abstract String getName();
 

@@ -57,7 +57,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
   @Test
   public void testPointIO() throws ParseException {
 
-    ODocument doc = new ODocument("Point");
+    ODocument doc = new ODocument("OPoint");
     doc.field("coordinates", new ArrayList<Double>() {
       {
         add(-100d);
@@ -84,7 +84,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
   @Test
   public void testMultiPointIO() {
 
-    ODocument doc = new ODocument("MultiPoint");
+    ODocument doc = new ODocument("OMultiPoint");
     doc.field("coordinates", new ArrayList<List<Double>>() {
       {
         add(Arrays.asList(-71.160281, 42.258729));
@@ -132,7 +132,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
   @Test
   public void testLineStringIO() {
 
-    ODocument doc = new ODocument("LineString");
+    ODocument doc = new ODocument("OLineString");
     doc.field("coordinates", new ArrayList<List<Double>>() {
       {
         add(Arrays.asList(-71.160281, 42.258729));
@@ -161,7 +161,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
   @Test
   public void testMultiLineStringIO() {
 
-    ODocument doc = new ODocument("MultiLineString");
+    ODocument doc = new ODocument("OMultiLineString");
     doc.field("coordinates", new ArrayList<List<List<Double>>>() {
       {
         add(new ArrayList<List<Double>>() {
@@ -198,7 +198,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
   @Test
   public void testPolygonNoHolesIO() {
 
-    ODocument doc = new ODocument("Polygon");
+    ODocument doc = new ODocument("OPolygon");
     doc.field("coordinates", new ArrayList<List<List<Double>>>() {
       {
         add(new ArrayList<List<Double>>() {
@@ -233,7 +233,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
   @Test
   public void testPolygonHolesIO() {
 
-    ODocument doc = new ODocument("Polygon");
+    ODocument doc = new ODocument("OPolygon");
     doc.field("coordinates", polygonCoordTestHole());
 
     Polygon polygon1 = polygonTestHole();

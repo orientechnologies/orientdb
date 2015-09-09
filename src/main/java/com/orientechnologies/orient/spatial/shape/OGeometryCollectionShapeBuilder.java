@@ -43,7 +43,7 @@ public class OGeometryCollectionShapeBuilder extends OComplexShapeBuilder<ShapeC
 
   @Override
   public String getName() {
-    return "GeometryCollection";
+    return "OGeometryCollection";
   }
 
   @Override

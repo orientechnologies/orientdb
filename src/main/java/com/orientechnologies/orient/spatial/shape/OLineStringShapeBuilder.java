@@ -32,7 +32,7 @@ import java.util.List;
 public class OLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   @Override
   public String getName() {
-    return "LineString";
+    return "OLineString";
   }
 
   @Override

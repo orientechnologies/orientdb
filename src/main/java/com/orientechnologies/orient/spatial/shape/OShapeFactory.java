@@ -146,25 +146,25 @@ public class OShapeFactory extends OComplexShapeBuilder {
     // TODO REFACTOR
     ODocument doc = null;
     if (Point.class.isAssignableFrom(shape.getClass())) {
-      doc = factories.get(Point.class.getSimpleName()).toDoc(shape);
+      doc = factories.get(OPointShapeBuilder.NAME).toDoc(shape);
     } else if (Rectangle.class.isAssignableFrom(shape.getClass())) {
-      doc = factories.get(Rectangle.class.getSimpleName()).toDoc(shape);
+      doc = factories.get(ORectangleShapeBuilder.NAME).toDoc(shape);
     } else if (JtsGeometry.class.isAssignableFrom(shape.getClass())) {
       JtsGeometry geometry = (JtsGeometry) shape;
       Geometry geom = geometry.getGeom();
-      doc = factories.get(geom.getClass().getSimpleName()).toDoc(shape);
+      doc = factories.get("O" + geom.getClass().getSimpleName()).toDoc(shape);
 
     } else if (ShapeCollection.class.isAssignableFrom(shape.getClass())) {
       ShapeCollection collection = (ShapeCollection) shape;
 
       if (isMultiPolygon(collection)) {
-        doc = factories.get("MultiPolygon").toDoc(createMultiPolygon(collection));
+        doc = factories.get("OMultiPolygon").toDoc(createMultiPolygon(collection));
       } else if (isMultiPoint(collection)) {
-        doc = factories.get("MultiPoint").toDoc(createMultiPoint(collection));
+        doc = factories.get("OMultiPoint").toDoc(createMultiPoint(collection));
       } else if (isMultiLine(collection)) {
-        doc = factories.get("MultiLineString").toDoc(createMultiLine(collection));
+        doc = factories.get("OMultiLineString").toDoc(createMultiLine(collection));
       } else {
-        doc = factories.get("GeometryCollection").toDoc(shape);
+        doc = factories.get("OGeometryCollection").toDoc(shape);
       }
     }
     return doc;
@@ -173,11 +173,15 @@ public class OShapeFactory extends OComplexShapeBuilder {
   @Override
   public Shape fromMapGeoJson(Map geoJsonMap) {
     OShapeBuilder oShapeBuilder = factories.get(geoJsonMap.get("type"));
+
+    if (oShapeBuilder == null) {
+      oShapeBuilder = factories.get(geoJsonMap.get("@class"));
+    }
     if (oShapeBuilder != null) {
       return oShapeBuilder.fromMapGeoJson(geoJsonMap);
     }
+    throw new IllegalArgumentException("Invalid map");
     // TODO handle exception shape not found
-    return null;
   }
 
   public void registerFactory(OShapeBuilder factory) {

@@ -19,7 +19,6 @@
 package com.orientechnologies.lucene.test.geo;
 
 import com.orientechnologies.lucene.test.BaseSpatialLuceneTest;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -50,12 +49,11 @@ public class LuceneSpatialFunctionAsTextTest extends BaseSpatialLuceneTest {
   public void init() {
     super.init();
 
-    databaseDocumentTx.set(ODatabase.ATTRIBUTES.CUSTOM, "strictSql=false");
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     OClass oClass = schema.createClass("Location");
     oClass.setSuperClass(v);
-    oClass.createProperty("geometry", OType.EMBEDDED, schema.getClass("Shape"));
+    oClass.createProperty("geometry", OType.EMBEDDED, schema.getClass("OShape"));
     oClass.createProperty("name", OType.STRING);
 
     initData();
@@ -63,44 +61,44 @@ public class LuceneSpatialFunctionAsTextTest extends BaseSpatialLuceneTest {
 
   private void initData() {
 
-    createLocation("Point", point());
-    createLocation("MultiPoint", multiPoint());
-    createLocation("LineString", lineStringDoc());
-    createLocation("MultiLineString", multiLineString());
-    createLocation("Rectangle", rectangle());
-    createLocation("Polygon", polygon());
-    createLocation("MultiPolygon", loadMultiPolygon());
-    createLocation("GeometryCollection", geometryCollection());
+    createLocation("OPoint", point());
+    createLocation("OMultiPoint", multiPoint());
+    createLocation("OLineString", lineStringDoc());
+    createLocation("OMultiLineString", multiLineString());
+    createLocation("ORectangle", rectangle());
+    createLocation("OPolygon", polygon());
+    createLocation("OMultiPolygon", loadMultiPolygon());
+    createLocation("OGeometryCollection", geometryCollection());
 
   }
 
   @Test
   public void testPoint() {
 
-    queryAndAssertGeom("Point", POINTWKT);
+    queryAndAssertGeom("OPoint", POINTWKT);
 
   }
 
   @Test
   public void testMultiPoint() {
 
-    queryAndAssertGeom("MultiPoint", MULTIPOINTWKT);
+    queryAndAssertGeom("OMultiPoint", MULTIPOINTWKT);
 
   }
 
   @Test
   public void testLineString() {
-    queryAndAssertGeom("LineString", LINESTRINGWKT);
+    queryAndAssertGeom("OLineString", LINESTRINGWKT);
   }
 
   @Test
   public void testMultiLineString() {
-    queryAndAssertGeom("MultiLineString", MULTILINESTRINGWKT);
+    queryAndAssertGeom("OMultiLineString", MULTILINESTRINGWKT);
   }
 
   @Test
   public void testRectangle() {
-    queryAndAssertGeom("Rectangle", RECTANGLEWKT);
+    queryAndAssertGeom("ORectangle", RECTANGLEWKT);
   }
 
   @Test
@@ -117,17 +115,17 @@ public class LuceneSpatialFunctionAsTextTest extends BaseSpatialLuceneTest {
 
   @Test
   public void testPolygon() {
-    queryAndAssertGeom("Polygon", POLYGONWKT);
+    queryAndAssertGeom("OPolygon", POLYGONWKT);
   }
 
   @Test
   public void testGeometryCollection() {
-    queryAndAssertGeom("GeometryCollection", GEOMETRYCOLLECTION);
+    queryAndAssertGeom("OGeometryCollection", GEOMETRYCOLLECTION);
   }
 
   @Test
   public void testMultiPolygon() {
-    queryAndAssertGeom("MultiPolygon", MULTIPOLYGONWKT);
+    queryAndAssertGeom("OMultiPolygon", MULTIPOLYGONWKT);
   }
 
   protected void queryAndAssertGeom(String name, String wkt) {

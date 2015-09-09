@@ -60,7 +60,7 @@ public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
     OClass v = schema.getClass("V");
     OClass oClass = schema.createClass("Place");
     oClass.setSuperClass(v);
-    oClass.createProperty("location", OType.EMBEDDED, schema.getClass("LineString"));
+    oClass.createProperty("location", OType.EMBEDDED, schema.getClass("OLineString"));
     oClass.createProperty("name", OType.STRING);
 
     databaseDocumentTx.command(new OCommandSQL("CREATE INDEX Place.location ON Place(location) SPATIAL ENGINE LUCENE")).execute();
@@ -75,7 +75,7 @@ public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
   }
 
   public ODocument createLineString(List<List<Double>> coordinates) {
-    ODocument location = new ODocument("LineString");
+    ODocument location = new ODocument("OLineString");
     location.field("coordinates", coordinates);
     return location;
   }
@@ -116,7 +116,7 @@ public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
   }
 
   protected void queryLineString() {
-    String query = "select * from Place where location && { 'shape' : { 'type' : 'LineString' , 'coordinates' : [[1,2],[4,6]]} } ";
+    String query = "select * from Place where location && { 'shape' : { 'type' : 'OLineString' , 'coordinates' : [[1,2],[4,6]]} } ";
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(docs.size(), 1);

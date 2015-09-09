@@ -32,9 +32,12 @@ import java.util.Collection;
 import java.util.List;
 
 public class ORectangleShapeBuilder extends OShapeBuilder<Rectangle> {
+
+  public static final String NAME = "ORectangle";
+
   @Override
   public String getName() {
-    return "Rectangle";
+    return NAME;
   }
 
   @Override

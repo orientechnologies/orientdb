@@ -37,7 +37,7 @@ import java.util.List;
 public class OMultiPolygonShapeBuilder extends OPolygonShapeBuilder {
   @Override
   public String getName() {
-    return "MultiPolygon";
+    return "OMultiPolygon";
   }
 
   @Override

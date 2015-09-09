@@ -33,7 +33,7 @@ import java.util.List;
 public class OMultiLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   @Override
   public String getName() {
-    return "MultiLineString";
+    return "OMultiLineString";
   }
 
   @Override

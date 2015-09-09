@@ -34,7 +34,7 @@ public class OLuceneSpatialManager {
 
   public void init(ODatabaseDocumentTx db) {
 
-    db.getMetadata().getSchema().createAbstractClass("Shape");
+    db.getMetadata().getSchema().createAbstractClass("OShape");
     shapeFactory.initClazz(db);
   }
 }

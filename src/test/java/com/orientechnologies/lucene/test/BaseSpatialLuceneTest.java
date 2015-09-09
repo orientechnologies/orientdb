@@ -121,7 +121,7 @@ public abstract class BaseSpatialLuceneTest extends BaseLuceneTest {
       Map geometry = doc.field("geometry");
 
       String type = (String) geometry.get("type");
-      ODocument location = new ODocument(type);
+      ODocument location = new ODocument("O" + type);
       location.field("coordinates", geometry.get("coordinates"));
       return location;
     } catch (Exception e) {
@@ -141,7 +141,7 @@ public abstract class BaseSpatialLuceneTest extends BaseLuceneTest {
 
   protected ODocument geometryCollection() {
 
-    final ODocument point = new ODocument("Point");
+    final ODocument point = new ODocument("OPoint");
     point.field("coordinates", new ArrayList<Double>() {
       {
         add(4d);
@@ -149,7 +149,7 @@ public abstract class BaseSpatialLuceneTest extends BaseLuceneTest {
       }
     });
 
-    final ODocument lineString = new ODocument("LineString");
+    final ODocument lineString = new ODocument("OLineString");
     lineString.field("coordinates", new ArrayList<List<Double>>() {
       {
         add(Arrays.asList(4d, 6d));
@@ -157,7 +157,7 @@ public abstract class BaseSpatialLuceneTest extends BaseLuceneTest {
       }
     });
 
-    ODocument geometryCollection = new ODocument("GeometryCollection");
+    ODocument geometryCollection = new ODocument("OGeometryCollection");
 
     geometryCollection.field("geometries", new ArrayList<ODocument>() {
       {
@@ -169,7 +169,7 @@ public abstract class BaseSpatialLuceneTest extends BaseLuceneTest {
   }
 
   protected ODocument lineStringDoc() {
-    ODocument point = new ODocument("LineString");
+    ODocument point = new ODocument("OLineString");
     point.field("coordinates", new ArrayList<List<Double>>() {
       {
         add(Arrays.asList(-71.160281, 42.258729));
@@ -193,7 +193,7 @@ public abstract class BaseSpatialLuceneTest extends BaseLuceneTest {
   }
 
   protected ODocument point() {
-    ODocument point = new ODocument("Point");
+    ODocument point = new ODocument("OPoint");
     point.field("coordinates", new ArrayList<Double>() {
       {
         add(50d);
@@ -204,7 +204,7 @@ public abstract class BaseSpatialLuceneTest extends BaseLuceneTest {
   }
 
   protected ODocument multiLineString() {
-    ODocument point = new ODocument("MultiLineString");
+    ODocument point = new ODocument("OMultiLineString");
     point.field("coordinates", new ArrayList<List<List<Double>>>() {
       {
         add(new ArrayList<List<Double>>() {
@@ -220,7 +220,7 @@ public abstract class BaseSpatialLuceneTest extends BaseLuceneTest {
   }
 
   protected ODocument multiPoint() {
-    ODocument point = new ODocument("MultiPoint");
+    ODocument point = new ODocument("OMultiPoint");
     point.field("coordinates", new ArrayList<List<Double>>() {
       {
         add(Arrays.asList(-71.160281, 42.258729));
@@ -232,7 +232,7 @@ public abstract class BaseSpatialLuceneTest extends BaseLuceneTest {
   }
 
   protected ODocument rectangle() {
-    ODocument polygon = new ODocument("Rectangle");
+    ODocument polygon = new ODocument("ORectangle");
     polygon.field("coordinates", new ArrayList<Double>() {
       {
         add(-45d);
@@ -245,7 +245,7 @@ public abstract class BaseSpatialLuceneTest extends BaseLuceneTest {
   }
 
   protected ODocument polygon() {
-    ODocument polygon = new ODocument("Polygon");
+    ODocument polygon = new ODocument("OPolygon");
     polygon.field("coordinates", new ArrayList<List<List<Double>>>() {
       {
         add(new ArrayList<List<Double>>() {

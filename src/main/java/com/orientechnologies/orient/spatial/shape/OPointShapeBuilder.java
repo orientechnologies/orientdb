@@ -30,9 +30,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OPointShapeBuilder extends OShapeBuilder<Point> {
+
+  public static String NAME = "OPoint";
+
   @Override
   public String getName() {
-    return "Point";
+    return NAME;
   }
 
   @Override
@@ -65,7 +68,7 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
   public void initClazz(ODatabaseDocumentTx db) {
 
     OSchemaProxy schema = db.getMetadata().getSchema();
-    OClass point = schema.createClass("Point");
+    OClass point = schema.createClass(getName());
     point.setAbstract(true);
     point.addSuperClass(superClass(db));
     OProperty coordinates = point.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.DOUBLE);

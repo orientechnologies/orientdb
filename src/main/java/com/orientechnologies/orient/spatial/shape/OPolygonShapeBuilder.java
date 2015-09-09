@@ -38,7 +38,7 @@ import java.util.List;
 public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   @Override
   public String getName() {
-    return "Polygon";
+    return "OPolygon";
   }
 
   @Override

@@ -55,7 +55,7 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
     OClass v = schema.getClass("V");
     OClass oClass = schema.createClass("City");
     oClass.setSuperClass(v);
-    oClass.createProperty("location", OType.EMBEDDED, schema.getClass("Point"));
+    oClass.createProperty("location", OType.EMBEDDED, schema.getClass("OPoint"));
     oClass.createProperty("name", OType.STRING);
 
     OClass place = schema.createClass("Place");
@@ -99,7 +99,7 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
 
   protected void queryPoint() {
     // TODO remove = true when parser will support index function without expression
-    String query = "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'Rectangle' , 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} })"
+    String query = "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'ORectangle' , 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} })"
         + " = true";
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
@@ -147,7 +147,7 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
 
   protected ODocument newCity(String name, final Double longitude, final Double latitude) {
 
-    ODocument location = new ODocument("Point");
+    ODocument location = new ODocument("OPoint");
     location.field("coordinates", new ArrayList<Double>() {
       {
         add(longitude);

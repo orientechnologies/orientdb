@@ -57,7 +57,7 @@ public class LuceneSpatialPolygonTest extends BaseSpatialLuceneTest {
     OClass v = schema.getClass("V");
     OClass oClass = schema.createClass("Place");
     oClass.setSuperClass(v);
-    oClass.createProperty("location", OType.EMBEDDED, schema.getClass("Polygon"));
+    oClass.createProperty("location", OType.EMBEDDED, schema.getClass("OPolygon"));
     oClass.createProperty("name", OType.STRING);
 
     databaseDocumentTx.command(new OCommandSQL("CREATE INDEX Place.location ON Place(location) SPATIAL ENGINE LUCENE")).execute();
@@ -81,7 +81,7 @@ public class LuceneSpatialPolygonTest extends BaseSpatialLuceneTest {
     Map geometry = doc.field("geometry");
 
     String type = (String) geometry.get("type");
-    ODocument location = new ODocument(type);
+    ODocument location = new ODocument("O" + type);
     location.field("coordinates", geometry.get("coordinates"));
     ODocument germany = new ODocument("Place");
     germany.field("name", "Germany");

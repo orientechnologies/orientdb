@@ -46,19 +46,19 @@ public class LuceneSpatialClassCreateTest extends BaseLuceneTest {
 
     OSchemaProxy schema = databaseDocumentTx.getMetadata().getSchema();
 
-    Assert.assertNotNull(schema.getClass("Point"));
+    Assert.assertNotNull(schema.getClass("OPoint"));
 
-    Assert.assertNotNull(schema.getClass("MultiPoint"));
+    Assert.assertNotNull(schema.getClass("OMultiPoint"));
 
-    Assert.assertNotNull(schema.getClass("LineString"));
+    Assert.assertNotNull(schema.getClass("OLineString"));
 
-    Assert.assertNotNull(schema.getClass("MultiLineString"));
+    Assert.assertNotNull(schema.getClass("OMultiLineString"));
 
-    Assert.assertNotNull(schema.getClass("Rectangle"));
+    Assert.assertNotNull(schema.getClass("ORectangle"));
 
-    Assert.assertNotNull(schema.getClass("Polygon"));
+    Assert.assertNotNull(schema.getClass("OPolygon"));
 
-    Assert.assertNotNull(schema.getClass("MultiPolygon"));
+    Assert.assertNotNull(schema.getClass("OMultiPolygon"));
   }
 
   @AfterClass
