@@ -120,6 +120,10 @@ public class OResourcePool<K, V> {
     return sem.availablePermits();
   }
 
+  public int getInPoolResources() {
+    return resources.size();
+  }
+
   public boolean returnResource(final V res) {
     if (resourcesOut.remove(res)) {
       resources.add(res);

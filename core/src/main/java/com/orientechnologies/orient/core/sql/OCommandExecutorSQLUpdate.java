@@ -76,7 +76,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   private List<OPair<String, Object>>           addEntries        = new ArrayList<OPair<String, Object>>();
   private List<OTriple<String, String, Object>> putEntries        = new ArrayList<OTriple<String, String, Object>>();
   private List<OPair<String, Object>>           removeEntries     = new ArrayList<OPair<String, Object>>();
-  private List<OPair<String, Number>>           incrementEntries  = new ArrayList<OPair<String, Number>>();
+  private List<OPair<String, Object>>           incrementEntries  = new ArrayList<OPair<String, Object>>();
   private ODocument                             merge             = null;
   private String                                lockStrategy      = "NONE";
   private OReturnHandler                        returnHandler     = new ORecordCountHandler();
@@ -298,7 +298,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     boolean updated = handleContent(record);
     updated |= handleMerge(record);
     updated |= handleSetEntries(record);
-    updated |= handleIncrementEnries(record);
+    updated |= handleIncrementEntries(record);
     updated |= handleAddEntries(record);
     updated |= handlePutEntries(record);
     updated |= handleRemoveEntries(record);
@@ -462,19 +462,27 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     return updated;
   }
 
-  private boolean handleIncrementEnries(ODocument record) {
+  private boolean handleIncrementEntries(final ODocument record) {
     boolean updated = false;
     // BIND VALUES TO INCREMENT
     if (!incrementEntries.isEmpty()) {
-      for (OPair<String, Number> entry : incrementEntries) {
+      for (OPair<String, Object> entry : incrementEntries) {
         final Number prevValue = record.field(entry.getKey());
+
+        Number current;
+        if (entry.getValue() instanceof OSQLFilterItem)
+          current = (Number) ((OSQLFilterItem) entry.getValue()).getValue(record, null, context);
+        else if (entry.getValue() instanceof Number)
+          current = (Number) entry.getValue();
+        else
+          throw new OCommandExecutionException("Increment value is not a number (" + entry.getValue() + ")");
 
         if (prevValue == null)
           // NO PREVIOUS VALUE: CONSIDER AS 0
-          record.field(entry.getKey(), entry.getValue());
+          record.field(entry.getKey(), current);
         else
           // COMPUTING INCREMENT
-          record.field(entry.getKey(), OType.increment(prevValue, entry.getValue()));
+          record.field(entry.getKey(), OType.increment(prevValue, current));
       }
       updated = true;
     }
@@ -762,7 +770,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       fieldValue = getBlock(parserRequiredWord(false, "Value expected"));
 
       // INSERT TRANSFORMED FIELD VALUE
-      incrementEntries.add(new OPair(fieldName, (Number) getFieldValueCountingParameters(fieldValue)));
+      incrementEntries.add(new OPair(fieldName, getFieldValueCountingParameters(fieldValue)));
       parserSkipWhiteSpaces();
 
       firstLap = false;

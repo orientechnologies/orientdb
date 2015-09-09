@@ -1,43 +1,46 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.util.OSupportsContains;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * This operator can work as aggregate or inline. If only one argument is passed than aggregates, otherwise executes, and returns,
  * the INTERSECTION of the collections received as parameters.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
-public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Object>> {
+public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Object> {
   public static final String NAME = "intersect";
 
   public OSQLFunctionIntersect() {
@@ -54,43 +57,67 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Ob
     if (value == null)
       return Collections.emptySet();
 
-    if (!(value instanceof Collection<?>))
-      value = Arrays.asList(value);
-
-    final Collection<?> coll = (Collection<?>) value;
-
     if (iParams.length == 1) {
       // AGGREGATION MODE (STATEFUL)
       if (context == null) {
         // ADD ALL THE ITEMS OF THE FIRST COLLECTION
-        context = new HashSet<Object>(coll);
+        if (value instanceof Collection) {
+          context = ((Collection) value).iterator();
+        } else if (value instanceof Iterator) {
+          context = (Iterator) value;
+        } else {
+          context = Arrays.asList(value).iterator();
+        }
       } else {
-        // INTERSECT IT AGAINST THE CURRENT COLLECTION
-        context.retainAll(coll);
+        context = intersectWith((Iterator) context, value);
       }
       return null;
-    } else {
-      // IN-LINE MODE (STATELESS)
-      final HashSet<Object> result = new HashSet<Object>(coll);
-
-      for (int i = 1; i < iParams.length; ++i) {
-        value = iParams[i];
-
-        if (value instanceof OSQLFilterItemVariable)
-          value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iCurrentResult, iContext);
-
-        if (value != null) {
-          if (!(value instanceof Collection<?>))
-            // CONVERT IT INTO A COLLECTION
-            value = Arrays.asList(value);
-
-          result.retainAll((Collection<?>) value);
-        } else
-          result.clear();
-      }
-
-      return result;
     }
+
+    // IN-LINE MODE (STATELESS)
+    Iterator result = OMultiValue.getMultiValueIterator(value);
+
+    for (int i = 1; i < iParams.length; ++i) {
+      value = iParams[i];
+
+      if (value instanceof OSQLFilterItemVariable)
+        value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iCurrentResult, iContext);
+
+      if (value != null) {
+        intersectWith(result, value);
+      } else
+        result = new ArrayList().iterator();
+    }
+
+    return result;
+  }
+
+  @Override
+  public Object getResult() {
+    return OMultiValue.toSet(context);
+  }
+
+  static Iterator intersectWith(final Iterator current, Object value) {
+    final HashSet tempSet = new HashSet();
+
+    if (value instanceof Iterator && (!(value instanceof OSupportsContains)) || !((OSupportsContains) value).supportsFastContains())
+      value = OMultiValue.toSet(value);
+
+    for (Iterator it = current; it.hasNext();) {
+      final Object curr = it.next();
+      if (value instanceof ORidBag) {
+        if (((ORidBag) value).contains((OIdentifiable) curr))
+          tempSet.add(curr);
+      } else if (value instanceof Collection) {
+        if (((Collection) value).contains(curr))
+          tempSet.add(curr);
+      } else if (value instanceof OSupportsContains) {
+        if (((OSupportsContains) value).contains(curr))
+          tempSet.add(curr);
+      }
+    }
+
+    return tempSet.iterator();
   }
 
   public String getSyntax() {

@@ -1271,16 +1271,33 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     case 'l':
     case 's':
       final int tot = network.readInt();
-      final Collection<OIdentifiable> coll = type == 's' ? new HashSet<OIdentifiable>(tot) : new ArrayList<OIdentifiable>(tot);
+      final Collection<OIdentifiable> coll;
+
+      coll = type == 's' ? new HashSet<OIdentifiable>(tot) : new ArrayList<OIdentifiable>(tot);
       for (int i = 0; i < tot; ++i) {
         final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
         if (resultItem instanceof ORecord)
           database.getLocalCache().updateRecord((ORecord) resultItem);
         coll.add(resultItem);
       }
+
       result = coll;
       break;
-
+    case 'i':
+      coll = new ArrayList<OIdentifiable>();
+      byte status;
+      while ((status = network.readByte()) > 0) {
+        final OIdentifiable record = OChannelBinaryProtocol.readIdentifiable(network);
+        if (record == null)
+          continue;
+        if (status == 1) {
+          if (record instanceof ORecord)
+            database.getLocalCache().updateRecord((ORecord) record);
+          coll.add(record);
+        }
+      }
+      result = coll;
+      break;
     case 'a':
       final String value = new String(network.readBytes());
       result = ORecordSerializerStringAbstract.fieldTypeFromStream(null, ORecordSerializerStringAbstract.getType(value), value);
@@ -1719,7 +1736,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   /**
    * Handles exceptions. In case of IO errors retries to reconnect until the configured retry times has reached.
-   * 
+   *
    * @param message
    *          the detail message
    * @param exception
@@ -1916,7 +1933,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
           OLogManager.instance().error(this, "Cannot open database url=" + currentURL, e);
         }
-      } while (engine.getConnectionManager().getAvailableConnections(currentURL) > 0);
+      } while (engine.getConnectionManager().getReusableConnections(currentURL) > 0);
 
       currentURL = useNewServerURL(currentURL);
 
@@ -2063,7 +2080,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   /**
    * Acquire a network channel from the pool. Don't lock the write stream since the connection usage is exclusive.
-   * 
+   *
    * @param iCommand
    *          id. Ids described at {@link OChannelBinaryProtocol}
    * @return connection to server
@@ -2111,6 +2128,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         lastURL = useNewServerURL(lastURL);
         if (lastURL == null) {
           parseServerURLs();
+          if (cause instanceof IOException)
+            throw (IOException) cause;
           throw new OIOException("Cannot open a connection to remote server: " + iCurrentURL, cause);
         }
       } else if (!network.isConnected()) {

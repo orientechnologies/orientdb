@@ -848,6 +848,7 @@ ODeleteVertexStatement DeleteVertexStatement():
 (
 	<DELETE>
 	<VERTEX>
+	[ <FROM> {jjtThis.from = true;} ]
 	jjtThis.fromClause = FromClause()
 	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
 	[ <WHERE> jjtThis.whereClause = WhereClause() ]

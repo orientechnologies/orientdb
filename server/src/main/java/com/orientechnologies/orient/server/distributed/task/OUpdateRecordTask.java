@@ -54,6 +54,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   protected byte[]          content;
 
   private transient ORecord record;
+  private transient boolean lockRecord       = true;
 
   public OUpdateRecordTask() {
   }
@@ -85,7 +86,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
     if (!inTx) {
       // TRY LOCKING RECORD
-      if (!ddb.lockRecord(rid, nodeSource))
+      if (lockRecord && !ddb.lockRecord(rid, nodeSource))
         throw new ODistributedRecordLockedException(rid);
     }
 
@@ -141,6 +142,14 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     versionCopy.setRollbackMode();
 
     return new OUpdateRecordTask(rid, null, null, previousContent, versionCopy, recordType);
+  }
+
+  public boolean isLockRecord() {
+    return lockRecord;
+  }
+
+  public void setLockRecord(final boolean lockRecord) {
+    this.lockRecord = lockRecord;
   }
 
   @Override

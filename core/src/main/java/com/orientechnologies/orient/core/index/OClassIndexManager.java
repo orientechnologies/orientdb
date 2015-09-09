@@ -366,8 +366,8 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
 
     for (final OIndex<?> index : indexes) {
 
-      if (index instanceof OIndexUnique) {
-        final OIndexRecorder indexRecorder = new OIndexRecorder((OIndexUnique) index);
+      if (index.getInternal() instanceof OIndexUnique) {
+        final OIndexRecorder indexRecorder = new OIndexRecorder((OIndexInternal<OIdentifiable>)index.getInternal());
         processIndexUpdate(record, dirtyFields, indexRecorder);
 
         indexKeysMap.put(index, indexRecorder.getAffectedKeys());

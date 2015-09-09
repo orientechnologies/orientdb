@@ -703,6 +703,28 @@ public class OSBTreeRidBag implements ORidBagDelegate {
           OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable, false));
   }
 
+  @Override
+  public boolean contains(OIdentifiable identifiable) {
+    if (newEntries.containsKey(identifiable))
+      return true;
+
+    Change counter = changes.get(identifiable);
+
+    if (counter != null) {
+      AbsoluteChange absoluteValue = getAbsoluteValue(identifiable);
+
+      if (counter.isUndefined()) {
+        changes.put(identifiable, absoluteValue);
+      }
+
+      counter = absoluteValue;
+    } else {
+      counter = getAbsoluteValue(identifiable);
+    }
+
+    return counter.applyTo(0) > 0;
+  }
+
   public int size() {
     if (size >= 0)
       return size;
@@ -944,11 +966,15 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   private AbsoluteChange getAbsoluteValue(OIdentifiable identifiable) {
     final OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
     try {
-      final Integer oldValue;
+      Integer oldValue;
+
       if (tree == null)
         oldValue = 0;
       else
         oldValue = tree.get(identifiable);
+
+      if (oldValue == null)
+        oldValue = 0;
 
       final Change change = changes.get(identifiable);
 

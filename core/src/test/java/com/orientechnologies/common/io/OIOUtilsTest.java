@@ -4,6 +4,10 @@ import static org.testng.Assert.assertEquals;
 
 import org.testng.annotations.Test;
 
+import java.text.ParseException;
+import java.util.Calendar;
+import java.util.Date;
+
 public class OIOUtilsTest {
 
   @Test
@@ -17,6 +21,17 @@ public class OIOUtilsTest {
 
   private void assertGetTimeAsMilis(String data, long expected) {
     assertEquals(OIOUtils.getTimeAsMillisecs(data), expected);
+  }
+
+  @Test
+  public void shoudGetRightTimeFromString() throws ParseException {
+    Calendar calendar = Calendar.getInstance();
+    calendar.set(Calendar.HOUR, 5);
+    calendar.set(Calendar.MINUTE, 10);
+    calendar.set(Calendar.SECOND, 0);
+    calendar.set(Calendar.MILLISECOND, 0);
+    Date d = OIOUtils.getTodayWithTime("05:10:00");
+    assertEquals(calendar.getTime(), d);
   }
 
 }

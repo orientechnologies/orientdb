@@ -56,9 +56,20 @@ public class OCommandExecutorSQLScriptTest {
     List<ODocument> qResult = db.command(new OCommandScript("sql", script.toString())).execute();
 
     assertEquals(qResult.size(), 3);
-
   }
 
+  @Test
+  public void testIncrementAndLet() throws Exception {
+
+    StringBuilder script = new StringBuilder();
+    script.append("CREATE CLASS TestCounter;\n");
+    script.append("INSERT INTO TestCounter set weight = 3;\n");
+    script.append("LET counter = SELECT count(*) FROM TestCounter;\n");
+    script.append("UPDATE TestCounter INCREMENT weight = $counter[0].count RETURN AfTER @this;\n");
+    List<ODocument> qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    assertEquals(qResult.get(0).field("weight"), 4l);
+  }
 
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
