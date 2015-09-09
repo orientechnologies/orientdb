@@ -89,6 +89,7 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
 
     databaseDocumentTx.command(new OCommandSQL("Drop INDEX City.location")).execute();
     queryPoint();
+
   }
 
   @Test(enabled = true)
@@ -105,12 +106,19 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
 
     Assert.assertEquals(1, docs.size());
 
+    query = "select * from City where  ST_WITHIN(location,'POLYGON ((12.314015 41.8262816, 12.314015 41.963125, 12.6605063 41.963125, 12.6605063 41.8262816, 12.314015 41.8262816))')"
+        + " = true";
+    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
+    Assert.assertEquals(1, docs.size());
 
+    query = "select * from City where  ST_WITHIN(location,ST_GeomFromText('POLYGON ((12.314015 41.8262816, 12.314015 41.963125, 12.6605063 41.963125, 12.6605063 41.8262816, 12.314015 41.8262816))'))"
+            + " = true";
+    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
+    Assert.assertEquals(1, docs.size());
 
     query = "select * from City where location && 'LINESTRING(-160.06393432617188 21.996535232496047,-160.1099395751953 21.94304553343818,-160.169677734375 21.89399562866819,-160.21087646484375 21.844928843026818,-160.21018981933594 21.787556698550834)' ";
     docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-
 
     Assert.assertEquals(1, docs.size());
 
