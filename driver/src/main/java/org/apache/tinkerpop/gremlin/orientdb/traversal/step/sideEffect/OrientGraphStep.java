@@ -31,8 +31,7 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
 
         if (this.ids != null && this.ids.length > 0) {
             return this.iteratorList(graph.vertices(this.ids));
-        }
-        else if (indexedContainer == null) {
+        } else if (indexedContainer == null) {
 //            System.out.println("not indexed");
             return this.iteratorList(graph.vertices());
         } else {

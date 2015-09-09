@@ -49,6 +49,14 @@ class OrientSpec extends WordSpec with ShouldMatchers {
       labels should contain("label1")
       labels should contain("label2")
     }
+
+    "delete" in new Fixture {
+      val v1 = sg.addVertex()
+      val v2 = sg.addVertex()
+      sg.V().toList.size shouldBe 2
+      sg.V().toList.foreach(_.remove())
+      sg.V().toList.size shouldBe 0
+    }
   }
 
   "edges" should {
@@ -86,6 +94,17 @@ class OrientSpec extends WordSpec with ShouldMatchers {
       val property2 = "key2" → "value2"
       val e = v1.addEdge("label1", v2, Map(property1, property2))
       gs.E(e.id).values[String]("key1", "key2").toList shouldBe List("value1", "value2")
+    }
+
+    "delete" in new Fixture {
+      val v1 = sg.addVertex()
+      val v2 = sg.addVertex()
+      val e1 = v1.addEdge("label1", v2)
+      val e2 = v2.addEdge("label2", v1)
+
+      gs.E(e2.id).toList should have length 1
+      gs.E(e2.id).head().remove()
+      gs.E(e2.id).toList should have length 0
     }
   }
 

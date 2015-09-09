@@ -2,7 +2,6 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Property;
@@ -45,7 +44,7 @@ public class OrientElement implements Element {
     }
 
     public void remove() {
-        throw new NotImplementedException();
+        getRawDocument().delete();
     }
 
     public <V> Iterator<? extends Property<V>> properties(final String... propertyKeys) {
