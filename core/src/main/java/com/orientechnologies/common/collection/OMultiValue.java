@@ -742,6 +742,7 @@ public class OMultiValue {
         set.add(Array.get(o, i));
       }
       return set;
+    } else if (o instanceof OMultiValue) {
     } else if (o instanceof Iterator<?>) {
       final HashSet set = new HashSet();
       while (((Iterator<?>) o).hasNext()) {

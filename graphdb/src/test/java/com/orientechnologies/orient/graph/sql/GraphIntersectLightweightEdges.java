@@ -31,15 +31,13 @@ import org.junit.Test;
 
 import java.util.Set;
 
-public class GraphIntersect extends GraphNoTxAbstractTest {
+public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
   private final int TOT = 1000;
-
-  public GraphIntersect() {
-    System.setProperty("orientdb.test.env", "ci");
-  }
 
   @Test
   public void testIntersect() {
+
+    graph.setUseLightweightEdges(true);
 
     graph.setAutoStartTx(false);
     graph.declareIntent(new OIntentMassiveInsert().setDisableSecurity(true).setDisableHooks(true).setDisableValidation(true)
@@ -102,6 +100,7 @@ public class GraphIntersect extends GraphNoTxAbstractTest {
 
   @BeforeClass
   public static void init() {
-    init(GraphIntersect.class.getSimpleName());
+    System.setProperty("orientdb.test.env", "ci");
+    init(GraphIntersectLightweightEdges.class.getSimpleName());
   }
 }
