@@ -19,15 +19,17 @@
  */
 package com.orientechnologies.orient.server.tx;
 
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
+
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -41,19 +43,11 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   private final Map<ORID, ORecordOperation> tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
@@ -77,6 +71,8 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   @Override
   public void begin() {
     super.begin();
+    // Needed for keep the exception and insure that all data is read from the socket.
+    OException toThrow = null;
 
     try {
       setUsingLog(channel.readByte() == 1);
@@ -93,8 +89,8 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
         switch (recordStatus) {
         case ORecordOperation.CREATED:
-          oNetworkProtocolBinary.fillRecord(rid, channel.readBytes(), OVersionFactory.instance().createVersion(),
-              entry.getRecord(), database);
+          oNetworkProtocolBinary.fillRecord(rid, channel.readBytes(), OVersionFactory.instance().createVersion(), entry.getRecord(),
+              database);
 
           // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
           createdRecords.put(rid.copy(), entry.getRecord());
@@ -111,7 +107,12 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         case ORecordOperation.DELETED:
           // LOAD RECORD TO BE SURE IT HASN'T BEEN DELETED BEFORE + PROVIDE CONTENT FOR ANY HOOK
           final ORecord rec = rid.getRecord();
-          ORecordInternal.setVersion(rec, channel.readVersion().getCounter());
+          ORecordVersion deleteVersion = channel.readVersion();
+          if (rec == null)
+            toThrow = new OConcurrentModificationException(rid.getIdentity(), new OSimpleVersion(-1), deleteVersion,
+                ORecordOperation.DELETED);
+
+          ORecordInternal.setVersion(rec, deleteVersion.getCounter());
           entry.setRecord(rec);
           break;
 
@@ -123,9 +124,13 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         tempEntries.put(entry.getRecord().getIdentity(), entry);
       }
 
+      if (toThrow != null)
+        throw toThrow;
+
       if (lastTxStatus == -1)
         // ABORT TX
         throw new OTransactionAbortedException("Transaction aborted by the client");
+
 
       final ODocument remoteIndexEntries = new ODocument(channel.readBytes());
       fillIndexOperations(remoteIndexEntries);
