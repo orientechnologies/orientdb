@@ -130,7 +130,7 @@
                         -Dstorage.configuration.syncOnUpdate=false
                     </argLine>
 
-                    <groups>embedded,remote</groups>
+                    <groups>embedded</groups>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
                     </systemPropertyVariables>
