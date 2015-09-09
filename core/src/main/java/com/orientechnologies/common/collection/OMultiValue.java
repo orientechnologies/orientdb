@@ -30,6 +30,10 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.Map.Entry;
 
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
+
 /**
  * Handles Multi-value types such as Arrays, Collections and Maps. It recognizes special Orient collections.
  * 
@@ -46,10 +50,8 @@ public class OMultiValue {
    * @return true if it's an array, a collection or a map, otherwise false
    */
   public static boolean isMultiValue(final Class<?> iType) {
-    return OCollection.class.isAssignableFrom(iType)
-        || Collection.class.isAssignableFrom(iType)
-        || (iType.isArray() || Map.class.isAssignableFrom(iType) || OMultiCollectionIterator.class.isAssignableFrom(iType) || OCollection.class
-            .isAssignableFrom(iType));
+    return OCollection.class.isAssignableFrom(iType) || Collection.class.isAssignableFrom(iType) || iType.isArray()
+        || Map.class.isAssignableFrom(iType) || OMultiCollectionIterator.class.isAssignableFrom(iType);
   }
 
   /**
@@ -730,5 +732,36 @@ public class OMultiValue {
     }
 
     return -1;
+  }
+
+  public static Object toSet(final Object o) {
+    if (o instanceof Set<?>)
+      return o;
+    else if (o instanceof Collection<?>)
+      return new HashSet<Object>((Collection<?>) o);
+    else if (o instanceof Map<?, ?>)
+      return (Set<?>) ((Map) o).values();
+    else if (o.getClass().isArray()) {
+      final HashSet set = new HashSet();
+      int tot = Array.getLength(o);
+      for (int i = 0; i < tot; ++i) {
+        set.add(Array.get(o, i));
+      }
+      return set;
+    } else if (o instanceof Iterator<?>) {
+      final HashSet set = new HashSet();
+      while (((Iterator<?>) o).hasNext()) {
+        set.add(((Iterator<?>) o).next());
+      }
+
+      if (o instanceof OResettable)
+        ((OResettable) o).reset();
+
+      return set;
+    }
+
+    final HashSet set = new HashSet(1);
+    set.add(o);
+    return set;
   }
 }
