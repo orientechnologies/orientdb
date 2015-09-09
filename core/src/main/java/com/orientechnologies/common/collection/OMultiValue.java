@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.common.collection;
 
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OResettable;
