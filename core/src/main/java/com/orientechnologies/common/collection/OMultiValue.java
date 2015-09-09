@@ -30,10 +30,6 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.Map.Entry;
 
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
-
 /**
  * Handles Multi-value types such as Arrays, Collections and Maps. It recognizes special Orient collections.
  * 
@@ -739,9 +735,10 @@ public class OMultiValue {
       return o;
     else if (o instanceof Collection<?>)
       return new HashSet<Object>((Collection<?>) o);
-    else if (o instanceof Map<?, ?>)
-      return (Set<?>) ((Map) o).values();
-    else if (o.getClass().isArray()) {
+    else if (o instanceof Map<?, ?>) {
+      final Collection values = ((Map) o).values();
+      return values instanceof Set ? values : new HashSet(values);
+    } else if (o.getClass().isArray()) {
       final HashSet set = new HashSet();
       int tot = Array.getLength(o);
       for (int i = 0; i < tot; ++i) {
