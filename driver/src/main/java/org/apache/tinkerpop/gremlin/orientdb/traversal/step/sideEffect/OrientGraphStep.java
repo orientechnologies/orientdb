@@ -29,33 +29,38 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
         final OrientGraph graph = (OrientGraph) this.getTraversal().getGraph().get();
         final HasContainer indexedContainer = getIndexKey(this.returnClass);
 
-        if (indexedContainer == null) {
+        if (this.ids != null && this.ids.length > 0) {
+            return this.iteratorList(graph.vertices(this.ids));
+        }
+        else if (indexedContainer == null) {
 //            System.out.println("not indexed");
             return this.iteratorList(graph.vertices());
-        } else if (this.ids.length > 0) {
-            return this.iteratorList(graph.vertices(this.ids));
         } else {
 //            System.out.println("indexed");
             Stream<OrientVertex> indexedVertices = graph.getIndexedVertices(indexedContainer.getKey(), indexedContainer.getValue());
             return indexedVertices
-                    .filter(vertex -> HasContainer.testAll(vertex, this.hasContainers))
-                    .collect(Collectors.<Vertex>toList())
-                    .iterator();
+                .filter(vertex -> HasContainer.testAll(vertex, this.hasContainers))
+                .collect(Collectors.<Vertex>toList())
+                .iterator();
         }
     }
 
     //TODO: indexed edges
     private Iterator<? extends Edge> edges() {
         final OrientGraph graph = (OrientGraph) this.getTraversal().getGraph().get();
-        return this.iteratorList(graph.edges());
+        if (this.ids != null && this.ids.length > 0) {
+            return this.iteratorList(graph.edges(this.ids));
+        } else {
+            return this.iteratorList(graph.edges());
+        }
     }
 
     private HasContainer getIndexKey(final Class<? extends Element> indexedClass) {
         final Set<String> indexedKeys = ((OrientGraph) this.getTraversal().getGraph().get()).getIndexedKeys(indexedClass);
         return this.hasContainers.stream()
-                .filter(c -> indexedKeys.contains(c.getKey()) && c.getPredicate().getBiPredicate() == Compare.eq)
-                .findAny()
-                .orElseGet(() -> null);
+            .filter(c -> indexedKeys.contains(c.getKey()) && c.getPredicate().getBiPredicate() == Compare.eq)
+            .findAny()
+            .orElseGet(() -> null);
     }
 
     @Override
@@ -64,8 +69,8 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
             return super.toString();
         else
             return 0 == this.ids.length ?
-                    StringFactory.stepString(this, this.returnClass.getSimpleName().toLowerCase(), this.hasContainers) :
-                    StringFactory.stepString(this, this.returnClass.getSimpleName().toLowerCase(), Arrays.toString(this.ids), this.hasContainers);
+                StringFactory.stepString(this, this.returnClass.getSimpleName().toLowerCase(), this.hasContainers) :
+                StringFactory.stepString(this, this.returnClass.getSimpleName().toLowerCase(), Arrays.toString(this.ids), this.hasContainers);
     }
 
     private <E extends Element> Iterator<E> iteratorList(final Iterator<E> iterator) {
