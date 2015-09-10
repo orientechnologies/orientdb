@@ -172,6 +172,9 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
         return null;
       case HALT:
         throw new OETLProcessHaltedException("Cannot resolve join for value '" + joinCurrentValue + "'");
+      case NOTHING:
+      default:
+        return null;
       }
     }
 
