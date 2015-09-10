@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -25,7 +26,6 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
   private static final String[]  NAMES           = { "POST|token/*" };
   private static final String    RESPONSE_FORMAT = "indent:-1,attribSameRow";
   private volatile OTokenHandler tokenHandler;
-  private volatile boolean       hasToken        = true;
 
   @Override
   public String[] getNames() {
@@ -33,12 +33,9 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
   }
 
   private void init() {
-    if (hasToken && tokenHandler == null) {
-      tokenHandler = (OTokenHandler) server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
-      if (tokenHandler != null && !tokenHandler.isEnabled()) {
-        tokenHandler = null;
-        hasToken = false;
-      }
+
+    if (tokenHandler == null && OGlobalConfiguration.NETWORK_HTTP_USE_TOKEN.getValueAsBoolean()) {
+      tokenHandler = server.getTokenHandler();
     }
   }
 

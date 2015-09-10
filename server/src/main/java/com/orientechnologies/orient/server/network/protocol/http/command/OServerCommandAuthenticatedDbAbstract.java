@@ -24,6 +24,7 @@ import java.util.List;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -35,12 +36,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.OTokenHandler;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+import com.orientechnologies.orient.server.network.protocol.http.*;
 
 /**
  * Database based authenticated command. Authenticates against the database taken as second parameter of the URL. The URL must be in
@@ -59,7 +55,6 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   public static final String     SESSIONID_UNAUTHORIZED = "-";
   public static final String     SESSIONID_LOGOUT       = "!";
   private volatile OTokenHandler tokenHandler;
-  private boolean                hasToken               = true;
 
   @Override
   public boolean beforeExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
@@ -267,12 +262,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   }
 
   private void init() {
-    if (tokenHandler == null && hasToken) {
-      tokenHandler = (OTokenHandler) server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
-      if (tokenHandler != null && !tokenHandler.isEnabled()) {
-        tokenHandler = null;
-        hasToken = false;
-      }
+    if (tokenHandler == null && OGlobalConfiguration.NETWORK_HTTP_USE_TOKEN.getValueAsBoolean()) {
+      tokenHandler = server.getTokenHandler();
     }
   }
 }

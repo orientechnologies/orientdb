@@ -33,4 +33,6 @@ public interface OStorageProxy extends OStorage {
   int addUser();
 
   int removeUser();
+
+  OStorageProxy copy();
 }

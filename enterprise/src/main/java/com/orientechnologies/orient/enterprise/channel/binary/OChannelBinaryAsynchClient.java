@@ -55,6 +55,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   private volatile boolean                     channelRead   = false;
   private byte                                 currentStatus;
   private int                                  currentSessionId;
+  private byte[]                               tokenBytes;
   private volatile OAsynchChannelServiceThread serviceThread;
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
@@ -276,11 +277,12 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       if (debug)
         OLogManager.instance().debug(this, "%s - Session %d handle response", socket.getLocalAddress(), iRequesterId);
 
-      byte[] renew = null;
       if (token)
-        renew = this.readBytes();
+        tokenBytes = this.readBytes();
+      else
+        tokenBytes = null;
       handleStatus(currentStatus, currentSessionId);
-      return renew;
+      return tokenBytes;
     } catch (OLockException e) {
       Thread.currentThread().interrupt();
       // NEVER HAPPENS?

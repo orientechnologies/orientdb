@@ -114,7 +114,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       contentWasChanged = true;
       if (OEmbeddedRidBag.this.owner != null)
         ORecordInternal.unTrack(OEmbeddedRidBag.this.owner, nextValue);
-      
+
       if (!changeListeners.isEmpty())
         fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
             OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null, nextValue));
@@ -151,12 +151,25 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   @Override
+  public boolean contains(OIdentifiable identifiable) {
+    if (identifiable == null)
+      return false;
+
+    for (int i = 0; i < entriesLength; i++) {
+      if (identifiable.equals(entries[i]))
+        return true;
+    }
+
+    return false;
+  }
+
+  @Override
   public void setOwner(ORecord owner) {
     if (owner != null && this.owner != null && !this.owner.equals(owner)) {
       throw new IllegalStateException("This data structure is owned by document " + owner
           + " if you want to use it in other document create new rid bag instance and copy content of current one.");
     }
-    if(this.owner != null){
+    if (this.owner != null) {
       for (int i = 0; i < entriesLength; i++) {
         final Object entry = entries[i];
         if (entry instanceof OIdentifiable) {
@@ -164,7 +177,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
         }
       }
     }
-    
+
     this.owner = owner;
     if (this.owner != null) {
       for (int i = 0; i < entriesLength; i++) {
@@ -218,7 +231,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
       if (this.owner != null)
         ORecordInternal.unTrack(this.owner, identifiable);
-      
+
       if (!changeListeners.isEmpty())
         fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
             OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable));
@@ -254,8 +267,8 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       if (entry instanceof OIdentifiable) {
         final OIdentifiable identifiable = (OIdentifiable) entry;
         ORecord record = identifiable.getRecord();
-        if (record != null){
-          if (this.owner != null){
+        if (record != null) {
+          if (this.owner != null) {
             ORecordInternal.unTrack(this.owner, identifiable);
             ORecordInternal.track(this.owner, record);
           }
@@ -406,7 +419,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       final Object entry = entries[i];
       if (entry instanceof OIdentifiable) {
         OIdentifiable link = (OIdentifiable) entry;
-        if(link.getIdentity().isTemporary())
+        if (link.getIdentity().isTemporary())
           link = link.getRecord();
 
         OLinkSerializer.INSTANCE.serialize(link, stream, offset);

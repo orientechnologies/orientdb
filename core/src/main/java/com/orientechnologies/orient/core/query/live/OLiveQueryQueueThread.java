@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.query.live;
 
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -31,13 +31,23 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class OLiveQueryQueueThread extends Thread {
 
-  private final BlockingQueue<ORecordOperation>  queue       = new LinkedBlockingQueue<ORecordOperation>();
-  private final Map<Integer, OLiveQueryListener> subscribers = new ConcurrentHashMap<Integer, OLiveQueryListener>();
-  private boolean                                stopped     = false;
+  private final BlockingQueue<ORecordOperation>  queue;
+  private final Map<Integer, OLiveQueryListener> subscribers;
+  private boolean                                stopped = false;
+
+  private OLiveQueryQueueThread(BlockingQueue<ORecordOperation> queue, Map<Integer, OLiveQueryListener> subscribers) {
+    this.queue = queue;
+    this.subscribers = subscribers;
+  }
 
   public OLiveQueryQueueThread() {
+    this(new LinkedBlockingQueue<ORecordOperation>(), new ConcurrentHashMap<Integer, OLiveQueryListener>());
     setName("LiveQueryQueueThread");
     this.setDaemon(true);
+  }
+
+  public OLiveQueryQueueThread clone() {
+    return new OLiveQueryQueueThread(this.queue, this.subscribers);
   }
 
   @Override
@@ -61,7 +71,7 @@ public class OLiveQueryQueueThread extends Thread {
 
   public void stopExecution() {
     this.stopped = true;
-    queue.notifyAll();
+    this.interrupt();
   }
 
   public void enqueue(ORecordOperation item) {

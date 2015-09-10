@@ -3,9 +3,6 @@
         <Package name="~com\.orientechnologies\.orient\.core\.index.*"/>
     </Match>
     <Match>
-        <Package name="~com\.orientechnologies\.common\.collection.*"/>
-    </Match>
-    <Match>
         <Package name="~com\.orientechnologies\.common\.concur.*"/>
     </Match>
     <Match>

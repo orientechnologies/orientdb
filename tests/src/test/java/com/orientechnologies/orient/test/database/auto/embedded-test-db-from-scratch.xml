@@ -9,6 +9,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.ConnectDatabaseTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DatabaseConflictStategyTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DatabaseConflictStrategyAutoMergeTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.DbCopyTest"/>
         </classes>
     </test>
     <test name="Schema">

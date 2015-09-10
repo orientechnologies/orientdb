@@ -19,16 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -40,19 +30,22 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Wrapper of OStorageRemote that maintains the sessionId. It's bound to the ODatabase and allow to use the shared OStorageRemote.
@@ -176,6 +169,19 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
+  @Override
+  public OStorageProxy copy() {
+    try {
+      OStorageRemoteThread a = new OStorageRemoteThread(delegate);
+      delegate.openRemoteDatabase();
+      a.popSession();
+      return a;
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
   public void close() {
     pushSession();
     try {
@@ -192,6 +198,26 @@ public class OStorageRemoteThread implements OStorageProxy {
     try {
       delegate.delete();
       Orient.instance().unregisterStorage(this);
+    } finally {
+      popSession();
+    }
+  }
+
+  @Override
+  public void incrementalBackup(String backupDirectory) {
+    pushSession();
+    try {
+      delegate.incrementalBackup(backupDirectory);
+    } finally {
+      popSession();
+    }
+  }
+
+  @Override
+  public void restoreFromIncrementalBackup(String filePath) {
+    pushSession();
+    try {
+      delegate.restoreFromIncrementalBackup(filePath);
     } finally {
       popSession();
     }

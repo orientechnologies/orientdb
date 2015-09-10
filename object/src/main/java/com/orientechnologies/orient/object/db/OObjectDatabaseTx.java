@@ -800,6 +800,16 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
+  public void incrementalBackup(String path) {
+    underlying.incrementalBackup(path);
+  }
+
+  @Override
+  public void incrementalRestore(String path) {
+    underlying.incrementalRestore(path);
+  }
+
+  @Override
   public void resetInitialization() {
     underlying.resetInitialization();
   }
