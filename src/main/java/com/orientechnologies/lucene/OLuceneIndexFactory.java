@@ -108,7 +108,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   @Override
   public void onOpen(ODatabaseInternal iDatabase) {
-
+    spatialManager.init((ODatabaseDocumentTx) iDatabase);
   }
 
   @Override

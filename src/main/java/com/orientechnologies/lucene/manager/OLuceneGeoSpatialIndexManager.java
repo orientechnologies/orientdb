@@ -51,7 +51,7 @@ import org.apache.lucene.queries.function.ValueSource;
 import org.apache.lucene.search.*;
 import org.apache.lucene.spatial.SpatialStrategy;
 import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
-import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
+import org.apache.lucene.spatial.prefix.tree.QuadPrefixTree;
 import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
 import org.apache.lucene.spatial.query.SpatialArgs;
 import org.apache.lucene.spatial.query.SpatialOperation;
@@ -73,7 +73,7 @@ public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract i
     super(name);
     this.ctx = factory.getSpatialContext();
     this.factory = factory;
-    SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 11);
+    SpatialPrefixTree grid = new QuadPrefixTree(ctx, 11);
     this.strategy = new RecursivePrefixTreeStrategy(grid, "location");
     queryStrategy = new SpatialQueryBuilder(this, factory);
   }
