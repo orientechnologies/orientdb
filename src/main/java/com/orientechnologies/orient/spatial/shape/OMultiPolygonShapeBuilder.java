@@ -50,6 +50,7 @@ public class OMultiPolygonShapeBuilder extends OPolygonShapeBuilder {
 
     OSchemaProxy schema = db.getMetadata().getSchema();
     OClass polygon = schema.createClass(getName());
+    polygon.setAbstract(true);
     polygon.addSuperClass(superClass(db));
     polygon.createProperty("coordinates", OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
   }

@@ -45,6 +45,7 @@ public class OLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
 
     OSchemaProxy schema = db.getMetadata().getSchema();
     OClass lineString = schema.createClass(getName());
+    lineString.setAbstract(true);
     lineString.addSuperClass(superClass(db));
     lineString.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
   }

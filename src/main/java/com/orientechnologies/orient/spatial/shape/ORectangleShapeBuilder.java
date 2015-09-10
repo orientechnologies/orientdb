@@ -80,6 +80,7 @@ public class ORectangleShapeBuilder extends OShapeBuilder<Rectangle> {
 
     OSchemaProxy schema = db.getMetadata().getSchema();
     OClass rectangle = schema.createClass(getName());
+    rectangle.setAbstract(true);
     rectangle.addSuperClass(superClass(db));
     OProperty coordinates = rectangle.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.DOUBLE);
     coordinates.setMin("4");
