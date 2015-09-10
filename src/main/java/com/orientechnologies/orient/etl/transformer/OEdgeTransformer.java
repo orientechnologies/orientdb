@@ -18,6 +18,9 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -29,9 +32,6 @@ import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class OEdgeTransformer extends OAbstractLookupTransformer {
   private String    edgeClass    = OrientEdgeType.CLASS_NAME;
@@ -91,33 +91,35 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-    // GET JOIN VALUE
-    final OrientVertex vertex;
-    if (input instanceof OrientVertex)
-      vertex = (OrientVertex) input;
-    else if (input instanceof OIdentifiable)
-      vertex = pipeline.getGraphDatabase().getVertex(input);
-    else
-      throw new OTransformException(getName() + ": input type '" + input + "' is not supported");
+    for (Object o : OMultiValue.getMultiValueIterable(input)) {
+      // GET JOIN VALUE
+      final OrientVertex vertex;
+      if (o instanceof OrientVertex)
+        vertex = (OrientVertex) o;
+      else if (o instanceof OIdentifiable)
+        vertex = pipeline.getGraphDatabase().getVertex(o);
+      else
+        throw new OTransformException(getName() + ": input type '" + o + "' is not supported");
 
-    final Object joinCurrentValue = joinValue != null ? joinValue : vertex.getProperty(joinFieldName);
+      final Object joinCurrentValue = joinValue != null ? joinValue : vertex.getProperty(joinFieldName);
 
-    if (OMultiValue.isMultiValue(joinCurrentValue)) {
-      // RESOLVE SINGLE JOINS
-      for (Object o : OMultiValue.getMultiValueIterable(joinCurrentValue)) {
-        final Object r = lookup(o, false);
-        if (createEdge(vertex, o, r) == null) {
+      if (OMultiValue.isMultiValue(joinCurrentValue)) {
+        // RESOLVE SINGLE JOINS
+        for (Object ob : OMultiValue.getMultiValueIterable(joinCurrentValue)) {
+          final Object r = lookup(ob, true);
+          if (createEdge(vertex, ob, r) == null) {
+            if (unresolvedLinkAction == ACTION.SKIP)
+              // RETURN NULL ONLY IN CASE SKIP ACTION IS REQUESTED
+              return null;
+          }
+        }
+      } else {
+        final Object result = lookup(joinCurrentValue, true);
+        if (createEdge(vertex, joinCurrentValue, result) == null) {
           if (unresolvedLinkAction == ACTION.SKIP)
             // RETURN NULL ONLY IN CASE SKIP ACTION IS REQUESTED
             return null;
         }
-      }
-    } else {
-      final Object result = lookup(joinCurrentValue, false);
-      if (createEdge(vertex, joinCurrentValue, result) == null) {
-        if (unresolvedLinkAction == ACTION.SKIP)
-          // RETURN NULL ONLY IN CASE SKIP ACTION IS REQUESTED
-          return null;
       }
     }
     return input;
@@ -130,7 +132,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
       // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
       switch (unresolvedLinkAction) {
       case CREATE:
-        //Don't try to create a Vertex with a null value
+        // Don't try to create a Vertex with a null value
         if (joinCurrentValue != null) {
           if (lookup != null) {
             final String[] lookupParts = lookup.split("\\.");
@@ -146,7 +148,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
 
             log(OETLProcessor.LOG_LEVELS.DEBUG, "created new vertex=%s", linkedV.getRecord());
 
-            result = linkedV;
+            result = linkedV.getIdentity();
           } else {
             throw new OConfigurationException("Cannot create linked document because target class is unknown. Use 'lookup' field");
           }
@@ -180,7 +182,9 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
         edges = new ArrayList<OrientEdge>(1);
 
       for (Object o : OMultiValue.getMultiValueIterable(result)) {
-        final OrientVertex targetVertex = pipeline.getGraphDatabase().getVertex(o);
+
+        OIdentifiable oid = (OIdentifiable) o;
+        final OrientVertex targetVertex = pipeline.getGraphDatabase().getVertex(oid);
 
         // CREATE THE EDGE
         final OrientEdge edge;
