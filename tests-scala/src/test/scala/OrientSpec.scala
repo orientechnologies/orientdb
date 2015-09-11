@@ -1,8 +1,8 @@
 import com.orientechnologies.orient.core.sql.query.OResultSet
 import gremlin.scala._
-import java.util.{ArrayList => JArrayList}
+import java.util.{ ArrayList ⇒ JArrayList }
 import org.apache.tinkerpop.gremlin.orientdb._
-import org.scalatest.{ShouldMatchers, WordSpec}
+import org.scalatest.{ ShouldMatchers, WordSpec }
 import scala.collection.JavaConversions._
 
 class OrientSpec extends WordSpec with ShouldMatchers {
@@ -29,6 +29,22 @@ class OrientSpec extends WordSpec with ShouldMatchers {
 
       v.property[String](key).value shouldBe "testValue1"
       gs.V(v.id).values(key).toList shouldBe List("testValue1")
+    }
+
+    "set property after creation 2" in new Fixture {
+      val v = sg.addVertex()
+      val key = "testProperty"
+      v.setProperty(key, "testValue1")
+
+      val vSizeBefore = gs.V.toList.size
+      val v2 = gs.V(v.id).toList.head
+      v2.setProperties(Map(key -> "testValue2"))
+
+      val vSizeAfter = gs.V.toList.size
+      vSizeBefore shouldBe vSizeAfter
+
+      v2.property[String](key).value shouldBe "testValue2"
+      gs.V(v2.id).values(key).toList shouldBe List("testValue2")
     }
 
     "set property during creation" in new Fixture {
@@ -147,7 +163,7 @@ class OrientSpec extends WordSpec with ShouldMatchers {
     }
 
     "value" in new TinkerpopFixture {
-      def traversal = gs.V(marko.id).out.value[Int]("age")//.filter(_.value[Int]
+      def traversal = gs.V(marko.id).out.value[Int]("age") //.filter(_.value[Int]
       traversal.toSet shouldBe Set(27, 32)
     }
 
@@ -156,7 +172,7 @@ class OrientSpec extends WordSpec with ShouldMatchers {
       traversal.toSet.map(_.value) shouldBe Set(27, 32)
     }
 
-    "filter" taggedAs(org.scalatest.Tag("foo")) in new TinkerpopFixture {
+    "filter" taggedAs (org.scalatest.Tag("foo")) in new TinkerpopFixture {
       def traversal = gs.V(marko.id).out.filter(_.property[Int]("age").orElse(0) > 30)
       traversal.value[String]("name").toSet shouldBe Set("josh")
     }

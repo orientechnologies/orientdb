@@ -197,8 +197,11 @@ public final class OrientGraph implements Graph {
             iValue = convertKey(idx, iValue);
 
             Object indexValue = idx.get(iValue);
-            if (indexValue != null && !(indexValue instanceof Iterable<?>))
+            if (indexValue == null) {
+                return Collections.<OrientVertex>emptyList().stream();
+            } else if (!(indexValue instanceof Iterable<?>)) {
                 indexValue = Collections.singletonList(indexValue);
+            }
 
             Iterable<ORecordId> iterableIds = (Iterable<ORecordId>) indexValue;
 
