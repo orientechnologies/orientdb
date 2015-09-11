@@ -67,8 +67,8 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
 
   protected final String                              url;
   protected final String                              mode;
-  protected final OSharedResourceAdaptiveExternal dataLock;
-  protected final OReadersWriterSpinLock          stateLock;
+  protected final OSharedResourceAdaptiveExternal     dataLock;
+  protected final OReadersWriterSpinLock              stateLock;
 
   protected volatile OStorageConfiguration            configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
@@ -79,10 +79,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   private final OSharedContainerImpl                  sharedContainer = new OSharedContainerImpl();
 
   public OStorageAbstract(final String name, final String iURL, final String mode, final int timeout) {
-    if (OStringSerializerHelper.contains(name, '/'))
-      this.name = name.substring(name.lastIndexOf("/") + 1);
-    else
-      this.name = name;
+    this.name = normalizeName(name);
 
     if (OStringSerializerHelper.contains(name, ','))
       throw new IllegalArgumentException("Invalid character in storage name: " + this.name);
@@ -92,6 +89,13 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
 
     dataLock = new OSharedResourceAdaptiveExternal(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), timeout, true);
     stateLock = new OReadersWriterSpinLock();
+  }
+
+  protected String normalizeName(String name) {
+    if (OStringSerializerHelper.contains(name, '/'))
+      return name.substring(name.lastIndexOf("/") + 1);
+    else
+      return name;
   }
 
   public abstract OCluster getClusterByName(final String iClusterName);
@@ -153,7 +157,6 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     return dropCluster(getClusterIdByName(iClusterName), iTruncate);
   }
-
 
   public long countRecords() {
     long tot = 0;

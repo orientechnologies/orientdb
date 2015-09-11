@@ -312,4 +312,16 @@ public class OIOUtils {
     }
     return isLong;
   }
+
+  public static void readFully(InputStream in, byte[] b, int off, int len) throws IOException {
+    while (len > 0) {
+      int n = in.read(b, off, len);
+
+      if (n == -1) {
+        throw new EOFException();
+      }
+      off += n;
+      len -= n;
+    }
+  }
 }

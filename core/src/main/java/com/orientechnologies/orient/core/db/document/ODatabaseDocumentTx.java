@@ -476,8 +476,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     if (dbInThreadLocal != null) {
       dbInThreadLocal.activateOnCurrentThread();
-    }else{
-      if(ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
+    } else {
+      if (ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
         ODatabaseRecordThreadLocal.INSTANCE.remove();
       }
     }
@@ -1553,8 +1553,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (loadedRecord != null && record != loadedRecord) {
       record.fromStream(loadedRecord.toStream());
       record.getRecordVersion().copyFrom(loadedRecord.getRecordVersion());
-    } else if (loadedRecord == null)
+    } else if (loadedRecord == null) {
       throw new ORecordNotFoundException("Record with rid " + record.getIdentity() + " was not found in database");
+    }
 
     return (RET) record;
   }

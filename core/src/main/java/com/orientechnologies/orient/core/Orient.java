@@ -512,21 +512,6 @@ public class Orient extends OListenerManger<OOrientListener> {
     return os.indexOf("win") >= 0;
   }
 
-  public OStorage registerStorage(OStorage storage) throws IOException {
-    engineLock.readLock().lock();
-    try {
-      for (OOrientListener l : browseListeners())
-        l.onStorageRegistered(storage);
-
-      OStorage oldStorage = storages.putIfAbsent(storage.getName(), storage);
-      if (oldStorage != null)
-        storage = oldStorage;
-
-      return storage;
-    } finally {
-      engineLock.readLock().unlock();
-    }
-  }
 
   public OStorage getStorage(final String dbName) {
     engineLock.readLock().lock();

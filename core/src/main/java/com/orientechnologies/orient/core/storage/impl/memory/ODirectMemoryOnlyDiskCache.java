@@ -131,7 +131,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void addFile(String fileName, long fileId, OWriteCache writeCache) {
+  public long addFile(String fileName, long fileId, OWriteCache writeCache) {
     int intId = extractFileId(fileId);
 
     metadataLock.lock();
@@ -145,6 +145,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
       files.put(intId, new MemoryFile(id, intId, pageSize));
       fileNameIdMap.put(fileName, intId);
       fileIdNameMap.put(intId, fileName);
+
+      return composeFileId(id, intId);
     } finally {
       metadataLock.unlock();
     }
@@ -413,8 +415,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
           }
 
           final ODirectMemoryPointer directMemoryPointer = ODirectMemoryPointerFactory.instance().createPointer(
-              new byte[pageSize + 2
-              * ODurablePage.PAGE_PADDING]);
+              new byte[pageSize + 2 * ODurablePage.PAGE_PADDING]);
           final OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(-1, -1), id, index);
           cachePointer.incrementReferrer();
 
@@ -523,8 +524,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void addFile(String fileName, long fileId) {
-    addFile(fileName, fileId, null);
+  public long addFile(String fileName, long fileId) {
+    return addFile(fileName, fileId, null);
   }
 
   @Override
@@ -591,6 +592,14 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   @Override
   public int pageSize() {
     return pageSize;
+  }
+
+  @Override
+  public boolean fileIdsAreEqual(long firsId, long secondId) {
+    final int firstIntId = extractFileId(firsId);
+    final int secondIntId = extractFileId(secondId);
+
+    return firstIntId == secondIntId;
   }
 
   @Override

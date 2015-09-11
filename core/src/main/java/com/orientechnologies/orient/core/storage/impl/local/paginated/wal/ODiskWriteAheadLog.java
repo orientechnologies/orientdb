@@ -966,7 +966,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       if (end() == null)
         throw new OStorageException("Can not change end of WAL because WAL is empty");
 
-      if (end().compareTo(lsn) <= 0)
+      if (end().compareTo(lsn) > 0)
         return;
 
       LogSegment last = logSegments.get(logSegments.size() - 1);
@@ -975,8 +975,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       if (last.filledUpTo() == 0) {
         last.delete(false);
         logSegments.remove(logSegments.size() - 1);
-      } else {
-        last.stopFlush(true);
       }
 
       last = new LogSegment(new File(walLocation, getSegmentName(lsn.getSegment() + 1)), maxPagesCacheSize);

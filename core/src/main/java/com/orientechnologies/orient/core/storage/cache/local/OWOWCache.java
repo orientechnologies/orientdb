@@ -290,6 +290,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     return pageSize;
   }
 
+  @Override
+  public boolean fileIdsAreEqual(long firsId, long secondId) {
+    final int firstIntId = extractFileId(firsId);
+    final int secondIntId = extractFileId(secondId);
+
+    return firstIntId == secondIntId;
+  }
+
   public long openFile(String fileName) throws IOException {
     filesLock.acquireWriteLock();
     try {
@@ -391,7 +399,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
-  public void addFile(String fileName, long fileId) throws IOException {
+  public long addFile(String fileName, long fileId) throws IOException {
     filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
@@ -427,6 +435,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       writeNameIdEntry(new NameFileIdEntry(fileName, intId), true);
 
       addFile(fileClassic);
+
+      return composeFileId(id, intId);
     } finally {
       filesLock.releaseWriteLock();
     }

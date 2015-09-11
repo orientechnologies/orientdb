@@ -45,7 +45,7 @@ public interface OWriteCache {
 
   long addFile(String fileName) throws IOException;
 
-  void addFile(String fileName, long fileId) throws IOException;
+  long addFile(String fileName, long fileId) throws IOException;
 
   boolean checkLowDiskSpace();
 
@@ -102,4 +102,6 @@ public interface OWriteCache {
   Map<String, Long> files();
 
   int pageSize();
+
+  boolean fileIdsAreEqual(long firsId, long secondId);
 }

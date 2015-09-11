@@ -15,9 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -28,6 +27,8 @@ import com.orientechnologies.orient.test.database.base.SetupTest;
 
 @Test(groups = "db")
 public class DbClosedTest extends DocumentDBBaseTest {
+  private OPartitionedDatabasePool pool;
+
   @Parameters(value = { "url" })
   public DbClosedTest(@Optional String url) {
     super(url);
@@ -35,11 +36,21 @@ public class DbClosedTest extends DocumentDBBaseTest {
     setDropDb(true);
   }
 
+  @BeforeClass
+  public void before() {
+    pool = new OPartitionedDatabasePool(url, "admin", "admin");
+  }
+
+  @AfterClass
+  public void after() {
+    pool.close();
+  }
+
   public void testDoubleDb() {
-    OObjectDatabaseTx db = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    OObjectDatabaseTx db = new OObjectDatabaseTx(pool.acquire());
 
     // now I am getting another db instance
-    OObjectDatabaseTx dbAnother = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    OObjectDatabaseTx dbAnother = new OObjectDatabaseTx(pool.acquire());
     dbAnother.close();
 
     db.activateOnCurrentThread();
@@ -47,10 +58,10 @@ public class DbClosedTest extends DocumentDBBaseTest {
   }
 
   public void testDoubleDbWindowsPath() {
-    OObjectDatabaseTx db = OObjectDatabasePool.global().acquire(url.replace('/', '\\'), "admin", "admin");
+    OObjectDatabaseTx db = new OObjectDatabaseTx(pool.acquire());
 
     // now I am getting another db instance
-    OObjectDatabaseTx dbAnother = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    OObjectDatabaseTx dbAnother = new OObjectDatabaseTx(pool.acquire());
     dbAnother.close();
 
     db.activateOnCurrentThread();

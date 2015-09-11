@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -56,7 +57,6 @@ import java.util.concurrent.TimeUnit;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage {
-
 
   private static String[]                  ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
       ".oem", ".oet", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
@@ -115,6 +115,17 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     super.create(iProperties);
   }
 
+  @Override
+  protected String normalizeName(String name) {
+    final int firstIndexOf = name.lastIndexOf('/');
+    final int secondIndexOf = name.lastIndexOf(File.separator);
+
+    if (firstIndexOf >= 0 || secondIndexOf >= 0)
+      return name.substring(Math.max(firstIndexOf, secondIndexOf) + 1);
+    else
+      return name;
+  }
+
   public boolean exists() {
     if (status == STATUS.OPEN)
       return true;
@@ -166,7 +177,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       release();
     }
   }
-
 
   @Override
   public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable,

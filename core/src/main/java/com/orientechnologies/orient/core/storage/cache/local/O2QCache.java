@@ -205,14 +205,16 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   }
 
   @Override
-  public void addFile(String fileName, long fileId, OWriteCache writeCache) throws IOException {
+  public long addFile(String fileName, long fileId, OWriteCache writeCache) throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
 
     cacheLock.acquireWriteLock();
     try {
-      writeCache.addFile(fileName, fileId);
-      Set<Long> oldPages = filePages.put(fileId, Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>()));
+      final long fid = writeCache.addFile(fileName, fileId);
+      Set<Long> oldPages = filePages.put(fid, Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>()));
       assert oldPages == null || oldPages.isEmpty();
+
+      return fid;
     } finally {
       cacheLock.releaseWriteLock();
     }

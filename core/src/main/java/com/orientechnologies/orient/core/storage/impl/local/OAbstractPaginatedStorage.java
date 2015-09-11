@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
@@ -2555,7 +2556,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       final File ibuFile = new File(backupDirectory, fileName);
 
-      rndIBUFile = new RandomAccessFile(ibuFile, "w");
+      rndIBUFile = new RandomAccessFile(ibuFile, "rw");
       final FileChannel ibuChannel = rndIBUFile.getChannel();
 
       ibuChannel.position(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
@@ -2635,6 +2636,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         ibuChannel.position(OLongSerializer.LONG_SIZE);
 
         ByteBuffer lsnData = ByteBuffer.allocate(2 * OLongSerializer.LONG_SIZE);
+        ibuChannel.read(lsnData);
+        lsnData.rewind();
 
         final long segment = lsnData.getLong();
         final long position = lsnData.getLong();
@@ -2714,10 +2717,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             zipOutputStream.closeEntry();
 
           } finally {
-            zipOutputStream.close();
+            zipOutputStream.flush();
           }
         } finally {
-          bufferedOutputStream.close();
+          bufferedOutputStream.flush();
         }
       } finally {
         modificationLock.allowModifications();
@@ -2750,6 +2753,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       final ZipEntry zipEntry = new ZipEntry(fileName);
 
       stream.putNextEntry(zipEntry);
+
+      final byte[] binaryFileId = new byte[OLongSerializer.LONG_SIZE];
+      OLongSerializer.INSTANCE.serialize(fileId, binaryFileId, 0);
+      stream.write(binaryFileId, 0, binaryFileId.length);
 
       for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
         final OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache);
@@ -2814,6 +2821,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
             final ByteBuffer buffer = ByteBuffer.allocate(1);
             ibuChannel.read(buffer);
+            buffer.rewind();
+
             final boolean fullBackup = buffer.get() == 1;
 
             final InputStream inputStream = Channels.newInputStream(ibuChannel);
@@ -2848,7 +2857,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       List<String> processedFiles = new ArrayList<String>();
 
-      while ((zipEntry = zipInputStream.getNextEntry()) != null) {
+      if (isFull) {
+        final Map<String, Long> files = writeCache.files();
+        for (Map.Entry<String, Long> entry : files.entrySet()) {
+          final long fileId = readCache.openFile(entry.getKey(), writeCache);
+
+          assert entry.getValue().equals(fileId);
+          readCache.deleteFile(fileId, writeCache);
+        }
+      }
+
+      entryLoop: while ((zipEntry = zipInputStream.getNextEntry()) != null) {
         if (zipEntry.getName().equals("backup.json"))
           continue;
 
@@ -2858,11 +2877,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           continue;
         }
 
+        final byte[] binaryFileId = new byte[OLongSerializer.LONG_SIZE];
+        OIOUtils.readFully(zipInputStream, binaryFileId, 0, binaryFileId.length);
+
+        final long expectedFileId = OLongSerializer.INSTANCE.deserialize(binaryFileId, 0);
         Long fileId;
+
         final boolean isClosed;
 
         if (!writeCache.exists(zipEntry.getName())) {
-          fileId = readCache.addFile(zipEntry.getName(), writeCache);
+          fileId = readCache.addFile(zipEntry.getName(), expectedFileId, writeCache);
           isClosed = true;
         } else {
           fileId = writeCache.isOpen(zipEntry.getName());
@@ -2874,8 +2898,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             isClosed = false;
         }
 
-        if (isFull)
-          readCache.truncateFile(fileId, writeCache);
+        if (!writeCache.fileIdsAreEqual(expectedFileId, fileId))
+          throw new OStorageException("Can not restore database from backup because expected and actaul file ids are not the same");
 
         while (zipInputStream.available() > 0) {
           final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
@@ -2885,8 +2909,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           while (rb < data.length) {
             final int b = zipInputStream.read(data, rb, data.length - rb);
 
-            if (b == -1)
-              throw new OStorageException("Can not read data from file " + zipEntry.getName());
+            if (b == -1) {
+              if (rb > 0)
+                throw new OStorageException("Can not read data from file " + zipEntry.getName());
+              else {
+                processedFiles.add(zipEntry.getName());
+                continue entryLoop;
+              }
+            }
 
             rb += b;
           }
@@ -2897,33 +2927,37 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
           if (cacheEntry == null) {
             do {
-              readCache.release(cacheEntry, writeCache);
+              if (cacheEntry != null)
+                readCache.release(cacheEntry, writeCache);
+
               cacheEntry = readCache.allocateNewPage(fileId, writeCache);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
 
-          cacheEntry.acquireSharedLock();
+          cacheEntry.acquireExclusiveLock();
           try {
             final ODirectMemoryPointer pointer = cacheEntry.getCachePointer().getDataPointer();
             final OLogSequenceNumber backedUpPageLsn = ODurablePage.getLogSequenceNumber(OLongSerializer.LONG_SIZE, data);
             if (isFull) {
               pointer.set(OWOWCache.PAGE_PADDING, data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
+              cacheEntry.markDirty();
 
-              if (maxLsn == null || maxLsn.compareTo(backedUpPageLsn) > 0) {
+              if (maxLsn == null || maxLsn.compareTo(backedUpPageLsn) < 0) {
                 maxLsn = backedUpPageLsn;
               }
             } else {
               final OLogSequenceNumber currentPageLsn = ODurablePage.getLogSequenceNumberFromPage(pointer);
               if (backedUpPageLsn.compareTo(currentPageLsn) > 0) {
                 pointer.set(OWOWCache.PAGE_PADDING, data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
+                cacheEntry.markDirty();
 
-                if (maxLsn == null || maxLsn.compareTo(backedUpPageLsn) > 0) {
+                if (maxLsn == null || maxLsn.compareTo(backedUpPageLsn) < 0) {
                   maxLsn = backedUpPageLsn;
                 }
               }
             }
           } finally {
-            cacheEntry.releaseSharedLock();
+            cacheEntry.releaseExclusiveLock();
             readCache.release(cacheEntry, writeCache);
           }
         }
@@ -2979,6 +3013,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     configuration.fromStream(buffer, 0, rb);
     configuration.update();
+
+    configuration.close();
 
     configuration.load(loadProperties);
   }

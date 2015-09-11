@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -875,7 +876,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
-      if (Boolean.TRUE.equals(tokenBased) && token != null && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
+      if (Boolean.TRUE.equals(tokenBased)
+          && token != null
+          && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
           && (requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN || connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32)) {
         // TODO: Check if the token is expiring and if it is send a new token
         byte[] renewedToken = tokenHandler.renewIfNeeded(token);
@@ -1096,27 +1099,19 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.exists");
 
-    if (storageType != null)
-      connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
-    else {
-      // CHECK AGAINST ALL THE ENGINE TYPES, BUT REMOTE
-      for (String engine : Orient.instance().getEngines()) {
-        if (!engine.equalsIgnoreCase(OEngineRemote.NAME)) {
-          connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, engine);
-          if (connection.database.exists())
-            // FOUND
-            break;
+    boolean result = false;
+    ODatabaseDocumentInternal database;
 
-          // NOT FOUND: ASSURE TO UNREGISTER IT TO AVOID CACHING
-          Orient.instance().unregisterStorage(connection.database.getStorage());
-        }
-      }
-    }
+    database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
+    if (database.exists())
+      result = true;
+    else
+      Orient.instance().unregisterStorage(database.getStorage());
 
     beginResponse();
     try {
       sendOk(clientTxId);
-      channel.writeByte((byte) (connection.database.exists() ? 1 : 0));
+      channel.writeByte((byte) (result ? 1 : 0));
     } finally {
       endResponse();
     }
@@ -1478,7 +1473,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
     } else if (OMultiValue.isIterable(result)) {
       if (connection.data.protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_32) {
-        channel.writeByte((byte)'i');
+        channel.writeByte((byte) 'i');
         for (Object o : OMultiValue.getMultiValueIterable(result)) {
           try {
             if (load && o instanceof ORecordId)

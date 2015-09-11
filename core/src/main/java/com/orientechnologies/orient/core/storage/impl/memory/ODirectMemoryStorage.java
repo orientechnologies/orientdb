@@ -73,14 +73,6 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void postCreateSteps() {
-    ORecordId recordId = new ORecordId();
-    recordId.clusterId = 0;
-    createRecord(recordId, OCommonConst.EMPTY_BYTE_ARRAY, new OSimpleVersion(), ORecordBytes.RECORD_TYPE,
-        ODatabase.OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
-  }
-
-  @Override
   public boolean exists() {
     return readCache != null && writeCache.exists("default" + OPaginatedCluster.DEF_EXTENSION);
   }
@@ -99,7 +91,8 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+  public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+      OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     throw new UnsupportedOperationException();
   }
 

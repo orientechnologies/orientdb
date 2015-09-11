@@ -62,7 +62,7 @@ import java.io.IOException;
 public interface OReadCache {
   long addFile(String fileName, OWriteCache writeCache) throws IOException;
 
-  void addFile(String fileName, long fileId, OWriteCache writeCache) throws IOException;
+  long addFile(String fileName, long fileId, OWriteCache writeCache) throws IOException;
 
   long openFile(String fileName, OWriteCache writeCache) throws IOException;
 

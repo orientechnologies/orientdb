@@ -21,7 +21,9 @@ package com.orientechnologies.orient.client.remote;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.log.OLogManager;
@@ -256,22 +258,22 @@ public class OServerAdmin {
       throw new OStorageException("Error on checking existence of the remote storage: " + storage.getName(), e);
     }
   }
-  
+
   /**
    * Checks if a database exists in the remote server.
-   * 
+   *
    * @return true if exists, otherwise false
    * @throws IOException
    * @param storageType
    *          Storage type between "plocal" or "memory".
    */
   public synchronized boolean existsDatabase(final String storageType) throws IOException {
-	  return existsDatabase(storage.getName(), storageType);
+    return existsDatabase(storage.getName(), storageType);
   }
 
   /**
    * Deprecated. Use dropDatabase() instead.
-   * 
+   *
    * @return The instance itself. Useful to execute method in chain
    * @see #dropDatabase(String)
    * @throws IOException
@@ -285,7 +287,7 @@ public class OServerAdmin {
 
   /**
    * Drops a database from a remote server instance.
-   * 
+   *
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    * @param iDatabaseName
@@ -316,12 +318,17 @@ public class OServerAdmin {
         throw new OStorageException("Cannot delete the remote storage: " + storage.getName(), e);
       }
 
+    final Set<OStorage> underlyingStorages = new HashSet<OStorage>();
+
     for (OStorage s : Orient.instance().getStorages()) {
-      if (s.getURL().startsWith(getURL())) {
-        s.removeResource(OSchema.class.getSimpleName());
-        s.removeResource(OIndexManager.class.getSimpleName());
-        s.removeResource(OSecurity.class.getSimpleName());
+      if (s.getType().equals(storage.getType()) && s.getName().equals(storage.getName())) {
+        underlyingStorages.add(s.getUnderlying());
+        Orient.instance().unregisterStorage(s);
       }
+    }
+
+    for (OStorage s : underlyingStorages) {
+      Orient.instance().unregisterStorage(s);
     }
 
     ODatabaseRecordThreadLocal.INSTANCE.remove();
@@ -331,16 +338,16 @@ public class OServerAdmin {
 
   /**
    * Drops a database from a remote server instance.
-   * 
+   *
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    * @param storageType
    *          Storage type between "plocal" or "memory".
    */
   public synchronized OServerAdmin dropDatabase(final String storageType) throws IOException {
-	    return dropDatabase(storage.getName(), storageType);
+    return dropDatabase(storage.getName(), storageType);
   }
-  
+
   /**
    * Freezes the database by locking it in exclusive mode.
    * 

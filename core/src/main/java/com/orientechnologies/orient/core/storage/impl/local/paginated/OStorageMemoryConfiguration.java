@@ -41,9 +41,11 @@ public class OStorageMemoryConfiguration extends OStorageConfiguration {
   }
 
   public void close() throws IOException {
+    super.close();
   }
 
   public void create() throws IOException {
+    super.create();
   }
 
   @Override

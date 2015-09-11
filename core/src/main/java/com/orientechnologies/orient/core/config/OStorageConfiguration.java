@@ -202,6 +202,9 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public Map<String, Object> getLoadProperties() {
+    if (loadProperties == null)
+      return Collections.emptyMap();
+
     return Collections.unmodifiableMap(loadProperties);
   }
 
