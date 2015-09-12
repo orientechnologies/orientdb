@@ -111,7 +111,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
       if (OMultiValue.isMultiValue(joinCurrentValue)) {
         // RESOLVE SINGLE JOINS
         for (Object ob : OMultiValue.getMultiValueIterable(joinCurrentValue)) {
-          final Object r = lookup(ob, false);
+          final Object r = lookup(ob, true);
           if (createEdge(vertex, ob, r) == null) {
             if (unresolvedLinkAction == ACTION.SKIP)
               // RETURN NULL ONLY IN CASE SKIP ACTION IS REQUESTED
@@ -119,7 +119,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
           }
         }
       } else {
-        final Object result = lookup(joinCurrentValue, false);
+        final Object result = lookup(joinCurrentValue, true);
         if (createEdge(vertex, joinCurrentValue, result) == null) {
           if (unresolvedLinkAction == ACTION.SKIP)
             // RETURN NULL ONLY IN CASE SKIP ACTION IS REQUESTED
@@ -154,7 +154,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
 
             log(OETLProcessor.LOG_LEVELS.DEBUG, "created new vertex=%s", linkedV.getRecord());
 
-            result = linkedV;
+            result = linkedV.getIdentity();
           } else {
             throw new OConfigurationException("Cannot create linked document because target class is unknown. Use 'lookup' field");
           }
@@ -172,6 +172,9 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
         return null;
       case HALT:
         throw new OETLProcessHaltedException("Cannot resolve join for value '" + joinCurrentValue + "'");
+      case NOTHING:
+      default:
+        return null;
       }
     }
 
@@ -188,7 +191,9 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
         edges = new ArrayList<OrientEdge>(1);
 
       for (Object o : OMultiValue.getMultiValueIterable(result)) {
-        final OrientVertex targetVertex = pipeline.getGraphDatabase().getVertex(o);
+        
+        OIdentifiable oid = (OIdentifiable) o;
+        final OrientVertex targetVertex = pipeline.getGraphDatabase().getVertex(oid);
 
         try {
           // CREATE THE EDGE
