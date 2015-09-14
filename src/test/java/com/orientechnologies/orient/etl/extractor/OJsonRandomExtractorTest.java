@@ -26,6 +26,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.ETLBaseTest;
 import com.orientechnologies.orient.etl.RandomExtractor;
 
+import static org.junit.Assert.assertEquals;
+
 /**
  * Tests ETL JSON Extractor.
  *
@@ -58,8 +60,8 @@ public class OJsonRandomExtractorTest extends ETLBaseTest {
 
     process("{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
         + "loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
-        + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }",
-        (OBasicCommandContext) new OBasicCommandContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
+        + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }", (OBasicCommandContext) new OBasicCommandContext()
+        .setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
 
     assertEquals(TOTAL, graph.countVertices("Person"));
 

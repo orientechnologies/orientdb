@@ -21,7 +21,8 @@ package com.orientechnologies.orient.etl;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import junit.framework.TestCase;
+import org.junit.After;
+import org.junit.Before;
 
 import java.util.List;
 
@@ -30,22 +31,22 @@ import java.util.List;
  *
  * @author Luca Garulli
  */
-public abstract class ETLBaseTest extends TestCase {
+public abstract class ETLBaseTest {
   protected String[] names    = new String[] { "Jay", "Luca", "Bill", "Steve", "Jill", "Luigi", "Enrico", "Emanuele" };
   protected String[] surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles", "Ironcutter" };
 
   protected OrientGraph graph;
   protected OETLProcessor proc;
 
-  @Override
-  protected void setUp() {
+  @Before
+  public void setUp() {
     graph = new OrientGraph("memory:ETLBaseTest");
     graph.setUseLightweightEdges(false);
     proc = new OETLProcessor();
     proc.getFactory().registerLoader(TestLoader.class);
   }
 
-  @Override
+  @After
   public void tearDown() {
     graph.drop();
   }

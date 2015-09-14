@@ -27,11 +27,12 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import junit.framework.Assert;
 import org.junit.Test;
 
 import java.util.Iterator;
 import java.util.Set;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests ETL Field Transformer.
@@ -128,18 +129,12 @@ public class OEdgeTransformerTest extends ETLBaseTest {
     assertEquals(v0.getProperty("id"), 0);
   }
 
-  @Test
+  @Test(expected = OETLProcessHaltedException.class)
   public void testErrorOnDuplicateVertex() {
-    try {
       process("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca\nJay,Miner,Luca' } }, extractor : { row: {} },"
           + " transformers: [{csv: {}}, {merge: {joinFieldName:'name',lookup:'V1.name'}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
           + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
-      Assert.fail();
-
-    } catch (OETLProcessHaltedException e) {
-      Assert.assertTrue(true);
-    }
   }
 
   @Test
