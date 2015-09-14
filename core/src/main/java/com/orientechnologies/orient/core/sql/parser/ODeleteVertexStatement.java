@@ -6,6 +6,7 @@ import java.util.Map;
 
 public class ODeleteVertexStatement extends OStatement {
 
+  protected boolean      from         = false;
   protected OFromClause  fromClause;
   protected OWhereClause whereClause;
   protected boolean      returnBefore = false;
@@ -22,6 +23,9 @@ public class ODeleteVertexStatement extends OStatement {
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DELETE VERTEX ");
+    if(from){
+      builder.append("FROM ");
+    }
     fromClause.toString(params, builder);
     if (returnBefore) {
       builder.append(" RETURN BEFORE");
