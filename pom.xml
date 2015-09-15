@@ -26,7 +26,7 @@
     <packaging>jar</packaging>
 
     <properties>
-        <orientdb.version>${version}</orientdb.version>
+        <orientdb.version>${project.version}</orientdb.version>
         <blueprints.version>2.6.0</blueprints.version>
         <jdkVersion>1.6</jdkVersion>
         <maven.compile.targetLevel>${jdkVersion}</maven.compile.targetLevel>
@@ -59,6 +59,18 @@
                 <role>architect</role>
                 <role>developer</role>
                 <role>founder</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <id>r.franchini</id>
+            <name>Roberto Franchini</name>
+            <email>r.franchini@orientechnologies.com</email>
+            <organization>Orient Technologies</organization>
+            <organizationUrl>http://www.orientechnologies.com</organizationUrl>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
             </roles>
             <timezone>+1</timezone>
         </developer>
