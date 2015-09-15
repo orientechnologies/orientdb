@@ -17,7 +17,7 @@ public class ODistributedCounter extends OOrientListenerAbstract {
   private static final int MAX_RETRIES = 8;
 
   private static final AtomicInteger nextHashCode = new AtomicInteger();
-  private final AtomicBoolean poolBusy = new AtomicBoolean();
+  private final AtomicBoolean           isBusy         = new AtomicBoolean();
   private final int maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
 
 
@@ -60,7 +60,8 @@ public class ODistributedCounter extends OOrientListenerAbstract {
   }
 
   public void clear() {
-    while (!poolBusy.compareAndSet(false, true)) ;
+    while (!isBusy.compareAndSet(false, true))
+      ;
 
     final AtomicLong[] cts = new AtomicLong[counters.length];
     for (int i = 0; i < counters.length; i++) {
@@ -69,7 +70,7 @@ public class ODistributedCounter extends OOrientListenerAbstract {
 
     counters = cts;
 
-    poolBusy.set(false);
+    isBusy.set(false);
   }
 
   private void updateCounter(long delta) {
@@ -82,7 +83,7 @@ public class ODistributedCounter extends OOrientListenerAbstract {
       AtomicLong counter = cts[index];
 
       if (counter == null) {
-        if (!poolBusy.get() && poolBusy.compareAndSet(false, true)) {
+        if (!isBusy.get() && isBusy.compareAndSet(false, true)) {
           if (cts == counters) {
             counter = cts[index];
 
@@ -90,7 +91,7 @@ public class ODistributedCounter extends OOrientListenerAbstract {
               cts[index] = new AtomicLong();
           }
 
-          poolBusy.set(false);
+          isBusy.set(false);
         }
 
         continue;
@@ -112,7 +113,7 @@ public class ODistributedCounter extends OOrientListenerAbstract {
           return;
         }
 
-        if (!poolBusy.get() && poolBusy.compareAndSet(false, true)) {
+        if (!isBusy.get() && isBusy.compareAndSet(false, true)) {
           if (cts == counters) {
             if (cts.length < maxPartitions) {
               final AtomicLong[] newCts = new AtomicLong[cts.length << 1];
@@ -121,7 +122,7 @@ public class ODistributedCounter extends OOrientListenerAbstract {
             }
           }
 
-          poolBusy.set(false);
+          isBusy.set(false);
         }
 
         continue;

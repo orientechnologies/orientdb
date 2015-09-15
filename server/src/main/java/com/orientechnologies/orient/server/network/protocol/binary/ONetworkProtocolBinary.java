@@ -423,14 +423,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         releaseDatabase();
         break;
 
-      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE:
-        freezeCluster();
-        break;
-
-      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE:
-        releaseCluster();
-        break;
-
       case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
         cleanOutRecord();
         break;
@@ -1991,76 +1983,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         server.openDatabaseBypassingSecurity(connection.database, connection.data, connection.serverUser.name);
 
       connection.database.release();
-    } else {
-      throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
-    }
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-    } finally {
-      endResponse();
-    }
-  }
-
-  protected void freezeCluster() throws IOException {
-    setDataCommandInfo("Freeze cluster");
-    final String dbName = channel.readString();
-    final int clusterId = channel.readShort();
-
-    checkServerAccess("database.freeze");
-
-    String storageType = null;
-    storageType = channel.readString();
-
-    if (storageType == null)
-      storageType = "plocal";
-
-    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
-
-    if (connection.database.exists()) {
-      OLogManager.instance().info(this, "Freezing database '%s' cluster %d", connection.database.getURL(), clusterId);
-
-      if (connection.database.isClosed()) {
-        server.openDatabaseBypassingSecurity(connection.database, connection.data, connection.serverUser.name);
-      }
-
-      connection.database.freezeCluster(clusterId);
-    } else {
-      throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
-    }
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-    } finally {
-      endResponse();
-    }
-  }
-
-  protected void releaseCluster() throws IOException {
-    setDataCommandInfo("Release database");
-    final String dbName = channel.readString();
-    final int clusterId = channel.readShort();
-
-    checkServerAccess("database.release");
-
-    String storageType = null;
-    storageType = channel.readString();
-
-    if (storageType == null)
-      storageType = "plocal";
-
-    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
-
-    if (connection.database.exists()) {
-      OLogManager.instance().info(this, "Realising database '%s' cluster %d", connection.database.getURL(), clusterId);
-
-      if (connection.database.isClosed()) {
-        server.openDatabaseBypassingSecurity(connection.database, connection.data, connection.serverUser.name);
-      }
-
-      connection.database.releaseCluster(clusterId);
     } else {
       throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
     }

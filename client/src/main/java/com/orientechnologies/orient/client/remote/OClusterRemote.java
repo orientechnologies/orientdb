@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -81,11 +80,6 @@ public class OClusterRemote implements OCluster {
   }
 
   public void close() throws IOException {
-  }
-
-  @Override
-  public OModificationLock getExternalModificationLock() {
-    throw new UnsupportedOperationException("getExternalModificationLock");
   }
 
   @Override
