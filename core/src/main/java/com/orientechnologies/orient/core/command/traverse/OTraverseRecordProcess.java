@@ -92,7 +92,7 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
         } else {
           // SINGLE FIELD
           final int pos = OStringSerializerHelper
-              .parse(cfgField, new StringBuilder(), 0, -1, new char[] { '.' }, true, true, true, 0, true);
+              .parse(cfgField, new StringBuilder(), 0, -1, new char[] { '.' }, true, true, true, 0, true) - 1;
           if (pos > -1) {
             // FOUND <CLASS>.<FIELD>
             final OClass cls = ODocumentInternal.getImmutableSchemaClass(targetDoc);
