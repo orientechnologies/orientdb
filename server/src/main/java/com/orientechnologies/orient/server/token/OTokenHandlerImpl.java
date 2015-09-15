@@ -201,7 +201,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       token.setHeader(header);
       if (db != null) {
         token.setDatabase(db.getName());
-        token.setDatabaseType(db.getStorage().getType());
+        token.setDatabaseType(db.getStorage().getUnderlying().getType());
       }
       if (data.serverUser) {
         token.setServerUser(true);
