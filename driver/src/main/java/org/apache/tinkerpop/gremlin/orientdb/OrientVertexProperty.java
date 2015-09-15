@@ -1,5 +1,6 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
@@ -33,5 +34,12 @@ public class OrientVertexProperty<V> extends OrientProperty<V> implements Vertex
     @Override
     public Vertex element() {
         return vertex;
+    }
+
+    @Override
+    public void remove() {
+        ODocument doc = ((OrientVertex) vertex).getRawDocument();
+        doc.removeField(key);
+        doc.save();
     }
 }

@@ -38,6 +38,17 @@ class OrientSpec extends WordSpec with ShouldMatchers {
       gs.V(v.id).values[String]("key1", "key2").toList shouldBe List("value1", "value2")
     }
 
+    "delete property" in new Fixture {
+      val v = sg.addVertex()
+      val key = "testProperty"
+      v.setProperty(key, "testValue1")
+      v.property[String](key).value shouldBe "testValue1"
+      v.removeProperty(key)
+      intercept[IllegalStateException] {
+        v.property[String](key).value()
+      }
+    }
+
     "using labels" in new Fixture {
       val v1 = sg.addVertex("label1")
       val v2 = sg.addVertex("label2")
