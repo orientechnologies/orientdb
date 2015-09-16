@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.Map;
 
 public class OArraySelector extends SimpleNode {
@@ -36,5 +39,23 @@ public class OArraySelector extends SimpleNode {
     }
   }
 
+    public Integer getValue(OIdentifiable iCurrentRecord, Object iResult, OCommandContext ctx) {
+      Object result = null;
+      if (inputParam!= null) {
+        result = inputParam.bindFromInputParams(ctx.getInputParameters());
+      } else if (expression != null) {
+        result = expression.execute(iCurrentRecord, ctx);
+      } else if (integer != null) {
+        result = integer;
+      }
+
+      if (result == null) {
+        return null;
+      }
+      if (result instanceof Number) {
+        return ((Number) result).intValue();
+      }
+      return null;
+  }
 }
 /* JavaCC - OriginalChecksum=f87a5543b1dad0fb5f6828a0663a7c9e (do not edit this line) */

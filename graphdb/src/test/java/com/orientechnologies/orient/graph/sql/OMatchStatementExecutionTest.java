@@ -619,6 +619,88 @@ public class OMatchStatementExecutionTest {
 
   }
 
+  @Test
+  public void testArrayNumber() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0] as foo" );
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = (ODocument) result.get(0);
+    Object foo = doc.field("foo");
+    assertNotNull(foo);
+    assertFalse(foo.getClass().isArray());
+//    assertEquals(1, ((Object[])foo).length);
+  }
+
+  @Test
+  public void testArraySingleSelectors1() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0-1] as foo" );
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = (ODocument) result.get(0);
+    Object foo = doc.field("foo");
+    assertNotNull(foo);
+    assertTrue(foo.getClass().isArray());
+    assertEquals(1, ((Object[])foo).length);
+  }
+
+
+  @Test
+  public void testArraySingleSelectors2() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0,1] as foo" );
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = (ODocument) result.get(0);
+    Object foo = doc.field("foo");
+    assertNotNull(foo);
+    assertTrue(foo.getClass().isArray());
+    assertEquals(2, ((Object[])foo).length);
+  }
+
+  @Test
+  public void testArrayRange2() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0-2] as foo" );
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = (ODocument) result.get(0);
+    Object foo = doc.field("foo");
+    assertNotNull(foo);
+    assertTrue(foo.getClass().isArray());
+    assertEquals(2, ((Object[])foo).length);
+  }
+
+
+  @Test
+  public void testArrayRange3() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0-3] as foo" );
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = (ODocument) result.get(0);
+    Object foo = doc.field("foo");
+    assertNotNull(foo);
+    assertTrue(foo.getClass().isArray());
+    assertEquals(2, ((Object[])foo).length);
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

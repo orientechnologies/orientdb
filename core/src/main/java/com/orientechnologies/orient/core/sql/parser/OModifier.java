@@ -56,13 +56,18 @@ public class OModifier extends SimpleNode {
     }
   }
 
-
   public Object execute(OIdentifiable iCurrentRecord, Object result, OCommandContext ctx) {
     if (methodCall != null) {
       result = methodCall.execute(result, ctx);
-    } else if(suffix!=null){
+    } else if (suffix != null) {
       result = suffix.execute(result, ctx);
-    }else {
+    } else if (arrayRange != null) {
+      return arrayRange.execute(iCurrentRecord, result, ctx);
+    } else if (condition != null) {
+      throw new UnsupportedOperationException("implement OModifier!");
+    } else if (arraySingleValues != null) {
+      return arraySingleValues.execute(iCurrentRecord, result, ctx);
+    } else {
       throw new UnsupportedOperationException("implement OModifier!");
       // TODO
     }
