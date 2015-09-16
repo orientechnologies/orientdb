@@ -65,9 +65,9 @@ public class LuceneResultSet implements Set<OIdentifiable> {
           String[] path = queryContext.getDrillDownQuery().split(":");
           pathFacet = path[1].split("/");
           drillDownQuery.add(path[0], pathFacet);
-          FacetsCollector.search(queryContext.searcher, drillDownQuery, PAGE_SIZE, facetsCollector);
+          FacetsCollector.search(queryContext.getSearcher(), drillDownQuery, PAGE_SIZE, facetsCollector);
         } else {
-          FacetsCollector.search(queryContext.searcher, query, PAGE_SIZE, facetsCollector);
+          FacetsCollector.search(queryContext.getSearcher(), query, PAGE_SIZE, facetsCollector);
         }
 
         Facets facets = new FastTaxonomyFacetCounts(queryContext.reader, queryContext.getFacetConfig(), facetsCollector);
@@ -119,16 +119,16 @@ public class LuceneResultSet implements Set<OIdentifiable> {
       switch (queryContext.cfg) {
 
       case NO_FILTER_NO_SORT:
-        topDocs = queryContext.searcher.search(query, PAGE_SIZE);
+        topDocs = queryContext.getSearcher().search(query, PAGE_SIZE);
         break;
       case FILTER_SORT:
-        topDocs = queryContext.searcher.search(query, queryContext.filter, PAGE_SIZE, queryContext.sort);
+        topDocs = queryContext.getSearcher().search(query, queryContext.filter, PAGE_SIZE, queryContext.sort);
         break;
       case FILTER:
-        topDocs = queryContext.searcher.search(query, queryContext.filter, PAGE_SIZE);
+        topDocs = queryContext.getSearcher().search(query, queryContext.filter, PAGE_SIZE);
         break;
       case SORT:
-        topDocs = queryContext.searcher.search(query, PAGE_SIZE, queryContext.sort);
+        topDocs = queryContext.getSearcher().search(query, PAGE_SIZE, queryContext.sort);
         break;
       }
     } catch (IOException e) {
@@ -226,7 +226,7 @@ public class LuceneResultSet implements Set<OIdentifiable> {
       Document ret = null;
       OContextualRecordId res = null;
       try {
-        ret = queryContext.searcher.doc(score.doc);
+        ret = queryContext.getSearcher().doc(score.doc);
         String rId = ret.get(OLuceneIndexManagerAbstract.RID);
         res = new OContextualRecordId(rId);
         manager.onRecordAddedToResultSet(queryContext, res, ret, score);
@@ -245,17 +245,17 @@ public class LuceneResultSet implements Set<OIdentifiable> {
         switch (queryContext.cfg) {
 
         case NO_FILTER_NO_SORT:
-          topDocs = queryContext.searcher.searchAfter(array[array.length - 1], query, PAGE_SIZE);
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
           break;
         case FILTER_SORT:
-          topDocs = queryContext.searcher.searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE,
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE,
               queryContext.sort);
           break;
         case FILTER:
-          topDocs = queryContext.searcher.searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE);
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE);
           break;
         case SORT:
-          topDocs = queryContext.searcher.searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);
           break;
         }
         array = topDocs.scoreDocs;

@@ -212,7 +212,6 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
         });
       }
     });
-    doc.save();
 
     List<Coordinate> coordinates = new ArrayList<Coordinate>();
     coordinates.add(new Coordinate(-45, 30));

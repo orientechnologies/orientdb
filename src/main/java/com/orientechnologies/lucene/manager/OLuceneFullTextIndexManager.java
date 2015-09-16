@@ -23,6 +23,7 @@ import com.orientechnologies.lucene.builder.OQueryBuilder;
 import com.orientechnologies.lucene.collections.LuceneResultSet;
 import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
 import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
@@ -96,6 +97,11 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
   @Override
   public Object get(Object key) {
+    return getInTx(key, null);
+  }
+
+  @Override
+  public Object getInTx(Object key, OLuceneTxChanges changes) {
     Query q = null;
     try {
       q = queryBuilder.query(index, key, mgrWriter.getIndexWriter().getAnalyzer());
@@ -103,11 +109,13 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
       if (key instanceof OFullTextCompositeKey) {
         context = ((OFullTextCompositeKey) key).getContext();
       }
-      return getResults(q, context, key);
+      return getResults(q, context, key, changes);
     } catch (ParseException e) {
       throw new OIndexEngineException("Error parsing lucene query ", e);
     }
   }
+
+
 
   @Override
   public void put(Object key, Object value) {
@@ -179,11 +187,11 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     }
   }
 
-  private Set<OIdentifiable> getResults(Query query, OCommandContext context, Object key) {
+  private Set<OIdentifiable> getResults(Query query, OCommandContext context, Object key, OLuceneTxChanges changes) {
 
     try {
       IndexSearcher searcher = searcher();
-      QueryContext queryContext = new QueryContext(context, searcher, query);
+      QueryContext queryContext = new QueryContext(context, searcher, query).setChanges(changes);
       if (facetManager.supportsFacets()) {
         facetManager.addFacetContext(queryContext, key);
       }
@@ -255,8 +263,8 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   @Override
-  public Document buildDocument(Object key) {
-    return builder.build(index, key, metadata);
+  public Document buildDocument(Object key, OIdentifiable value) {
+    return builder.build(index, key, value, metadata);
   }
 
   @Override

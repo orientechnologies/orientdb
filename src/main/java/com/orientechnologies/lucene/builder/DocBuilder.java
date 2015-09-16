@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.builder;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.document.Document;
@@ -27,5 +28,5 @@ import org.apache.lucene.document.Document;
  */
 public interface DocBuilder {
 
-  public Document build(OIndexDefinition definition,Object key,ODocument metadata);
+  public Document build(OIndexDefinition definition,Object key,OIdentifiable value,ODocument metadata);
 }

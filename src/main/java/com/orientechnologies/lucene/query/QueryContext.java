@@ -18,9 +18,11 @@
 
 package com.orientechnologies.lucene.query;
 
+import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import org.apache.lucene.facet.FacetsConfig;
 import org.apache.lucene.facet.taxonomy.TaxonomyReader;
+import org.apache.lucene.index.MultiReader;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -31,18 +33,19 @@ import org.apache.lucene.search.Sort;
  */
 public class QueryContext {
 
-  public final OCommandContext context;
-  public final IndexSearcher   searcher;
-  public final Query           query;
-  public final Filter          filter;
-  public final Sort            sort;
-  public QueryContextCFG       cfg;
-  public boolean               facet     = false;
-  public boolean               drillDown = false;
-  public TaxonomyReader        reader;
-  private FacetsConfig         facetConfig;
-  private String               facetField;
-  private String               drillDownQuery;
+  public final OCommandContext  context;
+  protected final IndexSearcher searcher;
+  public final Query            query;
+  public final Filter           filter;
+  public final Sort             sort;
+  public QueryContextCFG        cfg;
+  public boolean                facet     = false;
+  public boolean                drillDown = false;
+  public TaxonomyReader         reader;
+  private FacetsConfig          facetConfig;
+  private String                facetField;
+  private String                drillDownQuery;
+  protected OLuceneTxChanges    changes;
 
   public QueryContext(OCommandContext context, IndexSearcher searcher, Query query) {
     this(context, searcher, query, null, null);
@@ -114,5 +117,16 @@ public class QueryContext {
 
   public enum QueryContextCFG {
     NO_FILTER_NO_SORT, FILTER_SORT, FILTER, SORT
+  }
+
+  public QueryContext setChanges(OLuceneTxChanges changes) {
+    this.changes = changes;
+    return this;
+  }
+
+  public IndexSearcher getSearcher() {
+
+    return changes == null ? searcher : new IndexSearcher(new MultiReader(searcher.getIndexReader(), changes.searcher()
+        .getIndexReader()));
   }
 }

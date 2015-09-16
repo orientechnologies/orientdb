@@ -18,19 +18,19 @@
 
 package com.orientechnologies.lucene.test;
 
-import java.util.Collection;
-
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.Collection;
 
 /**
  * Created by enricorisa on 28/06/14.
@@ -73,14 +73,14 @@ public class LuceneInsertUpdateTransactionTest extends BaseLuceneTest {
   @Test
   public void testInsertUpdateTransactionWithIndex() throws Exception {
 
-    databaseDocumentTx.close();
-    databaseDocumentTx.open("admin", "admin");
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     schema.reload();
     databaseDocumentTx.begin();
     ODocument doc = new ODocument("City");
     doc.field("name", "Rome");
     databaseDocumentTx.save(doc);
+
+
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
     Assert.assertNotNull(idx);
     Collection<?> coll = (Collection<?>) idx.get("Rome");
@@ -92,6 +92,10 @@ public class LuceneInsertUpdateTransactionTest extends BaseLuceneTest {
     doc = new ODocument("City");
     doc.field("name", "Rome");
     databaseDocumentTx.save(doc);
+
+    OUser user = new OUser("test", "test");
+    databaseDocumentTx.save(user.getDocument());
+
     databaseDocumentTx.commit();
     coll = (Collection<?>) idx.get("Rome");
     Assert.assertEquals(coll.size(), 1);

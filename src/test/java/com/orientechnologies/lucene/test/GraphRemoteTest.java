@@ -35,7 +35,7 @@ public class GraphRemoteTest extends GraphEmbeddedTest {
 
 //  @Test(enabled = false)
   @Override
-  public void embedded() {
-    super.embedded();
+  public void embeddedTx() {
+    super.embeddedTx();
   }
 }

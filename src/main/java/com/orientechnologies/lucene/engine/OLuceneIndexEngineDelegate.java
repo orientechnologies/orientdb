@@ -23,6 +23,7 @@ import com.orientechnologies.lucene.builder.ODocBuilder;
 import com.orientechnologies.lucene.builder.OQueryBuilderImpl;
 import com.orientechnologies.lucene.manager.OLuceneFullTextIndexManager;
 import com.orientechnologies.lucene.manager.OLuceneGeoSpatialIndexManager;
+import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -199,8 +200,8 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
   }
 
   @Override
-  public Document buildDocument(Object key) {
-    return delegate.buildDocument(key);
+  public Document buildDocument(Object key, OIdentifiable value) {
+    return delegate.buildDocument(key, value);
   }
 
   @Override
@@ -221,5 +222,25 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
   @Override
   public IndexSearcher searcher() throws IOException {
     return delegate.searcher();
+  }
+
+  @Override
+  public Object getInTx(Object key, OLuceneTxChanges changes) {
+    return delegate.getInTx(key, changes);
+  }
+
+  @Override
+  public long sizeInTx(OLuceneTxChanges changes) {
+    return delegate.sizeInTx(changes);
+  }
+
+  @Override
+  public OLuceneTxChanges buildTxChanges() throws IOException {
+    return delegate.buildTxChanges();
+  }
+
+  @Override
+  public Query deleteQuery(Object key, OIdentifiable value) {
+    return delegate.deleteQuery(key, value);
   }
 }

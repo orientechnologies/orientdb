@@ -23,6 +23,7 @@ import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.lucene.OLuceneMapEntryIterator;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
 import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
@@ -126,15 +127,21 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   public boolean remove(Object key, OIdentifiable value) {
 
+    Query query = deleteQuery(key, value);
+    if (query != null)
+      deleteDocument(query);
+    return true;
+  }
+
+  @Override
+  public Query deleteQuery(Object key, OIdentifiable value) {
     Query query = null;
     if (isCollectionDelete()) {
       query = OLuceneIndexType.createDeleteQuery(value, index.getFields(), key);
     } else {
       query = OLuceneIndexType.createQueryId(value);
     }
-    if (query != null)
-      deleteDocument(query);
-    return true;
+    return query;
   }
 
   public void commit() {
@@ -207,7 +214,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   public void clear() {
     try {
-      mgrWriter.getIndexWriter().deleteAll();
+      reopenToken = mgrWriter.deleteAll();
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on clearing Lucene index", e);
     }
@@ -251,7 +258,11 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   }
 
   public long size(final ValuesTransformer transformer) {
+    return sizeInTx(null);
+  }
 
+  @Override
+  public long sizeInTx(OLuceneTxChanges changes) {
     IndexReader reader = null;
     IndexSearcher searcher = null;
     try {
@@ -263,7 +274,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
         release(searcher);
       }
     }
-    return reader.numDocs();
+    return changes == null ? reader.numDocs()  : reader.numDocs() + changes.numDocs();
   }
 
   public void release(IndexSearcher searcher) {
@@ -505,8 +516,6 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     return indexName;
   }
 
-  public abstract Document buildDocument(Object key);
-
   // TODO we could chose different analyzer for fields
   @Override
   public Analyzer analyzer(String field) {
@@ -526,5 +535,10 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   @Override
   public void onStorageUnregistered(OStorage storage) {
 
+  }
+
+  @Override
+  public OLuceneTxChanges buildTxChanges() throws IOException {
+    return new OLuceneTxChanges(this, createIndexWriter(new RAMDirectory(), metadata));
   }
 }
