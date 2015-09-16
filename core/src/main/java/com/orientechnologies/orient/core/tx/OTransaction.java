@@ -136,6 +136,10 @@ public interface OTransaction {
 
   boolean isUsingLog();
 
+  void setCustomData(String iName, Object iValue);
+
+  Object getCustomData(String iName);
+
   /**
    * If you set this flag to false, you are unable to
    * <ol>

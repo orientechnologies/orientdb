@@ -720,7 +720,7 @@ public class ReadWriteDiskCacheTest {
     if (!file.exists())
       file.mkdir();
 
-    writeAheadLog = new ODiskWriteAheadLog(1024, -1, 10 * 1024, storageLocal);
+    writeAheadLog = new ODiskWriteAheadLog(1024, -1, 10 * 1024, null, storageLocal);
 
     final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
         "readWriteDiskCacheTest.tst", 0);
