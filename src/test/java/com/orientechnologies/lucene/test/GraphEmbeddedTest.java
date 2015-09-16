@@ -62,7 +62,7 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
   }
 
   @Test
-  public void embedded() {
+  public void embeddedTx() {
 
     graph.getRawGraph().begin();
     graph.addVertex("class:City", new Object[] { "name", "London" });
@@ -75,9 +75,11 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
     int size = 0;
     for (Vertex v : vertexes) {
       size++;
+      Assert.assertNotNull(v);
     }
     Assert.assertEquals(size, 1);
   }
+
 
   @Override
   protected String getDatabaseName() {

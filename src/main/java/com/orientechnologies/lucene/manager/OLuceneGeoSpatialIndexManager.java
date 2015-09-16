@@ -24,6 +24,7 @@ import com.orientechnologies.lucene.collections.LuceneResultSet;
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.query.SpatialQueryContext;
+import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
@@ -113,7 +114,11 @@ public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract i
 
   @Override
   public Object get(Object key) {
+    return getInTx(key, null);
+  }
 
+  @Override
+  public Object getInTx(Object key, OLuceneTxChanges changes) {
     try {
       if (key instanceof Map) {
         return newGeoSearch((Map<String, Object>) key);
@@ -186,8 +191,8 @@ public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract i
   }
 
   @Override
-  public Document buildDocument(Object key) {
-    return null;
+  public Document buildDocument(Object key, OIdentifiable value) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

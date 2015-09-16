@@ -19,6 +19,8 @@
 package com.orientechnologies.lucene.builder;
 
 import com.orientechnologies.lucene.OLuceneIndexType;
+import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -32,35 +34,40 @@ import java.util.List;
  * Created by Enrico Risa on 02/09/15.
  */
 public class ODocBuilder implements DocBuilder {
-    @Override
-    public Document build(OIndexDefinition definition, Object key, ODocument metadata) {
-        Document doc = new Document();
-        int i = 0;
-        List<Object> formattedKey = formatKeys(definition, key);
-        for (String f : definition.getFields()) {
-            Object val = formattedKey.get(i);
-            i++;
-            doc.add(OLuceneIndexType.createField(f, val, Field.Store.NO, Field.Index.ANALYZED));
-        }
-        return doc;
+  @Override
+  public Document build(OIndexDefinition definition, Object key, OIdentifiable value, ODocument metadata) {
+    Document doc = new Document();
+    int i = 0;
+
+    if (value != null) {
+      doc.add(OLuceneIndexType.createField(OLuceneIndexManagerAbstract.RID, value.getIdentity().toString(), Field.Store.YES,
+          Field.Index.NOT_ANALYZED_NO_NORMS));
+    }
+    List<Object> formattedKey = formatKeys(definition, key);
+    for (String f : definition.getFields()) {
+      Object val = formattedKey.get(i);
+      i++;
+      doc.add(OLuceneIndexType.createField(f, val, Field.Store.NO, Field.Index.ANALYZED));
+    }
+    return doc;
+  }
+
+  private List<Object> formatKeys(OIndexDefinition definition, Object key) {
+    List<Object> keys;
+
+    if (key instanceof OCompositeKey) {
+      keys = ((OCompositeKey) key).getKeys();
+
+    } else if (key instanceof List) {
+      keys = ((List) key);
+    } else {
+      keys = new ArrayList<Object>();
+      keys.add(key);
     }
 
-    private List<Object> formatKeys(OIndexDefinition definition, Object key) {
-        List<Object> keys;
-
-        if (key instanceof OCompositeKey) {
-            keys = ((OCompositeKey) key).getKeys();
-
-        } else if (key instanceof List) {
-            keys = ((List) key);
-        } else {
-            keys = new ArrayList<Object>();
-            keys.add(key);
-        }
-
-        for (int i = keys.size(); i < definition.getFields().size(); i++) {
-            keys.add("");
-        }
-        return keys;
+    for (int i = keys.size(); i < definition.getFields().size(); i++) {
+      keys.add("");
     }
+    return keys;
+  }
 }

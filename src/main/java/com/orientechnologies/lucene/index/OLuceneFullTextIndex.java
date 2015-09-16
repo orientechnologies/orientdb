@@ -40,7 +40,7 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique implements OLuce
       @Override
       public Document callEngine(OIndexEngine engine) {
         OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-        return indexEngine.buildDocument(key);
+        return indexEngine.buildDocument(key, null);
       }
     });
   }

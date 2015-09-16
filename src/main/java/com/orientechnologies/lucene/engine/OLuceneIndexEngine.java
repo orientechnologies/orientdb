@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.engine;
 
+import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -38,7 +39,7 @@ public interface OLuceneIndexEngine extends OIndexEngine {
   public void initIndex(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic,
       ODocument metadata);
 
-  public Document buildDocument(Object key);
+  public Document buildDocument(Object key, OIdentifiable value);
 
   public Query buildQuery(Object query);
 
@@ -48,4 +49,11 @@ public interface OLuceneIndexEngine extends OIndexEngine {
 
   public IndexSearcher searcher() throws IOException;
 
+  public Object getInTx(Object key, OLuceneTxChanges changes);
+
+  public long sizeInTx(OLuceneTxChanges changes);
+
+  public OLuceneTxChanges buildTxChanges() throws IOException;
+
+  public Query deleteQuery(Object key, OIdentifiable value);
 }
