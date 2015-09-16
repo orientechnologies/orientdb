@@ -201,7 +201,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             String db = token.getDatabase();
             String type = token.getDatabaseType();
             if (db != null && type != null && requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
-              final ODatabaseDocumentTx database = new ODatabaseDocumentTx(type + ":" + db);
+              //TODO refactor for use server.openDatabase
+              final ODatabaseDocumentTx database = new ODatabaseDocumentTx(server.getStoragePath(type + ":" + db));
               if (connection.data.serverUser) {
                 database.resetInitialization();
                 database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
