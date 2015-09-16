@@ -56,4 +56,6 @@ public interface OLuceneIndexEngine extends OIndexEngine {
   public OLuceneTxChanges buildTxChanges() throws IOException;
 
   public Query deleteQuery(Object key, OIdentifiable value);
+
+
 }

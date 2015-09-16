@@ -26,46 +26,54 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.IndexSearcher;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Enrico Risa on 15/09/15.
  */
 public class OLuceneTxChanges {
 
-    IndexWriter writer;
-    private OLuceneIndexEngine engine;
-    private long deletedDoc = 0;
+  IndexWriter                writer;
+  private OLuceneIndexEngine engine;
 
-    public OLuceneTxChanges(OLuceneIndexEngine engine, IndexWriter writer) {
-        this.writer = writer;
-        this.engine = engine;
+  private Set<String>        deleted = new HashSet<String>();
+
+  public OLuceneTxChanges(OLuceneIndexEngine engine, IndexWriter writer) {
+    this.writer = writer;
+    this.engine = engine;
+  }
+
+  public void put(Object key, OIdentifiable value, Document doc) throws IOException {
+    writer.addDocument(doc);
+  }
+
+  public void remove(Object key, OIdentifiable value) throws IOException {
+
+    if (value.getIdentity().isTemporary()) {
+      writer.deleteDocuments(engine.deleteQuery(key, value));
+    } else {
+      deleted.add(value.getIdentity().toString());
+    }
+  }
+
+  public IndexSearcher searcher() {
+    // TODO optimize
+    try {
+      return new IndexSearcher(DirectoryReader.open(writer, true));
+    } catch (IOException e) {
+      e.printStackTrace();
     }
 
-    public void put(Object key, OIdentifiable value, Document doc) throws IOException {
-        writer.addDocument(doc);
-    }
+    return null;
+  }
 
-    public void remove(Object key, OIdentifiable value) throws IOException {
+  public long numDocs() {
+    return searcher().getIndexReader().numDocs() - deleted.size();
+  }
 
-        if (value.getIdentity().isTemporary()) {
-            writer.deleteDocuments(engine.deleteQuery(key, value));
-        } else {
-            deletedDoc++;
-        }
-    }
-
-    public IndexSearcher searcher() {
-        // TODO optimize
-        try {
-            return new IndexSearcher(DirectoryReader.open(writer, true));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
-    public long numDocs() {
-        return searcher().getIndexReader().numDocs() - deletedDoc;
-    }
+  // TODO is ok for full text on string but with [] ?
+  public boolean isDeleted(Document document, Object key, OIdentifiable value) {
+    return deleted.contains(value.getIdentity().toString());
+  }
 }

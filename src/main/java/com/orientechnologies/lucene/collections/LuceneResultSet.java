@@ -23,16 +23,15 @@ import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.facet.*;
-import org.apache.lucene.facet.taxonomy.FastTaxonomyFacetCounts;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Created by Enrico Risa on 28/10/14.
@@ -50,62 +49,6 @@ public class LuceneResultSet implements Set<OIdentifiable> {
     this.queryContext = queryContext;
     this.query = queryContext.query;
     fetchFirstBatch();
-    fetchFacet();
-  }
-
-  private void fetchFacet() {
-    if (queryContext.facet) {
-      FacetsCollector facetsCollector = new FacetsCollector(true);
-
-      try {
-
-        String[] pathFacet = null;
-        if (queryContext.isDrillDown()) {
-          DrillDownQuery drillDownQuery = new DrillDownQuery(queryContext.getFacetConfig(), query);
-          String[] path = queryContext.getDrillDownQuery().split(":");
-          pathFacet = path[1].split("/");
-          drillDownQuery.add(path[0], pathFacet);
-          FacetsCollector.search(queryContext.getSearcher(), drillDownQuery, PAGE_SIZE, facetsCollector);
-        } else {
-          FacetsCollector.search(queryContext.getSearcher(), query, PAGE_SIZE, facetsCollector);
-        }
-
-        Facets facets = new FastTaxonomyFacetCounts(queryContext.reader, queryContext.getFacetConfig(), facetsCollector);
-
-        FacetResult facetResult = null;
-        if (pathFacet != null) {
-          facetResult = facets.getTopChildren(PAGE_SIZE, queryContext.getFacetField(), pathFacet);
-        } else {
-          facetResult = facets.getTopChildren(PAGE_SIZE, queryContext.getFacetField());
-        }
-
-        if (facetResult != null) {
-          List<ODocument> documents = new ArrayList<ODocument>();
-          // for (FacetResult facetResult : res) {
-
-          ODocument doc = new ODocument();
-
-          doc.field("childCount", facetResult.childCount);
-          doc.field("value", facetResult.value);
-          doc.field("dim", facetResult.dim);
-          List<ODocument> labelsAndValue = new ArrayList<ODocument>();
-          for (LabelAndValue labelValue : facetResult.labelValues) {
-            ODocument doc1 = new ODocument();
-            doc1.field("label", labelValue.label);
-            doc1.field("value", labelValue.value);
-            labelsAndValue.add(doc1);
-
-          }
-          doc.field("labelsValue", labelsAndValue);
-          documents.add(doc);
-          queryContext.context.setVariable("$facet", documents);
-        }
-        // }
-
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
   }
 
   @Override

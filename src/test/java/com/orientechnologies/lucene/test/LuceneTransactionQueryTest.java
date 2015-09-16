@@ -31,6 +31,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -107,8 +108,10 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
     query = "select from C1 where p1 lucene \"abc\" limit 1";
     vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-    Assert.assertEquals(vertices.size(), 0);
+    Collection coll = (Collection) index.get("abc");
 
+    Assert.assertEquals(vertices.size(), 0);
+    Assert.assertEquals(coll.size(), 0);
     Assert.assertEquals(index.getSize(), 0);
 
     databaseDocumentTx.rollback();
@@ -154,7 +157,10 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
     query = "select from C1 where p1 lucene \"update\" limit 1";
     vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
+    Collection coll = (Collection) index.get("update");
+
     Assert.assertEquals(vertices.size(), 1);
+    Assert.assertEquals(coll.size(), 1);
     Assert.assertEquals(index.getSize(), 1);
 
     databaseDocumentTx.begin();
@@ -165,15 +171,18 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
 
     query = "select from C1 where p1 lucene \"update\" limit 1";
     vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
+    coll = (Collection) index.get("update");
 
     Assert.assertEquals(vertices.size(), 0);
-
+    Assert.assertEquals(coll.size(), 0);
     Assert.assertEquals(index.getSize(), 1);
 
     query = "select from C1 where p1 lucene \"removed\" limit 1";
     vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
+    coll = (Collection) index.get("update");
 
     Assert.assertEquals(vertices.size(), 1);
+    Assert.assertEquals(coll.size(), 1);
 
     databaseDocumentTx.rollback();
 

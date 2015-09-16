@@ -243,4 +243,6 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
   public Query deleteQuery(Object key, OIdentifiable value) {
     return delegate.deleteQuery(key, value);
   }
+
+
 }
