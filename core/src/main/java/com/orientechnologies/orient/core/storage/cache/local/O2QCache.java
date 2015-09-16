@@ -157,7 +157,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   }
 
   @Override
-  public void openFile(long fileId, OWriteCache writeCache) throws IOException {
+  public long openFile(long fileId, OWriteCache writeCache) throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
 
     cacheLock.acquireReadLock();
@@ -166,7 +166,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       fileLock = fileLockManager.acquireExclusiveLock(fileId);
       try {
         if (writeCache.isOpen(fileId))
-          return;
+          return fileId;
 
         writeCache.openFile(fileId);
         Set<Long> oldPages = filePages.put(fileId, Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>()));
@@ -178,10 +178,12 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     } finally {
       cacheLock.releaseReadLock();
     }
+
+    return fileId;
   }
 
   @Override
-  public void openFile(String fileName, long fileId, OWriteCache writeCache) throws IOException {
+  public long openFile(String fileName, long fileId, OWriteCache writeCache) throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
 
     cacheLock.acquireWriteLock();
@@ -189,8 +191,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       Long existingFileId = writeCache.isOpen(fileName);
 
       if (existingFileId != null) {
-        if (fileId == existingFileId)
-          return;
+        if (writeCache.fileIdsAreEqual(fileId, existingFileId))
+          return fileId;
 
         throw new OStorageException("File with given name already exists but has different id " + existingFileId + " vs. proposed "
             + fileId);
@@ -202,6 +204,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     } finally {
       cacheLock.releaseWriteLock();
     }
+
+    return fileId;
   }
 
   @Override

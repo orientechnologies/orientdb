@@ -118,15 +118,18 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void openFile(long fileId, OWriteCache writeCache) {
+  public long openFile(long fileId, OWriteCache writeCache) {
     int intId = extractFileId(fileId);
     final MemoryFile memoryFile = files.get(intId);
+
     if (memoryFile == null)
       throw new OStorageException("File with id " + intId + " does not exist");
+
+    return composeFileId(id, intId);
   }
 
   @Override
-  public void openFile(String fileName, long fileId, OWriteCache writeCache) {
+  public long openFile(String fileName, long fileId, OWriteCache writeCache) {
     throw new UnsupportedOperationException();
   }
 

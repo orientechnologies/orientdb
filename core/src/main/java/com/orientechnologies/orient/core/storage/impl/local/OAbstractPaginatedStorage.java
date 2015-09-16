@@ -2633,15 +2633,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     for (Map.Entry<String, Long> entry : files.entrySet()) {
       final String fileName = entry.getKey();
-      final long fileId = entry.getValue();
-      final boolean closeFile;
 
-      if (writeCache.isOpen(fileId))
-        closeFile = false;
-      else {
-        readCache.openFile(fileId, writeCache);
-        closeFile = true;
-      }
+      long fileId = entry.getValue();
+      final boolean closeFile = !writeCache.isOpen(fileId);
+
+      fileId = readCache.openFile(fileId, writeCache);
 
       final long filledUpTo = writeCache.getFilledUpTo(fileId);
       final ZipEntry zipEntry = new ZipEntry(fileName);
@@ -2775,7 +2771,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           continue;
         }
 
-        if (zipEntry.getName().toLowerCase(serverLocale).equals(ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION)) {
+        if (zipEntry.getName().toLowerCase(serverLocale).endsWith(ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION)) {
           addFileToDirectory(zipEntry.getName(), zipInputStream, walTempDir);
 
           continue;
@@ -4112,11 +4108,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       } else if (walRecord instanceof OUpdatePageRecord) {
         final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) walRecord;
 
-        final long fileId = updatePageRecord.getFileId();
-        final long pageIndex = updatePageRecord.getPageIndex();
+        long fileId = updatePageRecord.getFileId();
 
-        if (!writeCache.isOpen(fileId))
-          readCache.openFile(fileId, writeCache);
+        final long pageIndex = updatePageRecord.getPageIndex();
+        fileId = readCache.openFile(fileId, writeCache);
 
         OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache);
         if (cacheEntry == null) {

@@ -203,7 +203,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
     try {
       while (true) {
-        for (; i < WAL_BACKUP_ITERATION_STEP * (n + 1) || i < nonActiveSegments.length; i++) {
+        for (; i < WAL_BACKUP_ITERATION_STEP * (n + 1) && i < nonActiveSegments.length; i++) {
           final File nonActiveSegment = nonActiveSegments[i];
           final FileInputStream fileInputStream = new FileInputStream(nonActiveSegment);
           try {
@@ -211,13 +211,16 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
             try {
               final ZipEntry entry = new ZipEntry(nonActiveSegment.getName());
               zipOutputStream.putNextEntry(entry);
+              try {
+                final byte[] buffer = new byte[4096];
 
-              final byte[] buffer = new byte[4096];
+                int br = 0;
 
-              int br = 0;
-
-              while ((br = bufferedInputStream.read(buffer)) >= 0) {
-                zipOutputStream.write(buffer, 0, br);
+                while ((br = bufferedInputStream.read(buffer)) >= 0) {
+                  zipOutputStream.write(buffer, 0, br);
+                }
+              } finally {
+                zipOutputStream.closeEntry();
               }
             } finally {
               bufferedInputStream.close();
@@ -249,6 +252,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
           }
 
           writeAheadLog.newSegment();
+          newSegment = true;
 
           nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
         }
