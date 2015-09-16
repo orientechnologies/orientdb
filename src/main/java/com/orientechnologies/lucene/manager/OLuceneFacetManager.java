@@ -92,7 +92,7 @@ public class OLuceneFacetManager {
     final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
     if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
       String pathname = getIndexFacetPath((OLocalPaginatedStorage) storageLocalAbstract);
-      dir = NIOFSDirectory.open(new File(pathname));
+      dir = NIOFSDirectory.open(new File(pathname).toPath());
     } else {
       dir = new RAMDirectory();
     }

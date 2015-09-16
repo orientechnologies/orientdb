@@ -18,7 +18,6 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
 import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -48,11 +47,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.List;
 
 /**
@@ -80,8 +75,8 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
 
     try {
       Directory dir = getDirectory();
-      Analyzer analyzer = new StandardAnalyzer(OLuceneIndexManagerAbstract.LUCENE_VERSION);
-      IndexWriterConfig iwc = new IndexWriterConfig(OLuceneIndexManagerAbstract.LUCENE_VERSION, analyzer);
+      Analyzer analyzer = new StandardAnalyzer();
+      IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
       iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
       indexWriter = new IndexWriter(dir, iwc);
 
@@ -93,7 +88,7 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
   }
 
   protected Directory getDirectory() throws IOException {
-    return NIOFSDirectory.open(getPath());
+    return NIOFSDirectory.open(getPath().toPath());
   }
 
   private File getPath() {
@@ -121,8 +116,7 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
     indexWriter.close();
     IndexReader reader = DirectoryReader.open(getDirectory());
     IndexSearcher searcher = new IndexSearcher(reader);
-    Query query = new MultiFieldQueryParser(OLuceneIndexManagerAbstract.LUCENE_VERSION, new String[] { "title" },
-        new StandardAnalyzer(OLuceneIndexManagerAbstract.LUCENE_VERSION)).parse("down the");
+    Query query = new MultiFieldQueryParser(new String[] { "title" }, new StandardAnalyzer()).parse("down the");
     final TopDocs docs = searcher.search(query, Integer.MAX_VALUE);
     ScoreDoc[] hits = docs.scoreDocs;
     List<ODocument> oDocs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(

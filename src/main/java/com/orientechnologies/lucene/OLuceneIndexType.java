@@ -27,7 +27,6 @@ import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
-import org.apache.lucene.util.Version;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -39,8 +38,7 @@ import java.util.Map;
  */
 public class OLuceneIndexType {
 
-  public static Field createField(String fieldName, Object value, Field.Store store,
-      Field.Index analyzed) {
+  public static Field createField(String fieldName, Object value, Field.Store store, Field.Index analyzed) {
     Field field = null;
 
     if (value instanceof Number) {
@@ -100,7 +98,8 @@ public class OLuceneIndexType {
 
     BooleanQuery booleanQuery = new BooleanQuery();
 
-    booleanQuery.add(new TermQuery(new Term(OLuceneIndexManagerAbstract.RID, value.getIdentity().toString())), BooleanClause.Occur.MUST);
+    booleanQuery.add(new TermQuery(new Term(OLuceneIndexManagerAbstract.RID, value.getIdentity().toString())),
+        BooleanClause.Occur.MUST);
 
     Map<String, String> values = new HashMap<String, String>();
     // TODO Implementation of Composite keys with Collection
@@ -115,7 +114,7 @@ public class OLuceneIndexType {
     return booleanQuery;
   }
 
-  public static Query createFullQuery(OIndexDefinition index, Object key, Analyzer analyzer, Version version) throws ParseException {
+  public static Query createFullQuery(OIndexDefinition index, Object key, Analyzer analyzer) throws ParseException {
 
     String query = "";
     if (key instanceof OCompositeKey) {
@@ -133,15 +132,14 @@ public class OLuceneIndexType {
       query = key.toString();
     }
 
-    return getQueryParser(index, query, analyzer, version);
+    return getQueryParser(index, query, analyzer);
 
   }
 
-  protected static Query getQueryParser(OIndexDefinition index, String key, Analyzer analyzer, Version version)
-      throws ParseException {
+  protected static Query getQueryParser(OIndexDefinition index, String key, Analyzer analyzer) throws ParseException {
     QueryParser queryParser;
     if ((key).startsWith("(")) {
-      queryParser = new QueryParser(version, "", analyzer);
+      queryParser = new QueryParser("", analyzer);
 
     } else {
       String[] fields = null;
@@ -155,7 +153,7 @@ public class OLuceneIndexType {
           fields[i] = "k" + i;
         }
       }
-      queryParser = new MultiFieldQueryParser(version, fields, analyzer);
+      queryParser = new MultiFieldQueryParser(fields, analyzer);
     }
 
     return queryParser.parse(key);

@@ -38,7 +38,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.util.Version;
 
 import java.io.IOException;
 import java.util.*;
@@ -59,8 +58,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   public IndexWriter createIndexWriter(Directory directory, ODocument metadata) throws IOException {
 
     Analyzer analyzer = getAnalyzer(metadata);
-    Version version = getLuceneVersion(metadata);
-    IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
+    IndexWriterConfig iwc = new IndexWriterConfig( analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
     facetManager = new OLuceneFacetManager(this, metadata);
@@ -73,8 +71,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   @Override
   public IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException {
     Analyzer analyzer = getAnalyzer(metadata);
-    Version version = getLuceneVersion(metadata);
-    IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
+    IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.APPEND);
 
     OLogManager.instance().debug(this, "Opening Lucene index in '%s'...", directory);
@@ -101,7 +98,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   public Object get(Object key) {
     Query q = null;
     try {
-      q = queryBuilder.query(index, key, mgrWriter.getIndexWriter().getAnalyzer(), getLuceneVersion(metadata));
+      q = queryBuilder.query(index, key, mgrWriter.getIndexWriter().getAnalyzer());
       OCommandContext context = null;
       if (key instanceof OFullTextCompositeKey) {
         context = ((OFullTextCompositeKey) key).getContext();
@@ -266,7 +263,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   public Query buildQuery(Object query) {
 
     try {
-      return queryBuilder.query(index, query, mgrWriter.getIndexWriter().getAnalyzer(), getLuceneVersion(metadata));
+      return queryBuilder.query(index, query, mgrWriter.getIndexWriter().getAnalyzer());
     } catch (ParseException e) {
       throw new OIndexEngineException("Error parsing query", e);
     }

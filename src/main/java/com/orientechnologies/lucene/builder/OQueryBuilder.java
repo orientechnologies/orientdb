@@ -18,17 +18,15 @@
 
 package com.orientechnologies.lucene.builder;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.util.Version;
-
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.search.Query;
 
 /**
  * Created by Enrico Risa on 02/09/15.
  */
 public interface OQueryBuilder {
 
-  public Query query(OIndexDefinition index, Object key, Analyzer analyzer, Version version) throws ParseException;
+  public Query query(OIndexDefinition index, Object key, Analyzer analyzer) throws ParseException;
 }

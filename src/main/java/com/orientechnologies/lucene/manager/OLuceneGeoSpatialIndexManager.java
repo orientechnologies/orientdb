@@ -44,6 +44,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StoredField;
+import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexableField;
@@ -56,7 +57,6 @@ import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
 import org.apache.lucene.spatial.query.SpatialArgs;
 import org.apache.lucene.spatial.query.SpatialOperation;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.util.Version;
 
 import java.io.IOException;
 import java.util.*;
@@ -81,8 +81,7 @@ public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract i
   @Override
   public IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException {
     Analyzer analyzer = getAnalyzer(metadata);
-    Version version = getLuceneVersion(metadata);
-    IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
+    IndexWriterConfig iwc = new IndexWriterConfig( analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
     return new IndexWriter(directory, iwc);
   }
@@ -90,8 +89,7 @@ public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract i
   @Override
   public IndexWriter createIndexWriter(Directory directory, ODocument metadata) throws IOException {
     Analyzer analyzer = getAnalyzer(metadata);
-    Version version = getLuceneVersion(metadata);
-    IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
+    IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
     return new IndexWriter(directory, iwc);
   }
@@ -274,7 +272,7 @@ public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract i
   private Document newGeoDocument(OIdentifiable oIdentifiable, Shape shape) {
 
     FieldType ft = new FieldType();
-    ft.setIndexed(true);
+    ft.setIndexOptions(IndexOptions.DOCS);
     ft.setStored(true);
 
     Document doc = new Document();

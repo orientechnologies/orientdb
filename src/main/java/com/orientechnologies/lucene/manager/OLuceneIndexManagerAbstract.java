@@ -67,7 +67,6 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   public static final String               RID              = "RID";
   public static final String               KEY              = "KEY";
   public static final String               STORED           = "_STORED";
-  public static final Version              LUCENE_VERSION   = Version.LUCENE_47;
 
   public static final String               OLUCENE_BASE_DIR = "luceneIndexes";
 
@@ -291,9 +290,9 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
         try {
 
           final Class classAnalyzer = Class.forName(analyzerString);
-          final Constructor constructor = classAnalyzer.getConstructor(Version.class);
+          final Constructor constructor = classAnalyzer.getConstructor();
 
-          analyzer = (Analyzer) constructor.newInstance(getLuceneVersion(metadata));
+          analyzer = (Analyzer) constructor.newInstance();
         } catch (ClassNotFoundException e) {
           throw new OIndexException("Analyzer: " + analyzerString + " not found", e);
         } catch (NoSuchMethodException e) {
@@ -311,17 +310,11 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
         }
       }
     } else {
-      analyzer = new StandardAnalyzer(getLuceneVersion(metadata));
+      analyzer = new StandardAnalyzer();
     }
     return analyzer;
   }
 
-  public Version getLuceneVersion(ODocument metadata) {
-    if (version == null) {
-      version = LUCENE_VERSION;
-    }
-    return version;
-  }
 
   public void initIndex(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic,
       ODocument metadata) {
@@ -424,7 +417,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
       OLogManager.instance().debug(this, "Opening NIOFS Lucene db=%s, path=%s", database.getName(), pathname);
 
-      dir = NIOFSDirectory.open(new File(pathname));
+      dir = NIOFSDirectory.open(new File(pathname).toPath());
     } else {
 
       OLogManager.instance().debug(this, "Opening RAM Lucene index db=%s", database.getName());

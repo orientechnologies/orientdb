@@ -25,7 +25,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.util.Version;
 
 import java.util.Map;
 
@@ -34,7 +33,7 @@ import java.util.Map;
  */
 public class OQueryBuilderImpl implements OQueryBuilder {
   @Override
-  public Query query(OIndexDefinition index, Object key, Analyzer analyzer, Version version) throws ParseException {
+  public Query query(OIndexDefinition index, Object key, Analyzer analyzer) throws ParseException {
     String query = "";
     if (key instanceof OCompositeKey) {
       Object params = ((OCompositeKey) key).getKeys().get(0);
@@ -51,14 +50,14 @@ public class OQueryBuilderImpl implements OQueryBuilder {
       query = key.toString();
     }
 
-    return getQueryParser(index, query, analyzer, version);
+    return getQueryParser(index, query, analyzer);
   }
 
-  protected static Query getQueryParser(OIndexDefinition index, String key, Analyzer analyzer, Version version)
+  protected static Query getQueryParser(OIndexDefinition index, String key, Analyzer analyzer)
       throws ParseException {
     QueryParser queryParser;
     if ((key).startsWith("(")) {
-      queryParser = new QueryParser(version, "", analyzer);
+      queryParser = new QueryParser( "", analyzer);
 
     } else {
       String[] fields = null;
@@ -72,7 +71,7 @@ public class OQueryBuilderImpl implements OQueryBuilder {
           fields[i] = "k" + i;
         }
       }
-      queryParser = new MultiFieldQueryParser(version, fields, analyzer);
+      queryParser = new MultiFieldQueryParser(fields, analyzer);
     }
 
     try {

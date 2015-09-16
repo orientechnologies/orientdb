@@ -18,8 +18,7 @@ package com.orientechnologies.lucene;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.functions.OLuceneFunctionsFactory;
-import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
-import com.orientechnologies.lucene.operator.*;
+import com.orientechnologies.lucene.operator.OLuceneOperatorFactory;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -33,6 +32,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.orient.spatial.functions.OSpatialFunctionsFactory;
+import org.apache.lucene.util.Version;
 
 import java.util.Map;
 import java.util.Set;
@@ -58,8 +58,7 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
 
     registerFunctions();
 
-    OLogManager.instance().info(this, "Lucene index plugin installed and active. Lucene version: %s",
-        OLuceneIndexManagerAbstract.LUCENE_VERSION);
+    OLogManager.instance().info(this, "Lucene index plugin installed and active. Lucene version: %s", Version.LATEST);
   }
 
   protected void registerOperators() {
