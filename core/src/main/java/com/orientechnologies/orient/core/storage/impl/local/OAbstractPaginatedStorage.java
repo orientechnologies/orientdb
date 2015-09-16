@@ -2552,7 +2552,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       checkOpeness();
 
-      final long freezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
+      final long freezeId;
+
+      if (!isWritesAllowedDuringBackup())
+        freezeId = atomicOperationsManager.freezeAtomicOperations(OModificationOperationProhibitedException.class,
+            "Incremental backup in progress");
+      else
+        freezeId = -1;
+
       try {
         final BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(stream);
         try {
@@ -2560,34 +2567,43 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               .getCharset()));
           try {
             final Date startedOn = new Date();
-            lastLsn = backupPagesWithChanges(fromLsn, zipOutputStream);
+            final OLogSequenceNumber startLsn = writeAheadLog.end();
+            writeAheadLog.preventCutTill(startLsn);
 
-            final Date completedOn = new Date();
+            final long startSegment = writeAheadLog.activeSegment();
+            try {
+              lastLsn = backupPagesWithChanges(fromLsn, zipOutputStream);
 
-            final ZipEntry backupJson = new ZipEntry("backup.json");
-            zipOutputStream.putNextEntry(backupJson);
+              final Date completedOn = new Date();
 
-            final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh-mm-ss.SSS");
+              final ZipEntry backupJson = new ZipEntry("backup.json");
+              zipOutputStream.putNextEntry(backupJson);
 
-            final OutputStreamWriter writer = new OutputStreamWriter(zipOutputStream, configuration.getCharset());
-            writer.append("{\r\n");
-            writer.append("\t\"lsn\":").append(lastLsn.toString()).append(",\r\n");
-            writer.append("\t\"startedOn\":").append(dateFormat.format(startedOn)).append(",\r\n");
-            writer.append("\t\"completedOn\":").append(dateFormat.format(completedOn)).append("\r\n");
-            writer.append("}\r\n");
+              final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh-mm-ss.SSS");
 
-            writer.flush();
+              final OutputStreamWriter writer = new OutputStreamWriter(zipOutputStream, configuration.getCharset());
+              writer.append("{\r\n");
+              writer.append("\t\"lsn\":").append(lastLsn.toString()).append(",\r\n");
+              writer.append("\t\"startedOn\":").append(dateFormat.format(startedOn)).append(",\r\n");
+              writer.append("\t\"completedOn\":").append(dateFormat.format(completedOn)).append("\r\n");
+              writer.append("}\r\n");
 
-            zipOutputStream.closeEntry();
+              writer.flush();
 
-            final ZipEntry configurationEntry = new ZipEntry(CONF_ENTRY_NAME);
+              zipOutputStream.closeEntry();
 
-            zipOutputStream.putNextEntry(configurationEntry);
-            final byte[] btConf = configuration.toStream();
+              final ZipEntry configurationEntry = new ZipEntry(CONF_ENTRY_NAME);
 
-            zipOutputStream.write(btConf);
-            zipOutputStream.closeEntry();
+              zipOutputStream.putNextEntry(configurationEntry);
+              final byte[] btConf = configuration.toStream();
 
+              zipOutputStream.write(btConf);
+              zipOutputStream.closeEntry();
+
+              finalizeIncrementalBackup(zipOutputStream, startSegment);
+            } finally {
+              writeAheadLog.preventCutTill(null);
+            }
           } finally {
             zipOutputStream.flush();
           }
@@ -2595,7 +2611,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           bufferedOutputStream.flush();
         }
       } finally {
-        atomicOperationsManager.releaseAtomicOperations(freezeId);
+        if (!isWritesAllowedDuringBackup())
+          atomicOperationsManager.releaseAtomicOperations(freezeId);
       }
     } finally {
       stateLock.releaseReadLock();
@@ -2603,6 +2620,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     return lastLsn;
   }
+
+  protected abstract void finalizeIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException;
+
+  protected abstract boolean isWritesAllowedDuringBackup();
 
   private OLogSequenceNumber backupPagesWithChanges(OLogSequenceNumber changeLsn, ZipOutputStream stream) throws IOException {
     OLogSequenceNumber lastLsn = changeLsn;
@@ -2614,6 +2635,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       final String fileName = entry.getKey();
       final long fileId = entry.getValue();
       final boolean closeFile;
+
       if (writeCache.isOpen(fileId))
         closeFile = false;
       else {
@@ -2715,6 +2737,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   public void restoreFromIncrementalBackup(final InputStream inputStream, final boolean isFull) throws IOException {
     stateLock.acquireWriteLock();
     try {
+      final Locale serverLocale = configuration.getLocaleInstance();
+
       closeClusters(false);
       closeIndexes(false);
 
@@ -2739,12 +2763,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         }
       }
 
+      final File walTempDir = createWalTempDirectory();
+
       entryLoop: while ((zipEntry = zipInputStream.getNextEntry()) != null) {
         if (zipEntry.getName().equals("backup.json"))
           continue;
 
         if (zipEntry.getName().equals(CONF_ENTRY_NAME)) {
           replaceConfiguration(zipInputStream);
+
+          continue;
+        }
+
+        if (zipEntry.getName().toLowerCase(serverLocale).equals(ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION)) {
+          addFileToDirectory(zipEntry.getName(), zipInputStream, walTempDir);
 
           continue;
         }
@@ -2852,6 +2884,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         writeAheadLog.moveLsnAfter(maxLsn);
       }
 
+      final OWriteAheadLog restoreLog = createWalFromIBUFiles(walTempDir);
+      if (restoreLog != null) {
+        final OLogSequenceNumber beginLsn = writeAheadLog.begin();
+        restoreFrom(beginLsn, restoreLog);
+
+        restoreLog.delete();
+      }
+
+      if (walTempDir != null) {
+        if (!walTempDir.delete()) {
+          OLogManager.instance().error(this, "Can not remove temporary backup directory " + walTempDir.getAbsolutePath());
+        }
+      }
+
       openClusters();
       openIndexes();
 
@@ -2860,6 +2906,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       stateLock.releaseWriteLock();
     }
   }
+
+  protected abstract File createWalTempDirectory();
+
+  protected abstract void addFileToDirectory(String name, InputStream stream, File directory) throws IOException;
+
+  protected abstract OWriteAheadLog createWalFromIBUFiles(File directory) throws IOException;
 
   private void replaceConfiguration(ZipInputStream zipInputStream) throws IOException {
     final Map<String, Object> loadProperties = configuration.getLoadProperties();
@@ -3869,7 +3921,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         checkPointRecord.getLsn());
 
     final OLogSequenceNumber lsn = writeAheadLog.next(checkPointRecord.getLsn());
-    return restoreFrom(lsn);
+    return restoreFrom(lsn, writeAheadLog);
   }
 
   private boolean restoreFromFuzzyCheckPoint(OFuzzyCheckpointStartRecord checkPointRecord) throws IOException {
@@ -3879,17 +3931,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (flushedLsn.compareTo(writeAheadLog.begin()) < 0)
       flushedLsn = writeAheadLog.begin();
 
-    return restoreFrom(flushedLsn);
+    return restoreFrom(flushedLsn, writeAheadLog);
   }
 
   private boolean restoreFromBegging() throws IOException {
     OLogManager.instance().info(this, "Data restore procedure is started.");
     OLogSequenceNumber lsn = writeAheadLog.begin();
 
-    return restoreFrom(lsn);
+    return restoreFrom(lsn, writeAheadLog);
   }
 
-  private boolean restoreFrom(OLogSequenceNumber lsn) throws IOException {
+  private boolean restoreFrom(OLogSequenceNumber lsn, OWriteAheadLog writeAheadLog) throws IOException {
     final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean(false);
 
     long recordsProcessed = 0;

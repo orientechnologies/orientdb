@@ -132,7 +132,7 @@ public class SBTreeWAL extends SBTreeTest {
     if (!actualStorageDirFile.exists())
       actualStorageDirFile.mkdirs();
 
-    writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, actualStorage);
+    writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, actualStorage);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(actualStorageDir);
     when(actualStorage.getVariableParser()).thenReturn(variableParser);
@@ -323,7 +323,7 @@ public class SBTreeWAL extends SBTreeTest {
   }
 
   private void restoreDataFromWAL() throws IOException {
-    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, actualStorage);
+    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, actualStorage);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
@@ -48,7 +49,8 @@ public interface OWriteAheadLog {
 
   OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, OOperationUnitId unitId) throws IOException;
 
-  OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback, OLogSequenceNumber startLsn) throws IOException;
+  OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback, OLogSequenceNumber startLsn)
+      throws IOException;
 
   OLogSequenceNumber log(OWALRecord record) throws IOException;
 
@@ -75,4 +77,12 @@ public interface OWriteAheadLog {
   void removeFullCheckpointListener(OFullCheckpointRequestListener listener);
 
   void moveLsnAfter(OLogSequenceNumber lsn) throws IOException;
+
+  void preventCutTill(OLogSequenceNumber lsn) throws IOException;
+
+  File[] nonActiveSegments(long fromSegment);
+
+  long activeSegment();
+
+  void newSegment() throws IOException;
 }

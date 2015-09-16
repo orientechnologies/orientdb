@@ -61,7 +61,7 @@ public class WriteAheadLogTest {
     when(configurationMock.getLocaleInstance()).thenReturn(Locale.getDefault());
     when(paginatedStorage.getConfiguration()).thenReturn(configurationMock);
 
-    return new ODiskWriteAheadLog(maxPagesCacheSize, -1, maxSegmentSize, paginatedStorage);
+    return new ODiskWriteAheadLog(maxPagesCacheSize, -1, maxSegmentSize, null, paginatedStorage);
   }
 
   @AfterMethod
