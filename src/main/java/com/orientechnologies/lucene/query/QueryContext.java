@@ -28,6 +28,8 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 
+import java.io.IOException;
+
 /**
  * Created by Enrico Risa on 08/01/15.
  */
@@ -124,7 +126,7 @@ public class QueryContext {
     return this;
   }
 
-  public IndexSearcher getSearcher() {
+  public IndexSearcher getSearcher() throws IOException {
 
     return changes == null ? searcher : new IndexSearcher(new MultiReader(searcher.getIndexReader(), changes.searcher()
         .getIndexReader()));
