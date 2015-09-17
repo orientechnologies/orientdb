@@ -636,7 +636,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       try {
         cluster.synch();
-        cluster.setSoftlyClosed(true);
       } catch (IOException e) {
         throw new OStorageException("Error on synch cluster '" + name + "'", e);
       }
@@ -655,11 +654,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         throw new IllegalArgumentException("It is impossible to freeze and release index or manualindex cluster!");
       }
 
-      try {
-        cluster.setSoftlyClosed(false);
-      } catch (IOException e) {
-        throw new OStorageException("Error on unfreeze storage '" + name + "'", e);
-      }
 
       cluster.getExternalModificationLock().allowModifications();
     } finally {
