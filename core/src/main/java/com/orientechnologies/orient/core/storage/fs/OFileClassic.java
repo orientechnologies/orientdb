@@ -445,45 +445,6 @@ public class OFileClassic implements OFile {
 
       setVersion(OFileClassic.CURRENT_VERSION);
       version = OFileClassic.CURRENT_VERSION;
-      setSoftlyClosed(!failCheck);
-    } finally {
-      releaseWriteLock();
-    }
-  }
-
-  @Override
-  public boolean isSoftlyClosed() throws IOException {
-    acquireReadLock();
-    try {
-      final ByteBuffer buffer;
-      if (version == 0)
-        buffer = readData(SOFTLY_CLOSED_OFFSET_V_0, 1);
-      else
-        buffer = readData(SOFTLY_CLOSED_OFFSET, 1);
-
-      return buffer.get(0) > 0;
-    } finally {
-      releaseReadLock();
-    }
-  }
-
-  public void setSoftlyClosed(final boolean value) throws IOException {
-    acquireWriteLock();
-    try {
-      if (channel == null || mode.indexOf('w') < 0)
-        return;
-
-      final ByteBuffer buffer = getBuffer(1);
-      buffer.put(0, (byte) (value ? 1 : 0));
-
-      writeBuffer(buffer, SOFTLY_CLOSED_OFFSET);
-
-      try {
-        channel.force(true);
-      } catch (IOException e) {
-        OLogManager.instance()
-            .warn(this, "Error during flush of file %s. Data may be lost in case of power failure.", getName(), e);
-      }
     } finally {
       releaseWriteLock();
     }
@@ -559,17 +520,9 @@ public class OFileClassic implements OFile {
 
       OLogManager.instance().debug(this, "Checking file integrity of " + osFile.getName() + "...");
 
-      if (failCheck) {
-        wasSoftlyClosed = isSoftlyClosed();
-
-        if (wasSoftlyClosed)
-          setSoftlyClosed(false);
-      }
-
       if (version < CURRENT_VERSION) {
         setVersion(CURRENT_VERSION);
         version = CURRENT_VERSION;
-        setSoftlyClosed(!failCheck);
       }
 
       if (failCheck)
@@ -612,8 +565,6 @@ public class OFileClassic implements OFile {
 
       if (accessFile != null && (accessFile.length() - HEADER_SIZE) < getFileSize())
         accessFile.setLength(getFileSize() + HEADER_SIZE);
-
-      setSoftlyClosed(true);
 
       if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
         unlock();

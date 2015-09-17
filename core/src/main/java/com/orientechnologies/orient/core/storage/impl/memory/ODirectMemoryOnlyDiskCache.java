@@ -263,19 +263,6 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public boolean wasSoftlyClosed(long fileId) {
-    return true;
-  }
-
-  @Override
-  public void setSoftlyClosed(long fileId, boolean softlyClosed) {
-  }
-
-  @Override
-  public void setSoftlyClosed(boolean softlyClosed) {
-  }
-
-  @Override
   public void flush() {
   }
 
