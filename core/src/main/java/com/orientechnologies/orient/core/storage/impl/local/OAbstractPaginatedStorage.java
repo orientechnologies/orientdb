@@ -2562,32 +2562,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           final ZipOutputStream zipOutputStream = new ZipOutputStream(bufferedOutputStream, Charset.forName(configuration
               .getCharset()));
           try {
-            final Date startedOn = new Date();
+            final long newSegmentFreezeId = atomicOperationsManager.freezeAtomicOperations(
+                OModificationOperationProhibitedException.class, "Backup in progress");
+            try {
+              writeAheadLog.newSegment();
+            } finally {
+              atomicOperationsManager.releaseAtomicOperations(newSegmentFreezeId);
+            }
+
             final OLogSequenceNumber startLsn = writeAheadLog.end();
             writeAheadLog.preventCutTill(startLsn);
 
             final long startSegment = writeAheadLog.activeSegment();
             try {
               lastLsn = backupPagesWithChanges(fromLsn, zipOutputStream);
-
-              final Date completedOn = new Date();
-
-              final ZipEntry backupJson = new ZipEntry("backup.json");
-              zipOutputStream.putNextEntry(backupJson);
-
-              final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh-mm-ss.SSS");
-
-              final OutputStreamWriter writer = new OutputStreamWriter(zipOutputStream, configuration.getCharset());
-              writer.append("{\r\n");
-              writer.append("\t\"lsn\":").append(lastLsn.toString()).append(",\r\n");
-              writer.append("\t\"startedOn\":").append(dateFormat.format(startedOn)).append(",\r\n");
-              writer.append("\t\"completedOn\":").append(dateFormat.format(completedOn)).append("\r\n");
-              writer.append("}\r\n");
-
-              writer.flush();
-
-              zipOutputStream.closeEntry();
-
               final ZipEntry configurationEntry = new ZipEntry(CONF_ENTRY_NAME);
 
               zipOutputStream.putNextEntry(configurationEntry);
@@ -2758,9 +2746,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       final File walTempDir = createWalTempDirectory();
 
       entryLoop: while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-        if (zipEntry.getName().equals("backup.json"))
-          continue;
-
         if (zipEntry.getName().equals(CONF_ENTRY_NAME)) {
           replaceConfiguration(zipInputStream);
 
