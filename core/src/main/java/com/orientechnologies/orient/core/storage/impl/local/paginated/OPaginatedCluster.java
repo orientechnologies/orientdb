@@ -1137,26 +1137,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
-    acquireExclusiveLock();
-    try {
-      writeCache.setSoftlyClosed(fileId, softlyClosed);
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
-  @Override
-  public boolean wasSoftlyClosed() throws IOException {
-    acquireSharedLock();
-    try {
-      return writeCache.wasSoftlyClosed(fileId) || clusterPositionMap.wasSoftlyClosed();
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
   public long getRecordsSize() throws IOException {
     atomicOperationsManager.acquireReadLock(this);
     try {

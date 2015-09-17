@@ -2106,8 +2106,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       try {
         unlock();
 
-        writeCache.setSoftlyClosed(true);
-
         if (configuration != null)
           configuration.setSoftlyClosed(true);
 
@@ -2127,8 +2125,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   public void release() {
     try {
       lock();
-
-      writeCache.setSoftlyClosed(false);
 
       if (configuration != null)
         configuration.setSoftlyClosed(false);

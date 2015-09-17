@@ -81,12 +81,6 @@ public interface OFile {
 
   long write(long iOffset, byte[] iSourceBuffer) throws IOException;
 
-  void setSoftlyClosed(boolean b) throws IOException;
-
-  boolean wasSoftlyClosed() throws IOException;
-
-  boolean isSoftlyClosed() throws IOException;
-
   void lock() throws IOException;
 
   FileLock lock(final long iRangeFrom, final long iRangeSize, final boolean iShared) throws IOException;
