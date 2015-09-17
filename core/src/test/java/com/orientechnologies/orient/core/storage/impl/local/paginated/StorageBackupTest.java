@@ -22,7 +22,7 @@ import java.util.Random;
  * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
  * @since 9/9/2015
  */
-@Test(enabled = false)
+@Test
 public class StorageBackupTest {
   private String buildDirectory;
 
@@ -184,13 +184,13 @@ public class StorageBackupTest {
 
     Assert.assertTrue(compare.compare());
 
-    db.open("admin", "admin");
-    db.drop();
-
-    backedUpDb.open("admin", "admin");
-    backedUpDb.drop();
-
-    OFileUtils.deleteRecursively(backupDir);
+    // db.open("admin", "admin");
+    // db.drop();
+    //
+    // backedUpDb.open("admin", "admin");
+    // backedUpDb.drop();
+    //
+    // OFileUtils.deleteRecursively(backupDir);
   }
 
 }
