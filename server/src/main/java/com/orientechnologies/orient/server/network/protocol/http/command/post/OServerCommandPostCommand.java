@@ -24,10 +24,12 @@ import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,9 +49,25 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
     final String accept = iRequest.getHeader("accept");
 
-    if (iRequest.content != null)
+    Object params = null;
+
+    if (iRequest.content != null && !iRequest.content.isEmpty()) {
       // CONTENT REPLACES TEXT
-      text = iRequest.content;
+      if (iRequest.content.startsWith("{")) {
+        // JSON PAYLOAD
+        final ODocument doc = new ODocument().fromJSON(iRequest.content);
+        text = doc.field("command");
+        params = doc.field("parameters");
+
+        if (params instanceof Collection) {
+          final Object[] paramArray = new Object[((Collection) params).size()];
+          ((Collection) params).toArray(paramArray);
+          params = paramArray;
+        }
+      } else {
+        text = iRequest.content;
+      }
+    }
 
     if (text == null)
       throw new IllegalArgumentException("text cannot be null");
@@ -80,8 +98,8 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
       // REQUEST CAN'T MODIFY THE RESULT, SO IT'S CACHEABLE
       cmd.setCacheableResult(true);
-      
-      response = db.command(cmd).execute();
+
+      response = db.command(cmd).execute(params);
 
       fetchPlan = executor.getFetchPlan();
 
