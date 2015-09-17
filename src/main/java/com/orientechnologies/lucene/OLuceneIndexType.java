@@ -39,53 +39,49 @@ import java.util.Map;
 public class OLuceneIndexType {
 
   public static Field createField(String fieldName, Object value, Field.Store store, Field.Index analyzed) {
-    Field field = null;
 
     if (value instanceof Number) {
       Number number = (Number) value;
-      if (value instanceof Long) {
-        field = new LongField(fieldName, number.longValue(), store);
-      } else if (value instanceof Float) {
-        field = new FloatField(fieldName, number.floatValue(), store);
-      } else if (value instanceof Double) {
-        field = new DoubleField(fieldName, number.doubleValue(), store);
-      } else {
-        field = new IntField(fieldName, number.intValue(), store);
-      }
+      if (value instanceof Long)
+        return new LongField(fieldName, number.longValue(), store);
+      else if (value instanceof Float)
+        return new FloatField(fieldName, number.floatValue(), store);
+      else if (value instanceof Double)
+        return new DoubleField(fieldName, number.doubleValue(), store);
+
+      return new IntField(fieldName, number.intValue(), store);
+
     } else if (value instanceof Date) {
-      field = new LongField(fieldName, ((Date) value).getTime(), store);
-
-    } else {
-      field = new Field(fieldName, value.toString(), store, analyzed);
-
+      return new LongField(fieldName, ((Date) value).getTime(), store);
     }
-    return field;
+    return new Field(fieldName, value.toString(), store, analyzed);
+
   }
 
   public static Query createExactQuery(OIndexDefinition index, Object key) {
 
     Query query = null;
     if (key instanceof String) {
-      BooleanQuery booleanQ = new BooleanQuery();
+      final BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
       if (index.getFields().size() > 0) {
         for (String idx : index.getFields()) {
-          booleanQ.add(new TermQuery(new Term(idx, key.toString())), BooleanClause.Occur.SHOULD);
+          queryBuilder.add(new TermQuery(new Term(idx, key.toString())), BooleanClause.Occur.SHOULD);
         }
       } else {
-        booleanQ.add(new TermQuery(new Term(OLuceneIndexManagerAbstract.KEY, key.toString())), BooleanClause.Occur.SHOULD);
+        queryBuilder.add(new TermQuery(new Term(OLuceneIndexManagerAbstract.KEY, key.toString())), BooleanClause.Occur.SHOULD);
       }
-      query = booleanQ;
+      query = queryBuilder.build();
     } else if (key instanceof OCompositeKey) {
-      BooleanQuery booleanQ = new BooleanQuery();
+      final BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
       int i = 0;
       OCompositeKey keys = (OCompositeKey) key;
       for (String idx : index.getFields()) {
         String val = (String) keys.getKeys().get(i);
-        booleanQ.add(new TermQuery(new Term(idx, val)), BooleanClause.Occur.MUST);
+        queryBuilder.add(new TermQuery(new Term(idx, val)), BooleanClause.Occur.MUST);
         i++;
 
       }
-      query = booleanQ;
+      query = queryBuilder.build();
     }
     return query;
   }
@@ -96,9 +92,8 @@ public class OLuceneIndexType {
 
   public static Query createDeleteQuery(OIdentifiable value, List<String> fields, Object key) {
 
-    BooleanQuery booleanQuery = new BooleanQuery();
-
-    booleanQuery.add(new TermQuery(new Term(OLuceneIndexManagerAbstract.RID, value.getIdentity().toString())),
+    final BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
+    queryBuilder.add(new TermQuery(new Term(OLuceneIndexManagerAbstract.RID, value.getIdentity().toString())),
         BooleanClause.Occur.MUST);
 
     Map<String, String> values = new HashMap<String, String>();
@@ -109,9 +104,9 @@ public class OLuceneIndexType {
       values.put(fields.iterator().next(), key.toString());
     }
     for (String s : values.keySet()) {
-      booleanQuery.add(new TermQuery(new Term(s + OLuceneIndexManagerAbstract.STORED, values.get(s))), BooleanClause.Occur.MUST);
+      queryBuilder.add(new TermQuery(new Term(s + OLuceneIndexManagerAbstract.STORED, values.get(s))), BooleanClause.Occur.MUST);
     }
-    return booleanQuery;
+    return queryBuilder.build();
   }
 
   public static Query createFullQuery(OIndexDefinition index, Object key, Analyzer analyzer) throws ParseException {

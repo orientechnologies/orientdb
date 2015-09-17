@@ -71,7 +71,6 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   public static final String               OLUCENE_BASE_DIR = "luceneIndexes";
 
   protected SearcherManager                searcherManager;
-  private String                           indexType;
   protected OIndexDefinition               index;
   protected TrackingIndexWriter            mgrWriter;
   protected String                         indexName;
@@ -80,12 +79,12 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   protected ControlledRealTimeReopenThread nrt;
   protected ODocument                      metadata;
   protected Version                        version;
-  private boolean                          rebuilding;
-  private long                             reopenToken;
   protected Map<String, Boolean>           collectionFields = new HashMap<String, Boolean>();
   protected TimerTask                      commitTask;
-
   protected AtomicBoolean                  closed           = new AtomicBoolean(true);
+  private String                           indexType;
+  private boolean                          rebuilding;
+  private long                             reopenToken;
 
   public OLuceneIndexManagerAbstract(String indexName) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
@@ -126,14 +125,13 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   public boolean remove(Object key, OIdentifiable value) {
 
-    Query query = null;
+    Query query;
     if (isCollectionDelete()) {
       query = OLuceneIndexType.createDeleteQuery(value, index.getFields(), key);
     } else {
       query = OLuceneIndexType.createQueryId(value);
     }
-    if (query != null)
-      deleteDocument(query);
+    deleteDocument(query);
     return true;
   }
 
@@ -314,7 +312,6 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     }
     return analyzer;
   }
-
 
   public void initIndex(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic,
       ODocument metadata) {

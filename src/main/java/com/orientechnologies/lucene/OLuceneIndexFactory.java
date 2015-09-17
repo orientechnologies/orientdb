@@ -45,10 +45,10 @@ import java.util.Set;
 
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
 
+  public static final String       LUCENE_ALGORITHM = "LUCENE";
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
-  public static final String       LUCENE_ALGORITHM = "LUCENE";
-  OLuceneSpatialManager            spatialManager;
+
   static {
     final Set<String> types = new HashSet<String>();
     types.add(OClass.INDEX_TYPE.FULLTEXT.toString());
@@ -61,6 +61,8 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
     algorithms.add(LUCENE_ALGORITHM);
     ALGORITHMS = Collections.unmodifiableSet(algorithms);
   }
+
+  OLuceneSpatialManager            spatialManager;
 
   public OLuceneIndexFactory() {
 
@@ -91,10 +93,10 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version, Map<String, String> engineProperties) {
+  public OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version,
+      Map<String, String> engineProperties) {
     return new OLuceneIndexEngineDelegate(name, durableInNonTxMode, storage, version);
   }
-
 
   @Override
   public PRIORITY getPriority() {
