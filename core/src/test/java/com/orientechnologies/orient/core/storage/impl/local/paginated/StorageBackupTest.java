@@ -22,7 +22,7 @@ import java.util.Random;
  * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
  * @since 9/9/2015
  */
-@Test
+@Test(enabled = false)
 public class StorageBackupTest {
   private String buildDirectory;
 
