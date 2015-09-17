@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,17 @@ public class OOrBlock extends OBooleanExpression {
       if (block.evaluate(currentRecord, ctx)) {
         return true;
       }
+    }
+    return false;
+  }
+
+  public boolean evaluate(Object currentRecord, OCommandContext ctx) {
+    if (currentRecord instanceof OIdentifiable) {
+      return evaluate((OIdentifiable) currentRecord, ctx);
+    } else if (currentRecord instanceof Map) {
+      ODocument doc = new ODocument();
+      doc.fromMap((Map<String, Object>) currentRecord);
+      return evaluate(doc, ctx);
     }
     return false;
   }

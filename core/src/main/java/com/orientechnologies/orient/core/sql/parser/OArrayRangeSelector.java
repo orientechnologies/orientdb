@@ -54,7 +54,7 @@ public class OArrayRangeSelector extends SimpleNode {
       return null;
     }
     if (!OMultiValue.isMultiValue(result)) {
-      return result;// is this correct?
+      return null;
     }
     Integer lFrom = from;
     if (fromSelector != null) {
@@ -83,7 +83,7 @@ public class OArrayRangeSelector extends SimpleNode {
 
     lTo = Math.min(lTo, arrayResult.length);
 
-    return Arrays.copyOfRange(arrayResult, lFrom, lTo);
+    return Arrays.asList(Arrays.copyOfRange(arrayResult, lFrom, lTo));
   }
 
 }

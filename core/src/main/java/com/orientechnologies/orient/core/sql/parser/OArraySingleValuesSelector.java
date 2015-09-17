@@ -47,7 +47,7 @@ public class OArraySingleValuesSelector extends SimpleNode {
       }
       result.add(OMultiValue.getValue(iResult, index));
     }
-    return result.toArray();
+    return result;
   }
 
 }
