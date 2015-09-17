@@ -324,6 +324,10 @@ public class OGraphMLReader {
               if (vertexIdKey != null)
                 mapId(vertexMappedIdMap, vertexId, v.getIdentity());
               bufferCounter++;
+            } else {
+              // UPDATE IT
+              final OrientVertex v = graph.getVertex(currentVertex);
+              v.setProperties(vertexProps);
             }
 
             vertexId = null;
