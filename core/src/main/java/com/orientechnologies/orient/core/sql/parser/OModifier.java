@@ -5,6 +5,10 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 public class OModifier extends SimpleNode {
@@ -64,7 +68,7 @@ public class OModifier extends SimpleNode {
     } else if (arrayRange != null) {
       return arrayRange.execute(iCurrentRecord, result, ctx);
     } else if (condition != null) {
-      throw new UnsupportedOperationException("implement OModifier!");
+      return filterByCondition(iCurrentRecord, result, ctx);
     } else if (arraySingleValues != null) {
       return arraySingleValues.execute(iCurrentRecord, result, ctx);
     } else {
@@ -73,6 +77,34 @@ public class OModifier extends SimpleNode {
     }
     if (next != null) {
       result = next.execute(iCurrentRecord, result, ctx);
+    }
+    return result;
+  }
+
+  private Object filterByCondition(OIdentifiable iCurrentRecord, Object iResult, OCommandContext ctx) {
+    if(iResult==null){
+      return null;
+    }
+    List<Object> result = new ArrayList<Object>();
+    if(iResult.getClass().isArray()){
+      for(int i=0;i< Array.getLength(iResult); i++){
+        Object item = Array.get(iResult, i);
+        if(condition.evaluate(item, ctx)){
+          result.add(item);
+        }
+      }
+      return result;
+    }
+    if(iResult instanceof Iterable){
+      iResult = ((Iterable) iResult).iterator();
+    }
+    if(iResult instanceof Iterator){
+      while(((Iterator) iResult).hasNext()){
+        Object item = ((Iterator) iResult).next();
+        if(condition.evaluate(item, ctx)){
+          result.add(item);
+        }
+      }
     }
     return result;
   }
