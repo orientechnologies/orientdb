@@ -66,11 +66,11 @@ public class OModifier extends SimpleNode {
     } else if (suffix != null) {
       result = suffix.execute(result, ctx);
     } else if (arrayRange != null) {
-      return arrayRange.execute(iCurrentRecord, result, ctx);
+      result = arrayRange.execute(iCurrentRecord, result, ctx);
     } else if (condition != null) {
-      return filterByCondition(iCurrentRecord, result, ctx);
+      result = filterByCondition(iCurrentRecord, result, ctx);
     } else if (arraySingleValues != null) {
-      return arraySingleValues.execute(iCurrentRecord, result, ctx);
+      result = arraySingleValues.execute(iCurrentRecord, result, ctx);
     } else {
       throw new UnsupportedOperationException("implement OModifier!");
       // TODO
