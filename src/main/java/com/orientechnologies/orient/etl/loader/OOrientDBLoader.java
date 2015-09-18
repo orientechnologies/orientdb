@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl.loader;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -218,7 +218,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   }
 
   @Override
-  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
+  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
 
     if (iConfiguration.containsField("dbURL"))

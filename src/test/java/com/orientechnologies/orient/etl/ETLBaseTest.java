@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.junit.After;
@@ -61,7 +62,7 @@ public abstract class ETLBaseTest {
     proc.execute();
   }
 
-  protected void process(final String cfgJson, final OBasicCommandContext iContext) {
+  protected void process(final String cfgJson, final OCommandContext iContext) {
     ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
     proc.parse(cfg, iContext);
     proc.execute();

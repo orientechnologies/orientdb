@@ -20,7 +20,7 @@
 
 package com.orientechnologies.orient.etl;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.extractor.OAbstractExtractor;
 
@@ -39,7 +39,7 @@ public class RandomExtractor extends OAbstractExtractor {
   private int  delay   = 0;
 
   @Override
-  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
+  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
 
     if (iConfiguration.containsField("items"))

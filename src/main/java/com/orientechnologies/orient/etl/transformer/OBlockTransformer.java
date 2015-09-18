@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLPipeline;
@@ -38,7 +38,7 @@ public class OBlockTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iContext) {
+  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
     final String[] fieldNames = iConfiguration.fieldNames();
 

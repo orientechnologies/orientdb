@@ -19,7 +19,7 @@
 package com.orientechnologies.orient.etl.source;
 
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
@@ -34,7 +34,7 @@ public class OContentSource extends OAbstractSource {
   protected BufferedReader reader;
 
   @Override
-  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
+  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iContext) {
     final Object value = iConfiguration.field("value");
     if (value != null) {
       String stringContent;

@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
@@ -39,7 +39,7 @@ public class OVertexTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
+  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
     if (iConfiguration.containsField("class"))
       vertexClass = (String) resolve(iConfiguration.field("class"));

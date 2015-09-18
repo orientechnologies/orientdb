@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -48,7 +48,7 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iContext) {
+  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
 
     joinFieldName = iConfiguration.field("joinFieldName");

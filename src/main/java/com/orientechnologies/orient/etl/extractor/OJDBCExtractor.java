@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -55,7 +55,7 @@ public class OJDBCExtractor extends OAbstractExtractor {
   protected int          fetchSize   = 10000;
 
   @Override
-  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
+  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
 
     driverClass = (String) resolve(iConfiguration.field("driver"));

@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public interface OETLComponent {
   ODocument getConfiguration();
 
-  void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iSettings);
+  void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iSettings);
 
   void begin();
 

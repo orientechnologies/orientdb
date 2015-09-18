@@ -60,7 +60,7 @@ public class OJsonRandomExtractorTest extends ETLBaseTest {
 
     process("{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
         + "loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
-        + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }", (OBasicCommandContext) new OBasicCommandContext()
+        + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }",  new OBasicCommandContext()
         .setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
 
     assertEquals(TOTAL, graph.countVertices("Person"));
