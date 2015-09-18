@@ -1453,10 +1453,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   private <T> T doCallIndexEngine(boolean atomicOperation, boolean readOperation, int indexId, OIndexEngineCallback<T> callback) {
     checkIndexId(indexId);
-
     try {
       if (atomicOperation)
         atomicOperationsManager.startAtomicOperation((String) null, false);
+    } catch (IOException e) {
+      throw new OStorageException("Can not put key value entry in index", e);
+    }
+
+    try {
 
       if (!readOperation)
         makeStorageDirty();
@@ -1484,6 +1488,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private void doUpdateIndexEntry(int indexId, Object key, Callable<Object> valueCreator) {
     try {
       atomicOperationsManager.startAtomicOperation((String) null, false);
+    } catch (IOException e) {
+      throw new OStorageException("Can not put key value entry in index", e);
+    }
+
+    try {
+
       checkIndexId(indexId);
 
       final OIndexEngine engine = indexEngines.get(indexId);
@@ -2573,8 +2583,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             final OLogSequenceNumber startLsn = writeAheadLog.end();
             writeAheadLog.preventCutTill(startLsn);
 
-            final long startSegment = writeAheadLog.activeSegment();
             try {
+              final long startSegment = writeAheadLog.activeSegment();
               lastLsn = backupPagesWithChanges(fromLsn, zipOutputStream);
               final ZipEntry configurationEntry = new ZipEntry(CONF_ENTRY_NAME);
 
@@ -2863,7 +2873,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       final OWriteAheadLog restoreLog = createWalFromIBUFiles(walTempDir);
       if (restoreLog != null) {
-        final OLogSequenceNumber beginLsn = writeAheadLog.begin();
+        final OLogSequenceNumber beginLsn = restoreLog.begin();
         restoreFrom(beginLsn, restoreLog);
 
         restoreLog.delete();

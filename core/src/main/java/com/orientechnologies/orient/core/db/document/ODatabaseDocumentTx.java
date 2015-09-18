@@ -1421,7 +1421,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return storage.getRecordMetadata(rid);
   }
 
-
   public OTransaction getTransaction() {
     checkIfActive();
     return currentTx;
@@ -2489,11 +2488,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       try {
         listener.onBeforeTxCommit(this);
       } catch (Throwable t) {
-        try {
-          rollback(force);
-        } catch (RuntimeException e) {
-          throw e;
-        }
+        rollback(force);
         OLogManager.instance().debug(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit()",
             t, OTransactionBlockedException.class, listener.getClass());
       }

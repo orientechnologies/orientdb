@@ -136,17 +136,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       return operation;
     }
 
-    final OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OLogSequenceNumber lsn;
-
-    if (!rollbackOnlyMode)
-      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
-    else
-      lsn = null;
-
-    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId(), rollbackOnlyMode);
-    currentOperation.set(operation);
-
     atomicOperationsCount.increment();
 
     while (freezeRequests.get() > 0) {
@@ -168,6 +157,17 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     }
 
     assert freezeRequests.get() >= 0;
+
+    final OOperationUnitId unitId = OOperationUnitId.generateId();
+    final OLogSequenceNumber lsn;
+
+    if (!rollbackOnlyMode)
+      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
+    else
+      lsn = null;
+
+    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId(), rollbackOnlyMode);
+    currentOperation.set(operation);
 
     if (trackAtomicOperations) {
       final Thread thread = Thread.currentThread();
@@ -369,7 +369,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
 
       currentOperation.set(null);
-      atomicOperationsCount.decrement();
 
       if (trackAtomicOperations) {
         activeAtomicOperations.remove(operation.getOperationUnitId());
@@ -377,6 +376,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
       for (String lockObject : operation.lockedObjects())
         lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
+
+      atomicOperationsCount.decrement();
     }
 
     return operation;
