@@ -18,7 +18,6 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -39,12 +38,12 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 10/08/15.
  */
-public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
+public class LuceneTransactionCompositeQueryTest extends BaseConfiguredLuceneTest {
 
-  public LuceneTransactionQueryTest() {
+  public LuceneTransactionCompositeQueryTest() {
   }
 
-  public LuceneTransactionQueryTest(boolean remote) {
+  public LuceneTransactionCompositeQueryTest(boolean remote) {
     super(remote);
   }
 
@@ -53,27 +52,30 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
   public void init() {
     super.init();
 
-    final OrientVertexType c1 = new OrientGraphNoTx(databaseDocumentTx).createVertexType("C1");
-    c1.createProperty("p1", OType.STRING);
-    c1.createIndex("C1.p1", "FULLTEXT", null, null, "LUCENE", new String[] { "p1" });
+    final OrientVertexType c1 = new OrientGraphNoTx(databaseDocumentTx).createVertexType("Foo");
+    c1.createProperty("name", OType.STRING);
+    c1.createProperty("bar", OType.STRING);
+    c1.createIndex("Foo.bar", "FULLTEXT", null, null, "LUCENE", new String[] { "bar" });
+    c1.createIndex("Foo.name", "NOTUNIQUE", null, null, "SBTREE", new String[] { "name" });
   }
 
   @Test
   public void testRollback() {
 
-    ODocument doc = new ODocument("c1");
-    doc.field("p1", "abc");
+    ODocument doc = new ODocument("Foo");
+    doc.field("name", "Test");
+    doc.field("bar", "abc");
     databaseDocumentTx.begin();
     databaseDocumentTx.save(doc);
 
-    String query = "select from C1 where p1 lucene \"abc\" ";
-    List<ODocument> vertices = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OSQLSynchQuery<ODocument>(query)).execute();
+    String query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
+    List<ODocument> vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
     Assert.assertEquals(vertices.size(), 1);
     databaseDocumentTx.rollback();
 
-    query = "select from C1 where p1 lucene \"abc\" ";
-    vertices = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OSQLSynchQuery<ODocument>(query)).execute();
+    query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
+    vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
     Assert.assertEquals(vertices.size(), 0);
 
   }
@@ -82,36 +84,22 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
   public void txRemoveTest() {
     databaseDocumentTx.begin();
 
-    ODocument doc = new ODocument("c1");
-    doc.field("p1", "abc");
+    ODocument doc = new ODocument("Foo");
+    doc.field("name", "Test");
+    doc.field("bar", "abc");
 
-    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("C1.p1");
+    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("Foo.bar");
 
     databaseDocumentTx.save(doc);
 
-    String query = "select from C1 where p1 lucene \"abc\" ";
-    List<ODocument> vertices = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OSQLSynchQuery<ODocument>(query)).execute();
-
-    Assert.assertEquals(vertices.size(), 1);
-
-    Assert.assertEquals(index.getSize(), 1);
     databaseDocumentTx.commit();
-
-    query = "select from C1 where p1 lucene \"abc\" ";
-    vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
-
-    Assert.assertEquals(vertices.size(), 1);
-    Assert.assertEquals(index.getSize(), 1);
 
     databaseDocumentTx.begin();
 
-    doc = new ODocument("c1");
-    doc.field("p1", "abc");
+    databaseDocumentTx.delete(doc);
 
-    databaseDocumentTx.delete(vertices.get(0));
-
-    query = "select from C1 where p1 lucene \"abc\" ";
-    vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
+    String query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
+    List<ODocument> vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
     Collection coll = (Collection) index.get("abc");
 
@@ -129,7 +117,7 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
 
     databaseDocumentTx.rollback();
 
-    query = "select from C1 where p1 lucene \"abc\" ";
+    query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
     vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
     Assert.assertEquals(vertices.size(), 1);
@@ -141,8 +129,8 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
   @Test
   public void txUpdateTest() {
 
-    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("C1.p1");
-    OClass c1 = databaseDocumentTx.getMetadata().getSchema().getClass("C1");
+    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("Foo.bar");
+    OClass c1 = databaseDocumentTx.getMetadata().getSchema().getClass("Foo");
     try {
       c1.truncate();
     } catch (IOException e) {
@@ -153,38 +141,22 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
 
     databaseDocumentTx.begin();
 
-    ODocument doc = new ODocument("c1");
-    doc.field("p1", "update");
+    ODocument doc = new ODocument("Foo");
+    doc.field("name", "Test");
+    doc.field("bar", "abc");
 
     databaseDocumentTx.save(doc);
 
-    String query = "select from C1 where p1 lucene \"update\" ";
-    List<ODocument> vertices = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OSQLSynchQuery<ODocument>(query)).execute();
-
-    Assert.assertEquals(vertices.size(), 1);
-
-    Assert.assertEquals(index.getSize(), 1);
-
     databaseDocumentTx.commit();
-
-    query = "select from C1 where p1 lucene \"update\" ";
-    vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
-
-    Collection coll = (Collection) index.get("update");
-
-    Assert.assertEquals(vertices.size(), 1);
-    Assert.assertEquals(coll.size(), 1);
-    Assert.assertEquals(index.getSize(), 1);
 
     databaseDocumentTx.begin();
 
-    ODocument record = vertices.get(0);
-    record.field("p1", "removed");
-    databaseDocumentTx.save(record);
+    doc.field("bar", "removed");
+    databaseDocumentTx.save(doc);
 
-    query = "select from C1 where p1 lucene \"update\" ";
-    vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
-    coll = (Collection) index.get("update");
+    String query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
+    List<ODocument> vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
+    Collection coll = (Collection) index.get("abc");
 
     Assert.assertEquals(vertices.size(), 0);
     Assert.assertEquals(coll.size(), 0);
@@ -199,7 +171,7 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
 
     Assert.assertEquals(index.getSize(), 1);
 
-    query = "select from C1 where p1 lucene \"removed\"";
+    query = "select from Foo where name = 'Test' and bar lucene \"removed\" ";
     vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
     coll = (Collection) index.get("removed");
 
@@ -208,7 +180,7 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
 
     databaseDocumentTx.rollback();
 
-    query = "select from C1 where p1 lucene \"update\" ";
+    query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
     vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
     Assert.assertEquals(vertices.size(), 1);
@@ -220,8 +192,8 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
   @Test
   public void txUpdateTestComplex() {
 
-    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("C1.p1");
-    OClass c1 = databaseDocumentTx.getMetadata().getSchema().getClass("C1");
+    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("Foo.bar");
+    OClass c1 = databaseDocumentTx.getMetadata().getSchema().getClass("Foo");
     try {
       c1.truncate();
     } catch (IOException e) {
@@ -232,11 +204,13 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
 
     databaseDocumentTx.begin();
 
-    ODocument doc = new ODocument("c1");
-    doc.field("p1", "abc");
+    ODocument doc = new ODocument("Foo");
+    doc.field("name", "Test");
+    doc.field("bar", "abc");
 
-    ODocument doc1 = new ODocument("c1");
-    doc1.field("p1", "abc");
+    ODocument doc1 = new ODocument("Foo");
+    doc1.field("name", "Test");
+    doc1.field("bar", "abc");
 
     databaseDocumentTx.save(doc1);
     databaseDocumentTx.save(doc);
@@ -245,10 +219,10 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
 
     databaseDocumentTx.begin();
 
-    doc.field("p1", "removed");
+    doc.field("bar", "removed");
     databaseDocumentTx.save(doc);
 
-    String query = "select from C1 where p1 lucene \"abc\"";
+    String query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
     List<ODocument> vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
     Collection coll = (Collection) index.get("abc");
 
@@ -267,7 +241,7 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
     Assert.assertEquals(doc1.getIdentity().toString(), rid.getIdentity().toString());
     Assert.assertEquals(index.getSize(), 2);
 
-    query = "select from C1 where p1 lucene \"removed\" ";
+    query = "select from Foo where name = 'Test' and bar lucene \"removed\" ";
     vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
     coll = (Collection) index.get("removed");
 
@@ -276,7 +250,7 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
 
     databaseDocumentTx.rollback();
 
-    query = "select from C1 where p1 lucene \"abc\" ";
+    query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
     vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
     Assert.assertEquals(vertices.size(), 2);
@@ -287,6 +261,6 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
 
   @Override
   protected String getDatabaseName() {
-    return "transactionQueryTest";
+    return "transactionQueryCompositeTest";
   }
 }

@@ -18,9 +18,11 @@
 
 package com.orientechnologies.lucene.tx;
 
+import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.IndexSearcher;
@@ -37,7 +39,10 @@ public class OLuceneTxChanges {
   IndexWriter                writer;
   private OLuceneIndexEngine engine;
 
-  private Set<String>        deleted = new HashSet<String>();
+  public static final String TMP         = "_tmp_rid";
+  private Set<String>        deleted     = new HashSet<String>();
+  private Set<String>        updated     = new HashSet<String>();
+  private Set<Document>      deletedDocs = new HashSet<Document>();
 
   public OLuceneTxChanges(OLuceneIndexEngine engine, IndexWriter writer) {
     this.writer = writer;
@@ -45,6 +50,10 @@ public class OLuceneTxChanges {
   }
 
   public void put(Object key, OIdentifiable value, Document doc) throws IOException {
+    if (deleted.remove(value.getIdentity().toString())) {
+      doc.add(OLuceneIndexType.createField(TMP, value.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+      updated.add(value.getIdentity().toString());
+    }
     writer.addDocument(doc);
   }
 
@@ -54,6 +63,7 @@ public class OLuceneTxChanges {
       writer.deleteDocuments(engine.deleteQuery(key, value));
     } else {
       deleted.add(value.getIdentity().toString());
+      deletedDocs.add(engine.buildDocument(key, value));
     }
   }
 
@@ -69,11 +79,23 @@ public class OLuceneTxChanges {
   }
 
   public long numDocs() {
-    return searcher().getIndexReader().numDocs() - deleted.size();
+    return searcher().getIndexReader().numDocs() - deleted.size() - updated.size();
+  }
+
+  public Set<Document> getDeletedDocs() {
+    return deletedDocs;
   }
 
   // TODO is ok for full text on string but with [] ?
   public boolean isDeleted(Document document, Object key, OIdentifiable value) {
     return deleted.contains(value.getIdentity().toString());
+  }
+
+  public boolean isUpdated(Document document, Object key, OIdentifiable value) {
+    return updated.contains(value.getIdentity().toString());
+  }
+
+  public boolean isChanged(Document document, Object key, OIdentifiable value) {
+    return isDeleted(document, key, value) || isUpdated(document, key, value);
   }
 }

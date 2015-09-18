@@ -449,15 +449,15 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     flush();
   }
 
-  public void sendTotalHits(OCommandContext context, TopDocs docs) {
+  public void sendTotalHits(OCommandContext context, int totalHits) {
     if (context != null) {
 
       if (context.getVariable("totalHits") == null) {
-        context.setVariable("totalHits", docs.totalHits);
+        context.setVariable("totalHits", totalHits);
       } else {
         context.setVariable("totalHits", null);
       }
-      context.setVariable((indexName + ".totalHits").replace(".", "_"), docs.totalHits);
+      context.setVariable((indexName + ".totalHits").replace(".", "_"), totalHits);
     }
   }
 

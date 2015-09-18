@@ -21,6 +21,7 @@ import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.lucene.builder.DocBuilder;
 import com.orientechnologies.lucene.builder.OQueryBuilder;
 import com.orientechnologies.lucene.collections.LuceneResultSet;
+import com.orientechnologies.lucene.collections.LuceneResultSetFactory;
 import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
@@ -195,7 +196,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
       if (facetManager.supportsFacets()) {
         facetManager.addFacetContext(queryContext, key);
       }
-      return new LuceneResultSet(this, queryContext);
+      return LuceneResultSetFactory.INSTANCE.create(this,queryContext);
     } catch (IOException e) {
       throw new OIndexException("Error reading from Lucene index", e);
     }

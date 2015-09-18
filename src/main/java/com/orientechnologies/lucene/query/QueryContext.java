@@ -117,6 +117,10 @@ public class QueryContext {
     return drillDownQuery;
   }
 
+  public boolean isInTx() {
+    return changes != null;
+  }
+
   public enum QueryContextCFG {
     NO_FILTER_NO_SORT, FILTER_SORT, FILTER, SORT
   }
@@ -124,6 +128,10 @@ public class QueryContext {
   public QueryContext setChanges(OLuceneTxChanges changes) {
     this.changes = changes;
     return this;
+  }
+
+  public OLuceneTxChanges changes() {
+    return changes;
   }
 
   public IndexSearcher getSearcher() throws IOException {
