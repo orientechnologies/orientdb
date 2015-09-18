@@ -481,6 +481,12 @@ public enum OGlobalConfiguration {
       "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Long.class, 15000l),
 
   /**
+   * @Since 2.1.3
+   */
+  DISTRIBUTED_BACKUP_DIRECTORY("distributed.backupDirectory",
+      "Directory where to copy an existent database before to download from the cluster", String.class, "../backup/databases"),
+
+  /**
    * @Since 2.1
    */
   @OApi(maturity = OApi.MATURITY.NEW)
