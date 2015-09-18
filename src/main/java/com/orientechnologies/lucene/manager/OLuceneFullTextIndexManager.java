@@ -60,7 +60,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   public IndexWriter createIndexWriter(Directory directory, ODocument metadata) throws IOException {
 
     Analyzer analyzer = getAnalyzer(metadata);
-    IndexWriterConfig iwc = new IndexWriterConfig( analyzer);
+    IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
     facetManager = new OLuceneFacetManager(this, metadata);
