@@ -90,6 +90,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private OLogSequenceNumber                                        firstMasterRecord;
   private OLogSequenceNumber                                        secondMasterRecord;
   private volatile OLogSequenceNumber                               flushedLsn;
+  private volatile OLogSequenceNumber                               preventCutTill;
 
   private boolean                                                   segmentCreationFlag     = false;
   private final Condition                                           segmentCreationComplete = syncObject.newCondition();
@@ -652,7 +653,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
   public ODiskWriteAheadLog(OLocalPaginatedStorage storage) throws IOException {
     this(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(), OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
-        OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * ONE_KB * ONE_KB, storage);
+        OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * ONE_KB * ONE_KB, OGlobalConfiguration.WAL_LOCATION
+            .getValueAsString(), storage);
   }
 
   public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
@@ -691,15 +693,15 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       fullCheckpointListeners.remove(ref);
   }
 
-  public ODiskWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, final OLocalPaginatedStorage storage)
-      throws IOException {
+  public ODiskWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, final String walPath,
+      final OLocalPaginatedStorage storage) throws IOException {
     this.maxPagesCacheSize = maxPagesCacheSize;
     this.commitDelay = commitDelay;
     this.maxSegmentSize = maxSegmentSize;
     this.storage = storage;
 
     try {
-      this.walLocation = new File(calculateWalPath(this.storage));
+      this.walLocation = new File(calculateWalPath(this.storage, walPath));
 
       File[] walFiles = this.walLocation.listFiles(new FilenameFilter(storage));
 
@@ -767,10 +769,9 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
-  private static String calculateWalPath(OLocalPaginatedStorage storage) {
-    String walPath = OGlobalConfiguration.WAL_LOCATION.getValueAsString();
+  private String calculateWalPath(OLocalPaginatedStorage storage, String walPath) {
     if (walPath == null)
-      walPath = storage.getStoragePath();
+      return storage.getStoragePath();
 
     return walPath;
   }
@@ -988,6 +989,65 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
+  @Override
+  public void newSegment() throws IOException {
+    syncObject.lock();
+    try {
+      if (!activeOperations.isEmpty())
+        throw new OStorageException("Can not change end of WAL because there are active atomic operations in the log.");
+
+      LogSegment last = logSegments.get(logSegments.size() - 1);
+      if (last.filledUpTo() == 0) {
+        return;
+      }
+
+      last.stopFlush(true);
+
+      last = new LogSegment(new File(walLocation, getSegmentName(last.order + 1)), maxPagesCacheSize);
+      last.init();
+      last.startFlush();
+
+      logSegments.add(last);
+    } finally {
+      syncObject.unlock();
+    }
+  }
+
+  @Override
+  public long activeSegment() {
+    syncObject.lock();
+    try {
+      final LogSegment last = logSegments.get(logSegments.size() - 1);
+      return last.order;
+    } finally {
+      syncObject.unlock();
+    }
+  }
+
+  @Override
+  public File[] nonActiveSegments(long fromSegment) {
+    final List<File> result = new ArrayList<File>();
+
+    syncObject.lock();
+    try {
+      for (int i = 0; i < logSegments.size() - 1; i++) {
+        final LogSegment logSegment = logSegments.get(i);
+
+        if (logSegment.order >= fromSegment) {
+          final File fileLog = new File(logSegment.getPath());
+          result.add(fileLog);
+        }
+      }
+    } finally {
+      syncObject.unlock();
+    }
+
+    File[] files = new File[result.size()];
+    files = result.toArray(files);
+
+    return files;
+  }
+
   public long size() {
     syncObject.lock();
     try {
@@ -1156,6 +1216,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
       flush();
 
+      final OLogSequenceNumber minLsn = preventCutTill;
+
+      if (minLsn != null && lsn.compareTo(minLsn) < 0)
+        lsn = minLsn;
+
       int lastTruncateIndex = -1;
 
       for (int i = 0; i < logSegments.size() - 1; i++) {
@@ -1178,6 +1243,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     } finally {
       syncObject.unlock();
     }
+  }
+
+  @Override
+  public void preventCutTill(OLogSequenceNumber lsn) throws IOException {
+    preventCutTill = lsn;
   }
 
   private LogSegment removeHeadSegmentFromList() {

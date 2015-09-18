@@ -101,7 +101,6 @@ public class OMatchFilter extends SimpleNode {
         } else {
           return item.className.value.toString();
         }
-        // TODO evaluate expression
       }
     }
     return null;

@@ -79,7 +79,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       throw new IllegalArgumentException("Can't find encryption algorithm '" + algorithm + "'", nsa);
     }
 
-    this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" ,"distributed"}, keyProvider.getKeys(),
+    this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, keyProvider.getKeys(),
         new String[] { this.algorithm }, new String[] { "OrientDB" });
   }
 
@@ -91,7 +91,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     keyProvider = new DefaultKeyProvider(key);
     this.algorithm = algorithm;
     sessionInMills = sessionLength * 1000 * 60;
-    this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" ,"distributed"}, keyProvider.getKeys(),
+    this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, keyProvider.getKeys(),
         new String[] { this.algorithm }, new String[] { "OrientDB" });
   }
 
@@ -201,7 +201,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       token.setHeader(header);
       if (db != null) {
         token.setDatabase(db.getName());
-        token.setDatabaseType(db.getStorage().getType());
+        token.setDatabaseType(db.getStorage().getUnderlying().getType());
       }
       if (data.serverUser) {
         token.setServerUser(true);

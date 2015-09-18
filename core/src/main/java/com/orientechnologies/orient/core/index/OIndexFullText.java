@@ -132,8 +132,6 @@ public class OIndexFullText extends OIndexMultiValues {
             }
           });
 
-        } catch (RuntimeException e) {
-          throw new OIndexException("Error during put of key - value entry", e);
         } finally {
           releaseSharedLock();
         }
@@ -179,8 +177,6 @@ public class OIndexFullText extends OIndexMultiValues {
           if (recs != null && !recs.isEmpty()) {
             storage.updateIndexEntry(indexId, word, new EntityRemover(recs, value, removed));
           }
-        } catch (RuntimeException e) {
-          throw new OIndexException("Error during removal of entry by key and value", e);
         } finally {
           releaseSharedLock();
         }

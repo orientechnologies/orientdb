@@ -1421,36 +1421,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return storage.getRecordMetadata(rid);
   }
 
-  @Override
-  public void freezeCluster(final int iClusterId) {
-    freezeCluster(iClusterId, false);
-  }
-
-  @Override
-  public void releaseCluster(final int iClusterId) {
-    checkIfActive();
-    final OLocalPaginatedStorage storage;
-    if (getStorage() instanceof OLocalPaginatedStorage)
-      storage = ((OLocalPaginatedStorage) getStorage());
-    else {
-      OLogManager.instance().error(this, "Only local paginated storage supports release of cluster");
-      return;
-    }
-
-    storage.release(iClusterId);
-  }
-
-  @Override
-  public void freezeCluster(final int iClusterId, final boolean throwException) {
-    checkIfActive();
-    if (getStorage() instanceof OLocalPaginatedStorage) {
-      final OLocalPaginatedStorage paginatedStorage = ((OLocalPaginatedStorage) getStorage());
-      paginatedStorage.freeze(throwException, iClusterId);
-    } else {
-      OLogManager.instance().error(this, "Only local paginated storage supports freeze of cluster");
-    }
-  }
-
   public OTransaction getTransaction() {
     checkIfActive();
     return currentTx;
@@ -2518,11 +2488,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       try {
         listener.onBeforeTxCommit(this);
       } catch (Throwable t) {
-        try {
-          rollback(force);
-        } catch (RuntimeException e) {
-          throw e;
-        }
+        rollback(force);
         OLogManager.instance().debug(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit()",
             t, OTransactionBlockedException.class, listener.getClass());
       }

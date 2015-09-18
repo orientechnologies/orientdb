@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -46,8 +45,6 @@ public interface OCluster {
   void close(boolean flush) throws IOException;
 
   void delete() throws IOException;
-
-  OModificationLock getExternalModificationLock();
 
   Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
 
@@ -97,10 +94,6 @@ public interface OCluster {
   int getId();
 
   void synch() throws IOException;
-
-  void setSoftlyClosed(boolean softlyClosed) throws IOException;
-
-  boolean wasSoftlyClosed() throws IOException;
 
   String getName();
 

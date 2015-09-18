@@ -165,6 +165,7 @@ public class OSBTree<K, V> extends ODurableComponent {
       } catch (IOException e1) {
         OLogManager.instance().error(this, "Error during sbtree data rollback", e1);
       }
+      throw e;
     } finally {
       releaseExclusiveLock();
     }
@@ -350,7 +351,7 @@ public class OSBTree<K, V> extends ODurableComponent {
       throw new OSBTreeException("Error during index update with key " + key + " and value " + value, e);
     } catch (RuntimeException e) {
       rollback(e);
-      throw new OSBTreeException("Error during index update with key " + key + " and value " + value, e);
+      throw e;
     } finally {
       releaseExclusiveLock();
     }
@@ -414,7 +415,7 @@ public class OSBTree<K, V> extends ODurableComponent {
       throw new OSBTreeException("Error during clear of sbtree with name " + getName(), e);
     } catch (RuntimeException e) {
       rollback(e);
-      throw new OSBTreeException(e);
+      throw e;
     } finally {
       releaseExclusiveLock();
     }
@@ -609,8 +610,7 @@ public class OSBTree<K, V> extends ODurableComponent {
       throw new OSBTreeException("Error during removing key " + key + " from sbtree " + getName(), e);
     } catch (RuntimeException e) {
       rollback(e);
-
-      throw new OSBTreeException("Error during removing key " + key + " from sbtree " + getName(), e);
+      throw e;
     } finally {
       releaseExclusiveLock();
     }

@@ -36,19 +36,17 @@ import java.io.IOException;
  * @since 5/14/14
  */
 public class OHashTableDirectory extends ODurableComponent {
-  public static final int                 ITEM_SIZE         = OLongSerializer.LONG_SIZE;
+  public static final int ITEM_SIZE         = OLongSerializer.LONG_SIZE;
 
-  public static final int                 LEVEL_SIZE        = OLocalHashTable20.MAX_LEVEL_SIZE;
+  public static final int LEVEL_SIZE        = OLocalHashTable20.MAX_LEVEL_SIZE;
 
-  public static final int                 BINARY_LEVEL_SIZE = LEVEL_SIZE * ITEM_SIZE + 3 * OByteSerializer.BYTE_SIZE;
+  public static final int BINARY_LEVEL_SIZE = LEVEL_SIZE * ITEM_SIZE + 3 * OByteSerializer.BYTE_SIZE;
 
+  private long            fileId;
 
-  private long                            fileId;
+  private final long      firstEntryIndex;
 
-  private final long                      firstEntryIndex;
-
-  private final boolean                   durableInNonTxMode;
-
+  private final boolean   durableInNonTxMode;
 
   public OHashTableDirectory(String defaultExtension, String name, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
     super(storage, name, defaultExtension);
@@ -253,7 +251,7 @@ public class OHashTableDirectory extends ODurableComponent {
       throw e;
     } catch (RuntimeException e) {
       endAtomicOperation(true, e);
-      throw new OStorageException(null, e);
+      throw e;
     } finally {
       releaseExclusiveLock();
     }
@@ -601,7 +599,6 @@ public class OHashTableDirectory extends ODurableComponent {
 
     return (nodeIndex - ODirectoryFirstPage.NODES_PER_PAGE) % ODirectoryPage.NODES_PER_PAGE;
   }
-
 
   @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {

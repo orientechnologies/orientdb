@@ -20,25 +20,20 @@
 
 package com.orientechnologies.orient.core.storage.impl.memory;
 
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageMemoryConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OMemoryWriteAheadLog;
-import com.orientechnologies.orient.core.version.OSimpleVersion;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -100,5 +95,28 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener)
       throws IOException {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  protected void finalizeIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
+  }
+
+  @Override
+  protected boolean isWritesAllowedDuringBackup() {
+    return false;
+  }
+
+  @Override
+  protected File createWalTempDirectory() {
+    return null;
+  }
+
+  @Override
+  protected void addFileToDirectory(String name, InputStream stream, File directory) throws IOException {
+  }
+
+  @Override
+  protected OWriteAheadLog createWalFromIBUFiles(File directory) throws IOException {
+    return null;
   }
 }

@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.tinkerpop.blueprints.Vertex;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -617,6 +618,105 @@ public class OMatchStatementExecutionTest {
       assertEquals(((ODocument) ((ODocument) d.getRecord()).field("friend1")).field("uid"), 1);
     }
 
+  }
+
+  @Test
+  public void testArrayNumber() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0] as foo" );
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = (ODocument) result.get(0);
+    Object foo = doc.field("foo");
+    assertNotNull(foo);
+    assertTrue(foo instanceof Vertex);
+  }
+
+
+  @Test
+  public void testArraySingleSelectors2() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0,1] as foo" );
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = (ODocument) result.get(0);
+    Object foo = doc.field("foo");
+    assertNotNull(foo);
+    assertTrue(foo instanceof List);
+    assertEquals(2, ((List)foo).size());
+  }
+
+  @Test
+  public void testArrayRangeSelectors1() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0-1] as foo" );
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = (ODocument) result.get(0);
+    Object foo = doc.field("foo");
+    assertNotNull(foo);
+    assertTrue(foo instanceof List);
+    assertEquals(1, ((List)foo).size());
+  }
+
+  @Test
+  public void testArrayRange2() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0-2] as foo" );
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = (ODocument) result.get(0);
+    Object foo = doc.field("foo");
+    assertNotNull(foo);
+    assertTrue(foo instanceof List);
+    assertEquals(2, ((List)foo).size());
+  }
+
+
+  @Test
+  public void testArrayRange3() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0-3] as foo" );
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = (ODocument) result.get(0);
+    Object foo = doc.field("foo");
+    assertNotNull(foo);
+    assertTrue(foo instanceof List);
+    assertEquals(2, ((List)foo).size());
+  }
+
+  @Test
+  public void testConditionInSquareBrackets() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[uid = 2] as foo" );
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = (ODocument) result.get(0);
+    Object foo = doc.field("foo");
+    assertNotNull(foo);
+    assertTrue(foo instanceof List);
+    assertEquals(1, ((List) foo).size());
+    Vertex resultVertex = (Vertex) ((List)foo).get(0);
+    assertEquals(2, resultVertex.getProperty("uid"));
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {

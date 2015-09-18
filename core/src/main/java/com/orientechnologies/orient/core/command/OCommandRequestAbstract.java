@@ -72,13 +72,17 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
   }
 
   @SuppressWarnings("unchecked")
-  protected Map<Object, Object> convertToParameters(final Object... iArgs) {
+  protected Map<Object, Object> convertToParameters(Object... iArgs) {
     final Map<Object, Object> params;
 
     if (iArgs.length == 1 && iArgs[0] instanceof Map) {
       params = (Map<Object, Object>) iArgs[0];
     } else {
+      if (iArgs.length == 1 && iArgs[0] != null && iArgs[0].getClass().isArray() && iArgs[0] instanceof Object[] )
+        iArgs = (Object[]) iArgs[0];
+
       params = new HashMap<Object, Object>(iArgs.length);
+
       for (int i = 0; i < iArgs.length; ++i) {
         Object par = iArgs[i];
 

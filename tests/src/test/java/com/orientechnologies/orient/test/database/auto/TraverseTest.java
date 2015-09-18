@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
@@ -31,6 +23,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.List;
 
 @Test
 @SuppressWarnings("unused")
@@ -57,7 +56,7 @@ public class TraverseTest extends DocumentDBBaseTest {
     totalElements++;
     megRyan = graph.addVertex("class:Actor", "name", "Meg Ryan").getRecord();
     totalElements++;
-    nicoleKidman = graph.addVertex("class:Actor", "name", "Nicol Kidman").getRecord();
+    nicoleKidman = graph.addVertex("class:Actor", "name", "Nicole Kidman", "attributeWithDotValue", "a.b").getRecord();
     totalElements++;
 
     ODocument topGun = graph.addVertex("class:Movie", "name", "Top Gun", "year", 1986).getRecord();
@@ -251,6 +250,25 @@ public class TraverseTest extends DocumentDBBaseTest {
     List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse any() from Movie limit 1")).execute();
 
     Assert.assertEquals(result1.size(), 1);
+  }
+
+  @Test
+  public void traverseAndFilterByAttributeThatContainsDotInValue() {
+    // issue #4952
+    List<ODocument> result1 = database.command(
+        new OSQLSynchQuery<ODocument>("select from ( traverse out_married, in[attributeWithDotValue = 'a.b']  from " + tomCruise.getIdentity() + ")"))
+        .execute();
+    Assert.assertTrue(result1.size() > 0);
+    boolean found = false;
+    for(ODocument doc:result1){
+      String name = doc.field("name");
+      if("Nicole Kidman".equals(name)){
+        found = true;
+        break;
+      }
+    }
+    Assert.assertTrue(found);
+
   }
 
 }

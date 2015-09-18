@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -109,5 +110,23 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public void moveLsnAfter(OLogSequenceNumber lsn) {
+  }
+
+  @Override
+  public void preventCutTill(OLogSequenceNumber lsn) throws IOException {
+  }
+
+  @Override
+  public File[] nonActiveSegments(long fromSegment) {
+    return new File[0];
+  }
+
+  @Override
+  public long activeSegment() {
+    return 0;
+  }
+
+  @Override
+  public void newSegment() throws IOException {
   }
 }

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
@@ -170,8 +171,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
         storage.updateIndexEntry(indexId, key, creator);
         return this;
-      } catch (RuntimeException e) {
-        throw new OIndexException("Error during insertion of key in index", e);
       } finally {
         releaseSharedLock();
       }
@@ -210,8 +209,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
         return removed.getValue();
 
-      } catch (RuntimeException e) {
-        throw new OIndexException("Error during removal of entry by key", e);
       } finally {
         releaseSharedLock();
       }

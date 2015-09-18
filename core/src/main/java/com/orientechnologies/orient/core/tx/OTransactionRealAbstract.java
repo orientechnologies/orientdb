@@ -63,7 +63,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
   protected int                                               id;
   protected int                                               newObjectCounter      = -2;
-
+  protected Map<String, Object>                               userData              = new HashMap<String, Object>();
   /**
    * This set is used to track which documents are changed during tx, if documents are changed but not saved all changes are made
    * during tx will be undone.
@@ -135,6 +135,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     status = TXSTATUS.INVALID;
 
     database.setDefaultTransactionMode();
+
+    userData.clear();
   }
 
   public int getId() {
@@ -464,5 +466,15 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     for (final OTransactionIndexEntry indexEntry : changesPerKey.entries)
       if (indexEntry.value.getIdentity().equals(oldRid))
         indexEntry.value = newRid;
+  }
+
+  @Override
+  public void setCustomData(String iName, Object iValue) {
+    userData.put(iName, iValue);
+  }
+
+  @Override
+  public Object getCustomData(String iName) {
+    return userData.get(iName);
   }
 }

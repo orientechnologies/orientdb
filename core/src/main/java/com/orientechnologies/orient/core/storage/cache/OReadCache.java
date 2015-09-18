@@ -66,9 +66,9 @@ public interface OReadCache {
 
   long openFile(String fileName, OWriteCache writeCache) throws IOException;
 
-  void openFile(long fileId, OWriteCache writeCache) throws IOException;
+  long openFile(long fileId, OWriteCache writeCache) throws IOException;
 
-  void openFile(String fileName, long fileId, OWriteCache writeCache) throws IOException;
+  long openFile(String fileName, long fileId, OWriteCache writeCache) throws IOException;
 
   OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache) throws IOException;
 

@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.Map;
 
 public class OArrayNumberSelector extends SimpleNode {
@@ -29,13 +32,6 @@ public class OArrayNumberSelector extends SimpleNode {
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (inputValue != null) {
-      // if (inputFinalValue == UNSET) {
-      // inputValue.toString(params, builder);
-      // } else if (inputFinalValue == null) {
-      // builder.append("NULL");
-      // } else {
-      // builder.appinputFinalValue.toString(params, builder);
-      // }
       inputValue.toString(params, builder);
     } else if (expressionValue != null) {
       expressionValue.toString(params, builder);
@@ -44,6 +40,24 @@ public class OArrayNumberSelector extends SimpleNode {
     }
   }
 
+  public Integer getValue(OIdentifiable iCurrentRecord, Object iResult, OCommandContext ctx) {
+    Object result = null;
+    if (inputValue != null) {
+      result = inputValue.bindFromInputParams(ctx.getInputParameters());
+    } else if (expressionValue != null) {
+      result = expressionValue.execute(iCurrentRecord, ctx);
+    } else if (integer != null) {
+      result = integer;
+    }
+
+    if (result == null) {
+      return null;
+    }
+    if (result instanceof Number) {
+      return ((Number) result).intValue();
+    }
+    return null;
+  }
 
 }
 /* JavaCC - OriginalChecksum=5b2e495391ede3ccdc6c25aa63c8e591 (do not edit this line) */

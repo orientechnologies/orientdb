@@ -79,8 +79,14 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   private long resolveFileIdByName(String fileName) {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying();
+    final OAtomicOperation atomicOperation;
     try {
-      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
+      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
+    } catch (IOException e) {
+      throw new OSBTreeException("Error creation of sbtree with name " + fileName, e);
+    }
+
+    try {
       final OReadCache readCache = storage.getReadCache();
       final OWriteCache writeCache = storage.getWriteCache();
 
