@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.graph.server.command;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -42,7 +35,15 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = { "GET|gephi/*" };
@@ -74,17 +75,17 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
     final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
     try {
 
-      final Iterable<OrientVertex> vertices;
+      final Iterable<OrientElement> vertices;
       if (language.equals("sql"))
         vertices = graph.command(new OSQLSynchQuery<OrientVertex>(text, limit).setFetchPlan(fetchPlan)).execute();
       else if (language.equals("gremlin")) {
         List<Object> result = new ArrayList<Object>();
         OGremlinHelper.execute(graph, text, null, null, result, null, null);
 
-        vertices = new ArrayList<OrientVertex>(result.size());
+        vertices = new ArrayList<OrientElement>(result.size());
 
         for (Object o : result) {
-          ((ArrayList<OrientVertex>) vertices).add(graph.getVertex(o));
+          ((ArrayList<OrientElement>) vertices).add(graph.getVertex(o));
         }
       } else
         throw new IllegalArgumentException("Language '" + language + "' is not supported. Use 'sql' or 'gremlin'");
@@ -102,7 +103,7 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
     return false;
   }
 
-  protected void sendRecordsContent(final OHttpRequest iRequest, final OHttpResponse iResponse, Iterable<OrientVertex> iRecords,
+  protected void sendRecordsContent(final OHttpRequest iRequest, final OHttpResponse iResponse, Iterable<OrientElement> iRecords,
       String iFetchPlan) throws IOException {
     final StringWriter buffer = new StringWriter();
     final OJSONWriter json = new OJSONWriter(buffer, OHttpResponse.JSON_FORMAT);
@@ -113,16 +114,19 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
     iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(), null);
   }
 
-  protected void generateGraphDbOutput(final Iterable<OrientVertex> iVertices, final OJSONWriter json) throws IOException {
+  protected void generateGraphDbOutput(final Iterable<OrientElement> iVertices, final OJSONWriter json) throws IOException {
     if (iVertices == null)
       return;
 
     // CREATE A SET TO SPEED UP SEARCHES ON VERTICES
     final Set<OrientVertex> vertexes = new HashSet<OrientVertex>();
-    for (OrientVertex id : iVertices)
-      vertexes.add(id);
-
     final Set<OrientEdge> edges = new HashSet<OrientEdge>();
+
+    for (OrientElement id : iVertices)
+      if (id instanceof OrientVertex)
+        vertexes.add((OrientVertex) id);
+      else
+        edges.add((OrientEdge) id);
 
     for (OrientVertex vertex : vertexes) {
       json.resetAttributes();
