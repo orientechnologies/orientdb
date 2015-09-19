@@ -18,6 +18,9 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -30,9 +33,6 @@ import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class OEdgeTransformer extends OAbstractLookupTransformer {
   private String    edgeClass      = OrientEdgeType.CLASS_NAME;
@@ -191,6 +191,8 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
         edges = new ArrayList<OrientEdge>(1);
 
       for (Object o : OMultiValue.getMultiValueIterable(result)) {
+        OIdentifiable oid = (OIdentifiable) o;
+        final OrientVertex targetVertex = pipeline.getGraphDatabase().getVertex(oid);
         
         OIdentifiable oid = (OIdentifiable) o;
         final OrientVertex targetVertex = pipeline.getGraphDatabase().getVertex(oid);
