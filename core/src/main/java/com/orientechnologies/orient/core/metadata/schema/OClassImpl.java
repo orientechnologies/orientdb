@@ -855,6 +855,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
+  public static OClass addClusters(final OClass cls, final int iClusters) {
+    final String clusterBase = cls.getName().toLowerCase() + "_";
+    for (int i = 1; i < iClusters; ++i) {
+      cls.addCluster(clusterBase + i);
+    }
+    return cls;
+  }
+
   @Override
   public OClass addCluster(final String clusterNameOrId) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
