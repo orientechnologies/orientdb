@@ -2137,7 +2137,18 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       } else {
         final OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
-        finalResult.setLimit(limit);
+        int iteratorLimit = 0;
+        if (limit < 0) {
+          iteratorLimit = -1;
+        } else {
+          iteratorLimit += limit;
+          if (skip > 0) {
+            iteratorLimit += skip;
+          }
+        }
+
+        finalResult.setLimit(iteratorLimit);
+
         for (OIdentifiable id : tempResult) {
           final Object fieldValue;
           if (expandTarget instanceof OSQLFilterItem) {
