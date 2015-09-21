@@ -153,6 +153,22 @@ public class OCommandExecutorSQLSelectTest {
             "insert into OCommandExecutorSQLSelectTest_aggregations set data = [{\"size\": 0}, {\"size\": 0}, {\"size\": 30}, {\"size\": 50}, {\"size\": 50}]"))
         .execute();
 
+    initExpandSkipLimit(db);
+  }
+
+  private void initExpandSkipLimit(ODatabaseDocumentTx db) {
+    db.getMetadata().getSchema().createClass("ExpandSkipLimit");
+
+    for (int i = 0; i < 5; i++) {
+      ODocument doc = new ODocument("ExpandSkipLimit");
+      doc.field("nnum", i);
+      doc.save();
+      ODocument parent = new ODocument("ExpandSkipLimit");
+      parent.field("parent", true);
+      parent.field("num", i);
+      parent.field("linked", doc);
+      parent.save();
+    }
   }
 
   @AfterClass
@@ -709,15 +725,23 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
-  public void testBacktick() {
+  public void testExpandSkipLimit() {
+    //issue #4985
+    OSQLSynchQuery sql = new OSQLSynchQuery(
+        "SELECT expand(linked) from ExpandSkipLimit where parent = true order by nnum skip 1 limit 1");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 1);
+    ODocument doc = results.get(0);
+    assertEquals(doc.field("nnum"), 1);
+  }
 
+  @Test
+  public void testBacktick() {
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT `foo-bar` as r from TestBacktick");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 1);
     ODocument doc = results.get(0);
     assertEquals(doc.field("r"), 10);
-
-
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {
