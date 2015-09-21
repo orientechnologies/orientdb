@@ -191,6 +191,7 @@ public abstract class BaseLuceneTest {
       process.destroy();
     } else {
       databaseDocumentTx.drop();
+      ODatabaseRecordThreadLocal.INSTANCE.set(null);
     }
   }
 

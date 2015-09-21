@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -38,7 +39,7 @@ import java.util.List;
  * Created by Enrico Risa on 02/09/15.
  */
 @Test(groups = "embedded")
-public class LuceneMixIndexTest extends BaseLuceneAutoTest {
+public class LuceneMixIndexTest extends BaseLuceneTest {
 
   @Override
   protected String getDatabaseName() {
@@ -46,10 +47,9 @@ public class LuceneMixIndexTest extends BaseLuceneAutoTest {
   }
 
   @BeforeClass
-  @Override
   public void init() {
-    super.init();
 
+    initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     OClass song = schema.createClass("Song");
@@ -92,7 +92,7 @@ public class LuceneMixIndexTest extends BaseLuceneAutoTest {
 
   }
 
-  @Test
+  @Test(enabled = false)
   public void testMixCompositeQuery() {
 
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
@@ -117,5 +117,10 @@ public class LuceneMixIndexTest extends BaseLuceneAutoTest {
 
     }
     return script;
+  }
+
+  @AfterClass
+  public void deInit() {
+    deInitDB();
   }
 }

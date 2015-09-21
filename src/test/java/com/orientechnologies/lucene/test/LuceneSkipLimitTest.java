@@ -58,6 +58,7 @@ public class LuceneSkipLimitTest extends BaseLuceneTest {
 
         databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
+
         List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
                 "select * from Song where [title] LUCENE \"(title:man)\""));
 
