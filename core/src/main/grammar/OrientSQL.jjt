@@ -2942,6 +2942,8 @@ OJson Json():
             (
                 lastItem.leftIdentifier = Identifier()
                 |
+                token = <RECORD_ATTRIBUTE> {lastItem.leftString = token.image; }
+                |
                 token = <STRING_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
                 |
                 token = <CHARACTER_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
@@ -2953,6 +2955,8 @@ OJson Json():
                 { lastItem = new OJsonItem(); }
                 (
                     lastItem.leftIdentifier = Identifier()
+                    |
+                    token = <RECORD_ATTRIBUTE> {lastItem.leftString = token.image; }
                     |
                     token = <STRING_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
                     |
