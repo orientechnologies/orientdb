@@ -81,8 +81,6 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
   }
 
-
-
   @Override
   public boolean contains(Object key) {
     return false;
@@ -118,7 +116,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     Set<OIdentifiable> container = (Set<OIdentifiable>) value;
     for (OIdentifiable oIdentifiable : container) {
       Document doc = new Document();
-      doc.add(OLuceneIndexType.createField(RID, oIdentifiable, oIdentifiable.getIdentity().toString(), Field.Store.YES,
+      doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES,
           Field.Index.NOT_ANALYZED_NO_NORMS));
       int i = 0;
       if (index.isAutomatic()) {
@@ -137,10 +135,9 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
             } else {
 
               if (isToStore(f).equals(Field.Store.YES)) {
-                doc.add(OLuceneIndexType.createField(f + STORED, oIdentifiable, val, Field.Store.YES,
-                    Field.Index.NOT_ANALYZED_NO_NORMS));
+                doc.add(OLuceneIndexType.createField(f + STORED, val, Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
               }
-              doc.add(OLuceneIndexType.createField(f, oIdentifiable, val, Field.Store.NO, Field.Index.ANALYZED));
+              doc.add(OLuceneIndexType.createField(f, val, Field.Store.NO, Field.Index.ANALYZED));
             }
           }
 
@@ -153,17 +150,17 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
           int k = 0;
           for (Object o : keys) {
-            doc.add(OLuceneIndexType.createField("k" + k, oIdentifiable, val, Field.Store.NO, Field.Index.ANALYZED));
+            doc.add(OLuceneIndexType.createField("k" + k, val, Field.Store.NO, Field.Index.ANALYZED));
           }
         } else if (key instanceof Collection) {
           Collection<Object> keys = (Collection<Object>) key;
           int k = 0;
           for (Object o : keys) {
-            doc.add(OLuceneIndexType.createField("k" + k, oIdentifiable, o, Field.Store.NO, Field.Index.ANALYZED));
+            doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO, Field.Index.ANALYZED));
           }
         } else {
           val = key;
-          doc.add(OLuceneIndexType.createField("k0", oIdentifiable, val, Field.Store.NO, Field.Index.ANALYZED));
+          doc.add(OLuceneIndexType.createField("k0", val, Field.Store.NO, Field.Index.ANALYZED));
         }
       }
       if (facetManager.supportsFacets()) {
@@ -260,6 +257,58 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   @Override
+  public Document buildDocument(Object key, OIdentifiable value) {
+    return build(index, key, value, metadata);
+  }
+
+  @Override
+  public Query buildQuery(Object query) throws ParseException {
+    return OLuceneIndexType.createFullQuery(index, query, mgrWriter.getIndexWriter().getAnalyzer(), getLuceneVersion(metadata));
+
+  }
+
+  @Override
+  public Analyzer analyzer(String field) {
+    return getAnalyzer(metadata);
+  }
+
+  protected Document build(OIndexDefinition definition, Object key, OIdentifiable value, ODocument metadata) {
+    Document doc = new Document();
+    int i = 0;
+
+    if (value != null) {
+      doc.add(OLuceneIndexType.createField(OLuceneIndexManagerAbstract.RID, value.getIdentity().toString(), Field.Store.YES,
+          Field.Index.NOT_ANALYZED_NO_NORMS));
+    }
+    List<Object> formattedKey = formatKeys(definition, key);
+    for (String f : definition.getFields()) {
+      Object val = formattedKey.get(i);
+      i++;
+      doc.add(OLuceneIndexType.createField(f, val, Field.Store.NO, Field.Index.ANALYZED));
+    }
+    return doc;
+  }
+
+  private List<Object> formatKeys(OIndexDefinition definition, Object key) {
+    List<Object> keys;
+
+    if (key instanceof OCompositeKey) {
+      keys = ((OCompositeKey) key).getKeys();
+
+    } else if (key instanceof List) {
+      keys = ((List) key);
+    } else {
+      keys = new ArrayList<Object>();
+      keys.add(key);
+    }
+
+    for (int i = keys.size(); i < definition.getFields().size(); i++) {
+      keys.add("");
+    }
+    return keys;
+  }
+
+  @Override
   public void delete() {
     super.delete();
     facetManager.delete();
@@ -337,5 +386,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     public void remove() {
 
     }
+
   }
+
 }

@@ -24,7 +24,11 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 
 import java.io.IOException;
 
@@ -205,4 +209,17 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   public void setIndexName(String indexName) {
     lucene.setIndexName(indexName);
   }
+
+  public Document buildDocument(Object key, OIdentifiable value) {
+    return lucene.buildDocument(key, value);
+  }
+
+  public Query buildQuery(Object query) throws ParseException {
+    return lucene.buildQuery(query);
+  }
+
+  public Analyzer analyzer(String field) {
+    return lucene.analyzer(field);
+  }
+
 }

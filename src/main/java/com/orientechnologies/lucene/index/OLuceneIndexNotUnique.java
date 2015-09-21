@@ -204,6 +204,10 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
 
   }
 
+
+  protected OLuceneIndexEngine getIndexEngine(){
+    return (OLuceneIndexEngine) indexEngine;
+  }
   @Override
   public boolean canBeUsedInEqualityOperators() {
     return false;

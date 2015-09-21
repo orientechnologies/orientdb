@@ -46,6 +46,7 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.TrackingIndexWriter;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
@@ -513,4 +514,11 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   public void onStorageUnregistered(OStorage storage) {
 
   }
+
+
+  public abstract Document buildDocument(Object key, OIdentifiable value);
+
+  public abstract Query buildQuery(Object query) throws ParseException;
+
+  public abstract Analyzer analyzer(String field);
 }

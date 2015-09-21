@@ -31,6 +31,7 @@
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
         <orientdb.version>${version}</orientdb.version>
+        <lucene.version>4.7.0</lucene.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -285,6 +286,11 @@
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-spatial</artifactId>
             <version>4.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-memory</artifactId>
+            <version>${lucene.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>

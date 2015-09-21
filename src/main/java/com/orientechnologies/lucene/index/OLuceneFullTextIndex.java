@@ -19,6 +19,10 @@ package com.orientechnologies.lucene.index;
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.Query;
 
 public class OLuceneFullTextIndex extends OLuceneIndexNotUnique implements OLuceneIndex {
 
@@ -28,4 +32,15 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique implements OLuce
     indexEngine.setIndexMetadata(metadata);
   }
 
+  public Document buildDocument(Object key) {
+    return getIndexEngine().buildDocument(key, null);
+  }
+
+  public Analyzer analyzer(String name) {
+    return getIndexEngine().analyzer(name);
+  }
+
+  public Query buildQuery(Object query) throws ParseException {
+    return getIndexEngine().buildQuery(query);
+  }
 }
