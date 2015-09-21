@@ -309,7 +309,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
 
   $scope.queryText = ""
   $scope.modificati = new Array;
-  $scope.listTypes = ['BINARY', 'BOOLEAN','BYTE', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'];
+  $scope.listTypes = ['BINARY', 'BOOLEAN', 'BYTE', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'];
   $scope.collateTypes = ['Case Insensitive', 'default'];
   $scope.modificato = function (result, prop) {
     var key = result['name'];
@@ -378,7 +378,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
             val = 'ci';
 
 
-          if(!val){
+          if (!val) {
             val = null;
           }
           var idx = result;
@@ -538,7 +538,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     });
   }
 }]);
-schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', 'Spinner', 'Notification', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, Spinner, Notification) {
+schemaModule.controller("IndexController", ['$scope', '$routeParams', '$route', '$location', 'Database', 'CommandApi', '$modal', '$q', 'Spinner', 'Notification', function ($scope, $routeParams, $route, $location, Database, CommandApi, $modal, $q, Spinner, Notification) {
 
   $scope.listTypeIndex = ['DICTIONARY', 'FULLTEXT', 'UNIQUE', 'NOTUNIQUE', 'DICTIONARY_HASH_INDEX', 'FULLTEXT_HASH_INDEX', 'UNIQUE_HASH_INDEX', 'NOTUNIQUE_HASH_INDEX'];
   $scope.newIndex = {"name": "", "type": "", "fields": ""}
@@ -619,9 +619,13 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
       verbose: false
     }, function (data) {
       $scope.$hide();
-      $scope.parentScope.addIndexFromExt($scope.newIndex);
+
+
       Spinner.stopSpinnerPopup();
       Notification.push({content: "Index '" + $scope.newIndex['name'] + "' created."})
+      $scope.db.refreshMetadata($routeParams.database, function () {
+        $scope.parentScope.addIndexFromExt($scope.newIndex);
+      });
     }, function (error) {
       $scope.testMsgClass = 'alert alert-danger';
       $scope.testMsg = error;
@@ -644,7 +648,7 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
     "min": null,
     "max": null
   }
-  $scope.listTypes = ['BINARY', 'BOOLEAN','BYTE', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'];
+  $scope.listTypes = ['BINARY', 'BOOLEAN', 'BYTE', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'];
   $scope.database = Database;
   $scope.listClasses = $scope.database.listNameOfClasses();
 
