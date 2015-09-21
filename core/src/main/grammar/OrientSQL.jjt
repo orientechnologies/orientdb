@@ -1585,6 +1585,7 @@ OCreateEdgeStatement CreateEdgeStatement():
     [ jjtThis.body = InsertBody() ]
     [ jjtThis.retry = Retry() ]
     [ jjtThis.wait = Wait() ]
+    [ jjtThis.batch = Batch() ]
 ) {return jjtThis;}
 }
 

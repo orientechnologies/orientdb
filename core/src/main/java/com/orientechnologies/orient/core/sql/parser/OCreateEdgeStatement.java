@@ -29,6 +29,7 @@ public class OCreateEdgeStatement extends OStatement {
   protected OInsertBody       body;
   protected Number            retry;
   protected Number            wait;
+  protected OBatch            batch;
 
   public OCreateEdgeStatement(int id) {
     super(id);
@@ -105,6 +106,9 @@ public class OCreateEdgeStatement extends OStatement {
     if (wait != null) {
       builder.append(" WAIT ");
       builder.append(wait);
+    }
+    if (batch != null) {
+      batch.toString(params, builder);
     }
   }
 
