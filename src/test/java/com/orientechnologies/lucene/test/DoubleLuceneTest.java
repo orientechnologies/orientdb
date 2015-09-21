@@ -44,9 +44,22 @@ public class DoubleLuceneTest {
     db.command(new OCommandSQL("create property Test.attr2 string")).execute();
     db.command(new OCommandSQL("create index Test.attr2 on Test (attr2) fulltext engine lucene")).execute();
     db.command(new OCommandSQL("insert into Test set attr1='foo', attr2='bar'")).execute();
+    db.command(new OCommandSQL("insert into Test set attr1='bar', attr2='foo'")).execute();
 
     List<ODocument> results = db.command(new OCommandSQL("select from Test where attr1 lucene 'foo*' OR attr2 lucene 'foo*'"))
         .execute();
+    Assert.assertEquals(results.size(), 2);
+
+    results = db.command(new OCommandSQL("select from Test where attr1 lucene 'bar*' OR attr2 lucene 'bar*'")).execute();
+
+    Assert.assertEquals(results.size(), 2);
+
+    results = db.command(new OCommandSQL("select from Test where attr1 lucene 'foo*' AND attr2 lucene 'bar*'")).execute();
+
+    Assert.assertEquals(results.size(), 1);
+
+    results = db.command(new OCommandSQL("select from Test where attr1 lucene 'bar*' AND attr2 lucene 'foo*'")).execute();
+
     Assert.assertEquals(results.size(), 1);
 
   }

@@ -92,7 +92,7 @@ public class LuceneMixIndexTest extends BaseLuceneTest {
 
   }
 
-  @Test(enabled = false)
+  @Test
   public void testMixCompositeQuery() {
 
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
