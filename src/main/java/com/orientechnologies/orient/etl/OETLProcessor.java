@@ -229,7 +229,6 @@ public class OETLProcessor {
           final OBlock b = factory.getBlock(name);
           beginBlocks.add(b);
           configureComponent(b, (ODocument) block.field(name), iContext);
-          b.execute();
         }
 
       if (iSource != null) {
