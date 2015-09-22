@@ -122,6 +122,17 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='foo', active = true")).execute();
     db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='bar', active = false")).execute();
 
+
+    db.command(new OCommandSQL("CREATE class TestParamsEmbedded")).execute();
+    db.command(new OCommandSQL("insert into TestParamsEmbedded set emb = {  \n"
+        + "            \"count\":0,\n"
+        + "            \"testupdate\":\"1441258203385\"\n"
+        + "         }")).execute();
+    db.command(new OCommandSQL("insert into TestParamsEmbedded set emb = {  \n"
+        + "            \"count\":1,\n"
+        + "            \"testupdate\":\"1441258203385\"\n"
+        + "         }")).execute();
+
     db.command(new OCommandSQL("CREATE class TestBacktick")).execute();
     db.command(new OCommandSQL("insert into TestBacktick  set foo = 1, bar = 2, `foo-bar` = 10")).execute();
 
@@ -752,6 +763,34 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 1);
     ODocument doc = results.get(0);
     assertEquals(doc.field("r"), 10);
+  }
+
+  @Test
+  public void testOrderByEmbeddedParams() {
+    // issue #4949
+    Map<String,Object> parameters = new HashMap<String,Object>();
+    parameters.put("paramvalue","count");
+    List<ODocument> qResult = db.command(
+        new OCommandSQL(
+            "select from TestParamsEmbedded order by emb[:paramvalue] DESC"))
+        .execute(parameters);
+    assertEquals(qResult.size(), 2);
+    Map embedded = qResult.get(0).field("emb");
+    assertEquals(embedded.get("count"), 1);
+  }
+
+  @Test
+  public void testOrderByEmbeddedParams2() {
+    // issue #4949
+    Map<String,Object> parameters = new HashMap<String,Object>();
+    parameters.put("paramvalue","count");
+    List<ODocument> qResult = db.command(
+        new OCommandSQL(
+            "select from TestParamsEmbedded order by emb[:paramvalue] ASC"))
+        .execute(parameters);
+    assertEquals(qResult.size(), 2);
+    Map embedded = qResult.get(0).field("emb");
+    assertEquals( embedded.get("count"), 0);
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {
