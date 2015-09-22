@@ -19,25 +19,19 @@
 package com.orientechnologies.orient.etl.source;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.RandomAccessFile;
-import java.io.Reader;
+import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.charset.Charset;
 import java.util.zip.GZIPInputStream;
 
 public class OFileSource extends OAbstractSource {
   protected String            fileName;
-  protected Object            path;
+  protected String            path;
   protected boolean           lockFile    = false;
   protected long              byteParsed  = 0;
   protected long              byteToParse = -1;
@@ -49,6 +43,8 @@ public class OFileSource extends OAbstractSource {
   protected InputStreamReader fileReader  = null;
   protected FileInputStream   fis         = null;
   protected FileLock          lock        = null;
+  private Charset encoding    = Charset.forName("UTF-8");
+  private File                input;
 
   @Override
   public String getUnit() {
@@ -61,28 +57,29 @@ public class OFileSource extends OAbstractSource {
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
+  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
 
-    path = resolve(iConfiguration.field("path"));
     if (iConfiguration.containsField("lock"))
-      lockFile = (Boolean) iConfiguration.field("lock");
+      lockFile = iConfiguration.<Boolean> field("lock");
 
     if (iConfiguration.containsField("skipFirst"))
-      skipFirst = Long.parseLong((String) iConfiguration.field("skipFirst"));
+      skipFirst = Long.parseLong(iConfiguration.<String> field("skipFirst"));
 
     if (iConfiguration.containsField("skipLast"))
-      skipLast = Long.parseLong((String) iConfiguration.field("skipLast"));
+      skipLast = Long.parseLong(iConfiguration.<String> field("skipLast"));
 
-    if (path instanceof String)
-      path = new File((String) path);
+    if (iConfiguration.containsField("encoding"))
+      encoding = Charset.forName(iConfiguration.<String> field("encoding"));
 
-    if (path instanceof File) {
-      final File file = (File) path;
-      if (!file.exists())
-        throw new OSourceException("[File source] path '" + path + "' not exists");
-      fileName = file.getName();
-    }
+    path = (String) resolve(iConfiguration.field("path"));
+
+    input = new File((String) path);
+
+    if (!input.exists())
+      throw new OSourceException("[File source] path '" + path + "' not exists");
+    fileName = input.getName();
+
   }
 
   @Override
@@ -125,34 +122,22 @@ public class OFileSource extends OAbstractSource {
 
   @Override
   public void begin() {
-    if (path instanceof File) {
-      final File file = (File) path;
 
       try {
         final String fileMode = lockFile ? "rw" : "r";
-        raf = new RandomAccessFile(file, fileMode);
+        raf = new RandomAccessFile(input, fileMode);
         channel = raf.getChannel();
-        fis = new FileInputStream(file);
+        fis = new FileInputStream(input);
         if (fileName.endsWith(".gz"))
-          fileReader = new InputStreamReader(new GZIPInputStream(fis));
+          fileReader = new InputStreamReader(new GZIPInputStream(fis),encoding);
         else {
-          fileReader = new FileReader(file);
-          byteToParse = file.length();
+          fileReader = new InputStreamReader(new FileInputStream(input),encoding);
+          byteToParse = input.length();
         }
 
       } catch (Exception e) {
         end();
       }
-    } else if (path instanceof InputStream) {
-      fileName = null;
-      byteToParse = -1;
-      fileReader = new InputStreamReader((InputStream) path);
-    } else if (path instanceof InputStreamReader) {
-      fileName = null;
-      byteToParse = -1;
-      fileReader = (InputStreamReader) path;
-    } else
-      throw new OSourceException("[File source] Unknown input '" + path + "' of class '" + path.getClass() + "'");
 
     byteParsed = 0;
 
@@ -163,7 +148,7 @@ public class OFileSource extends OAbstractSource {
         OLogManager.instance().error(this, "Error on locking file: %s", e, fileName);
       }
 
-    log(OETLProcessor.LOG_LEVELS.DEBUG, "Reading from file " + path);
+    log(OETLProcessor.LOG_LEVELS.INFO, "Reading from file " + path + " with encoding " + encoding.displayName());
   }
 
   public boolean isClosed() {

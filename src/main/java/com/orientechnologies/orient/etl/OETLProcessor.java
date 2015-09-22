@@ -22,6 +22,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -57,7 +58,7 @@ public class OETLProcessor {
   protected OExtractor                 extractor;
   protected OLoader                    loader;
   protected List<OTransformer>         transformers;
-  protected OBasicCommandContext       context;
+  protected OCommandContext            context;
   protected long                       startTime;
   protected long                       elapsed;
   protected OETLProcessorStats         stats       = new OETLProcessorStats();
@@ -108,7 +109,7 @@ public class OETLProcessor {
    */
   public OETLProcessor(final List<OBlock> iBeginBlocks, final OSource iSource, final OExtractor iExtractor,
       final List<OTransformer> iTransformers, final OLoader iLoader, final List<OBlock> iEndBlocks,
-      final OBasicCommandContext iContext) {
+      final OCommandContext iContext) {
     beginBlocks = iBeginBlocks;
     source = iSource;
     extractor = iExtractor;
@@ -317,7 +318,7 @@ public class OETLProcessor {
     return logLevel;
   }
 
-  public OBasicCommandContext getContext() {
+  public OCommandContext getContext() {
     return context;
   }
 

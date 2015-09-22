@@ -40,12 +40,14 @@ public class TestLoader extends OAbstractLoader {
 
   @Override
   public void load(Object input, OCommandContext context) {
-    loadedRecords.add((ODocument) input);
+    synchronized (loadedRecords) {
+      loadedRecords.add((ODocument) input);
+    }
   }
 
   @Override
   public String getUnit() {
-    return null;
+    return "document";
   }
 
   @Override

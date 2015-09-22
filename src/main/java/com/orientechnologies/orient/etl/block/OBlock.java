@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl.block;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.etl.OETLComponent;
 
 /**
@@ -27,5 +27,5 @@ import com.orientechnologies.orient.etl.OETLComponent;
 public interface OBlock extends OETLComponent {
   Object execute();
 
-  void setContext(OBasicCommandContext context);
+  void setContext(OCommandContext context);
 }

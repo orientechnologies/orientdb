@@ -18,9 +18,6 @@
 
 package com.orientechnologies.orient.etl.loader;
 
-import java.util.List;
-
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -38,6 +35,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.List;
 
 /**
  * ETL Loader that saves record into OrientDB database.
@@ -207,7 +206,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   }
 
   @Override
-  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
+  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
 
     if (iConfiguration.containsField("dbURL"))
@@ -385,6 +384,9 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       for (ODocument idx : indexes) {
         OIndex index;
 
+        final ODocument metadata = (ODocument) resolve(idx.field("metadata"));
+        log(OETLProcessor.LOG_LEVELS.DEBUG, "%s: found metadata field '%s'", getName(), metadata);
+
         String idxName = (String) resolve(idx.field("name"));
         if (idxName != null) {
           index = documentDatabase.getMetadata().getIndexManager().getIndex(idxName);
@@ -444,7 +446,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
           // ALREADY EXISTS
           continue;
 
-        index = cls.createIndex(idxName, idxType, fields);
+        index = cls.createIndex(idxName, idxType, null, metadata, fields);
         log(OETLProcessor.LOG_LEVELS.DEBUG, "- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s",
             idxName, idxType, idxClass, idxFields);
       }

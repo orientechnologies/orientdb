@@ -19,7 +19,7 @@
 package com.orientechnologies.orient.etl.block;
 
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
@@ -42,7 +42,7 @@ public class OConsoleBlock extends OAbstractBlock {
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iContext) {
+  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
     if (iConfiguration.containsField("file"))
       file = iConfiguration.field("file");
