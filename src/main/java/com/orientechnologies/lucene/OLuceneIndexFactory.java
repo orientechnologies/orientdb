@@ -58,7 +58,13 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   public OLuceneIndexFactory() {
-    Orient.instance().addDbLifecycleListener(this);
+    this(false);
+  }
+
+  public OLuceneIndexFactory(boolean manual) {
+    if (!manual) {
+      Orient.instance().addDbLifecycleListener(this);
+    }
   }
 
   @Override

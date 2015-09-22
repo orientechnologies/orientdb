@@ -47,7 +47,7 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
     super.startup();
     Orient.instance().addDbLifecycleListener(this);
 
-    OIndexes.registerFactory(new OLuceneIndexFactory());
+    OIndexes.registerFactory(new OLuceneIndexFactory(true));
     OSQLEngine.registerOperator(new OLuceneTextOperator());
     OSQLEngine.registerOperator(new OLuceneWithinOperator());
     OSQLEngine.registerOperator(new OLuceneNearOperator());
