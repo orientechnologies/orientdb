@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.graph.GraphNoTxAbstractTest;
 import com.tinkerpop.blueprints.Vertex;
@@ -68,6 +69,22 @@ public class GraphCommands extends GraphNoTxAbstractTest {
 
     results = ((Iterable<Vertex>) graph.command(new OSQLSynchQuery(sql)).execute(queryParams));
     Assert.assertFalse(results.iterator().hasNext());
+  }
+
+  @Test
+  public void testAddValueSQL() {
+    graph.command(new OCommandSQL("update V add testprop = 'first' return after @this limit 1")).execute();
+
+    Iterable<Vertex> results = ((Iterable<Vertex>) graph.command(
+        new OSQLSynchQuery("select from V where 'first' in testprop")).execute());
+    Assert.assertTrue(results.iterator().hasNext());
+
+    graph.command(new OCommandSQL("update V add testprop = 'second' return after @this limit 1")).execute();
+
+    results = ((Iterable<Vertex>) graph.command(new OSQLSynchQuery("select from V where 'first' in testprop")).execute());
+    Assert.assertTrue(results.iterator().hasNext());
+    results = ((Iterable<Vertex>) graph.command(new OSQLSynchQuery("select from V where 'second' in testprop")).execute());
+    Assert.assertTrue(results.iterator().hasNext());
   }
 
   @BeforeClass
