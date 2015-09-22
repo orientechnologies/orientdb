@@ -100,8 +100,8 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into TestUrl content { \"url\": \"http://www.google.com\" }")).execute();
 
     db.command(new OCommandSQL("CREATE class TestParams")).execute();
-    db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='foo'")).execute();
-    db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='bar'")).execute();
+    db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='foo', active = true")).execute();
+    db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='bar', active = false")).execute();
 
     db.command(new OCommandSQL("CREATE class TestBacktick")).execute();
     db.command(new OCommandSQL("insert into TestBacktick  set foo = 1, bar = 2, `foo-bar` = 10")).execute();
@@ -403,6 +403,16 @@ public class OCommandExecutorSQLSelectTest {
         new OCommandSQL(
             "select from TestParams let $foo = (select name from TestParams where surname = :name) where surname in $foo.name "))
         .execute(params);
+    assertEquals(qResult.size(), 1);
+  }
+
+  @Test
+  public void testBooleanParams() {
+    // issue #4224
+    List<ODocument> qResult = db.command(
+        new OCommandSQL(
+            "select name from TestParams where name = ? and active = ?"))
+        .execute("foo", true);
     assertEquals(qResult.size(), 1);
   }
 
