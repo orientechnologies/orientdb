@@ -2359,7 +2359,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     ODocument doc = (ODocument) iRecord;
     ODocumentInternal.checkClass(doc, this);
-    if (!getTransaction().isActive())
+    if (!getTransaction().isActive() && !storage.isRemote())
       // EXECUTE VALIDATION ONLY IF NOT IN TX
       doc.validate();
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);

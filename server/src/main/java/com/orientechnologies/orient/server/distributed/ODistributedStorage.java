@@ -1477,6 +1477,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
+  public boolean isRemote() {
+    return false;
+  }
+
+  @Override
   public OCurrentStorageComponentsFactory getComponentsFactory() {
     return wrapped.getComponentsFactory();
   }

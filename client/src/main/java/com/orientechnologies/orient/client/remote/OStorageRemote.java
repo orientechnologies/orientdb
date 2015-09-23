@@ -42,7 +42,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -54,7 +58,14 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -73,7 +84,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -126,15 +141,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   @Deprecated
   private int                                  minPool;
   @Deprecated
-  private int                           maxPool;
-  private ORemoteServerEventListener    asynchEventListener;
-  private String                        connectionDbType;
-  private volatile String               connectionUserName;
-  private String                        connectionUserPassword;
-  private Map<String, Object>           connectionOptions;
-  private OEngineRemote                 engine;
-  private String                        recordFormat;
-  private byte[]                        token;
+  private int                                  maxPool;
+  private ORemoteServerEventListener           asynchEventListener;
+  private String                               connectionDbType;
+  private volatile String                      connectionUserName;
+  private String                               connectionUserPassword;
+  private Map<String, Object>                  connectionOptions;
+  private OEngineRemote                        engine;
+  private String                               recordFormat;
+  private byte[]                               token;
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
     this(iClientId, iURL, iMode, null);
@@ -1608,6 +1623,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     engine.getConnectionManager().release(iNetwork);
   }
 
+  @Override
+  public boolean isRemote() {
+    return true;
+  }
+
   public boolean isPermanentRequester() {
     return false;
   }
@@ -2417,7 +2437,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return false;
   }
 
-  @Override public OStorageRemote copy() {
+  @Override
+  public OStorageRemote copy() {
     try {
       openRemoteDatabase();
     } catch (IOException e) {
