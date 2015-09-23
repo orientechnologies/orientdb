@@ -629,7 +629,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<REC>(this, this, clusterId, true, true);
+    return new ORecordIteratorCluster<REC>(this, this, clusterId);
   }
 
   /**
@@ -644,7 +644,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true, true,
+    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition,
         loadTombstones, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
@@ -656,7 +656,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true);
+    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition);
   }
 
   /**
@@ -2245,7 +2245,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in current database");
 
     checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iClassName);
-    return new ORecordIteratorClass<ODocument>(this, this, iClassName, iPolymorphic, true, true, false);
+    return new ORecordIteratorClass<ODocument>(this, this, iClassName, iPolymorphic, false);
   }
 
   /**
@@ -2255,7 +2255,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   public ORecordIteratorCluster<ODocument> browseCluster(final String iClusterName) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-    return new ORecordIteratorCluster<ODocument>(this, this, getClusterIdByName(iClusterName), true, true);
+    return new ORecordIteratorCluster<ODocument>(this, this, getClusterIdByName(iClusterName));
   }
 
   /**
@@ -2276,7 +2276,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
     return new ORecordIteratorCluster<ODocument>(this, this, getClusterIdByName(iClusterName), startClusterPosition,
-        endClusterPosition, true, true, loadTombstones, OStorage.LOCKING_STRATEGY.DEFAULT);
+        endClusterPosition, loadTombstones, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   /**
