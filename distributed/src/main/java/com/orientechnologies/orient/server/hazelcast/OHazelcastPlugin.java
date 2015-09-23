@@ -19,6 +19,18 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
@@ -63,18 +75,6 @@ import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.OSyncDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-
 /**
  * Hazelcast implementation for clustering.
  * 
@@ -89,7 +89,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   protected static final String                 NODE_NAME_ENV          = "ORIENTDB_NODE_NAME";
   protected static final String                 CONFIG_NODE_PREFIX     = "node.";
   protected static final String                 CONFIG_DBSTATUS_PREFIX = "dbstatus.";
-  protected final static String                 BACKUP_DIR             = "../backup/databases";
   protected String                              nodeId;
   protected String                              hazelcastConfigFile    = "hazelcast.xml";
   protected Map<String, Member>                 activeNodes            = new ConcurrentHashMap<String, Member>();
@@ -950,9 +949,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   protected void backupCurrentDatabase(final String iDatabaseName) {
     Orient.instance().unregisterStorageByName(iDatabaseName);
 
+    final String backupDirectory = OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.getValueAsString();
+    if (backupDirectory == null)
+      // SKIP BACKUP
+      return;
+
     // MOVE DIRECTORY TO ../backup/databases/<db-name>
-    final File backupFullPath = new File(serverInstance.getDatabaseDirectory() + BACKUP_DIR + "/" + iDatabaseName);
-    final File backupParentPath = new File(serverInstance.getDatabaseDirectory() + BACKUP_DIR);
+    final File backupFullPath = new File(serverInstance.getDatabaseDirectory() + backupDirectory + "/" + iDatabaseName);
+    final File backupParentPath = new File(serverInstance.getDatabaseDirectory() + backupDirectory);
 
     if (!backupParentPath.exists())
       // CREATE THE DIRECTORY STRUCTURE

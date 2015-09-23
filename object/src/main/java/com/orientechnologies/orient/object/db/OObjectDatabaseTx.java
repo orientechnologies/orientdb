@@ -335,7 +335,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   @Deprecated
   public <RET> RET load(Object iPojo, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
       OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    return load(iPojo, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
+    return load(iPojo, iFetchPlan, iIgnoreCache, !iIgnoreCache, loadTombstone, iLockingStrategy);
   }
 
   @Override

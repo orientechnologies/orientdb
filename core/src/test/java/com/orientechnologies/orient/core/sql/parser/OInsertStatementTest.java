@@ -62,6 +62,23 @@ public class OInsertStatementTest {
     checkRightSyntax("insert into foo return foo select from bar TIMEOUT 10 exception");
   }
 
+  public void testInsertEmbeddedDocs() {
+    checkRightSyntax("INSERT INTO Activity SET user = #14:1, story = #18:2, `like` = { \n"
+        + "      count: 0, \n"
+        + "      latest: [], \n"
+        + "      '@type': 'document', \n"
+        + "      '@class': 'Like'\n"
+        + "    }");
+
+    checkRightSyntax("INSERT INTO Activity SET user = #14:1, story = #18:2, `like` = { \n"
+        + "      count: 0, \n"
+        + "      latest: [], \n"
+        + "      '@type': 'document', \n"
+        + "      '@class': 'Like'\n"
+        + "    }");
+  }
+
+
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

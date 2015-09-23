@@ -190,7 +190,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
     } else {
-      return indexDefinition.createValue(OSQLHelper.getValue(value));
+      if (indexDefinition instanceof OIndexDefinitionMultiValue)
+        return ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(OSQLHelper.getValue(value));
+      else
+        return indexDefinition.createValue(OSQLHelper.getValue(value));
     }
   }
 
@@ -2134,7 +2137,18 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       } else {
         final OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
-        finalResult.setLimit(limit);
+        int iteratorLimit = 0;
+        if (limit < 0) {
+          iteratorLimit = -1;
+        } else {
+          iteratorLimit += limit;
+          if (skip > 0) {
+            iteratorLimit += skip;
+          }
+        }
+
+        finalResult.setLimit(iteratorLimit);
+
         for (OIdentifiable id : tempResult) {
           final Object fieldValue;
           if (expandTarget instanceof OSQLFilterItem) {
