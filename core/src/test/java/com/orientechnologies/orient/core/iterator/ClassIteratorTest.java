@@ -112,7 +112,7 @@ public class ClassIteratorTest {
     final ORecordIteratorClass<ODocument> personIter =
         new ORecordIteratorClassDescendentOrder<ODocument>(
 db, db, "Person", true,
-        false, LOCKING_STRATEGY.DEFAULT);
+        true, false, LOCKING_STRATEGY.DEFAULT);
 
     personIter.setRange(null, null); // open range
 

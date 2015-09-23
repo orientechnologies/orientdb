@@ -50,6 +50,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   protected final ORecordId                 current                = new ORecordId();
   private final ODatabaseDocumentInternal   lowLevelDatabase;
   private final OStorage                    dbStorage;
+  private final boolean                     useCache;
   private final boolean                     iterateThroughTombstones;
   protected boolean                         liveUpdated            = false;
   protected long                            limit                  = -1;
@@ -67,19 +68,22 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   private long                              currentEntry           = ORID.CLUSTER_POS_INVALID;
   private int                               currentEntryPosition   = -1;
   private OPhysicalPosition[]               positionsToProcess     = null;
+  protected boolean                         updateCache            = false;
 
-  public OIdentifiableIterator(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase) {
-    this(iDatabase, iLowLevelDatabase, false, OStorage.LOCKING_STRATEGY.NONE);
+  public OIdentifiableIterator(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
+      final boolean useCache) {
+    this(iDatabase, iLowLevelDatabase, useCache, false, OStorage.LOCKING_STRATEGY.NONE);
   }
 
   @Deprecated
   /**
    * @deprecated usage of this constructor may lead to deadlocks.
    */public OIdentifiableIterator(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
-      final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+      final boolean useCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     database = iDatabase;
     lowLevelDatabase = iLowLevelDatabase;
     this.iterateThroughTombstones = iterateThroughTombstones;
+    this.useCache = useCache;
     lockingStrategy = iLockingStrategy;
 
     dbStorage = lowLevelDatabase.getStorage();
@@ -282,9 +286,9 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       try {
         if (iRecord != null) {
           ORecordInternal.setIdentity(iRecord, new ORecordId(current.clusterId, current.clusterPosition));
-          iRecord = lowLevelDatabase.load(iRecord, fetchPlan, false, true, iterateThroughTombstones, lockingStrategy);
+          iRecord = lowLevelDatabase.load(iRecord, fetchPlan, !useCache, updateCache, iterateThroughTombstones, lockingStrategy);
         } else
-          iRecord = lowLevelDatabase.load(current, fetchPlan, false, true, iterateThroughTombstones, lockingStrategy);
+          iRecord = lowLevelDatabase.load(current, fetchPlan, !useCache, updateCache, iterateThroughTombstones, lockingStrategy);
       } catch (ODatabaseException e) {
         if (Thread.interrupted() || lowLevelDatabase.isClosed())
           // THREAD INTERRUPTED: RETURN
