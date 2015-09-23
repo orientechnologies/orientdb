@@ -223,6 +223,7 @@ public class OClientConnectionManager {
     final OClientConnection connection = connections.remove(iChannelId);
 
     if (connection != null) {
+      removeConnectFromSession(connection);
       connection.close();
 
       // CHECK IF THERE ARE OTHER CONNECTIONS
