@@ -38,7 +38,7 @@ public class OObjectIteratorClass<T> implements OObjectIteratorClassInterface<T>
       final String iClusterName, final boolean iPolymorphic) {
     database = iDatabase;
     underlying = new ORecordIteratorClass<ODocument>(iDatabase.getUnderlying(), iUnderlyingDatabase, iClusterName, iPolymorphic,
-        true, false);
+        true);
   }
 
   public boolean hasNext() {

@@ -37,7 +37,7 @@ public class OObjectIteratorCluster<T> implements OObjectIteratorClusterInterfac
   public OObjectIteratorCluster(final OObjectDatabaseTx iDatabase, final ODatabaseDocumentTx iUnderlyingDatabase,
       final int iClusterId) {
     database = iDatabase;
-    underlying = new ORecordIteratorCluster<ODocument>(iDatabase.getUnderlying(), iUnderlyingDatabase, iClusterId, true, true);
+    underlying = new ORecordIteratorCluster<ODocument>(iDatabase.getUnderlying(), iUnderlyingDatabase, iClusterId);
   }
 
   public boolean hasNext() {
