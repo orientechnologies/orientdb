@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.tx;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -36,13 +37,13 @@ import java.util.Set;
  */
 public class OLuceneTxChanges {
 
-  IndexWriter                writer;
-  private OLuceneIndexEngine engine;
+  public static final String       TMP         = "_tmp_rid";
 
-  public static final String TMP         = "_tmp_rid";
-  private Set<String>        deleted     = new HashSet<String>();
-  private Set<String>        updated     = new HashSet<String>();
-  private Set<Document>      deletedDocs = new HashSet<Document>();
+  private final IndexWriter        writer;
+  private final OLuceneIndexEngine engine;
+  private final Set<String>        deleted     = new HashSet<String>();
+  private final Set<String>        updated     = new HashSet<String>();
+  private final Set<Document>      deletedDocs = new HashSet<Document>();
 
   public OLuceneTxChanges(OLuceneIndexEngine engine, IndexWriter writer) {
     this.writer = writer;
@@ -72,7 +73,7 @@ public class OLuceneTxChanges {
     try {
       return new IndexSearcher(DirectoryReader.open(writer, true));
     } catch (IOException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Error during searcher instantiation", e);
     }
 
     return null;

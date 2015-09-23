@@ -45,9 +45,10 @@ import java.util.Set;
 
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
 
-  public static final String       LUCENE_ALGORITHM = "LUCENE";
-  private static final Set<String> TYPES;
-  private static final Set<String> ALGORITHMS;
+  public static final String          LUCENE_ALGORITHM = "LUCENE";
+
+  private static final Set<String>    TYPES;
+  private static final Set<String>    ALGORITHMS;
 
   static {
     final Set<String> types = new HashSet<String>();
@@ -62,7 +63,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
     ALGORITHMS = Collections.unmodifiableSet(algorithms);
   }
 
-  OLuceneSpatialManager            spatialManager;
+  private final OLuceneSpatialManager spatialManager;
 
   public OLuceneIndexFactory() {
     this(false);

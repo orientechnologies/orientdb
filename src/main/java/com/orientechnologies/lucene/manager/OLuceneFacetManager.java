@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.manager;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -51,10 +52,9 @@ import java.util.Map;
 public class OLuceneFacetManager {
 
   public static final String          FACET_FIELDS = "facetFields";
+  protected static final String       FACET        = "_facet";
   protected TaxonomyWriter            taxonomyWriter;
   protected FacetsConfig              config       = new FacetsConfig();
-  protected static final String       FACET        = "_facet";
-
   protected String                    facetField;
   // protected String facetDim;
   private OLuceneIndexManagerAbstract owner;
@@ -159,7 +159,7 @@ public class OLuceneFacetManager {
       if (taxonomyWriter != null)
         taxonomyWriter.commit();
     } catch (IOException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Error during taxonomy commit", e);
     }
   }
 

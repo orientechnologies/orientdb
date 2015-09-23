@@ -30,7 +30,7 @@ import java.util.Map;
 public class OLuceneMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> {
 
   private final OIndexDefinition definition;
-  private IndexReader            reader;
+  private final IndexReader      reader;
 
   private int                    currentIdx;
 

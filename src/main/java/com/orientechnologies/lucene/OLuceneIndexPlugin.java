@@ -16,6 +16,8 @@
 
 package com.orientechnologies.lucene;
 
+import org.apache.lucene.util.Version;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.functions.OLuceneFunctionsFactory;
 import com.orientechnologies.lucene.operator.OLuceneOperatorFactory;
@@ -32,10 +34,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.orient.spatial.functions.OSpatialFunctionsFactory;
-import org.apache.lucene.util.Version;
-
-import java.util.Map;
-import java.util.Set;
 
 public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODatabaseLifecycleListener {
 
@@ -63,25 +61,20 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
 
   protected void registerOperators() {
 
-    Set<OQueryOperator> operators = OLuceneOperatorFactory.OPERATORS;
-
-    for (OQueryOperator operator : operators) {
+    for (OQueryOperator operator : OLuceneOperatorFactory.OPERATORS) {
       OSQLEngine.registerOperator(operator);
     }
 
   }
 
   protected void registerFunctions() {
-    Map<String, Object> functions = OLuceneFunctionsFactory.FUNCTIONS;
 
-    for (String s : functions.keySet()) {
-      OSQLEngine.getInstance().registerFunction(s, (OSQLFunction) functions.get(s));
+    for (String s : OLuceneFunctionsFactory.FUNCTIONS.keySet()) {
+      OSQLEngine.getInstance().registerFunction(s, (OSQLFunction) OLuceneFunctionsFactory.FUNCTIONS.get(s));
     }
 
-    functions = OSpatialFunctionsFactory.FUNCTIONS;
-
-    for (String s : functions.keySet()) {
-      OSQLEngine.getInstance().registerFunction(s, (OSQLFunction) functions.get(s));
+    for (String s : OSpatialFunctionsFactory.FUNCTIONS.keySet()) {
+      OSQLEngine.getInstance().registerFunction(s, (OSQLFunction) OSpatialFunctionsFactory.FUNCTIONS.get(s));
     }
   }
 

@@ -37,13 +37,14 @@ public class ODocBuilder implements DocBuilder {
   @Override
   public Document build(OIndexDefinition definition, Object key, OIdentifiable value, ODocument metadata) {
     Document doc = new Document();
-    int i = 0;
 
     if (value != null) {
       doc.add(OLuceneIndexType.createField(OLuceneIndexManagerAbstract.RID, value.getIdentity().toString(), Field.Store.YES,
           Field.Index.NOT_ANALYZED_NO_NORMS));
     }
     List<Object> formattedKey = formatKeys(definition, key);
+
+    int i = 0;
     for (String f : definition.getFields()) {
       Object val = formattedKey.get(i);
       i++;
@@ -65,6 +66,7 @@ public class ODocBuilder implements DocBuilder {
       keys.add(key);
     }
 
+    //a sort of pa
     for (int i = keys.size(); i < definition.getFields().size(); i++) {
       keys.add("");
     }

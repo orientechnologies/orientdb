@@ -134,14 +134,10 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   @Override
   public Query deleteQuery(Object key, OIdentifiable value) {
-
-    Query query;
     if (isCollectionDelete()) {
-      query = OLuceneIndexType.createDeleteQuery(value, index.getFields(), key);
-    } else {
-      query = OLuceneIndexType.createQueryId(value);
+      return OLuceneIndexType.createDeleteQuery(value, index.getFields(), key);
     }
-    return query;
+    return OLuceneIndexType.createQueryId(value);
   }
 
   public void commit() {
@@ -191,9 +187,10 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
       final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
       if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
 
-        File f = new File(getIndexPath((OLocalPaginatedStorage) storageLocalAbstract));
+        final OLocalPaginatedStorage localAbstract = (OLocalPaginatedStorage) storageLocalAbstract;
+        File f = new File(getIndexPath(localAbstract));
         OLuceneIndexUtils.deleteFolder(f);
-        f = new File(getIndexBasePath((OLocalPaginatedStorage) storageLocalAbstract));
+        f = new File(getIndexBasePath(localAbstract));
         OLuceneIndexUtils.deleteFolderIfEmpty(f);
       }
     } catch (IOException e) {
@@ -266,7 +263,9 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     IndexReader reader = null;
     IndexSearcher searcher = null;
     try {
-      reader = searcher().getIndexReader();
+      searcher = searcher();
+      if (searcher != null)
+        reader = searcher.getIndexReader();
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on getting size of Lucene index", e);
     } finally {
@@ -294,23 +293,21 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   }
 
   public Analyzer getAnalyzer(final ODocument metadata) {
-    Analyzer analyzer = null;
     if (metadata != null && metadata.field("analyzer") != null) {
-      final String analyzerString = metadata.field("analyzer");
-      if (analyzerString != null) {
+      final String analyzerFQN = metadata.field("analyzer");
         try {
 
-          final Class classAnalyzer = Class.forName(analyzerString);
+          final Class classAnalyzer = Class.forName(analyzerFQN);
           final Constructor constructor = classAnalyzer.getConstructor();
 
-          analyzer = (Analyzer) constructor.newInstance();
+          return (Analyzer) constructor.newInstance();
         } catch (ClassNotFoundException e) {
-          throw new OIndexException("Analyzer: " + analyzerString + " not found", e);
+          throw new OIndexException("Analyzer: " + analyzerFQN + " not found", e);
         } catch (NoSuchMethodException e) {
           Class classAnalyzer = null;
           try {
-            classAnalyzer = Class.forName(analyzerString);
-            analyzer = (Analyzer) classAnalyzer.newInstance();
+            classAnalyzer = Class.forName(analyzerFQN);
+            return  (Analyzer) classAnalyzer.newInstance();
 
           } catch (Throwable e1) {
             throw new OIndexException("Couldn't instantiate analyzer:  public constructor  not found", e1);
@@ -319,16 +316,14 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
         } catch (Exception e) {
           OLogManager.instance().error(this, "Error on getting analyzer for Lucene index", e);
         }
-      }
-    } else {
-      analyzer = new StandardAnalyzer();
     }
-    return analyzer;
+    return new StandardAnalyzer();
   }
 
   public void initIndex(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic,
       ODocument metadata) {
 
+    //FIXME how many timers are around?
     Orient.instance().registerListener(this);
     commitTask = new TimerTask() {
       @Override

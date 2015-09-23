@@ -76,6 +76,8 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.APPEND);
 
+    //TODO: use writer config params to tune writer behaviour
+
     OLogManager.instance().debug(this, "Opening Lucene index in '%s'...", directory);
 
     return new IndexWriter(directory, iwc);
@@ -116,8 +118,6 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     }
   }
 
-
-
   @Override
   public void put(Object key, Object value) {
     Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
@@ -127,64 +127,73 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
           Field.Index.NOT_ANALYZED_NO_NORMS));
       int i = 0;
       if (index.isAutomatic()) {
-        for (String f : index.getFields()) {
-
-          Object val = null;
-          if (key instanceof OCompositeKey) {
-            val = ((OCompositeKey) key).getKeys().get(i);
-            i++;
-          } else {
-            val = key;
-          }
-          if (val != null) {
-            if (facetManager.supportsFacets() && facetManager.isFacetField(f)) {
-              doc.add(facetManager.buildFacetField(f, val));
-            } else {
-
-              if (isToStore(f).equals(Field.Store.YES)) {
-                doc.add(OLuceneIndexType.createField(f + STORED, val, Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
-              }
-              doc.add(OLuceneIndexType.createField(f, val, Field.Store.NO, Field.Index.ANALYZED));
-            }
-          }
-
-        }
+        putInAutomaticIndex(key, doc, i);
       } else {
-
-        Object val = null;
-        if (key instanceof OCompositeKey) {
-          List<Object> keys = ((OCompositeKey) key).getKeys();
-
-          int k = 0;
-          for (Object o : keys) {
-            doc.add(OLuceneIndexType.createField("k" + k, val, Field.Store.NO, Field.Index.ANALYZED));
-          }
-        } else if (key instanceof Collection) {
-          Collection<Object> keys = (Collection<Object>) key;
-          int k = 0;
-          for (Object o : keys) {
-            doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO, Field.Index.ANALYZED));
-          }
-        } else {
-          val = key;
-          doc.add(OLuceneIndexType.createField("k0", val, Field.Store.NO, Field.Index.ANALYZED));
-        }
+        putInManualindex(key, doc);
       }
+
       if (facetManager.supportsFacets()) {
         try {
           addDocument(facetManager.buildDocument(doc));
+          //FIXME: writer is commited by timer task, why commit this separately?
+          facetManager.commit();
         } catch (IOException e) {
-          e.printStackTrace();
+          OLogManager.instance().error(this, "Error while updating facets", e);
         }
       } else {
         addDocument(doc);
       }
 
-      facetManager.commit();
 
       if (!index.isAutomatic()) {
         commit();
       }
+    }
+  }
+
+  private void putInManualindex(Object key, Document doc) {
+    Object val = null;
+    if (key instanceof OCompositeKey) {
+      List<Object> keys = ((OCompositeKey) key).getKeys();
+
+      int k = 0;
+      for (Object o : keys) {
+        doc.add(OLuceneIndexType.createField("k" + k, val, Field.Store.NO, Field.Index.ANALYZED));
+      }
+    } else if (key instanceof Collection) {
+      Collection<Object> keys = (Collection<Object>) key;
+      int k = 0;
+      for (Object o : keys) {
+        doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO, Field.Index.ANALYZED));
+      }
+    } else {
+      val = key;
+      doc.add(OLuceneIndexType.createField("k0", val, Field.Store.NO, Field.Index.ANALYZED));
+    }
+  }
+
+  private void putInAutomaticIndex(Object key, Document doc, int i) {
+    for (String f : index.getFields()) {
+
+      Object val = null;
+      if (key instanceof OCompositeKey) {
+        val = ((OCompositeKey) key).getKeys().get(i);
+        i++;
+      } else {
+        val = key;
+      }
+      if (val != null) {
+        if (facetManager.supportsFacets() && facetManager.isFacetField(f)) {
+          doc.add(facetManager.buildFacetField(f, val));
+        } else {
+
+          if (isToStore(f).equals(Field.Store.YES)) {
+            doc.add(OLuceneIndexType.createField(f + STORED, val, Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+          }
+          doc.add(OLuceneIndexType.createField(f, val, Field.Store.NO, Field.Index.ANALYZED));
+        }
+      }
+
     }
   }
 
@@ -196,7 +205,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
       if (facetManager.supportsFacets()) {
         facetManager.addFacetContext(queryContext, key);
       }
-      return LuceneResultSetFactory.INSTANCE.create(this,queryContext);
+      return LuceneResultSetFactory.INSTANCE.create(this, queryContext);
     } catch (IOException e) {
       throw new OIndexException("Error reading from Lucene index", e);
     }

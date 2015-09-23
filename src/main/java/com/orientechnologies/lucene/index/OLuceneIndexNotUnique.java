@@ -17,6 +17,7 @@
 package com.orientechnologies.lucene.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.LuceneTxOperations;
 import com.orientechnologies.lucene.OLuceneIndex;
@@ -33,7 +34,10 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> implements OLuceneIndex {
@@ -145,7 +149,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
       try {
         transactionChanges.remove(key, value);
       } catch (IOException e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Error while removing", e);
       }
       return true;
     } else {
