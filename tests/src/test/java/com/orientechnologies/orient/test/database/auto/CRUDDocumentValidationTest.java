@@ -15,39 +15,38 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentComparator;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OValidationException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentComparator;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-
 @Test(groups = { "crud", "record-document" })
 public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
-  private ODocument           record;
-  private ODocument           account;
+  private ODocument record;
+  private ODocument account;
 
-	@Parameters(value = "url")
-	public CRUDDocumentValidationTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public CRUDDocumentValidationTest(@Optional String url) {
+    super(url);
+  }
 
-	@Test
+  @Test
   public void openDb() {
-		createBasicTestSchema();
+    createBasicTestSchema();
 
     record = database.newInstance("Whiz");
     account = new ODocument("Account");
@@ -184,9 +183,27 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
   }
 
   @Test(dependsOnMethods = "validationMandatoryNullableNoCloseDb")
+  public void validationDisabledAdDatabaseLevel() throws ParseException {
+    try {
+      ODocument doc = new ODocument("MyTestClass");
+      doc.save();
+      Assert.fail();
+    } catch (OValidationException e) {
+    }
+
+    database.set(ODatabase.ATTRIBUTES.VALIDATION, false);
+
+    ODocument doc = new ODocument("MyTestClass");
+    doc.save();
+
+    doc.delete();
+    database.set(ODatabase.ATTRIBUTES.VALIDATION, true);
+  }
+
+  @Test(dependsOnMethods = "validationMandatoryNullableNoCloseDb")
   public void dropSchemaForMandatoryNullableTest() throws ParseException {
     database.command(new OCommandSQL("DROP CLASS MyTestClass")).execute();
-		database.getMetadata().reload();
+    database.getMetadata().reload();
   }
 
   @Test
