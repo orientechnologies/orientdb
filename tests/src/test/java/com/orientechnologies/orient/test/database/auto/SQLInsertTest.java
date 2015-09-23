@@ -403,8 +403,9 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
   public void testAutoConversionOfEmbeddededListWithLinkedClass() {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("TestConvert");
-    c.createProperty("embeddedListWithLinkedClass", OType.EMBEDDEDLIST,
-        database.getMetadata().getSchema().getOrCreateClass("TestConvertLinkedClass"));
+    if (!c.existsProperty("embeddedListWithLinkedClass"))
+      c.createProperty("embeddedListWithLinkedClass", OType.EMBEDDEDLIST,
+          database.getMetadata().getSchema().getOrCreateClass("TestConvertLinkedClass"));
 
     ODocument doc = database
         .command(
@@ -521,14 +522,9 @@ public class SQLInsertTest extends DocumentDBBaseTest {
         database.getMetadata().getSchema().getOrCreateClass("EmbeddedWithRecordAttributes_Like"));
 
     ODocument doc = database.command(
-        new OCommandSQL(
-            "INSERT INTO EmbeddedWithRecordAttributes SET `like` = { \n"
-                + "      count: 0, \n"
-                + "      latest: [], \n"
-                + "      '@type': 'document', \n"
-                + "      '@class': 'EmbeddedWithRecordAttributes_Like'\n"
-                + "    } "))
-        .execute();
+        new OCommandSQL("INSERT INTO EmbeddedWithRecordAttributes SET `like` = { \n" + "      count: 0, \n"
+            + "      latest: [], \n" + "      '@type': 'document', \n" + "      '@class': 'EmbeddedWithRecordAttributes_Like'\n"
+            + "    } ")).execute();
 
     Assert.assertTrue(doc.field("like") instanceof OIdentifiable);
     Assert.assertEquals(((ODocument) doc.field("like")).getClassName(), "EmbeddedWithRecordAttributes_Like");
@@ -541,14 +537,9 @@ public class SQLInsertTest extends DocumentDBBaseTest {
         database.getMetadata().getSchema().getOrCreateClass("EmbeddedWithRecordAttributes2_Like"));
 
     ODocument doc = database.command(
-        new OCommandSQL(
-            "INSERT INTO EmbeddedWithRecordAttributes2 SET `like` = { \n"
-                + "      count: 0, \n"
-                + "      latest: [], \n"
-                + "      @type: 'document', \n"
-                + "      @class: 'EmbeddedWithRecordAttributes2_Like'\n"
-                + "    } "))
-        .execute();
+        new OCommandSQL("INSERT INTO EmbeddedWithRecordAttributes2 SET `like` = { \n" + "      count: 0, \n"
+            + "      latest: [], \n" + "      @type: 'document', \n" + "      @class: 'EmbeddedWithRecordAttributes2_Like'\n"
+            + "    } ")).execute();
 
     Assert.assertTrue(doc.field("like") instanceof OIdentifiable);
     Assert.assertEquals(((ODocument) doc.field("like")).getClassName(), "EmbeddedWithRecordAttributes2_Like");

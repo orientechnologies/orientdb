@@ -386,10 +386,10 @@ public class OMultiValue {
         } else
           coll = (OCollection<Object>) iObject;
 
-        if (isMultiValue(iToAdd)) {
+        if (!(iToAdd instanceof Map) && isMultiValue(iToAdd)) {
           // COLLECTION - COLLECTION
           for (Object o : getMultiValueIterable(iToAdd)) {
-            if (isMultiValue(o))
+            if (!(o instanceof Map) && isMultiValue(o))
               add(coll, o);
             else
               coll.add(o);
@@ -400,7 +400,7 @@ public class OMultiValue {
           // ARRAY - COLLECTION
           for (int i = 0; i < Array.getLength(iToAdd); ++i) {
             Object o = Array.get(iToAdd, i);
-            if (isMultiValue(o))
+            if (!(o instanceof Map) && isMultiValue(o))
               add(coll, o);
             else
               coll.add(o);
