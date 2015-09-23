@@ -45,15 +45,14 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   protected ORID    endRange;
 
   public ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
-      final int[] iClusterIds, final boolean iUseCache) {
-    this(iDatabase, iLowLevelDatabase, iClusterIds, iUseCache, false, OStorage.LOCKING_STRATEGY.NONE);
+      final int[] iClusterIds) {
+    this(iDatabase, iLowLevelDatabase, iClusterIds, false, OStorage.LOCKING_STRATEGY.NONE);
   }
 
   @Deprecated
   public ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
-      final int[] iClusterIds, final boolean iUseCache, final boolean iterateThroughTombstones,
-      final OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
+      final int[] iClusterIds, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    super(iDatabase, iLowLevelDatabase, iterateThroughTombstones, iLockingStrategy);
 
     checkForSystemClusters(iDatabase, iClusterIds);
 
@@ -66,18 +65,24 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
 
   @Deprecated
   protected ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
-      final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
+      final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    super(iDatabase, iLowLevelDatabase, iterateThroughTombstones, iLockingStrategy);
   }
 
   public ORecordIteratorClusters<REC> setRange(final ORID iBegin, final ORID iEnd) {
+    final ORID oldBegin = beginRange;
+    final ORID oldEnd = endRange;
+
     beginRange = iBegin;
     endRange = iEnd;
+
+    if ((oldBegin == null ? iBegin == null : oldBegin.equals(iBegin)) && (oldEnd == null ? iEnd == null : oldEnd.equals(iEnd)))
+      return this;
+
     if (currentRecord != null && outsideOfTheRange(currentRecord.getIdentity())) {
       currentRecord = null;
     }
 
-    updateClusterRange();
     begin();
     return this;
   }
@@ -114,6 +119,9 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
 
       // CLUSTER EXHAUSTED, TRY WITH THE PREVIOUS ONE
       currentClusterIdx--;
+
+      if (currentClusterIdx < 0)
+        break;
 
       updateClusterRange();
     }
@@ -291,8 +299,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     currentClusterIdx = 0;
     current.clusterId = clusterIds[currentClusterIdx];
 
-    if (liveUpdated)
-      updateClusterRange();
+    updateClusterRange();
 
     resetCurrentPosition();
     nextPosition();
@@ -320,8 +327,8 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
 
     browsedRecords = 0;
     currentClusterIdx = clusterIds.length - 1;
-    if (liveUpdated)
-      updateClusterRange();
+
+    updateClusterRange();
 
     current.clusterId = clusterIds[currentClusterIdx];
 
