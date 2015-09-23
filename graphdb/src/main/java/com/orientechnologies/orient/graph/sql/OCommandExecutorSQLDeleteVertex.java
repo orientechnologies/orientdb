@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -52,6 +46,12 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL DELETE VERTEX command.
@@ -114,7 +114,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
             clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(OrientVertexType.CLASS_NAME);
 
           where = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetPreviousPosition()) : "";
-          query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
+          query = database.command(new OSQLAsynchQuery<ODocument>("select from `" + clazz.getName() + "`" + where, this));
           break;
 
         } else if (word.equals(KEYWORD_LIMIT)) {
@@ -151,12 +151,14 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
       if (query == null && rid == null) {
         StringBuilder queryString = new StringBuilder();
-        queryString.append("select from ");
+        queryString.append("select from `");
         if (clazz == null) {
           queryString.append(OrientVertexType.CLASS_NAME);
         } else {
           queryString.append(clazz.getName());
         }
+        queryString.append("`");
+
         queryString.append(where);
         if (limit > -1) {
           queryString.append(" LIMIT ").append(limit);
