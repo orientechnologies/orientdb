@@ -1457,6 +1457,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       storage.getConfiguration().update();
       break;
 
+    case VALIDATION:
+      validation = Boolean.parseBoolean(stringValue);
+      break;
+
     default:
       throw new IllegalArgumentException("Option '" + iAttribute + "' not supported on alter database");
 
