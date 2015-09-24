@@ -1739,7 +1739,15 @@ OMathExpression ParenthesisExpression():
 {}
 {
     (
-	    <LPAREN> ( jjtThis.expression = Expression() | jjtThis.statement = SelectStatement() ) <RPAREN>
+	    <LPAREN>
+        (
+            jjtThis.expression = Expression()
+            |
+            jjtThis.statement = SelectStatement()
+            |
+            jjtThis.statement = InsertStatement()
+        )
+        <RPAREN>
 	)
 	{return jjtThis;}
 }
