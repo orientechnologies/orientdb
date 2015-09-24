@@ -144,7 +144,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private boolean                                           retainRecords     = true;
   private OLocalRecordCache                                 localCache;
   private boolean                                           mvcc;
-  private boolean                                           validation;
   private OCurrentStorageComponentsFactory                  componentsFactory;
   private boolean                                           initialized       = false;
   private OTransaction                                      currentTx;
@@ -184,7 +183,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       localCache = new OLocalRecordCache();
 
       mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
-      validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
 
       init();
 
@@ -1034,14 +1032,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@inheritDoc}
    */
   public boolean isValidationEnabled() {
-    return !getStatus().equals(STATUS.IMPORTING) && validation;
+    return !getStatus().equals(STATUS.IMPORTING) && storage.getConfiguration().isValidationEnabled();
   }
 
   /**
    * {@inheritDoc}
    */
   public <DB extends ODatabaseDocument> DB setValidationEnabled(final boolean iEnabled) {
-    validation = iEnabled;
+    storage.getConfiguration().setValidation(iEnabled);
     return (DB) this;
   }
 
@@ -1433,7 +1431,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       break;
 
     case VALIDATION:
-      validation = Boolean.parseBoolean(stringValue);
+      setValidationEnabled(Boolean.parseBoolean(stringValue));
       break;
 
     default:
