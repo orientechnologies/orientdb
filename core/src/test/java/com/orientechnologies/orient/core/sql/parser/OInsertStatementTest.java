@@ -62,6 +62,10 @@ public class OInsertStatementTest {
     checkRightSyntax("insert into foo return foo select from bar TIMEOUT 10 exception");
   }
 
+  public void testInsertInsert() {
+    checkRightSyntax("insert into foo set bar = (insert into foo set a = 'foo') ");
+  }
+
 
   public void testInsertEmbeddedDocs() {
     checkRightSyntax("INSERT INTO Activity SET user = #14:1, story = #18:2, `like` = { \n"
