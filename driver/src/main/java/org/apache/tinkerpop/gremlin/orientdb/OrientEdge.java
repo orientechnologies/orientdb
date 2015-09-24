@@ -39,8 +39,10 @@ public class OrientEdge extends OrientElement implements Edge {
     }
 
     protected static ODocument createRawElement(OrientGraph graph, String className) {
-        graph.createEdgeClass(className);
-        return new ODocument(className);
+        String internalClassName = className.equals(OImmutableClass.EDGE_CLASS_NAME) ?
+            OImmutableClass.EDGE_CLASS_NAME : OImmutableClass.EDGE_CLASS_NAME + "_" + className;
+        graph.createEdgeClass(internalClassName);
+        return new ODocument(internalClassName);
     }
 
     @Override

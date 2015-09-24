@@ -1,8 +1,10 @@
+import java.util.{ ArrayList ⇒ JArrayList }
+
 import com.orientechnologies.orient.core.sql.query.OResultSet
 import gremlin.scala._
-import java.util.{ArrayList => JArrayList}
 import org.apache.tinkerpop.gremlin.orientdb._
-import org.scalatest.{ShouldMatchers, WordSpec}
+import org.scalatest.{ ShouldMatchers, WordSpec }
+
 import scala.collection.JavaConversions._
 
 class OrientSpec extends WordSpec with ShouldMatchers {
@@ -76,6 +78,17 @@ class OrientSpec extends WordSpec with ShouldMatchers {
       val v2 = sg.addVertex()
       val e1 = v1.addEdge("label1", v2)
       val e2 = v2.addEdge("label2", v1)
+
+      gs.E(e2.id).toList should have length 1
+      gs.E().toList should have length 2
+    }
+
+    "be found if they have the same label as vertices" in new Fixture {
+      val label = "label"
+      val v1 = sg.addVertex(label)
+      val v2 = sg.addVertex(label)
+      val e1 = v1.addEdge(label, v2)
+      val e2 = v2.addEdge(label, v1)
 
       gs.E(e2.id).toList should have length 1
       gs.E().toList should have length 2
@@ -158,7 +171,7 @@ class OrientSpec extends WordSpec with ShouldMatchers {
     }
 
     "value" in new TinkerpopFixture {
-      def traversal = gs.V(marko.id).out.value[Int]("age")//.filter(_.value[Int]
+      def traversal = gs.V(marko.id).out.value[Int]("age") //.filter(_.value[Int]
       traversal.toSet shouldBe Set(27, 32)
     }
 
@@ -167,7 +180,7 @@ class OrientSpec extends WordSpec with ShouldMatchers {
       traversal.toSet.map(_.value) shouldBe Set(27, 32)
     }
 
-    "filter" taggedAs(org.scalatest.Tag("foo")) in new TinkerpopFixture {
+    "filter" taggedAs (org.scalatest.Tag("foo")) in new TinkerpopFixture {
       def traversal = gs.V(marko.id).out.filter(_.property[Int]("age").orElse(0) > 30)
       traversal.value[String]("name").toSet shouldBe Set("josh")
     }
@@ -187,7 +200,7 @@ class OrientSpec extends WordSpec with ShouldMatchers {
   }
 
   trait Fixture {
-    // val graph = new OrientGraphFactory("remote:localhost/graphtest", "root", "root").getTx()
+    // val graph = new OrientGraphFactory("remote:localhost/graphtest", "root", "root").getNoTx()
     val graph = new OrientGraphFactory(s"memory:test-${math.random}").getNoTx
     val gs = GremlinScala(graph)
     val sg = ScalaGraph(graph)
