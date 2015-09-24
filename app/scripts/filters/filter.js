@@ -32,7 +32,11 @@ filterModule.filter('sizeFormat', function () {
 });
 filterModule.filter('nograph', function () {
   return function (input) {
-    return input.replace("in_", "").replace("out_", "");
+    if (input.startsWith("in_") || input.startsWith("out_")) {
+      return input.replace("in_", "").replace("out_", "");
+    }
+    return input;
+
   }
 });
 filterModule.filter('nocomment', function () {
