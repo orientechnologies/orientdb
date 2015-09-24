@@ -230,9 +230,9 @@ public final class OrientGraph implements Graph {
     public Set<String> getIndexedKeys(final Class<? extends Element> elementClass) {
         // TODO: allow use of indexes on subclasses of V and E
         if (Vertex.class.isAssignableFrom(elementClass)) {
-            return getIndexedKeys("V");
+            return getIndexedKeys(OImmutableClass.VERTEX_CLASS_NAME);
         } else if (Edge.class.isAssignableFrom(elementClass)) {
-            return getIndexedKeys("E");
+            return getIndexedKeys(OImmutableClass.EDGE_CLASS_NAME);
         } else {
             throw new IllegalArgumentException("Class is not indexable: " + elementClass);
         }

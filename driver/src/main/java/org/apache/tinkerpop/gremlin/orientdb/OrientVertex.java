@@ -33,8 +33,10 @@ public final class OrientVertex extends OrientElement implements Vertex {
     }
 
     protected static ODocument createRawElement(OrientGraph graph, String className) {
-        graph.createVertexClass(className);
-        return new ODocument(className);
+        String internalClassName = className.equals(OImmutableClass.VERTEX_CLASS_NAME) ?
+            OImmutableClass.VERTEX_CLASS_NAME : OImmutableClass.VERTEX_CLASS_NAME + "_" + className;
+        graph.createVertexClass(internalClassName);
+        return new ODocument(internalClassName);
     }
 
     public Iterator<Vertex> vertices(final Direction direction, final String... labels) {

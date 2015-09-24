@@ -29,7 +29,9 @@ public class OrientElement implements Element {
     }
 
     public String label() {
-        return getRawDocument().getClassName();
+        String internalClassName = getRawDocument().getClassName();
+        // User labels on edges/vertices are prepended with E_ or V_ . The user should not see that.
+        return internalClassName.length() == 1 ? internalClassName : internalClassName.substring(2);
     }
 
     public Graph graph() {
