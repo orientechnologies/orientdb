@@ -20,6 +20,13 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -104,13 +111,6 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
@@ -471,12 +471,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
+  /**
+   * Returns a copy of current database if it's open. The retuned instance can be used by another thread without affecting current
+   * instance. The database copy is not set in thread local.
+   */
   public ODatabaseDocumentTx copy() {
     ODatabaseDocumentInternal dbInThreadLocal = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (this.isClosed())
       throw new ODatabaseException("Cannot copy a closed db");
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(this.url);
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(this.url);
     db.user = this.user;
     db.properties.putAll(this.properties);
     db.serializer = this.serializer;
