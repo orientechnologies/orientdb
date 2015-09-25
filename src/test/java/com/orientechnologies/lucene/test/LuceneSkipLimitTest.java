@@ -30,9 +30,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.List;
 
 /**
@@ -98,21 +96,5 @@ public class LuceneSkipLimitTest extends BaseLuceneTest {
         deInitDB();
     }
 
-    protected String getScriptFromStream(InputStream in) {
-        String script = "";
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            StringBuilder out = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                out.append(line + "\n");
-            }
-            script = out.toString();
-            reader.close();
-        } catch (Exception e) {
-
-        }
-        return script;
-    }
 
 }

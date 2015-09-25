@@ -93,8 +93,21 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   @Override
   public OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
-    return createLuceneIndex(name, (OAbstractPaginatedStorage) database.getStorage().getUnderlying(), indexType, algorithm,
-        valueContainerAlgorithm, metadata, version);
+
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
+
+    OBinarySerializer<?> objectSerializer = storage.getComponentsFactory().binarySerializerFactory
+        .getObjectSerializer(OLuceneMockSpatialSerializer.INSTANCE.getId());
+    if (objectSerializer == null) {
+      storage.getComponentsFactory().binarySerializerFactory.registerSerializer(OLuceneMockSpatialSerializer.INSTANCE,
+          OType.EMBEDDED);
+    }
+    if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
+      return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+    } else if (OClass.INDEX_TYPE.SPATIAL.toString().equals(indexType)) {
+      return new OLuceneSpatialIndex(name, indexType, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+    }
+    throw new OConfigurationException("Unsupported type : " + algorithm);
   }
 
   @Override
@@ -148,20 +161,4 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   }
 
-  private OIndexInternal<?> createLuceneIndex(String name, OAbstractPaginatedStorage storage, String type, String indexType,
-      String valueContainerAlgorithm, ODocument metadata, int version) {
-
-    OBinarySerializer<?> objectSerializer = storage.getComponentsFactory().binarySerializerFactory
-        .getObjectSerializer(OLuceneMockSpatialSerializer.INSTANCE.getId());
-    if (objectSerializer == null) {
-      storage.getComponentsFactory().binarySerializerFactory.registerSerializer(OLuceneMockSpatialSerializer.INSTANCE,
-          OType.EMBEDDED);
-    }
-    if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(type)) {
-      return new OLuceneFullTextIndex(name, type, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
-    } else if (OClass.INDEX_TYPE.SPATIAL.toString().equals(type)) {
-      return new OLuceneSpatialIndex(name, type, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
-    }
-    throw new OConfigurationException("Unsupported type : " + indexType);
-  }
 }

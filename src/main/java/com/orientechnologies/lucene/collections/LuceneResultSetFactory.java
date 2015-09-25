@@ -31,12 +31,12 @@ public class LuceneResultSetFactory {
   protected LuceneResultSetFactory() {
   }
 
-  public OLuceneAbstractResultSet create(OLuceneIndexManagerAbstract engine, QueryContext queryContext) {
+  public OLuceneAbstractResultSet create(OLuceneIndexManagerAbstract manager, QueryContext queryContext) {
 
     if (queryContext.isInTx()) {
-      return new OLuceneTxResultSet(engine, queryContext);
+      return new OLuceneTxResultSet(manager, queryContext);
     } else {
-      return new LuceneResultSet(engine, queryContext);
+      return new LuceneResultSet(manager, queryContext);
 
     }
 

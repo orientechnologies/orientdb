@@ -192,7 +192,6 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
     if (indexType.equalsIgnoreCase("SPATIAL")) {
       delegate = new OLuceneGeoSpatialIndexManager(indexName, OShapeFactory.INSTANCE);
     } else if (indexType.equalsIgnoreCase("FULLTEXT")) {
-
       delegate = new OLuceneFullTextIndexManager(indexName, new ODocBuilder(), new OQueryBuilderImpl());
     }
 

@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -44,6 +43,7 @@ import org.apache.lucene.store.Directory;
 import java.io.IOException;
 import java.util.*;
 
+//TODO: (frank) this is more and engine rather than a manager, maybe rename
 public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
   protected OLuceneFacetManager facetManager;
@@ -57,7 +57,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   @Override
-  public IndexWriter createIndexWriter(Directory directory, ODocument metadata) throws IOException {
+  public IndexWriter createIndexWriter(Directory directory) throws IOException {
 
     Analyzer analyzer = getAnalyzer(metadata);
     IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
@@ -71,7 +71,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   @Override
-  public IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException {
+    public IndexWriter openIndexWriter(Directory directory) throws IOException {
     Analyzer analyzer = getAnalyzer(metadata);
     IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.APPEND);

@@ -62,6 +62,7 @@ import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+//TODO: (frank) this is more and engine rather than a manager, maybe rename
 public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdaptiveExternal implements OLuceneIndexEngine,
     OOrientListener {
 
@@ -99,9 +100,9 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     // initIndex(indexName, null, isAutomatic, metadata);
   }
 
-  public abstract IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException;
+  public abstract IndexWriter openIndexWriter(Directory directory) throws IOException;
 
-  public abstract IndexWriter createIndexWriter(Directory directory, ODocument metadata) throws IOException;
+  public abstract IndexWriter createIndexWriter(Directory directory) throws IOException;
 
   public void addDocument(Document doc) {
     try {
@@ -225,7 +226,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on flushing Lucene index", e);
     } catch (Throwable e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Error on flushing Lucene index", e);
     }
 
   }
@@ -292,7 +293,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     this.rebuilding = rebuilding;
   }
 
-  public Analyzer getAnalyzer(final ODocument metadata) {
+  protected Analyzer getAnalyzer(final ODocument metadata) {
     if (metadata != null && metadata.field("analyzer") != null) {
       final String analyzerFQN = metadata.field("analyzer");
         try {
@@ -430,9 +431,11 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
     }
 
-    final IndexWriter indexWriter = createIndexWriter(dir, metadata);
+    final IndexWriter indexWriter = createIndexWriter(dir);
     mgrWriter = new TrackingIndexWriter(indexWriter);
     searcherManager = new SearcherManager(indexWriter, true, null);
+
+
     if (nrt != null) {
       nrt.close();
     }
@@ -533,6 +536,6 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   @Override
   public OLuceneTxChanges buildTxChanges() throws IOException {
-    return new OLuceneTxChanges(this, createIndexWriter(new RAMDirectory(), metadata));
+    return new OLuceneTxChanges(this, createIndexWriter(new RAMDirectory()));
   }
 }

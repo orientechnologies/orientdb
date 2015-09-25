@@ -132,22 +132,6 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
 
   }
 
-  protected String getScriptFromStream(InputStream in) {
-    String script = "";
-    try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-      StringBuilder out = new StringBuilder();
-      String line;
-      while ((line = reader.readLine()) != null) {
-        out.append(line + "\n");
-      }
-      script = out.toString();
-      reader.close();
-    } catch (Exception e) {
-
-    }
-    return script;
-  }
 
   @AfterClass
   public void deInit() {

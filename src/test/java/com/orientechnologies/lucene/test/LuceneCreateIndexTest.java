@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -52,8 +53,12 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
 
     databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-    databaseDocumentTx.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
-    databaseDocumentTx.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE")).execute();
+    databaseDocumentTx.command(
+            new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
+                    + StandardAnalyzer.class.getName() + "\"}")).execute();
+    databaseDocumentTx.command(
+            new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
+                    + StandardAnalyzer.class.getName() + "\"}")).execute();
 
     ODocument doc = new ODocument("Song");
 
@@ -74,7 +79,6 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
 
     assertNewQuery();
   }
-
 
   protected void assertQuery() {
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
@@ -97,10 +101,11 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
   protected void assertNewQuery() {
 
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-            "select * from Song where [title] LUCENE \"(title:Local)\""));
+        "select * from Song where [title] LUCENE \"(title:Local)\""));
 
     Assert.assertEquals(docs.size(), 1);
   }
+
   @BeforeClass
   @Override
   public void init() {

@@ -62,6 +62,7 @@ import org.apache.lucene.store.Directory;
 import java.io.IOException;
 import java.util.*;
 
+//TODO: (frank) this is more and engine rather than a manager, maybe rename
 public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract implements OLuceneSpatialIndexContainer {
 
   protected final OShapeBuilder factory;
@@ -80,15 +81,15 @@ public class OLuceneGeoSpatialIndexManager extends OLuceneIndexManagerAbstract i
   }
 
   @Override
-  public IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException {
+  public IndexWriter openIndexWriter(Directory directory) throws IOException {
     Analyzer analyzer = getAnalyzer(metadata);
-    IndexWriterConfig iwc = new IndexWriterConfig( analyzer);
+    IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
     return new IndexWriter(directory, iwc);
   }
 
   @Override
-  public IndexWriter createIndexWriter(Directory directory, ODocument metadata) throws IOException {
+  public IndexWriter createIndexWriter(Directory directory) throws IOException {
     Analyzer analyzer = getAnalyzer(metadata);
     IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);

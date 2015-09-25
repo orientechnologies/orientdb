@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.test;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -31,6 +32,7 @@ import org.testng.annotations.Test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.util.concurrent.ExecutorService;
@@ -192,6 +194,27 @@ public abstract class BaseLuceneTest {
     } else {
       databaseDocumentTx.drop();
     }
+  }
+
+  protected String getScriptFromStream(InputStream in) {
+    try {
+      return OIOUtils.readStreamAsString(in);
+    } catch (IOException e) {
+    }
+    String script = "";
+    try {
+      BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+      StringBuilder out = new StringBuilder();
+      String line;
+      while ((line = reader.readLine()) != null) {
+        out.append(line + "\n");
+      }
+      script = out.toString();
+      reader.close();
+    } catch (Exception e) {
+
+    }
+    return script;
   }
 
   protected abstract String getDatabaseName();
