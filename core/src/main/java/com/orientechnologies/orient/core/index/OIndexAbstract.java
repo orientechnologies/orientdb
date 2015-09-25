@@ -780,7 +780,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   @Override
   public ODocument getMetadata() {
-    return getConfiguration().field("metadata", OType.EMBEDDED);
+    //return getConfiguration().field("metadata", OType.EMBEDDED);
+    return metadata;
   }
 
   public boolean isAutomatic() {
