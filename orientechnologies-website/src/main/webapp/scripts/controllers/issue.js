@@ -397,8 +397,10 @@ angular.module('webappApp')
     User.whoami().then(function (data) {
 
 
+
       $scope.isMember = User.isMember(ORGANIZATION);
       $scope.isSupport = User.isSupport(ORGANIZATION);
+      $scope.isClient = User.isClient(ORGANIZATION);
       $scope.currentUser = data;
 
       if ($scope.isMember || $scope.isSupport) {
@@ -409,10 +411,19 @@ angular.module('webappApp')
     });
     Organization.all("issues").one(number).get().then(function (data) {
       $scope.issue = data.plain();
+
+
       $scope.repo = $scope.issue.repository.name;
       $scope.githubCommit = GITHUB + "/" + ORGANIZATION + "/" + $scope.repo + "/commit/";
       User.whoami().then(function (data) {
         $scope.isOwner = $scope.issue.user.name == data.name;
+        if($scope.issue.client){
+          try {
+            $scope.isOwnerClient = $scope.isClient && ($scope.issue.client.clientId == data.clients[0].clientId);
+          } catch(e){
+            $scope.isOwnerClient = false;
+          }
+        }
       })
       Repo.one($scope.repo).all("issues").one(number).all("actors").getList().then(function (data) {
         $scope.actors = data.plain();
@@ -467,6 +478,14 @@ angular.module('webappApp')
     $scope.sync = function () {
       Repo.one($scope.repo).all("issues").one(number).all("sync").post().then(function (data) {
         $route.reload();
+      });
+    }
+    $scope.escalateIssue = function(){
+      Repo.one($scope.repo).all("issues").one(number).all("escalate").post().then(function (data) {
+        var jacked = humane.create({baseCls: 'humane-jackedup', addnCls: 'humane-jackedup-success'})
+        jacked.log("Escalation email has been sent.");
+      }).catch(function(e){
+
       });
     }
     $scope.comment = function () {

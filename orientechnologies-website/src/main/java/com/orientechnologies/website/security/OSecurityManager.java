@@ -1,6 +1,7 @@
 package com.orientechnologies.website.security;
 
 import com.orientechnologies.website.helper.SecurityHelper;
+import com.orientechnologies.website.model.schema.dto.Client;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -47,6 +48,16 @@ public class OSecurityManager {
 
   public boolean isCurrentMemberOrSupport(String organization) {
     return isMemberOrSupport(SecurityHelper.currentUser(), organization);
+  }
+
+  public boolean isCurrentClient(String organization, OUser user, Client c) {
+
+    Client client = userService.getClient(user, organization);
+
+    if (c != null && client != null) {
+      return c.getClientId() == client.getClientId();
+    }
+    return false;
   }
 
   public OUser bot(String organization) {

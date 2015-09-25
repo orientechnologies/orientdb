@@ -128,6 +128,21 @@ public class RepositoryController {
         : new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
   }
 
+  @RequestMapping(value = "{owner}/{repo}/issues/{number}/escalate", method = RequestMethod.POST)
+  public ResponseEntity<Issue> escalateIssue(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
+      @PathVariable("number") Long number) {
+
+    Issue i = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
+    ResponseEntity responseEntity;
+    if (securityManager.isCurrentClient(owner, securityManager.currentUser(), i.getClient())) {
+      repositoryService.escalateIssue(i);
+      responseEntity = new ResponseEntity<Issue>(i, HttpStatus.OK);
+    } else {
+      responseEntity = new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
+    }
+    return responseEntity;
+  }
+
   @PreAuthorize(Permissions.ISSUE_LABEL)
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/labels", method = RequestMethod.POST)
   public ResponseEntity<List<Label>> addLabels(@PathVariable("owner") String owner, @PathVariable("repo") String repo,

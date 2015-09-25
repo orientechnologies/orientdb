@@ -6,6 +6,7 @@ import com.orientechnologies.website.configuration.GitHubConfiguration;
 import com.orientechnologies.website.daemon.IssueAlignDaemon;
 import com.orientechnologies.website.events.EventManager;
 import com.orientechnologies.website.events.IssueCreatedEvent;
+import com.orientechnologies.website.events.IssueEscalateEvent;
 import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.HasIssue;
 import com.orientechnologies.website.model.schema.HasLabel;
@@ -22,9 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Enrico Risa on 21/10/14.
@@ -121,6 +120,17 @@ public class RepositoryServiceImpl implements RepositoryService {
       }
       return githubService.patchIssue(original, user1, issue);
     }
+  }
+
+  @Override
+  public void escalateIssue(final Issue i) {
+    Map<String, Object> params = new HashMap<String, Object>() {
+      {
+        put("issue", i);
+        put("actor", securityManager.currentUser());
+      }
+    };
+    eventManager.pushInternalEvent(IssueEscalateEvent.EVENT, params);
   }
 
   private Issue patchPrivateIssue(Issue original, IssueDTO issue, boolean skipGithub) {

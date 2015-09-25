@@ -14,6 +14,8 @@
         </button>
       </div>
 
+
+
       <div class="btn-group">
         <button class="btn btn-sm btn-success" ng-disabled="!newTitle" ng-click="changeTitle(newTitle)"
                 ng-show="editingTitle">Save
@@ -25,7 +27,11 @@
           Cancel
         </button>
       </div>
-
+      <div class="btn-group">
+        <button class="btn btn-sm btn-default" ng-click="escalateIssue()"
+                ng-show="isOwnerClient">Escalate Issue
+        </button>
+      </div>
       <div class="btn-group">
         <a href="javascript:void(0)" ng-show="isMember && !editingTitle && issue.state == 'OPEN'" ng-click="markAsQuestion()"
            class="btn btn-sm btn-default">Mark as Question</a>

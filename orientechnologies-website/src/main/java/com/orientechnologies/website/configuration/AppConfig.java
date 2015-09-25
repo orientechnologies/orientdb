@@ -15,4 +15,7 @@ public class AppConfig {
 
     @Value("${app.endpoint}")
     public String endpoint;
+
+    @Value("${escalate.mail}")
+    public String escalateMil;
 }

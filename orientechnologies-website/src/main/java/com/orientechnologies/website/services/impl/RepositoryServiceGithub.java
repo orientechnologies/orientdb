@@ -157,4 +157,9 @@ public class RepositoryServiceGithub implements RepositoryService {
   public void syncRepository(Repository repository) {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public void escalateIssue(Issue i) {
+    throw new UnsupportedOperationException();
+  }
 }
