@@ -4,32 +4,31 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.id.ORID;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-public class OSQLFunctionDijkstraTest2 {
+public class OSQLFunctionDijkstraTest3 {
 
   private static OrientGraph          graph;
-  private static Vertex               v1;
-  private static Vertex               v2;
-  private static Vertex               v3;
-  private static Vertex               v4;
-  private static OSQLFunctionDijkstra2 functionDijkstra;
+  private static OrientVertex         v1;
+  private static OrientVertex         v2;
+  private static OrientVertex         v3;
+  private static OrientVertex         v4;
+  private static OSQLFunctionDijkstra3 functionDijkstra;
 
   @BeforeClass
   public static void setUp() throws Exception {
     setUpDatabase();
 
-    functionDijkstra = new OSQLFunctionDijkstra2();
+    functionDijkstra = new OSQLFunctionDijkstra3();
   }
 
   @AfterClass
@@ -71,72 +70,72 @@ public class OSQLFunctionDijkstraTest2 {
 
   @Test
   public void testExecute() throws Exception {
-    final List<OrientVertex> result = functionDijkstra.execute(null, null, null, new Object[] { v1, v4, "weight","'weight'" },
+    final List<ORID> result = functionDijkstra.execute(null, null, null, new Object[] { v1, v4,"'weight'", "OUT", "weight" },
         new OBasicCommandContext());
 
     assertEquals(4, result.size());
-    assertEquals(v1, result.get(0));
-    assertEquals(v2, result.get(1));
-    assertEquals(v3, result.get(2));
-    assertEquals(v4, result.get(3));
+    assertEquals(v1.getIdentity(), result.get(0));
+    assertEquals(v2.getIdentity(), result.get(1));
+    assertEquals(v3.getIdentity(), result.get(2));
+    assertEquals(v4.getIdentity(), result.get(3));
   }
 
   @Test
   public void testExecute2() throws Exception {
-    final List<OrientVertex> result = functionDijkstra.execute(null, null, null, new Object[] { v1, v4, "other","'weight'" },
+    final List<ORID> result = functionDijkstra.execute(null, null, null, new Object[] { v1, v4,"'weight'", "OUT", "other" },
         new OBasicCommandContext());
 
     assertEquals(2, result.size());
-    assertEquals(v1, result.get(0));
-    assertEquals(v4, result.get(1));
+    assertEquals(v1.getIdentity(), result.get(0));
+    assertEquals(v4.getIdentity(), result.get(1));
   }
 
   @Test
   public void testExecute3() throws Exception {
-    final List<OrientVertex> result = functionDijkstra.execute(null, null, null, new Object[] { v1, v3, "other","'weight'" },
+    final List<ORID> result = functionDijkstra.execute(null, null, null, new Object[] { v1, v3,"'weight'", "OUT", "other" },
         new OBasicCommandContext());
 
-    assertEquals(null, result);
+    assertEquals(0, result.size());
   }
   
   @Test
   public void testExecute4() throws Exception {
-    final List<OrientVertex> result = functionDijkstra.execute(null, null, null, new Object[] { v1, v1, "weight","'weight'" },
+    final List<ORID> result = functionDijkstra.execute(null, null, null, new Object[] { v1, v1,"'weight'", "OUT", "weight" },
         new OBasicCommandContext());
 
     assertEquals(1, result.size());
-    assertEquals(v1, result.get(0));
+    assertEquals(v1.getIdentity(), result.get(0));
   }
   
   @Test
   public void testExecute5() throws Exception {
-    final List<OrientVertex> result = functionDijkstra.execute(null, null, null, new Object[] { v4, v1, "weight","'weight'", "OUT" },
+    final List<ORID> result = functionDijkstra.execute(null, null, null, new Object[] { v4, v1, "'weight'", "OUT", "weight" },
         new OBasicCommandContext());
 
-    assertEquals(null, result);
+    assertEquals(0, result.size());
   }
   
   @Test
   public void testExecute6() throws Exception {
-    final List<OrientVertex> result = functionDijkstra.execute(null, null, null, new Object[] { v4, v1, "weight","'weight'", "BOTH" },
+    final List<ORID> result = functionDijkstra.execute(null, null, null, new Object[] { v4, v1,"'weight'", "BOTH", "weight" },
         new OBasicCommandContext());
 
     assertEquals(4, result.size());
-    assertEquals(v4, result.get(0));
-    assertEquals(v3, result.get(1));
-    assertEquals(v2, result.get(2));
-    assertEquals(v1, result.get(3));
+    assertEquals(v4.getIdentity(), result.get(0));
+    assertEquals(v3.getIdentity(), result.get(1));
+    assertEquals(v2.getIdentity(), result.get(2));
+    assertEquals(v1.getIdentity(), result.get(3));
   }
   
   @Test
   public void testExecute7() throws Exception {
-    final List<OrientVertex> result = functionDijkstra.execute(null, null, null, new Object[] { v4, v1, "weight","'weight'", "IN" },
+    final List<ORID> result = functionDijkstra.execute(null, null, null, new Object[] { v4, v1,"'weight'", "IN", "weight" },
         new OBasicCommandContext());
 
     assertEquals(4, result.size());
-    assertEquals(v4, result.get(0));
-    assertEquals(v3, result.get(1));
-    assertEquals(v2, result.get(2));
-    assertEquals(v1, result.get(3));
+    assertEquals(v4.getIdentity(), result.get(0));
+    assertEquals(v3.getIdentity(), result.get(1));
+    assertEquals(v2.getIdentity(), result.get(2));
+    assertEquals(v1.getIdentity(), result.get(3));
   }
 }
