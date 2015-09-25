@@ -2446,9 +2446,12 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   private void fillTrackedCollection(Collection<Object> dest, Collection<Object> source) {
     for (Object cur : source) {
-      if (cur instanceof ODocument)
-        ((ODocument) cur).convertAllMultiValuesToTrackedVersions();
-      else if (cur instanceof List) {
+      if (cur instanceof ODocument) {
+        final ODocument curDoc = (ODocument)cur;
+        if (curDoc != this) {
+          curDoc.convertAllMultiValuesToTrackedVersions();
+        }
+      } else if (cur instanceof List) {
         List<Object> newList = new OTrackedList<Object>(this);
         fillTrackedCollection(newList, (Collection<Object>) cur);
         cur = newList;

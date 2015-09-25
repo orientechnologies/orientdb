@@ -327,6 +327,73 @@ public class OSQLHelper {
     return bindParameters(iDocument, fields, iArguments, iContext);
   }
 
+  private static Object resolveParameterValue(final String fieldName, Object fieldValue,
+      final ODocument iDocument, final OCommandParameters iArguments, final OCommandContext iContext) {
+    if (fieldValue != null) {
+      if (fieldValue instanceof HashMap) {
+        final HashMap<String, Object> map = (HashMap<String, Object>)fieldValue;
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+          Object value = entry.getValue();
+
+          entry.setValue(resolveParameterValue(null, value, iDocument, iArguments, iContext));
+        }
+      } else if (fieldValue instanceof OCommandSQL) {
+        final OCommandSQL cmd = (OCommandSQL) fieldValue;
+        cmd.getContext().setParent(iContext);
+        fieldValue = ODatabaseRecordThreadLocal.INSTANCE.get().command(cmd).execute();
+
+        // CHECK FOR CONVERSIONS
+        OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(iDocument);
+        if (immutableClass != null && fieldName != null) {
+          final OProperty prop = immutableClass.getProperty(fieldName);
+          if (prop != null) {
+            if (prop.getType() == OType.LINK) {
+              if (OMultiValue.isMultiValue(fieldValue)) {
+                final int size = OMultiValue.getSize(fieldValue);
+                if (size == 1)
+                  // GET THE FIRST ITEM AS UNIQUE LINK
+                  fieldValue = OMultiValue.getFirstValue(fieldValue);
+                else if (size == 0)
+                  // NO ITEMS, SET IT AS NULL
+                  fieldValue = null;
+              }
+            }
+          }
+        }
+
+        if (OMultiValue.isMultiValue(fieldValue)) {
+          final List<Object> tempColl = new ArrayList<Object>(OMultiValue.getSize(fieldValue));
+
+          String singleFieldName = null;
+          for (Object o : OMultiValue.getMultiValueIterable(fieldValue)) {
+            if (o instanceof OIdentifiable && !((OIdentifiable) o).getIdentity().isPersistent()) {
+              // TEMPORARY / EMBEDDED
+              final ORecord rec = ((OIdentifiable) o).getRecord();
+              if (rec != null && rec instanceof ODocument) {
+                // CHECK FOR ONE FIELD ONLY
+                final ODocument doc = (ODocument) rec;
+                if (doc.fields() == 1) {
+                  singleFieldName = doc.fieldNames()[0];
+                  tempColl.add(doc.field(singleFieldName));
+                } else {
+                  // TRANSFORM IT IN EMBEDDED
+                  doc.getIdentity().reset();
+                  ODocumentInternal.addOwner(doc, iDocument);
+                  ODocumentInternal.addOwner(doc, iDocument);
+                  tempColl.add(doc);
+                }
+              }
+            } else
+              tempColl.add(o);
+          }
+
+          fieldValue = tempColl;
+        }
+      }
+    }
+    return resolveFieldValue(iDocument, fieldName, fieldValue, iArguments, iContext);
+  }
+
   public static ODocument bindParameters(final ODocument iDocument, final List<OPair<String, Object>> iFields,
       final OCommandParameters iArguments, final OCommandContext iContext) {
     if (iFields == null)
@@ -336,64 +403,9 @@ public class OSQLHelper {
     for (OPair<String, Object> field : iFields) {
       final String fieldName = field.getKey();
       Object fieldValue = field.getValue();
+      fieldValue = resolveParameterValue(fieldName, fieldValue, iDocument, iArguments, iContext);
 
-      if (fieldValue != null) {
-        if (fieldValue instanceof OCommandSQL) {
-          final OCommandSQL cmd = (OCommandSQL) fieldValue;
-          cmd.getContext().setParent(iContext);
-          fieldValue = ODatabaseRecordThreadLocal.INSTANCE.get().command(cmd).execute();
-
-          // CHECK FOR CONVERSIONS
-          OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(iDocument);
-          if (immutableClass != null) {
-            final OProperty prop = immutableClass.getProperty(fieldName);
-            if (prop != null) {
-              if (prop.getType() == OType.LINK) {
-                if (OMultiValue.isMultiValue(fieldValue)) {
-                  final int size = OMultiValue.getSize(fieldValue);
-                  if (size == 1)
-                    // GET THE FIRST ITEM AS UNIQUE LINK
-                    fieldValue = OMultiValue.getFirstValue(fieldValue);
-                  else if (size == 0)
-                    // NO ITEMS, SET IT AS NULL
-                    fieldValue = null;
-                }
-              }
-            }
-          }
-
-          if (OMultiValue.isMultiValue(fieldValue)) {
-            final List<Object> tempColl = new ArrayList<Object>(OMultiValue.getSize(fieldValue));
-
-            String singleFieldName = null;
-            for (Object o : OMultiValue.getMultiValueIterable(fieldValue)) {
-              if (o instanceof OIdentifiable && !((OIdentifiable) o).getIdentity().isPersistent()) {
-                // TEMPORARY / EMBEDDED
-                final ORecord rec = ((OIdentifiable) o).getRecord();
-                if (rec != null && rec instanceof ODocument) {
-                  // CHECK FOR ONE FIELD ONLY
-                  final ODocument doc = (ODocument) rec;
-                  if (doc.fields() == 1) {
-                    singleFieldName = doc.fieldNames()[0];
-                    tempColl.add(doc.field(singleFieldName));
-                  } else {
-                    // TRANSFORM IT IN EMBEDDED
-                    doc.getIdentity().reset();
-                    ODocumentInternal.addOwner(doc, iDocument);
-                    ODocumentInternal.addOwner(doc, iDocument);
-                    tempColl.add(doc);
-                  }
-                }
-              } else
-                tempColl.add(o);
-            }
-
-            fieldValue = tempColl;
-          }
-        }
-      }
-
-      iDocument.field(fieldName, resolveFieldValue(iDocument, fieldName, fieldValue, iArguments, iContext));
+      iDocument.field(fieldName, fieldValue);
     }
     return iDocument;
   }
