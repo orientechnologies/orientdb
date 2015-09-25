@@ -18,7 +18,6 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
@@ -55,7 +54,7 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
   SimpleDateFormat              dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
 
   public OServerCommandGetLog(final OServerCommandConfiguration iConfiguration) {
-    super(iConfiguration.pattern);
+    super("log"); // TODO: CHECK WHAT TO PASS
   }
 
   public OServerCommandGetLog() {

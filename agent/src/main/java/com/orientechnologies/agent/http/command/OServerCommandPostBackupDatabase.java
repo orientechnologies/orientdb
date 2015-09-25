@@ -15,6 +15,10 @@
  */
 package com.orientechnologies.agent.http.command;
 
+import java.net.SocketException;
+import java.util.Date;
+import java.util.List;
+
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -27,10 +31,6 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
-
-import java.net.SocketException;
-import java.util.Date;
-import java.util.List;
 
 public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticatedServerAbstract implements OCommandOutputListener {
   public OServerCommandPostBackupDatabase() {
@@ -79,12 +79,12 @@ public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticate
 
     if (localDatabase == null) {
       final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
-      localDatabase = (ODatabaseDocumentTx) server.openDatabase("document", iRequest.databaseName, parts.get(0), parts.get(1));
+      localDatabase = (ODatabaseDocumentTx) server.openDatabase(iRequest.databaseName, parts.get(0), parts.get(1));
     } else {
 
       String currentUserId = iRequest.data.currentUserId;
       if (currentUserId != null && currentUserId.length() > 0 && localDatabase != null && localDatabase.getUser() != null) {
-        if (!currentUserId.equals(localDatabase.getUser()   .getIdentity().toString())) {
+        if (!currentUserId.equals(localDatabase.getUser().getIdentity().toString())) {
           ODocument userDoc = localDatabase.load(new ORecordId(currentUserId));
           localDatabase.setUser(new OUser(userDoc));
         }

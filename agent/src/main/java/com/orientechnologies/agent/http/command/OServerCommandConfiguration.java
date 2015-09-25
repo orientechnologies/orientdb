@@ -31,77 +31,70 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public class OServerCommandConfiguration extends
-		OServerCommandAuthenticatedServerAbstract {
+public class OServerCommandConfiguration extends OServerCommandAuthenticatedServerAbstract {
 
-	private static final String[] NAMES = { "GET|configuration/*",
-			"PUT|configuration/*" };
+  private static final String[] NAMES = { "GET|configuration/*", "PUT|configuration/*" };
 
-	protected OServerCommandConfiguration(String iRequiredResource) {
-		super(iRequiredResource);
-	}
+  protected OServerCommandConfiguration(String iRequiredResource) {
+    super(iRequiredResource);
+  }
 
-	public OServerCommandConfiguration() {
-		super("server.configuration");
-	}
+  public OServerCommandConfiguration() {
+    super("server.configuration");
+  }
 
-	@Override
-	public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse)
-			throws Exception {
+  @Override
+  public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 
-		checkSyntax(iRequest.getUrl(), 2, "Syntax error: configuration/");
-		if (iRequest.httpMethod.equals("GET")) {
-			return doGet(iRequest, iResponse);
-		}
-		if (iRequest.httpMethod.equals("PUT")) {
-			return doPut(iRequest, iResponse);
-		}
-		return false;
-	}
+    checkSyntax(iRequest.getUrl(), 2, "Syntax error: configuration/");
+    if (iRequest.httpMethod.equals("GET")) {
+      return doGet(iRequest, iResponse);
+    }
+    if (iRequest.httpMethod.equals("PUT")) {
+      return doPut(iRequest, iResponse);
+    }
+    return false;
+  }
 
-	protected boolean doGet(OHttpRequest iRequest, OHttpResponse iResponse) {
-		String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
-		if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
-			config = System
-					.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
-		FileInputStream input;
-		try {
-			File file2 = new File(config);
-			input = new FileInputStream(file2);
-			iResponse.sendStream(OHttpUtils.STATUS_OK_CODE,
-					OHttpUtils.STATUS_OK_DESCRIPTION, "text/xml", input,
-					file2.length());
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-		}
+  protected boolean doGet(OHttpRequest iRequest, OHttpResponse iResponse) {
+    String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
+    if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
+      config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
+    FileInputStream input;
+    try {
+      File file2 = new File(config);
+      input = new FileInputStream(file2);
+      iResponse.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, "text/xml", input, file2.length());
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+    }
 
-		return false;
-	}
+    return false;
+  }
 
-	protected boolean doPut(OHttpRequest iRequest, OHttpResponse iResponse) {
+  protected boolean doPut(OHttpRequest iRequest, OHttpResponse iResponse) {
 
-		String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
-		if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
-			config = System
-					.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
+    String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
+    if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
+      config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
 
-		File file = new File(config);
-		BufferedWriter output;
-		try {
-			output = new BufferedWriter(new FileWriter(file));
-			output.write(iRequest.content);
-			output.close();
-			iResponse.writeRecord(new ODocument());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return false;
-	}
+    File file = new File(config);
+    BufferedWriter output;
+    try {
+      output = new BufferedWriter(new FileWriter(file));
+      output.write(iRequest.content);
+      output.close();
+      iResponse.writeRecord(new ODocument());
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return false;
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 
 }
