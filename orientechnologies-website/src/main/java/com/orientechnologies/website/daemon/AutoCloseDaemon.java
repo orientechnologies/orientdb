@@ -48,17 +48,20 @@ public class AutoCloseDaemon {
           IssueServiceImpl.WAIT_FOR_REPLY);
 
       for (Issue issue : organizationIssuesByLabel) {
+        try {
+          if (issue.isClosed()) {
+            issueService.removeLabel(issue, IssueServiceImpl.WAIT_FOR_REPLY, user, !Boolean.TRUE.equals(issue.getConfidential()));
+          } else if (isToClose(organization, issue.getRepository(), issue)) {
+            IssueDTO patch = new IssueDTO();
+            patch.setState("CLOSED");
+            repositoryService.patchIssue(issue, user, patch);
+            Comment comment = new Comment();
+            comment.setBody(organization.getClosingMessage());
+            issueService.createNewCommentOnIssue(issue, comment, user);
+            issueService.removeLabel(issue, IssueServiceImpl.WAIT_FOR_REPLY, user, !Boolean.TRUE.equals(issue.getConfidential()));
+          }
+        } catch (Exception e) {
 
-        if (issue.isClosed()) {
-          issueService.removeLabel(issue, IssueServiceImpl.WAIT_FOR_REPLY, user, !Boolean.TRUE.equals(issue.getConfidential()));
-        } else if (isToClose(organization, issue.getRepository(), issue)) {
-          IssueDTO patch = new IssueDTO();
-          patch.setState("CLOSED");
-          repositoryService.patchIssue(issue, user, patch);
-          Comment comment = new Comment();
-          comment.setBody(organization.getClosingMessage());
-          issueService.createNewCommentOnIssue(issue, comment, user);
-          issueService.removeLabel(issue, IssueServiceImpl.WAIT_FOR_REPLY, user, !Boolean.TRUE.equals(issue.getConfidential()));
         }
       }
     }

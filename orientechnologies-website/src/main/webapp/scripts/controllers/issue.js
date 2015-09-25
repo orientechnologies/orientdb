@@ -343,6 +343,10 @@ angular.module('webappApp')
       $scope.isClient = User.isClient(ORGANIZATION);
       $scope.isSupport = User.isSupport(ORGANIZATION);
       $scope.client = User.getClient(ORGANIZATION);
+
+      if($scope.isClient && !$scope.isSupport){
+        $scope.issue.confidential = true;
+      }
       User.environments().then(function (data) {
         $scope.environments = data.plain();
       });
@@ -387,6 +391,7 @@ angular.module('webappApp')
 
     var waiting_reply = 'waiting reply';
     var in_progress = 'in progress';
+    var question = 'question';
     $scope.number = $routeParams.id;
     var number = $scope.number;
     User.whoami().then(function (data) {
@@ -486,6 +491,18 @@ angular.module('webappApp')
       return deferred.promise;
     }
 
+
+    $scope.markAsQuestion = function(){
+      $scope.newComment = {}
+      $scope.newComment.body = "This is more a question than an issue. Please post it in the Community Group where more than 2k users can answer to your question: https://groups.google.com/forum/#!forum/orient-database (it's FREE)"
+      $scope.comment().then(function(data){
+
+          $scope.close().then(function(){
+            $scope.addLabel(question);
+          })
+
+      });
+    }
     $scope.commentAndWait = function () {
 
       $scope.comment().then(function (data) {
@@ -517,6 +534,7 @@ angular.module('webappApp')
     $scope.close = function () {
 
 
+      var deferred = $q.defer();
       Repo.one($scope.repo).all("issues").one(number).patch({state: "closed"}).then(function (data) {
         $scope.issue.state = "CLOSED";
         if ($scope.newComment && $scope.newComment.body) {
@@ -524,7 +542,10 @@ angular.module('webappApp')
         }
         refreshEvents();
         $scope.removeLabel(in_progress);
+        deferred.resolve();
       });
+      return deferred.promise;
+
 
     }
     $scope.removeLabel = function (l) {
@@ -545,6 +566,12 @@ angular.module('webappApp')
       $scope.labels.forEach(function (label) {
         if (label.name == l) {
           localLabel = label;
+        }
+      });
+
+      $scope.issue.labels.forEach(function (label) {
+        if (label.name == l) {
+          localLabel = null;
         }
       });
 

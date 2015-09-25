@@ -56,7 +56,7 @@ public class IssueServiceGithub implements IssueService {
       Comment persistentComment = new Comment();
       persistentComment.setCommentId(gComment.getId());
       persistentComment.setBody(gComment.getBody());
-      persistentComment.setUser(actor);
+      persistentComment.setUser(currentActor);
       persistentComment.setCreatedAt(gComment.getCreatedAt());
       persistentComment.setUpdatedAt(gComment.getUpdatedAt());
       persistentComment = issueService.commentRepository.save(persistentComment);

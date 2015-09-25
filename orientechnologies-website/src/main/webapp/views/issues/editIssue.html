@@ -1,13 +1,13 @@
 <div class="container-fluid edit-issue">
   <div class="row vertical-align">
-    <div class="col-md-9">
+    <div class="col-md-8">
       <h3 ng-hide="editingTitle">{{ issue.title}}</h3>
 
       <form ng-show="editingTitle">
         <input type="text" class="form-control" ng-model="newTitle">
       </form>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
       <div class="btn-group">
         <button class="btn btn-sm btn-default" ng-click="editingTitle = true; newTitle = issue.title"
                 ng-show=" (!editingTitle && (isOwner || isMember))">Edit
@@ -24,6 +24,11 @@
                 ng-show="editingTitle">
           Cancel
         </button>
+      </div>
+
+      <div class="btn-group">
+        <a href="javascript:void(0)" ng-show="isMember && !editingTitle && issue.state == 'OPEN'" ng-click="markAsQuestion()"
+           class="btn btn-sm btn-default">Mark as Question</a>
       </div>
       <div class="btn-group">
         <a href="javascript:void(0)" ng-show="(issue.number && isMember && !editingTitle)" ng-click="sync()"
