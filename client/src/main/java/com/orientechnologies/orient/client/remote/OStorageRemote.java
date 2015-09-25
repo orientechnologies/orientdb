@@ -19,6 +19,18 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.*;
+
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -42,11 +54,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -58,14 +66,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorageAbstract;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -74,21 +75,6 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -149,7 +135,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private Map<String, Object>                  connectionOptions;
   private OEngineRemote                        engine;
   private String                               recordFormat;
-  private byte[]                               token;
+  private Map<String,byte[]>                   tokens = new ConcurrentHashMap<String, byte[]>();
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
     this(iClientId, iURL, iMode, null);
@@ -190,7 +176,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public byte[] getSessionToken() {
-    return token;
+    if (getServerURL() != null)
+      return tokens.get(getServerURL());
+    return null;
   }
 
   public void setSessionId(final String iServerURL, final int iSessionId, byte[] token) {
@@ -200,16 +188,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       tl.serverURL = iServerURL;
       tl.sessionId = iSessionId;
     }
-    if (token != null)
-      this.token = token;
+    if (token != null && iServerURL!= null) {
+      this.tokens.put(iServerURL,token);
+    }
   }
 
   public void clearToken() {
     final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
     if (instance != null) {
       final OStorageRemoteSession tl = instance.get();
+      if (tl.serverURL != null)
+        tokens.remove(tl.serverURL);
     }
-    token = null;
   }
 
   public void clearSession() {
@@ -236,7 +226,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     addUser();
     try {
       if (status == STATUS.CLOSED || !iUserName.equals(connectionUserName) || !iUserPassword.equals(connectionUserPassword)
-          || this.token == null) {
+          || this.tokens.isEmpty()) {
         connectionUserName = iUserName;
         connectionUserPassword = iUserPassword;
         connectionOptions = iOptions != null ? new HashMap<String, Object>(iOptions) : null; // CREATE A COPY TO AVOID USER
@@ -347,7 +337,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       sbTreeCollectionManager.close();
 
       super.close(iForce, onDelete);
-      this.token = null;
+      this.tokens.clear();
       status = STATUS.CLOSED;
 
       Orient.instance().unregisterStorage(this);
@@ -460,7 +450,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // ASYNCHRONOUS
           if (iCallback != null) {
             final int sessionId = getSessionId();
-            final byte[] token = getSessionToken();
+            final String curUrl = getServerURL();
             final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get()
                 .getSbTreeCollectionManager();
             Callable<Object> response = new Callable<Object>() {
@@ -469,6 +459,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
                 try {
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
+                  OStorageRemoteThreadLocal.INSTANCE.get().serverURL= curUrl;
                   beginResponse(network);
                   if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_25)
                     iRid.clusterId = network.readShort();
@@ -484,6 +475,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 } finally {
                   endResponse(network);
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
+                  OStorageRemoteThreadLocal.INSTANCE.get().serverURL= null;
                 }
                 iCallback.call(iRid, result);
                 return null;
@@ -1142,7 +1134,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     if (!(iCommand instanceof OSerializableStream))
       throw new OCommandExecutionException("Cannot serialize the command to be executed to the server side.");
-
     Object result = null;
     final boolean live = iCommand instanceof OLiveQuery;
 
@@ -1799,8 +1790,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       try {
         if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance()
-              .debug(this, "Retrying to connect to remote server #" + (retry + 1) + "/" + currentMaxRetry + "...");
+          OLogManager.instance().debug(this, "Retrying to connect to remote server #" + (retry + 1) + "/" + currentMaxRetry + "...");
 
         // FORCE RESET OF THREAD DATA (SERVER URL + SESSION ID)
         setSessionId(null, -1, null);
@@ -1808,12 +1798,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         // REACQUIRE DB SESSION ID
         final String currentURL = reopenRemoteDatabase();
 
-        OLogManager
-            .instance()
-            .warn(
-                this,
-                "Connection re-acquired transparently after %dms and %d retries to server '%s': no errors will be thrown at application level",
-                System.currentTimeMillis() - lostConnectionTime, retry + 1, currentURL);
+        OLogManager.instance()
+          .warn(this, "Connection re-acquired transparently after %dms and %d retries to server '%s': no errors will be thrown at application level",
+                 System.currentTimeMillis() - lostConnectionTime, retry + 1, currentURL);
 
         // RECONNECTED!
         return;
@@ -1827,32 +1814,40 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     throw new OStorageException(message, exception);
   }
 
-  protected String reopenRemoteDatabase() {
+  protected String reopenRemoteDatabase() throws IOException {
     OChannelBinaryAsynchClient network = null;
     String currentURL = getCurrentServerURL();
     do {
       do {
         try {
-          network = getAvailableNetwork(currentURL);
-          try {
-            network.writeByte(OChannelBinaryProtocol.REQUEST_DB_REOPEN);
-            network.writeInt(getSessionId());
-            network.writeBytes(getSessionToken());
-          } finally {
-            endRequest(network);
-          }
+          final byte[] curToken = tokens.get(currentURL);
+          if(curToken == null || curToken.length == 0) {
+            return openRemoteDatabase();
+          } else {
+            network = getAvailableNetwork(currentURL);
+            try {
+              network.writeByte(OChannelBinaryProtocol.REQUEST_DB_REOPEN);
+              network.writeInt(getSessionId());
+              network.writeBytes(curToken);
+            } finally {
+              endRequest(network);
+            }
 
-          final int sessionId;
+            final int sessionId;
 
-          try {
-            beginResponse(network);
-            sessionId = network.readInt();
-            setSessionId(network.getServerURL(), sessionId, getSessionToken());
+            try {
+              byte[] newToken = network.beginResponse(getSessionId(), true);
+              if (newToken != null && newToken.length > 0) {
+                setSessionId(getServerURL(), getSessionId(), newToken);
+              }
+              sessionId = network.readInt();
+              setSessionId(currentURL, sessionId, curToken);
 
-            OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
-            return currentURL;
-          } finally {
-            endResponse(network);
+              OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
+              return currentURL;
+            } finally {
+              endResponse(network);
+            }
           }
         } catch (OIOException e) {
           if (network != null) {
@@ -1862,8 +1857,20 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           }
 
           OLogManager.instance().error(this, "Can not open database with url " + currentURL, e);
-
-        } catch (OException e) {
+        } catch ( OSecurityException ex){
+          if (network != null) {
+            // REMOVE THE NETWORK CONNECTION IF ANY
+            try {
+              engine.getConnectionManager().remove(network);
+            } catch (Exception e) {
+              // IGNORE ANY EXCEPTION
+              OLogManager.instance().debug(this, "Can not remove connection or database url=" + currentURL, e);
+            }
+            network = null;
+          }
+          return openRemoteDatabase();
+        }
+        catch (OException e) {
           // PROPAGATE ANY OTHER ORIENTDB EXCEPTION
           throw e;
 
@@ -1928,7 +1935,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final int sessionId;
 
           try {
-            beginResponse(network);
+            network.beginResponse(getSessionId(),false);
             sessionId = network.readInt();
             byte[] token = network.readBytes();
             if (token.length == 0) {
@@ -1936,14 +1943,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             } else {
               network.getServiceThread().setTokenBased(true);
             }
-            setSessionId(network.getServerURL(), sessionId, token);
+            setSessionId(currentURL, sessionId, token);
 
-            OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
+            OLogManager.instance().debug(this, "Client connected to %s with session id=%d", currentURL, sessionId);
 
             readDatabaseInformation(network);
 
             // READ CLUSTER CONFIGURATION
-            updateClusterConfiguration(network.getServerURL(), network.readBytes());
+            updateClusterConfiguration(currentURL, network.readBytes());
 
             // read OrientDB release info
             if (network.getSrvProtocolVersion() >= 14)
@@ -2144,11 +2151,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     if (token != null) {
       network.writeBytes(token);
     }
-
     return network;
   }
 
   protected String getCurrentServerURL() {
+    String url = getServerURL();
+    if(url != null)
+      return url;
     synchronized (serverURLs) {
       if (serverURLs.isEmpty()) {
         parseServerURLs();
@@ -2195,6 +2204,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
 
     } while (network == null);
+    setSessionId(lastURL,getSessionId(),tokens.get(lastURL));
     return network;
   }
 
@@ -2373,8 +2383,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         if (network.getSrvProtocolVersion() < 24)
           network.readString();
 
-        final int dataSegmentId = network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24 ? (int) network
-            .readShort() : 0;
+        final int dataSegmentId = network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24 ? (int) network.readShort() : 0;
 
         cluster.configure(this, clusterId, clusterName);
 

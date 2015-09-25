@@ -170,7 +170,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     } else {
       if (requestType != OChannelBinaryProtocol.REQUEST_CONNECT && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
         byte[] bytes = channel.readBytes();
-        if (bytes.length == 0 || !Arrays.equals(bytes, tokenBytes) || connection.database == null) {
+        if (bytes == null || bytes.length == 0 || !Arrays.equals(bytes, tokenBytes) || connection.database == null) {
           if (connection.database != null && !connection.database.isClosed()) {
             connection.database.activateOnCurrentThread();
             connection.database.close();
