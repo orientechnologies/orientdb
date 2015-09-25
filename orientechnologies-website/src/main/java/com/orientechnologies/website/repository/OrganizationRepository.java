@@ -11,6 +11,8 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
   public OUser findOwnerByName(String name);
 
+  public List<Issue> findOrganizationIssuesByLabel(String name, String label);
+
   public List<Issue> findOrganizationIssues(String name, String q, String page, String perPage);
 
   public Page<Issue> findOrganizationIssuesPagedProfiled(String name, String q, String page, String perPage);
@@ -42,6 +44,8 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
   public List<Comment> findSingleOrganizationIssueCommentByRepoAndNumber(String owner, String repo, Long number);
 
   public List<Event> findEventsByOwnerRepoAndIssueNumber(String owner, String repo, Long number);
+
+  public List<Event> findEventsByOrgRepoAndIssueNumber(String org, String repo, Long number);
 
   public List<OUser> findClientMembers(String org, Integer clientId);
 

@@ -58,6 +58,7 @@ public abstract class GitHubBaseHandler<T> implements GitHubHandler<T> {
           } finally {
             if (graph != null)
               graph.shutdown();
+            factory.unsetDb();
           }
         }
       });

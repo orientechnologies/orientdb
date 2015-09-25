@@ -117,11 +117,16 @@ public class IssueServiceImpl implements IssueService {
 
   @Transactional
   @Override
-  public Comment createNewCommentOnIssue(Issue issue, Comment comment) {
+  public Comment createNewCommentOnIssue(Issue issue, Comment comment, OUser actor) {
 
     if (Boolean.TRUE.equals(issue.getConfidential())) {
 
-      comment.setUser(SecurityHelper.currentUser());
+      if (actor != null) {
+        comment.setUser(actor);
+      } else {
+        comment.setUser(SecurityHelper.currentUser());
+      }
+
       comment.setCreatedAt(new Date());
 
       comment = commentRepository.save(comment);
@@ -131,7 +136,7 @@ public class IssueServiceImpl implements IssueService {
       eventManager.pushInternalEvent(IssueCommentedEvent.EVENT, comment);
       return comment;
     } else {
-      return githubIssueService.createNewCommentOnIssue(issue, comment);
+      return githubIssueService.createNewCommentOnIssue(issue, comment, actor);
     }
   }
 
@@ -165,7 +170,7 @@ public class IssueServiceImpl implements IssueService {
       if (l != null) {
         lbs.add(l);
         if (isStopSla(l.getName())) {
-            removeSlaCounting(issue, actor);
+          removeSlaCounting(issue, actor);
         }
       }
 
@@ -225,7 +230,6 @@ public class IssueServiceImpl implements IssueService {
     } else {
       if (l != null) {
         if (removeLabelRelationship(issue, l) != null) {
-          OLogManager.instance().info(this, "Current Actor : [%s]", actor);
           githubIssueService.removeLabel(issue, label, actor, remote);
         }
       }

@@ -77,6 +77,26 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   }
 
   @Override
+  public List<Issue> findOrganizationIssuesByLabel(String name, String label) {
+
+    OrientGraph db = dbFactory.getGraph();
+
+    String query = String
+        .format(
+            "select from (select expand(out('HasRepo').out('HasIssue')) from Organization where name = '%s') where out('HasLabel').name CONTAINS '%s' ",
+            name, label);
+
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<Issue> issues = new ArrayList<Issue>();
+    for (OrientVertex vertex : vertices) {
+      ODocument doc = vertex.getRecord();
+      issues.add(OIssue.NUMBER.fromDoc(doc, db));
+    }
+    return issues;
+  }
+
+  @Override
   public List<Issue> findOrganizationIssues(String name, String q, String page, String perPage) {
     OrientGraph db = dbFactory.getGraph();
 
@@ -601,6 +621,30 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     }
 
     return comments;
+  }
+
+  @Override
+  public List<Event> findEventsByOrgRepoAndIssueNumber(String org, String repo, Long number) {
+
+    OrientGraph db = dbFactory.getGraph();
+    String query = String
+        .format(
+            "select expand(out('HasRepo')[name = '%s'].out('HasIssue')[iid = %d].out('HasEvent'))  from Organization where name = '%s') ",
+            repo, number, org);
+
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+    final List<Event> events = new ArrayList<Event>();
+    for (Vertex vertex1 : vertices) {
+      OrientVertex v = (OrientVertex) vertex1;
+      events.add(OEvent.CREATED_AT.fromDoc(v.getRecord(), db));
+    }
+    Collections.sort(events, new Comparator<Event>() {
+      @Override
+      public int compare(Event o1, Event o2) {
+        return o1.getCreatedAt().after(o2.getCreatedAt()) ? 1 : -1;
+      }
+    });
+    return events;
   }
 
   @Override

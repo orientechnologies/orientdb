@@ -31,8 +31,16 @@ public class IssueServiceGithub implements IssueService {
   }
 
   @Override
-  public Comment createNewCommentOnIssue(Issue issue, Comment comment) {
-    GitHub github = new GitHub(SecurityHelper.currentToken(), issueService.gitHubConfiguration);
+  public Comment createNewCommentOnIssue(Issue issue, Comment comment, OUser actor) {
+
+    OUser currentActor;
+
+    if (actor != null) {
+      currentActor = actor;
+    } else {
+      currentActor = SecurityHelper.currentUser();
+    }
+    GitHub github = new GitHub(currentActor.getToken(), issueService.gitHubConfiguration);
 
     ODocument doc = new ODocument();
 
@@ -48,8 +56,7 @@ public class IssueServiceGithub implements IssueService {
       Comment persistentComment = new Comment();
       persistentComment.setCommentId(gComment.getId());
       persistentComment.setBody(gComment.getBody());
-      GUser user = gComment.getUser();
-      persistentComment.setUser(SecurityHelper.currentUser());
+      persistentComment.setUser(actor);
       persistentComment.setCreatedAt(gComment.getCreatedAt());
       persistentComment.setUpdatedAt(gComment.getUpdatedAt());
       persistentComment = issueService.commentRepository.save(persistentComment);

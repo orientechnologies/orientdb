@@ -75,7 +75,7 @@ public class RepositoryServiceImpl implements RepositoryService {
   protected OSecurityManager       securityManager;
 
   @Autowired
-  protected GitHubConfiguration gitHubConfiguration;
+  protected GitHubConfiguration    gitHubConfiguration;
 
   @PostConstruct
   protected void init() {
@@ -113,8 +113,13 @@ public class RepositoryServiceImpl implements RepositoryService {
       return patchPrivateIssue(original, issue, true);
     } else {
       patchPrivateIssue(original, issue, false);
-      return githubService.patchIssue(original, securityManager.botIfSupport(original.getRepository().getOrganization().getName()),
-          issue);
+      OUser user1;
+      try {
+        user1 = securityManager.botIfSupport(original.getRepository().getOrganization().getName());
+      } catch (Exception e) {
+        user1 = user;
+      }
+      return githubService.patchIssue(original, user1, issue);
     }
   }
 

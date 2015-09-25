@@ -165,7 +165,7 @@ public class RepositoryController {
 
     Issue i = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
 
-    return i != null ? new ResponseEntity<Comment>(issueService.createNewCommentOnIssue(i, comment), HttpStatus.OK)
+    return i != null ? new ResponseEntity<Comment>(issueService.createNewCommentOnIssue(i, comment, null), HttpStatus.OK)
         : new ResponseEntity<Comment>(HttpStatus.NOT_FOUND);
   }
 

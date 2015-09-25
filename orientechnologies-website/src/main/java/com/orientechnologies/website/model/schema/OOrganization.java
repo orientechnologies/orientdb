@@ -14,6 +14,18 @@ public enum OOrganization implements OTypeHolder<com.orientechnologies.website.m
     public OType getType() {
       return OType.STRING;
     }
+  },
+  CLOSING_DAYS("closingDays") {
+    @Override
+    public OType getType() {
+      return OType.INTEGER;
+    }
+  },
+  CLOSING_MESSAGE("closingMessage") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
+    }
   };
 
   private final String name;
@@ -31,6 +43,8 @@ public enum OOrganization implements OTypeHolder<com.orientechnologies.website.m
       doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
     }
     doc.field(NAME.toString(), entity.getName());
+    doc.field(CLOSING_DAYS.toString(), entity.getClosingDays());
+    doc.field(CLOSING_MESSAGE.toString(), entity.getClosingMessage());
     return doc;
   }
 
@@ -39,6 +53,8 @@ public enum OOrganization implements OTypeHolder<com.orientechnologies.website.m
     com.orientechnologies.website.model.schema.dto.Organization organization = new com.orientechnologies.website.model.schema.dto.Organization();
     organization.setId(doc.getIdentity().toString());
     organization.setName((String) doc.field(OOrganization.NAME.toString()));
+    organization.setClosingDays((Integer) doc.field(CLOSING_DAYS.toString()));
+    organization.setClosingMessage((String) doc.field(CLOSING_MESSAGE.toString()));
     return organization;
   }
 

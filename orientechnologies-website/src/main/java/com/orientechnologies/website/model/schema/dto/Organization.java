@@ -7,7 +7,11 @@ import com.orientechnologies.website.model.schema.Identity;
  */
 public class Organization extends Identity {
 
-  private String name;
+  private String  name;
+
+  private Integer closingDays;
+
+  private String  closingMessage;
 
   public String getName() {
     return name;
@@ -17,4 +21,19 @@ public class Organization extends Identity {
     this.name = name;
   }
 
+  public Integer getClosingDays() {
+    return closingDays;
+  }
+
+  public void setClosingDays(Integer closingDays) {
+    this.closingDays = closingDays;
+  }
+
+  public String getClosingMessage() {
+    return closingMessage;
+  }
+
+  public void setClosingMessage(String closingMessage) {
+    this.closingMessage = closingMessage;
+  }
 }

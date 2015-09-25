@@ -10,9 +10,9 @@ import java.util.List;
  */
 public interface IssueService {
 
-  public void commentIssue(Issue issue, Comment comment,boolean bot);
+  public void commentIssue(Issue issue, Comment comment, boolean bot);
 
-  public Comment createNewCommentOnIssue(Issue issue, Comment comment);
+  public Comment createNewCommentOnIssue(Issue issue, Comment comment, OUser actor);
 
   public void changeMilestone(Issue issue, Milestone milestone, OUser actor, boolean fire);
 
