@@ -2,12 +2,15 @@ package com.orientechnologies.website.services.reactor;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.services.reactor.event.GithubEvent;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -51,6 +54,8 @@ public abstract class GitHubBaseHandler<T> implements GitHubHandler<T> {
                 } catch (Exception e) {
                   OLogManager.instance().error(this, "Error handling %s event with payload : (%s)", e, action,
                       evt.formantPayload(payload));
+
+                  logException(graph, e, action, payload);
                   break;
                 }
               }
@@ -65,6 +70,21 @@ public abstract class GitHubBaseHandler<T> implements GitHubHandler<T> {
     } catch (Exception e) {
       e.printStackTrace();
     }
+
+  }
+
+  private void logException(OrientGraph graph, Exception e, String action, ODocument payload) {
+    ODatabaseDocumentTx rawGraph = graph.getRawGraph();
+
+    ODocument doc = new ODocument("GitHubErrorLog");
+
+    doc.field("action", action);
+    doc.field("payload", payload.toJSON());
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    e.printStackTrace(pw);
+    doc.field("stackTrace", sw.toString());
+    rawGraph.save(doc);
 
   }
 
