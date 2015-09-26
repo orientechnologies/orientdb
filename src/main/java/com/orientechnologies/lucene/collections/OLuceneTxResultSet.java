@@ -19,7 +19,7 @@
 package com.orientechnologies.lucene.collections;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -41,7 +41,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
 
   protected int deletedMatchCount = 0;
 
-  public OLuceneTxResultSet(OLuceneIndexManagerAbstract manager, QueryContext queryContext) {
+  public OLuceneTxResultSet(OLuceneIndexEngineAbstract manager, QueryContext queryContext) {
     super(manager, queryContext);
 
     deletedMatchCount = calculateDeletedMatch();
@@ -119,7 +119,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
     }
 
     private OContextualRecordId toRecordId(Document doc, ScoreDoc score) {
-      String rId = doc.get(OLuceneIndexManagerAbstract.RID);
+      String rId = doc.get(OLuceneIndexEngineAbstract.RID);
       OContextualRecordId res = new OContextualRecordId(rId);
       manager.onRecordAddedToResultSet(queryContext, res, doc, score);
       return res;

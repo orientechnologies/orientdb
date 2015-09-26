@@ -19,7 +19,7 @@
 package com.orientechnologies.lucene.collections;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import org.apache.lucene.search.Query;
@@ -36,11 +36,11 @@ public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
 
   protected TopDocs                     topDocs;
   protected Query                       query;
-  protected OLuceneIndexManagerAbstract manager;
+  protected OLuceneIndexEngineAbstract manager;
   protected QueryContext                queryContext;
-  protected static Integer              PAGE_SIZE = 50;
+  protected static Integer              PAGE_SIZE = 10000;
 
-  public OLuceneAbstractResultSet(OLuceneIndexManagerAbstract manager, QueryContext queryContext) {
+  public OLuceneAbstractResultSet(OLuceneIndexEngineAbstract manager, QueryContext queryContext) {
     this.manager = manager;
     this.queryContext = queryContext;
     this.query = enhanceQuery(queryContext.query);

@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.lucene.manager;
+package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.lucene.OLuceneMapEntryIterator;
-import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
@@ -63,7 +62,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 //TODO: (frank) this is more and engine rather than a manager, maybe rename
-public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdaptiveExternal implements OLuceneIndexEngine,
+public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdaptiveExternal implements OLuceneIndexEngine,
     OOrientListener {
 
   public static final String               RID              = "RID";
@@ -88,7 +87,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   private boolean                          rebuilding;
   private long                             reopenToken;
 
-  public OLuceneIndexManagerAbstract(String indexName) {
+  public OLuceneIndexEngineAbstract(String indexName) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
     this.indexName = indexName;

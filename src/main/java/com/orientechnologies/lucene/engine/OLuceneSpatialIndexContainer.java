@@ -16,7 +16,7 @@
  *
  */
 
-package com.orientechnologies.lucene.manager;
+package com.orientechnologies.lucene.engine;
 
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.spatial.SpatialStrategy;

@@ -16,7 +16,7 @@
 
 package com.orientechnologies.lucene;
 
-import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -68,7 +68,7 @@ public class OLuceneIndexType {
           queryBuilder.add(new TermQuery(new Term(idx, key.toString())), BooleanClause.Occur.SHOULD);
         }
       } else {
-        queryBuilder.add(new TermQuery(new Term(OLuceneIndexManagerAbstract.KEY, key.toString())), BooleanClause.Occur.SHOULD);
+        queryBuilder.add(new TermQuery(new Term(OLuceneIndexEngineAbstract.KEY, key.toString())), BooleanClause.Occur.SHOULD);
       }
       query = queryBuilder.build();
     } else if (key instanceof OCompositeKey) {
@@ -87,13 +87,13 @@ public class OLuceneIndexType {
   }
 
   public static Query createQueryId(OIdentifiable value) {
-    return new TermQuery(new Term(OLuceneIndexManagerAbstract.RID, value.getIdentity().toString()));
+    return new TermQuery(new Term(OLuceneIndexEngineAbstract.RID, value.getIdentity().toString()));
   }
 
   public static Query createDeleteQuery(OIdentifiable value, List<String> fields, Object key) {
 
     final BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
-    queryBuilder.add(new TermQuery(new Term(OLuceneIndexManagerAbstract.RID, value.getIdentity().toString())),
+    queryBuilder.add(new TermQuery(new Term(OLuceneIndexEngineAbstract.RID, value.getIdentity().toString())),
         BooleanClause.Occur.MUST);
 
     Map<String, String> values = new HashMap<String, String>();
@@ -104,7 +104,7 @@ public class OLuceneIndexType {
       values.put(fields.iterator().next(), key.toString());
     }
     for (String s : values.keySet()) {
-      queryBuilder.add(new TermQuery(new Term(s + OLuceneIndexManagerAbstract.STORED, values.get(s))), BooleanClause.Occur.MUST);
+      queryBuilder.add(new TermQuery(new Term(s + OLuceneIndexEngineAbstract.STORED, values.get(s))), BooleanClause.Occur.MUST);
     }
     return queryBuilder.build();
   }

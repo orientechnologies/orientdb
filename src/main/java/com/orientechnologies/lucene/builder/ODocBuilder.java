@@ -19,7 +19,7 @@
 package com.orientechnologies.lucene.builder;
 
 import com.orientechnologies.lucene.OLuceneIndexType;
-import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -39,7 +39,7 @@ public class ODocBuilder implements DocBuilder {
     Document doc = new Document();
 
     if (value != null) {
-      doc.add(OLuceneIndexType.createField(OLuceneIndexManagerAbstract.RID, value.getIdentity().toString(), Field.Store.YES,
+      doc.add(OLuceneIndexType.createField(OLuceneIndexEngineAbstract.RID, value.getIdentity().toString(), Field.Store.YES,
           Field.Index.NOT_ANALYZED_NO_NORMS));
     }
     List<Object> formattedKey = formatKeys(definition, key);

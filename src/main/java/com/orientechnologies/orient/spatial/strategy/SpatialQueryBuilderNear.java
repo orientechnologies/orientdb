@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.spatial.strategy;
 
-import com.orientechnologies.lucene.manager.OLuceneSpatialIndexContainer;
+import com.orientechnologies.lucene.engine.OLuceneSpatialIndexContainer;
 import com.orientechnologies.lucene.query.SpatialQueryContext;
 import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
 import com.spatial4j.core.distance.DistanceUtils;

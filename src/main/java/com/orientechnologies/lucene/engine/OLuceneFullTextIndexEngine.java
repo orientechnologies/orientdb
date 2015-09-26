@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.lucene.manager;
+package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.OLuceneIndexType;
@@ -44,13 +44,13 @@ import java.io.IOException;
 import java.util.*;
 
 //TODO: (frank) this is more and engine rather than a manager, maybe rename
-public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
+public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   protected OLuceneFacetManager facetManager;
   private DocBuilder            builder;
   private OQueryBuilder         queryBuilder;
 
-  public OLuceneFullTextIndexManager(String idxName, DocBuilder builder, OQueryBuilder queryBuilder) {
+  public OLuceneFullTextIndexEngine(String idxName, DocBuilder builder, OQueryBuilder queryBuilder) {
     super(idxName);
     this.builder = builder;
     this.queryBuilder = queryBuilder;

@@ -85,14 +85,21 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
     return SPATIAL_CONTEXT.makeShape(multiPoints);
   }
 
-  protected JtsGeometry createMultiPolygon(ShapeCollection<JtsGeometry> geometries) {
+  protected JtsGeometry createMultiPolygon(ShapeCollection<Shape> geometries) {
 
     Polygon[] polygons = new Polygon[geometries.size()];
 
     int i = 0;
 
-    for (JtsGeometry geometry : geometries) {
-      polygons[i] = (Polygon) geometry.getGeom();
+    for (Shape geometry : geometries) {
+      if (geometry instanceof JtsGeometry) {
+        polygons[i] = (Polygon) ((JtsGeometry) geometry).getGeom();
+      } else {
+        Rectangle rectangle = (Rectangle) geometry;
+        Geometry geometryFrom = SPATIAL_CONTEXT.getGeometryFrom(rectangle);
+        polygons[i] = (Polygon) geometryFrom;
+      }
+
       i++;
     }
 
@@ -157,6 +164,9 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
     if (shape instanceof JtsGeometry) {
       Geometry geom = ((JtsGeometry) shape).getGeom();
       return geom instanceof Polygon;
+    }
+    if (shape instanceof Rectangle) {
+      return true;
     }
     return false;
   }

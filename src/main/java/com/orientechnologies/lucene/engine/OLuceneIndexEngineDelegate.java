@@ -21,8 +21,6 @@ package com.orientechnologies.lucene.engine;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.builder.ODocBuilder;
 import com.orientechnologies.lucene.builder.OQueryBuilderImpl;
-import com.orientechnologies.lucene.manager.OLuceneFullTextIndexManager;
-import com.orientechnologies.lucene.manager.OLuceneGeoSpatialIndexManager;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndexCursor;
@@ -190,9 +188,14 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
       ODocument metadata) {
 
     if (indexType.equalsIgnoreCase("SPATIAL")) {
-      delegate = new OLuceneGeoSpatialIndexManager(indexName, OShapeFactory.INSTANCE);
+      if (indexDefinition.getFields().size() > 1) {
+        delegate = new OLuceneLegacySpatialIndexEngine(indexName, OShapeFactory.INSTANCE);
+      } else {
+        delegate = new OLuceneGeoSpatialIndexEngine(indexName, OShapeFactory.INSTANCE);
+      }
+
     } else if (indexType.equalsIgnoreCase("FULLTEXT")) {
-      delegate = new OLuceneFullTextIndexManager(indexName, new ODocBuilder(), new OQueryBuilderImpl());
+      delegate = new OLuceneFullTextIndexEngine(indexName, new ODocBuilder(), new OQueryBuilderImpl());
     }
 
     delegate.initIndex(indexName, indexType, indexDefinition, isAutomatic, metadata);
@@ -242,6 +245,5 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
   public Query deleteQuery(Object key, OIdentifiable value) {
     return delegate.deleteQuery(key, value);
   }
-
 
 }

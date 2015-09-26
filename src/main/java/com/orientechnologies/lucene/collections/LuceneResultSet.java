@@ -19,12 +19,11 @@
 package com.orientechnologies.lucene.collections;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 
@@ -36,7 +35,7 @@ import java.util.Iterator;
  */
 public class LuceneResultSet extends OLuceneAbstractResultSet {
 
-  public LuceneResultSet(OLuceneIndexManagerAbstract manager, QueryContext queryContext) {
+  public LuceneResultSet(OLuceneIndexEngineAbstract manager, QueryContext queryContext) {
     super(manager, queryContext);
   }
 
@@ -83,7 +82,7 @@ public class LuceneResultSet extends OLuceneAbstractResultSet {
       OContextualRecordId res = null;
       try {
         ret = queryContext.getSearcher().doc(score.doc);
-        String rId = ret.get(OLuceneIndexManagerAbstract.RID);
+        String rId = ret.get(OLuceneIndexEngineAbstract.RID);
         res = new OContextualRecordId(rId);
         manager.onRecordAddedToResultSet(queryContext, res, ret, score);
       } catch (IOException e) {

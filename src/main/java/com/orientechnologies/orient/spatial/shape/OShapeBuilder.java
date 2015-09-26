@@ -21,6 +21,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.context.jts.JtsSpatialContext;
+import com.spatial4j.core.context.jts.JtsSpatialContextFactory;
+import com.spatial4j.core.io.jts.JtsWktShapeParser;
 import com.spatial4j.core.shape.Shape;
 import com.spatial4j.core.shape.jts.JtsGeometry;
 import com.vividsolutions.jts.geom.Geometry;
@@ -31,10 +33,18 @@ import java.util.Map;
 
 public abstract class OShapeBuilder<T extends Shape> {
 
-  public static final JtsSpatialContext SPATIAL_CONTEXT  = JtsSpatialContext.GEO;
-  public static final GeometryFactory   GEOMETRY_FACTORY = JtsSpatialContext.GEO.getGeometryFactory();
-  public static final String            COORDINATES      = "coordinates";
-  public static final String            BASE_CLASS       = "OShape";
+  public static final JtsSpatialContext SPATIAL_CONTEXT;
+  public static final GeometryFactory   GEOMETRY_FACTORY;
+  static {
+
+    JtsSpatialContextFactory factory = new JtsSpatialContextFactory();
+    factory.geo = true;
+    factory.validationRule = JtsWktShapeParser.ValidationRule.none;
+    SPATIAL_CONTEXT = new JtsSpatialContext(factory);
+    GEOMETRY_FACTORY = SPATIAL_CONTEXT.getGeometryFactory();
+  }
+  public static final String            COORDINATES = "coordinates";
+  public static final String            BASE_CLASS  = "OShape";
 
   public abstract String getName();
 
@@ -119,7 +129,6 @@ public abstract class OShapeBuilder<T extends Shape> {
     T parsed = (T) SPATIAL_CONTEXT.getWktShapeParser().parse(wkt);
     return toDoc(parsed);
   }
-
 
   public static SpatialContext getSpatialContext() {
     return SPATIAL_CONTEXT;

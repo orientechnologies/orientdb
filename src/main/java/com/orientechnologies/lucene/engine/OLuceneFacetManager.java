@@ -16,7 +16,7 @@
  *
  */
 
-package com.orientechnologies.lucene.manager;
+package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.query.QueryContext;
@@ -57,10 +57,10 @@ public class OLuceneFacetManager {
   protected FacetsConfig              config       = new FacetsConfig();
   protected String                    facetField;
   // protected String facetDim;
-  private OLuceneIndexManagerAbstract owner;
+  private OLuceneIndexEngineAbstract owner;
   private ODocument                   metadata;
 
-  public OLuceneFacetManager(OLuceneIndexManagerAbstract owner, ODocument metadata) throws IOException {
+  public OLuceneFacetManager(OLuceneIndexEngineAbstract owner, ODocument metadata) throws IOException {
     this.owner = owner;
 
     this.metadata = metadata;

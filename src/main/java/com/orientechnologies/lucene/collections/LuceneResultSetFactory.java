@@ -18,7 +18,7 @@
 
 package com.orientechnologies.lucene.collections;
 
-import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.lucene.query.QueryContext;
 
 /**
@@ -31,7 +31,7 @@ public class LuceneResultSetFactory {
   protected LuceneResultSetFactory() {
   }
 
-  public OLuceneAbstractResultSet create(OLuceneIndexManagerAbstract manager, QueryContext queryContext) {
+  public OLuceneAbstractResultSet create(OLuceneIndexEngineAbstract manager, QueryContext queryContext) {
 
     if (queryContext.isInTx()) {
       return new OLuceneTxResultSet(manager, queryContext);

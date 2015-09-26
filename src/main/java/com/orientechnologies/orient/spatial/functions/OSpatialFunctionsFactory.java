@@ -32,8 +32,9 @@ public class OSpatialFunctionsFactory implements OSQLFunctionFactory {
   static {
     register(OSTAsTextFunction.NAME, new OSTAsTextFunction());
     register(STWithinFunction.NAME, new STWithinFunction());
-//    register(STNearFunction.NAME, new STNearFunction());
-//    register(STContainsFunction.NAME, new STContainsFunction());
+    register(STEqualsFunction.NAME, new STEqualsFunction());
+    // register(STNearFunction.NAME, new STNearFunction());
+    // register(STContainsFunction.NAME, new STContainsFunction());
     register(OSTGeomFromTextFunction.NAME, new OSTGeomFromTextFunction());
   }
 
