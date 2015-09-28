@@ -23,10 +23,13 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.document.Document;
 
+import java.util.Map;
+
 /**
  * Created by Enrico Risa on 02/09/15.
  */
 public interface DocBuilder {
 
-  public Document build(OIndexDefinition definition,Object key,OIdentifiable value,ODocument metadata);
+  public Document build(OIndexDefinition definition, Object key, OIdentifiable value, Map<String,Boolean> fieldsToStore,
+      ODocument metadata);
 }

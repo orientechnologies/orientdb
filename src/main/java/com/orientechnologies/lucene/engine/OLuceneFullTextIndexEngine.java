@@ -274,7 +274,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public Document buildDocument(Object key, OIdentifiable value) {
-    return builder.build(index, key, value, metadata);
+    return builder.build(index, key, value,collectionFields, metadata);
   }
 
   @Override

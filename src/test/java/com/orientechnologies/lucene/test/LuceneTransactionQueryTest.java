@@ -39,6 +39,7 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 10/08/15.
  */
+@Test(groups = "embedded")
 public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
 
   public LuceneTransactionQueryTest() {

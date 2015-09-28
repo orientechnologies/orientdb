@@ -21,7 +21,7 @@ package com.orientechnologies.lucene.collections;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.lucene.query.QueryContext;
-import com.orientechnologies.lucene.tx.OLuceneTxChanges;
+import com.orientechnologies.lucene.tx.OLuceneTxChangesAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import org.apache.lucene.document.Document;
@@ -126,7 +126,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
     }
 
     private boolean isToSkip(OContextualRecordId res, Document doc) {
-      return isDeleted(res) || isUpdatedDiskMatch(res, doc);
+      return isDeleted(res, doc) || isUpdatedDiskMatch(res, doc);
     }
 
     private boolean isUpdatedDiskMatch(OIdentifiable value, Document doc) {
@@ -134,15 +134,15 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
     }
 
     private boolean isTempMatch(Document doc) {
-      return doc.get(OLuceneTxChanges.TMP) != null;
+      return doc.get(OLuceneTxChangesAbstract.TMP) != null;
     }
 
     private boolean isUpdated(OIdentifiable value) {
       return queryContext.changes().isUpdated(null, null, value);
     }
 
-    private boolean isDeleted(OIdentifiable value) {
-      return queryContext.changes().isDeleted(null, null, value);
+    private boolean isDeleted(OIdentifiable value, Document doc) {
+      return queryContext.changes().isDeleted(doc, null, value);
     }
 
     protected ScoreDoc fetchNext() {

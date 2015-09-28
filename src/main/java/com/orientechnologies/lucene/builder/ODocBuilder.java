@@ -29,13 +29,15 @@ import org.apache.lucene.document.Field;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Enrico Risa on 02/09/15.
  */
 public class ODocBuilder implements DocBuilder {
   @Override
-  public Document build(OIndexDefinition definition, Object key, OIdentifiable value, ODocument metadata) {
+  public Document build(OIndexDefinition definition, Object key, OIdentifiable value, Map<String, Boolean> fieldsToStore,
+      ODocument metadata) {
     Document doc = new Document();
 
     if (value != null) {
@@ -48,6 +50,10 @@ public class ODocBuilder implements DocBuilder {
     for (String f : definition.getFields()) {
       Object val = formattedKey.get(i);
       i++;
+      if (isToStore(f, fieldsToStore).equals(Field.Store.YES)) {
+        doc.add(OLuceneIndexType.createField(f + OLuceneIndexEngineAbstract.STORED, val, Field.Store.YES,
+            Field.Index.NOT_ANALYZED_NO_NORMS));
+      }
       doc.add(OLuceneIndexType.createField(f, val, Field.Store.NO, Field.Index.ANALYZED));
     }
     return doc;
@@ -66,10 +72,14 @@ public class ODocBuilder implements DocBuilder {
       keys.add(key);
     }
 
-    //a sort of pa
+    // a sort of pa
     for (int i = keys.size(); i < definition.getFields().size(); i++) {
       keys.add("");
     }
     return keys;
+  }
+
+  protected Field.Store isToStore(String f, Map<String, Boolean> collectionFields) {
+    return collectionFields.get(f) ? Field.Store.YES : Field.Store.NO;
   }
 }

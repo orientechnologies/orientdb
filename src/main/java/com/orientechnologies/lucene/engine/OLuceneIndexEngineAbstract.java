@@ -23,6 +23,8 @@ import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.lucene.OLuceneMapEntryIterator;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
+import com.orientechnologies.lucene.tx.OLuceneTxChangesMultiRid;
+import com.orientechnologies.lucene.tx.OLuceneTxChangesSingleRid;
 import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
 import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
@@ -61,7 +63,6 @@ import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-//TODO: (frank) this is more and engine rather than a manager, maybe rename
 public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdaptiveExternal implements OLuceneIndexEngine,
     OOrientListener {
 
@@ -295,27 +296,27 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   protected Analyzer getAnalyzer(final ODocument metadata) {
     if (metadata != null && metadata.field("analyzer") != null) {
       final String analyzerFQN = metadata.field("analyzer");
+      try {
+
+        final Class classAnalyzer = Class.forName(analyzerFQN);
+        final Constructor constructor = classAnalyzer.getConstructor();
+
+        return (Analyzer) constructor.newInstance();
+      } catch (ClassNotFoundException e) {
+        throw new OIndexException("Analyzer: " + analyzerFQN + " not found", e);
+      } catch (NoSuchMethodException e) {
+        Class classAnalyzer = null;
         try {
+          classAnalyzer = Class.forName(analyzerFQN);
+          return (Analyzer) classAnalyzer.newInstance();
 
-          final Class classAnalyzer = Class.forName(analyzerFQN);
-          final Constructor constructor = classAnalyzer.getConstructor();
-
-          return (Analyzer) constructor.newInstance();
-        } catch (ClassNotFoundException e) {
-          throw new OIndexException("Analyzer: " + analyzerFQN + " not found", e);
-        } catch (NoSuchMethodException e) {
-          Class classAnalyzer = null;
-          try {
-            classAnalyzer = Class.forName(analyzerFQN);
-            return  (Analyzer) classAnalyzer.newInstance();
-
-          } catch (Throwable e1) {
-            throw new OIndexException("Couldn't instantiate analyzer:  public constructor  not found", e1);
-          }
-
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on getting analyzer for Lucene index", e);
+        } catch (Throwable e1) {
+          throw new OIndexException("Couldn't instantiate analyzer:  public constructor  not found", e1);
         }
+
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on getting analyzer for Lucene index", e);
+      }
     }
     return new StandardAnalyzer();
   }
@@ -323,7 +324,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   public void initIndex(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic,
       ODocument metadata) {
 
-    //FIXME how many timers are around?
+    // FIXME how many timers are around?
     Orient.instance().registerListener(this);
     commitTask = new TimerTask() {
       @Override
@@ -434,7 +435,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     mgrWriter = new TrackingIndexWriter(indexWriter);
     searcherManager = new SearcherManager(indexWriter, true, null);
 
-
     if (nrt != null) {
       nrt.close();
     }
@@ -535,6 +535,10 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public OLuceneTxChanges buildTxChanges() throws IOException {
-    return new OLuceneTxChanges(this, createIndexWriter(new RAMDirectory()));
+    if (isCollectionDelete()) {
+      return new OLuceneTxChangesMultiRid(this, createIndexWriter(new RAMDirectory()));
+    } else {
+      return new OLuceneTxChangesSingleRid(this, createIndexWriter(new RAMDirectory()));
+    }
   }
 }

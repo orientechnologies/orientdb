@@ -105,6 +105,10 @@ public abstract class OShapeBuilder<T extends Shape> {
 
   }
 
+  protected Geometry toGeometry(Shape shape) {
+    return SPATIAL_CONTEXT.getGeometryFrom(shape);
+  }
+
   public JtsGeometry toShape(Geometry geometry) {
     // dateline180Check is false because ElasticSearch does it's own dateline wrapping
     JtsGeometry jtsGeometry = new JtsGeometry(geometry, SPATIAL_CONTEXT, false, false);
@@ -132,5 +136,10 @@ public abstract class OShapeBuilder<T extends Shape> {
 
   public static SpatialContext getSpatialContext() {
     return SPATIAL_CONTEXT;
+  }
+
+  public int getSRID(Shape shape) {
+    Geometry geometry = toGeometry(shape);
+    return geometry.getSRID();
   }
 }

@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  * Created by Enrico Risa on 18/09/15.
  */
-@Test
+@Test(groups = "embedded")
 public class LuceneMiscTest {
 
   @Test

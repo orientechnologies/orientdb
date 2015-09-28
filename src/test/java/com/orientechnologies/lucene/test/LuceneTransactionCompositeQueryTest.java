@@ -38,6 +38,7 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 10/08/15.
  */
+@Test(groups = "embedded")
 public class LuceneTransactionCompositeQueryTest extends BaseConfiguredLuceneTest {
 
   public LuceneTransactionCompositeQueryTest() {

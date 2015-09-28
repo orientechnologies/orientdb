@@ -18,20 +18,17 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -39,21 +36,14 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 10/08/15.
  */
-public class LuceneTransactionEmbeddedQueryTest extends BaseConfiguredLuceneTest {
+@Test(groups = "embedded")
+public class LuceneTransactionEmbeddedQueryTest {
 
   public LuceneTransactionEmbeddedQueryTest() {
   }
 
-  public LuceneTransactionEmbeddedQueryTest(boolean remote) {
-    super(remote);
-  }
-
-  @BeforeClass
-  @Override
-  public void init() {
-    super.init();
-
-    final OrientVertexType c1 = new OrientGraphNoTx(databaseDocumentTx).createVertexType("C1");
+  protected void createSchema(ODatabaseDocumentTx db) {
+    final OrientVertexType c1 = new OrientGraphNoTx(db).createVertexType("C1");
     c1.createProperty("p1", OType.EMBEDDEDLIST, OType.STRING);
     c1.createIndex("C1.p1", "FULLTEXT", null, null, "LUCENE", new String[] { "p1" });
   }
@@ -61,229 +51,241 @@ public class LuceneTransactionEmbeddedQueryTest extends BaseConfiguredLuceneTest
   @Test
   public void testRollback() {
 
-    ODocument doc = new ODocument("c1");
-    doc.field("p1", new String[] { "abc" });
-    databaseDocumentTx.begin();
-    databaseDocumentTx.save(doc);
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:updateTxTest");
+    db.create();
+    createSchema(db);
+    try {
+      ODocument doc = new ODocument("c1");
+      doc.field("p1", new String[] { "abc" });
+      db.begin();
+      db.save(doc);
 
-    String query = "select from C1 where p1 lucene \"abc\" ";
-    List<ODocument> vertices = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OSQLSynchQuery<ODocument>(query)).execute();
+      String query = "select from C1 where p1 lucene \"abc\" ";
+      List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-    Assert.assertEquals(vertices.size(), 1);
-    databaseDocumentTx.rollback();
+      Assert.assertEquals(vertices.size(), 1);
+      db.rollback();
 
-    query = "select from C1 where p1 lucene \"abc\" ";
-    vertices = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OSQLSynchQuery<ODocument>(query)).execute();
-    Assert.assertEquals(vertices.size(), 0);
-
+      query = "select from C1 where p1 lucene \"abc\" ";
+      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      Assert.assertEquals(vertices.size(), 0);
+    } finally {
+      db.drop();
+    }
   }
 
   @Test
   public void txRemoveTest() {
-    databaseDocumentTx.begin();
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:updateTxTest");
+    db.create();
+    createSchema(db);
+    try {
+      db.begin();
 
-    ODocument doc = new ODocument("c1");
-    doc.field("p1", new String[] { "abc" });
+      ODocument doc = new ODocument("c1");
+      doc.field("p1", new String[] { "abc" });
 
-    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("C1.p1");
+      OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
 
-    databaseDocumentTx.save(doc);
+      db.save(doc);
 
-    String query = "select from C1 where p1 lucene \"abc\" ";
-    List<ODocument> vertices = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OSQLSynchQuery<ODocument>(query)).execute();
+      String query = "select from C1 where p1 lucene \"abc\" ";
+      List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-    Assert.assertEquals(vertices.size(), 1);
+      Assert.assertEquals(vertices.size(), 1);
 
-    Assert.assertEquals(index.getSize(), 1);
-    databaseDocumentTx.commit();
+      Assert.assertEquals(index.getSize(), 1);
+      db.commit();
 
-    query = "select from C1 where p1 lucene \"abc\" ";
-    vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      query = "select from C1 where p1 lucene \"abc\" ";
+      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-    Assert.assertEquals(vertices.size(), 1);
-    Assert.assertEquals(index.getSize(), 1);
+      Assert.assertEquals(vertices.size(), 1);
+      Assert.assertEquals(index.getSize(), 1);
 
-    databaseDocumentTx.begin();
+      db.begin();
 
-    databaseDocumentTx.delete(vertices.get(0));
+      db.delete(vertices.get(0));
 
-    query = "select from C1 where p1 lucene \"abc\" ";
-    vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      query = "select from C1 where p1 lucene \"abc\" ";
+      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-    Collection coll = (Collection) index.get("abc");
+      Collection coll = (Collection) index.get("abc");
 
-    Assert.assertEquals(vertices.size(), 0);
-    Assert.assertEquals(coll.size(), 0);
+      Assert.assertEquals(vertices.size(), 0);
+      Assert.assertEquals(coll.size(), 0);
 
-    Iterator iterator = coll.iterator();
-    int i = 0;
-    while (iterator.hasNext()) {
-      iterator.next();
-      i++;
+      Iterator iterator = coll.iterator();
+      int i = 0;
+      while (iterator.hasNext()) {
+        iterator.next();
+        i++;
+      }
+      Assert.assertEquals(i, 0);
+      Assert.assertEquals(index.getSize(), 0);
+
+      db.rollback();
+
+      query = "select from C1 where p1 lucene \"abc\" ";
+      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+
+      Assert.assertEquals(vertices.size(), 1);
+
+      Assert.assertEquals(index.getSize(), 1);
+    } finally {
+      db.drop();
     }
-    Assert.assertEquals(i, 0);
-    Assert.assertEquals(index.getSize(), 0);
-
-    databaseDocumentTx.rollback();
-
-    query = "select from C1 where p1 lucene \"abc\" ";
-    vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
-
-    Assert.assertEquals(vertices.size(), 1);
-
-    Assert.assertEquals(index.getSize(), 1);
-
   }
 
   @Test
   public void txUpdateTest() {
 
-    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("C1.p1");
-    OClass c1 = databaseDocumentTx.getMetadata().getSchema().getClass("C1");
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:updateTxTest");
+    db.create();
+    createSchema(db);
     try {
-      c1.truncate();
-    } catch (IOException e) {
-      e.printStackTrace();
+
+      OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+
+      Assert.assertEquals(index.getSize(), 0);
+
+      db.begin();
+
+      ODocument doc = new ODocument("c1");
+      doc.field("p1", new String[] { "update removed", "update fixed" });
+
+      db.save(doc);
+
+      String query = "select from C1 where p1 lucene \"update\" ";
+      List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+
+      Assert.assertEquals(vertices.size(), 1);
+
+      Assert.assertEquals(index.getSize(), 2);
+
+      db.commit();
+
+      query = "select from C1 where p1 lucene \"update\" ";
+      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+
+      Collection coll = (Collection) index.get("update");
+
+      Assert.assertEquals(vertices.size(), 1);
+      Assert.assertEquals(coll.size(), 2);
+      Assert.assertEquals(index.getSize(), 2);
+
+      db.begin();
+
+      ODocument record = vertices.get(0);
+      Collection p1 = record.field("p1");
+      p1.remove("update removed");
+      db.save(record);
+
+      query = "select from C1 where p1 lucene \"update\" ";
+      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      coll = (Collection) index.get("update");
+
+      Assert.assertEquals(vertices.size(), 1);
+      Assert.assertEquals(coll.size(), 1);
+
+      Iterator iterator = coll.iterator();
+      int i = 0;
+      while (iterator.hasNext()) {
+        iterator.next();
+        i++;
+      }
+      Assert.assertEquals(i, 1);
+
+      Assert.assertEquals(index.getSize(), 1);
+
+      query = "select from C1 where p1 lucene \"update\"";
+      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+
+      coll = (Collection) index.get("update");
+      Assert.assertEquals(coll.size(), 1);
+
+      Assert.assertEquals(vertices.size(), 1);
+
+      db.rollback();
+
+      query = "select from C1 where p1 lucene \"update\" ";
+      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+
+      Assert.assertEquals(vertices.size(), 1);
+
+      Assert.assertEquals(index.getSize(), 2);
+    } finally {
+      db.drop();
     }
-
-    Assert.assertEquals(index.getSize(), 0);
-
-    databaseDocumentTx.begin();
-
-    ODocument doc = new ODocument("c1");
-    doc.field("p1", new String[] { "update" });
-
-    databaseDocumentTx.save(doc);
-
-    String query = "select from C1 where p1 lucene \"update\" ";
-    List<ODocument> vertices = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OSQLSynchQuery<ODocument>(query)).execute();
-
-    Assert.assertEquals(vertices.size(), 1);
-
-    Assert.assertEquals(index.getSize(), 1);
-
-    databaseDocumentTx.commit();
-
-    query = "select from C1 where p1 lucene \"update\" ";
-    vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
-
-    Collection coll = (Collection) index.get("update");
-
-    Assert.assertEquals(vertices.size(), 1);
-    Assert.assertEquals(coll.size(), 1);
-    Assert.assertEquals(index.getSize(), 1);
-
-    databaseDocumentTx.begin();
-
-    ODocument record = vertices.get(0);
-    record.field("p1", new String[] { "update" });
-    databaseDocumentTx.save(record);
-
-    query = "select from C1 where p1 lucene \"update\" ";
-    vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
-    coll = (Collection) index.get("update");
-
-    Assert.assertEquals(vertices.size(), 0);
-    Assert.assertEquals(coll.size(), 0);
-
-    Iterator iterator = coll.iterator();
-    int i = 0;
-    while (iterator.hasNext()) {
-      iterator.next();
-      i++;
-    }
-    Assert.assertEquals(i, 0);
-
-    Assert.assertEquals(index.getSize(), 1);
-
-    query = "select from C1 where p1 lucene \"removed\"";
-    vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
-    coll = (Collection) index.get("removed");
-
-    Assert.assertEquals(vertices.size(), 1);
-    Assert.assertEquals(coll.size(), 1);
-
-    databaseDocumentTx.rollback();
-
-    query = "select from C1 where p1 lucene \"update\" ";
-    vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
-
-    Assert.assertEquals(vertices.size(), 1);
-
-    Assert.assertEquals(index.getSize(), 1);
 
   }
 
   @Test
   public void txUpdateTestComplex() {
 
-    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("C1.p1");
-    OClass c1 = databaseDocumentTx.getMetadata().getSchema().getClass("C1");
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:updateTxTest");
+    db.create();
+    createSchema(db);
     try {
-      c1.truncate();
-    } catch (IOException e) {
-      e.printStackTrace();
+      OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+
+      Assert.assertEquals(index.getSize(), 0);
+
+      db.begin();
+
+      ODocument doc = new ODocument("c1");
+      doc.field("p1", new String[] { "abc" });
+
+      ODocument doc1 = new ODocument("c1");
+      doc1.field("p1", new String[] { "abc" });
+
+      db.save(doc1);
+      db.save(doc);
+
+      db.commit();
+
+      db.begin();
+
+      doc.field("p1", new String[] { "removed" });
+      db.save(doc);
+
+      String query = "select from C1 where p1 lucene \"abc\"";
+      List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      Collection coll = (Collection) index.get("abc");
+
+      Assert.assertEquals(vertices.size(), 1);
+      Assert.assertEquals(coll.size(), 1);
+
+      Iterator iterator = coll.iterator();
+      int i = 0;
+      ORecordId rid = null;
+      while (iterator.hasNext()) {
+        rid = (ORecordId) iterator.next();
+        i++;
+      }
+
+      Assert.assertEquals(i, 1);
+      Assert.assertEquals(doc1.getIdentity().toString(), rid.getIdentity().toString());
+      Assert.assertEquals(index.getSize(), 2);
+
+      query = "select from C1 where p1 lucene \"removed\" ";
+      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      coll = (Collection) index.get("removed");
+
+      Assert.assertEquals(vertices.size(), 1);
+      Assert.assertEquals(coll.size(), 1);
+
+      db.rollback();
+
+      query = "select from C1 where p1 lucene \"abc\" ";
+      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+
+      Assert.assertEquals(vertices.size(), 2);
+
+      Assert.assertEquals(index.getSize(), 2);
+    } finally {
+      db.drop();
     }
-
-    Assert.assertEquals(index.getSize(), 0);
-
-    databaseDocumentTx.begin();
-
-    ODocument doc = new ODocument("c1");
-    doc.field("p1", new String[] { "abc" });
-
-    ODocument doc1 = new ODocument("c1");
-    doc1.field("p1", new String[] { "abc" });
-
-    databaseDocumentTx.save(doc1);
-    databaseDocumentTx.save(doc);
-
-    databaseDocumentTx.commit();
-
-    databaseDocumentTx.begin();
-
-    doc.field("p1", new String[] { "removed" });
-    databaseDocumentTx.save(doc);
-
-    String query = "select from C1 where p1 lucene \"abc\"";
-    List<ODocument> vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
-    Collection coll = (Collection) index.get("abc");
-
-    Assert.assertEquals(vertices.size(), 1);
-    Assert.assertEquals(coll.size(), 1);
-
-    Iterator iterator = coll.iterator();
-    int i = 0;
-    ORecordId rid = null;
-    while (iterator.hasNext()) {
-      rid = (ORecordId) iterator.next();
-      i++;
-    }
-
-    Assert.assertEquals(i, 1);
-    Assert.assertEquals(doc1.getIdentity().toString(), rid.getIdentity().toString());
-    Assert.assertEquals(index.getSize(), 2);
-
-    query = "select from C1 where p1 lucene \"removed\" ";
-    vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
-    coll = (Collection) index.get("removed");
-
-    Assert.assertEquals(vertices.size(), 1);
-    Assert.assertEquals(coll.size(), 1);
-
-    databaseDocumentTx.rollback();
-
-    query = "select from C1 where p1 lucene \"abc\" ";
-    vertices = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(query)).execute();
-
-    Assert.assertEquals(vertices.size(), 2);
-
-    Assert.assertEquals(index.getSize(), 2);
-
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "transactionQueryTest";
-  }
 }
