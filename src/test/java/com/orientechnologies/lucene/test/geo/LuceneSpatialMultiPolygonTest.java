@@ -134,48 +134,6 @@ public class LuceneSpatialMultiPolygonTest extends BaseSpatialLuceneTest {
     docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(docs.size(), 1);
-    // // Should not contain Berlin
-    // String query =
-    // "select * from Place where location ST_CONTAINS { 'shape' : { 'type' : 'Point' , 'coordinates' : [13.383333,52.516667]} } ";
-    // List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-    //
-    // Assert.assertEquals(docs.size(), 0);
-    //
-    // // Should not contain Berlin BBox
-    // query =
-    // "select * from Place where location ST_CONTAINS { 'shape' : { 'type' : 'Rectangle' , 'coordinates' : [13.0884,52.33812,13.76134,52.675499]} } ";
-    // docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-    //
-    // Assert.assertEquals(docs.size(), 0);
-    //
-    // // Should contain contain Rome
-    // query = "select * from Place where location ST_CONTAINS { 'shape' : { 'type' : 'Point' , 'coordinates' : [12.5,41.9]} } ";
-    // docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-    //
-    // Assert.assertEquals(docs.size(), 1);
-    //
-    // // Should contain Rome BBox
-    // query =
-    // "select * from Place where location ST_CONTAINS { 'shape' : { 'type' : 'Rectangle' , 'coordinates' : [12.37528,41.802872,12.62256,41.991791]} } ";
-    // docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-    //
-    // Assert.assertEquals(docs.size(), 1);
-    //
-    // // Should contain contain Catania
-    //
-    // query =
-    // "select * from Place where location ST_CONTAINS { 'shape' : { 'type' : 'Point' , 'coordinates' : [15.0777,37.507999]} } ";
-    // docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-    //
-    // Assert.assertEquals(docs.size(), 1);
-    //
-    // // Should contain Catania BBox
-    //
-    // query =
-    // "select * from Place where location ST_CONTAINS { 'shape' : { 'type' : 'Rectangle' , 'coordinates' : [15.04145,37.470379,15.11752,37.532421]} } ";
-    // docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-    //
-    // Assert.assertEquals(docs.size(), 1);
   }
 
   @AfterClass

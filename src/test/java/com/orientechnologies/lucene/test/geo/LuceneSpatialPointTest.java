@@ -113,7 +113,7 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
     Assert.assertEquals(1, docs.size());
 
     query = "select * from City where  ST_WITHIN(location,ST_GeomFromText('POLYGON ((12.314015 41.8262816, 12.314015 41.963125, 12.6605063 41.963125, 12.6605063 41.8262816, 12.314015 41.8262816))'))"
-            + " = true";
+        + " = true";
     docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(1, docs.size());
 
@@ -122,13 +122,6 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
 
     Assert.assertEquals(1, docs.size());
 
-    // query =
-    // "select *,$distance from City where location ST_NEAR { 'shape' : { 'type' : 'Point' , 'coordinates' : [12.482778,41.893056] } , 'maxDistance' : 2  } ";
-    // docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-    //
-    // Assert.assertEquals(1, docs.size());
-    //
-    // Assert.assertEquals(1.6229442709302933, docs.get(0).field("$distance"));
   }
 
   @Test

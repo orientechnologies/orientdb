@@ -106,32 +106,7 @@ public class LuceneSpatialPolygonTest extends BaseSpatialLuceneTest {
     docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(docs.size(), 0);
-    // Should contain Berlin
-    // String query =
-    // "select * from Place where location ST_CONTAINS { 'shape' : { 'type' : 'Point' , 'coordinates' : [13.383333,52.516667]} } ";
-    // List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-    //
-    // Assert.assertEquals(docs.size(), 1);
-    //
-    // // Should contain Berlin BBox
-    // query =
-    // "select * from Place where location ST_CONTAINS { 'shape' : { 'type' : 'Rectangle' , 'coordinates' : [13.0884,52.33812,13.76134,52.675499]} } ";
-    // docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-    //
-    // Assert.assertEquals(docs.size(), 1);
-    //
-    // // Should not contain Rome
-    // query = "select * from Place where location ST_CONTAINS { 'shape' : { 'type' : 'Point' , 'coordinates' : [12.5,41.9]} } ";
-    // docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-    //
-    // Assert.assertEquals(docs.size(), 0);
-    //
-    // // Should not contain Rome BBox
-    // query =
-    // "select * from Place where location ST_CONTAINS { 'shape' : { 'type' : 'Rectangle' , 'coordinates' : [12.37528,41.802872,12.62256,41.991791]} } ";
-    // docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-    //
-    // Assert.assertEquals(docs.size(), 0);
+
   }
 
   @AfterClass

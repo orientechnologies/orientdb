@@ -30,6 +30,7 @@ public class OSpatialFunctionsFactory implements OSQLFunctionFactory {
   public static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
 
   static {
+    register(OSTGeomFromTextFunction.NAME, new OSTGeomFromTextFunction());
     register(OSTAsTextFunction.NAME, new OSTAsTextFunction());
     register(STWithinFunction.NAME, new STWithinFunction());
     register(STEqualsFunction.NAME, new STEqualsFunction());
@@ -38,7 +39,7 @@ public class OSpatialFunctionsFactory implements OSQLFunctionFactory {
     register(STSrid.NAME, new STSrid());
     // register(STNearFunction.NAME, new STNearFunction());
     // register(STContainsFunction.NAME, new STContainsFunction());
-    register(OSTGeomFromTextFunction.NAME, new OSTGeomFromTextFunction());
+
   }
 
   @Override
