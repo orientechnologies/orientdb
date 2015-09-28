@@ -24,25 +24,12 @@ import java.io.IOException;
 import java.nio.channels.FileLock;
 
 /**
- * Interface to represent low-level File access. To use 3rd party implementations register them to the {@link OFileFactory}
- * singleton instance.
+ * Interface to represent low-level File access.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 public interface OFile {
-
-  /**
-   * Initializes the file passing name and open mode.
-   * 
-   * @param iFileName
-   *          File name
-   * @param iOpenMode
-   *          Opening mode between "r" = read-only and "rw" for read write
-   * @return
-   */
-  OFile init(String iFileName, String iOpenMode);
-
   /**
    * Opens the file.
    * 
@@ -72,12 +59,6 @@ public interface OFile {
    */
   void delete() throws IOException;
 
-  void setSize(long iSize) throws IOException;
-
-  void writeHeaderLong(int iPosition, long iValue) throws IOException;
-
-  long readHeaderLong(int iPosition) throws IOException;
-
   boolean synch() throws IOException;
 
   void read(long iOffset, byte[] iDestBuffer, int iLenght) throws IOException;
@@ -100,12 +81,6 @@ public interface OFile {
 
   long write(long iOffset, byte[] iSourceBuffer) throws IOException;
 
-  void setSoftlyClosed(boolean b) throws IOException;
-
-  boolean wasSoftlyClosed() throws IOException;
-
-  boolean isSoftlyClosed() throws IOException;
-
   void lock() throws IOException;
 
   FileLock lock(final long iRangeFrom, final long iRangeSize, final boolean iShared) throws IOException;
@@ -114,14 +89,6 @@ public interface OFile {
 
   void unlock() throws IOException;
 
-  /**
-   * Cuts bytes from the tail of the file reducing the filledUpTo size.
-   * 
-   * 
-   * @param iSizeToShrink
-   * @throws IOException
-   */
-  void removeTail(long iSizeToShrink) throws IOException;
 
   /**
    * Shrink the file content (filledUpTo attribute only)
@@ -142,31 +109,13 @@ public interface OFile {
 
   long allocateSpace(final long iSize) throws IOException;
 
-  long getFreeSpace();
-
   long getFileSize();
 
-  long getFilledUpTo();
-
-  boolean canOversize(final int iRecordSize);
-
   String toString();
-
-  long getMaxSize();
-
-  void setMaxSize(int maxSize);
-
-  int getIncrementSize();
-
-  void setIncrementSize(int incrementSize);
 
   boolean isOpen();
 
   boolean exists();
-
-  boolean isFailCheck();
-
-  void setFailCheck(boolean failCheck);
 
   void read(long iOffset, byte[] iData, int iLength, int iArrayOffset) throws IOException;
 

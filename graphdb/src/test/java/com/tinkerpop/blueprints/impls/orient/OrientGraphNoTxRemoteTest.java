@@ -2,6 +2,7 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
@@ -36,6 +37,7 @@ import java.util.Map;
  */
 @RunWith(JUnit4.class)
 public class OrientGraphNoTxRemoteTest extends GraphTest {
+  private static final String             serverPort     = System.getProperty("orient.server.port", "3080");
   private static OServer                  server;
   private static String                   oldOrientDBHome;
 
@@ -76,7 +78,7 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
 
     final File file = new File(serverHome);
     deleteDirectory(file);
-
+    OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.setValue(15000);
     Orient.instance().startup();
   }
 
@@ -135,7 +137,7 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
   }
 
   public Graph generateGraph(final String graphDirectoryName) {
-    final String url = "remote:localhost:3080/" + graphDirectoryName;
+    final String url = "remote:localhost:" + serverPort + "/" + graphDirectoryName;
     OrientGraphNoTx graph = currentGraphs.get(url);
 
     if (graph != null) {
@@ -179,7 +181,7 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     // this is necessary on windows systems: deleting the directory is not enough because it takes a
     // while to unlock files
     try {
-      final String url = "remote:localhost:3080/" + graphDirectoryName;
+      final String url = "remote:localhost:" + serverPort + "/" + graphDirectoryName;
       final OrientGraphNoTx graph = currentGraphs.get(url);
       if (graph != null)
         graph.shutdown();

@@ -74,7 +74,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
     final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
     executor.parse(iCommand);
     quorumType = ((OCommandDistributedReplicateRequest) executor).getQuorumType();
-    timeout = ((OCommandDistributedReplicateRequest) executor).getTimeout();
+    timeout = ((OCommandDistributedReplicateRequest) executor).getDistributedTimeout();
   }
 
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
@@ -100,8 +100,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
       for (String c : clusters)
         clusterIds[i++] = database.getClusterIdByName(c);
 
-      final ORecordIteratorClusters<ORecord> filteredTarget = new ORecordIteratorClusters<ORecord>(database, database, clusterIds,
-          true);
+      final ORecordIteratorClusters<ORecord> filteredTarget = new ORecordIteratorClusters<ORecord>(database, database, clusterIds);
       if (target instanceof ORecordIteratorClusters)
         filteredTarget.setRange(((ORecordIteratorClusters) target).getBeginRange(),
             ((ORecordIteratorClusters) target).getEndRange());
@@ -133,7 +132,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   }
 
   @Override
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     return timeout;
   }
 

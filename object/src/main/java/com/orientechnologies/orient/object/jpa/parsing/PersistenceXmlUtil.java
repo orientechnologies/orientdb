@@ -219,7 +219,7 @@ class SchemaLocatingHandler extends DefaultHandler {
 
     // This should never occurs, however check if contain known tag other than TAG_PERSISTENCE
     if (TAG_PERSISTENCE != element && EnumSet.allOf(PersistenceXml.class).contains(element)) {
-      throw new PersistenceException("Can't find schema version attribute in <persistence> tag");
+      throw new PersistenceException("Cannot find schema version attribute in <persistence> tag");
     }
   }
 

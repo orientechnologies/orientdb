@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -82,7 +83,10 @@ public class ODocumentHelper {
   }
 
   @SuppressWarnings("unchecked")
-  public static <RET> RET convertField(final ODocument iDocument, final String iFieldName, final Class<?> iFieldType, Object iValue) {
+  public static <RET> RET convertField(final ODocument iDocument, final String iFieldName, OType type, Class<?> iFieldType,
+      Object iValue) {
+    if (iFieldType == null)
+      iFieldType = type.getDefaultJavaType();
     if (iFieldType == null)
       return (RET) iValue;
 
@@ -105,7 +109,7 @@ public class ODocumentHelper {
         // CONVERT IT TO SET
         final Collection<?> newValue;
 
-        if (iValue instanceof ORecordLazyList || iValue instanceof ORecordLazyMap)
+        if (type.isLink())
           newValue = new ORecordLazySet(iDocument);
         else
           newValue = new OTrackedSet<Object>(iDocument);
@@ -141,7 +145,7 @@ public class ODocumentHelper {
         // CONVERT IT TO LIST
         final Collection<?> newValue;
 
-        if (iValue instanceof OMVRBTreeRIDSet || iValue instanceof ORecordLazyMap || iValue instanceof ORecordLazySet)
+        if (type.isLink())
           newValue = new ORecordLazyList(iDocument);
         else
           newValue = new OTrackedList<Object>(iDocument);
@@ -199,7 +203,7 @@ public class ODocumentHelper {
         } catch (ParseException pe) {
           final String dateFormat = ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat
               : config.dateFormat;
-          throw new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat);
+          throw new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat, pe);
         }
       }
     }
@@ -303,7 +307,7 @@ public class ODocumentHelper {
             // MULTI VALUE
             final Object[] values = new Object[indexParts.size()];
             for (int i = 0; i < indexParts.size(); ++i) {
-              values[i] = ((ODocument) record).field(OStringSerializerHelper.getStringContent(indexParts.get(i)));
+              values[i] = ((ODocument) record).field(OIOUtils.getStringContent(indexParts.get(i)));
             }
             value = values;
           } else if (indexRanges.size() > 1) {
@@ -332,7 +336,7 @@ public class ODocumentHelper {
             Object conditionFieldValue = ORecordSerializerStringAbstract.getTypeValue(indexCondition.get(1));
 
             if (conditionFieldValue instanceof String)
-              conditionFieldValue = OStringSerializerHelper.getStringContent(conditionFieldValue);
+              conditionFieldValue = OIOUtils.getStringContent(conditionFieldValue);
 
             final Object fieldValue = getFieldValue(currentRecord, conditionFieldName);
 
@@ -360,7 +364,7 @@ public class ODocumentHelper {
             // MULTI VALUE
             final Object[] values = new Object[indexParts.size()];
             for (int i = 0; i < indexParts.size(); ++i) {
-              values[i] = map.get(OStringSerializerHelper.getStringContent(indexParts.get(i)));
+              values[i] = map.get(OIOUtils.getStringContent(indexParts.get(i)));
             }
             value = values;
           } else if (indexRanges.size() > 1) {
@@ -387,7 +391,7 @@ public class ODocumentHelper {
             Object conditionFieldValue = ORecordSerializerStringAbstract.getTypeValue(indexCondition.get(1));
 
             if (conditionFieldValue instanceof String)
-              conditionFieldValue = OStringSerializerHelper.getStringContent(conditionFieldValue);
+              conditionFieldValue = OIOUtils.getStringContent(conditionFieldValue);
 
             final Object fieldValue = map.get(conditionFieldName);
 
@@ -447,7 +451,7 @@ public class ODocumentHelper {
             Object conditionFieldValue = ORecordSerializerStringAbstract.getTypeValue(indexCondition.get(1));
 
             if (conditionFieldValue instanceof String)
-              conditionFieldValue = OStringSerializerHelper.getStringContent(conditionFieldValue);
+              conditionFieldValue = OIOUtils.getStringContent(conditionFieldValue);
 
             final HashSet<Object> values = new HashSet<Object>();
             for (Object v : OMultiValue.getMultiValueIterable(value)) {
@@ -499,7 +503,7 @@ public class ODocumentHelper {
             Object conditionFieldValue = ORecordSerializerStringAbstract.getTypeValue(indexCondition.get(1));
 
             if (conditionFieldValue instanceof String)
-              conditionFieldValue = OStringSerializerHelper.getStringContent(conditionFieldValue);
+              conditionFieldValue = OIOUtils.getStringContent(conditionFieldValue);
 
             value = filterItem(conditionFieldName, conditionFieldValue, value);
 
@@ -554,7 +558,7 @@ public class ODocumentHelper {
   protected static Object getIndexPart(final OCommandContext iContext, final String indexPart) {
     Object index = indexPart;
     if (indexPart.indexOf(',') == -1 && (indexPart.charAt(0) == '"' || indexPart.charAt(0) == '\''))
-      index = OStringSerializerHelper.getStringContent(indexPart);
+      index = OIOUtils.getStringContent(indexPart);
     else if (indexPart.charAt(0) == '$') {
       final Object ctxValue = iContext.getVariable(indexPart);
       if (ctxValue == null)
@@ -745,9 +749,9 @@ public class ODocumentHelper {
         result = currentValue.toString().charAt(Integer.parseInt(args.get(0)));
       else if (function.startsWith("INDEXOF("))
         if (args.size() == 1)
-          result = currentValue.toString().indexOf(OStringSerializerHelper.getStringContent(args.get(0)));
+          result = currentValue.toString().indexOf(OIOUtils.getStringContent(args.get(0)));
         else
-          result = currentValue.toString().indexOf(OStringSerializerHelper.getStringContent(args.get(0)),
+          result = currentValue.toString().indexOf(OIOUtils.getStringContent(args.get(0)),
               Integer.parseInt(args.get(1)));
       else if (function.startsWith("SUBSTRING("))
         if (args.size() == 1)
@@ -755,14 +759,14 @@ public class ODocumentHelper {
         else
           result = currentValue.toString().substring(Integer.parseInt(args.get(0)), Integer.parseInt(args.get(1)));
       else if (function.startsWith("APPEND("))
-        result = currentValue.toString() + OStringSerializerHelper.getStringContent(args.get(0));
+        result = currentValue.toString() + OIOUtils.getStringContent(args.get(0));
       else if (function.startsWith("PREFIX("))
-        result = OStringSerializerHelper.getStringContent(args.get(0)) + currentValue.toString();
+        result = OIOUtils.getStringContent(args.get(0)) + currentValue.toString();
       else if (function.startsWith("FORMAT("))
         if (currentValue instanceof Date)
-          result = new SimpleDateFormat(OStringSerializerHelper.getStringContent(args.get(0))).format(currentValue);
+          result = new SimpleDateFormat(OIOUtils.getStringContent(args.get(0))).format(currentValue);
         else
-          result = String.format(OStringSerializerHelper.getStringContent(args.get(0)), currentValue.toString());
+          result = String.format(OIOUtils.getStringContent(args.get(0)), currentValue.toString());
       else if (function.startsWith("LEFT(")) {
         final int len = Integer.parseInt(args.get(0));
         final String stringValue = currentValue.toString();
@@ -790,7 +794,9 @@ public class ODocumentHelper {
         return ((ODocument) fieldValue).copy();
 
       } else if (fieldValue instanceof ORidBag) {
-        return ((ORidBag) fieldValue).copy();
+        ORidBag newBag = ((ORidBag) fieldValue).copy();
+        newBag.setOwner(iCloned);
+        return newBag;
 
       } else if (fieldValue instanceof ORecordLazyList) {
         return ((ORecordLazyList) fieldValue).copy(iCloned);

@@ -9,6 +9,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.ConnectDatabaseTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DatabaseConflictStategyTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DatabaseConflictStrategyAutoMergeTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.DbCopyTest"/>
         </classes>
     </test>
     <test name="Schema">
@@ -31,13 +32,11 @@
     </test>
     <test name="Population">
         <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectInheritanceTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ComplexTypesTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentValidationTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.RecordMetadataTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest"/>

@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -41,8 +42,7 @@ import java.util.Set;
 public class OHashIndexFactory implements OIndexFactory {
 
   private static final Set<String> TYPES;
-  public static final String       SBTREE_ALGORITHM   = "SBTREE";
-  public static final String       MVRBTREE_ALGORITHM = "MVRBTREE";
+  public static final String       HASH_INDEX_ALGORITHM = "HASH_INDEX";
   private static final Set<String> ALGORITHMS;
   static {
     final Set<String> types = new HashSet<String>();
@@ -54,8 +54,8 @@ public class OHashIndexFactory implements OIndexFactory {
   }
   static {
     final Set<String> algorithms = new HashSet<String>();
-    algorithms.add(SBTREE_ALGORITHM);
-    algorithms.add(MVRBTREE_ALGORITHM);
+    algorithms.add(HASH_INDEX_ALGORITHM);
+
     ALGORITHMS = Collections.unmodifiableSet(algorithms);
   }
 
@@ -85,41 +85,20 @@ public class OHashIndexFactory implements OIndexFactory {
     if (valueContainerAlgorithm == null)
       valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
 
-    OStorage storage = database.getStorage();
-    OIndexEngine indexEngine;
-
-    Boolean durableInNonTxMode;
-    Object durable = null;
-
-    if (metadata != null) {
-      durable = metadata.field("durableInNonTxMode");
-    }
-
-    if (durable instanceof Boolean)
-      durableInNonTxMode = (Boolean) durable;
-    else
-      durableInNonTxMode = null;
-
-    final String storageType = storage.getType();
-    if (storageType.equals("memory") || storageType.equals("plocal"))
-      indexEngine = new OHashTableIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage(), version);
-    else if (storageType.equals("distributed"))
-      // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OHashTableIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage()
-          .getUnderlying(), version);
-    else if (storageType.equals("remote"))
-      indexEngine = new ORemoteIndexEngine();
-    else
-      throw new OIndexException("Unsupported storage type : " + storageType);
+    final OStorage storage = database.getStorage();
 
     if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexUnique(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexUnique(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
+          valueContainerAlgorithm, metadata);
     else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexNotUnique(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexNotUnique(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
+          valueContainerAlgorithm, metadata);
     else if (OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType))
-      return new OIndexFullText(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexFullText(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
+          valueContainerAlgorithm, metadata);
     else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType))
-      return new OIndexDictionary(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexDictionary(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
+          valueContainerAlgorithm, metadata);
 
     throw new OConfigurationException("Unsupported type : " + indexType);
   }
@@ -127,5 +106,25 @@ public class OHashIndexFactory implements OIndexFactory {
   @Override
   public int getLastVersion() {
     return OHashTableIndexEngine.VERSION;
+  }
+
+  @Override
+  public OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version,
+      Map<String, String> engineProperties) {
+    OIndexEngine indexEngine;
+
+    final String storageType = storage.getType();
+    if (storageType.equals("memory") || storageType.equals("plocal"))
+      indexEngine = new OHashTableIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage, version);
+    else if (storageType.equals("distributed"))
+      // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
+      indexEngine = new OHashTableIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage.getUnderlying(),
+          version);
+    else if (storageType.equals("remote"))
+      indexEngine = new ORemoteIndexEngine(name);
+    else
+      throw new OIndexException("Unsupported storage type : " + storageType);
+
+    return indexEngine;
   }
 }

@@ -41,18 +41,9 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * SQL DELETE EDGE command.
@@ -151,6 +142,11 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
             if (temp != null)
               batch = Integer.parseInt(temp);
 
+          } else if (temp.equals(KEYWORD_LIMIT)) {
+            temp = parserNextWord(true);
+            if (temp != null)
+              limit = Integer.parseInt(temp);
+
           } else if (temp.length() > 0) {
             // GET/CHECK CLASS NAME
             label = originalTemp;
@@ -165,7 +161,11 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
         }
 
         if (where == null)
-          where = "";
+          if (limit > -1) {
+            where = " LIMIT " + limit;
+          } else {
+            where = "";
+          }
         else
           where = " WHERE " + where;
 
@@ -280,7 +280,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
                   // ADDITIONAL FILTERING
                   for (Iterator<OrientEdge> it = edges.iterator(); it.hasNext();) {
                     final OrientEdge edge = it.next();
-                    if (!(Boolean) compiledFilter.evaluate((ODocument) edge.getRecord(), null, context))
+                    if (!(Boolean) compiledFilter.evaluate(edge.getRecord(), null, context))
                       it.remove();
                   }
                 }
@@ -330,7 +330,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
     if (compiledFilter != null) {
       // ADDITIONAL FILTERING
-      if (!(Boolean) compiledFilter.evaluate((ODocument) id.getRecord(), null, context))
+      if (!(Boolean) compiledFilter.evaluate(id.getRecord(), null, context))
         return true;
     }
 
@@ -390,12 +390,18 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
     return QUORUM_TYPE.WRITE;
   }
 
-  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return query == null ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
-  }
-
   public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
     return getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.LOCAL ? DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS
         : DISTRIBUTED_RESULT_MGMT.MERGE;
+  }
+
+  @Override
+  public Object getResult() {
+    return null;
+  }
+
+  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return query != null && !getDatabase().getTransaction().isActive() ? DISTRIBUTED_EXECUTION_MODE.REPLICATE
+        : DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 }

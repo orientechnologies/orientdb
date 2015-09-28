@@ -22,29 +22,17 @@ public class OParenthesisExpression extends OMathExpression {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("(");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("(");
     if (expression != null) {
-      result.append(expression.toString());
+      expression.toString(params, builder);
     } else if (statement != null) {
-      result.append(statement.toString());
+      statement.toString(params, builder);
     }
-    result.append(")");
-    return result.toString();
+    builder.append(")");
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    super.replaceParameters(params);
-    if (expression != null) {
-      expression.replaceParameters(params);
-    }
-    if (statement != null) {
-      statement.replaceParameters(params);
-    }
-  }
+
 
   @Override
   protected boolean supportsBasicCalculation() {

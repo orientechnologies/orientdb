@@ -19,15 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OApi;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
-
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -39,6 +30,16 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OApi;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -55,7 +56,7 @@ public enum OGlobalConfiguration {
       Boolean.class, Boolean.TRUE),
 
   ENVIRONMENT_ALLOW_JVM_SHUTDOWN("environment.allowJVMShutdown", "Allows to shutdown the JVM if needed/requested", Boolean.class,
-      true),
+      true, true),
 
   // SCRIPT
   SCRIPT_POOL("script.pool.maxSize", "Maximum number of instances in the pool of script engines", Integer.class, 20),
@@ -68,6 +69,11 @@ public enum OGlobalConfiguration {
       "Indicates whether to do perform range check before each direct memory update, it is true by default, "
           + "but usually it can be safely put to false. It is needed to set to true only after dramatic changes in storage structures.",
       Boolean.class, true),
+
+  DIRECT_MEMORY_TRACK_MODE("memory.directMemory.trackMode", "If 'track mode' is switched on then following steps are performed: "
+      + "1. direct memory JMX bean is registered. 2. You may check amount of allocated direct memory as property of JMX bean. "
+      + "3. If memory leak is detected then JMX event will be fired. "
+      + "This mode provides big overhead and may be used only for testing purpose", Boolean.class, false),
 
   DIRECT_MEMORY_ONLY_ALIGNED_ACCESS(
       "memory.directMemory.onlyAlignedMemoryAccess",
@@ -91,10 +97,10 @@ public enum OGlobalConfiguration {
   DISK_WRITE_CACHE_FLUSH_WRITE_INACTIVITY_INTERVAL("storage.diskCache.writeCacheFlushInactivityInterval",
       "Interval between 2 writes to the disk cache,"
           + " if writes are done with interval more than provided all files will be fsynced before next write,"
-          + " which allows do not do data restore after server crash (in ms).", Long.class, 60 * 1000),
+          + " which allows do not do data restore after server crash (in ms)", Long.class, 60 * 1000),
 
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
-      "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, -1),
+      "Maximum amount of time till write cache will be wait before page flush in ms", Integer.class, -1),
 
   DISK_CACHE_FREE_SPACE_LIMIT("storage.diskCache.diskFreeSpaceLimit", "Minimum amount of space on disk after which database will "
       + "work only in read mode, in megabytes", Long.class, 100),
@@ -106,8 +112,25 @@ public enum OGlobalConfiguration {
   STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Should we perform force sync of storage configuration for each update", Boolean.class, true),
 
-  STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
-      + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "nothing"),
+  STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method used in storage."
+      + " Possible values : gzip, nothing, snappy, snappy-native. Default is 'nothing'", String.class, "nothing"),
+
+  STORAGE_ENCRYPTION_METHOD("storage.encryptionMethod", "Record encryption method used in storage"
+      + " Possible values : 'aes' and 'des'. Default is no encryption", String.class, "nothing"),
+
+  STORAGE_ENCRYPTION_KEY("storage.encryptionKey", "Contains the storage encryption key. This setting is hidden", String.class,
+      null, false, true),
+
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE("storage.makeFullCheckpointAfterCreate",
+      "Indicates whether full checkpoint should be performed if storage was created", Boolean.class, true),
+
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN(
+      "storage.makeFullCheckpointAfterOpen",
+      "Indicates whether full checkpoint should be performed if storage was opened. It is needed to make fuzzy checkpoints to work without issues",
+      Boolean.class, true),
+
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
+      "Indicates whether full checkpoint should be performed if storage was opened", Boolean.class, true),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
@@ -117,7 +140,7 @@ public enum OGlobalConfiguration {
       "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) <= 0 means that caching will be switched off.",
       Integer.class, 3000),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single. WAL segment in megabytes.", Integer.class, 128),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single. WAL segment in megabytes", Integer.class, 128),
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Supposed, maximum size of WAL on disk in megabytes. This size may be more or less. ",
       Integer.class, 4096),
@@ -149,25 +172,15 @@ public enum OGlobalConfiguration {
   WAL_LOCATION("storage.wal.path", "Path to the wal file on the disk, by default is placed in DB directory but"
       + " it is highly recomended to use separate disk to store log operations", String.class, null),
 
-  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE("storage.makeFullCheckpointAfterCreate",
-      "Indicates whether full checkpoint should be performed if storage was created.", Boolean.class, true),
-
-  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN(
-      "storage.makeFullCheckpointAfterOpen",
-      "Indicates whether full checkpoint should be performed if storage was opened. It is needed to make fuzzy checkpoints to work without issues",
-      Boolean.class, true),
-
-  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
-      "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
-
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes,!!! NEVER CHANGE THIS VALUE !!!",
       Integer.class, 64),
 
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound", "The minimal amount of free space (in kb)"
       + " in page which is tracked in paginated storage", Integer.class, 16),
 
+  @Deprecated
   STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
-      "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
+      "Indicates whether crc32 should be used for each record to check record integrity", Boolean.class, false),
 
   STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 0),
 
@@ -184,7 +197,8 @@ public enum OGlobalConfiguration {
       Boolean.class, true),
 
   // DATABASE
-  OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only saves objects bound to dirty records", Boolean.class, false),
+  OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only saves objects bound to dirty records", Boolean.class, false,
+      true),
 
   // DATABASE
   DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
@@ -198,9 +212,9 @@ public enum OGlobalConfiguration {
   DB_MVCC_THROWFAST(
       "db.mvcc.throwfast",
       "Use fast-thrown exceptions for MVCC OConcurrentModificationExceptions. No context information will be available, use where these exceptions are handled and the detail is not neccessary",
-      Boolean.class, false),
+      Boolean.class, false, true),
 
-  DB_VALIDATION("db.validation", "Enables or disables validation of records", Boolean.class, true),
+  DB_VALIDATION("db.validation", "Enables or disables validation of records", Boolean.class, true, true),
 
   // SETTINGS OF NON-TRANSACTIONAL MODE
   NON_TX_RECORD_UPDATE_SYNCH("nonTX.recordUpdate.synch",
@@ -220,18 +234,18 @@ public enum OGlobalConfiguration {
   // INDEX
   INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("index.embeddedToSbtreeBonsaiThreshold",
       "Amount of values after which index implementation will use sbtree as values container. Set to -1 to force always using it",
-      Integer.class, 40),
+      Integer.class, 40, true),
 
   INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("index.sbtreeBonsaiToEmbeddedThreshold",
       "Amount of values after which index implementation will use embedded values container (disabled by default)", Integer.class,
-      -1),
+      -1, true),
 
   HASH_TABLE_SPLIT_BUCKETS_BUFFER_LENGTH("hashTable.slitBucketsBuffer.length", "Length of buffer (in pages) where buckets "
       + "that were splited but not flushed to the disk are kept. This buffer is used to minimize random IO overhead.",
       Integer.class, 1500),
 
   INDEX_SYNCHRONOUS_AUTO_REBUILD("index.auto.synchronousAutoRebuild",
-      "Synchronous execution of auto rebuilding of indexes in case of db crash.", Boolean.class, Boolean.TRUE),
+      "Synchronous execution of auto rebuilding of indexes in case of db crash", Boolean.class, Boolean.TRUE),
 
   INDEX_AUTO_LAZY_UPDATES(
       "index.auto.lazyUpdates",
@@ -285,14 +299,14 @@ public enum OGlobalConfiguration {
   RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD(
       "ridBag.embeddedToSbtreeBonsaiThreshold",
       "Amount of values after which LINKBAG implementation will use sbtree as values container. Set to -1 to force always using it",
-      Integer.class, 40),
+      Integer.class, 40, true),
 
   RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("ridBag.sbtreeBonsaiToEmbeddedToThreshold",
       "Amount of values after which LINKBAG implementation will use embedded values container (disabled by default)",
-      Integer.class, -1),
+      Integer.class, -1, true),
 
   // COLLECTIONS
-  PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental.", Boolean.class, false),
+  PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental", Boolean.class, false),
 
   // FILE
   TRACK_FILE_CLOSE("file.trackFileClose",
@@ -305,49 +319,74 @@ public enum OGlobalConfiguration {
   FILE_DELETE_RETRY("file.deleteRetry", "Number of retries to delete a locked file", Integer.class, 50),
 
   JNA_DISABLE_USE_SYSTEM_LIBRARY("jna.disable.system.library",
-      "This property disable to using JNA installed in your system. And use JNA bundled with database.", boolean.class, true),
+      "This property disable to using JNA installed in your system. And use JNA bundled with database", boolean.class, true),
+
+  // SECURITY
+  SECURITY_USER_PASSWORD_SALT_ITERATIONS("security.userPasswordSaltIterations",
+      "Number of iterations to generate the salt or user password. Changing this setting does not affect stored passwords",
+      Integer.class, 65536),
+
+  SECURITY_USER_PASSWORD_SALT_CACHE_SIZE("security.userPasswordSaltCacheSize",
+      "Cache size of hashed salt passwords. The cache works as LRU. Use 0 to disable the cache", Integer.class, 500),
 
   // NETWORK
-  NETWORK_MAX_CONCURRENT_SESSIONS("network.maxConcurrentSessions", "Maximum number of concurrent sessions", Integer.class, 1000),
+  NETWORK_MAX_CONCURRENT_SESSIONS("network.maxConcurrentSessions", "Maximum number of concurrent sessions", Integer.class, 1000,
+      true),
 
-  NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
+  NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768, true),
 
-  NETWORK_LOCK_TIMEOUT("network.lockTimeout", "Timeout in ms to acquire a lock against a channel", Integer.class, 15000),
+  NETWORK_LOCK_TIMEOUT("network.lockTimeout", "Timeout in ms to acquire a lock against a channel", Integer.class, 15000, true),
 
-  NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 15000),
+  NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 15000, true),
 
-  NETWORK_REQUEST_TIMEOUT("network.requestTimeout", "Request completion timeout in ms ", Integer.class, 3600000 /* one hour */),
+  NETWORK_REQUEST_TIMEOUT("network.requestTimeout", "Request completion timeout in ms ", Integer.class, 3600000 /* one hour */,
+      true),
 
   NETWORK_SOCKET_RETRY("network.retry", "Number of times the client retries its connection to the server on failure",
-      Integer.class, 5),
+      Integer.class, 5, true),
 
   NETWORK_SOCKET_RETRY_DELAY("network.retryDelay", "Number of ms the client waits before reconnecting to the server on failure",
-      Integer.class, 500),
+      Integer.class, 500, true),
 
   NETWORK_BINARY_DNS_LOADBALANCING_ENABLED("network.binary.loadBalancing.enabled",
-      "Asks for DNS TXT record to determine if load balancing is supported", Boolean.class, Boolean.FALSE),
+      "Asks for DNS TXT record to determine if load balancing is supported", Boolean.class, Boolean.FALSE, true),
 
   NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT("network.binary.loadBalancing.timeout",
-      "Maximum time (in ms) to wait for the answer from DNS about the TXT record for load balancing", Integer.class, 2000),
+      "Maximum time (in ms) to wait for the answer from DNS about the TXT record for load balancing", Integer.class, 2000, true),
 
   NETWORK_BINARY_MAX_CONTENT_LENGTH("network.binary.maxLength", "TCP/IP max content length in bytes of BINARY requests",
-      Integer.class, 32736),
+      Integer.class, 32736, true),
 
   NETWORK_BINARY_READ_RESPONSE_MAX_TIMES("network.binary.readResponse.maxTimes",
-      "Maximum times to wait until response will be read. Otherwise response will be dropped from chanel", Integer.class, 20),
+      "Maximum times to wait until response will be read. Otherwise response will be dropped from chanel", Integer.class, 20, true),
 
-  NETWORK_BINARY_DEBUG("network.binary.debug", "Debug mode: print all data incoming on the binary channel", Boolean.class, false),
+  NETWORK_BINARY_DEBUG("network.binary.debug", "Debug mode: print all data incoming on the binary channel", Boolean.class, false,
+      true),
 
   NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", "TCP/IP max content length in bytes for HTTP requests", Integer.class,
-      1000000),
+      1000000, true),
 
-  NETWORK_HTTP_CONTENT_CHARSET("network.http.charset", "Http response charset", String.class, "utf-8"),
+  NETWORK_HTTP_CONTENT_CHARSET("network.http.charset", "Http response charset", String.class, "utf-8", true),
 
-  NETWORK_HTTP_JSON_RESPONSE_ERROR("network.http.jsonResponseError", "Http response error in json", Boolean.class, true),
+  NETWORK_HTTP_JSON_RESPONSE_ERROR("network.http.jsonResponseError", "Http response error in json", Boolean.class, true, true),
 
-  OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, "utf-8"), NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT(
-      "network.http.sessionExpireTimeout", "Timeout after which an http session is considered tp have expired (seconds)",
-      Integer.class, 300),
+  NETWORK_HTTP_JSONP_ENABLED("network.http.jsonp",
+      "Enable the usage of JSONP if requested by the client. The parameter name to use is 'callback'", Boolean.class, false, true),
+
+  @Deprecated
+  OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, ""),
+
+  NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
+      "Timeout after which an http session is considered tp have expired (seconds)", Integer.class, 300),
+
+  NETWORK_HTTP_USE_TOKEN("network.http.useToken", "Enable Token based sessions for http", Boolean.class, false),
+
+  NETWORK_TOKEN_SECRETKEY("network.token.secretyKey", "Network token sercret key", String.class, ""),
+
+  NETWORK_TOKEN_ENCRIPTION_ALGORITHM("network.token.encriptionAlgorithm", "Network token algorithm", String.class, "HmacSHA256"),
+
+  NETWORK_TOKEN_EXPIRE_TIMEOUT("network.token.expireTimeout",
+      "Timeout after which an binary session is considered tp have expired (minutes)", Integer.class, 60),
 
   // PROFILER
   PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,
@@ -388,10 +427,35 @@ public enum OGlobalConfiguration {
     }
   }),
 
+  // CACHE
+  CACHE_LOCAL_IMPL("cache.local.impl", "Local Record cache implementation", String.class, ORecordCacheWeakRefs.class.getName()),
+
   // COMMAND
-  COMMAND_TIMEOUT("command.timeout", "Default timeout for commands expressed in milliseconds", Long.class, 0),
+  COMMAND_TIMEOUT("command.timeout", "Default timeout for commands expressed in milliseconds", Long.class, 0, true),
+
+  COMMAND_CACHE_ENABLED("command.cache.enabled", "Enable command cache", Boolean.class, false),
+
+  COMMAND_CACHE_EVICT_STRATEGY("command.cache.evictStrategy", "Command cache strategy between: [INVALIDATE_ALL,PER_CLUSTER]",
+      String.class, "PER_CLUSTER"),
+
+  COMMAND_CACHE_MIN_EXECUTION_TIME("command.cache.minExecutionTime", "Minimum execution time to consider caching result set",
+      Integer.class, 10),
+
+  COMMAND_CACHE_MAX_RESULSET_SIZE("command.cache.maxResultsetSize", "Maximum resultset time to consider caching result set",
+      Integer.class, 500),
 
   // QUERY
+  QUERY_PARALLEL_AUTO("query.parallelAuto", "Auto enable parallel query if requirement are met", Boolean.class, Runtime
+      .getRuntime().availableProcessors() > 2),
+
+  QUERY_PARALLEL_MINIMUM_RECORDS("query.parallelMinimumRecords",
+      "Minimum number of records to activate parallel query automatically", Long.class, 300000),
+
+  QUERY_PARALLEL_RESULT_QUEUE_SIZE(
+      "query.parallelResultQueueSize",
+      "Size of the queue that hold result on parallel execution. The queue is blocking, so in case the queue is full, the query threads are in wait",
+      Integer.class, 20000),
+
   QUERY_SCAN_THRESHOLD_TIP("query.scanThresholdTip",
       "If total number of records scanned in a query is major than this threshold a warning is given. Use 0 to disable it",
       Long.class, 50000),
@@ -400,20 +464,22 @@ public enum OGlobalConfiguration {
       "If total number of returned records in a query is major than this threshold a warning is given. Use 0 to disable it",
       Long.class, 10000),
 
+  STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache", Integer.class, 100),
+
   /**
    * Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.
    */
   CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool",
-      "Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.", Integer.class, 100),
+      "Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection", Integer.class, 100),
 
   /**
    * Maximum time which client should wait a connection from the pool when all connection are used.
    */
   CLIENT_CONNECT_POOL_WAIT_TIMEOUT("client.connectionPool.waitTimeout",
-      "Maximum time which client should wait a connection from the pool when all connection are used", Integer.class, 5000),
+      "Maximum time which client should wait a connection from the pool when all connection are used", Integer.class, 5000, true),
 
   CLIENT_DB_RELEASE_WAIT_TIMEOUT("client.channel.dbReleaseWaitTimeout",
-      "Delay in ms. after which data modification command will be resent if DB was frozen", Integer.class, 10000),
+      "Delay in ms. after which data modification command will be resent if DB was frozen", Integer.class, 10000, true),
 
   CLIENT_USE_SSL("client.ssl.enabled", "Use SSL for client connections", Boolean.class, false),
 
@@ -425,9 +491,13 @@ public enum OGlobalConfiguration {
 
   CLIENT_SSL_TRUSTSTORE_PASSWORD("client.ssl.trustStorePass", "Use SSL for client connections", String.class, null),
 
-  CLIENT_SESSION_TOKEN_BASED("client.session.tokenBased", "Request a token based session to the server", Boolean.class, false),
+  @Deprecated
+  CLIENT_SESSION_TOKEN_BASED("client.session.tokenBased", "Request a token based session to the server", Boolean.class, true),
 
   // SERVER
+  SERVER_OPEN_ALL_DATABASES_AT_STARTUP("server.openAllDatabasesAtStartup",
+      "If true, the server opens all the available databases at startup. Since 2.2", Boolean.class, false),
+
   SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections", Integer.class,
       5000),
 
@@ -439,29 +509,29 @@ public enum OGlobalConfiguration {
       Level.class, Level.FINE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
-      "Dumps the full stack trace of the exception to sent to the client", Boolean.class, Boolean.FALSE),
+      "Dumps the full stack trace of the exception to sent to the client", Boolean.class, Boolean.FALSE, true),
 
   // DISTRIBUTED
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout",
-      "Maximum timeout in milliseconds to wait for CRUD remote tasks", Long.class, 3000l),
+      "Maximum timeout in milliseconds to wait for CRUD remote tasks", Long.class, 3000l, true),
 
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
-      "Maximum timeout in milliseconds to wait for Command remote tasks", Long.class, 10000l),
+      "Maximum timeout in milliseconds to wait for Command remote tasks", Long.class, 10000l, true),
 
   DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT("distributed.commandLongTaskTimeout",
-      "Maximum timeout in milliseconds to wait for Long-running remote tasks", Long.class, 24 * 60 * 60 * 1000),
+      "Maximum timeout in milliseconds to wait for Long-running remote tasks", Long.class, 24 * 60 * 60 * 1000, true),
 
   DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout",
-      "Maximum timeout in milliseconds to wait for database deployment", Long.class, 1200000l),
+      "Maximum timeout in milliseconds to wait for database deployment", Long.class, 1200000l, true),
 
   DISTRIBUTED_DEPLOYCHUNK_TASK_SYNCH_TIMEOUT("distributed.deployChunkTaskTimeout",
-      "Maximum timeout in milliseconds to wait for database chunk deployment", Long.class, 15000l),
+      "Maximum timeout in milliseconds to wait for database chunk deployment", Long.class, 15000l, true),
 
   DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION("distributed.deployDbTaskCompression",
-      "Compression level between 0 and 9 to use in backup for database deployment", Integer.class, 7),
+      "Compression level between 0 and 9 to use in backup for database deployment", Integer.class, 7, true),
 
   DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout", "Maximum timeout in milliseconds to wait for the response in replication",
-      Long.class, 5000l),
+      Long.class, 5000l, true),
 
   DISTRIBUTED_ASYNCH_QUEUE_SIZE("distributed.asynchQueueSize",
       "Queue size to handle distributed asynchronous operations. 0 = dynamic allocation (up to 2^31-1 entries)", Integer.class, 0),
@@ -473,13 +543,19 @@ public enum OGlobalConfiguration {
       "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Long.class, 15000l),
 
   /**
+   * @Since 2.1.3
+   */
+  DISTRIBUTED_BACKUP_DIRECTORY("distributed.backupDirectory",
+      "Directory where to copy an existent database before to download from the cluster", String.class, "../backup/databases"),
+
+  /**
    * @Since 2.1
    */
   @OApi(maturity = OApi.MATURITY.NEW)
   DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY(
       "distributed.concurrentTxMaxAutoRetry",
       "Maximum retries the transaction coordinator can execute a transaction automatically if records are locked. Minimum is 1 (no retry)",
-      Integer.class, 10),
+      Integer.class, 10, true),
 
   /**
    * @Since 2.1
@@ -487,13 +563,13 @@ public enum OGlobalConfiguration {
   @OApi(maturity = OApi.MATURITY.NEW)
   DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY("distributed.concurrentTxAutoRetryDelay",
       "Delay in ms between attempts on executing a distributed transaction failed because of records locked. 0=no delay",
-      Integer.class, 100),
+      Integer.class, 100, true),
 
   DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE("db.makeFullCheckpointOnIndexChange",
-      "When index metadata is changed full checkpoint is performed", Boolean.class, true),
+      "When index metadata is changed full checkpoint is performed", Boolean.class, true, true),
 
   DB_MAKE_FULL_CHECKPOINT_ON_SCHEMA_CHANGE("db.makeFullCheckpointOnSchemaChange",
-      "When index schema is changed full checkpoint is performed", Boolean.class, true),
+      "When index schema is changed full checkpoint is performed", Boolean.class, true, true),
 
   DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
       ORecordSerializerBinary.NAME),
@@ -594,6 +670,8 @@ public enum OGlobalConfiguration {
   private Object                       value          = null;
   private String                       description;
   private OConfigurationChangeCallback changeCallback = null;
+  private Boolean                      canChangeAtRuntime;
+  private boolean                      hidden         = false;
 
   // AT STARTUP AUTO-CONFIG
   static {
@@ -603,15 +681,27 @@ public enum OGlobalConfiguration {
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
       final OConfigurationChangeCallback iChangeAction) {
-    this(iKey, iDescription, iType, iDefValue);
+    this(iKey, iDescription, iType, iDefValue, true);
     changeCallback = iChangeAction;
   }
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue) {
+    this(iKey, iDescription, iType, iDefValue, false);
+  }
+
+  OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
+      final Boolean iCanChange) {
+    this(iKey, iDescription, iType, iDefValue, iCanChange, false);
+  }
+
+  OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
+      final boolean iCanChange, final boolean iHidden) {
     key = iKey;
     description = iDescription;
     defValue = iDefValue;
     type = iType;
+    canChangeAtRuntime = iCanChange;
+    hidden = iHidden;
   }
 
   public static void dumpConfiguration(final PrintStream out) {
@@ -631,7 +721,7 @@ public enum OGlobalConfiguration {
       out.print("  + ");
       out.print(v.key);
       out.print(" = ");
-      out.println(v.getValue());
+      out.println(v.isHidden() ? "<hidden>" : v.getValue());
     }
   }
 
@@ -758,8 +848,13 @@ public enum OGlobalConfiguration {
       else
         value = iValue;
 
-    if (changeCallback != null)
-      changeCallback.change(oldValue, value);
+    if (changeCallback != null) {
+      try {
+        changeCallback.change(oldValue, value);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
   }
 
   public boolean getValueAsBoolean() {
@@ -788,6 +883,18 @@ public enum OGlobalConfiguration {
 
   public String getKey() {
     return key;
+  }
+
+  public Boolean isChangeableAtRuntime() {
+    return canChangeAtRuntime;
+  }
+
+  public boolean isHidden() {
+    return hidden;
+  }
+
+  public Object getDefValue() {
+    return defValue;
   }
 
   public Class<?> getType() {

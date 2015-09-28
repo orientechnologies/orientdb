@@ -58,7 +58,7 @@ public abstract class OZIPCompression extends OAbstractCompression {
 
       return result;
     } catch (IOException ioe) {
-      throw new IllegalStateException("Exception during data compression.", ioe);
+      throw new IllegalStateException("Exception during data compression", ioe);
     }
   }
 
@@ -99,7 +99,7 @@ public abstract class OZIPCompression extends OAbstractCompression {
       }
 
     } catch (IOException ioe) {
-      throw new IllegalStateException("Exception during data uncompression.", ioe);
+      throw new IllegalStateException("Exception during data uncompression", ioe);
     }
   }
 

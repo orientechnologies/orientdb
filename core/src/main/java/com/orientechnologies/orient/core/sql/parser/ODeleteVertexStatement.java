@@ -6,6 +6,7 @@ import java.util.Map;
 
 public class ODeleteVertexStatement extends OStatement {
 
+  protected boolean      from         = false;
   protected OFromClause  fromClause;
   protected OWhereClause whereClause;
   protected boolean      returnBefore = false;
@@ -20,41 +21,27 @@ public class ODeleteVertexStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("DELETE VERTEX ");
-    result.append(fromClause.toString());
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("DELETE VERTEX ");
+    if(from){
+      builder.append("FROM ");
+    }
+    fromClause.toString(params, builder);
     if (returnBefore) {
-      result.append(" RETURN BEFORE");
+      builder.append(" RETURN BEFORE");
     }
     if (whereClause != null) {
-      result.append(" WHERE ");
-      result.append(whereClause.toString());
+      builder.append(" WHERE ");
+      whereClause.toString(params, builder);
     }
     if (limit != null) {
-      result.append(limit);
+      limit.toString(params, builder);
     }
     if (batch != null) {
-      result.append(batch);
+      batch.toString(params, builder);
     }
-    return result.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    fromClause.replaceParameters(params);
 
-    if (whereClause != null) {
-      whereClause.replaceParameters(params);
-    }
-
-    if (limit != null) {
-      limit.replaceParameters(params);
-    }
-    if (batch != null) {
-      batch.replaceParameters(params);
-    }
-
-  }
 }
 /* JavaCC - OriginalChecksum=b62d3046f4bd1b9c1f78ed4f125b06d3 (do not edit this line) */

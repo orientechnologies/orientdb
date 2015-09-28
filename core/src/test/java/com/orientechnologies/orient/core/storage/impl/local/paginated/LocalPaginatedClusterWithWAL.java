@@ -95,21 +95,21 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     if (!storageDirOneFile.exists())
       storageDirOneFile.mkdirs();
 
-    writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, storage);
+    writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, storage);
 
     writeCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, writeAheadLog,
         100, 1648L * 1024 * 1024, 2 * 1648L * 1024 * 1024, storage, false, 1);
 
     readCache = new O2QCache(1648L * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false);
 
+    when(storage.getReadCache()).thenReturn(readCache);
+    when(storage.getWriteCache()).thenReturn(writeCache);
     when(storage.getStorageTransaction()).thenReturn(null);
     when(storage.getWALInstance()).thenReturn(writeAheadLog);
     atomicOperationsManager = new OAtomicOperationsManager(storage);
     when(storage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
-    when(storage.getReadCache()).thenReturn(readCache);
     when(storage.getConfiguration()).thenReturn(storageConfiguration);
     when(storage.getMode()).thenReturn("rw");
-
     when(storageConfiguration.getDirectory()).thenReturn(storageDir);
 
     paginatedCluster = new OPaginatedCluster("testPaginatedClusterWithWALTest", storage);
@@ -141,7 +141,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
       storageDirTwoFile.mkdirs();
 
     testWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
-        writeAheadLog, 100, 1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, storage, false, 1);
+        writeAheadLog, 100, 1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, testStorage, false, 1);
 
     testReadCache = new O2QCache(400L * 1024 * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
         false);
@@ -149,10 +149,12 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     OStorageVariableParser variableParser = new OStorageVariableParser(testStorageDir);
     final OAtomicOperationsManager testAtomicOperationsManager = new OAtomicOperationsManager(testStorage);
 
+    when(testStorage.getReadCache()).thenReturn(testReadCache);
+    when(testStorage.getWriteCache()).thenReturn(testWriteCache);
     when(testStorage.getWALInstance()).thenReturn(null);
     when(testStorage.getStorageTransaction()).thenReturn(null);
     when(testStorage.getAtomicOperationsManager()).thenReturn(testAtomicOperationsManager);
-    when(testStorage.getReadCache()).thenReturn(testReadCache);
+
     when(testStorage.getVariableParser()).thenReturn(variableParser);
     when(testStorage.getConfiguration()).thenReturn(storageConfiguration);
     when(testStorage.getMode()).thenReturn("rw");
@@ -169,7 +171,6 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     Assert.assertNull(atomicOperationsManager.getCurrentOperation());
 
     writeAheadLog.delete();
-    paginatedCluster.delete();
     readCache.deleteStorage(writeCache);
 
     testCluster.delete();
@@ -225,12 +226,12 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     assertFileRestoreFromWAL();
   }
 
-//  @Override
-//  public void testDeleteRecordAndAddNewOnItsPlace() throws IOException {
-//    super.testDeleteRecordAndAddNewOnItsPlace();
-//
-//    assertFileRestoreFromWAL();
-//  }
+  @Override
+  public void testDeleteRecordAndAddNewOnItsPlace() throws IOException {
+    super.testDeleteRecordAndAddNewOnItsPlace();
+
+    assertFileRestoreFromWAL();
+  }
 
   @Override
   public void testAddManySmallRecords() throws IOException {
@@ -391,7 +392,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   }
 
   private void restoreClusterFromWAL() throws IOException {
-    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, storage);
+    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, storage);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();

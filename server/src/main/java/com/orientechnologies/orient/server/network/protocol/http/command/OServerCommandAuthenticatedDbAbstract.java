@@ -19,8 +19,12 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
+import java.io.IOException;
+import java.util.List;
+
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -33,10 +37,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.network.protocol.http.*;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Database based authenticated command. Authenticates against the database taken as second parameter of the URL. The URL must be in
@@ -55,7 +55,6 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   public static final String     SESSIONID_UNAUTHORIZED = "-";
   public static final String     SESSIONID_LOGOUT       = "!";
   private volatile OTokenHandler tokenHandler;
-  private boolean                hasToken               = true;
 
   @Override
   public boolean beforeExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
@@ -160,8 +159,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       final List<String> iAuthenticationParts, final String iDatabaseName) throws IOException {
     ODatabaseDocumentTx db = null;
     try {
-      db = (ODatabaseDocumentTx) server.openDatabase("document", iDatabaseName, iAuthenticationParts.get(0),
-          iAuthenticationParts.get(1));
+      db = (ODatabaseDocumentTx) server.openDatabase(iDatabaseName, iAuthenticationParts.get(0), iAuthenticationParts.get(1));
       // if (db.getUser() == null)
       // // MAYBE A PREVIOUS ROOT REALM? UN AUTHORIZE
       // return false;
@@ -208,7 +206,6 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   }
 
   protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
-    final OHttpSession session = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
     if (iRequest.bearerToken != null) {
       return getProfiledDatabaseInstanceToken(iRequest);
     } else {
@@ -220,7 +217,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user
     ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (localDatabase == null) {
-      localDatabase = (ODatabaseDocumentTx) server.openDatabase("document", iRequest.databaseName, iRequest.bearerToken);
+      localDatabase = (ODatabaseDocumentTx) server.openDatabase(iRequest.databaseName, iRequest.bearerToken);
     } else {
       ORID currentUserId = iRequest.bearerToken.getUserId();
       if (currentUserId != null && localDatabase != null && localDatabase.getUser() != null) {
@@ -246,7 +243,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
     if (localDatabase == null) {
-      localDatabase = (ODatabaseDocumentTx) server.openDatabase("document", iRequest.databaseName, session.getUserName(),
+      localDatabase = (ODatabaseDocumentTx) server.openDatabase(iRequest.databaseName, session.getUserName(),
           session.getUserPassword());
     } else {
 
@@ -265,12 +262,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   }
 
   private void init() {
-    if (tokenHandler == null && hasToken) {
-      tokenHandler = (OTokenHandler) server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
-      if (tokenHandler != null && !tokenHandler.isEnabled()) {
-        tokenHandler = null;
-        hasToken = false;
-      }
+    if (tokenHandler == null && OGlobalConfiguration.NETWORK_HTTP_USE_TOKEN.getValueAsBoolean()) {
+      tokenHandler = server.getTokenHandler();
     }
   }
 }

@@ -14,12 +14,13 @@ import java.io.IOException;
 @Test
 public class HttpDocumentTest extends BaseHttpDatabaseTest {
   public void create() throws IOException {
-    post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:99}", CONTENT.JSON).exec();
+    post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:99, \"@version\":100}", CONTENT.JSON).exec();
 
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
 
     final ODocument created = new ODocument().fromJSON(getResponse().getEntity().getContent());
 
+    Assert.assertEquals(created.getVersion(), 1);
     Assert.assertEquals(created.field("name"), "Jay");
     Assert.assertEquals(created.field("surname"), "Miner");
     Assert.assertEquals(created.field("age"), 99);

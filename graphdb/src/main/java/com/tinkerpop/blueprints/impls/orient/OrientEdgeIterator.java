@@ -44,9 +44,9 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
   private final OPair<Direction, String> connection;
   private final String[]                 labels;
 
-  public OrientEdgeIterator(final OrientVertex iSourceVertex, final OrientVertex iTargetVertex, final Iterator<?> iterator,
+  public OrientEdgeIterator(final OrientVertex iSourceVertex, final OrientVertex iTargetVertex, final Object iMultiValue, final Iterator<?> iterator,
       final OPair<Direction, String> connection, final String[] iLabels, final int iSize) {
-    super(iterator, iSize);
+    super(iterator, iSize, iMultiValue);
     this.sourceVertex = iSourceVertex;
     this.targetVertex = iTargetVertex;
     this.connection = connection;
@@ -62,7 +62,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
 
     if (rec == null) {
       // SKIP IT
-      OLogManager.instance().warn(this, "Record (%s) is null", rec);
+      OLogManager.instance().warn(this, "Record (%s) is null", iObject);
       return null;
     }
 
@@ -76,7 +76,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     if (!(record instanceof ODocument)) {
       // SKIP IT
       OLogManager.instance().warn(this,
-          "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s, Database : %s .", rec,
+          "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s, Database : %s", rec,
           sourceVertex != null ? sourceVertex.getIdentity() : null, targetVertex != null ? targetVertex.getIdentity() : null,
           record.getDatabase().getURL());
       return null;
@@ -128,5 +128,10 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
       return false;
 
     return this.sourceVertex.settings.isUseVertexFieldsForEdgeLabels() || iObject.isLabeled(labels);
+  }
+
+  @Override
+  public boolean canUseMultiValueDirectly() {
+    return true;
   }
 }

@@ -19,9 +19,12 @@
   */
 package com.orientechnologies.orient.core.index.mvrbtree;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.Arrays;
 
 @SuppressWarnings("unchecked")
+@SuppressFBWarnings()
 public class OMVRBTreeEntryMemory<K, V> extends OMVRBTreeEntry<K, V> {
 
 	protected int													size	= 1;

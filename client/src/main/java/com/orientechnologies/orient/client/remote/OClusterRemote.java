@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-
-import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -31,6 +28,8 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
 
 /**
  * Remote cluster implementation
@@ -84,11 +83,6 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public OModificationLock getExternalModificationLock() {
-    throw new UnsupportedOperationException("getExternalModificationLock");
-  }
-
-  @Override
   public void close(boolean flush) throws IOException {
   }
 
@@ -128,6 +122,11 @@ public class OClusterRemote implements OCluster {
 
   public Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException {
     return null;
+  }
+
+  @Override
+  public String encryption() {
+    throw new UnsupportedOperationException("encryption");
   }
 
   public void truncate() throws IOException {
@@ -176,14 +175,6 @@ public class OClusterRemote implements OCluster {
   public void synch() throws IOException {
   }
 
-  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
-  }
-
-  @Override
-  public boolean wasSoftlyClosed() throws IOException {
-    return true;
-  }
-
   public String getName() {
     return name;
   }
@@ -193,6 +184,11 @@ public class OClusterRemote implements OCluster {
   }
 
   public boolean isHashBased() {
+    return false;
+  }
+
+  @Override
+  public boolean isSystemCluster() {
     return false;
   }
 

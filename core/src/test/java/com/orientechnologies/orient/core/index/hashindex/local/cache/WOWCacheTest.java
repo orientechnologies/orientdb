@@ -242,7 +242,7 @@ public class WOWCacheTest {
       Assert.assertEquals(dataTwo, dataOne);
     }
 
-    Thread.sleep(10000);
+    Thread.sleep(20000);
 
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataContent = pageData[i];
@@ -253,8 +253,7 @@ public class WOWCacheTest {
   private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn) throws IOException {
     String path = storageLocal.getConfiguration().getDirectory() + File.separator + fileName;
 
-    OFileClassic fileClassic = new OFileClassic();
-    fileClassic.init(path, "r");
+    OFileClassic fileClassic = new OFileClassic(path, "r");
     fileClassic.open();
     byte[] content = new byte[8 + systemOffset];
     fileClassic.read(pageIndex * (8 + systemOffset), content, 8 + systemOffset);

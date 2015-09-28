@@ -19,19 +19,6 @@
  */
 package com.orientechnologies.orient.core.fetch;
 
-import com.orientechnologies.common.collection.OMultiCollectionIterator;
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
-
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -41,6 +28,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 
 /**
  * Helper class for fetching.
@@ -151,7 +152,7 @@ public class OFetchHelper {
       if (iFieldDepthLevel > -1)
         depthLevel = iFieldDepthLevel;
 
-      fieldValue = record.field(fieldName);
+      fieldValue = record.rawField(fieldName);
       if (fieldValue == null
           || !(fieldValue instanceof OIdentifiable)
           && (!(fieldValue instanceof ORecordLazyMultiValue) || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext() || !(((ORecordLazyMultiValue) fieldValue)
@@ -173,6 +174,9 @@ public class OFetchHelper {
             continue;
 
           final int nextLevel = isEmbedded ? iLevelFromRoot : iLevelFromRoot + 1;
+
+          if (fieldValue instanceof ORecordId)
+            fieldValue = ((ORecordId) fieldValue).getRecord();
 
           fetchRidMap(record, iFetchPlan, fieldValue, fieldName, iCurrentLevel, nextLevel, iFieldDepthLevel, parsedRecords,
               fieldPath, iContext);
@@ -216,11 +220,13 @@ public class OFetchHelper {
       final String iFieldPathFromRoot, final OFetchContext iContext) throws IOException {
     final Iterable<OIdentifiable> linked = (Iterable<OIdentifiable>) fieldValue;
     for (OIdentifiable d : linked) {
-      // GO RECURSIVELY
-      d = d.getRecord();
+      if (d != null) {
+        // GO RECURSIVELY
+        d = d.getRecord();
 
-      updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords, iFieldPathFromRoot,
-          iContext);
+        updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords, iFieldPathFromRoot,
+            iContext);
+      }
     }
   }
 
@@ -275,6 +281,9 @@ public class OFetchHelper {
       throws IOException {
 
     if (record == null)
+      return;
+
+    if (!iListener.requireFieldProcessing() && iFetchPlan == OFetchHelper.DEFAULT_FETCHPLAN)
       return;
 
     Object fieldValue;

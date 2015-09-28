@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -754,10 +753,6 @@ public class OWALChangesTree {
       this.start = start;
       this.end = start + value.length;
       this.maxEnd = end;
-    }
-
-    private boolean overlapsWith(Node other) {
-      return start < other.end && end > other.start;
     }
 
     private boolean overlapsWith(int start, int end) {

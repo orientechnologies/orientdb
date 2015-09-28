@@ -55,7 +55,7 @@ public class OJPAPersistenceProvider implements PersistenceProvider {
 		try {
 			persistenceUnits = PersistenceXmlUtil.parse(persistenceXml);
 		} catch (Exception e) {
-			logger.info("Can't parse '" + PERSISTENCE_XML + "' :" + e.getMessage());
+			logger.info("Cannot parse '" + PERSISTENCE_XML + "' :" + e.getMessage());
 		}
 	}
 

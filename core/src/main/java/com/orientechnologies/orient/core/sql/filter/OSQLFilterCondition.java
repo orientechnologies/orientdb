@@ -290,7 +290,7 @@ public class OSQLFilterCondition {
         return new Date(new Double(stringValue).longValue());
       } catch (Exception pe2) {
         throw new OQueryParsingException("Error on conversion of date '" + stringValue + "' using the format: "
-            + formatter.toPattern());
+            + formatter.toPattern(), pe2);
       }
     }
   }
@@ -300,11 +300,14 @@ public class OSQLFilterCondition {
     if (iValue == null)
       return null;
 
-    if (iCurrentRecord != null && iCurrentRecord.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-      try {
-        iCurrentRecord = iCurrentRecord.getRecord().load();
-      } catch (ORecordNotFoundException e) {
-        return null;
+    if (iCurrentRecord != null) {
+      iCurrentRecord = iCurrentRecord.getRecord();
+      if (iCurrentRecord!=null && ((ODocument)iCurrentRecord).getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+        try {
+          iCurrentRecord = iCurrentRecord.getRecord().load();
+        } catch (ORecordNotFoundException e) {
+          return null;
+        }
       }
     }
 

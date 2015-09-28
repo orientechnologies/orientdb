@@ -19,8 +19,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.IOException;
-
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
@@ -29,14 +28,21 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * Handles the database configuration in one big record.
  */
 @SuppressWarnings("serial")
+@SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED")
 public class OStorageConfigurationSegment extends OStorageConfiguration {
-  private static final int         START_SIZE = 10000;
-  private final OSingleFileSegment segment;
+  private static final long                  serialVersionUID = 638874446554389034L;
+
+  private static final int                   START_SIZE       = 10000;
+  private final transient OSingleFileSegment segment;
 
   public OStorageConfigurationSegment(final OLocalPaginatedStorage iStorage) throws IOException {
     super(iStorage);
@@ -45,6 +51,8 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   }
 
   public void close() throws IOException {
+    super.close();
+
     segment.close();
   }
 
@@ -58,8 +66,12 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   }
 
   @Override
-  public OStorageConfiguration load() throws OSerializationException {
+  public OStorageConfiguration load(final Map<String, Object> iProperties) throws OSerializationException {
     try {
+      initConfiguration();
+
+      bindPropertiesToContext(iProperties);
+
       if (segment.getFile().exists())
         segment.open();
       else {
@@ -80,8 +92,9 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
       segment.getFile().read(OBinaryProtocol.SIZE_INT, buffer, size);
 
       fromStream(buffer);
-    } catch (Exception e) {
-      throw new OSerializationException("Cannot load database's configuration. The database seems to be corrupted.", e);
+
+    } catch (IOException e) {
+      throw new OSerializationException("Cannot load database's configuration. The database seems to be corrupted", e);
     }
     return this;
   }
@@ -110,8 +123,8 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
       final int len = buffer.length + OBinaryProtocol.SIZE_INT;
 
-      if (len > f.getFilledUpTo())
-        f.allocateSpace(len - f.getFilledUpTo());
+      if (len > f.getFileSize())
+        f.allocateSpace(len - f.getFileSize());
 
       f.writeInt(0, buffer.length);
       f.write(OBinaryProtocol.SIZE_INT, buffer);
@@ -129,6 +142,9 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
   @Override
   public void setSoftlyClosed(boolean softlyClosed) throws IOException {
-    segment.getFile().setSoftlyClosed(softlyClosed);
+  }
+
+  public String getFileName() {
+    return segment.getFile().getName();
   }
 }

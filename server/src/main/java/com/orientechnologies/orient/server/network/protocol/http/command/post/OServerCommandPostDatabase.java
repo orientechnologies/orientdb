@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
@@ -43,13 +50,6 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServerAbstract {
   private static final String[] NAMES = { "POST|database/*" };
 
@@ -69,10 +69,10 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       String url = getStoragePath(databaseName, storageMode);
       final String type = urlParts.length > 3 ? urlParts[3] : "document";
       if (url != null) {
-        final ODatabaseDocumentTx database = Orient.instance().getDatabaseFactory().createDatabase(type, url);
+        final ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
         if (database.exists()) {
-          iResponse.send(OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION,
-                  OHttpUtils.CONTENT_TEXT_PLAIN, "Database '" + database.getURL() + "' already exists.", null);
+          iResponse.send(OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+              "Database '" + database.getURL() + "' already exists.", null);
         } else {
           for (OStorage stg : Orient.instance().getStorages()) {
             if (stg.getName().equalsIgnoreCase(database.getName()) && stg.exists())

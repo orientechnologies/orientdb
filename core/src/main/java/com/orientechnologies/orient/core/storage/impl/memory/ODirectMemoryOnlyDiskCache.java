@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.memory;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -117,20 +118,23 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void openFile(long fileId, OWriteCache writeCache) {
+  public long openFile(long fileId, OWriteCache writeCache) {
     int intId = extractFileId(fileId);
     final MemoryFile memoryFile = files.get(intId);
+
     if (memoryFile == null)
       throw new OStorageException("File with id " + intId + " does not exist");
+
+    return composeFileId(id, intId);
   }
 
   @Override
-  public void openFile(String fileName, long fileId, OWriteCache writeCache) {
+  public long openFile(String fileName, long fileId, OWriteCache writeCache) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void addFile(String fileName, long fileId, OWriteCache writeCache) {
+  public long addFile(String fileName, long fileId, OWriteCache writeCache) {
     int intId = extractFileId(fileId);
 
     metadataLock.lock();
@@ -144,6 +148,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
       files.put(intId, new MemoryFile(id, intId, pageSize));
       fileNameIdMap.put(fileName, intId);
       fileIdNameMap.put(intId, fileName);
+
+      return composeFileId(id, intId);
     } finally {
       metadataLock.unlock();
     }
@@ -263,25 +269,12 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public boolean wasSoftlyClosed(long fileId) {
-    return true;
-  }
-
-  @Override
-  public void setSoftlyClosed(long fileId, boolean softlyClosed) {
-  }
-
-  @Override
-  public void setSoftlyClosed(boolean softlyClosed) {
-  }
-
-  @Override
   public void flush() {
   }
 
   @Override
   public long[] close() {
-    return null;
+    return new long[0];
   }
 
   @Override
@@ -303,7 +296,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
       metadataLock.unlock();
     }
 
-    return null;
+    return new long[0];
   }
 
   @Override
@@ -313,7 +306,6 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public void closeStorage(OWriteCache writeCache) throws IOException {
-    close();
   }
 
   @Override
@@ -412,8 +404,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
             index = lastIndex + 1;
           }
 
-          final ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize + 2
-              * ODurablePage.PAGE_PADDING]);
+          final ODirectMemoryPointer directMemoryPointer = ODirectMemoryPointerFactory.instance().createPointer(
+              new byte[pageSize + 2 * ODurablePage.PAGE_PADDING]);
           final OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(-1, -1), id, index);
           cachePointer.incrementReferrer();
 
@@ -522,8 +514,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void addFile(String fileName, long fileId) {
-    addFile(fileName, fileId, null);
+  public long addFile(String fileName, long fileId) {
+    return addFile(fileName, fileId, null);
   }
 
   @Override
@@ -569,6 +561,35 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   @Override
   public int getId() {
     return id;
+  }
+
+  @Override
+  public Map<String, Long> files() {
+    final Map<String, Long> result = new HashMap<String, Long>();
+
+    metadataLock.lock();
+    try {
+      for (Map.Entry<String, Integer> entry : fileNameIdMap.entrySet()) {
+        result.put(entry.getKey(), composeFileId(id, entry.getValue()));
+      }
+    } finally {
+      metadataLock.unlock();
+    }
+
+    return result;
+  }
+
+  @Override
+  public int pageSize() {
+    return pageSize;
+  }
+
+  @Override
+  public boolean fileIdsAreEqual(long firsId, long secondId) {
+    final int firstIntId = extractFileId(firsId);
+    final int secondIntId = extractFileId(secondId);
+
+    return firstIntId == secondIntId;
   }
 
   @Override

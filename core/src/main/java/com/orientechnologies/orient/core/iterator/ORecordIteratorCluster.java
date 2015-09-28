@@ -37,26 +37,26 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
   private ORecord currentRecord;
 
   public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentTx iLowLevelDatabase,
-      final int iClusterId, final boolean iUseCache, final boolean iUpdateCache) {
-    this(iDatabase, iLowLevelDatabase, iClusterId, ORID.CLUSTER_POS_INVALID, ORID.CLUSTER_POS_INVALID, iUseCache, iUpdateCache,
-        false, OStorage.LOCKING_STRATEGY.DEFAULT);
+      final int iClusterId) {
+    this(iDatabase, iLowLevelDatabase, iClusterId, ORID.CLUSTER_POS_INVALID, ORID.CLUSTER_POS_INVALID, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentTx iLowLevelDatabase,
-      final int iClusterId, final long firstClusterEntry, final long lastClusterEntry, final boolean iUseCache) {
-    this(iDatabase, iLowLevelDatabase, iClusterId, firstClusterEntry, lastClusterEntry, iUseCache, false, false,
-        OStorage.LOCKING_STRATEGY.NONE);
+      final int iClusterId, final long firstClusterEntry, final long lastClusterEntry) {
+    this(iDatabase, iLowLevelDatabase, iClusterId, firstClusterEntry, lastClusterEntry, false, OStorage.LOCKING_STRATEGY.NONE);
   }
 
   @Deprecated
   public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentTx iLowLevelDatabase,
-      final int iClusterId, final long firstClusterEntry, final long lastClusterEntry, final boolean iUseCache,
-      final boolean iUpdateCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
-    updateCache = iUpdateCache;
+      final int iClusterId, final long firstClusterEntry, final long lastClusterEntry, final boolean iterateThroughTombstones,
+      final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    super(iDatabase, iLowLevelDatabase, iterateThroughTombstones, iLockingStrategy);
 
     if (iClusterId == ORID.CLUSTER_ID_INVALID)
       throw new IllegalArgumentException("The clusterId is invalid");
+
+    checkForSystemClusters(iDatabase, new int[] { iClusterId });
 
     current.clusterId = iClusterId;
     final long[] range = database.getStorage().getClusterDataRange(current.clusterId);
@@ -141,7 +141,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
       try {
         currentRecord = readCurrentRecord(record, +1);
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during read of record.", e);
+        OLogManager.instance().error(this, "Error during read of record", e);
 
         currentRecord = null;
       }

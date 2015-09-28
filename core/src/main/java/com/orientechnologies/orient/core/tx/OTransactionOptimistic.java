@@ -28,26 +28,21 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -55,12 +50,10 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -240,8 +233,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       return null;
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
-    final ORecord record = database.executeReadRecord((ORecordId) rid, iRecord, null, fetchPlan, ignoreCache, iUpdateCache, false,
-        lockingStrategy, new ODatabaseDocumentTx.SimpleRecordReader());
+    final ORecord record = database.executeReadRecord((ORecordId) rid, iRecord, null, fetchPlan, ignoreCache, iUpdateCache,
+        loadTombstone, lockingStrategy, new ODatabaseDocumentTx.SimpleRecordReader());
 
     if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ)
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
@@ -358,9 +351,44 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     if (iRecord == null)
       return null;
-    final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED
-        : ORecordOperation.CREATED;
-    addRecord(iRecord, operation, iClusterName);
+
+    boolean originalSaved = false;
+    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
+    do {
+      Set<ORecord> newRecord = dirtyManager.getNewRecord();
+      Set<ORecord> updatedRecord = dirtyManager.getUpdateRecord();
+      dirtyManager.cleanForSave();
+      if (newRecord != null) {
+        for (ORecord rec : newRecord) {
+          if (rec instanceof ODocument)
+            ODocumentInternal.convertAllMultiValuesToTrackedVersions((ODocument) rec);
+          if (rec == iRecord) {
+            addRecord(rec, ORecordOperation.CREATED, iClusterName);
+            originalSaved = true;
+          } else
+            addRecord(rec, ORecordOperation.CREATED, getClusterName(rec));
+        }
+      }
+      if (updatedRecord != null) {
+        for (ORecord rec : updatedRecord) {
+          if (rec instanceof ODocument)
+            ODocumentInternal.convertAllMultiValuesToTrackedVersions((ODocument) rec);
+          if (rec == iRecord) {
+            final byte operation = iForceCreate ? ORecordOperation.CREATED
+                : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
+            addRecord(rec, operation, iClusterName);
+            originalSaved = true;
+          } else
+            addRecord(rec, ORecordOperation.UPDATED, getClusterName(rec));
+        }
+      }
+    } while (dirtyManager.getNewRecord() != null || dirtyManager.getUpdateRecord() != null);
+
+    if (!originalSaved && iRecord.isDirty()) {
+      final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED
+          : ORecordOperation.CREATED;
+      addRecord(iRecord, operation, iClusterName);
+    }
     return iRecord;
   }
 
@@ -421,112 +449,72 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         if (iRecord.getIdentity().isTemporary())
           temp2persistent.put(iRecord.getIdentity().copy(), iRecord);
 
-        if ((status == OTransaction.TXSTATUS.COMMITTING)
-            && database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
+        final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
-          // I'M COMMITTING: BYPASS LOCAL BUFFER
-          switch (iStatus) {
-          case ORecordOperation.CREATED:
-          case ORecordOperation.UPDATED:
-            final ORID oldRid = iRecord.getIdentity().copy();
-            database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), false, OPERATION_MODE.SYNCHRONOUS, false,
-                null, null);
-            updateIdentityAfterCommit(oldRid, iRecord.getIdentity());
-            break;
-          case ORecordOperation.DELETED:
-            database.executeDeleteRecord(iRecord, iRecord.getRecordVersion(), false, false, OPERATION_MODE.SYNCHRONOUS, false);
-            break;
+        if (!rid.isValid()) {
+          ORecordInternal.onBeforeIdentityChanged(iRecord);
+          if (database.getStorage().isAssigningClusterIds() || iClusterName != null) {
+            // ASSIGN A UNIQUE SERIAL TEMPORARY ID
+            if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
+              rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
+
+            if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ODocument) {
+              final ODocument recordSchemaAware = (ODocument) iRecord;
+              final OClass recordClass = ODocumentInternal.getImmutableSchemaClass(recordSchemaAware);
+              final OClass clusterIdClass = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot()
+                  .getClassByClusterId(rid.clusterId);
+              if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
+                  || (recordClass != null && !recordClass.equals(clusterIdClass)))
+                throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class "
+                    + clusterIdClass + " but saved with class " + recordClass);
+            }
           }
 
-          final ORecordOperation txRecord = getRecordEntry(iRecord.getIdentity());
+          rid.clusterPosition = newObjectCounter--;
 
-          if (txRecord == null) {
-            // NOT IN TX, SAVE IT ANYWAY
-            allEntries.put(iRecord.getIdentity(), new ORecordOperation(iRecord, iStatus));
-          } else if (txRecord.record != iRecord) {
-            // UPDATE LOCAL RECORDS TO AVOID MISMATCH OF VERSION/CONTENT
-            final String clusterName = getDatabase().getClusterNameById(iRecord.getIdentity().getClusterId());
-            if (!clusterName.equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME)
-                && !clusterName.equals(OMetadataDefault.CLUSTER_INDEX_NAME))
-              OLogManager
-                  .instance()
-                  .warn(
-                      this,
-                      "Found record in transaction with the same RID %s but different instance. Probably the record has been loaded from another transaction and reused on the current one: reload it from current transaction before to update or delete it",
-                      iRecord.getIdentity());
+          ORecordInternal.onAfterIdentityChanged(iRecord);
+        }
 
-            txRecord.record = iRecord;
-            txRecord.type = iStatus;
+        ORecordOperation txEntry = getRecordEntry(rid);
+
+        if (txEntry == null) {
+          if (!(rid.isTemporary() && iStatus != ORecordOperation.CREATED)) {
+            // NEW ENTRY: JUST REGISTER IT
+            txEntry = new ORecordOperation(iRecord, iStatus);
+            recordEntries.put(rid, txEntry);
           }
-
         } else {
-          final ORecordId rid = (ORecordId) iRecord.getIdentity();
+          // UPDATE PREVIOUS STATUS
+          txEntry.record = iRecord;
 
-          if (!rid.isValid()) {
-            ORecordInternal.onBeforeIdentityChanged(iRecord);
-            if (database.getStorage().isAssigningClusterIds() || iClusterName != null) {
-              // ASSIGN A UNIQUE SERIAL TEMPORARY ID
-              if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
-                rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
-
-              if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ODocument) {
-                final ODocument recordSchemaAware = (ODocument) iRecord;
-                final OClass recordClass = ODocumentInternal.getImmutableSchemaClass(recordSchemaAware);
-                final OClass clusterIdClass = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot()
-                    .getClassByClusterId(rid.clusterId);
-                if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
-                    || (recordClass != null && !recordClass.equals(clusterIdClass)))
-                  throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class "
-                      + clusterIdClass + " but saved with class " + recordClass);
-              }
-            }
-
-            rid.clusterPosition = newObjectCounter--;
-
-            ORecordInternal.onAfterIdentityChanged(iRecord);
-          }
-
-          ORecordOperation txEntry = getRecordEntry(rid);
-
-          if (txEntry == null) {
-            if (!(rid.isTemporary() && iStatus != ORecordOperation.CREATED)) {
-              // NEW ENTRY: JUST REGISTER IT
-              txEntry = new ORecordOperation(iRecord, iStatus);
-              recordEntries.put(rid, txEntry);
-            }
-          } else {
-            // UPDATE PREVIOUS STATUS
-            txEntry.record = iRecord;
-
-            switch (txEntry.type) {
-            case ORecordOperation.LOADED:
-              switch (iStatus) {
-              case ORecordOperation.UPDATED:
-                txEntry.type = ORecordOperation.UPDATED;
-                break;
-              case ORecordOperation.DELETED:
-                txEntry.type = ORecordOperation.DELETED;
-                break;
-              }
-              break;
+          switch (txEntry.type) {
+          case ORecordOperation.LOADED:
+            switch (iStatus) {
             case ORecordOperation.UPDATED:
-              switch (iStatus) {
-              case ORecordOperation.DELETED:
-                txEntry.type = ORecordOperation.DELETED;
-                break;
-              }
+              txEntry.type = ORecordOperation.UPDATED;
               break;
             case ORecordOperation.DELETED:
-              break;
-            case ORecordOperation.CREATED:
-              switch (iStatus) {
-              case ORecordOperation.DELETED:
-                recordEntries.remove(rid);
-                // txEntry.type = ORecordOperation.DELETED;
-                break;
-              }
+              txEntry.type = ORecordOperation.DELETED;
               break;
             }
+            break;
+          case ORecordOperation.UPDATED:
+            switch (iStatus) {
+            case ORecordOperation.DELETED:
+              txEntry.type = ORecordOperation.DELETED;
+              break;
+            }
+            break;
+          case ORecordOperation.DELETED:
+            break;
+          case ORecordOperation.CREATED:
+            switch (iStatus) {
+            case ORecordOperation.DELETED:
+              recordEntries.remove(rid);
+              // txEntry.type = ORecordOperation.DELETED;
+              break;
+            }
+            break;
           }
         }
 
@@ -550,8 +538,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
         // RESET TRACKING
         if (iRecord instanceof ODocument && ((ODocument) iRecord).isTrackingChanges()) {
-          ((ODocument) iRecord).setTrackingChanges(false);
-          ((ODocument) iRecord).setTrackingChanges(true);
+          ODocumentInternal.clearTrackData(((ODocument) iRecord));
         }
 
       } catch (Throwable t) {
@@ -586,7 +573,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   private void doCommit() {
     if (status == TXSTATUS.ROLLED_BACK || status == TXSTATUS.ROLLBACKING)
-      throw new ORollbackException("Given transaction was rolled back and can not be used.");
+      throw new ORollbackException("Given transaction was rolled back and cannot be used.");
 
     status = TXSTATUS.COMMITTING;
 
@@ -595,29 +582,24 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
         database.getStorage().commit(this, null);
       else {
-        List<OIndexAbstract<?>> lockedIndexes = acquireIndexLocks();
-        try {
-          final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
-          for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
-            indexes.put(index.getName(), index);
+        final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
+        for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
+          indexes.put(index.getName(), index);
 
-          final Runnable callback = new CommitIndexesCallback(indexes);
+        final Runnable callback = new CommitIndexesCallback(indexes);
 
-          final String storageType = database.getStorage().getUnderlying().getType();
+        final String storageType = database.getStorage().getUnderlying().getType();
 
-          if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
-            database.getStorage().commit(OTransactionOptimistic.this, callback);
-          else {
-            database.getStorage().callInLock(new Callable<Object>() {
-              @Override
-              public Object call() throws Exception {
-                database.getStorage().commit(OTransactionOptimistic.this, callback);
-                return null;
-              }
-            }, true);
-          }
-        } finally {
-          releaseIndexLocks(lockedIndexes);
+        if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
+          database.getStorage().commit(OTransactionOptimistic.this, callback);
+        else {
+          database.getStorage().callInLock(new Callable<Object>() {
+            @Override
+            public Object call() throws Exception {
+              database.getStorage().commit(OTransactionOptimistic.this, callback);
+              return null;
+            }
+          }, true);
         }
       }
     }
@@ -627,37 +609,4 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.COMPLETED;
   }
 
-  private List<OIndexAbstract<?>> acquireIndexLocks() {
-    List<OIndexAbstract<?>> lockedIndexes = null;
-    final List<String> involvedIndexes = getInvolvedIndexes();
-
-    if (involvedIndexes != null)
-      Collections.sort(involvedIndexes);
-
-    try {
-      // LOCK INVOLVED INDEXES
-      if (involvedIndexes != null)
-        for (String indexName : involvedIndexes) {
-          final OIndexAbstract<?> index = (OIndexAbstract<?>) database.getMetadata().getIndexManager().getIndexInternal(indexName);
-          if (lockedIndexes == null)
-            lockedIndexes = new ArrayList<OIndexAbstract<?>>();
-
-          index.acquireModificationLock();
-          lockedIndexes.add(index);
-        }
-
-      return lockedIndexes;
-    } catch (RuntimeException e) {
-      releaseIndexLocks(lockedIndexes);
-      throw e;
-    }
-  }
-
-  private void releaseIndexLocks(List<OIndexAbstract<?>> lockedIndexes) {
-    if (lockedIndexes != null) {
-      for (OIndexAbstract<?> index : lockedIndexes)
-        index.releaseModificationLock();
-
-    }
-  }
 }

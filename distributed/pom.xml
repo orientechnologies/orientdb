@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>2.1-SNAPSHOT</version>
+        <version>2.2.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>orientdb-distributed</artifactId>
@@ -50,6 +50,7 @@
             -Dstorage.configuration.syncOnUpdate=false
             -Ddb.makeFullCheckpointOnIndexChange=false
             -Ddb.makeFullCheckpointOnSchemaChange=false
+            -Dhazelcast.wait.seconds.before.join=1
         </argLine>
     </properties>
 
@@ -98,8 +99,15 @@
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-tools</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-graphdb</artifactId>
             <version>${project.version}</version>
+            <!-- SET SCOPE=RUNTIME TO ENABLE STARTING DISTRIBUTED SERVER IN IDE (IntelliJ)-->
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -111,7 +119,7 @@
         <dependency>
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast-all</artifactId>
-            <version>3.3.5</version>
+            <version>3.5.1</version>
         </dependency>
     </dependencies>
 

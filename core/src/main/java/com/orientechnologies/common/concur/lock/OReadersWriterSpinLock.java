@@ -30,28 +30,28 @@ import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 8/18/14
  */
-public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implements OOrientStartupListener, OOrientShutdownListener {
-  private final ODistributedCounter                distributedCounter = new ODistributedCounter();
+@SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
+public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
+  private static final long serialVersionUID = 7975120282194559960L;
 
-  private final AtomicReference<WNode>             tail               = new AtomicReference<WNode>();
-  private volatile ThreadLocal<OModifiableInteger> lockHolds          = new InitOModifiableInteger();
+  private final transient ODistributedCounter distributedCounter = new ODistributedCounter();
+  private final transient AtomicReference<WNode> tail = new AtomicReference<WNode>();
+  private final transient ThreadLocal<OModifiableInteger> lockHolds = new InitOModifiableInteger();
 
-  private volatile ThreadLocal<WNode>              myNode             = new InitWNode();
-  private volatile ThreadLocal<WNode>              predNode           = new ThreadLocal<WNode>();
+  private final transient ThreadLocal<WNode> myNode = new InitWNode();
+  private final transient ThreadLocal<WNode> predNode = new ThreadLocal<WNode>();
 
   public OReadersWriterSpinLock() {
     final WNode wNode = new WNode();
     wNode.locked = false;
 
     tail.set(wNode);
-
-    Orient.instance().registerWeakOrientStartupListener(this);
-    Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
   public void acquireReadLock() {
@@ -169,26 +169,6 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
     assert lHolds.intValue() == 0;
   }
 
-  @Override
-  public void onShutdown() {
-    lockHolds = null;
-    myNode = null;
-    predNode = null;
-  }
-
-  @Override
-  public void onStartup() {
-    if (lockHolds == null)
-      lockHolds = new InitOModifiableInteger();
-
-    if (myNode == null)
-      myNode = new InitWNode();
-
-    if (predNode == null)
-      predNode = new ThreadLocal<WNode>();
-
-  }
-
   private static final class InitWNode extends ThreadLocal<WNode> {
     @Override
     protected WNode initialValue() {
@@ -206,7 +186,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
   private final static class WNode {
     private final Queue<Thread> waitingReaders = new ConcurrentLinkedQueue<Thread>();
 
-    private volatile boolean    locked         = true;
-    private volatile Thread     waitingWriter;
+    private volatile boolean locked = true;
+    private volatile Thread waitingWriter;
   }
 }

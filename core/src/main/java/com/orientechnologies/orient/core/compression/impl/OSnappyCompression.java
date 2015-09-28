@@ -43,7 +43,7 @@ public class OSnappyCompression extends OAbstractCompression {
       System.arraycopy(buf, 0, result, 0, compressedByteSize);
       return result;
     } catch (IOException e) {
-      throw new ODatabaseException("Error during data compression.", e);
+      throw new ODatabaseException("Error during data compression", e);
     }
   }
 
@@ -55,7 +55,7 @@ public class OSnappyCompression extends OAbstractCompression {
       return result;
 
     } catch (IOException e) {
-      throw new ODatabaseException("Error during data decompression.", e);
+      throw new ODatabaseException("Error during data decompression", e);
     }
   }
 

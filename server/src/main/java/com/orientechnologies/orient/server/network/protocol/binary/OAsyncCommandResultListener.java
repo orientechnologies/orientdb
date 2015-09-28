@@ -43,14 +43,13 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
   private final ONetworkProtocolBinary protocol;
   private final AtomicBoolean          empty       = new AtomicBoolean(true);
   private final int                    txId;
-  private final OCommandResultListener resultListener;
   private final Set<ORID>              alreadySent = new HashSet<ORID>();
 
   public OAsyncCommandResultListener(final ONetworkProtocolBinary iNetworkProtocolBinary, final int txId,
-      OCommandResultListener resultListener) {
+      final OCommandResultListener wrappedResultListener) {
+    super(wrappedResultListener);
     this.protocol = iNetworkProtocolBinary;
     this.txId = txId;
-    this.resultListener = resultListener;
   }
 
   @Override
@@ -68,10 +67,8 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
           if (!alreadySent.contains(iLinked.getIdentity())) {
             alreadySent.add(iLinked.getIdentity());
             try {
-              if (protocol.connection.data.protocolVersion >= 17) {
-                protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
-                protocol.writeIdentifiable(iLinked);
-              }
+              protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
+              protocol.writeIdentifiable(iLinked);
             } catch (IOException e) {
               OLogManager.instance().error(this, "Cannot write against channel", e);
             }
@@ -82,18 +79,16 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
       protocol.channel.writeByte((byte) 1); // ONE MORE RECORD
       protocol.writeIdentifiable(((OIdentifiable) iRecord).getRecord());
       protocol.channel.flush();// TODO review this flush... it's for non blocking...
+
+      if (wrappedResultListener != null)
+        // NOTIFY THE WRAPPED LISTENER
+        wrappedResultListener.result(iRecord);
+
     } catch (IOException e) {
       return false;
     }
 
     return true;
-  }
-
-  @Override
-  public void end() {
-    super.end();
-    if (resultListener != null)
-      resultListener.end();
   }
 
   public boolean isEmpty() {

@@ -25,7 +25,6 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 
 @Test(groups = "dictionary")
@@ -39,27 +38,27 @@ public class DictionaryTest extends DocumentDBBaseTest {
   }
 
   public void testDictionaryCreate() throws IOException {
-    ORecordFlat record = new ORecordFlat();
+    ODocument record = new ODocument();
 
-    database.getDictionary().put("key1", record.value("Dictionary test!"));
+    database.getDictionary().put("key1", record.field("test", "Dictionary test!"));
   }
 
   @Test(dependsOnMethods = "testDictionaryCreate")
   public void testDictionaryLookup() throws IOException {
     Assert.assertNotNull(database.getDictionary().get("key1"));
-    Assert.assertTrue(((ORecordFlat) database.getDictionary().get("key1")).value().equals("Dictionary test!"));
+    Assert.assertTrue(((ODocument) database.getDictionary().get("key1")).field("test").equals("Dictionary test!"));
   }
 
   @Test(dependsOnMethods = "testDictionaryLookup")
   public void testDictionaryUpdate() throws IOException {
     final long originalSize = database.getDictionary().size();
 
-    database.getDictionary().put("key1", new ORecordFlat().value("Text changed"));
+    database.getDictionary().put("key1", new ODocument().field("test", "Text changed"));
 
     database.close();
     database.open("admin", "admin");
 
-    Assert.assertEquals(((ORecordFlat) database.getDictionary().get("key1")).value(), "Text changed");
+    Assert.assertEquals(((ODocument) database.getDictionary().get("key1")).field("test"), "Text changed");
     Assert.assertEquals(database.getDictionary().size(), originalSize);
   }
 
@@ -82,7 +81,7 @@ public class DictionaryTest extends DocumentDBBaseTest {
     final int total = 1000;
 
     for (int i = total; i > 0; --i) {
-      database.getDictionary().put("key-" + (originalSize + i), new ORecordFlat().value("test-dictionary-" + i));
+      database.getDictionary().put("key-" + (originalSize + i), new ODocument().field("test", "test-dictionary-" + i));
     }
 
     for (int i = total; i > 0; --i) {
@@ -96,7 +95,7 @@ public class DictionaryTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testDictionaryMassiveCreate")
   public void testDictionaryInTx() throws IOException {
     database.begin();
-    database.getDictionary().put("tx-key", new ORecordFlat().value("tx-test-dictionary"));
+    database.getDictionary().put("tx-key", new ODocument().field("test", "tx-test-dictionary"));
     database.commit();
 
     Assert.assertNotNull(database.getDictionary().get("tx-key"));

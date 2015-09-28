@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.intent.OIntent;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -128,7 +127,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     this.password = iUserPassword;
 
     database = iDatabase;
-    checkForGraphSchema(database);
 
     makeActive();
     putInInitializationStack();
@@ -290,7 +288,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * (Internal) Returns the case sensitive edge class names.
    */
   public static void getEdgeClassNames(final OrientBaseGraph graph, final String... iLabels) {
-    if (iLabels != null && graph.isUseClassForEdgeLabel()) {
+    if (iLabels != null && graph != null && graph.isUseClassForEdgeLabel()) {
       for (int i = 0; i < iLabels.length; ++i) {
         final OrientEdgeType edgeType = graph.getEdgeType(iLabels[i]);
         if (edgeType != null)
@@ -333,48 +331,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     } catch (UnsupportedEncodingException e) {
       OLogManager.instance().error(null, "Error on decoding class name using encoding '%s'", e, "UTF-8");
       return iClassName;
-    }
-  }
-
-  protected static void checkForGraphSchema(final ODatabaseDocumentTx iDatabase) {
-    final OSchema schema = iDatabase.getMetadata().getSchema();
-
-    final OClass vertexBaseClass = schema.getClass(OrientVertexType.CLASS_NAME);
-    final OClass edgeBaseClass = schema.getClass(OrientEdgeType.CLASS_NAME);
-
-    if (vertexBaseClass == null)
-      // CREATE THE META MODEL USING THE ORIENT SCHEMA
-      schema.createClass(OrientVertexType.CLASS_NAME).setOverSize(2);
-
-    if (edgeBaseClass == null)
-      schema.createClass(OrientEdgeType.CLASS_NAME);
-
-    // @COMPATIBILITY < 1.4.0:
-    boolean warn = false;
-    final String MSG_SUFFIX = ". Probably you are using a database created with a previous version of OrientDB. Export in graphml format and reimport it";
-
-    if (vertexBaseClass != null) {
-      if (!vertexBaseClass.getName().equals(OrientVertexType.CLASS_NAME)) {
-        OLogManager.instance().warn(null, "Found Vertex class %s" + MSG_SUFFIX, vertexBaseClass.getName());
-        warn = true;
-      }
-
-      if (vertexBaseClass.existsProperty(CONNECTION_OUT) || vertexBaseClass.existsProperty(CONNECTION_IN)) {
-        OLogManager.instance().warn(null, "Found property in/out against V");
-        warn = true;
-      }
-    }
-
-    if (edgeBaseClass != null) {
-      if (!warn && !edgeBaseClass.getName().equals(OrientEdgeType.CLASS_NAME)) {
-        OLogManager.instance().warn(null, "Found Edge class %s" + MSG_SUFFIX, edgeBaseClass.getName());
-        warn = true;
-      }
-
-      if (edgeBaseClass.existsProperty(CONNECTION_OUT) || edgeBaseClass.existsProperty(CONNECTION_IN)) {
-        OLogManager.instance().warn(null, "Found property in/out against E");
-        warn = true;
-      }
     }
   }
 
@@ -800,6 +756,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public Iterable<Vertex> getVerticesOfClass(final String iClassName, final boolean iPolymorphic) {
     makeActive();
 
+    final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iClassName);
+    if (cls == null)
+      throw new IllegalArgumentException("Cannot find class '" + iClassName + "' in database schema");
+
+    if (!cls.isSubClassOf(OrientVertexType.CLASS_NAME))
+      throw new IllegalArgumentException("Class '" + iClassName + "' is not a vertex class");
+
     return new OrientElementScanIterable<Vertex>(this, iClassName, iPolymorphic);
   }
 
@@ -823,13 +786,14 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     String indexName;
     final String key;
     int pos = iKey.indexOf('.');
+    OClass clazz = null;
     if (pos > -1) {
       indexName = iKey;
 
       final String className = iKey.substring(0, pos);
       key = iKey.substring(iKey.indexOf('.') + 1);
 
-      final OClass clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
+      clazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(className);
 
       final Collection<? extends OIndex<?>> indexes = clazz.getIndexes();
       for (OIndex<?> index : indexes) {
@@ -859,7 +823,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     }
 
     // NO INDEX: EXECUTE A QUERY
-    return query().has(key, iValue).vertices();
+    OrientGraphQuery query = (OrientGraphQuery) query();
+    if (clazz != null)
+      query.labels(clazz.getName());
+    return query.has(key, iValue).vertices();
   }
 
   /**
@@ -987,6 +954,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public Iterable<Edge> getEdgesOfClass(final String iClassName, final boolean iPolymorphic) {
     makeActive();
 
+    final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iClassName);
+    if (cls == null)
+      throw new IllegalArgumentException("Cannot find class '" + iClassName + "' in database schema");
+
+    if (!cls.isSubClassOf(OrientEdgeType.CLASS_NAME))
+      throw new IllegalArgumentException("Class '" + iClassName + "' is not an edge class");
+
     return new OrientElementScanIterable<Edge>(this, iClassName, iPolymorphic);
   }
 
@@ -1078,6 +1052,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     final ODocument doc = rec.getRecord();
     if (doc == null)
       return null;
+
+    if (!doc.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME))
+      throw new IllegalArgumentException("Class '" + doc.getClassName() + "' is not an edge class");
 
     return new OrientEdge(this, rec);
   }
@@ -1596,7 +1573,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (elementClass == null)
       throw ExceptionFactory.classForElementCannotBeNull();
 
-    final OSchema schema = ((OMetadataInternal) getRawGraph().getMetadata()).getImmutableSchemaSnapshot();
+    final OSchema schema = getRawGraph().getMetadata().getImmutableSchemaSnapshot();
     final String elementOClassName = getClassName(elementClass);
 
     Set<String> result = new HashSet<String>();
@@ -1844,7 +1821,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     makeActive();
     putInInitializationStack();
-    checkForGraphSchema(database);
   }
 
   private List<Index<? extends Element>> loadManualIndexes() {

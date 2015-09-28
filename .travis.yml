@@ -1,0 +1,8 @@
+sudo: false
+language: java
+install: travis_wait mvn install
+branches:
+  only:
+  - develop
+jdk:
+- oraclejdk8

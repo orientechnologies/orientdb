@@ -43,6 +43,14 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+import com.orientechnologies.orient.core.sql.sequence.OSQLSequenceItem;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -100,7 +108,7 @@ public class OSQLHelper {
 
     if (iValue.startsWith("'") && iValue.endsWith("'") || iValue.startsWith("\"") && iValue.endsWith("\""))
       // STRING
-      fieldValue = OStringSerializerHelper.getStringContent(iValue);
+      fieldValue = OIOUtils.getStringContent(iValue);
     else if (iValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN
         && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.LIST_END) {
       // COLLECTION/ARRAY
@@ -131,9 +139,11 @@ public class OSQLHelper {
 
       if (map.containsKey(ODocumentHelper.ATTRIBUTE_TYPE))
         // IT'S A DOCUMENT
-        fieldValue = new ODocument(map);
+        // TODO: IMPROVE THIS CASE AVOIDING DOUBLE PARSING
+        fieldValue = new ODocument().fromJSON(iValue);
       else
         fieldValue = map;
+
     } else if (iValue.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN
         && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.EMBEDDED_END) {
       // SUB-COMMAND
@@ -229,6 +239,10 @@ public class OSQLHelper {
     if (iWord.startsWith("$"))
       // CONTEXT VARIABLE
       return new OSQLFilterItemVariable(iCommand, iWord);
+
+    if (iWord.startsWith(OSQLSequenceItem.PREFIX)) {
+      return new OSQLSequenceItem(iCommand, iWord);
+    }
 
     // PARSE AS FIELD
     return new OSQLFilterItemField(iCommand, iWord);

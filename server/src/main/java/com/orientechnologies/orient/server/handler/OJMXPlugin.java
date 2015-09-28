@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.managed.OrientServer;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 import javax.management.MBeanServer;
@@ -83,7 +82,7 @@ public class OJMXPlugin extends OServerPluginAbstract {
           mBeanServer.unregisterMBean(onProfiler);
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " unregisterMBean error.", e);
+      OLogManager.instance().error(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " unregisterMBean error", e);
     }
 
   }

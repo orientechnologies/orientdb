@@ -23,20 +23,13 @@ public class OUpdatePutItem extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    key.replaceParameters(params);
-    value.replaceParameters(params);
-  }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(left.toString());
-    result.append(" = ");
-    result.append(key.toString());
-    result.append(", ");
-    result.append(value.toString());
-    return result.toString();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    left.toString(params, builder);
+    builder.append(" = ");
+    key.toString(params, builder);
+    builder.append(", ");
+    value.toString(params, builder);
   }
 }
 /* JavaCC - OriginalChecksum=a38339c33ebf0a8b21e76ddb278f4958 (do not edit this line) */

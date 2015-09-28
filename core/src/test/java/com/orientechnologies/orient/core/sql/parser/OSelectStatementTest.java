@@ -14,7 +14,10 @@ import static org.testng.Assert.*;
 public class OSelectStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
-    return checkSyntax(query, true);
+    SimpleNode result = checkSyntax(query, true);
+    StringBuilder builder = new StringBuilder();
+    result.toString(null, builder);
+    return checkSyntax(builder.toString(), true);
   }
 
   protected SimpleNode checkWrongSyntax(String query) {
@@ -30,7 +33,9 @@ public class OSelectStatementTest {
       }
       System.out.println(query);
       System.out.println("->");
-      System.out.println(result.toString());
+      StringBuilder builer = new StringBuilder();
+      result.toString(null, builer);
+      System.out.println(builer.toString());
       System.out.println("............");
       return result;
     } catch (Exception e) {
@@ -148,7 +153,14 @@ public class OSelectStatementTest {
   @Test
   public void testIndex1() {
     SimpleNode result = checkRightSyntax("select from index:collateCompositeIndexCS where key = ['VAL', 'VaL']");
-    // result.dump("    ");
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
+  }
+
+  @Test
+  public void testIndex2() {
+    SimpleNode result = checkRightSyntax("select from index:collateCompositeIndexCS where key between ['VAL', 'VaL'] and ['zz', 'zz']");
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
 
@@ -286,8 +298,10 @@ public class OSelectStatementTest {
       OSelectStatement stm = (OSelectStatement) result;
       Map<Object, Object> params = new HashMap<Object, Object>();
       params.put("param1", new HashSet<Object>());
-      ((OSelectStatement) result).replaceParameters(params);
-      assertEquals(stm.toString(), "SELECT FROM bar WHERE name NOT IN []");
+
+      StringBuilder parsed = new StringBuilder();
+      stm.toString(params, parsed);
+      assertEquals(parsed.toString(), "SELECT FROM bar WHERE name NOT IN []");
     } catch (Exception e) {
       fail();
 
@@ -388,7 +402,7 @@ public class OSelectStatementTest {
     checkRightSyntax("insert into test content { \"node_id\": \"MFmqvmht\\/\\/GYsYYWB8=\"}");
   }
 
-  @Test()
+  @Test
   public void testClusterList() {
     checkRightSyntax("select from cluster:[foo,bar]");
   }
@@ -415,22 +429,20 @@ public class OSelectStatementTest {
     checkRightSyntax("select from Foo where a lucene 'a'");
     checkWrongSyntax("select from Foo where a lucene 'a' and b lucene 'a'");
 
-    checkWrongSyntax(
-        "select union($a, $b) let $a = (select from Foo where a lucene 'a' and b lucene 'b'), $b = (select from Foo where b lucene 'b')");
+    checkWrongSyntax("select union($a, $b) let $a = (select from Foo where a lucene 'a' and b lucene 'b'), $b = (select from Foo where b lucene 'b')");
     checkRightSyntax("select union($a, $b) let $a = (select from Foo where a lucene 'a'), $b = (select from Foo where b lucene 'b')");
     checkWrongSyntax("select from (select from Foo) where a lucene 'a'");
 
-    checkWrongSyntax(
-        "select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo')))) or select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo'))))");
+    checkWrongSyntax("select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo')))) or select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo'))))");
 
     checkWrongSyntax("select from cluster:foo where a lucene 'b'");
-    checkWrongSyntax("select from index:foo where a lucene 'b'");
+    checkRightSyntax("select from index:foo where a lucene 'b'");
     checkWrongSyntax("select from #12:0 where a lucene 'b'");
     checkWrongSyntax("select from [#12:0, #12:1] where a lucene 'b'");
 
   }
 
-  public void testBacktick(){
+  public void testBacktick() {
     checkRightSyntax("select `foo` from foo where `foo` = 'bar'");
     checkRightSyntax("select `SELECT` from foo where `SELECT` = 'bar'");
     checkRightSyntax("select `TRAVERSE` from foo where `TRAVERSE` = 'bar'");
@@ -548,8 +560,17 @@ public class OSelectStatementTest {
     checkRightSyntax("select `instanceof` from foo where `instanceof` = 'bar'");
     checkRightSyntax("select `cluster` from foo where `cluster` = 'bar'");
 
+    checkRightSyntax("select `foo-bar` from foo where `cluster` = 'bar'");
+
     checkWrongSyntax("select `cluster from foo where `cluster` = 'bar'");
     checkWrongSyntax("select `cluster from foo where cluster` = 'bar'");
+
+  }
+
+  @Test
+  public void testReturn() {
+    checkRightSyntax("select from ouser timeout 1 exception");
+    checkRightSyntax("select from ouser timeout 1 return");
 
   }
 

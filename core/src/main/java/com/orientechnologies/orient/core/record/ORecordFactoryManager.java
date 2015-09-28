@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 /**
  * Record factory. To use your own record implementation use the declareRecordType() method. Example of registration of the record
@@ -46,18 +45,13 @@ public class ORecordFactoryManager {
   protected final ORecordFactory[]           recordFactories = new ORecordFactory[Byte.MAX_VALUE];
 
   public interface ORecordFactory {
-    public ORecord newRecord();
+    ORecord newRecord();
   }
 
   public ORecordFactoryManager() {
     declareRecordType(ODocument.RECORD_TYPE, "document", ODocument.class, new ORecordFactory() {
       public ORecord newRecord() {
         return new ODocument();
-      }
-    });
-    declareRecordType(ORecordFlat.RECORD_TYPE, "flat", ORecordFlat.class, new ORecordFactory() {
-      public ORecord newRecord() {
-        return new ORecordFlat();
       }
     });
     declareRecordType(ORecordBytes.RECORD_TYPE, "bytes", ORecordBytes.class, new ORecordFactory() {

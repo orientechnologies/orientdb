@@ -73,7 +73,7 @@ public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLAbstrac
       attribute = ODatabase.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException e) {
       throw new OCommandSQLParsingException("Unknown database's attribute '" + attributeAsString + "'. Supported attributes are: "
-          + Arrays.toString(ODatabase.ATTRIBUTES.values()), parserText, oldPos);
+          + Arrays.toString(ODatabase.ATTRIBUTES.values()), parserText, oldPos, e);
     }
 
     value = parserText.substring(pos + 1).trim();
@@ -89,7 +89,7 @@ public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLAbstrac
   }
 
   @Override
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 

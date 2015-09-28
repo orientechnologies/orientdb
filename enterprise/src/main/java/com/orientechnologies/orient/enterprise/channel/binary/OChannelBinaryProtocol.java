@@ -19,14 +19,14 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
+import java.io.IOException;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.IOException;
 
 /**
  * The range of the requests is 1-79.
@@ -46,6 +46,7 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_DB_DROP                           = 7;
   public static final byte  REQUEST_DB_SIZE                           = 8;
   public static final byte  REQUEST_DB_COUNTRECORDS                   = 9;
+  public static final byte  REQUEST_DB_REOPEN                         = 17;
 
   public static final byte  REQUEST_DATACLUSTER_ADD                   = 10;
   public static final byte  REQUEST_DATACLUSTER_DROP                  = 11;
@@ -56,6 +57,9 @@ public class OChannelBinaryProtocol {
 
   public static final byte  REQUEST_DATASEGMENT_ADD                   = 20;
   public static final byte  REQUEST_DATASEGMENT_DROP                  = 21;
+
+  public static final byte  REQUEST_INCREMENTAL_BACKUP                = 27;                 // since 2.2
+  public static final byte  REQUEST_INCREMENTAL_RESTORE               = 28;                 // since 2.2
 
   public static final byte  REQUEST_RECORD_METADATA                   = 29;                 // since 1.4.0
   public static final byte  REQUEST_RECORD_LOAD                       = 30;
@@ -87,37 +91,33 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_PUSH_LIVE_QUERY                   = 81;                 // SINCE 2.1
 
   // DISTRIBUTED
-  public static final byte  REQUEST_DB_COPY                           = 90;                 // SINCE 1.0rc8
-  public static final byte  REQUEST_REPLICATION                       = 91;                 // SINCE 1.0
-  public static final byte  REQUEST_CLUSTER                           = 92;                 // SINCE 1.0
-  public static final byte  REQUEST_DB_TRANSFER                       = 93;                 // SINCE 1.0.2
+  public static final byte REQUEST_DB_COPY     = 90; // SINCE 1.0rc8
+  public static final byte REQUEST_REPLICATION = 91; // SINCE 1.0
+  public static final byte REQUEST_CLUSTER     = 92; // SINCE 1.0
+  public static final byte REQUEST_DB_TRANSFER = 93; // SINCE 1.0.2
 
   // Lock + sync
-  public static final byte  REQUEST_DB_FREEZE                         = 94;                 // SINCE 1.1.0
-  public static final byte  REQUEST_DB_RELEASE                        = 95;                 // SINCE 1.1.0
+  public static final byte REQUEST_DB_FREEZE  = 94; // SINCE 1.1.0
+  public static final byte REQUEST_DB_RELEASE = 95; // SINCE 1.1.0
 
-  public static final byte  REQUEST_DATACLUSTER_FREEZE                = 96;
-  public static final byte  REQUEST_DATACLUSTER_RELEASE               = 97;
+  public static final byte REQUEST_DATACLUSTER_FREEZE  = 96;
+  public static final byte REQUEST_DATACLUSTER_RELEASE = 97;
 
   // REMOTE SB-TREE COLLECTIONS
-  public static final byte  REQUEST_CREATE_SBTREE_BONSAI              = 110;
-  public static final byte  REQUEST_SBTREE_BONSAI_GET                 = 111;
-  public static final byte  REQUEST_SBTREE_BONSAI_FIRST_KEY           = 112;
-  public static final byte  REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR   = 113;
-  public static final byte  REQUEST_RIDBAG_GET_SIZE                   = 114;
-
-  public static final byte  REQUEST_INDEX_GET                         = 120;
-  public static final byte  REQUEST_INDEX_PUT                         = 121;
-  public static final byte  REQUEST_INDEX_REMOVE                      = 122;
+  public static final byte REQUEST_CREATE_SBTREE_BONSAI            = 110;
+  public static final byte REQUEST_SBTREE_BONSAI_GET               = 111;
+  public static final byte REQUEST_SBTREE_BONSAI_FIRST_KEY         = 112;
+  public static final byte REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR = 113;
+  public static final byte REQUEST_RIDBAG_GET_SIZE                 = 114;
 
   // INCOMING
-  public static final byte  RESPONSE_STATUS_OK                        = 0;
-  public static final byte  RESPONSE_STATUS_ERROR                     = 1;
-  public static final byte  PUSH_DATA                                 = 3;
+  public static final byte RESPONSE_STATUS_OK    = 0;
+  public static final byte RESPONSE_STATUS_ERROR = 1;
+  public static final byte PUSH_DATA             = 3;
 
   // CONSTANTS
-  public static final short RECORD_NULL                               = -2;
-  public static final short RECORD_RID                                = -3;
+  public static final short RECORD_NULL = -2;
+  public static final short RECORD_RID  = -3;
 
   // FOR MORE INFO: https://github.com/orientechnologies/orientdb/wiki/Network-Binary-Protocol#wiki-Compatibility
   public static final int   PROTOCOL_VERSION_21                       = 21;
@@ -131,9 +131,13 @@ public class OChannelBinaryProtocol {
   public static final int   PROTOCOL_VERSION_29                       = 29;                 // ADDED PUSH SUPPORT FOR LIVE QUERY
   public static final int   PROTOCOL_VERSION_30                       = 30;                 // NEW COMMAND TO READ RECORD ONLY IF
                                                                                              // VERSION IS NOT LATEST WAS ADD
-  public static final int   PROTOCOL_VERSION_31                       = 30;                 // NEW INDEX COMMANDS: INDEX_GET,
-                                                                                             // INDEX_PUT, INDEX_REMOVE
-  public static final int   CURRENT_PROTOCOL_VERSION                  = PROTOCOL_VERSION_31;
+  public static final int   PROTOCOL_VERSION_31                       = 31;                 // CHANGED STORAGE CFG TO ADD
+                                                                                             // ENCRYPTION
+  public static final int   PROTOCOL_VERSION_32                       = 32;                 // STREAMABLE RESULT SET
+
+  public static final int   PROTOCOL_VERSION_33                       = 33;                 // INCREMENTAL BACKUP/RESTORE
+
+  public static final int   CURRENT_PROTOCOL_VERSION                  = PROTOCOL_VERSION_33;
 
   public static OIdentifiable readIdentifiable(final OChannelBinaryAsynchClient network) throws IOException {
     final int classId = network.readShort();

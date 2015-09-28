@@ -25,6 +25,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import sun.misc.Unsafe;
 
 /**
@@ -53,9 +54,9 @@ public class OUnsafeMemory implements ODirectMemory {
           f.setAccessible(true);
           return f.get(null);
         } catch (NoSuchFieldException e) {
-          throw new Error();
+          throw new Error(e);
         } catch (IllegalAccessException e) {
-          throw new Error();
+          throw new Error(e);
         }
       }
     });
@@ -65,7 +66,13 @@ public class OUnsafeMemory implements ODirectMemory {
       Class<?> unsafeMemoryJava7 = OUnsafeMemory.class.getClassLoader().loadClass(
           "com.orientechnologies.common.directmemory.OUnsafeMemoryJava7");
       futureInstance = (OUnsafeMemory) unsafeMemoryJava7.newInstance();
-    } catch (Exception e) {
+    } catch (ClassNotFoundException e) {
+      futureInstance = new OUnsafeMemory();
+    } catch (NoSuchMethodException e) {
+      futureInstance = new OUnsafeMemory();
+    } catch (InstantiationException e) {
+      futureInstance = new OUnsafeMemory();
+    } catch (IllegalAccessException e) {
       futureInstance = new OUnsafeMemory();
     }
 
@@ -102,7 +109,6 @@ public class OUnsafeMemory implements ODirectMemory {
 
   @Override
   public void get(long pointer, byte[] array, int arrayOffset, int length) {
-    pointer += arrayOffset;
     for (int i = arrayOffset; i < length + arrayOffset; i++)
       array[i] = unsafe.getByte(pointer++);
 

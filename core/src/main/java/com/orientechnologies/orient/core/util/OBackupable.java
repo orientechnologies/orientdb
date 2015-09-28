@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -54,8 +55,7 @@ public interface OBackupable {
    * @throws IOException
    * @see ODatabaseExport
    */
-  void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener,
-      int compressionLevel, int bufferSize) throws IOException;
+  List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException;
 
   /**
    * Executes a restore of a database backup. During the restore the database will be frozen in read-only mode.

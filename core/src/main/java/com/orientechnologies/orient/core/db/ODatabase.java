@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.io.Closeable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -47,6 +41,12 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
+import java.io.Closeable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
  * Limits:
@@ -61,7 +61,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * @author Luca Garulli
  *
  */
-public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2RecordHandler {
+public interface ODatabase<T> extends OBackupable, Closeable {
 
   enum OPTIONS {
     SECURITY
@@ -72,7 +72,7 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
   }
 
   enum ATTRIBUTES {
-    TYPE, STATUS, DEFAULTCLUSTERID, DATEFORMAT, DATETIMEFORMAT, TIMEZONE, LOCALECOUNTRY, LOCALELANGUAGE, CHARSET, CUSTOM, CLUSTERSELECTION, MINIMUMCLUSTERS, CONFLICTSTRATEGY
+    TYPE, STATUS, DEFAULTCLUSTERID, DATEFORMAT, DATETIMEFORMAT, TIMEZONE, LOCALECOUNTRY, LOCALELANGUAGE, CHARSET, CUSTOM, CLUSTERSELECTION, MINIMUMCLUSTERS, CONFLICTSTRATEGY, VALIDATION
   }
 
   /**
@@ -433,46 +433,7 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
    */
   void freeze(boolean throwException);
 
-  /**
-   * Flush cached cluster content to the disk.
-   *
-   * After this call users can perform only select queries. All write-related commands will queued till {@link #releaseCluster(int)}
-   * command will be called.
-   *
-   * Given command waits till all on going modifications in indexes or DB will be finished.
-   *
-   * IMPORTANT: This command is not reentrant.
-   *
-   * @param iClusterId
-   *          that must be released
-   */
-  void freezeCluster(int iClusterId);
 
-  /**
-   * Allows to execute write-related commands on the cluster
-   *
-   * @param iClusterId
-   *          that must be released
-   */
-  void releaseCluster(int iClusterId);
-
-  /**
-   * Flush cached cluster content to the disk.
-   *
-   * After this call users can perform only select queries. All write-related commands will queued till {@link #releaseCluster(int)}
-   * command will be called.
-   *
-   * Given command waits till all on going modifications in indexes or DB will be finished.
-   *
-   * IMPORTANT: This command is not reentrant.
-   *
-   * @param iClusterId
-   *          that must be released
-   * @param throwException
-   *          If <code>true</code> {@link com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException}
-   *          exception will be thrown in case of write command will be performed.
-   */
-  void freezeCluster(int iClusterId, boolean throwException);
 
   enum OPERATION_MODE {
     SYNCHRONOUS, ASYNCHRONOUS, ASYNCHRONOUS_NOANSWER
@@ -498,11 +459,6 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
    * @see com.orientechnologies.orient.core.metadata.security.OSecurity
    */
   OSecurityUser getUser();
-
-  /**
-   * Set user for current database instance
-   */
-  void setUser(OSecurityUser user);
 
   /**
    * Loads the entity and return it.
@@ -738,7 +694,7 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
   /**
    * Hides records content by putting tombstone on the records position but does not delete record itself.
    *
-   * This method is used in case of record content itself is broken and can not be read or deleted. So it is emergence method. This
+   * This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method. This
    * method can be used only if there is no active transaction in database.
    *
    *
@@ -927,4 +883,29 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   <DB extends ODatabase<?>> DB setConflictStrategy(ORecordConflictStrategy iResolver);
+
+  /**
+   * Performs incremental backup of database content to the selected folder. This is thread safe operation and can be done in normal
+   * operational mode.
+   *
+   * If it will be first backup of data full content of database will be copied into folder otherwise only changes after last backup
+   * in the same folder will be copied.
+   *
+   * @param path
+   *          Path to backup folder.
+   * @since 2.2
+   * 
+   */
+  void incrementalBackup(String path);
+
+  /**
+   * Restores content of database stored using {@link #incrementalBackup(String)} method.
+   *
+   * During data restore database can not be used in normal mode you should wait till database restore will be finished.
+   * 
+   * @param path
+   *          Path to backup folder.
+   * @since 2.2
+   */
+  void incrementalRestore(String path);
 }

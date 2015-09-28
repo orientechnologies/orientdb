@@ -34,9 +34,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableA
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 /**
  * Hi-level function that return the label for both edges and vertices. The label could be bound to the class name.
@@ -55,7 +53,7 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
       OCommandContext iContext) {
     final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
     ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getAnyGraph(shutdownFlag);
     try {
       if (iCurrentResult != null) {
         return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
@@ -88,8 +86,7 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
       return edge.getLabel();
 
     } else
-      throw new OCommandExecutionException("Invalid record: is neither a vertex nor an edge. Found class: "
-          + immutableClass);
+      throw new OCommandExecutionException("Invalid record: is neither a vertex nor an edge. Found class: " + immutableClass);
   }
 
   public String getSyntax() {

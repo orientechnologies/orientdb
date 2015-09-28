@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.server.OServer;
@@ -51,17 +52,6 @@ public class BareBonesServer {
 
   public void deleteRecursively(final File iRootFile) {
     OLogManager.instance().info(this, "deleting recursively: " + iRootFile.getAbsolutePath());
-    if (iRootFile.exists()) {
-      if (iRootFile.isDirectory()) {
-        for (File f : iRootFile.listFiles()) {
-          if (f.isFile())
-            f.delete();
-          else
-            deleteRecursively(f);
-        }
-      }
-      iRootFile.delete();
-    }
+    OFileUtils.deleteRecursively(iRootFile);
   }
-
 }

@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -304,6 +305,10 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getDefaultClusterId();
   }
 
+  public <RET extends ORecord> RET load(final String iRidAsString) {
+    return (RET) database.load(new ORecordId(iRidAsString));
+  }
+
   public <RET extends ORecord> RET load(ORecord iRecord) {
     return (RET) database.load(iRecord);
   }
@@ -370,10 +375,6 @@ public class OScriptDocumentDatabaseWrapper {
 
   public long getSize() {
     return database.getSize();
-  }
-
-  public ORecord getRecordByUserObject(Object iUserObject, boolean iCreateIfNotAvailable) {
-    return database.getRecordByUserObject(iUserObject, iCreateIfNotAvailable);
   }
 
   public ODocument save(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,

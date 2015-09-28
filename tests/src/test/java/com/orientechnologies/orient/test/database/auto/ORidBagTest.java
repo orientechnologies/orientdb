@@ -38,6 +38,9 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     bag.setAutoConvertToRecord(false);
 
     bag.add(new ORecordId("#77:1"));
+    Assert.assertTrue(bag.contains(new ORecordId("#77:1")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#78:2")));
+
     Iterator<OIdentifiable> iterator = bag.iterator();
     Assert.assertTrue(iterator.hasNext());
 
@@ -54,6 +57,10 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     bag.add(new ORecordId("#77:2"));
     bag.add(new ORecordId("#77:2"));
+
+    Assert.assertTrue(bag.contains(new ORecordId("#77:2")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:3")));
+
     assertEquals(bag.size(), 2);
     assertEmbedded(bag.isEmbedded());
   }
@@ -76,6 +83,15 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     bag.remove(new ORecordId("#77:2"));
     bag.remove(new ORecordId("#77:4"));
     bag.remove(new ORecordId("#77:6"));
+
+    Assert.assertTrue(bag.contains(new ORecordId("#77:3")));
+    Assert.assertTrue(bag.contains(new ORecordId("#77:4")));
+    Assert.assertTrue(bag.contains(new ORecordId("#77:5")));
+
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:2")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:6")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:1")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:0")));
 
     assertEmbedded(bag.isEmbedded());
 
@@ -104,6 +120,15 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     bag = doc.field("ridbag");
     assertEmbedded(bag.isEmbedded());
+
+    Assert.assertTrue(bag.contains(new ORecordId("#77:3")));
+    Assert.assertTrue(bag.contains(new ORecordId("#77:4")));
+    Assert.assertTrue(bag.contains(new ORecordId("#77:5")));
+
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:2")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:6")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:1")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:0")));
 
     for (OIdentifiable identifiable : bag)
       assertTrue(rids.remove(identifiable));

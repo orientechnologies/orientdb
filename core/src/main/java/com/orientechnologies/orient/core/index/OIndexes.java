@@ -17,15 +17,15 @@ package com.orientechnologies.orient.core.index;
 
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexFactory;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Utility class to create indexes. New OIndexFactory can be registered
@@ -116,7 +116,7 @@ public final class OIndexes {
 
   public static OIndexFactory getFactory(String indexType, String algorithm) {
     if (algorithm == null)
-      algorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
+      algorithm = chooseDefaultIndexAlgorithm(indexType);
 
     final Iterator<OIndexFactory> ite = getAllFactories();
 
@@ -148,17 +148,9 @@ public final class OIndexes {
    */
   public static OIndexInternal<?> createIndex(ODatabaseDocumentInternal database, String name, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException, OIndexException {
-    Iterator<OIndexFactory> ite = getAllFactories();
-    boolean found = false;
-    while (ite.hasNext()) {
-      final OIndexFactory factory = ite.next();
-      found = found || factory.getAlgorithms().contains(algorithm);
-    }
-    if (!found) {
-      throw new OIndexException("Engine type: '" + algorithm + "' is not supported. Types are "
-          + OCollections.toString(getIndexEngines()) + ". Please check the engine name or verify that the engine '" + algorithm
-          + "' is installed correctly");
-    }
+    findFactoryByAlgorithm(algorithm);
+
+    Iterator<OIndexFactory> ite;
     ite = getAllFactories();
     while (ite.hasNext()) {
       final OIndexFactory factory = ite.next();
@@ -168,6 +160,43 @@ public final class OIndexes {
     }
 
     throw new OIndexException("Index type: " + indexType + " is not supported. Types are " + OCollections.toString(getIndexTypes()));
+  }
+
+  private static OIndexFactory findFactoryByAlgorithm(String algorithm) {
+    Iterator<OIndexFactory> ite = getAllFactories();
+
+    while (ite.hasNext()) {
+      final OIndexFactory factory = ite.next();
+      if (factory.getAlgorithms().contains(algorithm))
+        return factory;
+
+    }
+
+    throw new OIndexException("Engine type: '" + algorithm + "' is not supported. Types are "
+        + OCollections.toString(getIndexEngines()) + ". Please check the engine name or verify that the engine '" + algorithm
+        + "' is installed correctly");
+  }
+
+  public static OIndexEngine createIndexEngine(String name, String algorithm, Boolean durableInNonTxMode, OStorage storage,
+      int version, Map<String, String> indexProperties) {
+
+    final OIndexFactory factory = findFactoryByAlgorithm(algorithm);
+
+    return factory.createIndexEngine(name, durableInNonTxMode, storage, version, indexProperties);
+  }
+
+  public static String chooseDefaultIndexAlgorithm(String type) {
+    String algorithm = null;
+
+    if (OClass.INDEX_TYPE.DICTIONARY.name().equals(type) || OClass.INDEX_TYPE.FULLTEXT.name().equals(type)
+        || OClass.INDEX_TYPE.NOTUNIQUE.name().equals(type) || OClass.INDEX_TYPE.UNIQUE.name().equals(type)) {
+      algorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
+    } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equals(type)
+        || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name().equals(type) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name().equals(type)
+        || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name().equals(type)) {
+      algorithm = OHashIndexFactory.HASH_INDEX_ALGORITHM;
+    }
+    return algorithm;
   }
 
   /**

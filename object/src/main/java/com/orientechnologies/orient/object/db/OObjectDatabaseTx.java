@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -81,8 +80,7 @@ import java.util.Map;
  * @author Luca Molino
  */
 @SuppressWarnings("unchecked")
-public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements ODatabaseObject, ODatabaseInternal<Object>,
-    OUserObject2RecordHandler {
+public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements ODatabaseObject, ODatabaseInternal<Object> {
 
   public static final String    TYPE = "object";
   protected ODictionary<Object> dictionary;
@@ -324,7 +322,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * @return the object serialized or with detached data
    */
   public <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance) {
-    return detachAll(iPojo, returnNonProxiedInstance, new HashMap<Object, Object>());
+    return detachAll(iPojo, returnNonProxiedInstance, new HashMap<Object, Object>(), new HashMap<Object, Object>());
   }
 
   public <RET> RET load(final Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
@@ -335,7 +333,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   @Deprecated
   public <RET> RET load(Object iPojo, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
       OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    return load(iPojo, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
+    return load(iPojo, iFetchPlan, iIgnoreCache, !iIgnoreCache, loadTombstone, iLockingStrategy);
   }
 
   @Override
@@ -801,12 +799,23 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
+  public void incrementalBackup(String path) {
+    underlying.incrementalBackup(path);
+  }
+
+  @Override
+  public void incrementalRestore(String path) {
+    underlying.incrementalRestore(path);
+  }
+
+  @Override
   public void resetInitialization() {
     underlying.resetInitialization();
   }
 
-  protected <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached) {
-    return (RET) OObjectEntitySerializer.detachAll(iPojo, this, returnNonProxiedInstance, alreadyDetached);
+  protected <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached,
+      Map<Object, Object> lazyObjects) {
+    return (RET) OObjectEntitySerializer.detachAll(iPojo, this, returnNonProxiedInstance, alreadyDetached, lazyObjects);
   }
 
   protected void deleteCascade(final ODocument record) {

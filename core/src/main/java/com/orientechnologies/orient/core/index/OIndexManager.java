@@ -84,16 +84,6 @@ public interface OIndexManager {
    */
   public boolean existsIndex(final String iName);
 
-  /**
-   * Searches for index by id of its configuration.
-   * 
-   * IMPORTANT! Only for internal usage.
-   * 
-   * @param iRID
-   *          id of index configuration.
-   * @return an index, or null if such does not exist.
-   */
-  public OIndex<?> getIndex(final ORID iRID);
 
   /**
    * Creates a new index with default algorithm.

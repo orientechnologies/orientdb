@@ -30,8 +30,10 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Iterator;
 
 /**
@@ -41,12 +43,12 @@ import java.util.Iterator;
  * to classic algorithm because of its big memory consumption in case of non-uniform data distribution instead it is implemented
  * according too "Multilevel Extendible Hashing Sven Helmer, Thomas Neumann, Guido Moerkotte April 17, 2002". Which has much less
  * memory consumption in case of nonuniform data distribution.
- * 
+ * <p>
  * Index itself uses so called "muiltilevel  schema" when first level contains 256 buckets, when bucket is split it is put at the
  * end of other file which represents second level. So if data which are put has distribution close to uniform (this index was
  * designed to be use as rid index for DHT storage) buckets split will be preformed in append only manner to speed up index write
  * speed.
- * 
+ * <p>
  * So hash index bucket itself has following structure:
  * <ol>
  * <li>Bucket depth - 1 byte.</li>
@@ -55,30 +57,30 @@ import java.util.Iterator;
  * <li>Offsets of entities stored in this bucket relatively to it's beginning. It is array of int values of undefined size.</li>
  * <li>Entities itself</li>
  * </ol>
- * 
+ * <p>
  * So if 1-st and 2-nd fields are clear. We should discuss the last ones.
- * 
- * 
+ * <p>
+ * <p>
  * Entities in bucket are sorted by key's hash code so each entity has following storage format in bucket: key's hash code (8
  * bytes), key, value. Because entities are stored in sorted order it means that every time when we insert new entity old ones
  * should be moved.
- * 
+ * <p>
  * There are 2 reasons why it is bad:
  * <ol>
  * <li>It will generate write ahead log of enormous size.</li>
  * <li>The more amount of memory is affected in operation the less speed we will have. In worst case 60 kb of memory should be
  * moved.</li>
  * </ol>
- * 
+ * <p>
  * To avoid disadvantages listed above entries ara appended to the end of bucket, but their offsets are stored at the beginning of
  * bucket. Offsets are stored in sorted order (ordered by hash code of entity's key) so we need to move only small amount of memory
  * to store entities in sorted order.
- * 
+ * <p>
  * About indexes of parents of current bucket. When item is removed from bucket we check space which is needed to store all entities
  * of this bucket, it's buddy bucket (bucket which was also created from parent bucket during split) and if space of single bucket
  * is enough to save all entities from both buckets we remove these buckets and put all content in parent bucket. That is why we
  * need indexes of parents of current bucket.
- * 
+ * <p>
  * Also hash index has special file of one page long which contains information about state of each level of buckets in index. This
  * information is stored as array index of which equals to file level. All array item has following structure:
  * <ol>
@@ -87,8 +89,7 @@ import java.util.Iterator;
  * <li>Amount of buckets in given level - 8 bytes.</li>
  * <li>Index of page of first removed bucket (not splitted but removed) - 8 bytes</li>
  * </ol>
- * 
- * 
+ *
  * @author Andrey Lomakin
  * @since 12.03.13
  */
@@ -148,14 +149,18 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during hash table creation.", e);
+      throw new OIndexException("Error during hash table creation", e);
     }
 
     acquireExclusiveLock();
     try {
       try {
 
-        this.keyTypes = keyTypes;
+        if (keyTypes != null)
+          this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
+        else
+          this.keyTypes = null;
+
         this.nullKeyIsSupported = nullKeyIsSupported;
 
         this.directory = new OHashTableDirectory(treeStateFileExtension, getName(), durableInNonTxMode, storage);
@@ -196,12 +201,11 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
         throw new OStorageException(null, e);
       }
     } catch (IOException e) {
-      throw new OIndexException("Error during local hash table creation.", e);
+      throw new OIndexException("Error during local hash table creation", e);
     } finally {
       releaseExclusiveLock();
     }
   }
-
 
   @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
@@ -224,7 +228,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during hash set serializer for index keys.", e);
+      throw new OIndexException("Error during hash set serializer for index keys", e);
     }
 
     acquireExclusiveLock();
@@ -246,7 +250,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
     } catch (IOException e) {
       rollback();
 
-      throw new OIndexException("Can not set serializer for index keys", e);
+      throw new OIndexException("Cannot set serializer for index keys", e);
     } catch (Throwable e) {
       rollback();
       throw new OStorageException(null, e);
@@ -301,7 +305,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
       endAtomicOperation(false, null);
     } catch (IOException e) {
       rollback();
-      throw new OIndexException("Can not set serializer for index values", e);
+      throw new OIndexException("Cannot set serializer for index values", e);
     } catch (Throwable e) {
       rollback();
       throw new OStorageException(null, e);
@@ -416,7 +420,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during hash table entry deletion.", e);
+      throw new OIndexException("Error during hash table entry deletion", e);
     }
 
     acquireExclusiveLock();
@@ -650,7 +654,11 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
   public void load(String name, OType[] keyTypes, boolean nullKeyIsSupported) {
     acquireExclusiveLock();
     try {
-      this.keyTypes = keyTypes;
+      if (keyTypes != null)
+        this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
+      else
+        this.keyTypes = null;
+
       this.nullKeyIsSupported = nullKeyIsSupported;
 
       OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
@@ -666,10 +674,10 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
       try {
         OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(hashStateEntry, getChangesTree(atomicOperation,
             hashStateEntry), false);
-        keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance()
-            .getObjectSerializer(page.getKeySerializerId());
-        valueSerializer = (OBinarySerializer<V>) OBinarySerializerFactory.getInstance().getObjectSerializer(
-            page.getValueSerializerId());
+        keySerializer = (OBinarySerializer<K>) storage.getComponentsFactory().binarySerializerFactory.getObjectSerializer(page
+            .getKeySerializerId());
+        valueSerializer = (OBinarySerializer<V>) storage.getComponentsFactory().binarySerializerFactory.getObjectSerializer(page
+            .getValueSerializerId());
 
         for (int i = 0; i < HASH_CODE_SIZE; i++)
           if (!page.isRemoved(i))
@@ -693,7 +701,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during hash table deletion.", e);
+      throw new OIndexException("Error during hash table deletion", e);
     }
 
     acquireExclusiveLock();
@@ -731,10 +739,10 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
       endAtomicOperation(false, null);
     } catch (IOException ioe) {
       rollback();
-      throw new OIndexException("Can not delete hash table with name " + name, ioe);
+      throw new OIndexException("Cannot delete hash table with name " + name, ioe);
     } catch (Exception e) {
       rollback();
-      throw new OIndexException("Can not delete hash table with name " + name, e);
+      throw new OIndexException("Cannot delete hash table with name " + name, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -1255,7 +1263,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
         releaseSharedLock();
       }
     } catch (IOException e) {
-      throw new OIndexException("Error during index size request.", e);
+      throw new OIndexException("Error during index size request", e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -1297,7 +1305,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during hash table deletion.", e);
+      throw new OIndexException("Error during hash table deletion", e);
     }
 
     acquireExclusiveLock();
@@ -2074,6 +2082,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
     }
   }
 
+  @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
   private void initHashTreeState(OAtomicOperation atomicOperation) throws IOException {
 
     for (long pageIndex = 0; pageIndex < MAX_LEVEL_SIZE; pageIndex++) {
@@ -2146,7 +2155,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
     int offset = 0;
 
     int index = (int) ((hashCode >>> (HASH_CODE_SIZE - nodeDepth)) & (LEVEL_MASK >>> (MAX_LEVEL_DEPTH - localNodeDepth)));
-    BucketPath currentNode = new BucketPath(parentNode, 0, index, 0, localNodeDepth, nodeDepth);
+    BucketPath currentNode = new BucketPath(null, 0, index, 0, localNodeDepth, nodeDepth);
     do {
       final long position = directory.getNodePointer(nodeIndex, index + offset);
       if (position >= 0)

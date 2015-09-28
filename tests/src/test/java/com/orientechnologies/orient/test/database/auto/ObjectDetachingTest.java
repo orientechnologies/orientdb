@@ -32,6 +32,8 @@ import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.cycle.CycleChild;
 import com.orientechnologies.orient.test.domain.cycle.CycleParent;
 import com.orientechnologies.orient.test.domain.cycle.GrandChild;
+import com.orientechnologies.orient.test.domain.lazy.LazyChild;
+import com.orientechnologies.orient.test.domain.lazy.LazyParent;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 import javassist.util.proxy.Proxy;
 import org.testng.Assert;
@@ -758,5 +760,21 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     Assert.assertEquals(detachedGrandChild.getName(), grandChild.getName());
     Assert.assertSame(detachedGrandChild.getGrandParent(), detachedParent);
 
+  }
+
+  public void testDetachAllWithLazyOneToOne(){
+    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.lazy");
+    LazyParent parent = new LazyParent();
+    LazyChild theChild = new LazyChild();
+    theChild.setName("name");
+    parent.setChild(theChild);
+    LazyParent saved = database.save(parent);
+    saved.setChildCopy(saved.getChild());
+    LazyParent detached = database.detachAll(saved, true);
+    Assert.assertNotNull(detached.getChild().getId());
+    Assert.assertNull(detached.getChild().getName());
+    Assert.assertSame(detached.getChild(), detached.getChildCopy());
+    LazyChild loaded = database.load(detached.getChild().getId());
+    Assert.assertEquals("name", loaded.getName());
   }
 }

@@ -3,11 +3,16 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.schedule.OScheduler;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,6 +52,7 @@ public class OImmutableClass implements OClass {
   private final float                     classOverSize;
   private final String                    shortName;
   private final Map<String, String>       customFields;
+  private final String                    description;
 
   private final OImmutableSchema          schema;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
@@ -56,6 +62,11 @@ public class OImmutableClass implements OClass {
   private boolean                         restricted;
   private boolean                         isVertexType;
   private boolean                         isEdgeType;
+  private boolean                         triggered;
+  private boolean                         function;
+  private boolean                         scheduler;
+  private boolean                         ouser;
+  private boolean                         orole;
 
   public OImmutableClass(OClass oClass, OImmutableSchema schema) {
     isAbstract = oClass.isAbstract();
@@ -63,7 +74,7 @@ public class OImmutableClass implements OClass {
     this.schema = schema;
 
     superClassesNames = oClass.getSuperClassesNames();
-    superClasses = new ArrayList<OImmutableClass>();
+    superClasses = new ArrayList<OImmutableClass>(superClassesNames.size());
 
     name = oClass.getName();
     streamAbleName = oClass.getStreamableName();
@@ -90,6 +101,7 @@ public class OImmutableClass implements OClass {
       customFields.put(key, oClass.getCustom(key));
 
     this.customFields = Collections.unmodifiableMap(customFields);
+    this.description = oClass.getDescription();
   }
 
   public void init() {
@@ -115,6 +127,11 @@ public class OImmutableClass implements OClass {
       this.restricted = isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME);
       this.isVertexType = isSubClassOf(VERTEX_CLASS_NAME);
       this.isEdgeType = isSubClassOf(EDGE_CLASS_NAME);
+      this.triggered = isSubClassOf(OClassTrigger.CLASSNAME);
+      this.function = isSubClassOf(OFunctionTrigger.CLASSNAME);
+      this.scheduler = isSubClassOf(OScheduler.CLASSNAME);
+      this.ouser = isSubClassOf(OUser.CLASS_NAME);
+      this.orole = isSubClassOf(ORole.CLASS_NAME);
       inited = true;
     }
   }
@@ -482,6 +499,16 @@ public class OImmutableClass implements OClass {
   public OClass setShortName(String shortName) {
     throw new UnsupportedOperationException();
   }
+  
+  @Override
+  public String getDescription() {
+    return description;
+  }
+  
+  @Override
+  public OClass setDescription(String iDescription) {
+    throw new UnsupportedOperationException();
+  }
 
   @Override
   public Object get(ATTRIBUTES iAttribute) {
@@ -507,6 +534,8 @@ public class OImmutableClass implements OClass {
       return getClusterSelection();
     case CUSTOM:
       return getCustomInternal();
+    case DESCRIPTION:
+      return getDescription();
     }
 
     throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");
@@ -657,7 +686,7 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
-  public String getCustom(String iName) {
+  public String getCustom(final String iName) {
     return customFields.get(iName);
   }
 
@@ -682,12 +711,17 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
-  public boolean hasClusterId(int clusterId) {
+  public boolean hasClusterId(final int clusterId) {
     return Arrays.binarySearch(clusterIds, clusterId) >= 0;
   }
 
   @Override
-  public int compareTo(OClass other) {
+  public boolean hasPolymorphicClusterId(final int clusterId) {
+    return Arrays.binarySearch(polymorphicClusterIds, clusterId) >= 0;
+  }
+
+  @Override
+  public int compareTo(final OClass other) {
     return name.compareTo(other.getName());
   }
 
@@ -730,6 +764,26 @@ public class OImmutableClass implements OClass {
 
   public boolean isVertexType() {
     return isVertexType;
+  }
+
+  public boolean isTriggered() {
+    return triggered;
+  }
+
+  public boolean isFunction() {
+    return function;
+  }
+
+  public boolean isScheduler() {
+    return scheduler;
+  }
+
+  public boolean isOuser() {
+    return ouser;
+  }
+
+  public boolean isOrole() {
+    return orole;
   }
 
 }

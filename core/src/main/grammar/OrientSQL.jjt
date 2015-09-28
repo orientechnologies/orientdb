@@ -74,6 +74,8 @@ TOKEN:
 	|
 	< TRAVERSE: ( "t" | "T") ( "r" | "R") ( "a" | "A") ( "v" | "V") ( "e" | "E") ( "r" | "R") ( "s" | "S") ( "e" | "E") >
 	|
+	< MATCH: ( "m" | "M" ) ( "a" | "A" ) ( "t" | "T" ) ( "c" | "C" ) ( "h" | "H" ) >
+	|
 	< INSERT: ( "i" | "I" ) ( "n" | "N" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) >
 	|
 	< CREATE: ( "c" | "C" ) ( "r" | "R" ) ( "e" | "E" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) >
@@ -183,6 +185,14 @@ TOKEN:
 	< UNWIND: ( "u" | "U" ) ( "n" | "N" ) ( "w" | "W" ) ( "i" | "I" ) ( "n" | "N" ) ( "d" | "D" ) >
 	|
 	< MAXDEPTH: ( "m" | "M" ) ( "a" | "A" ) ( "x" | "X" ) ( "d" | "D" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) >
+	|
+	< MINDEPTH: ( "m" | "M" ) ( "i" | "I" ) ( "n" | "N" ) ( "d" | "D" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) >
+	|
+	< CLASS: ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) >
+	|
+	< CLASSES: ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) ( "e" | "E" ) ( "s" | "S" ) >
+    |
+	< EXCEPTION: ( "e" | "E" ) ( "x" | "X" ) ( "c" | "C" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -380,8 +390,8 @@ TOKEN :
 TOKEN :
 {
   < IDENTIFIER: ( (<DOLLAR>)? <LETTER> (<PART_LETTER>)* ) >
-//|
-//  < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
+|
+  < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
 |
   < INDEX_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ":" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
 |
@@ -434,7 +444,7 @@ OStatement parse() :
 
 OIdentifier Identifier():
 {
-    //Token quotedToken = null;
+    Token quotedToken = null;
     Token token = null;
 
 }
@@ -472,10 +482,20 @@ OIdentifier Identifier():
     |
     token = <LUCENE>
     |
+    token = <CLASS>
+    |
+    token = <CLASSES>
+    |
+    token = <MINDEPTH>
+    |
     token = <NEAR>
     |
     token = <WITHIN>
     |
+    token = <EXCEPTION>
+    |
+    quotedToken = <QUOTED_IDENTIFIER>
+    /*
     (
     //TODO REPLACE THIS WITH <QUOTED_IDENTIFIER>
         <BACKTICK>
@@ -621,24 +641,27 @@ OIdentifier Identifier():
             token = <INSTANCEOF>
             |
             token = <CLUSTER>
+            |
+            token = <EXCEPTION>
         )
         <BACKTICK>
     )
+    */
 ) {
 
-    //if(token!=null){
-    jjtThis.value = token.image;
-    /*
+    if(token!=null){
+        jjtThis.value = token.image;
     }else{
+        jjtThis.quoted = true;
         jjtThis.value = quotedToken.image;
         jjtThis.value = jjtThis.value.substring(1, jjtThis.value.length() - 1);
-        try{
+        /*try{
             jjtThis.value = java.net.URLEncoder.encode(jjtThis.value, null);
         }catch(Exception e){
 
-        }
+        }*/
     }
-    */
+
     return jjtThis;
 
 
@@ -719,6 +742,8 @@ OStatement Statement():
         result = CreateEdgeStatement()
         |
 		result = UpdateStatement()
+		|
+		result = MatchStatement()
 
 	) [ <SEMICOLON> ]
 	{
@@ -818,6 +843,39 @@ OTraverseStatement TraverseStatement():
     {return jjtThis;}
 }
 
+OMatchStatement MatchStatement():
+{
+    OMatchExpression lastMatchExpr = null;
+    OExpression lastReturn = null;
+    OIdentifier lastReturnAlias = null;
+}
+{
+    (
+        <MATCH>
+        lastMatchExpr = MatchExpression() { jjtThis.matchExpressions.add(lastMatchExpr); }
+        (
+            <COMMA>
+            lastMatchExpr = MatchExpression() { jjtThis.matchExpressions.add(lastMatchExpr); }
+        )*
+        <RETURN>
+        lastReturn = Expression() {lastReturnAlias = null;}
+        [ <AS> lastReturnAlias = Identifier() ]
+        {
+            jjtThis.returnAliases.add(lastReturnAlias);
+            jjtThis.returnItems.add(lastReturn);
+        }
+        (
+            <COMMA>
+            lastReturn = Expression() {lastReturnAlias = null;}
+            [ <AS> lastReturnAlias = Identifier() ]
+            {
+                jjtThis.returnAliases.add(lastReturnAlias);
+                jjtThis.returnItems.add(lastReturn);
+            }
+        )*
+        [ jjtThis.limit = Limit() ]
+    ){ return jjtThis; }
+}
 
 ODeleteStatement DeleteStatement():
 {}
@@ -839,6 +897,7 @@ ODeleteVertexStatement DeleteVertexStatement():
 (
 	<DELETE>
 	<VERTEX>
+	[ <FROM> {jjtThis.from = true;} ]
 	jjtThis.fromClause = FromClause()
 	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
 	[ <WHERE> jjtThis.whereClause = WhereClause() ]
@@ -1242,7 +1301,10 @@ OUpdateIncrementItem UpdateIncrementItem():
 {}
 {
     (
-	    jjtThis.left = Identifier() <EQ> jjtThis.right = Expression()
+	    jjtThis.left = Identifier() 
+	    [ jjtThis.leftModifier = Modifier() ]
+	    <EQ> 
+	    jjtThis.right = Expression()
 	)
 	{ return jjtThis; }
 }
@@ -1290,8 +1352,19 @@ OInsertStatement InsertStatement():
 	    |
 	    jjtThis.targetIndex = IndexIdentifier()
 	)
-	[ <RETURN> jjtThis.returnStatement = Projection() ]
-    jjtThis.insertBody = InsertBody()
+    [ LOOKAHEAD(InsertBody()) jjtThis.insertBody = InsertBody() ]
+    [ <RETURN> jjtThis.returnStatement = Projection() ]
+    [
+        [ <FROM> { jjtThis.selectWithFrom = true; } ]
+        (
+             jjtThis.selectStatement = SelectStatement()
+             |
+             LOOKAHEAD(2)
+            (
+                <LPAREN> jjtThis.selectStatement = SelectStatement() { jjtThis.selectInParentheses = true; } <RPAREN>
+            )
+        )
+    ]
     [ <UNSAFE> { jjtThis.unsafe = true; }]
 ) {return jjtThis;}
 }
@@ -1368,21 +1441,9 @@ OInsertBody InsertBody():
                 )*
             )
             |
-            (
-                [ <FROM> ]
-                (
-                     jjtThis.selectStatement = SelectStatement()
-                     |
-                     LOOKAHEAD(2)
-                    (
-                        <LPAREN> jjtThis.selectStatement = SelectStatement() { jjtThis.selectInParentheses = true; } <RPAREN>
-                    )
-                )
-            )
-            |
             ( <CONTENT> jjtThis.content = Json() )
          )
-        [ <RETURN> jjtThis.returnProjection = Projection() ]
+         //[ <RETURN> jjtThis.returnProjection = Projection() ]
     )
     { return jjtThis; }
 }
@@ -1524,6 +1585,7 @@ OCreateEdgeStatement CreateEdgeStatement():
     [ jjtThis.body = InsertBody() ]
     [ jjtThis.retry = Retry() ]
     [ jjtThis.wait = Wait() ]
+    [ jjtThis.batch = Batch() ]
 ) {return jjtThis;}
 }
 
@@ -1893,7 +1955,15 @@ OMathExpression ParenthesisExpression():
 {}
 {
     (
-	    <LPAREN> ( jjtThis.expression = Expression() | jjtThis.statement = SelectStatement() ) <RPAREN>
+	    <LPAREN>
+	    (
+	        jjtThis.expression = Expression()
+	        |
+	        jjtThis.statement = SelectStatement()
+	        |
+            jjtThis.statement = InsertStatement()
+        )
+	    <RPAREN>
 	)
 	{return jjtThis;}
 }
@@ -2016,6 +2086,8 @@ OFromItem FromItem():
     	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.statement = SelectWithoutTargetStatement()
     	            |
     	            jjtThis.statement = TraverseStatement()
+    	            |
+                    jjtThis.statement = MatchStatement()
     	) <RPAREN>
     	|
     	jjtThis.inputParam = InputParameter()
@@ -2214,6 +2286,8 @@ OBinaryCompareOperator CompareOperator():
       | result = LuceneOperator()
       | result = NearOperator()
       | result = WithinOperator()
+      | result = ScAndOperator()
+
 ){return result;}
 }
 
@@ -2302,6 +2376,14 @@ OWithinOperator WithinOperator():
 {
 (
 	<WITHIN>
+){return jjtThis;}
+}
+
+OScAndOperator ScAndOperator():
+{}
+{
+(
+	<SC_AND>
 ){return jjtThis;}
 }
 
@@ -2736,13 +2818,20 @@ OBatch Batch():
     { return jjtThis; }
 }
 
-java.lang.Number Timeout():
+OTimeout Timeout():
 { OInteger val; }
 {
+    <TIMEOUT>
+
     (
-	    <TIMEOUT> val = Integer()
+	    val = Integer() { jjtThis.val = val.getValue(); }
+	    [
+	        ( <RETURN> { jjtThis.failureStrategy = OTimeout.RETURN;} )
+	        |
+	        ( <EXCEPTION> { jjtThis.failureStrategy = OTimeout.EXCEPTION;} )
+	    ]
 	)
-	{ return val.getValue(); }
+	{ return jjtThis; }
 }
 
 
@@ -2849,21 +2938,6 @@ OTraverseProjectionItem TraverseProjectionItem():
     { return jjtThis; }
 }
 
-OArray Array():
-{
-    jjtThis.expressions = new java.util.ArrayList();
-    OExpression currentExpr;
-}
-{
-    (
-        <LBRACKET> [ currentExpr = Expression() { jjtThis.expressions.add(currentExpr); }
-        ( <COMMA> currentExpr = Expression() { jjtThis.expressions.add(currentExpr); } )* ] <RBRACKET>
-    )
-    { return jjtThis; }
-
-}
-
-
 OJson Json():
 {
     OJsonItem lastItem;
@@ -2877,6 +2951,8 @@ OJson Json():
             (
                 lastItem.leftIdentifier = Identifier()
                 |
+                token = <RECORD_ATTRIBUTE> {lastItem.leftString = token.image; }
+                |
                 token = <STRING_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
                 |
                 token = <CHARACTER_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
@@ -2888,6 +2964,8 @@ OJson Json():
                 { lastItem = new OJsonItem(); }
                 (
                     lastItem.leftIdentifier = Identifier()
+                    |
+                    token = <RECORD_ATTRIBUTE> {lastItem.leftString = token.image; }
                     |
                     token = <STRING_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
                     |
@@ -2904,4 +2982,110 @@ OJson Json():
 
 
 
+OMatchExpression MatchExpression():
+{ OMatchPathItem nextItem = null; }
+{
+    (
+        jjtThis.origin = MatchFilter()
+        (
+            (
+                LOOKAHEAD(2)
+                nextItem = MatchPathItem()
+                |
+                LOOKAHEAD(2)
+                nextItem = MultiMatchPathItem()
+            )
+            { jjtThis.items.add(nextItem); }
+        )*
+    ) { return jjtThis; }
+}
 
+
+OMatchPathItem MatchPathItem():
+{}
+{
+    (
+        jjtThis.method = MethodCall()
+        [ jjtThis.filter = MatchFilter() ]
+    ){ return jjtThis; }
+}
+
+OMatchPathItem MatchPathItemFirst():
+{}
+{
+    (
+        jjtThis.function = FunctionCall()
+        [ jjtThis.filter = MatchFilter() ]
+    ){ return jjtThis; }
+}
+
+OMatchPathItem MultiMatchPathItem():
+{ OMatchPathItem nextItem = null; }
+{
+    (
+        <DOT>
+        <LPAREN>
+        nextItem = MatchPathItemFirst() { jjtThis.items.add(nextItem); }
+        (
+            nextItem = MatchPathItem() { jjtThis.items.add(nextItem); }
+        )*
+        <RPAREN>
+        [ jjtThis.filter = MatchFilter() ]
+    ){ return jjtThis; }
+}
+
+
+OMatchFilter MatchFilter():
+{ OMatchFilterItem lastItem = null; }
+{
+    (
+        <LBRACE>
+            [
+                lastItem = MatchFilterItem() { jjtThis.items.add(lastItem); }
+                (
+                    <COMMA>
+                    lastItem = MatchFilterItem() { jjtThis.items.add(lastItem); }
+                )*
+            ]
+        <RBRACE>
+    ) { return jjtThis; }
+}
+
+OMatchFilterItem MatchFilterItem():
+{}
+{
+    (
+        (
+            <CLASS> <COLON> jjtThis.className = Expression()
+        )
+        |
+        (
+            <CLASSES> <COLON> jjtThis.classNames = Expression()
+        )
+        |
+        (
+            <AS> <COLON> jjtThis.alias = Identifier()
+        )
+        |
+        (
+            <WHERE> <COLON> <LPAREN>
+            (
+                jjtThis.filter = WhereClause()
+            )
+            <RPAREN>
+        )
+        |
+        (
+            <WHILE> <COLON> <LPAREN>
+            (
+                jjtThis.whileCondition = WhereClause()
+            )
+            <RPAREN>
+        )
+        |
+        (
+            <MAXDEPTH> <COLON> jjtThis.maxDepth = Integer()
+        )
+    )
+    { return jjtThis; }
+}

@@ -21,9 +21,11 @@
 package com.orientechnologies.orient.core.storage.cache;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 public interface OWriteCache {
@@ -43,7 +45,7 @@ public interface OWriteCache {
 
   long addFile(String fileName) throws IOException;
 
-  void addFile(String fileName, long fileId) throws IOException;
+  long addFile(String fileName, long fileId) throws IOException;
 
   boolean checkLowDiskSpace();
 
@@ -73,12 +75,6 @@ public interface OWriteCache {
 
   Long isOpen(String fileName) throws IOException;
 
-  void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException;
-
-  void setSoftlyClosed(boolean softlyClosed) throws IOException;
-
-  boolean wasSoftlyClosed(long fileId) throws IOException;
-
   void deleteFile(long fileId) throws IOException;
 
   void truncateFile(long fileId) throws IOException;
@@ -96,4 +92,10 @@ public interface OWriteCache {
   String fileNameById(long fileId);
 
   int getId();
+
+  Map<String, Long> files();
+
+  int pageSize();
+
+  boolean fileIdsAreEqual(long firsId, long secondId);
 }

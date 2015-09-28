@@ -46,9 +46,8 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   private final OAbstractPaginatedStorage                           storage;
   private volatile ThreadLocal<Map<UUID, OBonsaiCollectionPointer>> collectionPointerChanges = new CollectionPointerChangesThreadLocal();
 
-  public OSBTreeCollectionManagerShared() {
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    this.storage = (OAbstractPaginatedStorage) db.getStorage().getUnderlying();
+  public OSBTreeCollectionManagerShared(OAbstractPaginatedStorage storage) {
+    this.storage = storage;
 
     Orient.instance().registerWeakOrientStartupListener(this);
     Orient.instance().registerWeakOrientShutdownListener(this);

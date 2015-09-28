@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.type.OBuffer;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class ORawBuffer extends OBuffer {
   public ORecordVersion version;
@@ -40,7 +41,8 @@ public class ORawBuffer extends OBuffer {
     version = OVersionFactory.instance().createVersion();
   }
 
-  public ORawBuffer(final byte[] buffer, final ORecordVersion version, final byte recordType) {
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
+  public ORawBuffer( final byte[] buffer, final ORecordVersion version, final byte recordType) {
     this.buffer = buffer;
     this.version = version.copy();
     this.recordType = recordType;
@@ -67,5 +69,26 @@ public class ORawBuffer extends OBuffer {
     super.writeExternal(iOutput);
     version.getSerializer().writeTo(iOutput, version);
     iOutput.write(recordType);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    ORawBuffer that = (ORawBuffer) o;
+
+    if (recordType != that.recordType) return false;
+    return !(version != null ? !version.equals(that.version) : that.version != null);
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (version != null ? version.hashCode() : 0);
+    result = 31 * result + (int) recordType;
+    return result;
   }
 }

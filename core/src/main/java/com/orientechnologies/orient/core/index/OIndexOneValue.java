@@ -21,11 +21,13 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,9 +45,9 @@ import java.util.Set;
  * 
  */
 public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
-  public OIndexOneValue(String name, final String type, String algorithm, OIndexEngine<OIdentifiable> engine,
+  public OIndexOneValue(String name, final String type, String algorithm, int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
-    super(name, type, algorithm, engine, valueContainerAlgorithm, metadata);
+    super(name, type, algorithm, valueContainerAlgorithm, metadata, version, storage);
   }
 
   public OIdentifiable get(Object iKey) {
@@ -60,7 +62,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     try {
       acquireSharedLock();
       try {
-        return indexEngine.get(iKey);
+        return (OIdentifiable) storage.getIndexValue(indexId, iKey);
       } finally {
         releaseSharedLock();
       }
@@ -84,7 +86,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     try {
       acquireSharedLock();
       try {
-        return indexEngine.contains(iKey) ? 1 : 0;
+        return storage.indexContainsKey(indexId, iKey) ? 1 : 0;
       } finally {
         releaseSharedLock();
       }
@@ -156,7 +158,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
           acquireSharedLock();
           try {
-            result = indexEngine.get(key);
+            result = (OIdentifiable) storage.getIndexValue(indexId, key);
           } finally {
             releaseSharedLock();
           }
@@ -198,7 +200,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     acquireSharedLock();
     try {
-      return indexEngine.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder, null);
+      return storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null);
     } finally {
       releaseSharedLock();
     }
@@ -211,7 +213,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     fromKey = getCollatingValue(fromKey);
     acquireSharedLock();
     try {
-      return indexEngine.iterateEntriesMajor(fromKey, fromInclusive, ascOrder, null);
+      return storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, null);
     } finally {
       releaseSharedLock();
     }
@@ -224,7 +226,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     toKey = getCollatingValue(toKey);
     acquireSharedLock();
     try {
-      return indexEngine.iterateEntriesMinor(toKey, toInclusive, ascOrder, null);
+      return storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null);
     } finally {
       releaseSharedLock();
     }
@@ -235,7 +237,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     acquireSharedLock();
     try {
-      return indexEngine.size(null);
+      return storage.getIndexSize(indexId, null);
     } finally {
       releaseSharedLock();
     }
@@ -246,7 +248,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     acquireSharedLock();
     try {
-      return indexEngine.size(null);
+      return storage.getIndexSize(indexId, null);
     } finally {
       releaseSharedLock();
     }
@@ -258,7 +260,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     acquireSharedLock();
     try {
-      return indexEngine.cursor(null);
+      return storage.getIndexCursor(indexId, null);
     } finally {
       releaseSharedLock();
     }
@@ -270,14 +272,14 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     acquireSharedLock();
     try {
-      return indexEngine.descCursor(null);
+      return storage.getIndexDescCursor(indexId, null);
     } finally {
       releaseSharedLock();
     }
   }
 
   @Override
-  protected OStreamSerializer determineValueSerializer() {
+  protected OBinarySerializer determineValueSerializer() {
     return OStreamSerializerRID.INSTANCE;
   }
 }

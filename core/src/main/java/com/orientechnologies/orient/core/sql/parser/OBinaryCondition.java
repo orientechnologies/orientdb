@@ -2,9 +2,13 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -27,19 +31,16 @@ public class OBinaryCondition extends OBooleanExpression {
   }
 
   @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
-    return false;
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    return operator.execute(left.execute(currentRecord, ctx), right.execute(currentRecord, ctx));
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    left.replaceParameters(params);
-    right.replaceParameters(params);
-  }
-
-  @Override
-  public String toString() {
-    return left.toString() + " " + operator.toString() + " " + right.toString();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    left.toString(params, builder);
+    builder.append(" ");
+    builder.append(operator.toString());
+    builder.append(" ");
+    right.toString(params, builder);
   }
 
   protected boolean supportsBasicCalculation() {
@@ -78,6 +79,28 @@ public class OBinaryCondition extends OBooleanExpression {
       result.add(right);
     }
     return result;
+  }
+
+  public OBinaryCondition isIndexedFunctionCondition(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+    if (left.isIndexedFunctionCal()) {
+      return this;
+    }
+    return null;
+  }
+
+  public long estimateIndexed(OFromClause target, OCommandContext context) {
+    return left.estimateIndexedFunction(target, context, operator, right.execute(null, context));
+  }
+
+  public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context) {
+    return left.executeIndexedFunction(target, context, operator, right.execute(null, context));
+  }
+
+  public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+    if (left.isIndexedFunctionCal()) {
+      return Collections.singletonList(this);
+    }
+    return null;
   }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

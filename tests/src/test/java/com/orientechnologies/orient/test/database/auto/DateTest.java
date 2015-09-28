@@ -15,31 +15,30 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.text.ParseException;
-import java.util.Date;
-import java.util.List;
-
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.util.ODateHelper;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.util.ODateHelper;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 
 @Test(groups = "sql-select")
 public class DateTest extends DocumentDBBaseTest {
 
-	@Parameters(value = "url")
-	public DateTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public DateTest(@Optional String url) {
+    super(url);
+  }
 
-	@Test
+  @Test
   public void testDateConversion() throws ParseException {
     final long begin = System.currentTimeMillis();
 
@@ -89,6 +88,22 @@ public class DateTest extends DocumentDBBaseTest {
     doc.field("date", System.currentTimeMillis(), OType.DATE);
 
     Assert.assertTrue(doc.field("date") instanceof Date);
+  }
 
+  /**
+   * https://github.com/orientechnologies/orientjs/issues/48
+   */
+  @Test
+  public void testDateGregorianCalendar() throws ParseException {
+    database.command(new OCommandSQL("CREATE CLASS TimeTest EXTENDS V")).execute();
+
+    final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    final Date date = df.parse("1200-11-11 00:00:00.000");
+
+    database.command(new OCommandSQL("CREATE VERTEX TimeTest SET firstname = ?, birthDate = ?")).execute("Robert", date);
+
+    final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from TimeTest where firstname = ?"), "Robert");
+    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(result.get(0).field("birthDate"), date);
   }
 }

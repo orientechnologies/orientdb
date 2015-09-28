@@ -94,6 +94,17 @@ public class ODurablePage {
     return new OLogSequenceNumber(segment, position);
   }
 
+  public static void getPageData(ODirectMemoryPointer dataPointer, byte[] data, int offset, int length) {
+    dataPointer.get(PAGE_PADDING, data, offset, length);
+  }
+
+  public static OLogSequenceNumber getLogSequenceNumber(int offset, byte[] data) {
+    final long segment = OLongSerializer.INSTANCE.deserializeNative(data, offset + WAL_SEGMENT_OFFSET);
+    final long position = OLongSerializer.INSTANCE.deserializeNative(data, offset + WAL_POSITION_OFFSET);
+
+    return new OLogSequenceNumber(segment, position);
+  }
+
   protected int getIntValue(int pageOffset) {
     if (changesTree == null)
       return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset + PAGE_PADDING);

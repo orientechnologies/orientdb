@@ -60,10 +60,10 @@
     <users>
         <user resources="*" password="02030E9917890174FB847A47C4BFFC449A604A248E9642BB31F28CE51245EC85" name="root"/>
         <user resources="connect,server.listDatabases,server.dblist" password="guest" name="guest"/>
-        <user resources="database.passthrough" password="repl" name="replicator"/>
     </users>
     <properties>
         <entry value="info" name="log.console.level"/>
         <entry value="fine" name="log.file.level"/>
     </properties>
+    <isAfterFirstTime>true</isAfterFirstTime>
 </orient-server>

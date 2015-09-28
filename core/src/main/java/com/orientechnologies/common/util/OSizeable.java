@@ -24,5 +24,5 @@ package com.orientechnologies.common.util;
  * Interface that support size()
  */
 public interface OSizeable {
-  public int size();
+  int size();
 }

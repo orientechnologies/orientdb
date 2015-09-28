@@ -19,10 +19,33 @@
  */
 package com.orientechnologies.orient.core.storage.cache.local;
 
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.lang.management.ManagementFactory;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.zip.CRC32;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+
 import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -33,6 +56,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
@@ -44,33 +68,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.lang.management.ManagementFactory;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.zip.CRC32;
 
 /**
  * @author Andrey Lomakin
@@ -95,7 +92,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
                                                                                         .getValueAsLong() * 1024L * 1024L;
 
   private final long                                       diskSizeCheckInterval    = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL
-                                                                                        .getValueAsInteger() * 1000;
+                                                                                        .getValueAsInteger() * 1000L;
   private final List<WeakReference<OLowDiskSpaceListener>> listeners                = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
 
   private final AtomicLong                                 lastDiskSpaceCheck       = new AtomicLong(System.currentTimeMillis());
@@ -244,9 +241,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private void callLowSpaceListeners(final OLowDiskSpaceInformation information) {
-    lowSpaceEventsPublisher.submit(new Callable<Void>() {
+    lowSpaceEventsPublisher.execute(new Runnable() {
       @Override
-      public Void call() throws Exception {
+      public void run() {
         for (WeakReference<OLowDiskSpaceListener> lowDiskSpaceListenerWeakReference : listeners) {
           final OLowDiskSpaceListener listener = lowDiskSpaceListenerWeakReference.get();
           if (listener != null)
@@ -257,8 +254,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
                   "Error during notification of low disk space for storage " + storageLocal.getName(), e);
             }
         }
-
-        return null;
       }
     });
   }
@@ -290,6 +285,19 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
+  @Override
+  public int pageSize() {
+    return pageSize;
+  }
+
+  @Override
+  public boolean fileIdsAreEqual(long firsId, long secondId) {
+    final int firstIntId = extractFileId(firsId);
+    final int secondIntId = extractFileId(secondId);
+
+    return firstIntId == secondIntId;
+  }
+
   public long openFile(String fileName) throws IOException {
     filesLock.acquireWriteLock();
     try {
@@ -308,15 +316,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         if (!fileClassic.exists())
           throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
         else {
-          // workaround of bug in distributed storage https://github.com/orientechnologies/orientdb/issues/4439
+          // throw new OStorageException("File '" + fileName
+          // + "' is not registered in 'file name - id' map, but exists in file system");
 
-          OLogManager
-              .instance()
-              .error(
-                  this,
-                  "File '"
-                      + fileName
-                      + "' is not registered in the 'file name - id' map, but exists in file system. This could be due to a failed restore");
+          // REGISTER THE FILE
+          OLogManager.instance().debug(this,
+              "File '" + fileName + "' is not registered in 'file name - id' map, but exists in file system. Registering it");
 
           if (fileId == null) {
             ++fileCounter;
@@ -394,7 +399,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
-  public void addFile(String fileName, long fileId) throws IOException {
+  public long addFile(String fileName, long fileId) throws IOException {
     filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
@@ -407,7 +412,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
       if (existingFileId != null && existingFileId >= 0) {
         if (existingFileId == intId)
-          throw new OStorageException("File with name " + fileName + " already exists in storage " + storageLocal.getName());
+          throw new OStorageException("File with name '" + fileName + "'' already exists in storage '" + storageLocal.getName()
+              + "'");
         else
           throw new OStorageException("File with given name already exists but has different id " + existingFileId
               + " vs. proposed " + fileId);
@@ -429,6 +435,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       writeNameIdEntry(new NameFileIdEntry(fileName, intId), true);
 
       addFile(fileClassic);
+
+      return composeFileId(id, intId);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -558,6 +566,22 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
+  @Override
+  public Map<String, Long> files() {
+    filesLock.acquireReadLock();
+    try {
+      final Map<String, Long> result = new HashMap<String, Long>();
+
+      for (Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
+        result.put(entry.getKey(), composeFileId(id, entry.getValue()));
+      }
+
+      return result;
+    } finally {
+      filesLock.releaseReadLock();
+    }
+  }
+
   public OCachePointer load(long fileId, long pageIndex, boolean addNewPages) throws IOException {
     final int intId = extractFileId(fileId);
 
@@ -623,7 +647,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     filesLock.acquireReadLock();
     try {
-      return files.get(intId).getFilledUpTo() / pageSize;
+      return files.get(intId).getFileSize() / pageSize;
     } finally {
       filesLock.releaseReadLock();
     }
@@ -664,44 +688,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       return composeFileId(id, fileId);
     } finally {
       filesLock.releaseWriteLock();
-    }
-  }
-
-  public void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException {
-    final int intId = extractFileId(fileId);
-
-    filesLock.acquireWriteLock();
-    try {
-      OFileClassic fileClassic = files.get(intId);
-      if (fileClassic != null && fileClassic.isOpen())
-        fileClassic.setSoftlyClosed(softlyClosed);
-    } finally {
-      filesLock.releaseWriteLock();
-    }
-  }
-
-  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
-    filesLock.acquireWriteLock();
-    try {
-      for (long fileId : files.keySet())
-        setSoftlyClosed(fileId, softlyClosed);
-    } finally {
-      filesLock.releaseWriteLock();
-    }
-  }
-
-  public boolean wasSoftlyClosed(long fileId) throws IOException {
-    final int intId = extractFileId(fileId);
-
-    filesLock.acquireReadLock();
-    try {
-      OFileClassic fileClassic = files.get(intId);
-      if (fileClassic == null)
-        return false;
-
-      return fileClassic.wasSoftlyClosed();
-    } finally {
-      filesLock.releaseReadLock();
     }
   }
 
@@ -772,7 +758,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       commitExecutor.shutdown();
       try {
         if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
-          throw new OException("Background data flush task can not be stopped.");
+          throw new OException("Background data flush task cannot be stopped.");
       } catch (InterruptedException e) {
         OLogManager.instance().error(this, "Data flush thread was interrupted");
 
@@ -835,9 +821,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     filesLock.acquireWriteLock();
     try {
-      for (int fileId : files.keySet()) {
-
-        OFileClassic fileClassic = files.get(fileId);
+      for (Map.Entry<Integer, OFileClassic> entry : files.entrySet()) {
+        final int fileId = entry.getKey();
+        final OFileClassic fileClassic = entry.getValue();
 
         boolean fileIsCorrect;
         try {
@@ -852,7 +838,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
           long time = System.currentTimeMillis();
 
-          long filledUpTo = fileClassic.getFilledUpTo();
+          long filledUpTo = fileClassic.getFileSize();
           fileIsCorrect = true;
 
           for (long pos = 0; pos < filledUpTo; pos += pageSize) {
@@ -933,7 +919,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           nameIdMapHolder.close();
 
           if (!nameIdMapHolderFile.delete())
-            throw new OStorageException("Can not delete disk cache file which contains name-id mapping.");
+            throw new OStorageException("Cannot delete disk cache file which contains name-id mapping.");
         }
 
         nameIdMapHolder = null;
@@ -947,7 +933,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       commitExecutor.shutdown();
       try {
         if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
-          throw new OException("Background data flush task can not be stopped.");
+          throw new OException("Background data flush task cannot be stopped.");
       } catch (InterruptedException e) {
         OLogManager.instance().error(this, "Data flush thread was interrupted");
 
@@ -982,13 +968,13 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         final ObjectName mbeanName = new ObjectName(getMBeanName());
         server.registerMBean(this, mbeanName);
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during registration of write cache MBean.", e);
+        throw new OStorageException("Error during registration of write cache MBean", e);
       } catch (InstanceAlreadyExistsException e) {
-        throw new OStorageException("Error during registration of write cache MBean.", e);
+        throw new OStorageException("Error during registration of write cache MBean", e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during registration of write cache MBean.", e);
+        throw new OStorageException("Error during registration of write cache MBean", e);
       } catch (NotCompliantMBeanException e) {
-        throw new OStorageException("Error during registration of write cache MBean.", e);
+        throw new OStorageException("Error during registration of write cache MBean", e);
       }
     }
   }
@@ -1004,11 +990,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         final ObjectName mbeanName = new ObjectName(getMBeanName());
         server.unregisterMBean(mbeanName);
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during unregistration of write cache MBean.", e);
+        throw new OStorageException("Error during unregistration of write cache MBean", e);
       } catch (InstanceNotFoundException e) {
-        throw new OStorageException("Error during unregistration of write cache MBean.", e);
+        throw new OStorageException("Error during unregistration of write cache MBean", e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during unregistration of write cache MBean.", e);
+        throw new OStorageException("Error during unregistration of write cache MBean", e);
       }
     }
   }
@@ -1092,9 +1078,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private OFileClassic createFile(String fileName) {
-    OFileClassic fileClassic = new OFileClassic();
     String path = storageLocal.getVariableParser().resolveVariables(storageLocal.getStoragePath() + File.separator + fileName);
-    fileClassic.init(path, storageLocal.getMode());
+    OFileClassic fileClassic = new OFileClassic(path, storageLocal.getMode());
     return fileClassic;
   }
 
@@ -1208,22 +1193,23 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     OLogSequenceNumber lastLsn;
     if (writeAheadLog != null)
-      lastLsn = writeAheadLog.getFlushedLSN();
+      lastLsn = writeAheadLog.getFlushedLsn();
     else
       lastLsn = new OLogSequenceNumber(-1, -1);
 
-    if (fileClassic.getFilledUpTo() >= endPosition) {
+    if (fileClassic.getFileSize() >= endPosition) {
       fileClassic.read(startPosition, content, content.length - 2 * PAGE_PADDING, PAGE_PADDING);
-      final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
+
+      final ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(content);
 
       dataPointer = new OCachePointer(pointer, lastLsn, fileId, pageIndex);
     } else if (addNewPages) {
-      final int space = (int) (endPosition - fileClassic.getFilledUpTo());
+      final int space = (int) (endPosition - fileClassic.getFileSize());
       fileClassic.allocateSpace(space);
 
       addAllocatedSpace(space);
 
-      final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
+      final ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(content);
       dataPointer = new OCachePointer(pointer, lastLsn, fileId, pageIndex);
     } else
       return null;
@@ -1234,7 +1220,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private void flushPage(int fileId, long pageIndex, ODirectMemoryPointer dataPointer) throws IOException {
     if (writeAheadLog != null) {
       OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(dataPointer);
-      OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLSN();
+      OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLsn();
       if (flushedLSN == null || flushedLSN.compareTo(lsn) < 0)
         writeAheadLog.flush();
     }
@@ -1409,8 +1395,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         }
 
         lastAmountOfFlushedPages.lazySet(flushedPages);
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Exception during data flush.", e);
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Exception during data flush", e);
+      } catch (RuntimeException e) {
+        OLogManager.instance().error(this, "Exception during data flush", e);
       } finally {
         final long end = System.currentTimeMillis();
         durationOfLastFlush.lazySet(end - start);
@@ -1595,7 +1583,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     @Override
     public void run() {
-      OLogSequenceNumber minLsn = writeAheadLog.getFlushedLSN();
+      OLogSequenceNumber minLsn = writeAheadLog.getFlushedLsn();
 
       minLsn = findMinLsn(minLsn, writeCachePages);
 
@@ -1744,7 +1732,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     @Override
     public Thread newThread(Runnable r) {
-      Thread thread = new Thread(r);
+      Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
       thread.setPriority(Thread.MAX_PRIORITY);
       thread.setName("OrientDB Write Cache Flush Task (" + storageName + ")");
@@ -1761,7 +1749,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     @Override
     public Thread newThread(Runnable r) {
-      Thread thread = new Thread(r);
+      Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
       thread.setName("OrientDB Low Disk Space Publisher (" + storageName + ")");
       return thread;

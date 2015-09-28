@@ -44,7 +44,12 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OServerCommandGetDatabase extends OServerCommandGetConnect {
   private static final String[] NAMES = { "GET|database/*" };
@@ -79,6 +84,8 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.writeAttribute("records", db.countClass(cls.getName()));
     } catch (OSecurityAccessException e) {
       json.writeAttribute("records", "? (Unauthorized)");
+    } catch (Exception e) {
+      json.writeAttribute("records", "? (Error)");
     }
 
     if (cls.properties() != null && cls.properties().size() > 0) {
@@ -230,41 +237,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       if (db.getUser() != null) {
         json.writeAttribute("currentUser", db.getUser().getName());
 
-        json.beginCollection("users");
-        for (ODocument doc : db.getMetadata().getSecurity().getAllUsers()) {
-          OUser user = new OUser(doc);
-          json.beginObject();
-          json.writeAttribute("name", user.getName());
-          json.writeAttribute("roles", user.getRoles() != null ? Arrays.toString(user.getRoles().toArray()) : "null");
-          json.endObject();
-        }
-        json.endCollection();
-
-        json.beginCollection("roles");
-        ORole role;
-        for (ODocument doc : db.getMetadata().getSecurity().getAllRoles()) {
-          role = new ORole(doc);
-          json.beginObject();
-          json.writeAttribute("name", role.getName());
-          json.writeAttribute("mode", role.getMode().toString());
-
-          json.beginCollection("rules");
-          if (role.getRules() != null) {
-            for (Map.Entry<String, Byte> rule : role.getRules().entrySet()) {
-              json.beginObject();
-              json.writeAttribute("name", rule.getKey());
-              json.writeAttribute("create", role.allow(rule.getKey(), ORole.PERMISSION_CREATE));
-              json.writeAttribute("read", role.allow(rule.getKey(), ORole.PERMISSION_READ));
-              json.writeAttribute("update", role.allow(rule.getKey(), ORole.PERMISSION_UPDATE));
-              json.writeAttribute("delete", role.allow(rule.getKey(), ORole.PERMISSION_DELETE));
-              json.endObject();
-            }
-          }
-          json.endCollection();
-
-          json.endObject();
-        }
-        json.endCollection();
+        // exportSecurityInfo(db, json);
       }
       final OIndexManagerProxy idxManager = db.getMetadata().getIndexManager();
       json.beginCollection("indexes");
@@ -318,5 +291,43 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       if (db != null)
         db.close();
     }
+  }
+
+  private void exportSecurityInfo(ODatabaseDocumentTx db, OJSONWriter json) throws IOException {
+    json.beginCollection("users");
+    for (ODocument doc : db.getMetadata().getSecurity().getAllUsers()) {
+      OUser user = new OUser(doc);
+      json.beginObject();
+      json.writeAttribute("name", user.getName());
+      json.writeAttribute("roles", user.getRoles() != null ? Arrays.toString(user.getRoles().toArray()) : "null");
+      json.endObject();
+    }
+    json.endCollection();
+
+    json.beginCollection("roles");
+    ORole role;
+    for (ODocument doc : db.getMetadata().getSecurity().getAllRoles()) {
+      role = new ORole(doc);
+      json.beginObject();
+      json.writeAttribute("name", role.getName());
+      json.writeAttribute("mode", role.getMode().toString());
+
+      json.beginCollection("rules");
+      if (role.getRules() != null) {
+        for (Map.Entry<String, Byte> rule : role.getRules().entrySet()) {
+          json.beginObject();
+          json.writeAttribute("name", rule.getKey());
+          json.writeAttribute("create", role.allow(rule.getKey(), ORole.PERMISSION_CREATE));
+          json.writeAttribute("read", role.allow(rule.getKey(), ORole.PERMISSION_READ));
+          json.writeAttribute("update", role.allow(rule.getKey(), ORole.PERMISSION_UPDATE));
+          json.writeAttribute("delete", role.allow(rule.getKey(), ORole.PERMISSION_DELETE));
+          json.endObject();
+        }
+      }
+      json.endCollection();
+
+      json.endObject();
+    }
+    json.endCollection();
   }
 }

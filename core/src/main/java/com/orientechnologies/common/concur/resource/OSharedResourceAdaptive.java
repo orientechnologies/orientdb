@@ -45,7 +45,6 @@ public class OSharedResourceAdaptive {
   private final boolean                concurrent;
   private final int                    timeout;
   private final boolean                ignoreThreadInterruption;
-  private int                          scaledUpCount = 0;
 
   protected OSharedResourceAdaptive() {
     this.concurrent = true;
@@ -123,7 +122,7 @@ public class OSharedResourceAdaptive {
           }
 
           throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
-              + timeout);
+              + timeout, e);
         }
         throwTimeoutException(lock.writeLock());
       } else {
@@ -156,7 +155,7 @@ public class OSharedResourceAdaptive {
             }
           }
           throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
-              + timeout);
+              + timeout, e);
         }
 
         throwTimeoutException(lock.readLock());

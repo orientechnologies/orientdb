@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -52,9 +53,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract implements ODistributedServerManager,
     ODatabaseLifecycleListener {
-  public static final String                               REPLICATOR_USER             = "replicator";
-  protected static final String                            MASTER_AUTO                 = "$auto";
-
   protected static final String                            PAR_DEF_DISTRIB_DB_CONFIG   = "configuration.db.default";
   protected static final String                            FILE_DISTRIBUTED_DB_CONFIG  = "distributed-config.json";
 
@@ -121,14 +119,15 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       }
     }
 
-    if (serverInstance.getUser(REPLICATOR_USER) == null)
-      // CREATE THE REPLICATOR USER
-      try {
-        serverInstance.addUser(REPLICATOR_USER, null, "database.passthrough");
-        serverInstance.saveConfiguration();
-      } catch (IOException e) {
-        throw new OConfigurationException("Error on creating 'replicator' user", e);
-      }
+    if (serverInstance.getUser("replicator") == null)
+      // DROP THE REPLICATOR USER. THIS USER WAS NEEDED BEFORE 2.2, BUT IT'S NOT REQUIRED ANYMORE
+      OLogManager.instance().config(this,
+          "Found 'replicator' user. Starting from OrientDB v2.2 this internal user is no needed anymore. Removing it...");
+    try {
+      serverInstance.dropUser("replicator");
+    } catch (IOException e) {
+      throw new OConfigurationException("Error on deleting 'replicator' user", e);
+    }
   }
 
   public void setDefaultDatabaseConfigFile(final String iFile) {
@@ -211,7 +210,19 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   }
 
   @Override
-  public void onDrop(ODatabaseInternal iDatabase) {
+  public void onDrop(final ODatabaseInternal iDatabase) {
+    synchronized (cachedDatabaseConfiguration) {
+      storages.remove(iDatabase.getURL());
+    }
+
+    final ODistributedMessageService msgService = getMessageService();
+    if (msgService != null) {
+      msgService.unregisterDatabase(iDatabase.getName());
+    }
+  }
+
+  @Override
+  public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
   }
 
   @Override
@@ -241,7 +252,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
       if (oldCfg != null && oldVersion > currVersion) {
         // NO CHANGE, SKIP IT
-        OLogManager.instance().warn(this,
+        OLogManager.instance().debug(this,
             "Skip saving of distributed configuration file for database '%s' because is unchanged (version %d)", iDatabaseName,
             (Integer) cfg.field("version"));
         return false;

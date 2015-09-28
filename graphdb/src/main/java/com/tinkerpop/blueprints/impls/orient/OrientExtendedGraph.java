@@ -42,7 +42,7 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
   /**
    * (Blueprints Extension) Drops the database
    */
-  public void drop();
+  void drop();
 
   /**
    * (Blueprints Extension) Creates a temporary vertex setting the initial field values. The vertex is not saved and the transaction
@@ -54,7 +54,7 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    *          Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
    * @return added vertex
    */
-  public OrientVertex addTemporaryVertex(String iClassName, Object... prop);
+  OrientVertex addTemporaryVertex(String iClassName, Object... prop);
 
   /**
    * (Blueprints Extension) Creates a new unconnected vertex in the Graph setting the initial field values.
@@ -65,12 +65,12 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    *          Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
    * @return The new OrientVertex created
    */
-  public Vertex addVertex(Object id, Object... prop);
+  Vertex addVertex(Object id, Object... prop);
 
   /**
    * Returns the V persistent class as OrientVertexType instance.
    */
-  public OrientVertexType getVertexBaseType();
+  OrientVertexType getVertexBaseType();
 
   /**
    * Returns the persistent class for type iTypeName as OrientVertexType instance.
@@ -78,7 +78,7 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    * @param iTypeName
    *          Vertex class name
    */
-  public OrientVertexType getVertexType(String iTypeName);
+  OrientVertexType getVertexType(String iTypeName);
 
   /**
    * Creates a new Vertex persistent class.
@@ -87,7 +87,7 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    *          Vertex class name
    * @return OrientVertexType instance representing the persistent class
    */
-  public OrientVertexType createVertexType(String iClassName);
+  OrientVertexType createVertexType(String iClassName);
 
   /**
    * Creates a new Vertex persistent class specifying the super class.
@@ -98,7 +98,7 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    *          Vertex class name to extend
    * @return OrientVertexType instance representing the persistent class
    */
-  public OrientVertexType createVertexType(String iClassName, String iSuperClassName);
+  OrientVertexType createVertexType(String iClassName, String iSuperClassName);
 
   /**
    * Creates a new Vertex persistent class specifying the super class.
@@ -109,7 +109,7 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    *          OClass Vertex to extend
    * @return OrientVertexType instance representing the persistent class
    */
-  public OrientVertexType createVertexType(String iClassName, OClass iSuperClass);
+  OrientVertexType createVertexType(String iClassName, OClass iSuperClass);
 
   /**
    * Drop a vertex class.
@@ -117,12 +117,12 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    * @param iTypeName
    *          Vertex class name
    */
-  public void dropVertexType(String iTypeName);
+  void dropVertexType(String iTypeName);
 
   /**
    * Returns the E persistent class as OrientEdgeType instance.
    */
-  public OrientEdgeType getEdgeBaseType();
+  OrientEdgeType getEdgeBaseType();
 
   /**
    * Returns the persistent class for type iTypeName as OrientEdgeType instance.
@@ -130,7 +130,7 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    * @param iTypeName
    *          Edge class name
    */
-  public OrientEdgeType getEdgeType(String iTypeName);
+  OrientEdgeType getEdgeType(String iTypeName);
 
   /**
    * Creates a new Edge persistent class.
@@ -139,7 +139,7 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    *          Edge class name
    * @return OrientEdgeType instance representing the persistent class
    */
-  public OrientEdgeType createEdgeType(String iClassName);
+  OrientEdgeType createEdgeType(String iClassName);
 
   /**
    * Creates a new Edge persistent class specifying the super class.
@@ -150,7 +150,7 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    *          Edge class name to extend
    * @return OrientEdgeType instance representing the persistent class
    */
-  public OrientEdgeType createEdgeType(String iClassName, String iSuperClassName);
+  OrientEdgeType createEdgeType(String iClassName, String iSuperClassName);
 
   /**
    * Creates a new Edge persistent class specifying the super class.
@@ -161,7 +161,7 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    *          OClass Edge to extend
    * @return OrientEdgeType instance representing the persistent class
    */
-  public OrientEdgeType createEdgeType(String iClassName, OClass iSuperClass);
+  OrientEdgeType createEdgeType(String iClassName, OClass iSuperClass);
 
   /**
    * Drops an edge class.
@@ -169,7 +169,7 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    * @param iTypeName
    *          Edge class name
    */
-  public void dropEdgeType(String iTypeName);
+  void dropEdgeType(String iTypeName);
 
   /**
    * Detaches a Graph Element to be used offline. All the changes will be committed on further @attach call.
@@ -179,7 +179,7 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    * @return The detached element
    * @see #attach(OrientElement)
    */
-  public OrientElement detach(OrientElement iElement);
+  OrientElement detach(OrientElement iElement);
 
   /**
    * Attaches a previously detached Graph Element to the current Graph. All the pending changes will be committed.
@@ -189,7 +189,7 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    * @return The attached element
    * @see #detach(OrientElement)
    */
-  public OrientElement attach(OrientElement iElement);
+  OrientElement attach(OrientElement iElement);
 
   /**
    * Returns a GraphQuery object to execute queries against the Graph.
@@ -197,12 +197,12 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    * @return new GraphQuery instance
    */
   @Override
-  public GraphQuery query();
+  GraphQuery query();
 
   /**
    * Returns a OTraverse object to start traversing the graph.
    */
-  public OTraverse traverse();
+  OTraverse traverse();
 
   /**
    * Executes commands against the graph. Commands are executed outside transaction.
@@ -210,44 +210,44 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    * @param iCommand
    *          Command request between SQL, GREMLIN and SCRIPT commands
    */
-  public OCommandRequest command(OCommandRequest iCommand);
+  OCommandRequest command(OCommandRequest iCommand);
 
   /**
    * Counts the vertices in graph.
    * 
    * @return Long as number of total vertices
    */
-  public long countVertices();
+  long countVertices();
 
   /**
    * Counts the vertices in graph of a particular class.
    * 
    * @return Long as number of total vertices
    */
-  public long countVertices(String iClassName);
+  long countVertices(String iClassName);
 
   /**
    * Counts the edges in graph. Edge counting works only if useLightweightEdges is false.
    * 
    * @return Long as number of total edges
    */
-  public long countEdges();
+  long countEdges();
 
   /**
    * Counts the edges in graph of a particular class. Edge counting works only if useLightweightEdges is false.
    * 
    * @return Long as number of total edges
    */
-  public long countEdges(String iClassName);
+  long countEdges(String iClassName);
 
   /**
    * Declare an intent.
    */
-  public void declareIntent(OIntent iIntent);
+  void declareIntent(OIntent iIntent);
 
-  public ORecordConflictStrategy getConflictStrategy();
+  ORecordConflictStrategy getConflictStrategy();
 
-  public OrientExtendedGraph setConflictStrategy(ORecordConflictStrategy iResolver);
+  OrientExtendedGraph setConflictStrategy(ORecordConflictStrategy iResolver);
 
-  public OrientExtendedGraph setConflictStrategy(String iStrategyName);
+  OrientExtendedGraph setConflictStrategy(String iStrategyName);
 }

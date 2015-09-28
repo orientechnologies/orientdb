@@ -2,6 +2,10 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,26 +27,28 @@ public class OArraySingleValuesSelector extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     boolean first = true;
-    StringBuilder result = new StringBuilder();
     for (OArraySelector item : items) {
       if (!first) {
-        result.append(",");
+        builder.append(",");
       }
-      result.append(item.toString());
+      item.toString(params, builder);
       first = false;
     }
-    return result.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if(items!=null){
-      for(OArraySelector item:items){
-        item.replaceParameters(params);
+  public Object execute(OIdentifiable iCurrentRecord, Object iResult, OCommandContext ctx) {
+    List<Object> result = new ArrayList<Object>();
+    for(OArraySelector item:items){
+      Integer index = item.getValue(iCurrentRecord, iResult, ctx);
+      if(this.items.size()==1){
+        return OMultiValue.getValue(iResult, index);
       }
+      result.add(OMultiValue.getValue(iResult, index));
     }
+    return result;
   }
+
 }
 /* JavaCC - OriginalChecksum=991998c77a4831184b6dca572513fd8d (do not edit this line) */

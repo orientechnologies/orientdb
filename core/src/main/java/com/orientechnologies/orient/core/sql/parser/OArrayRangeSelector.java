@@ -2,6 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
+import java.util.Arrays;
 import java.util.Map;
 
 public class OArrayRangeSelector extends SimpleNode {
@@ -25,35 +30,61 @@ public class OArrayRangeSelector extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (from != null) {
-      result.append(from);
+      builder.append(from);
     } else {
-      result.append(fromSelector.toString());
+      fromSelector.toString(params, builder);
     }
     if (newRange) {
-      result.append("-");
+      builder.append("-");
       // TODO in 3.0 result.append("..");
     } else {
-      result.append("-");
+      builder.append("-");
     }
     if (to != null) {
-      result.append(to);
+      builder.append(to);
     } else {
-      result.append(toSelector.toString());
+      toSelector.toString(params, builder);
     }
-    return result.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
+  public Object execute(OIdentifiable iCurrentRecord, Object result, OCommandContext ctx) {
+    if (result == null) {
+      return null;
+    }
+    if (!OMultiValue.isMultiValue(result)) {
+      return null;
+    }
+    Integer lFrom = from;
     if (fromSelector != null) {
-      fromSelector.replaceParameters(params);
+      lFrom = fromSelector.getValue(iCurrentRecord, result, ctx);
     }
+    if (lFrom == null) {
+      lFrom = 0;
+    }
+    Integer lTo = to;
     if (toSelector != null) {
-      toSelector.replaceParameters(params);
+      lTo = toSelector.getValue(iCurrentRecord, result, ctx);
     }
+    if (lFrom > lTo) {
+      return null;
+    }
+    Object[] arrayResult = OMultiValue.array(result);
+
+    if (arrayResult == null || arrayResult.length == 0) {
+      return arrayResult;
+    }
+    lFrom = Math.max(lFrom, 0);
+    if (arrayResult.length < lFrom) {
+      return null;
+    }
+    lFrom = Math.min(lFrom, arrayResult.length - 1);
+
+    lTo = Math.min(lTo, arrayResult.length);
+
+    return Arrays.asList(Arrays.copyOfRange(arrayResult, lFrom, lTo));
   }
+
 }
 /* JavaCC - OriginalChecksum=594a372e31fcbcd3ed962c2260e76468 (do not edit this line) */

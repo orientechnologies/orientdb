@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 public class OClassDictionary {
   private static final OClassDictionary instance = new OClassDictionary();
@@ -44,7 +43,7 @@ public class OClassDictionary {
     case '0':
       return ODocument.class;
     case '2':
-      return ORecordFlat.class;
+      throw new IllegalArgumentException("Record type 'flat' is not supported anymore");
     case '3':
       return ORecordBytes.class;
 
@@ -73,8 +72,6 @@ public class OClassDictionary {
   public Character getCodeByClass(final Class<?> iClass) {
     if (iClass.equals(ODocument.class))
       return '0';
-    if (iClass.equals(ORecordFlat.class))
-      return '2';
     if (iClass.equals(ORecordBytes.class))
       return '3';
 

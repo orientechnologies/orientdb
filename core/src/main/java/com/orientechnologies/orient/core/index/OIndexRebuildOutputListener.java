@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
@@ -29,13 +29,14 @@ import com.orientechnologies.common.log.OLogManager;
  * 
  */
 public class OIndexRebuildOutputListener implements OProgressListener {
-  private final OIndex<?> idx;
-  long                    startTime;
-  long                    lastDump;
-  long                    lastCounter = 0;
-  boolean                 rebuild     = false;
+  long                 startTime;
+  long                 lastDump;
+  long                 lastCounter = 0;
+  boolean              rebuild     = false;
 
-  public OIndexRebuildOutputListener(final OIndex<?> idx) {
+  private final OIndex idx;
+
+  public OIndexRebuildOutputListener(OIndex idx) {
     this.idx = idx;
   }
 
@@ -47,9 +48,11 @@ public class OIndexRebuildOutputListener implements OProgressListener {
     rebuild = (Boolean) iRebuild;
     if (iTotal > 0)
       if (rebuild)
-        OLogManager.instance().info(this, "- Rebuilding index %s.%s (estimated %,d items)...", idx.getDatabaseName(), idx.getName(), iTotal);
+        OLogManager.instance().info(this, "- Rebuilding index %s.%s (estimated %,d items)...", idx.getDatabaseName(),
+            idx.getName(), iTotal);
       else
-        OLogManager.instance().debug(this, "- Building index %s.%s (estimated %,d items)...", idx.getDatabaseName(), idx.getName(), iTotal);
+        OLogManager.instance().debug(this, "- Building index %s.%s (estimated %,d items)...", idx.getDatabaseName(), idx.getName(),
+            iTotal);
   }
 
   @Override

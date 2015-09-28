@@ -32,7 +32,14 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -48,13 +55,22 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
   @Test
   public void insertOperator() {
+    if (!database.getMetadata().getSchema().existsClass("Account"))
+      database.getMetadata().getSchema().createClass("Account");
+
     final int clId = database.addCluster("anotherdefault");
     final OClass profileClass = database.getMetadata().getSchema().getClass("Account");
     profileClass.addClusterId(clId);
 
+    if (!database.getMetadata().getSchema().existsClass("Address"))
+      database.getMetadata().getSchema().createClass("Address");
+
     int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
     List<Long> positions = getValidPositions(addressId);
+
+    if (!database.getMetadata().getSchema().existsClass("Profile"))
+      database.getMetadata().getSchema().createClass("Profile");
 
     ODocument doc = (ODocument) database.command(
         new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values ('Luca','Smith', 109.9, #" + addressId
@@ -403,8 +419,9 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
   public void testAutoConversionOfEmbeddededListWithLinkedClass() {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("TestConvert");
-    c.createProperty("embeddedListWithLinkedClass", OType.EMBEDDEDLIST,
-        database.getMetadata().getSchema().getOrCreateClass("TestConvertLinkedClass"));
+    if (!c.existsProperty("embeddedListWithLinkedClass"))
+      c.createProperty("embeddedListWithLinkedClass", OType.EMBEDDEDLIST,
+          database.getMetadata().getSchema().getOrCreateClass("TestConvertLinkedClass"));
 
     ODocument doc = database
         .command(
@@ -513,6 +530,36 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(doc.field("embeddedWithLinkedClass") instanceof ODocument);
     Assert.assertEquals(((ODocument) doc.field("embeddedWithLinkedClass")).getClassName(), "TestConvertLinkedClass");
+  }
+
+  public void testInsertEmbeddedWithRecordAttributes() {
+    OClass c = database.getMetadata().getSchema().getOrCreateClass("EmbeddedWithRecordAttributes");
+    c.createProperty("like", OType.EMBEDDED,
+        database.getMetadata().getSchema().getOrCreateClass("EmbeddedWithRecordAttributes_Like"));
+
+    ODocument doc = database.command(
+        new OCommandSQL("INSERT INTO EmbeddedWithRecordAttributes SET `like` = { \n" + "      count: 0, \n"
+            + "      latest: [], \n" + "      '@type': 'document', \n" + "      '@class': 'EmbeddedWithRecordAttributes_Like'\n"
+            + "    } ")).execute();
+
+    Assert.assertTrue(doc.field("like") instanceof OIdentifiable);
+    Assert.assertEquals(((ODocument) doc.field("like")).getClassName(), "EmbeddedWithRecordAttributes_Like");
+    Assert.assertEquals(((ODocument) doc.field("like")).field("count"), 0);
+  }
+
+  public void testInsertEmbeddedWithRecordAttributes2() {
+    OClass c = database.getMetadata().getSchema().getOrCreateClass("EmbeddedWithRecordAttributes2");
+    c.createProperty("like", OType.EMBEDDED,
+        database.getMetadata().getSchema().getOrCreateClass("EmbeddedWithRecordAttributes2_Like"));
+
+    ODocument doc = database.command(
+        new OCommandSQL("INSERT INTO EmbeddedWithRecordAttributes2 SET `like` = { \n" + "      count: 0, \n"
+            + "      latest: [], \n" + "      @type: 'document', \n" + "      @class: 'EmbeddedWithRecordAttributes2_Like'\n"
+            + "    } ")).execute();
+
+    Assert.assertTrue(doc.field("like") instanceof OIdentifiable);
+    Assert.assertEquals(((ODocument) doc.field("like")).getClassName(), "EmbeddedWithRecordAttributes2_Like");
+    Assert.assertEquals(((ODocument) doc.field("like")).field("count"), 0);
   }
 
   private List<Long> getValidPositions(int clusterId) {

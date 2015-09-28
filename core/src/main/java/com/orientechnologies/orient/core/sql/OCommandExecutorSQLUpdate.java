@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OTriple;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -49,12 +50,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * SQL UPDATE command.
@@ -76,7 +72,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   private List<OPair<String, Object>>           addEntries        = new ArrayList<OPair<String, Object>>();
   private List<OTriple<String, String, Object>> putEntries        = new ArrayList<OTriple<String, String, Object>>();
   private List<OPair<String, Object>>           removeEntries     = new ArrayList<OPair<String, Object>>();
-  private List<OPair<String, Number>>           incrementEntries  = new ArrayList<OPair<String, Number>>();
+  private List<OPair<String, Object>>           incrementEntries  = new ArrayList<OPair<String, Object>>();
   private ODocument                             merge             = null;
   private String                                lockStrategy      = "NONE";
   private OReturnHandler                        returnHandler     = new ORecordCountHandler();
@@ -156,9 +152,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
           upsertMode = true;
         else if (word.equals(KEYWORD_RETURN))
           parseReturn();
-        else if (word.equals(KEYWORD_RETRY))
+        else if (word.equals(KEYWORD_RETRY)) {
+          OLogManager.instance().warn(this, "RETRY keyword will be ignored in " + originalQuery);
           parseRetry();
-        else
+        } else
           break;
 
         parserNextWord(true);
@@ -224,26 +221,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     if (lockStrategy.equals("RECORD"))
       query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK);
 
-    for (int r = 0; r < retry; ++r) {
-      try {
-
-        getDatabase().query(query, queryArgs);
-
-        break;
-
-      } catch (OConcurrentModificationException e) {
-        if (r + 1 >= retry)
-          // NO RETRY; PROPAGATE THE EXCEPTION
-          throw e;
-
-        // RETRY?
-        if (wait > 0)
-          try {
-            Thread.sleep(wait);
-          } catch (InterruptedException ignored) {
-          }
-      }
-    }
+    getDatabase().query(query, queryArgs);
 
     if (upsertMode && !updated) {
       // IF UPDATE DOES NOT PRODUCE RESULTS AND UPSERT MODE IS ENABLED, CREATE DOCUMENT AND APPLY SET/ADD/PUT/MERGE and so on
@@ -298,7 +276,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     boolean updated = handleContent(record);
     updated |= handleMerge(record);
     updated |= handleSetEntries(record);
-    updated |= handleIncrementEnries(record);
+    updated |= handleIncrementEntries(record);
     updated |= handleAddEntries(record);
     updated |= handlePutEntries(record);
     updated |= handleRemoveEntries(record);
@@ -322,7 +300,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     if (distributedMode == null)
       // REPLICATE MODE COULD BE MORE EFFICIENT ON MASSIVE UPDATES
-      distributedMode = upsertMode || query == null ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+      distributedMode = upsertMode || query == null || getDatabase().getTransaction().isActive() ? DISTRIBUTED_EXECUTION_MODE.LOCAL
+          : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
     return distributedMode;
   }
 
@@ -461,19 +440,27 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     return updated;
   }
 
-  private boolean handleIncrementEnries(ODocument record) {
+  private boolean handleIncrementEntries(final ODocument record) {
     boolean updated = false;
     // BIND VALUES TO INCREMENT
     if (!incrementEntries.isEmpty()) {
-      for (OPair<String, Number> entry : incrementEntries) {
+      for (OPair<String, Object> entry : incrementEntries) {
         final Number prevValue = record.field(entry.getKey());
+
+        Number current;
+        if (entry.getValue() instanceof OSQLFilterItem)
+          current = (Number) ((OSQLFilterItem) entry.getValue()).getValue(record, null, context);
+        else if (entry.getValue() instanceof Number)
+          current = (Number) entry.getValue();
+        else
+          throw new OCommandExecutionException("Increment value is not a number (" + entry.getValue() + ")");
 
         if (prevValue == null)
           // NO PREVIOUS VALUE: CONSIDER AS 0
-          record.field(entry.getKey(), entry.getValue());
+          record.field(entry.getKey(), current);
         else
           // COMPUTING INCREMENT
-          record.field(entry.getKey(), OType.increment(prevValue, entry.getValue()));
+          record.field(entry.getKey(), OType.increment(prevValue, current));
       }
       updated = true;
     }
@@ -507,9 +494,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         if (coll != null) {
           // containField's condition above does NOT check subdocument's fields so
           Collection<Object> currColl = record.field(entry.getKey());
-          if (currColl == null)
+          if (currColl == null) {
             record.field(entry.getKey(), coll);
-          else
+            coll = record.field(entry.getKey());
+          } else
             coll = currColl;
         }
 
@@ -658,7 +646,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     else if (value instanceof OCommandRequest)
       value = ((OCommandRequest) value).execute(record, null, context);
 
-    if (value instanceof OIdentifiable)
+    if (value instanceof OIdentifiable && ((OIdentifiable) value).getIdentity().isPersistent())
       // USE ONLY THE RID TO AVOID CONCURRENCY PROBLEM WITH OLD VERSIONS
       value = ((OIdentifiable) value).getIdentity();
     return value;
@@ -760,7 +748,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       fieldValue = getBlock(parserRequiredWord(false, "Value expected"));
 
       // INSERT TRANSFORMED FIELD VALUE
-      incrementEntries.add(new OPair(fieldName, (Number) getFieldValueCountingParameters(fieldValue)));
+      incrementEntries.add(new OPair(fieldName, getFieldValueCountingParameters(fieldValue)));
       parserSkipWhiteSpaces();
 
       firstLap = false;
@@ -773,5 +761,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.WRITE;
+  }
+
+  @Override
+  public Object getResult() {
+    return null;
   }
 }

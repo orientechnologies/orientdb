@@ -22,8 +22,10 @@ package com.orientechnologies.common.io;
 import com.orientechnologies.common.util.OPatternConst;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
@@ -123,10 +125,14 @@ public class OIOUtils {
 
   public static Date getTodayWithTime(final String iTime) throws ParseException {
     final SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss");
-    final long today = System.currentTimeMillis();
-    final Date rslt = new Date();
-    rslt.setTime(today - (today % DAY) + df.parse(iTime).getTime());
-    return rslt;
+    Calendar calParsed = Calendar.getInstance();
+    calParsed.setTime(df.parse(iTime));
+    Calendar cal = Calendar.getInstance();
+    cal.set(Calendar.HOUR, calParsed.get(Calendar.HOUR));
+    cal.set(Calendar.MINUTE, calParsed.get(Calendar.MINUTE));
+    cal.set(Calendar.SECOND, calParsed.get(Calendar.SECOND));
+    cal.set(Calendar.MILLISECOND, 0);
+    return cal.getTime();
   }
 
   public static String readFileAsString(final File iFile) throws IOException {
@@ -135,7 +141,7 @@ public class OIOUtils {
 
   public static String readStreamAsString(final InputStream iStream) throws IOException {
     final StringBuffer fileData = new StringBuffer(1000);
-    final BufferedReader reader = new BufferedReader(new InputStreamReader(iStream));
+    final BufferedReader reader = new BufferedReader(new InputStreamReader(iStream, StandardCharsets.UTF_8));
     try {
       final char[] buf = new char[1024];
       int numRead = 0;
@@ -269,7 +275,22 @@ public class OIOUtils {
         && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'' || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"'))
       return s.substring(1, s.length() - 1);
 
+    if (s.length() > 1 && (s.charAt(0) == '`' && s.charAt(s.length() - 1) == '`'))
+      return s.substring(1, s.length() - 1);
+
     return s;
+  }
+
+  public static String wrapStringContent(final Object iValue, final char iStringDelimiter) {
+    if (iValue == null)
+      return null;
+
+    final String s = iValue.toString();
+
+    if (s == null)
+      return null;
+
+    return iStringDelimiter + s + iStringDelimiter;
   }
 
   public static boolean equals(final byte[] buffer, final byte[] buffer2) {
@@ -291,5 +312,17 @@ public class OIOUtils {
       isLong = isLong & ((c >= '0' && c <= '9'));
     }
     return isLong;
+  }
+
+  public static void readFully(InputStream in, byte[] b, int off, int len) throws IOException {
+    while (len > 0) {
+      int n = in.read(b, off, len);
+
+      if (n == -1) {
+        throw new EOFException();
+      }
+      off += n;
+      len -= n;
+    }
   }
 }

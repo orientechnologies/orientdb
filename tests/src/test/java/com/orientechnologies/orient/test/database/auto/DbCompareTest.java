@@ -28,27 +28,25 @@ import java.io.IOException;
 public class DbCompareTest extends DocumentDBBaseTest implements OCommandOutputListener {
   final private String testPath;
 
-	@Parameters(value = { "url", "testPath" })
-	public DbCompareTest(@Optional String url, String testPath) {
-		super(url);
-		this.testPath = testPath;
-	}
+  @Parameters(value = { "url", "testPath" })
+  public DbCompareTest(@Optional String url, String testPath) {
+    super(url);
+    this.testPath = testPath;
+  }
 
-	@Test
+  @Test
   public void testCompareDatabases() throws IOException {
     String urlPrefix = getStorageType() + ":";
 
     final ODatabaseCompare databaseCompare = new ODatabaseCompare(url, urlPrefix + testPath + "/" + DbImportExportTest.NEW_DB_URL,
         "admin", "admin", this);
     databaseCompare.setCompareEntriesForAutomaticIndexes(true);
-		databaseCompare.setCompareIndexMetadata(true);
+    databaseCompare.setCompareIndexMetadata(true);
     Assert.assertTrue(databaseCompare.compare());
   }
 
   @Override
   @Test(enabled = false)
   public void onMessage(final String iText) {
-//    System.out.print(iText);
-//    System.out.flush();
   }
 }

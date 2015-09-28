@@ -16,7 +16,7 @@ public class HttpClassTest extends BaseHttpDatabaseTest {
   }
 
   @Test
-    public void testNonExistentClass() throws Exception {
+  public void testNonExistentClass() throws Exception {
     Assert.assertEquals(get("class/" + getDatabaseName() + "/NonExistentCLass").getResponse().getStatusLine().getStatusCode(), 404);
   }
 
@@ -28,7 +28,8 @@ public class HttpClassTest extends BaseHttpDatabaseTest {
   @Test
   public void testDropClass() throws Exception {
     Assert.assertEquals(post("class/" + getDatabaseName() + "/NewClassToDrop").getResponse().getStatusLine().getStatusCode(), 201);
-    Assert.assertEquals(delete("class/" + getDatabaseName() + "/NewClassToDrop").getResponse().getStatusLine().getStatusCode(), 204);
+    Assert
+        .assertEquals(delete("class/" + getDatabaseName() + "/NewClassToDrop").getResponse().getStatusLine().getStatusCode(), 204);
   }
 
   @Override

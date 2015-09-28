@@ -19,18 +19,17 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.io.IOException;
-
-import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
+import java.io.IOException;
+
 public interface OCluster {
 
   enum ATTRIBUTES {
-    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION, CONFLICTSTRATEGY, STATUS
+    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION, CONFLICTSTRATEGY, STATUS, ENCRYPTION
   }
 
   void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException;
@@ -47,9 +46,9 @@ public interface OCluster {
 
   void delete() throws IOException;
 
-  OModificationLock getExternalModificationLock();
-
   Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
+
+  String encryption();
 
   void convertToTombstone(long iPosition) throws IOException;
 
@@ -96,10 +95,6 @@ public interface OCluster {
 
   void synch() throws IOException;
 
-  void setSoftlyClosed(boolean softlyClosed) throws IOException;
-
-  boolean wasSoftlyClosed() throws IOException;
-
   String getName();
 
   /**
@@ -119,6 +114,8 @@ public interface OCluster {
 
   boolean isHashBased();
 
+  boolean isSystemCluster();
+
   OClusterEntryIterator absoluteIterator();
 
   OPhysicalPosition[] higherPositions(OPhysicalPosition position) throws IOException;
@@ -132,7 +129,7 @@ public interface OCluster {
   /**
    * Hides records content by putting tombstone on the records position but does not delete record itself.
    * <p>
-   * This method is used in case of record content itself is broken and can not be read or deleted. So it is emergence method.
+   * This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method.
    *
    * @param position
    *          Position of record in cluster

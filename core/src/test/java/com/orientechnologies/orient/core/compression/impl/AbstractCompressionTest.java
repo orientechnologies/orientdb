@@ -1,10 +1,11 @@
 package com.orientechnologies.orient.core.compression.impl;
 
-import com.orientechnologies.orient.core.compression.OCompression;
-import com.orientechnologies.orient.core.compression.OCompressionFactory;
+import java.util.Random;
+
 import org.testng.Assert;
 
-import java.util.Random;
+import com.orientechnologies.orient.core.compression.OCompression;
+import com.orientechnologies.orient.core.compression.OCompressionFactory;
 
 /**
  * @author Andrey Lomakin
@@ -12,6 +13,10 @@ import java.util.Random;
  */
 public abstract class AbstractCompressionTest {
   public static void testCompression(String name) {
+    testCompression(name, null);
+  }
+
+  public static void testCompression(String name, String options) {
     long seed = System.currentTimeMillis();
     System.out.println(name + " - Compression seed " + seed);
 
@@ -23,7 +28,7 @@ public abstract class AbstractCompressionTest {
       byte[] content = new byte[contentSize];
       random.nextBytes(content);
 
-      OCompression compression = OCompressionFactory.INSTANCE.getCompression(name);
+      final OCompression compression = OCompressionFactory.INSTANCE.getCompression(name, options);
 
       final byte[] compressedContent = compression.compress(content);
 

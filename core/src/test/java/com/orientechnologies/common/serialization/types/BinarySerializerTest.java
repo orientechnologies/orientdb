@@ -16,11 +16,11 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
@@ -59,7 +59,7 @@ public class BinarySerializerTest {
   public void testNativeDirectMemoryCompatibility() {
     binarySerializer.serializeNativeObject(OBJECT, stream, 0);
 
-    ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
+    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(stream);
 
     try {
       Assert.assertEquals(binarySerializer.deserializeFromDirectMemoryObject(pointer, 0), OBJECT);

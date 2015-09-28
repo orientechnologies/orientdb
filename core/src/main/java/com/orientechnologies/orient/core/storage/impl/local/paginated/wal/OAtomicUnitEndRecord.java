@@ -32,8 +32,8 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   public OAtomicUnitEndRecord() {
   }
 
-  OAtomicUnitEndRecord(OOperationUnitId operationUnitId, boolean rollback, OLogSequenceNumber startLsn) {
-    super(operationUnitId, startLsn);
+  OAtomicUnitEndRecord(OOperationUnitId operationUnitId, boolean rollback) {
+    super(operationUnitId);
     this.rollback = rollback;
     assert operationUnitId != null;
   }

@@ -55,6 +55,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   private volatile boolean                     channelRead   = false;
   private byte                                 currentStatus;
   private int                                  currentSessionId;
+  private byte[]                               tokenBytes;
   private volatile OAsynchChannelServiceThread serviceThread;
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
@@ -276,11 +277,12 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       if (debug)
         OLogManager.instance().debug(this, "%s - Session %d handle response", socket.getLocalAddress(), iRequesterId);
 
-      byte[] renew = null;
       if (token)
-        renew = this.readBytes();
+        tokenBytes = this.readBytes();
+      else
+        tokenBytes = null;
       handleStatus(currentStatus, currentSessionId);
-      return renew;
+      return tokenBytes;
     } catch (OLockException e) {
       Thread.currentThread().interrupt();
       // NEVER HAPPENS?
@@ -317,7 +319,11 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         releaseReadLock();
       }
 
-    super.close();
+    try {
+      super.close();
+    } catch (Exception e) {
+      // IGNORE IT
+    }
 
     if (serviceThread != null) {
       final OAsynchChannelServiceThread s = serviceThread;
@@ -429,7 +435,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     try {
       throwable = objectInputStream.readObject();
     } catch (ClassNotFoundException e) {
-      OLogManager.instance().error(this, "Error during exception serialization.", e);
+      OLogManager.instance().error(this, "Error during exception serialization", e);
     }
 
     objectInputStream.close();
@@ -438,7 +444,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       throw (OException) throwable;
     else if (throwable instanceof Throwable)
       // WRAP IT
-      throw new OResponseProcessingException("Exception during response processing.", (Throwable) throwable);
+      throw new OResponseProcessingException("Exception during response processing", (Throwable) throwable);
     else
       OLogManager.instance().error(
           this,

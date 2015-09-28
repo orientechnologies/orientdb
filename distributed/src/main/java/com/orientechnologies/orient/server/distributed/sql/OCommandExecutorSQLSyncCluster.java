@@ -178,6 +178,11 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
         } else if (value instanceof ODistributedDatabaseChunk) {
           ODistributedDatabaseChunk chunk = (ODistributedDatabaseChunk) value;
 
+          // DELETE ANY PREVIOUS .COMPLETED FILE
+          final File completedFile = new File(tempFile.getAbsolutePath() + ".completed");
+          if (completedFile.exists())
+            completedFile.delete();
+
           fileSize = writeDatabaseChunk(nodeName, 1, chunk, out);
           for (int chunkNum = 2; !chunk.last; chunkNum++) {
             final Object result = dManager.sendRequest(databaseName, null, Collections.singleton(r.getKey()),
@@ -195,6 +200,11 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
               fileSize += writeDatabaseChunk(nodeName, chunkNum, chunk, out);
             }
           }
+
+          out.flush();
+
+          // CREATE THE .COMPLETED FILE TO SIGNAL EOF
+          new File(tempFile.getAbsolutePath() + ".completed").createNewFile();
         }
       }
 
@@ -237,7 +247,7 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
   }
 
   @Override
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 

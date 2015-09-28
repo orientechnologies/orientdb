@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.graph.sql;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -14,6 +14,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -29,8 +30,7 @@ public class OCommandExecutorSQLCreateEdgeTest {
 
   @Before
   public void setUp() throws Exception {
-    db = Orient.instance().getDatabaseFactory()
-        .createDatabase("graph", "memory:" + OCommandExecutorSQLCreateEdgeTest.class.getSimpleName());
+    db = new ODatabaseDocumentTx("memory:" + OCommandExecutorSQLCreateEdgeTest.class.getSimpleName());
 
     if (db.exists()) {
       db.open("admin", "admin");
@@ -90,6 +90,26 @@ public class OCommandExecutorSQLCreateEdgeTest {
     Assert.assertEquals(edge.field("foo"), "bar");
     Assert.assertEquals(edge.field("out"), owner1.getIdentity());
     Assert.assertEquals(edge.field("in"), owner2.getIdentity());
+  }
+
+  @Test
+  public void testBatch() throws Exception {
+    for (int i = 0; i < 20; ++i) {
+      db.command(new OCommandSQL("CREATE VERTEX Owner SET testbatch = true, id = ?")).execute(i);
+    }
+
+    Collection edges = db
+        .command(
+            new OCommandSQL(
+                "CREATE EDGE link from (select from owner where testbatch = true and id > 0) TO (select from owner where testbatch = true and id = 0) batch 10"))
+        .execute("456");
+
+    Assert.assertEquals(edges.size(), 19);
+
+    final List<ODocument> list = db.query(new OSQLSynchQuery<Object>("select from owner where testbatch = true and id = 0"));
+
+    Assert.assertEquals(list.size(), 1);
+    Assert.assertEquals(((ORidBag) list.get(0).field("in_link")).size(), 19);
   }
 
   @Test

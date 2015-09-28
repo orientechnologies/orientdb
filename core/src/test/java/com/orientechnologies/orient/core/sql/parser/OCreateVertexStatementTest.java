@@ -38,6 +38,7 @@ public class OCreateVertexStatementTest {
   public void testSimpleCreate() {
     checkRightSyntax("create vertex");
     checkRightSyntax("create vertex V");
+    checkRightSyntax("create vertex x cluster t");
     checkWrongSyntax("create vertex V foo");
     checkRightSyntax("create vertex Foo (a) values (1)");
     checkRightSyntax("create vertex Foo (a) values ('1')");

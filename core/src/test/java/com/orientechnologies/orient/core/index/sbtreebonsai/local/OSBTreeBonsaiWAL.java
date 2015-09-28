@@ -119,7 +119,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
     if (!actualStorageDirFile.exists())
       actualStorageDirFile.mkdirs();
 
-    writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, actualStorage);
+    writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, actualStorage);
 
     actualWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
         writeAheadLog, 100, 1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, actualStorage, false, 1);
@@ -287,7 +287,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
   }
 
   private void restoreDataFromWAL() throws IOException {
-    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, actualStorage);
+    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, actualStorage);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();

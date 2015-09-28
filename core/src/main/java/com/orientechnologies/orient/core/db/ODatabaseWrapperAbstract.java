@@ -19,7 +19,16 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.Orient;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -32,15 +41,6 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> implements ODatabaseInternal<T> {
   protected DB                   underlying;
@@ -49,7 +49,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
   public ODatabaseWrapperAbstract(final DB iDatabase) {
     underlying = iDatabase;
     databaseOwner = this;
-    Orient.instance().getDatabaseFactory().register(databaseOwner);
   }
 
   public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
@@ -59,7 +58,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
 
   public <THISDB extends ODatabase> THISDB open(final OToken iToken) {
     underlying.open(iToken);
-    Orient.instance().getDatabaseFactory().register(databaseOwner);
     return (THISDB) this;
   }
 
@@ -114,9 +112,9 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
    * @throws IOException
    */
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+  public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
       final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
-    underlying.backup(out, options, callable, iListener, compressionLevel, bufferSize);
+    return underlying.backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
   /**
@@ -149,7 +147,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
 
   public void drop() {
     underlying.drop();
-    Orient.instance().getDatabaseFactory().unregister(databaseOwner);
   }
 
   public STATUS getStatus() {
@@ -350,21 +347,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
 
   public void release() {
     underlying.release();
-  }
-
-  @Override
-  public void freezeCluster(int iClusterId, boolean throwException) {
-    underlying.freezeCluster(iClusterId, throwException);
-  }
-
-  @Override
-  public void freezeCluster(int iClusterId) {
-    underlying.freezeCluster(iClusterId);
-  }
-
-  @Override
-  public void releaseCluster(int iClusterId) {
-    underlying.releaseCluster(iClusterId);
   }
 
   protected void checkOpeness() {

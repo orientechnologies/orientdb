@@ -1,74 +1,98 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.query.live;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * Created by luigidellaquila on 16/03/15.
  */
 public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseListener {
 
-  protected static Map<ODatabaseDocument, List<ORecordOperation>> pendingOps  = new ConcurrentHashMap<ODatabaseDocument, List<ORecordOperation>>();
+  static class OLiveQueryOps implements OCloseable {
 
-  // protected static Map<OStorage, OLiveQueryQueueThread> queueThreads = new ConcurrentHashMap<OStorage, OLiveQueryQueueThread>();
+    protected Map<ODatabaseDocument, List<ORecordOperation>> pendingOps  = new ConcurrentHashMap<ODatabaseDocument, List<ORecordOperation>>();
+    OLiveQueryQueueThread                                    queueThread = new OLiveQueryQueueThread();
+    Object                                                   threadLock  = new Object();
 
-  static OLiveQueryQueueThread                                    queueThread = new OLiveQueryQueueThread();
-  static Object                                                   threadLock  = new Object();
+    @Override
+    public void close() {
+      queueThread.stopExecution();
+      try {
+        queueThread.join();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      pendingOps.clear();
+    }
+  }
 
   public OLiveQueryHook(ODatabaseDocumentTx db) {
+    super(db);
+    getOpsReference(db);
     db.registerListener(this);
   }
 
-  public static Integer subscribe(Integer token, OLiveQueryListener iListener) {
-    synchronized (threadLock) {
-      if (!queueThread.isAlive()) {
-        // TODO copy old queues!
-        queueThread = new OLiveQueryQueueThread();
-        queueThread.start();
+  private static OLiveQueryOps getOpsReference(ODatabaseInternal db) {
+    return (OLiveQueryOps) db.getStorage().getResource("LiveQueryOps", new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        return new OLiveQueryOps();
+      }
+    });
+  }
+
+  public static Integer subscribe(Integer token, OLiveQueryListener iListener, ODatabaseInternal db) {
+    OLiveQueryOps ops = getOpsReference(db);
+    synchronized (ops.threadLock) {
+      if (!ops.queueThread.isAlive()) {
+        ops.queueThread = ops.queueThread.clone();
+        ops.queueThread.start();
       }
     }
 
-    return queueThread.subscribe(token, iListener);
+    return ops.queueThread.subscribe(token, iListener);
   }
 
-  public static void unsubscribe(Integer id) {
+  public static void unsubscribe(Integer id, ODatabaseInternal db) {
     try {
-      synchronized (threadLock) {
-        queueThread.unsubscribe(id);
+      OLiveQueryOps ops = getOpsReference(db);
+      synchronized (ops.threadLock) {
+        ops.queueThread.unsubscribe(id);
       }
     } catch (Exception e) {
       OLogManager.instance().warn(OLiveQueryHook.class, "Error on unsubscribing client");
@@ -82,8 +106,9 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
 
   @Override
   public void onDelete(ODatabase iDatabase) {
-    synchronized (pendingOps) {
-      pendingOps.remove(iDatabase);
+    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
+    synchronized (ops.pendingOps) {
+      ops.pendingOps.remove(iDatabase);
     }
   }
 
@@ -104,8 +129,9 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
 
   @Override
   public void onAfterTxRollback(ODatabase iDatabase) {
-    synchronized (pendingOps) {
-      pendingOps.remove(iDatabase);
+    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
+    synchronized (ops.pendingOps) {
+      ops.pendingOps.remove(iDatabase);
     }
   }
 
@@ -116,22 +142,24 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
 
   @Override
   public void onAfterTxCommit(ODatabase iDatabase) {
+    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
     List<ORecordOperation> list;
-    synchronized (pendingOps) {
-      list = pendingOps.remove(iDatabase);
+    synchronized (ops.pendingOps) {
+      list = ops.pendingOps.remove(iDatabase);
     }
     // TODO sync
     if (list != null) {
       for (ORecordOperation item : list) {
-        queueThread.enqueue(item);
+        ops.queueThread.enqueue(item);
       }
     }
   }
 
   @Override
   public void onClose(ODatabase iDatabase) {
-    synchronized (pendingOps) {
-      pendingOps.remove(iDatabase);
+    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
+    synchronized (ops.pendingOps) {
+      ops.pendingOps.remove(iDatabase);
     }
   }
 
@@ -162,20 +190,21 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
   }
 
   protected void addOp(ODocument iDocument, byte iType) {
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocument db = database;
+    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) db);
     if (db.getTransaction() == null || !db.getTransaction().isActive()) {
 
       // TODO synchronize
       ORecordOperation op = new ORecordOperation(iDocument, iType);
-      queueThread.enqueue(op);
+      ops.queueThread.enqueue(op);
       return;
     }
     ORecordOperation result = new ORecordOperation(iDocument, iType);
-    synchronized (pendingOps) {
-      List<ORecordOperation> list = this.pendingOps.get(db);
+    synchronized (ops.pendingOps) {
+      List<ORecordOperation> list = ops.pendingOps.get(db);
       if (list == null) {
         list = new ArrayList<ORecordOperation>();
-        this.pendingOps.put(db, list);
+        ops.pendingOps.put(db, list);
       }
       list.add(result);
     }
@@ -189,14 +218,5 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
   @Override
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.BOTH;
-  }
-
-  @Override
-  public void onUnregister() {
-    super.onUnregister();
-    // for (OLiveQueryQueueThread queueThread : OLiveQueryHook.queueThreads.values()) {
-    // queueThread.stopExecution();
-    // }
-
   }
 }

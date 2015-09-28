@@ -25,9 +25,11 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.*;
 
+@SuppressFBWarnings("EQ_COMPARETO_USE_OBJECT_EQUALS")
 public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OIdentifiable> {
   private final OIndexInternal<OIdentifiable> delegate;
 
@@ -162,10 +164,6 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  @Override
-  public void deleteWithoutIndexLoad(String indexName) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
 
   @Override
   public String getName() {
@@ -231,11 +229,6 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   @Override
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
     throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public ORID getIdentity() {
-    return delegate.getIdentity();
   }
 
   @Override
@@ -316,24 +309,6 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   @Override
   public boolean hasRangeQuerySupport() {
     return delegate.hasRangeQuerySupport();
-  }
-
-  @Override
-  public void freeze(boolean throwException) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public void release() {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public void acquireModificationLock() {
-  }
-
-  @Override
-  public void releaseModificationLock() {
   }
 
   @Override

@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
 /**
  * Tagged interface for proxy storage implementation
  * 
@@ -30,10 +28,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 public interface OStorageProxy extends OStorage {
   String getUserName();
 
-  Object indexGet(final String iIndexName, final Object iKey, final String iFetchPlan);
+  int getUsers();
 
-  void indexPut(final String iIndexName, final Object iKey, final OIdentifiable iValue);
+  int addUser();
 
-  boolean indexRemove(final String iIndexName, final Object iKey);
+  int removeUser();
 
+  OStorageProxy copy();
 }

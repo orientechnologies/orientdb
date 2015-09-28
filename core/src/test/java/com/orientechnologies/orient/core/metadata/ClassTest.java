@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.metadata;
 
+import static org.testng.Assert.assertEquals;
+
 import java.util.List;
 
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -15,7 +17,9 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
@@ -156,6 +160,27 @@ public class ClassTest {
 
     Assert.assertEquals(db.countClass("ClassTwo"), 2);
     Assert.assertEquals(db.countClass("ClassOne"), 1);
+  }
+  
+  @Test
+  public void testOClassAndOPropertyDescription() {
+    final OSchema oSchema = db.getMetadata().getSchema();
+    OClass oClass = oSchema.createClass("DescriptionTest");
+    OProperty oProperty = oClass.createProperty("property", OType.STRING);
+    oClass.setDescription("DescriptionTest-class-description");
+    oProperty.setDescription("DescriptionTest-property-description");
+    assertEquals(oClass.getDescription(), "DescriptionTest-class-description");
+    assertEquals(oProperty.getDescription(), "DescriptionTest-property-description");
+    oSchema.reload();
+    oClass = oSchema.getClass("DescriptionTest");
+    oProperty = oClass.getProperty("property");
+    assertEquals(oClass.getDescription(), "DescriptionTest-class-description");
+    assertEquals(oProperty.getDescription(), "DescriptionTest-property-description");
+    
+    oClass = db.getMetadata().getImmutableSchemaSnapshot().getClass("DescriptionTest");
+    oProperty = oClass.getProperty("property");
+    assertEquals(oClass.getDescription(), "DescriptionTest-class-description");
+    assertEquals(oProperty.getDescription(), "DescriptionTest-property-description");
   }
 
   private String queryShortName() {

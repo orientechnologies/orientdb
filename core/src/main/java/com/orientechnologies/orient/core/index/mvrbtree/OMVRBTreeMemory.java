@@ -25,6 +25,7 @@ import java.util.SortedMap;
 
 @SuppressWarnings("serial")
 public class OMVRBTreeMemory<K, V> extends OMVRBTree<K, V> {
+  private static final long serialVersionUID = 665177956875869815L;
   /**
    * The number of entries in the tree
    */

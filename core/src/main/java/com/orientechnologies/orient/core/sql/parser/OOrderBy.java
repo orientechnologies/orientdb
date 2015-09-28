@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.List;
+import java.util.Map;
 
 public class OOrderBy extends SimpleNode {
   protected List<OOrderByItem> items;
@@ -32,19 +33,16 @@ public class OOrderBy extends SimpleNode {
     this.items = items;
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (items != null && items.size() > 0) {
-      result.append("ORDER BY ");
+      builder.append("ORDER BY ");
       for (int i = 0; i < items.size(); i++) {
         if (i > 0) {
-          result.append(", ");
+          builder.append(", ");
         }
-        result.append(items.get(i).toString());
+        items.get(i).toString(params, builder);
       }
     }
-    return result.toString();
   }
 }
 /* JavaCC - OriginalChecksum=d5529400217169f15e556e5dc6fe4f5b (do not edit this line) */

@@ -108,7 +108,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     try {
       getRecord().load();
     } catch (ORecordNotFoundException e) {
-      throw new IllegalStateException("The elements " + getIdentity() + " has already been deleted");
+      throw new IllegalStateException("The elements " + getIdentity() + " has already been deleted", e);
     }
 
     getRecord().delete();
@@ -274,7 +274,8 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (graph != null && fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof ORecordBytes))
       // CONVERT IT TO VERTEX/EDGE
       return (T) graph.getElement(fieldValue);
-    else if (OMultiValue.isMultiValue(fieldValue) && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable) {
+    else if (!(fieldValue instanceof Map) && OMultiValue.isMultiValue(fieldValue)
+        && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable) {
       final OIdentifiable firstValue = (OIdentifiable) OMultiValue.getFirstValue(fieldValue);
 
       if (firstValue instanceof ODocument) {

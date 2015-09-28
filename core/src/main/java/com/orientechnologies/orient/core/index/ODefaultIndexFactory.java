@@ -17,14 +17,16 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
@@ -95,6 +97,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
     if (valueContainerAlgorithm == null)
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
+
     if (version < 0)
       version = getLastVersion();
 
@@ -107,35 +110,15 @@ public class ODefaultIndexFactory implements OIndexFactory {
 
   private OIndexInternal<?> createSBTreeIndex(String name, String indexType, String valueContainerAlgorithm, ODocument metadata,
       OAbstractPaginatedStorage storage, int version) {
-    Boolean durableInNonTxMode;
-
-    Object durable = null;
-
-    if (metadata != null) {
-      durable = metadata.field("durableInNonTxMode");
-    }
-
-    if (durable instanceof Boolean)
-      durableInNonTxMode = (Boolean) durable;
-    else
-      durableInNonTxMode = null;
 
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
-      return new OIndexUnique(name, indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(name, durableInNonTxMode,
-          storage,
-          version), valueContainerAlgorithm, metadata);
+      return new OIndexUnique(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
-      return new OIndexNotUnique(name, indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(name,
-          durableInNonTxMode,
-          storage, version), valueContainerAlgorithm, metadata);
+      return new OIndexNotUnique(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OIndexFullText(name, indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(name,
-          durableInNonTxMode,
-          storage, version), valueContainerAlgorithm, metadata);
+      return new OIndexFullText(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
-      return new OIndexDictionary(name, indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(name,
-          durableInNonTxMode,
-          storage, version), valueContainerAlgorithm, metadata);
+      return new OIndexDictionary(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     }
 
     throw new OConfigurationException("Unsupported type : " + indexType);
@@ -144,5 +127,25 @@ public class ODefaultIndexFactory implements OIndexFactory {
   @Override
   public int getLastVersion() {
     return OSBTreeIndexEngine.VERSION;
+  }
+
+  @Override
+  public OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version,
+      Map<String, String> engineProperties) {
+
+    final OIndexEngine indexEngine;
+
+    final String storageType = storage.getType();
+    if (storageType.equals("memory") || storageType.equals("plocal"))
+      indexEngine = new OSBTreeIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage, version);
+    else if (storageType.equals("distributed"))
+      // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
+      indexEngine = new OSBTreeIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
+    else if (storageType.equals("remote"))
+      indexEngine = new ORemoteIndexEngine(name);
+    else
+      throw new OIndexException("Unsupported storage type : " + storageType);
+
+    return indexEngine;
   }
 }

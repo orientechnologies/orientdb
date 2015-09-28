@@ -128,7 +128,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
             try {
               database.getStorage().getClusterById(clusterIds[i]);
             } catch (Exception e) {
-              throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos);
+              throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos, e);
             }
           }
         }
@@ -159,7 +159,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   }
 
   @Override
-  public long getTimeout() {
+  public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
