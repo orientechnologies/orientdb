@@ -1184,7 +1184,19 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message("\nSuper classes........: " + Arrays.toString(cls.getSuperClassesNames().toArray()));
     message("\nDefault cluster......: " + currentDatabase.getClusterNameById(cls.getDefaultClusterId()) + " (id="
         + cls.getDefaultClusterId() + ")");
-    message("\nSupported cluster ids: " + Arrays.toString(cls.getClusterIds()));
+
+    final StringBuilder clusters = new StringBuilder();
+    for (int clId : cls.getClusterIds()) {
+      if (clusters.length() > 0)
+        clusters.append(", ");
+
+      clusters.append(currentDatabase.getClusterNameById(clId));
+      clusters.append("(");
+      clusters.append(clId);
+      clusters.append(")");
+    }
+    message("\nSupported clusters...: " + clusters.toString());
+
     message("\nCluster selection....: " + cls.getClusterSelection().getName());
     message("\nOversize.............: " + cls.getClassOverSize());
 
