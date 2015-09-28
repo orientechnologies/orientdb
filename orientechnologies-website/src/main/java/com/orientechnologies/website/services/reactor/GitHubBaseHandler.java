@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -80,6 +81,7 @@ public abstract class GitHubBaseHandler<T> implements GitHubHandler<T> {
 
     doc.field("action", action);
     doc.field("payload", payload.toJSON());
+    doc.field("timestamp", new Date());
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     e.printStackTrace(pw);
