@@ -633,7 +633,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       releaseSchemaReadLock();
     }
   }
-  
 
   public OClass setShortName(String shortName) {
     if (shortName != null) {
@@ -677,7 +676,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       releaseSchemaReadLock();
     }
   }
-  
+
   public OClass setDescription(String iDescription) {
     if (iDescription != null) {
       iDescription = iDescription.trim();
@@ -2137,7 +2136,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       releaseSchemaWriteLock();
     }
   }
-  
+
   private void setDescriptionInternal(final String iDescription) {
     acquireSchemaWriteLock();
     try {
@@ -2403,10 +2402,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return property;
   }
 
-  private void validatePropertyName(String propertyName) {
-    if (propertyName.contains("-")) {
-      throw new OSchemaException("Character '-' not allowed in property name (" + propertyName + ") when strictSql is enabled");
-    }
+  private void validatePropertyName(final String propertyName) {
   }
 
   private int getClusterId(final String stringValue) {

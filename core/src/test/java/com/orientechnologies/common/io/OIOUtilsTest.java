@@ -1,12 +1,16 @@
 package com.orientechnologies.common.io;
 
-import static org.testng.Assert.assertEquals;
-
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.testng.Assert.assertEquals;
 
 public class OIOUtilsTest {
 
@@ -34,4 +38,21 @@ public class OIOUtilsTest {
     assertEquals(calendar.getTime(), d);
   }
 
+  @Test
+  public void shouldReadFileAsString() throws IOException {
+    //UTF-8
+    Path path = Paths.get("./src/test/resources/", getClass().getSimpleName() + "_utf8.txt");
+
+    String asString = OIOUtils.readFileAsString(path.toFile());
+
+    assertThat(asString).isEqualToIgnoringCase("utf-8 :: èàòì€");
+
+    //ISO-8859-1
+    path = Paths.get("./src/test/resources/", getClass().getSimpleName() + "_iso-8859-1.txt");
+
+    asString = OIOUtils.readFileAsString(path.toFile());
+
+    assertThat(asString).isNotEqualToIgnoringCase("iso-8859-1 :: èàòì€");
+
+  }
 }

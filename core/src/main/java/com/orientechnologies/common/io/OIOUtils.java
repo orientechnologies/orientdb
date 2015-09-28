@@ -22,6 +22,7 @@ package com.orientechnologies.common.io;
 import com.orientechnologies.common.util.OPatternConst;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -140,7 +141,7 @@ public class OIOUtils {
 
   public static String readStreamAsString(final InputStream iStream) throws IOException {
     final StringBuffer fileData = new StringBuffer(1000);
-    final BufferedReader reader = new BufferedReader(new InputStreamReader(iStream));
+    final BufferedReader reader = new BufferedReader(new InputStreamReader(iStream, StandardCharsets.UTF_8));
     try {
       final char[] buf = new char[1024];
       int numRead = 0;
