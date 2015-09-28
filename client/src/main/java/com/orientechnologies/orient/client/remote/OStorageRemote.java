@@ -1837,12 +1837,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
             try {
               byte[] newToken = network.beginResponse(getSessionId(), true);
-              if (newToken != null && newToken.length > 0) {
-                setSessionId(getServerURL(), getSessionId(), newToken);
-              }
               sessionId = network.readInt();
-              setSessionId(currentURL, sessionId, curToken);
-
+              if (newToken != null && newToken.length > 0) {
+                setSessionId(currentURL, sessionId, newToken);
+              } else {
+                setSessionId(currentURL, sessionId, curToken);
+              }
               OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
               return currentURL;
             } finally {
@@ -1868,7 +1868,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             }
             network = null;
           }
-          return openRemoteDatabase();
         }
         catch (OException e) {
           // PROPAGATE ANY OTHER ORIENTDB EXCEPTION
