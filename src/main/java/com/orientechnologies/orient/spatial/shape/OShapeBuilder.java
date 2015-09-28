@@ -27,6 +27,7 @@ import com.spatial4j.core.shape.Shape;
 import com.spatial4j.core.shape.jts.JtsGeometry;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.io.WKBWriter;
 
 import java.text.ParseException;
 import java.util.Map;
@@ -78,6 +79,12 @@ public abstract class OShapeBuilder<T extends Shape> {
     return SPATIAL_CONTEXT.getGeometryFrom(shape).toText();
   }
 
+  public byte[] asBinary(T shape) {
+    WKBWriter writer = new WKBWriter();
+    Geometry geom = SPATIAL_CONTEXT.getGeometryFrom(shape);
+    return writer.write(geom);
+  }
+
   public String asText(ODocument document) {
     return asText(fromDoc(document));
   }
@@ -104,6 +111,7 @@ public abstract class OShapeBuilder<T extends Shape> {
     }
 
   }
+
 
   protected Geometry toGeometry(Shape shape) {
     return SPATIAL_CONTEXT.getGeometryFrom(shape);

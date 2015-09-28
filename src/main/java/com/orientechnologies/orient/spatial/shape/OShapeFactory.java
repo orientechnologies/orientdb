@@ -140,6 +140,24 @@ public class OShapeFactory extends OComplexShapeBuilder {
     return null;
   }
 
+  public byte[] asBinary(Object obj) {
+
+    if (obj instanceof ODocument) {
+      Shape shape = fromDoc((ODocument) obj);
+      return asBinary(shape);
+    }
+    if (obj instanceof Map) {
+      Map map = (Map) ((Map) obj).get("shape");
+      if (map == null) {
+        map = (Map) obj;
+      }
+      Shape shape = fromMapGeoJson(map);
+
+      return asBinary(shape);
+    }
+    throw new IllegalArgumentException("Error serializing to binary " + obj);
+  }
+
   @Override
   public ODocument toDoc(Shape shape) {
 

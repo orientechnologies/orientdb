@@ -33,6 +33,8 @@ public class OSpatialFunctionsFactory implements OSQLFunctionFactory {
     register(OSTAsTextFunction.NAME, new OSTAsTextFunction());
     register(STWithinFunction.NAME, new STWithinFunction());
     register(STEqualsFunction.NAME, new STEqualsFunction());
+    register(OSTAsBinaryFunction.NAME, new OSTAsBinaryFunction());
+    register(OSTEnvelopFunction.NAME, new OSTEnvelopFunction());
     register(STSrid.NAME, new STSrid());
     // register(STNearFunction.NAME, new STNearFunction());
     // register(STContainsFunction.NAME, new STContainsFunction());

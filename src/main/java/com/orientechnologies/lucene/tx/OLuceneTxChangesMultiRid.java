@@ -86,6 +86,7 @@ public class OLuceneTxChangesMultiRid extends OLuceneTxChangesAbstract {
     return match;
   }
 
+  // TODO is this valid?
   public boolean isUpdated(Document document, Object key, OIdentifiable value) {
     return false;
   }
