@@ -141,9 +141,11 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
         method.setParameters(op.getValue(), true);
 
 
-        Object processEachObj = iContext.getVariable(OSQLMethodEach.VARIABLE_PROCESS_EACH);
-        if (processEachObj != null && processEachObj instanceof Boolean) {
-          processEach = (Boolean)processEachObj;
+        if (iContext != null) {
+          Object processEachObj = iContext.getVariable(OSQLMethodEach.VARIABLE_PROCESS_EACH);
+          if (processEachObj != null && processEachObj instanceof Boolean) {
+            processEach = (Boolean) processEachObj;
+          }
         }
 
         if (processEach && (ioResult instanceof List)) {
