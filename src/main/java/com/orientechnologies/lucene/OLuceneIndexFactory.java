@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.spatial.shape.OShapeFactory;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -102,6 +103,9 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
       storage.getComponentsFactory().binarySerializerFactory.registerSerializer(OLuceneMockSpatialSerializer.INSTANCE,
           OType.EMBEDDED);
     }
+
+    if (metadata == null)
+      metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
     if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
       return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.SPATIAL.toString().equals(indexType)) {

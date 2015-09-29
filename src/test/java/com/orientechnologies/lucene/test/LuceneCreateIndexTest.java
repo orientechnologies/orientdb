@@ -54,11 +54,11 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
     databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
     databaseDocumentTx.command(
-            new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
-                    + StandardAnalyzer.class.getName() + "\"}")).execute();
+        new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
+            + StandardAnalyzer.class.getName() + "\"}")).execute();
     databaseDocumentTx.command(
-            new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
-                    + StandardAnalyzer.class.getName() + "\"}")).execute();
+        new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
+            + StandardAnalyzer.class.getName() + "\"}")).execute();
 
     ODocument doc = new ODocument("Song");
 
@@ -66,7 +66,7 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
     doc.field("author", "Local");
 
     databaseDocumentTx.save(doc);
-
+    testMetadata();
     assertQuery();
 
     assertNewQuery();
@@ -104,6 +104,12 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
         "select * from Song where [title] LUCENE \"(title:Local)\""));
 
     Assert.assertEquals(docs.size(), 1);
+  }
+
+  protected void testMetadata() {
+    final ODocument index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("Song.title").getMetadata();
+
+    Assert.assertEquals(index.field("analyzer"), StandardAnalyzer.class.getName());
   }
 
   @BeforeClass

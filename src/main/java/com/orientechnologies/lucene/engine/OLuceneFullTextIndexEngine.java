@@ -43,7 +43,6 @@ import org.apache.lucene.store.Directory;
 import java.io.IOException;
 import java.util.*;
 
-//TODO: (frank) this is more and engine rather than a manager, maybe rename
 public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   protected OLuceneFacetManager facetManager;
