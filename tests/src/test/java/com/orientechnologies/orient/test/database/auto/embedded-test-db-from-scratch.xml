@@ -175,6 +175,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.PoolTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.StringsTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.RecordReloadTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.SequenceTest"/>
         </classes>
     </test>
     <test name="DbTools">

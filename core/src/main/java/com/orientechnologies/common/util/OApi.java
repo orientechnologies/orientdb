@@ -17,7 +17,7 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.SOURCE)
 public @interface OApi {
-  public enum MATURITY {
+  enum MATURITY {
     EXPERIMENTAL, NEW, STABLE, DEPRECATED
   }
 
