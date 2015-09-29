@@ -76,7 +76,11 @@
             </listener>
         </listeners>
     </network>
-    <storages/>
+    <storages>
+        <storage name="datch" path="plocal:/Volumes/MACCHI/Geo/datch"
+                 userName="admin" userPassword="admin"
+                 loaded-at-startup="true"/>
+    </storages>
     <users>
         <user resources="*" password="root" name="root"/>
         <user resources="connect,server.listDatabases,server.dblist" password="guest" name="guest"/>

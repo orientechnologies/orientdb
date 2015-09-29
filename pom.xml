@@ -29,6 +29,7 @@
         <surefire.version>2.18.1</surefire.version>
         <orientdb.version>${project.version}</orientdb.version>
         <lucene.version>5.3.0</lucene.version>
+        <geotools.version>13.2</geotools.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -124,7 +125,19 @@
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
+
         </repository>
+        <repository>
+            <id>maven2-repository.dev.java.net</id>
+            <name>Java.net repository</name>
+            <url>http://download.java.net/maven/2</url>
+        </repository>
+        <repository>
+            <id>osgeo</id>
+            <name>Open Source Geospatial Foundation Repository</name>
+            <url>http://download.osgeo.org/webdav/geotools/</url>
+        </repository>
+
     </repositories>
 
     <build>
@@ -323,6 +336,17 @@
             <artifactId>jts</artifactId>
             <version>1.13</version>
             <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-main</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-api</artifactId>
+            <version>${geotools.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>

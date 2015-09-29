@@ -37,7 +37,10 @@ public class OShapeFactory extends OComplexShapeBuilder {
 
   public static final OShapeFactory  INSTANCE  = new OShapeFactory();
 
+  protected OShapeOperation          operation;
+
   protected OShapeFactory() {
+    operation = new OShapeOperationImpl(this);
     registerFactory(new OLineStringShapeBuilder());
     registerFactory(new OMultiLineStringShapeBuilder());
     registerFactory(new OPointShapeBuilder());
@@ -200,6 +203,10 @@ public class OShapeFactory extends OComplexShapeBuilder {
     }
     throw new IllegalArgumentException("Invalid map");
     // TODO handle exception shape not found
+  }
+
+  public OShapeOperation operation() {
+    return operation;
   }
 
   public void registerFactory(OShapeBuilder factory) {

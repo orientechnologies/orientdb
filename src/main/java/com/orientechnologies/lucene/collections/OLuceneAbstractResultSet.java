@@ -21,6 +21,7 @@ package com.orientechnologies.lucene.collections;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
@@ -34,11 +35,11 @@ import java.util.Set;
  */
 public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
 
-  protected TopDocs                     topDocs;
-  protected Query                       query;
+  protected TopDocs                    topDocs;
+  protected Query                      query;
   protected OLuceneIndexEngineAbstract manager;
-  protected QueryContext                queryContext;
-  protected static Integer              PAGE_SIZE = 10000;
+  protected QueryContext               queryContext;
+  protected static Integer             PAGE_SIZE = 10000;
 
   public OLuceneAbstractResultSet(OLuceneIndexEngineAbstract manager, QueryContext queryContext) {
     this.manager = manager;
@@ -48,7 +49,7 @@ public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
     fetchFirstBatch();
   }
 
-  protected  Query enhanceQuery(Query query){
+  protected Query enhanceQuery(Query query) {
     return query;
   }
 
@@ -128,5 +129,9 @@ public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
   @Override
   public void clear() {
     throw new UnsupportedOperationException();
+  }
+
+  public void sendLookupTime(OCommandContext commandContext, long start) {
+    manager.sendLookupTime(commandContext, topDocs, -1, start);
   }
 }

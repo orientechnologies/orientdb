@@ -28,6 +28,8 @@ import com.spatial4j.core.shape.jts.JtsGeometry;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.io.WKBWriter;
+import com.vividsolutions.jts.operation.buffer.BufferOp;
+import com.vividsolutions.jts.operation.buffer.BufferParameters;
 
 import java.text.ParseException;
 import java.util.Map;
@@ -112,8 +114,7 @@ public abstract class OShapeBuilder<T extends Shape> {
 
   }
 
-
-  protected Geometry toGeometry(Shape shape) {
+  Geometry toGeometry(Shape shape) {
     return SPATIAL_CONTEXT.getGeometryFrom(shape);
   }
 
@@ -150,4 +151,25 @@ public abstract class OShapeBuilder<T extends Shape> {
     Geometry geometry = toGeometry(shape);
     return geometry.getSRID();
   }
+
+  public Shape buffer(Shape shape, Double distance, Map<String, Object> params) {
+    Geometry geometry = toGeometry(shape);
+    BufferParameters parameters = new BufferParameters();
+    if (params != null) {
+      bindParameters(parameters, params);
+    }
+    BufferOp ops = new BufferOp(geometry, parameters);
+    return toShape(ops.getResultGeometry(distance));
+  }
+
+  private void bindParameters(BufferParameters parameters, Map<String, Object> params) {
+
+    Number quad_segs = (Number) params.get("quad_segs");
+
+    if (quad_segs != null) {
+      parameters.setQuadrantSegments(quad_segs.intValue());
+    }
+
+  }
+
 }

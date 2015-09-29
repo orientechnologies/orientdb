@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.operator;
 
+import com.orientechnologies.lucene.collections.OLuceneAbstractResultSet;
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -60,13 +61,15 @@ public class OLuceneOverlapOperator extends OLuceneSpatialOperator {
     queryParams.put(SpatialQueryBuilderAbstract.GEO_FILTER, SpatialQueryBuilderOverlap.NAME);
     queryParams.put(SpatialQueryBuilderAbstract.SHAPE, key);
 
-    Object indexResult = index.get(queryParams);
+    long start = System.currentTimeMillis();
+    OLuceneAbstractResultSet indexResult = (OLuceneAbstractResultSet) index.get(queryParams);
     if (indexResult == null || indexResult instanceof OIdentifiable)
       cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
     else
       cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), new OSpatialCompositeKey(
           keyParams));
 
+    indexResult.sendLookupTime(iContext, start);
     return cursor;
   }
 
@@ -74,7 +77,6 @@ public class OLuceneOverlapOperator extends OLuceneSpatialOperator {
   public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
       Object iRight, OCommandContext iContext) {
     Shape shape = factory.fromDoc((ODocument) iLeft);
-
 
     // TODO { 'shape' : { 'type' : 'LineString' , 'coordinates' : [[1,2],[4,6]]} }
     // TODO is not translated in map but in array[ { 'type' : 'LineString' , 'coordinates' : [[1,2],[4,6]]} ]
