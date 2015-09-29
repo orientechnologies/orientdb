@@ -31,7 +31,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   private OSQLAsynchQuery<ODocument> request;
 
-  long                               threshold            = 5;
+  long                               threshold            = 20;
 
   class MatchContext {
     int                        currentEdgeNumber = 0;

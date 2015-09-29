@@ -53,6 +53,48 @@ public class OMatchStatementExecutionTest {
     initOrgChart();
 
     initTriangleTest();
+
+    initEdgeIndexTest();
+  }
+
+  private static void initEdgeIndexTest() {
+    db.command(new OCommandSQL("CREATE class IndexedVertex extends V")).execute();
+    db.command(new OCommandSQL("CREATE property IndexedVertex.uid INTEGER")).execute();
+    db.command(new OCommandSQL("CREATE index IndexedVertex_uid on IndexedVertex (uid) NOTUNIQUE")).execute();
+
+    db.command(new OCommandSQL("CREATE class IndexedEdge extends E")).execute();
+    db.command(new OCommandSQL("CREATE property IndexedEdge.out LINK")).execute();
+    db.command(new OCommandSQL("CREATE property IndexedEdge.in LINK")).execute();
+    db.command(new OCommandSQL("CREATE index IndexedEdge_out_in on IndexedEdge (out, in) NOTUNIQUE")).execute();
+
+    int nodes = 5000;
+    for (int i = 0; i < nodes; i++) {
+      ODocument doc = new ODocument("IndexedVertex");
+      doc.field("uid", i);
+      doc.save();
+    }
+
+    System.out.println("vertices created");
+
+    for (int i = 0; i < 100; i++) {
+      db.command(
+          new OCommandSQL(
+              "CREATE EDGE IndexedEDGE FROM (SELECT FROM IndexedVertex WHERE uid = 0) TO (SELECT FROM IndexedVertex WHERE uid > "
+                  + (i * nodes / 100) + " and uid <" + ((i + 1) * nodes / 100) + ")")).execute();
+      System.out.print(".");
+    }
+
+    System.out.println(".");
+    System.out.println("first supernode created");
+
+    for (int i = 0; i < 100; i++) {
+      db.command(
+          new OCommandSQL("CREATE EDGE IndexedEDGE FROM (SELECT FROM IndexedVertex WHERE uid > " + ((i * nodes / 100) + 1)
+              + " and uid < " + (((i + 1) * nodes / 100) + 1) + ") TO (SELECT FROM IndexedVertex WHERE uid = 1)")).execute();
+      System.out.print(".");
+    }
+    System.out.println(".");
+    System.out.println("second supernode created");
   }
 
   private static void initOrgChart() {
@@ -625,7 +667,7 @@ public class OMatchStatementExecutionTest {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-    query.append("return friend1.out('TriangleE')[0] as foo" );
+    query.append("return friend1.out('TriangleE')[0] as foo");
 
     List<?> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
@@ -635,13 +677,12 @@ public class OMatchStatementExecutionTest {
     assertTrue(foo instanceof Vertex);
   }
 
-
   @Test
   public void testArraySingleSelectors2() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-    query.append("return friend1.out('TriangleE')[0,1] as foo" );
+    query.append("return friend1.out('TriangleE')[0,1] as foo");
 
     List<?> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
@@ -649,7 +690,7 @@ public class OMatchStatementExecutionTest {
     Object foo = doc.field("foo");
     assertNotNull(foo);
     assertTrue(foo instanceof List);
-    assertEquals(2, ((List)foo).size());
+    assertEquals(2, ((List) foo).size());
   }
 
   @Test
@@ -657,56 +698,7 @@ public class OMatchStatementExecutionTest {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-    query.append("return friend1.out('TriangleE')[0-1] as foo" );
-
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
-    assertEquals(1, result.size());
-    ODocument doc = (ODocument) result.get(0);
-    Object foo = doc.field("foo");
-    assertNotNull(foo);
-    assertTrue(foo instanceof List);
-    assertEquals(1, ((List)foo).size());
-  }
-
-  @Test
-  public void testArrayRange2() {
-    StringBuilder query = new StringBuilder();
-    query.append("match ");
-    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-    query.append("return friend1.out('TriangleE')[0-2] as foo" );
-
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
-    assertEquals(1, result.size());
-    ODocument doc = (ODocument) result.get(0);
-    Object foo = doc.field("foo");
-    assertNotNull(foo);
-    assertTrue(foo instanceof List);
-    assertEquals(2, ((List)foo).size());
-  }
-
-
-  @Test
-  public void testArrayRange3() {
-    StringBuilder query = new StringBuilder();
-    query.append("match ");
-    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-    query.append("return friend1.out('TriangleE')[0-3] as foo" );
-
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
-    assertEquals(1, result.size());
-    ODocument doc = (ODocument) result.get(0);
-    Object foo = doc.field("foo");
-    assertNotNull(foo);
-    assertTrue(foo instanceof List);
-    assertEquals(2, ((List)foo).size());
-  }
-
-  @Test
-  public void testConditionInSquareBrackets() {
-    StringBuilder query = new StringBuilder();
-    query.append("match ");
-    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-    query.append("return friend1.out('TriangleE')[uid = 2] as foo" );
+    query.append("return friend1.out('TriangleE')[0-1] as foo");
 
     List<?> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
@@ -715,8 +707,70 @@ public class OMatchStatementExecutionTest {
     assertNotNull(foo);
     assertTrue(foo instanceof List);
     assertEquals(1, ((List) foo).size());
-    Vertex resultVertex = (Vertex) ((List)foo).get(0);
+  }
+
+  @Test
+  public void testArrayRange2() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0-2] as foo");
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = (ODocument) result.get(0);
+    Object foo = doc.field("foo");
+    assertNotNull(foo);
+    assertTrue(foo instanceof List);
+    assertEquals(2, ((List) foo).size());
+  }
+
+  @Test
+  public void testArrayRange3() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0-3] as foo");
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = (ODocument) result.get(0);
+    Object foo = doc.field("foo");
+    assertNotNull(foo);
+    assertTrue(foo instanceof List);
+    assertEquals(2, ((List) foo).size());
+  }
+
+  @Test
+  public void testConditionInSquareBrackets() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[uid = 2] as foo");
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = (ODocument) result.get(0);
+    Object foo = doc.field("foo");
+    assertNotNull(foo);
+    assertTrue(foo instanceof List);
+    assertEquals(1, ((List) foo).size());
+    Vertex resultVertex = (Vertex) ((List) foo).get(0);
     assertEquals(2, resultVertex.getProperty("uid"));
+  }
+
+  @Test
+  public void testIndexedEdge() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:IndexedVertex, as: one, where: (uid = 0)}");
+    query.append(".out('IndexedEdge'){class:IndexedVertex, as: two, where: (uid = 1)}");
+    query.append("return one, two");
+
+    long begin = System.currentTimeMillis();
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    System.out.println("took " + (System.currentTimeMillis() - begin));// TODO
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {
