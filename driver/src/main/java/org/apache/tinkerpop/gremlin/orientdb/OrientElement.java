@@ -1,6 +1,7 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -46,7 +47,11 @@ public class OrientElement implements Element {
     }
 
     public void remove() {
-        getRawDocument().delete();
+        ODocument doc = getRawDocument();
+        if (doc.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+            doc.load();
+        }
+        doc.delete();
     }
 
     public <V> Iterator<? extends Property<V>> properties(final String... propertyKeys) {

@@ -3,14 +3,24 @@ import java.util.{ ArrayList ⇒ JArrayList }
 import com.orientechnologies.orient.core.sql.query.OResultSet
 import gremlin.scala._
 import org.apache.tinkerpop.gremlin.orientdb._
-import org.scalatest.{ ShouldMatchers, WordSpec }
+import org.scalatest.{ BeforeAndAfterEach, BeforeAndAfterAll, ShouldMatchers, WordSpec }
 
 import scala.collection.JavaConversions._
 
-class OrientSpec extends WordSpec with ShouldMatchers {
+class OrientSpec extends WordSpec with ShouldMatchers with BeforeAndAfterEach {
+
+  val graph = new OrientGraphFactory(s"memory:test-${math.random}").getNoTx
+  //  val graph = new OrientGraphFactory("remote:localhost/graphtest", "root", "root").getNoTx()
+  val sg = ScalaGraph(graph)
+  val gs = GremlinScala(graph)
+
+  override def beforeEach(): Unit = {
+    gs.E.toList.foreach(_.remove())
+    gs.V.toList.foreach(_.remove())
+  }
 
   "vertices" should {
-    "be found if they exist" in new Fixture {
+    "be found if they exist" in {
       val v1 = sg.addVertex()
       val v2 = sg.addVertex()
       val v3 = sg.addVertex()
@@ -19,12 +29,12 @@ class OrientSpec extends WordSpec with ShouldMatchers {
       gs.V().toList should have length 3
     }
 
-    "not be found if they don't exist" in new Fixture {
+    "not be found if they don't exist" in {
       val list = gs.V("#3:999").toList
       list should have length 0
     }
 
-    "set property after creation" in new Fixture {
+    "set property after creation" in {
       val v = sg.addVertex()
       val key = "testProperty"
       v.setProperty(key, "testValue1")
@@ -33,14 +43,14 @@ class OrientSpec extends WordSpec with ShouldMatchers {
       gs.V(v.id).values(key).toList shouldBe List("testValue1")
     }
 
-    "set property during creation" in new Fixture {
+    "set property during creation" in {
       val property1 = "key1" → "value1"
       val property2 = "key2" → "value2"
       val v = sg.addVertex(Map(property1, property2))
       gs.V(v.id).values[String]("key1", "key2").toList shouldBe List("value1", "value2")
     }
 
-    "delete property" in new Fixture {
+    "delete property" in {
       val v = sg.addVertex()
       val key = "testProperty"
       v.setProperty(key, "testValue1")
@@ -51,7 +61,7 @@ class OrientSpec extends WordSpec with ShouldMatchers {
       }
     }
 
-    "using labels" in new Fixture {
+    "using labels" in {
       val v1 = sg.addVertex("label1")
       val v2 = sg.addVertex("label2")
       val v3 = sg.addVertex()
@@ -63,7 +73,7 @@ class OrientSpec extends WordSpec with ShouldMatchers {
       labels should contain("label2")
     }
 
-    "delete" in new Fixture {
+    "delete" in {
       val v1 = sg.addVertex()
       val v2 = sg.addVertex()
       sg.V().toList.size shouldBe 2
@@ -73,7 +83,7 @@ class OrientSpec extends WordSpec with ShouldMatchers {
   }
 
   "edges" should {
-    "be found if they exist" in new Fixture {
+    "be found if they exist" in {
       val v1 = sg.addVertex()
       val v2 = sg.addVertex()
       val e1 = v1.addEdge("label1", v2)
@@ -83,7 +93,7 @@ class OrientSpec extends WordSpec with ShouldMatchers {
       gs.E().toList should have length 2
     }
 
-    "be found if they have the same label as vertices" in new Fixture {
+    "be found if they have the same label as vertices" in {
       val label = "label"
       val v1 = sg.addVertex(label)
       val v2 = sg.addVertex(label)
@@ -94,12 +104,12 @@ class OrientSpec extends WordSpec with ShouldMatchers {
       gs.E().toList should have length 2
     }
 
-    "not be found if they don't exist" in new Fixture {
+    "not be found if they don't exist" in {
       val list = gs.E("#3:999").toList
       list should have length 0
     }
 
-    "set property after creation" in new Fixture {
+    "set property after creation" in {
       val v1 = sg.addVertex()
       val v2 = sg.addVertex()
       val e = v1.addEdge("label1", v2)
@@ -111,7 +121,7 @@ class OrientSpec extends WordSpec with ShouldMatchers {
       gs.E(e.id).values(key).toList shouldBe List("testValue1")
     }
 
-    "set property during creation" in new Fixture {
+    "set property during creation" in {
       val v1 = sg.addVertex()
       val v2 = sg.addVertex()
       val property1 = "key1" → "value1"
@@ -120,7 +130,7 @@ class OrientSpec extends WordSpec with ShouldMatchers {
       gs.E(e.id).values[String]("key1", "key2").toList shouldBe List("value1", "value2")
     }
 
-    "delete" in new Fixture {
+    "delete" in {
       val v1 = sg.addVertex()
       val v2 = sg.addVertex()
       val e1 = v1.addEdge("label1", v2)
@@ -186,7 +196,7 @@ class OrientSpec extends WordSpec with ShouldMatchers {
     }
   }
 
-  "execute arbitrary OrientSQL" in new Fixture {
+  "execute arbitrary OrientSQL" in {
     (1 to 20) foreach { _ ⇒
       sg.addVertex()
     }
@@ -199,19 +209,7 @@ class OrientSpec extends WordSpec with ShouldMatchers {
     results should have length 10
   }
 
-  trait Fixture {
-    // val graph = new OrientGraphFactory("remote:localhost/graphtest", "root", "root").getNoTx()
-    val graph = new OrientGraphFactory(s"memory:test-${math.random}").getNoTx
-    val gs = GremlinScala(graph)
-    val sg = ScalaGraph(graph)
-  }
-
   trait TinkerpopFixture {
-    // val graph = new OrientGraphFactory("remote:localhost/graphtest", "root", "root").getTx()
-    val graph = new OrientGraphFactory(s"memory:test-${math.random}").getNoTx
-    val gs = GremlinScala(graph)
-    val sg = ScalaGraph(graph)
-
     val marko = sg.addVertex("person", Map("name" -> "marko", "age" -> 29))
     val vadas = sg.addVertex("person", Map("name" -> "vadas", "age" -> 27))
     val lop = sg.addVertex("software", Map("name" -> "lop", "lang" -> "java"))
@@ -224,12 +222,5 @@ class OrientSpec extends WordSpec with ShouldMatchers {
     josh.addEdge("created", ripple, Map("weight" -> 1.0d))
     josh.addEdge("created", lop, Map("weight" -> 0.4d))
     peter.addEdge("created", lop, Map("weight" -> 0.2d))
-  }
-
-  trait RemoteGraphFixture {
-    val graphUri = "remote:localhost/test"
-    val graph = new OrientGraphFactory(graphUri, "root", "root").getNoTx()
-    val gs = GremlinScala(graph)
-    val sg = ScalaGraph(graph)
   }
 }

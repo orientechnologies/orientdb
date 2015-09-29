@@ -71,12 +71,12 @@ public final class OrientVertex extends OrientElement implements Vertex {
                     } else {
                         // CREATE LAZY Iterable AGAINST COLLECTION FIELD
                         if (coll instanceof ORecordLazyMultiValue)
-                            iterable.add(new OrientVertexIterator(this, ((ORecordLazyMultiValue) coll).rawIterator(), connection, labels, ((ORecordLazyMultiValue) coll).size()));
+                            iterable.add(new OrientVertexIterator(this, coll, ((ORecordLazyMultiValue) coll).rawIterator(), connection, labels, ((ORecordLazyMultiValue) coll).size()));
                         else
-                            iterable.add(new OrientVertexIterator(this, coll.iterator(), connection, labels, -1));
+                            iterable.add(new OrientVertexIterator(this, coll, coll.iterator(), connection, labels, -1));
                     }
                 } else if (fieldValue instanceof ORidBag) {
-                    iterable.add(new OrientVertexIterator(this, ((ORidBag) fieldValue).rawIterator(), connection, labels, -1));
+                    iterable.add(new OrientVertexIterator(this, fieldValue, ((ORidBag) fieldValue).rawIterator(), connection, labels, -1));
                 }
         }
 
@@ -306,12 +306,12 @@ public final class OrientVertex extends OrientElement implements Vertex {
                     } else {
                         // CREATE LAZY Iterable AGAINST COLLECTION FIELD
                         if (coll instanceof ORecordLazyMultiValue) {
-                            iterable.add(new OrientEdgeIterator(this, iDestination, ((ORecordLazyMultiValue) coll).rawIterator(), connection, edgeLabels, ((ORecordLazyMultiValue) coll).size()));
+                            iterable.add(new OrientEdgeIterator(this, iDestination, coll, ((ORecordLazyMultiValue) coll).rawIterator(), connection, edgeLabels, ((ORecordLazyMultiValue) coll).size()));
                         } else
-                            iterable.add(new OrientEdgeIterator(this, iDestination, coll.iterator(), connection, edgeLabels, -1));
+                            iterable.add(new OrientEdgeIterator(this, iDestination, coll, coll.iterator(), connection, edgeLabels, -1));
                     }
                 } else if (fieldValue instanceof ORidBag) {
-                    iterable.add(new OrientEdgeIterator(this, iDestination, ((ORidBag) fieldValue).rawIterator(), connection, edgeLabels, ((ORidBag) fieldValue).size()));
+                    iterable.add(new OrientEdgeIterator(this, iDestination, fieldValue, ((ORidBag) fieldValue).rawIterator(), connection, edgeLabels, ((ORidBag) fieldValue).size()));
                 }
             }
         }
@@ -406,12 +406,16 @@ public final class OrientVertex extends OrientElement implements Vertex {
         return OrientEdgeType.CLASS_NAME;
     }
 
-    protected void addSingleEdge(final ODocument doc, final OMultiCollectionIterator<Edge> iterable, String fieldName, final OPair<Direction, String> connection, final Object fieldValue, final OIdentifiable iTargetVertex, final String[] iLabels) {
+    protected void addSingleEdge(final ODocument doc, final OMultiCollectionIterator<Edge> iterable, String fieldName,
+                                 final OPair<Direction, String> connection, final Object fieldValue,
+                                 final OIdentifiable iTargetVertex, final String[] iLabels) {
         final OrientEdge toAdd = getEdge(graph, doc, fieldName, connection, fieldValue, iTargetVertex, iLabels);
         iterable.add(toAdd);
     }
 
-    protected static OrientEdge getEdge(final OrientGraph graph, final ODocument doc, String fieldName, final OPair<Direction, String> connection, final Object fieldValue, final OIdentifiable iTargetVertex, final String[] iLabels) {
+    protected static OrientEdge getEdge(final OrientGraph graph, final ODocument doc, String fieldName,
+                                        final OPair<Direction, String> connection, final Object fieldValue,
+                                        final OIdentifiable iTargetVertex, final String[] iLabels) {
         final OrientEdge toAdd;
 
         final ODocument fieldRecord = ((OIdentifiable) fieldValue).getRecord();
@@ -446,7 +450,8 @@ public final class OrientVertex extends OrientElement implements Vertex {
     }
 
 
-    private void addSingleVertex(final ODocument doc, final OMultiCollectionIterator<Vertex> iterable, String fieldName, final OPair<Direction, String> connection, final Object fieldValue, final String[] iLabels) {
+    private void addSingleVertex(final ODocument doc, final OMultiCollectionIterator<Vertex> iterable, String fieldName,
+                                 final OPair<Direction, String> connection, final Object fieldValue, final String[] iLabels) {
         final OrientVertex toAdd;
 
         final ODocument fieldRecord = ((OIdentifiable) fieldValue).getRecord();
