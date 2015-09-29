@@ -15,6 +15,10 @@
  */
 package com.orientechnologies.orient.core.sql.method;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLMethodMultiValue;
 import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodAsDate;
@@ -32,10 +36,9 @@ import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodRight;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodSubString;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodToJSON;
 import com.orientechnologies.orient.core.sql.method.misc.*;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodCurrent;
+import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodNext;
+import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodReset;
 
 /**
  * Default method factory.
@@ -89,6 +92,11 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
     register(OSQLMethodSubString.NAME, new OSQLMethodSubString());
     register(OSQLMethodToJSON.NAME, new OSQLMethodToJSON());
     register(OSQLMethodValues.NAME, new OSQLMethodValues());
+
+    // SEQUENCE
+    register(OSQLMethodCurrent.NAME, new OSQLMethodCurrent());
+    register(OSQLMethodNext.NAME, new OSQLMethodNext());
+    register(OSQLMethodReset.NAME, new OSQLMethodReset());
   }
 
   public void register(final String iName, final Object iImplementation) {
