@@ -123,7 +123,9 @@ public class OETLProcessor {
       if (arg.charAt(0) != '-') {
         try {
           final String config = OIOUtils.readFileAsString(new File(arg));
-          configuration = new ODocument().fromJSON(config, "noMap");
+
+          configuration.merge(new ODocument().fromJSON(config, "noMap"), true, true);
+          // configuration = ;
           ODocument cfgGlobal = configuration.field("config");
           if (cfgGlobal != null) {
             for (String f : cfgGlobal.fieldNames()) {
@@ -198,7 +200,6 @@ public class OETLProcessor {
           final OBlock b = factory.getBlock(name);
           beginBlocks.add(b);
           configureComponent(b, (ODocument) block.field(name), iContext);
-          // b.execute();
         }
 
       if (iSource != null) {
@@ -211,6 +212,7 @@ public class OETLProcessor {
 
       // EXTRACTOR
       name = iExtractor.fieldNames()[0];
+      System.out.println("name:: " + name);
       extractor = factory.getExtractor(name);
       configureComponent(extractor, (ODocument) iExtractor.field(name), iContext);
 
