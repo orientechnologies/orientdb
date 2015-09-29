@@ -5,9 +5,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.ETLBaseTest;
 import org.junit.Test;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+
 
 /**
  * Created by frank on 9/14/15.
@@ -18,26 +17,26 @@ public class OOrientDBLoaderTest extends ETLBaseTest {
   public void testAddMetadataToIndex() {
 
     process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }], loader: { orientdb: {\n"
-        + "      dbURL: \"memory:ETLBaseTest\",\n"
-        + "      dbUser: \"admin\",\n"
-        + "      dbPassword: \"admin\",\n"
-        + "      dbAutoCreate: true,\n"
-        + "      tx: false,\n"
-        + "      batchCommit: 1000,\n"
-        + "      wal : false,\n"
-        + "      dbType: \"graph\",\n"
-        + "      classes: [\n"
-        + "        {name:\"Person\", extends: \"V\" },\n"
-        + "      ],\n"
-        + "      indexes: [{class:\"V\" , fields:[\"surname:String\"], \"type\":\"NOTUNIQUE\", \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
+            + "      dbURL: \"memory:ETLBaseTest\",\n"
+            + "      dbUser: \"admin\",\n"
+            + "      dbPassword: \"admin\",\n"
+            + "      dbAutoCreate: true,\n"
+            + "      tx: false,\n"
+            + "      batchCommit: 1000,\n"
+            + "      wal : false,\n"
+            + "      dbType: \"graph\",\n"
+            + "      classes: [\n"
+            + "        {name:\"Person\", extends: \"V\" },\n"
+            + "      ],\n"
+            + "      indexes: [{class:\"V\" , fields:[\"surname:String\"], \"type\":\"NOTUNIQUE\", \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
 
     final OIndexManagerProxy indexManager = graph.getRawGraph().getMetadata().getIndexManager();
 
-    assertThat(indexManager.existsIndex("V.surname"), is(true));
+    assertThat(indexManager.existsIndex("V.surname")).isTrue();
 
     final ODocument indexMetadata = indexManager.getIndex("V.surname").getMetadata();
-    assertThat(indexMetadata.containsField("ignoreNullValues"), is(true));
-    assertThat(indexMetadata.<String>field("ignoreNullValues"), equalTo("false"));
+    assertThat(indexMetadata.containsField("ignoreNullValues")).isTrue();
+    assertThat(indexMetadata.<String>field("ignoreNullValues")).isEqualTo("false");
 
   }
 
