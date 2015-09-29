@@ -19,7 +19,9 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.hazelcast.collection.impl.queue.QueueService;
 import com.hazelcast.config.QueueConfig;
+import com.hazelcast.core.DistributedObject;
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IAtomicLong;
@@ -218,10 +220,10 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
   @Override
   public List<String> getManagedQueueNames() {
-    List<String> queueNames = new ArrayList<String>();
-    for (String q : manager.getHazelcastInstance().getConfig().getQueueConfigs().keySet()) {
-      if (q.startsWith(NODE_QUEUE_PREFIX))
-        queueNames.add(q);
+    final List<String> queueNames = new ArrayList<String>();
+    for (DistributedObject d : manager.getHazelcastInstance().getDistributedObjects()) {
+      if (d.getServiceName().equals(QueueService.SERVICE_NAME))
+        queueNames.add(d.getName());
     }
     return queueNames;
   }
