@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.metadata.schema.*;
 import javassist.util.proxy.Proxy;
 
 import com.orientechnologies.common.exception.OException;
@@ -31,11 +32,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -134,6 +130,31 @@ public class OSchemaProxyObject implements OSchema {
   @Override
   public void dropClass(String iClassName) {
     underlying.dropClass(iClassName);
+  }
+
+  @Override
+  public int countViews() {
+    return underlying.countViews();
+  }
+
+  @Override
+  public OView createView(String iViewName, String iQuery) {
+    return underlying.createView(iViewName, iQuery);
+  }
+
+  @Override
+  public void dropView(String iViewName) {
+    underlying.dropView(iViewName);
+  }
+
+  @Override
+  public OView getView(String iViewName) {
+    return underlying.getView(iViewName);
+  }
+
+  @Override
+  public Collection<OView> getViews() {
+    return underlying.getViews();
   }
 
   @Override

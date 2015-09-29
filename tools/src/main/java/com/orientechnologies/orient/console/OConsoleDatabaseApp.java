@@ -24,6 +24,7 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -1053,6 +1054,25 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     updateDatabaseInfo();
   }
 
+  @ConsoleCommand(splitInWords = false, description = "Create a view", onlineHelp = "SQL-Create-View")
+  public void createView(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+    sqlCommand("create", iCommandText, "\nView created successfully. Total views in database now: %d.\n", true);
+    updateDatabaseInfo();
+  }
+
+  @ConsoleCommand(splitInWords = false, description = "Alter a view in the database schema")
+  public void alterView(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+    sqlCommand("alter", iCommandText, "\nView updated successfully.\n", false);
+    updateDatabaseInfo();
+  }
+
+  @ConsoleCommand(splitInWords = false, description = "Remove a view from the schema", onlineHelp = "SQL-Drop-View")
+  public void dropView(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
+    throws IOException {
+    sqlCommand("drop", iCommandText, "\nRemoved view in %f sec(s).\n", false);
+    updateDatabaseInfo();
+  }
+
   @ConsoleCommand(splitInWords = false, description = "Remove a property from a class", onlineHelp = "SQL-Drop-Property")
   public void dropProperty(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
       throws IOException {
@@ -1217,6 +1237,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       listProperties();
       listClusters();
       listClasses();
+      listViews();
       listIndexes();
     }
   }
@@ -1536,6 +1557,37 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message("\n------------------------------------------------------+-------------------+----------------+");
     } else
       message("\nNo database selected yet.");
+  }
+
+  @ConsoleCommand(description = "Display all the configured views", aliases = { "views" }, onlineHelp = "Console-Command-List-Views")
+  public void listViews() {
+    if (currentDatabaseName == null) {
+      message("\nNo database selected yet.");
+    } else {
+      message("\n\nVIEWS");
+      message("\n-----------------+----------------------------------------------------------------------------------+");
+      message("\n NAME            | QUERY                                                                             ");
+      message("\n-----------------+----------------------------------------------------------------------------------+");
+
+      final List<OView> views = new ArrayList<OView>(currentDatabase.getMetadata().getImmutableSchemaSnapshot().getViews());
+      Collections.sort(views, new Comparator<OView>() {
+        public int compare(OView o1, OView o2) {
+          return o1.getName().compareToIgnoreCase(o2.getName());
+        }
+      });
+
+      for (OView view : views) {
+        try {
+          message("\n %-15s | %-80s |", format(view.getName(), 15), format(view.getQuery(), 85));
+        } catch (Exception ignored) {
+
+        }
+      }
+      message("\n-----------------+----------------------------------------------------------------------------------+");
+      message("\n TOTAL = %-3d                                                                                        |",
+        views.size());
+      message("\n-----------------+----------------------------------------------------------------------------------+");
+    }
   }
 
   @ConsoleCommand(description = "Display all the configured classes", aliases = { "classes" }, onlineHelp = "Console-Command-List-Classes")

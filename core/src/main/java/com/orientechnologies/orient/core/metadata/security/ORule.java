@@ -25,6 +25,11 @@ public class ORule implements Serializable {
                                                                                  ODatabaseSecurityResources.CLASS) {
                                                                                private static final long serialVersionUID = 1L;
                                                                              };
+
+    public static ResourceGeneric                         VIEW               = new ResourceGeneric("VIEW",
+                                                                                 ODatabaseSecurityResources.VIEW) {
+                                                                               private static final long serialVersionUID = 1L;
+                                                                             };
     public static ResourceGeneric                         CLUSTER            = new ResourceGeneric("CLUSTER",
                                                                                  ODatabaseSecurityResources.CLUSTER) {
                                                                                private static final long serialVersionUID = 1L;

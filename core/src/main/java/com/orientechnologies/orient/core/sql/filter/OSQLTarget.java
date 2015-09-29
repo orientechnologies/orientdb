@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLResultsetDelegate;
@@ -50,18 +51,19 @@ import com.orientechnologies.orient.core.sql.OCommandSQLResultset;
  * 
  */
 public class OSQLTarget extends OBaseParser {
-  protected final boolean                     empty;
-  protected final OCommandContext             context;
-  protected String                            targetVariable;
-  protected String                            targetQuery;
-  protected Iterable<? extends OIdentifiable> targetRecords;
-  protected Map<String, String>               targetClusters;
-  protected Map<String, String>               targetClasses;
+  protected final boolean                                         empty;
+  protected final OCommandContext                                 context;
+  protected String                                                targetVariable;
+  protected String                                                targetQuery;
+  protected Iterable<? extends OIdentifiable>                     targetRecords;
+  protected Map<String, String>                                   targetClusters;
+  protected Map<String, String>                                   targetClasses;
+  protected Map<String, Iterable<? extends OIdentifiable>>        targetViews;
 
-  protected String                            targetIndex;
+  protected String                                                targetIndex;
 
-  protected String                            targetIndexValues;
-  protected boolean                           targetIndexValuesAsc;
+  protected String                                                targetIndexValues;
+  protected boolean                                               targetIndexValuesAsc;
 
   public OSQLTarget(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
     super();
@@ -105,6 +107,10 @@ public class OSQLTarget extends OBaseParser {
     return targetClasses;
   }
 
+  public Map<String, Iterable<? extends OIdentifiable>> getTargetViews() {
+    return targetViews;
+  }
+
   public Iterable<? extends OIdentifiable> getTargetRecords() {
     return targetRecords;
   }
@@ -129,14 +135,22 @@ public class OSQLTarget extends OBaseParser {
   public String toString() {
     if (targetClasses != null)
       return "class " + targetClasses.keySet();
-    else if (targetClusters != null)
+
+    if (targetViews != null)
+      return "view " + targetViews.keySet();
+
+    if (targetClusters != null)
       return "cluster " + targetClusters.keySet();
+
     if (targetIndex != null)
       return "index " + targetIndex;
+
     if (targetRecords != null)
       return "records from " + targetRecords.getClass().getSimpleName();
+
     if (targetVariable != null)
       return "variable " + targetVariable;
+
     return "?";
   }
 
@@ -202,7 +216,7 @@ public class OSQLTarget extends OBaseParser {
     } else {
 
       while (!parserIsEnded()
-          && (targetClasses == null && targetClusters == null && targetIndex == null && targetIndexValues == null && targetRecords == null)) {
+          && (targetClasses == null && targetViews == null && targetClusters == null && targetIndex == null && targetIndexValues == null && targetRecords == null)) {
         String originalSubjectName = parserRequiredWord(false, "Target not found");
         String subjectName = originalSubjectName.toUpperCase();
 
@@ -263,24 +277,78 @@ public class OSQLTarget extends OBaseParser {
           targetIndexValues = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_VALUES_DESC_PREFIX.length());
           targetIndexValuesAsc = false;
         } else {
-          if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
-            // REGISTER AS CLASS
+          if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX)) {
             subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
 
-          // REGISTER AS CLASS
-          if (targetClasses == null)
-            targetClasses = new HashMap<String, String>();
+            addTargetClass(subjectName, alias);
+          } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.VIEW_PREFIX)) {
+            subjectName = subjectName.substring(OCommandExecutorSQLAbstract.VIEW_PREFIX.length());
 
-          final OClass cls = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(subjectName);
-          if (cls == null)
-            throw new OCommandExecutionException("Class '" + subjectName + "' was not found in database '"
-                + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + "'");
-
-          targetClasses.put(cls.getName(), alias);
+            addTargetView(subjectName);
+          } else {
+            OClass cls;
+            OView view;
+            if ((cls = findClass(subjectName)) != null) {
+              addTargetClass(subjectName, alias, cls);
+            } else if ((view = findView(subjectName)) != null) {
+              addTargetView(subjectName, view);
+            }
+          }
         }
       }
     }
 
-    return !parserIsEnded();
+  return !parserIsEnded();
+  }
+
+  private OView findView(String subjectName) {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getView(subjectName);
+  }
+
+  private OClass findClass(String subjectName) {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(subjectName);
+  }
+
+  private void addTargetClass(String subjectName, String alias) {
+    addTargetClass(subjectName, alias, findClass(subjectName));
+  }
+
+  private void addTargetClass(String subjectName, String alias, final OClass cls) {
+    // REGISTER AS CLASS
+    if (targetClasses == null)
+      targetClasses = new HashMap<String, String>();
+
+    if (cls == null)
+      throw new OCommandExecutionException("Class '" + subjectName + "' was not found in database '"
+        + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + "'");
+
+    targetClasses.put(cls.getName(), alias);
+  }
+
+  private void addTargetView(String subjectName) {
+    addTargetView(subjectName, findView(subjectName));
+  }
+
+  private void addTargetView(String subjectName, final OView view) {
+    if (targetViews == null) {
+      targetViews = new HashMap<String, Iterable<? extends OIdentifiable>>();
+    }
+
+    if (view == null) {
+      throw new OCommandExecutionException("View '" + subjectName + "' was not found in database '"
+        + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + "'");
+    }
+
+    /* */
+    final OCommandSQL subCommand = new OCommandSQLResultset(view.getQuery());
+
+    final OCommandExecutorSQLResultsetDelegate executor = (OCommandExecutorSQLResultsetDelegate)OCommandManager.instance()
+      .getExecutor(subCommand);
+    executor.setProgressListener(subCommand.getProgressListener());
+    executor.parse(subCommand);
+    context.setChild(executor.getContext());
+
+    /* */
+    targetViews.put(view.getName(), executor);
   }
 }

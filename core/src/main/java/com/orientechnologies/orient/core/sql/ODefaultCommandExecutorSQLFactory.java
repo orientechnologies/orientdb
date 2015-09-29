@@ -23,6 +23,9 @@ import java.util.Set;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.parser.OMatchStatement;
+import com.orientechnologies.orient.core.sql.view.OCommandExecutorSQLAlterView;
+import com.orientechnologies.orient.core.sql.view.OCommandExecutorSQLCreateView;
+import com.orientechnologies.orient.core.sql.view.OCommandExecutorSQLDropView;
 
 /**
  * Default command operator executor factory.
@@ -70,6 +73,12 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
         OCommandExecutorSQLDropCluster.class);
     commands.put(OCommandExecutorSQLDropClass.KEYWORD_DROP + " " + OCommandExecutorSQLDropClass.KEYWORD_CLASS,
         OCommandExecutorSQLDropClass.class);
+    commands.put(OCommandExecutorSQLCreateView.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateView.KEYWORD_VIEW,
+      OCommandExecutorSQLCreateView.class);
+    commands.put(OCommandExecutorSQLAlterView.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterView.KEYWORD_VIEW,
+      OCommandExecutorSQLAlterView.class);
+    commands.put(OCommandExecutorSQLDropView.KEYWORD_DROP + " " + OCommandExecutorSQLDropView.KEYWORD_VIEW,
+      OCommandExecutorSQLDropView.class);
     commands.put(OCommandExecutorSQLDropProperty.KEYWORD_DROP + " " + OCommandExecutorSQLDropProperty.KEYWORD_PROPERTY,
         OCommandExecutorSQLDropProperty.class);
     commands.put(OCommandExecutorSQLFindReferences.KEYWORD_FIND + " " + OCommandExecutorSQLFindReferences.KEYWORD_REFERENCES,

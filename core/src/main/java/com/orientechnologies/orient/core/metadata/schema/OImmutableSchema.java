@@ -20,6 +20,7 @@ import java.util.*;
 public class OImmutableSchema implements OSchema {
   private final Map<Integer, OClass>     clustersToClasses;
   private final Map<String, OClass>      classes;
+  private final Map<String, OView>       views;
 
   public final int                       version;
   private final ORID                     identity;
@@ -34,7 +35,8 @@ public class OImmutableSchema implements OSchema {
     clusterSelectionFactory = schemaShared.getClusterSelectionFactory();
 
     clustersToClasses = new HashMap<Integer, OClass>(schemaShared.getClasses().size() * 3);
-    classes = new HashMap<String, OClass>(schemaShared.getClasses().size());
+    classes = new HashMap<String, OClass>(schemaShared.countClasses());
+    views = new HashMap<String, OView>(schemaShared.countViews());
 
     for (OClass oClass : schemaShared.getClasses()) {
       final OImmutableClass immutableClass = new OImmutableClass(oClass, this);
@@ -45,6 +47,12 @@ public class OImmutableSchema implements OSchema {
 
       for (int clusterId : immutableClass.getClusterIds())
         clustersToClasses.put(clusterId, immutableClass);
+    }
+
+    for (OView view : schemaShared.getViews()) {
+      final OImmutableView immutableView = new OImmutableView(view, this);
+
+      views.put(immutableView.getName().toLowerCase(Locale.ENGLISH), immutableView);
     }
 
     properties = new ArrayList<OGlobalProperty>();
@@ -134,6 +142,32 @@ public class OImmutableSchema implements OSchema {
   @Override
   public void dropClass(String iClassName) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public int countViews() {
+    return views.size();
+  }
+
+  @Override
+  public OView createView(String iViewName, String iQuery) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void dropView(String iViewName) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OView getView(String iViewName) {
+    return views.get(iViewName);
+  }
+
+  @Override
+  public Collection<OView> getViews() {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
+    return new HashSet<OView>(views.values());
   }
 
   @Override

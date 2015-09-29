@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHookConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -104,6 +105,16 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
 
   @Override
   public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
+  }
+
+  @Override
+  public void onCreateView(ODatabaseInternal iDatabase, OView iClass) {
+
+  }
+
+  @Override
+  public void onDropView(ODatabaseInternal iDatabase, OView iClass) {
+
   }
 
   public String getName() {

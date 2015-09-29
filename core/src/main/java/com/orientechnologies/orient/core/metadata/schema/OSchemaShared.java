@@ -88,6 +88,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   private final Map<String, OClass>                classes                 = new HashMap<String, OClass>();
   private final Map<Integer, OClass>               clustersToClasses       = new HashMap<Integer, OClass>();
 
+  private final Map<String, OView>                 views                   = new HashMap<String, OView>();
+
   private final OClusterSelectionFactory           clusterSelectionFactory = new OClusterSelectionFactory();
 
   private volatile ThreadLocal<OModifiableInteger> modificationCounter     = new OModificationsCounter();
@@ -117,6 +119,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   public void onStartup() {
     if (modificationCounter == null)
       modificationCounter = new OModificationsCounter();
+  }
+
+  public static Character checkViewNameIfValid(String name) throws OSchemaException {
+    return OSchemaShared.checkClassNameIfValid(name);
   }
 
   public static Character checkClassNameIfValid(String iName) throws OSchemaException {
@@ -191,6 +197,17 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   public OClusterSelectionFactory getClusterSelectionFactory() {
     return clusterSelectionFactory;
+  }
+
+  public int countViews() {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
+
+    acquireSchemaReadLock();
+    try {
+      return views.size();
+    } finally {
+      releaseSchemaReadLock();
+    }
   }
 
   public int countClasses() {
@@ -421,6 +438,147 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       }
 
     return result;
+  }
+
+  /* Views */
+  public Collection<OView> getViews() {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
+    acquireSchemaReadLock();
+    try {
+      return new HashSet<OView>(views.values());
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
+  public OView getView(String iViewName) {
+    if (iViewName == null || iViewName.isEmpty()) {
+      return null;
+    }
+
+    acquireSchemaReadLock();
+    try {
+      return views.get(iViewName.toLowerCase());
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
+  /* Create View */
+  @Override
+  public OView createView(String iViewName, String iQuery) {
+    OViewImpl.verifyName(iViewName);
+    OView result;
+
+    final ODatabaseDocumentInternal db = getDatabase();
+    final OStorage storage = db.getStorage();
+
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
+    acquireSchemaWriteLock();
+    try {
+      final String key = iViewName.toLowerCase();
+      if (views.containsKey(key)) {
+        throw new OSchemaException("View " + iViewName + " already exists in current database");
+      }
+      if (classes.containsKey(key)) {
+        throw new OSchemaException("A class with the name " + iViewName + " already exists in current database");
+      }
+
+      if (isDistributedCommand()) {
+        createViewInternal(iViewName, iQuery);
+
+        final OAutoshardedStorage autoshardedStorage = (OAutoshardedStorage) storage;
+        OCommandSQL commandSQL = new OCommandSQL("CREATE VIEW " + iViewName + " AS " + iQuery);
+        commandSQL.addExcludedNode(autoshardedStorage.getNodeId());
+
+        db.command(commandSQL).execute();
+      } else if (storage instanceof OStorageProxy) {
+        db.command(new OCommandSQL("CREATE VIEW " + iViewName + " AS " + iQuery)).execute();
+        reload();
+      } else {
+        createViewInternal(iViewName, iQuery);
+      }
+
+      result = views.get(key);
+
+      // WAKE UP DB LIFECYCLE LISTENER
+      Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners();
+      while (it.hasNext()) {
+        it.next().onCreateView(getDatabase(), result);
+      }
+
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return result;
+  }
+
+  private OView createViewInternal(final String iViewName, final String iQuery) {
+    checkEmbedded();
+
+    OViewImpl view = new OViewImpl(this, iViewName, iQuery);
+    views.put(iViewName.toLowerCase(), view);
+
+    return view;
+  }
+
+  /* Drop View */
+  public void dropView(final String iViewName) {
+    OViewImpl.verifyName(iViewName);
+
+    final ODatabaseDocumentInternal database = getDatabase();
+    final OStorage storage = database.getStorage();
+
+    acquireSchemaWriteLock();
+    try {
+      if (getDatabase().getTransaction().isActive()) {
+        throw new IllegalStateException("Cannot drop a view inside a transaction");
+      }
+
+      database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
+
+      final String key = iViewName.toLowerCase();
+      OView view = views.get(key);
+
+      if (view == null) {
+        throw new OSchemaException("View '" + iViewName + "' was not found in current database");
+      }
+
+      if (isDistributedCommand()) {
+        final OAutoshardedStorage autoshardedStorage = (OAutoshardedStorage) storage;
+        OCommandSQL commandSQL = new OCommandSQL("DROP VIEW " + iViewName);
+        commandSQL.addExcludedNode(autoshardedStorage.getNodeId());
+        database.command(commandSQL).execute();
+
+        dropViewInternal(iViewName);
+      } else if (storage instanceof OStorageProxy) {
+        final OCommandSQL commandSQL = new OCommandSQL("DROP VIEW " + iViewName);
+        database.command(commandSQL).execute();
+        reload();
+      } else {
+        dropViewInternal(iViewName);
+      }
+
+      // WAKE UP DB LIFECYCLE LISTENER
+      Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners();
+      while (it.hasNext()) {
+        it.next().onDropView(getDatabase(), view);
+      }
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  private void dropViewInternal(final String iViewName) {
+    checkEmbedded(getDatabase().getStorage());
+
+    views.remove(iViewName.toLowerCase());
+  }
+
+  /* */
+  private void checkEmbedded() {
+    checkEmbedded(getDatabase().getStorage());
   }
 
   public void checkEmbedded(final OStorage storage) {
@@ -657,6 +815,13 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }
   }
 
+  void changeViewName(final String oldName, final String newName, final OView view) {
+    if (oldName != null)
+      views.remove(oldName.toLowerCase());
+    if (newName != null)
+      views.put(newName.toLowerCase(), view);
+  }
+
   void changeClassName(final String oldName, final String newName, final OClass cls) {
 
     if (oldName != null && oldName.equalsIgnoreCase(newName))
@@ -745,6 +910,28 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       classes.clear();
       classes.putAll(newClasses);
 
+      /* Views */
+      {
+        final Map<String, OView> newViews = new HashMap<String, OView>();
+        Collection<ODocument> storedViews = document.field("views");
+        if (storedViews != null) {
+          for (ODocument viewDocument : storedViews) {
+            OViewImpl view = new OViewImpl(this, viewDocument);
+            view.fromStream();
+
+            if (views.containsKey(view.getName().toLowerCase())) {
+              view = (OViewImpl) views.get(view.getName().toLowerCase());
+              view.fromStream(viewDocument);
+            }
+
+            newViews.put(view.getName().toLowerCase(), view);
+          }
+
+          views.clear();
+          views.putAll(newViews);
+        }
+      }
+
       // REBUILD THE INHERITANCE TREE
       List<String> superClassNames;
       String legacySuperClassName;
@@ -807,6 +994,14 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
         document.field("classes", cc, OType.EMBEDDEDSET);
 
+        /* Views */
+        Set<ODocument> viewDocs = new HashSet<ODocument>();
+        for (OView view : views.values()) {
+          viewDocs.add(view.toStream());
+        }
+        document.field("views", viewDocs, OType.EMBEDDEDSET);
+
+        /* */
         List<ODocument> globalProperties = new ArrayList<ODocument>();
         for (OGlobalProperty globalProperty : properties) {
           if (globalProperty != null)

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 
 /**
  * Listener Interface to receive callbacks on database usage.
@@ -45,4 +46,8 @@ public interface ODatabaseLifecycleListener {
   void onCreateClass(ODatabaseInternal iDatabase, OClass iClass);
 
   void onDropClass(ODatabaseInternal iDatabase, OClass iClass);
+
+  void onCreateView(ODatabaseInternal iDatabase, OView iClass);
+
+  void onDropView(ODatabaseInternal iDatabase, OView iClass);
 }

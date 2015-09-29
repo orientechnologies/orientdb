@@ -389,6 +389,28 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
 
+      /* View */
+      if (parsedTarget.getTargetViews() != null) {
+        for (Iterable<? extends OIdentifiable> recs : parsedTarget.getTargetViews().values()) {
+          if (recs instanceof OCommandExecutorSQLResultsetDelegate) {
+            final Set<String> clIds = ((OCommandExecutorSQLResultsetDelegate)recs).getInvolvedClusters();
+            for (String c : clIds) {
+              if (checkClusterAccess(db, c)) {
+                clusters.add(c);
+              }
+            }
+          } else if (recs != null) {
+            for (OIdentifiable identifiable : recs ) {
+              final String c = db.getClusterNameById(identifiable.getIdentity().getClusterId()).toLowerCase();
+              if (checkClusterAccess(db, c)) {
+                clusters.add(c);
+              }
+            }
+          }
+        }
+      }
+
+      /* */
       if (parsedTarget.getTargetClasses() != null) {
         return getInvolvedClustersOfClasses(parsedTarget.getTargetClasses().values());
       }
@@ -1163,6 +1185,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
                 }
               } else if (parsedTarget.getTargetIndex() != null) {
                 count += getDatabase().getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex()).getSize();
+              } else if (parsedTarget.getTargetViews() != null) {
+                for (final Iterable<? extends OIdentifiable> recs : parsedTarget.getTargetViews().values()) {
+                  if (recs instanceof Collection<?>) {
+                    count += ((Collection<?>) recs).size();
+                  } else if (recs != null) {
+                    for (Object ignored : recs) {
+                      count++;
+                    }
+                  }
+                }
               } else {
                 final Iterable<? extends OIdentifiable> recs = parsedTarget.getTargetRecords();
                 if (recs != null) {

@@ -40,10 +40,7 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -461,6 +458,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       return;
 
     installClustersOfClass(iDatabase, cfg, iClass);
+  }
+
+  @Override
+  public void onCreateView(ODatabaseInternal iDatabase, OView iClass) {
+
+  }
+
+  @Override
+  public void onDropView(ODatabaseInternal iDatabase, OView iClass) {
+
   }
 
   @Override

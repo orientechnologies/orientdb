@@ -156,6 +156,31 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     delegate.dropClass(iClassName);
   }
 
+  @Override
+  public int countViews() {
+    return delegate.countViews();
+  }
+
+  @Override
+  public OView createView(String iViewName, String iQuery) {
+    return delegate.createView(iViewName, iQuery);
+  }
+
+  @Override
+  public void dropView(String iViewName) {
+    delegate.dropView(iViewName);
+  }
+
+  @Override
+  public OView getView(String iViewName) {
+    return delegate.getView(iViewName);
+  }
+
+  @Override
+  public Collection<OView> getViews() {
+    return delegate.getViews();
+  }
+
   public boolean existsClass(final String iClassName) {
     if (iClassName == null)
       return false;

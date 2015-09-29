@@ -63,6 +63,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   public static final String KEYWORD_RID              = "rid";
   public static final String CLUSTER_PREFIX           = "CLUSTER:";
   public static final String CLASS_PREFIX             = "CLASS:";
+  public static final String VIEW_PREFIX              = "VIEW:";
   public static final String INDEX_PREFIX             = "INDEX:";
   public static final String KEYWORD_UNSAFE           = "UNSAFE";
 

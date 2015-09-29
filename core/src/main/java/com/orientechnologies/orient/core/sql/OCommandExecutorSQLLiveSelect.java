@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
@@ -177,6 +178,15 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
       for (String clazz : parsedTarget.getTargetClasses().keySet()) {
         if (docClass.isSubClassOf(clazz)) {
           return true;
+        }
+      }
+    }
+    if (this.parsedTarget.getTargetViews() != null) {
+      for (Iterable<? extends OIdentifiable> recs : parsedTarget.getTargetViews().values()) {
+        for (OIdentifiable r : recs) {
+          if (r.getIdentity().equals(value.getIdentity())) {
+            return true;
+          }
         }
       }
     }

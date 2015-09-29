@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.sql.OLiveCommandExecutorSQLFactory;
 import com.orientechnologies.orient.server.OServer;
@@ -119,6 +120,16 @@ public class OLiveQueryPlugin extends OServerPluginAbstract implements ODatabase
 
   @Override
   public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
+
+  }
+
+  @Override
+  public void onCreateView(ODatabaseInternal iDatabase, OView iClass) {
+
+  }
+
+  @Override
+  public void onDropView(ODatabaseInternal iDatabase, OView iClass) {
 
   }
 }

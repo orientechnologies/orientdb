@@ -181,7 +181,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
     if (clusters != null)
       OClassImpl.addClusters(cls, clusters);
 
-    return database.getMetadata().getSchema().getClasses().size();
+    return database.getMetadata().getSchema().countClasses();
   }
 
   @Override

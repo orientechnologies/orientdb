@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorClassDescendent
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -207,6 +208,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     if (target == null) {
       if (parsedTarget.getTargetClasses() != null)
         searchInClasses();
+      else if (parsedTarget.getTargetViews() != null)
+        searchInViews(iArgs);
       else if (parsedTarget.getTargetIndexValues() != null) {
         target = new IndexValuesIterator(parsedTarget.getTargetIndexValues(), parsedTarget.isTargetIndexValuesAsc());
       } else if (parsedTarget.getTargetClusters() != null)
@@ -461,6 +464,21 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   protected void searchInClasses() {
     searchInClasses(true);
+  }
+
+  protected void searchInViews(final Map<Object, Object> iArgs) {
+    final Map.Entry<String, Iterable<? extends OIdentifiable>> entry = parsedTarget.
+      getTargetViews().entrySet().iterator().next();
+    final OView view = getDatabase().getMetadata().getSchema().getView(entry.getKey());
+
+    if (!lazyIteration) {
+      target = ((Iterable<? extends OIdentifiable>) getDatabase().command(new OCommandSQL(view.getQuery()))
+        .execute(iArgs)).iterator();
+    } else if (entry.getValue() instanceof OIterableRecordSource) {
+      target = ((OIterableRecordSource) entry.getValue()).iterator(iArgs);
+    } else {
+      target = entry.getValue().iterator();
+    }
   }
 
   protected void searchInClasses(final boolean iAscendentOrder) {

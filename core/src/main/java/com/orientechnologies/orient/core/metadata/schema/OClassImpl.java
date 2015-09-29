@@ -72,10 +72,9 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 @SuppressWarnings("unchecked")
-public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
+public class OClassImpl extends OSchemaObject implements OClass {
   private static final long                  serialVersionUID        = 1L;
   private static final int                   NOT_EXISTENT_CLUSTER_ID = -1;
-  final OSchemaShared                        owner;
   private final Map<String, OProperty>       properties              = new HashMap<String, OProperty>();
   private int                                defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
   private String                             name;
@@ -91,7 +90,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private boolean                            abstractClass           = false;                           // @SINCE v1.2.0
   private Map<String, String>                customFields;
   private volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
-  private volatile int                       hashCode;
 
   private static Set<String>                 reserved                = new HashSet<String>();
   static {
@@ -111,7 +109,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * Constructor used in unmarshalling.
    */
   protected OClassImpl(final OSchemaShared iOwner) {
-    this(iOwner, new ODocument().setTrackingChanges(false));
+    super(iOwner);
   }
 
   protected OClassImpl(final OSchemaShared iOwner, final String iName, final int[] iClusterIds) {
@@ -134,8 +132,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * Constructor used in unmarshalling.
    */
   protected OClassImpl(final OSchemaShared iOwner, final ODocument iDocument) {
-    document = iDocument;
-    owner = iOwner;
+    super(iOwner, iDocument);
   }
 
   public static int[] readableClusters(final ODatabaseDocument iDatabase, final int[] iClusterIds) {
@@ -893,7 +890,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   @Override
-  public void fromStream() {
+  protected void loadDocument() {
     subclasses = null;
     superClasses.clear();
 
@@ -964,48 +961,38 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   @Override
-  @OBeforeSerialization
-  public ODocument toStream() {
-    document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+  protected void saveDocument() {
+    document.field("name", name);
+    document.field("shortName", shortName);
+    document.field("description", description);
+    document.field("defaultClusterId", defaultClusterId);
+    document.field("clusterIds", clusterIds);
+    document.field("clusterSelection", clusterSelection.getName());
+    document.field("overSize", overSize);
+    document.field("strictMode", strictMode);
+    document.field("abstract", abstractClass);
 
-    try {
-      document.field("name", name);
-      document.field("shortName", shortName);
-      document.field("description", description);
-      document.field("defaultClusterId", defaultClusterId);
-      document.field("clusterIds", clusterIds);
-      document.field("clusterSelection", clusterSelection.getName());
-      document.field("overSize", overSize);
-      document.field("strictMode", strictMode);
-      document.field("abstract", abstractClass);
+    final Set<ODocument> props = new LinkedHashSet<ODocument>();
+    for (final OProperty p : properties.values()) {
+      props.add(((OPropertyImpl) p).toStream());
+    }
+    document.field("properties", props, OType.EMBEDDEDSET);
 
-      final Set<ODocument> props = new LinkedHashSet<ODocument>();
-      for (final OProperty p : properties.values()) {
-        props.add(((OPropertyImpl) p).toStream());
+    if (superClasses.isEmpty()) {
+      // Single super class is deprecated!
+      document.field("superClass", null, OType.STRING);
+      document.field("superClasses", null, OType.EMBEDDEDLIST);
+    } else {
+      // Single super class is deprecated!
+      document.field("superClass", superClasses.get(0).getName(), OType.STRING);
+      List<String> superClassesNames = new ArrayList<String>();
+      for (OClassImpl superClass : superClasses) {
+        superClassesNames.add(superClass.getName());
       }
-      document.field("properties", props, OType.EMBEDDEDSET);
-
-      if (superClasses.isEmpty()) {
-        // Single super class is deprecated!
-        document.field("superClass", null, OType.STRING);
-        document.field("superClasses", null, OType.EMBEDDEDLIST);
-      } else {
-        // Single super class is deprecated!
-        document.field("superClass", superClasses.get(0).getName(), OType.STRING);
-        List<String> superClassesNames = new ArrayList<String>();
-        for (OClassImpl superClass : superClasses) {
-          superClassesNames.add(superClass.getName());
-        }
-        document.field("superClasses", superClassesNames, OType.EMBEDDEDLIST);
-      }
-
-      document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
-
-    } finally {
-      document.setInternalStatus(ORecordElement.STATUS.LOADED);
+      document.field("superClasses", superClassesNames, OType.EMBEDDEDLIST);
     }
 
-    return document;
+    document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
   }
 
   public Class<?> getJavaClass() {
@@ -1406,25 +1393,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         return false;
 
       return true;
-    } finally {
-      releaseSchemaReadLock();
-    }
-  }
-
-  @Override
-  public int hashCode() {
-    int sh = hashCode;
-    if (sh != 0)
-      return sh;
-
-    acquireSchemaReadLock();
-    try {
-      sh = hashCode;
-      if (sh != 0)
-        return sh;
-
-      calculateHashCode();
-      return hashCode;
     } finally {
       releaseSchemaReadLock();
     }
@@ -1863,31 +1831,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return indexes;
   }
 
-  public void acquireSchemaReadLock() {
-    owner.acquireSchemaReadLock();
-  }
-
-  public void releaseSchemaReadLock() {
-    owner.releaseSchemaReadLock();
-  }
-
-  public void acquireSchemaWriteLock() {
-    owner.acquireSchemaWriteLock();
-  }
-
-  public void releaseSchemaWriteLock() {
-    releaseSchemaWriteLock(true);
-  }
-
-  public void releaseSchemaWriteLock(final boolean iSave) {
-    calculateHashCode();
-    owner.releaseSchemaWriteLock(iSave);
-  }
-
-  public void checkEmbedded() {
-    owner.checkEmbedded(getDatabase().getStorage().getUnderlying().getUnderlying());
-  }
-
   public void setClusterSelectionInternal(final String clusterSelection) {
     acquireSchemaWriteLock();
     try {
@@ -1995,14 +1938,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return iName;
   }
 
-  public OSchemaShared getOwner() {
-    return owner;
-  }
-
-  private void calculateHashCode() {
-    int result = super.hashCode();
-    result = 31 * result + (name != null ? name.hashCode() : 0);
-    hashCode = result;
+  @Override
+  protected int calculateHashCode(int baseHashCode) {
+    return 31 * baseHashCode + (name != null ? name.hashCode() : 0);
   }
 
   private void setOverSizeInternal(final float overSize) {
@@ -2531,10 +2469,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  private ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
-  }
-
   /**
    * Add different cluster id to the "polymorphic cluster ids" array.
    */
@@ -2582,11 +2516,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     Arrays.sort(clusterIds);
 
     return this;
-  }
-
-  private boolean isDistributedCommand() {
-    return getDatabase().getStorage() instanceof OAutoshardedStorage
-        && OScenarioThreadLocal.INSTANCE.get() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
   }
 
 }

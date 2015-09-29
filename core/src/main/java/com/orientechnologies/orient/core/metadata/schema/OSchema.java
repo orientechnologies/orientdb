@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 public interface OSchema {
 
+  /* Class */
   int countClasses();
 
   OClass createClass(Class<?> iClass);
@@ -59,6 +60,18 @@ public interface OSchema {
 
   void dropClass(String iClassName);
 
+  /* View */
+  int countViews();
+
+  OView createView(String iViewName, String iQuery);
+
+  void dropView(String iViewName);
+
+  OView getView(String iViewName);
+
+  Collection<OView> getViews();
+
+  /* */
   <RET extends ODocumentWrapper> RET reload();
 
   boolean existsClass(String iClassName);
